@@ -5,10 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'data/auth_repository_impl.dart';
-import 'domain/usecases.dart';
-import 'domain/auth_repository.dart';
-import 'domain/user.dart';
+import 'data/catalogue_repository_impl.dart';
+import 'domain/usecases/auth_usecases.dart';
+import 'domain/usecases/catalogue_usecases.dart';
 import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/home_page.dart';
 
@@ -22,14 +23,24 @@ void main() async{
     fb_auth.FirebaseAuth.instance,
     GoogleSignIn(),
   );
+  final catalogueRepository = CatalogueRepositoryImpl();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(
-        signInWithGoogleUseCase: SignInWithGoogleUseCase(authRepository),
-        signOutUseCase: SignOutUseCase(authRepository),
-        getUserStreamUseCase: GetUserStreamUseCase(authRepository),
-      ),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            signInWithGoogleUseCase: SignInWithGoogleUseCase(authRepository),
+            signOutUseCase: SignOutUseCase(authRepository),
+            getUserStreamUseCase: GetUserStreamUseCase(authRepository),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CatalogueProvider(
+            getProductsStreamUseCase: GetProductsStreamUseCase(catalogueRepository),
+          ),
+        ),
+      ],
       child: const MyApp(),
     ),
   );

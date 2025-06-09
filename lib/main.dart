@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
-import 'domain.dart';
-import 'data.dart';
-import 'auth_provider.dart';
-import 'login_page.dart';
-import 'home_page.dart';
+import 'data/auth_repository_impl.dart';
+import 'domain/usecases.dart';
+import 'domain/auth_repository.dart';
+import 'domain/user.dart';
+import 'presentation/providers/auth_provider.dart';
+import 'presentation/pages/login_page.dart';
+import 'presentation/pages/home_page.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

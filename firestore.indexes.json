@@ -1,0 +1,33 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "PRODUCTOS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "categoria",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp_actualizacion",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTOS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "subcategoria",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp_actualizacion",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

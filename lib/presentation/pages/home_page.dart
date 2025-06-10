@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
-import '../providers/auth_provider.dart';
-import '../providers/catalogue_provider.dart'; 
+import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import '../providers/home_provider.dart';
+import '../providers/catalogue_provider.dart';
+import '../widgets/producto_item.dart';
 
+// ignore: must_be_immutable
 class HomePage extends StatefulWidget {
-  final AuthProvider authProvider;
-  const HomePage({super.key, required this.authProvider});
+  HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -14,18 +16,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _barcodeBuffer = '';
-  DateTime? _lastKey;
-  final FocusNode _focusNode = FocusNode();
-  List<Map<String, dynamic>> _cart = [];
 
-  @override
-  void initState() {
-    super.initState();
-    // sirve para que el teclado se enfoque automáticamente al iniciar la página 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
-    });
-  }
+  DateTime? _lastKey;
+
+  final FocusNode _focusNode = FocusNode();
 
   void _onKey(KeyEvent event) async {  
     // Detecta un código de barras válido por velocidad de tipeo y enter
@@ -43,173 +37,43 @@ class _HomePageState extends State<HomePage> {
         // Si el buffer tiene más de 6 caracteres, se asume que es un código de barras completo
         if (_barcodeBuffer.length > 6) {
           // Procesa el código de barras
-          showScanResultdialog(code: _barcodeBuffer);
+          scanCodeProduct(code: _barcodeBuffer);
           // Limpia el buffer
           _barcodeBuffer = '';
         }
       }); 
-       
-      // Actualiza el estado para reflejar el cambio
-      setState(() { });
+
 
     } else {
       print('3Key event not handled: event.runtimeType');
     }
   }
 
-  void _addToCart(product) {
-    setState(() {
-      final index = _cart.indexWhere((item) => item['code'] == product.code);
-      if (index != -1) {
-        _cart[index]['qty'] += 1;
-      } else {
-        _cart.add({
-          'code': product.code,
-          'description': product.description,
-          'nameMark': product.nameMark,
-          'qty': 1,
-        });
-      }
-    });
+  void scanCodeProduct({required String code}) {
+    final context = _focusNode.context;
+    if (context == null) return;
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final product = catalogueProvider.getProductByCode(code);
+    if (product != null) {
+      homeProvider.addProduct(  product.convertProductCatalogue()
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Producto agregado: A${product.description}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Producto no encontrado: $code')),
+      );
+    }
   }
 
-  void _removeFromCart(int index) {
-    setState(() {
-      _cart.removeAt(index);
-    });
-  }
-
-  void _showCartDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Carrito', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _cart.isEmpty
-                    ? const Text('El carrito está vacío')
-                    : SizedBox(
-                        height: 300,
-                        width: 300,
-                        child: ListView.builder(
-                          itemCount: _cart.length,
-                          itemBuilder: (context, index) {
-                            final item = _cart[index];
-                            return ListTile(
-                              title: Text(item['description'] ?? ''),
-                              subtitle: Text('Marca: ${item['nameMark'] ?? ''}\nCódigo: ${item['code']}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('x${item['qty']}'),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline),
-                                    onPressed: () {
-                                      _removeFromCart(index);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  showScanResultdialog({required String code}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
-      final product = catalogueProvider.getProductByCode(code);
-
-      if (product != null) {
-        _addToCart(product);
-        showDialog(
-          context: context, 
-          builder: (context) {
-            return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 48),
-                    const SizedBox(height: 16),
-                    Text('Producto encontrado', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Text('Código: $code', style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 8),
-                    Text(product.description.isNotEmpty ? product.description : 'Sin descripción', style: Theme.of(context).textTheme.bodyMedium),
-                    if (product.nameMark.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(product.nameMark, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.secondary)),
-                    ],
-                    const SizedBox(height: 4),
-                    Text(product.code, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).colorScheme.outline)),
-                  
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      } else {
-        // Dialogo Material 3 sin resultado, se cierra solo
-        showDialog(
-          context: context, 
-          builder: (context) {
-            return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error, size: 48),
-                    const SizedBox(height: 16),
-                    Text('Producto no encontrado', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Text('Código: $code', style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 8),
-                    Text('No se encontró el producto en la base de datos', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error)),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      }
-      await Future.delayed(const Duration(milliseconds:500));
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
+   @override
+  void initState() {
+    super.initState();
+    // sirve para que el teclado se enfoque automáticamente al iniciar la página 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
     });
   }
 
@@ -221,80 +85,64 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bienvenido'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await widget.authProvider.signOut();
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Consumer<CatalogueProvider>(
-          builder: (context, catalogueProvider, _) {
-            final count = catalogueProvider.products.length;
-
-
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('$count productos disponible', style: const TextStyle(fontSize: 32)),
-                const SizedBox(height: 32),
-                const Text('Carrito de compras', style: TextStyle(fontSize: 20)),
-                KeyboardListener(
-                  focusNode: _focusNode,
-                  autofocus: true,
-                  onKeyEvent: _onKey,
-                  child: Container(
-                    width: 300,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              _cart.isEmpty ? 'Esperando escaneo...' : 'Productos',
-                              style: const TextStyle(fontSize: 16, color: Colors.black54),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Stack(
-                            alignment: Alignment.topRight,
-                            children: [
-                              const Icon(Icons.shopping_cart_outlined),
-                              if (_cart.isNotEmpty)
-                                CircleAvatar(
-                                  radius: 9,
-                                  backgroundColor: Colors.red,
-                                  child: Text(
-                                    '${_cart.fold<int>(0, (sum, item) => sum + (item['qty'] as int))}',
-                                    style: const TextStyle(fontSize: 12, color: Colors.white),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          tooltip: 'Ver carrito',
-                          onPressed: _showCartDialog,
-                        ),
-                      ],
+    return Consumer2<HomeProvider, CatalogueProvider>(
+      builder: (context, controller, catalogueProvider, _) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Vender')),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: KeyboardListener(
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      onKeyEvent: _onKey,
+                      child: body(controller: controller),
                     ),
                   ),
-                ),
-                // Eliminado el splash overlay
-              ],
-            );
+                  // Aquí podrías agregar un drawerTicket adaptado a Provider si lo necesitas
+                ],
+              );
+            },
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () { 
+              // ... 
+            },
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget body({required HomeProvider controller}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = constraints.maxWidth < 700
+            ? 3
+            : constraints.maxWidth < 900
+                ? 4
+                : 6;
+        final List<ProductCatalogue> list = controller.selectedProducts.reversed.toList();
+        return GridView.builder(
+          padding: const EdgeInsets.all(12),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 1.0,
+            mainAxisSpacing: 1.0,
+          ),
+          itemCount: list.length + 18,
+          itemBuilder: (context, index) {
+            if (index < list.length) {
+              return ProductoItem(producto: list[index]);
+            } else {
+              return Card(elevation: 0, color: Colors.grey.withOpacity(0.1));
+            }
           },
-        ),
-      ),
+        );
+      },
     );
   }
 }

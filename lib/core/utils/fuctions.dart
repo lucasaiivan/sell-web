@@ -1,3 +1,6 @@
+import 'dart:convert';
+// ignore: deprecated_member_use, avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import 'dart:io';
 import 'dart:math';
 
@@ -12,7 +15,7 @@ import 'package:share_plus/share_plus.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
 
-import '../../domain/entities/cashRegister_model.dart';
+import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 
 class Publications {
@@ -252,17 +255,34 @@ class Utils {
   }); 
   }    
 
-  Future<void> createPdfAndShare({required Uint8List data,required String id}) async {
-    // description : crea un pdf y lo comparte
+  Future<void> createPdfAndShare({required Uint8List data, required String id}) async {
+    // description : crea un pdf y lo comparte (soporta web y otras plataformas)
     final pdf = pw.Document();
-    pdf.addPage(pw.Page(build: (pw.Context context) => pw.Center(child: pw.Image(pw.MemoryImage(data))),
-    pageFormat: PdfPageFormat.a4, 
-    ));
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Center(child: pw.Image(pw.MemoryImage(data))),
+        pageFormat: PdfPageFormat.a4,
+      ),
+    );
 
-    final output = await getTemporaryDirectory();
-    final file = File("${output.path}/${id}Ticket.pdf");
-    await file.writeAsBytes(await pdf.save());
-
-    Share.shareXFiles([XFile(file.path)], text: 'Compartir Ticket',subject: 'hello',sharePositionOrigin: Rect.zero );
+    if (kIsWeb) {
+      // Para web: descarga el PDF usando un enlace oculto
+      final bytes = await pdf.save();
+      final url = 'data:application/pdf;base64,${base64Encode(bytes)}';
+      // ignore: undefined_prefixed_name
+      final anchor = html.AnchorElement(href: url)
+        ..target = 'blank'
+        ..download = '${id}Ticket.pdf';
+      html.document.body!.append(anchor);
+      anchor.click();
+      anchor.remove();
+    } else {
+      // Para móvil/escritorio: guarda y comparte el PDF como antes
+      final output = await getTemporaryDirectory();
+      final file = File("${output.path}/${id}Ticket.pdf");
+      await file.writeAsBytes(await pdf.save());
+      // ignore: deprecated_member_use
+      await Share.shareXFiles([XFile(file.path)], text: 'Compartir Ticket'); 
+    }
   }
 }

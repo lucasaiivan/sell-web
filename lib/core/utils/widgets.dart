@@ -17,7 +17,7 @@ class ComponentApp extends StatelessWidget {
         preferredSize: const Size.fromHeight(0.0),
         child: LinearProgressIndicator(
             minHeight: 6.0,
-            backgroundColor: Colors.white.withOpacity(0.3),
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
             valueColor: AlwaysStoppedAnimation<Color>(color)));
   }
   // view : grafico divisor estandar de la app 
@@ -28,7 +28,7 @@ class ComponentApp extends StatelessWidget {
   }
   // view : grafico punto divisor estandar de la app
   Widget dividerDot({double size = 4.0,Color color = Colors.black}) {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child:Icon(Icons.circle,size:size, color: color.withOpacity(0.4)));
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child:Icon(Icons.circle,size:size, color: color.withValues(alpha: 0.4)));
   }
   // view : imagen avatar del usuario
   Widget userAvatarCircle({ Color? background,IconData? iconData,bool empty=false,String urlImage='',String text = '', double radius = 20.0}) {

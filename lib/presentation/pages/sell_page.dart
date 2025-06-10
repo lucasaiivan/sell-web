@@ -43,9 +43,7 @@ class _SellPageState extends State<SellPage> {
       }); 
 
 
-    } else {
-      print('3Key event not handled: event.runtimeType');
-    }
+    } 
   }
 
   void scanCodeProduct({required String code}) {
@@ -146,7 +144,7 @@ class _SellPageState extends State<SellPage> {
             if (index < list.length) {
               return ProductoItem(producto: list[index]);
             } else {
-              return Card(elevation: 0, color: Colors.grey.withOpacity(0.1));
+              return Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.1));
             }
           },
         );
@@ -188,7 +186,7 @@ class _SellPageState extends State<SellPage> {
         elevation: 0,
         color: backgroundColor,
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: borderColor.withOpacity(0.7), width: 0.5),
+          side: BorderSide(color: borderColor.withValues(alpha: 0.7), width: 0.5),
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: ListView(
@@ -238,7 +236,7 @@ class _SellPageState extends State<SellPage> {
                     const Spacer(),
                     const SizedBox(width: 12),
                     // Suma total considerando cantidades
-                    Text(ticket.listProduct.fold<double>(0, (sum, item) => sum + (item.salePrice * (item.quantity ?? 1))).toStringAsFixed(2), style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+                    Text(ticket.listProduct.fold<double>(0, (sum, item) => sum + (item.salePrice * (item.quantity))).toStringAsFixed(2), style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
                   ],
                 ),
               ),

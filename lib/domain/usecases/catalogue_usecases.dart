@@ -10,7 +10,7 @@ class GetProductsStreamUseCase {
 
 class GetProductByCodeUseCase {
   // Recibe la lista de productos y el código a buscar
-  Product? call(List<Product> products, String code) {
+  ProductCatalogue? call(List<ProductCatalogue> products, String code) {
     try {
       return products.firstWhere((p) => p.code == code);
     } catch (_) {
@@ -23,7 +23,7 @@ class IsProductScannedUseCase {
   final GetProductByCodeUseCase getProductByCodeUseCase;
   IsProductScannedUseCase(this.getProductByCodeUseCase);
 
-  bool call(List<Product> products, String code) {
+  bool call(List<ProductCatalogue> products, String code) {
     final product = getProductByCodeUseCase(products, code);
     return product != null;
   }

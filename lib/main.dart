@@ -19,8 +19,7 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform );
 
-  final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance,GoogleSignIn());
-  final catalogueRepository = CatalogueRepositoryImpl();
+  final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance,GoogleSignIn()); 
 
   runApp(
     MultiProvider(
@@ -32,21 +31,6 @@ void main() async{
             getUserStreamUseCase: GetUserStreamUseCase(authRepository),
           ),
         ),
-        ChangeNotifierProvider(
-          create: (_) {
-            final getProductsStreamUseCase = GetProductsStreamUseCase(catalogueRepository);
-            final getProductByCodeUseCase = GetProductByCodeUseCase();
-            final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
-            return CatalogueProvider(
-              getProductsStreamUseCase: getProductsStreamUseCase,
-              getProductByCodeUseCase: getProductByCodeUseCase,
-              isProductScannedUseCase: isProductScannedUseCase,
-            );
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (_) => HomeProvider(),
-        ),
       ],
       child: const MyApp(),
     ),
@@ -56,7 +40,6 @@ void main() async{
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -65,7 +48,30 @@ class MyApp extends StatelessWidget {
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           if (authProvider.user != null) {
-            return HomePage();
+            // Proveedor de catálogo solo cuando el usuario está autenticado
+            return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (_) {
+                    final userId = authProvider.user!.uid;
+                    final getProductsStreamUseCase = GetProductsStreamUseCase(
+                      CatalogueRepositoryImpl(id: userId),
+                    );
+                    final getProductByCodeUseCase = GetProductByCodeUseCase();
+                    final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
+                    return CatalogueProvider(
+                      getProductsStreamUseCase: getProductsStreamUseCase,
+                      getProductByCodeUseCase: getProductByCodeUseCase,
+                      isProductScannedUseCase: isProductScannedUseCase,
+                    );
+                  },
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => SellProvider(),
+                ),
+              ],
+              child: SellPage(),
+            );
           } else {
             return LoginPage(authProvider: authProvider);
           }

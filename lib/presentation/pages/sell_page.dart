@@ -1,24 +1,23 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
-import '../widgets/producto_item.dart';
-
-// ignore: must_be_immutable
-class HomePage extends StatefulWidget {
-  HomePage({super.key});
+ 
+class SellPage extends StatefulWidget {
+  const SellPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<SellPage> createState() => _SellPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _SellPageState extends State<SellPage> {
+
   String _barcodeBuffer = '';
-
   DateTime? _lastKey;
-
   final FocusNode _focusNode = FocusNode();
 
   void _onKey(KeyEvent event) async {  
@@ -53,11 +52,10 @@ class _HomePageState extends State<HomePage> {
     final context = _focusNode.context;
     if (context == null) return;
     final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
-    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
     if (product != null) {
-      homeProvider.addProduct(  product.convertProductCatalogue()
-      );
+      homeProvider.addProduct(product);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Producto agregado: A${product.description}')),
       );
@@ -85,7 +83,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<HomeProvider, CatalogueProvider>(
+    return Consumer2<SellProvider, CatalogueProvider>(
       builder: (context, provider, catalogueProvider, _) {
         return Scaffold(
           appBar: AppBar(title: const Text('Vender')),
@@ -94,7 +92,7 @@ class _HomePageState extends State<HomePage> {
               return Row(
                 children: [
                   /// [KeyboardListener] se utiliza para detectar y responder a eventos del Escaner de codigo de barra
-                  Expanded(
+                  Flexible(
                     child: KeyboardListener(
                       focusNode: _focusNode,
                       autofocus: true,
@@ -102,9 +100,10 @@ class _HomePageState extends State<HomePage> {
                       child: body(provider: provider),
                     ),
                   ),
-                  // ...
-                  // ... Aquí agregar un drawerTicket para mostrar el ticket de venta
-                  // ...
+                  //  drawerTicket para mostrar el ticket de venta
+                  if (provider.ticketView)
+                    drawerTicket(context),
+
                 ],
               );
             },
@@ -120,7 +119,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget body({required HomeProvider provider}) {
+  Widget body({required SellProvider provider}) {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Ajusta el número de columnas según el ancho de pantalla para una experiencia uniforme
@@ -153,5 +152,374 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  Widget drawerTicket(BuildContext context) {
+    // values
+    const EdgeInsets padding = EdgeInsets.symmetric(horizontal: 20, vertical: 1);
+    final provider = Provider.of<SellProvider>(context);
+    final ticket = provider.getTicket;
+
+    // style
+    Color borderColor = Colors.black;
+    Color backgroundColor = Colors.white;
+    const TextStyle textValuesStyle = TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold);
+    const TextStyle textDescrpitionStyle = TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold);
+
+    // widgets
+    Widget dividerLinesWidget = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      child: Divider(
+        color: borderColor,
+        thickness: 0.5,
+      ),
+    );
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 700;
+
+    return AnimatedContainer(
+      width: provider.ticketView ? (isMobile ? screenWidth : 400) : 0,
+      curve: Curves.fastOutSlowIn,
+      duration: const Duration(milliseconds: 300),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        elevation: 0,
+        color: backgroundColor,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: borderColor.withOpacity(0.7), width: 0.5),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: ListView(
+          key: const Key('ticket'),
+          shrinkWrap: false,
+          children: [
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Ticket', textAlign: TextAlign.center, style: textDescrpitionStyle.copyWith(fontSize: 30, fontWeight: FontWeight.bold)),
+            ),
+            dividerLinesWidget,
+            const SizedBox(height: 20),
+            Padding(
+              padding: padding,
+              child: Row(
+                children: [
+                  const Opacity(opacity: 0.7, child: Text('Productos:', style: textDescrpitionStyle)),
+                  const Spacer(),
+                  // Suma total de cantidades de todos los productos
+                  Text(ticket.listProduct.fold<int>(0, (sum, item) => sum + item.quantity).toString(), style: textValuesStyle),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Lista de productos
+            ...ticket.listProduct.map((item) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+              child: Row(
+                children: [
+                  Expanded(child: Text(item.description, style: textValuesStyle)),
+                  Text('x${item.quantity}', style: textValuesStyle),
+                  const SizedBox(width: 8),
+                  Text((item.salePrice * item.quantity).toStringAsFixed(2), style: textValuesStyle),
+                ],
+              ),
+            )),
+            const SizedBox(height: 12),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+              color: Colors.green,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Text('Total', style: textDescrpitionStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                    const Spacer(),
+                    const SizedBox(width: 12),
+                    // Suma total considerando cantidades
+                    Text(ticket.listProduct.fold<double>(0, (sum, item) => sum + (item.salePrice * (item.quantity ?? 1))).toStringAsFixed(2), style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Aquí puedes agregar widgets para métodos de pago, descuentos, vuelto, etc.
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget widgetConfirmedPurchase(BuildContext context) {
+    final provider = Provider.of<SellProvider>(context, listen: false);
+    Color background = Colors.green.shade400;
+
+    return Theme(
+      data: ThemeData(brightness: Brightness.dark),
+      child: Container(
+        color: background,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 60),
+              const SizedBox(height: 12),
+              const Text('¡Listo! Transacción exitosa', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300)),
+              const SizedBox(height: 20),
+              Text('Total: \$${provider.getTicket.getTotalPrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  provider.setTicketView(false);
+                  // Aquí puedes agregar lógica para reiniciar el estado si es necesario
+                },
+                child: const Text('Volver a vender', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ProductoItem extends StatefulWidget {
+  final ProductCatalogue producto;
+
+  const ProductoItem({super.key, required this.producto});
+
+  @override
+  State<ProductoItem> createState() => _ProductoItemState();
+}
+class _ProductoItemState extends State<ProductoItem> { 
+
+  @override
+  Widget build(BuildContext context) {
+    //  values 
+    final String alertStockText = widget.producto.stock
+      ? (widget.producto.quantityStock >= 0
+        ? widget.producto.quantityStock <= widget.producto.alertStock
+          ? 'Stock bajo'
+          : ''
+        : 'Sin stock')
+      : '';
+
+    // aparición animada
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(  
+        children: [
+          // view : alert stock, image and info
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              alertStockText == ''
+                  ? Container()
+                  : Container(
+                      width: double.infinity,
+                      color: Colors.red,
+                      child: Center(
+                          child: Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Text(alertStockText,style: const TextStyle(color: Colors.white,fontSize: 10,fontWeight: FontWeight.bold)),
+                      )),
+                    ),
+              Flexible(child: contentImage()),
+              contentInfo(),
+            ],
+          ),
+          // view : selected
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                mouseCursor: MouseCursor.uncontrolled,
+                onTap: () {
+                  final originalContext = context; // <-- Guardar el contexto original
+                  showDialog(
+                    context: context,
+                    builder: (dialogContext) {
+                      int cantidad = widget.producto.quantity;
+                      return StatefulBuilder(
+                        builder: (context, setState) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+                            title: Text(widget.producto.description, style: Theme.of(dialogContext).textTheme.titleLarge),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (widget.producto.image.isNotEmpty)
+                                  Center(
+                                  child: SizedBox(
+                                      width: 300,
+                                      height: 300,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                      widget.producto.image, 
+                                      fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  ),
+                                const SizedBox(height: 16),
+                                Text('Código: ${widget.producto.code}', style: Theme.of(dialogContext).textTheme.bodyMedium),
+                                Text('Precio: [200m${Publications.getFormatoPrecio(value: widget.producto.salePrice)}[0m', style: Theme.of(dialogContext).textTheme.bodyMedium),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    const Text('Cantidad:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    const SizedBox(width: 12),
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle_outline),
+                                      onPressed: cantidad > 1 ? () => setState(() => cantidad--) : null,
+                                      color: Theme.of(dialogContext).colorScheme.primary,
+                                    ),
+                                    Text('$cantidad', style: Theme.of(dialogContext).textTheme.titleMedium),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle_outline),
+                                      onPressed: () => setState(() => cantidad++),
+                                      color: Theme.of(dialogContext).colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton.icon(
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Eliminar'),
+                                style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
+                                onPressed: () {
+                                  Provider.of<SellProvider>(originalContext, listen: false).removeProduct(widget.producto);
+                                  Navigator.of(originalContext).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('Cancelar'),
+                                onPressed: () => Navigator.of(originalContext).pop(),
+                              ),
+                              FilledButton(
+                                child: const Text('Guardar'),
+                                onPressed: () {
+                                  Provider.of<SellProvider>(originalContext, listen: false).addProduct(
+                                    widget.producto.copyWith(quantity: cantidad),
+                                    replaceQuantity: true,
+                                  );
+                                  Navigator.of(originalContext).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+                },  
+              ),
+            ),
+          ),
+          // view : cantidad de productos seleccionados
+          widget.producto.quantity==1 ?  Container()
+          :Positioned(
+            top:5,
+            right:5,
+            child: CircleAvatar(
+              backgroundColor: Colors.black87,
+              child: Padding(
+                padding: const EdgeInsets.all(1.0),
+                child: CircleAvatar(  
+                  backgroundColor: Colors.white,
+                  child: Text(widget.producto.quantity.toString(),style: const TextStyle(color: Colors.black,fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // WIDGETS COMPONETS
+
+  Widget contentImage() {
+    // var
+    String description = widget.producto.description != ''
+        ? widget.producto.description.length >= 3
+            ? widget.producto.description.substring(0, 3)
+            : widget.producto.description.substring(0, 1)
+        : Publications.getFormatoPrecio(
+            value: widget.producto.salePrice * widget.producto.quantity);
+    return widget.producto.image != "" && !widget.producto.local
+        ? SizedBox(
+            width: double.infinity,
+            child: CachedNetworkImage(
+              fadeInDuration: const Duration(milliseconds: 200),
+              fit: BoxFit.cover,
+              imageUrl: widget.producto.image,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[100],
+                child: Center(
+                  child: Text(description, style: const TextStyle(fontSize: 24.0, color: Colors.grey,overflow: TextOverflow.clip )),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[100],
+                child: Center(
+                  child: Text(description,
+                      style:  const TextStyle(fontSize: 24.0, color: Colors.grey,overflow: TextOverflow.clip)),
+                ),
+              ),
+            ),
+          )
+        : Container(
+            color: Colors.grey[100],
+            child: Center(
+              child: Text(description,
+                  style: const TextStyle(fontSize: 24.0, color: Colors.grey,overflow: TextOverflow.clip)),
+            ),
+          );
+  }
+
+  Widget contentInfo() {
+    return widget.producto.description == ''
+        ? Container()
+        : Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(widget.producto.description,style: const TextStyle(fontWeight: FontWeight.normal,color: Colors.grey ,overflow:TextOverflow.ellipsis),maxLines:1),
+                Text( Publications.getFormatoPrecio(value: widget.producto.salePrice),
+                    style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 17.0,color: Colors.black),
+                    overflow: TextOverflow.clip,
+                    softWrap: false),
+              ],
+            ),
+          );
   }
 }

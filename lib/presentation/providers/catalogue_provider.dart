@@ -17,10 +17,10 @@ class CatalogueProvider extends ChangeNotifier {
     _initProducts();
   }
 
-  List<Product> _products = [];
-  List<Product> get products => _products;
+  List<ProductCatalogue> _products = [];
+  List<ProductCatalogue> get products => _products;
 
-  Product? _lastScannedProduct;
+  ProductCatalogue? _lastScannedProduct;
   String? _lastScannedCode;
   bool _showSplash = false;
   String? _scanError;
@@ -29,21 +29,21 @@ class CatalogueProvider extends ChangeNotifier {
     _showSplash = value;
     notifyListeners();
   }
-  Product? get lastScannedProduct => _lastScannedProduct;
+  ProductCatalogue? get lastScannedProduct => _lastScannedProduct;
   String? get lastScannedCode => _lastScannedCode;
   String? get scanError => _scanError;
 
   // Obtiene el stream de productos desde la base de datos y actualiza la lista interna.
   void _initProducts() {
     getProductsStreamUseCase().listen((snapshot) {
-      // Convierte los documentos del snapshot en objetos Product y actualiza la lista interna.
-      _products = snapshot.docs.map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      // Convierte los documentos del snapshot en objetos ProductCatalogue y actualiza la lista interna.
+      _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
       notifyListeners(); // Notifica a los listeners que hubo un cambio en la lista de productos.
     });
   }
 
   /// Busca un producto por su código en la lista interna de productos usando el caso de uso correspondiente.
-  Product? getProductByCode(String code) {
+  ProductCatalogue? getProductByCode(String code) {
     return getProductByCodeUseCase(_products, code);
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
-import '../providers/home_provider.dart';
+import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/producto_item.dart';
 
@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
 
 
     } else {
-      print('3Key event not handled: event.runtimeType');
+      print('3Key event not handled: event.runtimeType');
     }
   }
 
@@ -86,22 +86,25 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<HomeProvider, CatalogueProvider>(
-      builder: (context, controller, catalogueProvider, _) {
+      builder: (context, provider, catalogueProvider, _) {
         return Scaffold(
           appBar: AppBar(title: const Text('Vender')),
           body: LayoutBuilder(
             builder: (context, constraints) {
               return Row(
                 children: [
+                  /// [KeyboardListener] se utiliza para detectar y responder a eventos del Escaner de codigo de barra
                   Expanded(
                     child: KeyboardListener(
                       focusNode: _focusNode,
                       autofocus: true,
                       onKeyEvent: _onKey,
-                      child: body(controller: controller),
+                      child: body(provider: provider),
                     ),
                   ),
-                  // Aquí podrías agregar un drawerTicket adaptado a Provider si lo necesitas
+                  // ...
+                  // ... Aquí agregar un drawerTicket para mostrar el ticket de venta
+                  // ...
                 ],
               );
             },
@@ -117,15 +120,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget body({required HomeProvider controller}) {
+  Widget body({required HomeProvider provider}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount = constraints.maxWidth < 700
-            ? 3
-            : constraints.maxWidth < 900
-                ? 4
-                : 6;
-        final List<ProductCatalogue> list = controller.selectedProducts.reversed.toList();
+        // Ajusta el número de columnas según el ancho de pantalla para una experiencia uniforme
+        int crossAxisCount;
+        if (constraints.maxWidth < 600) {
+          crossAxisCount = 3; // Móvil, ítems grandes
+        } else if (constraints.maxWidth < 800) {
+          crossAxisCount = 4;
+        } else if (constraints.maxWidth < 1000) {
+          crossAxisCount = 5;
+        } else {
+          crossAxisCount = 6;
+        }
+        final List<ProductCatalogue> list = provider.selectedProducts.reversed.toList();
         return GridView.builder(
           padding: const EdgeInsets.all(12),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -133,7 +142,7 @@ class _HomePageState extends State<HomePage> {
             crossAxisSpacing: 1.0,
             mainAxisSpacing: 1.0,
           ),
-          itemCount: list.length + 18,
+          itemCount: list.length + 17,
           itemBuilder: (context, index) {
             if (index < list.length) {
               return ProductoItem(producto: list[index]);

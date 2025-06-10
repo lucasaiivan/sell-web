@@ -6,7 +6,14 @@ import '../../domain/usecases/catalogue_usecases.dart';
 
 class CatalogueProvider extends ChangeNotifier {
   final GetProductsStreamUseCase getProductsStreamUseCase;
-  CatalogueProvider({required this.getProductsStreamUseCase}) {
+  final GetProductByCodeUseCase getProductByCodeUseCase;
+  final IsProductScannedUseCase isProductScannedUseCase;
+
+  CatalogueProvider({
+    required this.getProductsStreamUseCase,
+    required this.getProductByCodeUseCase,
+    required this.isProductScannedUseCase,
+  }) {
     _initProducts();
   }
 
@@ -26,30 +33,25 @@ class CatalogueProvider extends ChangeNotifier {
   String? get lastScannedCode => _lastScannedCode;
   String? get scanError => _scanError;
 
+  // Obtiene el stream de productos desde la base de datos y actualiza la lista interna.
   void _initProducts() {
     getProductsStreamUseCase().listen((snapshot) {
+      // Convierte los documentos del snapshot en objetos Product y actualiza la lista interna.
       _products = snapshot.docs.map((doc) => Product.fromMap(doc.data() as Map<String, dynamic>)).toList();
-      notifyListeners();
+      notifyListeners(); // Notifica a los listeners que hubo un cambio en la lista de productos.
     });
   }
 
+  /// Busca un producto por su código en la lista interna de productos usando el caso de uso correspondiente.
   Product? getProductByCode(String code) {
-    try {
-      return _products.firstWhere((p) => p.code == code);
-    } catch (_) {
-      return null;
-    }
+    return getProductByCodeUseCase(_products, code);
   }
 
-  Future<bool> getIsProductScanned(String code) async {
-    final product = getProductByCode(code);
-    if (product != null) {
-      return true;
-    } else {
-      return false;
-    }
-    
+  /// Verifica si un producto con el código dado ya fue escaneado usando el caso de uso correspondiente.
+  bool getIsProductScanned(String code) {
+    return isProductScannedUseCase(_products, code);
   }
 
+  /// Devuelve el stream de productos para ser usado directamente en la UI si es necesario.
   Stream<QuerySnapshot> get productsStream => getProductsStreamUseCase();
 }

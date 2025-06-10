@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/domain/entities/catalogue.dart'; 
 
 class HomeProvider extends ChangeNotifier {
-  // Simulación de ticket y productos seleccionados
+
+
+  // lista de productos seleccionados por el usuario (carrito de compras)
   final List<ProductCatalogue> _selectedProducts = [];
-  bool _ticketView = false;
+  bool _ticketView = false; // si mostramos vista de ticket o no
 
   List<ProductCatalogue> get selectedProducts => _selectedProducts;
   bool get ticketView => _ticketView;
 
+  /// Agrega un producto a la lista de productos.
   void addProduct(ProductCatalogue product) {
     final index = _selectedProducts.indexWhere((p) => p.id == product.id);
     if (index != -1) {

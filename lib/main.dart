@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sellweb/presentation/providers/home_provider.dart';
+import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'firebase_options.dart';
 import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
@@ -12,19 +12,14 @@ import 'domain/usecases/catalogue_usecases.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/pages/login_page.dart';
-import 'presentation/pages/home_page.dart';
+import 'presentation/pages/sell_page.dart';
 
 void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform );
 
-  final authRepository = AuthRepositoryImpl(
-    fb_auth.FirebaseAuth.instance,
-    GoogleSignIn(),
-  );
+  final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance,GoogleSignIn());
   final catalogueRepository = CatalogueRepositoryImpl();
 
   runApp(
@@ -38,9 +33,16 @@ void main() async{
           ),
         ),
         ChangeNotifierProvider(
-          create: (_) => CatalogueProvider(
-            getProductsStreamUseCase: GetProductsStreamUseCase(catalogueRepository),
-          ),
+          create: (_) {
+            final getProductsStreamUseCase = GetProductsStreamUseCase(catalogueRepository);
+            final getProductByCodeUseCase = GetProductByCodeUseCase();
+            final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
+            return CatalogueProvider(
+              getProductsStreamUseCase: getProductsStreamUseCase,
+              getProductByCodeUseCase: getProductByCodeUseCase,
+              isProductScannedUseCase: isProductScannedUseCase,
+            );
+          },
         ),
         ChangeNotifierProvider(
           create: (_) => HomeProvider(),

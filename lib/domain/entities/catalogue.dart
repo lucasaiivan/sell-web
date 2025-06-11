@@ -203,10 +203,10 @@ class ProductCatalogue {
     this.quantityStock = 0,
     this.alertStock = 5,
     this.revenue =0.0,
-    required this.creation,
-    required this.upgrade,
-    required this.documentCreation,
-    required this.documentUpgrade, 
+    Timestamp? creation,
+    Timestamp? upgrade,
+    Timestamp? documentCreation,
+    Timestamp? documentUpgrade,
     this.documentIdCreation = "",
     this.documentIdUpgrade = "",
     this.sales = 0,
@@ -215,10 +215,13 @@ class ProductCatalogue {
     this.currencySign = "\$",
     this.idMark = '',
     this.nameMark = '',
-    this.imageMark = '', 
+    this.imageMark = '',
     this.quantity = 1,
     this.local = false ,
-  });
+  })  : creation = creation ?? Timestamp.now(),
+        upgrade = upgrade ?? Timestamp.now(),
+        documentCreation = documentCreation ?? Timestamp.now(),
+        documentUpgrade = documentUpgrade ?? Timestamp.now();
 
   ProductCatalogue copyWith({
     String? id,

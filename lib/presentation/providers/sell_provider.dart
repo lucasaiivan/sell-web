@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/domain/entities/catalogue.dart'; 
 import 'package:sellweb/domain/usecases/sell_usecases.dart';
 
@@ -41,6 +42,25 @@ class SellProvider extends ChangeNotifier {
 
   void setTicketView(bool value) {
     _ticketView = value;
+    notifyListeners();
+  }
+
+  // void : descartar ticket, limpia la lista de productos y oculta la vista de ticket
+  void discartTicket() {
+    _selectedProducts.clear();
+    _ticketView = false;
+    notifyListeners();
+  }
+
+  // agregar un producto rapido sin registrar a la lista de productos deleccionados
+  void addQuickProduct({required String description, required double salePrice}) {
+    var id = Publications.generateUid();
+    var product = ProductCatalogue(
+      id: id,
+      description: description,
+      salePrice: salePrice, 
+    );
+    addProduct(product, replaceQuantity: true);
     notifyListeners();
   }
 

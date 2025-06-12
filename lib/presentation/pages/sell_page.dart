@@ -25,6 +25,7 @@ class _SellPageState extends State<SellPage> {
   DateTime? _lastKey;
   final FocusNode _focusNode = FocusNode();
   bool _showConfirmPurchaseButton = false; 
+  bool _showConfirmedPurchase = false;
 
   void _onKey(KeyEvent event) async {  
     // Detecta un código de barras válido por velocidad de tipeo y enter
@@ -233,7 +234,7 @@ class _SellPageState extends State<SellPage> {
       title: ComponentApp().buttonAppbar( 
         context:  buildContext,
         onTap: (){
-          // ... show modal bottom sheet
+          showModalBottomSheetSelectProducts(buildContext);
         }, 
         text: 'Vender',
         iconLeading: Icons.search,
@@ -307,6 +308,7 @@ class _SellPageState extends State<SellPage> {
     final double minButtonWidth = 150;
     final double maxButtonWidth = ticketWidth > 0 ? ticketWidth - 40 : minButtonWidth; // padding
 
+    if (_showConfirmedPurchase) return const SizedBox.shrink();
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -316,13 +318,21 @@ class _SellPageState extends State<SellPage> {
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
+            foregroundColor: Colors.white, // Color del texto
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             minimumSize: Size(isConfirm ? maxButtonWidth : minButtonWidth, 48),
             maximumSize: Size(isConfirm ? maxButtonWidth : double.infinity, 48),
           ),
-          onPressed: () {
+          onPressed: () async {
             if (isConfirm) {
+              setState(() {
+                _showConfirmedPurchase = true;
+              });
+              await Future.delayed(const Duration(seconds: 2));
+              setState(() {
+                _showConfirmedPurchase = false;
+              });
               provider.discartTicket();
               setState(() {
                 _showConfirmPurchaseButton = false;
@@ -339,9 +349,8 @@ class _SellPageState extends State<SellPage> {
             child: Text(
               isConfirm ? confirmarText : cobrarText,
               key: ValueKey(isConfirm ? confirmarText : cobrarText),
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white), // Color blanco explícito
             ),
           ),
         ),
@@ -408,80 +417,91 @@ class _SellPageState extends State<SellPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 700;
 
-    return AnimatedContainer(
-      width: provider.ticketView ? (isMobile ? screenWidth : 400) : 0,
-      curve: Curves.fastOutSlowIn,
-      duration: const Duration(milliseconds: 300),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Card(
-          clipBehavior: Clip.antiAlias,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          
-          elevation: 0,
-          color: backgroundColor,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: borderColor.withValues(alpha: 0.7), width: 0.5),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: ListView(
-            key: const Key('ticket'),
-            shrinkWrap: false,
-            children: [
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('Ticket', textAlign: TextAlign.center, style: textDescrpitionStyle.copyWith(fontSize: 30, fontWeight: FontWeight.bold)),
+    return Stack(
+      children: [
+        AnimatedContainer(
+          width: provider.ticketView ? (isMobile ? screenWidth : 400) : 0,
+          curve: Curves.fastOutSlowIn,
+          duration: const Duration(milliseconds: 300),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Card(
+              clipBehavior: Clip.antiAlias,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              
+              elevation: 0,
+              color: backgroundColor,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: borderColor.withValues(alpha: 0.7), width: 0.5),
+                borderRadius: BorderRadius.circular(8.0),
               ),
-              dividerLinesWidget,
-              const SizedBox(height: 20),
-              Padding(
-                padding: padding,
-                child: Row(
-                  children: [
-                    const Opacity(opacity: 0.7, child: Text('Productos:', style: textDescrpitionStyle)),
-                    const Spacer(),
-                    // Suma total de cantidades de todos los productos
-                    Text(ticket.listProduct.fold<int>(0, (sum, item) => sum + item.quantity).toString(), style: textValuesStyle),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Lista de productos
-              ...ticket.listProduct.map((item) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(item.description, style: textValuesStyle)),
-                    Text('x${item.quantity}', style: textValuesStyle),
-                    const SizedBox(width: 8),
-                    Text((item.salePrice * item.quantity).toStringAsFixed(2), style: textValuesStyle),
-                  ],
-                ),
-              )),
-              const SizedBox(height: 12),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                color: Colors.green,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      Text('Total', style: textDescrpitionStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-                      const Spacer(),
-                      const SizedBox(width: 12),
-                      // Suma total considerando cantidades
-                      Text(ticket.listProduct.fold<double>(0, (sum, item) => sum + (item.salePrice * (item.quantity))).toStringAsFixed(2), style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
-                    ],
+              child: ListView(
+                key: const Key('ticket'),
+                shrinkWrap: false,
+                children: [
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Ticket', textAlign: TextAlign.center, style: textDescrpitionStyle.copyWith(fontSize: 30, fontWeight: FontWeight.bold)),
                   ),
-                ),
+                  dividerLinesWidget,
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: padding,
+                    child: Row(
+                      children: [
+                        const Opacity(opacity: 0.7, child: Text('Productos:', style: textDescrpitionStyle)),
+                        const Spacer(),
+                        // Suma total de cantidades de todos los productos
+                        Text(ticket.listProduct.fold<int>(0, (sum, item) => sum + item.quantity).toString(), style: textValuesStyle),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Lista de productos
+                  ...ticket.listProduct.map((item) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(item.description, style: textValuesStyle)),
+                        Text('x${item.quantity}', style: textValuesStyle),
+                        const SizedBox(width: 8),
+                        Text((item.salePrice * item.quantity).toStringAsFixed(2), style: textValuesStyle),
+                      ],
+                    ),
+                  )),
+                  const SizedBox(height: 12),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    color: Colors.green,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Text('Total', style: textDescrpitionStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                          const Spacer(),
+                          const SizedBox(width: 12),
+                          // Suma total considerando cantidades, ahora formateado
+                          Text(
+                            Publications.getFormatoPrecio(value: ticket.listProduct.fold<double>(0, (sum, item) => sum + (item.salePrice * (item.quantity)))),
+                            style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Aquí puedes agregar widgets para métodos de pago, descuentos, vuelto, etc.
+                ],
               ),
-              const SizedBox(height: 12),
-              // Aquí puedes agregar widgets para métodos de pago, descuentos, vuelto, etc.
-            ],
+            ),
           ),
         ),
-      ),
+        if (_showConfirmedPurchase)
+          Positioned.fill(
+            child: widgetConfirmedPurchase(context),
+          ),
+      ],
     );
   }
 
@@ -501,19 +521,20 @@ class _SellPageState extends State<SellPage> {
               const SizedBox(height: 12),
               const Text('¡Listo! Transacción exitosa', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300)),
               const SizedBox(height: 20),
-              Text('Total: \$${provider.getTicket.getTotalPrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+              Text('Total: ${Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () {
                   provider.setTicketView(false);
-                  // Aquí puedes agregar lógica para reiniciar el estado si es necesario
                 },
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
                 child: const Text('Volver a vender', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
-        ))
-      );
+        ),
+      ),
+    );
   }
 
   void discartTicketAlertDialg() {
@@ -683,6 +704,119 @@ class _SellPageState extends State<SellPage> {
           ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
           : null,
       onTap: onTap,
+    );
+  }
+
+  /// Muestra un modal con el listado de productos para agregar a seleccionados, con buscador.
+  void showModalBottomSheetSelectProducts(BuildContext context) {
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final products = catalogueProvider.products;
+    final TextEditingController searchController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (contextBottomSheet) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                String search = searchController.text.trim().toLowerCase();
+                final filteredProducts = search.isEmpty
+                  ? products
+                  : products.where((product) =>
+                      product.description.toLowerCase().contains(search) ||
+                      product.nameMark.toLowerCase().contains(search) ||
+                      product.code.toLowerCase().contains(search)
+                    ).toList();
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Catálogo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar producto, marca o código',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    if (filteredProducts.isEmpty)
+                      const Text('No hay productos disponibles'),
+                    if (filteredProducts.isNotEmpty)
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: filteredProducts.length,
+                          itemBuilder: (context, index) {
+                            final product = filteredProducts[index];
+                            return Card(
+                              elevation: 0,
+                              color: Colors.blueGrey.shade50.withValues(alpha: 0.7),
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              child: ListTile(
+                                title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(product.description),
+                                    Text(
+                                      product.nameMark.isNotEmpty ? product.nameMark : '',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.blueGrey.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                subtitle: Text(product.code),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      Publications.getFormatoPrecio(value: product.salePrice),
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Mostrar cantidad seleccionada si es mayor a 0
+                                    if (sellProvider.selectedProducts.any((p) => p.id == product.id && p.quantity > 0))
+                                      Chip(
+                                        label: Text(
+                                          sellProvider.selectedProducts.firstWhere((p) => p.id == product.id).quantity.toString(),
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                        ),
+                                        backgroundColor: Colors.blueGrey.shade400,
+                                        visualDensity: VisualDensity.compact,
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  sellProvider.addProduct(product.copyWith());
+                                  setState(() {}); // Actualiza la vista del modal al seleccionar
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

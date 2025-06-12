@@ -232,7 +232,9 @@ class _SellPageState extends State<SellPage> {
       titleSpacing: 0.0, 
       title: ComponentApp().buttonAppbar( 
         context:  buildContext,
-        onTap: (){},// controller.showSeach(context: buildContext), 
+        onTap: (){
+          // ... show modal bottom sheet
+        }, 
         text: 'Vender',
         iconLeading: Icons.search,
         colorBackground: Theme.of(buildContext).colorScheme.outline.withValues(alpha: 0.1),//Colors.blueGrey.shade300.withOpacity(0.4),
@@ -241,38 +243,42 @@ class _SellPageState extends State<SellPage> {
       centerTitle: false,
       actions: [
 
-        // text : mostrar el id de la cuenta seleccionada
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Consumer<SellProvider>(
-            builder: (context, provider, _) {
-              final String accountName = provider.selectedAccount.id.isNotEmpty ? provider.selectedAccount.id : 'Cuenta no seleccionada';
-              return Text(
-                accountName,
-                style: TextStyle(color: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.7)),
-              );
-            },
-          ),
-        ),
-
         // text : mostrar cantidad de productos en el catalogo
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Consumer<CatalogueProvider>(
             builder: (context, catalogueProvider, _) {
-              final int value = catalogueProvider.products.length;
-              return Text(
-                '$value productos',
-                style: TextStyle(color: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.7)),
+              final bool isLoading = catalogueProvider.products.isEmpty;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Theme.of(buildContext).colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  isLoading ? 'Cargando...' : '${catalogueProvider.products.length} productos',
+                  style: TextStyle(
+                    color: Theme.of(buildContext).textTheme.bodyLarge!.color?.withOpacity(0.7),
+                  ),
+                ),
               );
             },
           ),
         ),
-        // button : seleccionar cuentas administradas
-        IconButton(
-          icon: const Icon(Icons.account_circle_outlined),
-          tooltip: 'Seleccionar cuenta',
-          onPressed: showModalBottomSheetSelectAccount,
+        // button : seleccionar cuentas administradas , icono con texto del nombre de la cuenta seleccionada
+        TextButton(
+          onPressed: () => showModalBottomSheetSelectAccount(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+          provider.selectedAccount.name.isNotEmpty ? provider.selectedAccount.name : 'Seleccionar cuenta',
+          style: const TextStyle(color: Colors.blue),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.account_circle_rounded, color: Colors.blue),
+            ],
+          ),
         ),
         // button : salir de la cuenta si esque hay una cuenta seleccionada
         if (provider.selectedAccount.id.isNotEmpty) 
@@ -281,9 +287,9 @@ class _SellPageState extends State<SellPage> {
             label: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-              const Text('Salir de la cuenta', style: TextStyle(color: Colors.blue)),
+              const Text('Salir de la cuenta'),
               const SizedBox(width: 8),
-              const Icon(Icons.logout_rounded, color: Colors.blue),
+              const Icon(Icons.logout_rounded),
               ],
             ),
             onPressed: provider.removeSelectedAccount,

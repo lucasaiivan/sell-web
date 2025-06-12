@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 import '../domain/repositories/catalogue_repository.dart';
 
 class CatalogueRepositoryImpl implements CatalogueRepository {
@@ -7,14 +6,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   CatalogueRepositoryImpl({this.id});
 
   @override
-  Stream<QuerySnapshot> getProductsStream() {
-    final uid = id ?? fb_auth.FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
+  Stream<QuerySnapshot> getCatalogueStream() { 
+    if (id == null) {
       // Si no hay usuario autenticado ni userId inyectado, retorna un stream vacío
       return const Stream.empty();
     }
-    return FirebaseFirestore.instance
-        .collection('/ACCOUNTS/$uid/CATALOGUE')
-        .snapshots();
+    return FirebaseFirestore.instance.collection('/ACCOUNTS/$id/CATALOGUE').snapshots();
   }
 }

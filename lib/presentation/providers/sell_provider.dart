@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' as provider_package;
 import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/domain/entities/catalogue.dart'; 
+import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/domain/entities/user.dart'; 
 import 'package:sellweb/domain/usecases/sell_usecases.dart';
+import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 
 class SellProvider extends ChangeNotifier {
 
@@ -10,9 +13,10 @@ class SellProvider extends ChangeNotifier {
   final List<ProductCatalogue> _selectedProducts = [];
   final SellUseCases _sellUseCases = SellUseCases();
   bool _ticketView = false; // si mostramos vista de ticket o no
-
   List<ProductCatalogue> get selectedProducts => _selectedProducts;
-  bool get ticketView => _ticketView;
+  bool get ticketView => _ticketView; 
+  ProfileAccountModel selectedAccount = ProfileAccountModel();
+  
 
   /// Agrega un producto a la lista de productos.
   void addProduct(ProductCatalogue product, {bool replaceQuantity = false}) {
@@ -66,6 +70,29 @@ class SellProvider extends ChangeNotifier {
 
   // Simulación de ticket
   Ticket get getTicket => _sellUseCases.getTicket(_selectedProducts);
+
+  Future<void> selectAccount({required ProfileAccountModel account,required BuildContext context}) async {
+    selectedAccount = account.copyWith(); 
+    _selectedProducts.clear(); // Limpiar productos seleccionados al seleccionar cuenta
+    _ticketView = false; // Ocultar la vista de ticket
+    // Limpiar y recargar catálogo si se provee el contexto
+    try {
+      final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
+      catalogueProvider.initCatalogue(account.id);
+      catalogueProvider.initCatalogue(account.id);
+    } catch (e) {
+      // Manejo de errores si no se puede acceder al CatalogueProvider
+      print('Error al inicializar el catálogo: $e');
+    } 
+    notifyListeners();
+  }
+
+   /// Quita la cuenta seleccionada y notifica a los listeners.
+  void removeSelectedAccount() {
+    selectedAccount = ProfileAccountModel();
+    notifyListeners();
+  }
+  
 }
 
 class Ticket {

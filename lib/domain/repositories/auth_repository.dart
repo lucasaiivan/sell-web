@@ -1,7 +1,7 @@
 import '../entities/user.dart';
 
 abstract class AuthRepository {
-  Future<User?> signInWithGoogle();
+  Future<UserAuth?> signInWithGoogle();
   Future<void> signOut();
-  Stream<User?> get user;
+  Stream<UserAuth?> get user;
 }

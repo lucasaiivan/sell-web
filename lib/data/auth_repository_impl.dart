@@ -10,7 +10,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._firebaseAuth, this._googleSignIn);
 
   @override
-  Future<User?> signInWithGoogle() async {
+  Future<UserAuth?> signInWithGoogle() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
     final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -21,7 +21,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final userCredential = await _firebaseAuth.signInWithCredential(credential);
     final fbUser = userCredential.user;
     if (fbUser == null) return null;
-    return User(
+    return UserAuth(
       uid: fbUser.uid,
       displayName: fbUser.displayName,
       email: fbUser.email,
@@ -36,9 +36,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Stream<User?> get user => _firebaseAuth.authStateChanges().map((fbUser) {
+  Stream<UserAuth?> get user => _firebaseAuth.authStateChanges().map((fbUser) {
         if (fbUser == null) return null;
-        return User(
+        return UserAuth(
           uid: fbUser.uid,
           displayName: fbUser.displayName,
           email: fbUser.email,

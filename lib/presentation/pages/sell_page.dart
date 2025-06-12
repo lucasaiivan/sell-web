@@ -6,9 +6,12 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/widgets.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:sellweb/domain/entities/user.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
- 
+import '../providers/auth_provider.dart'; 
+import 'welcome_page.dart';
+
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
 
@@ -21,7 +24,7 @@ class _SellPageState extends State<SellPage> {
   String _barcodeBuffer = '';
   DateTime? _lastKey;
   final FocusNode _focusNode = FocusNode();
-  bool _showConfirmPurchaseButton = false;
+  bool _showConfirmPurchaseButton = false; 
 
   void _onKey(KeyEvent event) async {  
     // Detecta un código de barras válido por velocidad de tipeo y enter
@@ -80,21 +83,100 @@ class _SellPageState extends State<SellPage> {
     super.dispose();
   }
 
+  void showModalBottomSheetSelectAccount() {
+
+    // provider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final SellProvider sellProvider = Provider.of<SellProvider>(context, listen: false); 
+
+    // dialog 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (contextBottomSheet) {
+        final accounts = authProvider.accountsAssociateds;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    const Text('Seleccionar cuenta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              if (accounts.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No tienes cuentas asociadas'),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: accounts.length,
+                  itemBuilder: (_, index) {
+
+                    final account = accounts[index];
+
+                    return buttonListTileItemCuenta(
+                      perfilNegocio: account,
+                      isSelected: sellProvider.selectedAccount.id  == account.id,
+                      onTap: () {
+                         sellProvider.selectAccount(account: account, context: context);
+                         Navigator.of(context).pop();
+                      }, 
+                    );
+                  },
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+ 
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
 
     return Consumer2<SellProvider, CatalogueProvider>(
-      builder: (context, provider, catalogueProvider, _) {
+      builder: (_, sellProvider, catalogueProvider, _) {
+
+        if(sellProvider.selectedAccount.id == '') {
+          // Si no hay cuenta seleccionada, seleccionar la primera cuenta disponible
+          return WelcomePage(
+            onSelectAccount: (account) {
+              // Selecciona la cuenta y recarga el catálogo
+              sellProvider.selectAccount(account: account,context: context); 
+            },
+          );
+        }
         return Scaffold(
           appBar: appbar(
             buildContext: context,
-            provider: provider,
+            provider: sellProvider,
           ),
           drawer: Container(), // ... // implementar drawer
           body: LayoutBuilder(
             builder: (context, constraints) {
+
               return Row(
                 children: [
+                  
                   /// [KeyboardListener] se utiliza para detectar y responder a eventos del Escaner de codigo de barra
                   Flexible(
                     child: Stack(
@@ -103,7 +185,7 @@ class _SellPageState extends State<SellPage> {
                           focusNode: _focusNode,
                           autofocus: true,
                           onKeyEvent: _onKey,
-                          child: body(provider: provider),
+                          child: body(provider: sellProvider),
                         ),
                         // floatingActionButton
                         Positioned(
@@ -111,7 +193,7 @@ class _SellPageState extends State<SellPage> {
                           right: 16,
                           child: FloatingActionButton(
                             backgroundColor: Colors.amber,
-                            onPressed: () => showDialogQuickSale(provider: provider),
+                            onPressed: () => showDialogQuickSale(provider: sellProvider),
                             child: const Icon(Icons.flash_on_rounded,
                             color: Colors.white)).animate( delay: const Duration(milliseconds: 0),).fade(),
                         ),
@@ -119,7 +201,7 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   //  drawerTicket para mostrar el ticket de venta
-                  if (provider.ticketView)
+                  if (sellProvider.ticketView)
                     Stack(
                       children: [
                         drawerTicket(context),
@@ -127,7 +209,7 @@ class _SellPageState extends State<SellPage> {
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: floatingActionButtonTicket(provider: provider).animate(
+                          child: floatingActionButtonTicket(provider: sellProvider).animate(
                             delay: const Duration(milliseconds: 0),
                           ).fade(),
                         ),
@@ -146,9 +228,6 @@ class _SellPageState extends State<SellPage> {
 
   PreferredSizeWidget appbar({required BuildContext buildContext, required SellProvider provider}) { 
 
-    // obtener lista de productos seleccionados
-    final List<ProductCatalogue> list = provider.selectedProducts.reversed.toList();
-
     return AppBar( 
       titleSpacing: 0.0, 
       title: ComponentApp().buttonAppbar( 
@@ -161,12 +240,55 @@ class _SellPageState extends State<SellPage> {
         ),
       centerTitle: false,
       actions: [
-        list.isNotEmpty
-          ? TextButton.icon(
-              icon: const Icon(Icons.clear_rounded),
-              label: const Text('Descartar Ticket'),onPressed: discartTicketAlertDialg)
-          : Container(),//Container(key: homeController.floatingActionButtonSelectedCajaKey, child: cashRegisterNumberPopupMenuButton()),
-      ],  
+
+        // text : mostrar el id de la cuenta seleccionada
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Consumer<SellProvider>(
+            builder: (context, provider, _) {
+              final String accountName = provider.selectedAccount.id.isNotEmpty ? provider.selectedAccount.id : 'Cuenta no seleccionada';
+              return Text(
+                accountName,
+                style: TextStyle(color: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.7)),
+              );
+            },
+          ),
+        ),
+
+        // text : mostrar cantidad de productos en el catalogo
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Consumer<CatalogueProvider>(
+            builder: (context, catalogueProvider, _) {
+              final int value = catalogueProvider.products.length;
+              return Text(
+                '$value productos',
+                style: TextStyle(color: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.7)),
+              );
+            },
+          ),
+        ),
+        // button : seleccionar cuentas administradas
+        IconButton(
+          icon: const Icon(Icons.account_circle_outlined),
+          tooltip: 'Seleccionar cuenta',
+          onPressed: showModalBottomSheetSelectAccount,
+        ),
+        // button : salir de la cuenta si esque hay una cuenta seleccionada
+        if (provider.selectedAccount.id.isNotEmpty) 
+            TextButton.icon(
+            icon: const SizedBox.shrink(),
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              const Text('Salir de la cuenta', style: TextStyle(color: Colors.blue)),
+              const SizedBox(width: 8),
+              const Icon(Icons.logout_rounded, color: Colors.blue),
+              ],
+            ),
+            onPressed: provider.removeSelectedAccount,
+          ),
+      ],
     );
   } 
   Widget floatingActionButtonTicket({required SellProvider provider}) {
@@ -384,9 +506,8 @@ class _SellPageState extends State<SellPage> {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        ))
+      );
   }
 
   void discartTicketAlertDialg() {
@@ -530,6 +651,33 @@ class _SellPageState extends State<SellPage> {
         );
       },
     );  
+  }
+
+  /// Muestra una cuenta con un icono check si está seleccionada.
+  Widget buttonListTileItemCuenta({
+    required ProfileAccountModel perfilNegocio,
+    required bool isSelected,
+    required VoidCallback onTap, 
+  }) {
+    if (perfilNegocio.id == '') return Container();
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      leading: CircleAvatar(
+        backgroundColor: Colors.black26,
+        backgroundImage: (perfilNegocio.image.isNotEmpty && perfilNegocio.image.contains('https://'))
+            ? NetworkImage(perfilNegocio.image)
+            : null,
+        child: (perfilNegocio.image.isEmpty)
+            ? Text(perfilNegocio.name.isNotEmpty ? perfilNegocio.name[0] : '?',
+                style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))
+            : null,
+      ),
+      title: Text(perfilNegocio.name, style: const TextStyle(fontSize: 18, overflow: TextOverflow.ellipsis)),
+      trailing: isSelected
+          ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+          : null,
+      onTap: onTap,
+    );
   }
 }
 

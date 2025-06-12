@@ -4,7 +4,7 @@ import '../entities/user.dart';
 class SignInWithGoogleUseCase {
   final AuthRepository repository;
   SignInWithGoogleUseCase(this.repository);
-  Future<User?> call() => repository.signInWithGoogle();
+  Future<UserAuth?> call() => repository.signInWithGoogle();
 }
 
 class SignOutUseCase {
@@ -16,5 +16,5 @@ class SignOutUseCase {
 class GetUserStreamUseCase {
   final AuthRepository repository;
   GetUserStreamUseCase(this.repository);
-  Stream<User?> call() => repository.user;
+  Stream<UserAuth?> call() => repository.user;
 }

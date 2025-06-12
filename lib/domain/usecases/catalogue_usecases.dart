@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../repositories/catalogue_repository.dart';
 import '../entities/catalogue.dart';
 
-class GetProductsStreamUseCase {
+class GetCatalogueStreamUseCase {
   final CatalogueRepository repository;
-  GetProductsStreamUseCase(this.repository);
-  Stream<QuerySnapshot> call() => repository.getProductsStream();
+  GetCatalogueStreamUseCase(this.repository);
+  Stream<QuerySnapshot> call() => repository.getCatalogueStream();
 }
 
 class GetProductByCodeUseCase {

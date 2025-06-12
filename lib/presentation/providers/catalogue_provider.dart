@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -5,7 +7,7 @@ import 'package:flutter/material.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
 
 class CatalogueProvider extends ChangeNotifier {
-  final GetProductsStreamUseCase getProductsStreamUseCase;
+  final GetCatalogueStreamUseCase getProductsStreamUseCase;
   final GetProductByCodeUseCase getProductByCodeUseCase;
   final IsProductScannedUseCase isProductScannedUseCase;
 
@@ -24,17 +26,48 @@ class CatalogueProvider extends ChangeNotifier {
   String? _lastScannedCode;
   bool _showSplash = false;
   String? _scanError;
+  StreamSubscription<QuerySnapshot>? _catalogueSubscription;
+
+  void initCatalogue(String id) {
+    // Cancelar la suscripción anterior si existe
+    _catalogueSubscription?.cancel();
+    // Limpiar productos y notificar a la UI inmediatamente
+    _products = [];
+    notifyListeners();
+    // case use : Crear un nuevo caso de uso con el ID proporcionado y reiniciar la suscripción
+    final newUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: id));
+    _initCatalogueWithUseCase(newUseCase);
+  }
+
+  void _initCatalogueWithUseCase(GetCatalogueStreamUseCase useCase) {
+    _catalogueSubscription?.cancel();
+    _catalogueSubscription = useCase().listen((snapshot) {
+      _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _catalogueSubscription?.cancel();
+    super.dispose();
+  }
+
   bool get showSplash => _showSplash;
   set showSplash(bool value) {
     _showSplash = value;
     notifyListeners();
   }
-  ProductCatalogue? get lastScannedProduct => _lastScannedProduct;
-  String? get lastScannedCode => _lastScannedCode;
-  String? get scanError => _scanError;
+  ProductCatalogue? get lastScannedProduct => _lastScannedProduct; // Devuelve el último producto escaneado
+  String? get lastScannedCode => _lastScannedCode; // Devuelve el último código escaneado
+  String? get scanError => _scanError; // Devuelve el error de escaneo si existe
 
-  // Obtiene el stream de productos desde la base de datos y actualiza la lista interna.
+  // Modifica _initProducts para usar _accountId si está definido
   void _initProducts() {
+    _products = [];
+    _lastScannedProduct = null;
+    _lastScannedCode = null;
+    _scanError = null;
     getProductsStreamUseCase().listen((snapshot) {
       // Convierte los documentos del snapshot en objetos ProductCatalogue y actualiza la lista interna.
       _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
@@ -54,4 +87,6 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Devuelve el stream de productos para ser usado directamente en la UI si es necesario.
   Stream<QuerySnapshot> get productsStream => getProductsStreamUseCase();
+
+  // 
 }

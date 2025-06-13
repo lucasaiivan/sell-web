@@ -17,20 +17,20 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
+    
     Widget content;
     if (width < 600) {
       // Móvil: apilar verticalmente
       content = Column(
         children: [
-          Expanded(
-            flex: 3,
+          Flexible( 
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: OnboardingIntroductionApp(),
             ),
           ),
-          Expanded(
-            flex: 1,
+          Padding(
+            padding: const EdgeInsets.all(20.0),
             child: _LoginForm(authProvider: authProvider),
           ),
         ],
@@ -65,7 +65,10 @@ class LoginPage extends StatelessWidget {
           ),
           Expanded(
             flex: 1,
-            child: _LoginForm(authProvider: authProvider),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: _LoginForm(authProvider: authProvider),
+            ),
           ),
         ],
       );
@@ -77,8 +80,8 @@ class LoginPage extends StatelessWidget {
           content,
           // button : cambiar el brillo del tema
           Positioned(
-            top: 16,
-            right: 16,
+            top: 20,
+            right: 20,
             child: Consumer<ThemeDataAppProvider>(
               builder: (context, themeProvider, _) => Material(
                 color: Colors.transparent,
@@ -101,7 +104,7 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-/// Widget que muestra el formulario de login y controla el estado del checkbox
+/// Widget : que muestra el formulario de login y controla el estado del checkbox
 class _LoginForm extends StatefulWidget {
   final AuthProvider authProvider;
   const _LoginForm({required this.authProvider});
@@ -188,7 +191,17 @@ class _LoginFormState extends State<_LoginForm> {
                             await widget.authProvider.signInWithGoogle();
                           }
                         : null,
-                  )
+                  ),
+                  // ElevatedButton : Iniciar como invitado
+                  ComponentApp().button(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    context: context,
+                    colorButton: Colors.blueGrey,
+                    text: "Iniciar como invitado",
+                    onPressed: () async {
+                      // Iniciar sesión como invitado y navegar a la página de inicio 
+                    } ,
+                  ),
                 ],
               ),
             );
@@ -319,9 +332,8 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
         }
 
       });
-      }catch(e){
-        print(e);
-      }
+      // ignore: empty_catches
+      }catch(e){ }
     });
   }
 
@@ -469,18 +481,14 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
               // icon : un icono con animion
                 iconData != null
                   ? Container(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Icon(
-                    iconData,
-                    size: screenSize.height * 0.10,
-                    color: colorIcon,
-                    )
-                      .animate(
-                      key: Key(titulo),
-                      )
-                      .fadeIn(duration: const Duration(milliseconds: 500))
-                      .slideY(begin: -0.2, duration: const Duration(milliseconds: 500)),
-                  )
+                    padding: const EdgeInsets.all(20.0),
+                    margin: const EdgeInsets.all(20.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(iconData,size: screenSize.height * 0.07,color: colorIcon),
+                  ).animate(key: Key(titulo)).fadeIn(duration: const Duration(milliseconds: 500)).slideY(begin: -0.2, duration: const Duration(milliseconds: 500))
                   : Container(),
               Text(titulo,style: estiloTitulo,textAlign: TextAlign.center),
               const SizedBox(height: 12.0),

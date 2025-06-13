@@ -199,8 +199,8 @@ class _LoginFormState extends State<_LoginForm> {
                     colorButton: Colors.blueGrey,
                     text: "Iniciar como invitado",
                     onPressed: () async {
-                      // Iniciar sesión como invitado y navegar a la página de inicio 
-                    } ,
+                      await widget.authProvider.signInAsGuest();
+                    },
                   ),
                 ],
               ),

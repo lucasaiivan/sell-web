@@ -45,4 +45,18 @@ class AuthRepositoryImpl implements AuthRepository {
           photoUrl: fbUser.photoURL,
         );
       });
+
+  @override
+  Future<UserAuth?> signInAnonymously() async {
+    final userCredential = await _firebaseAuth.signInAnonymously();
+    final fbUser = userCredential.user;
+    if (fbUser == null) return null;
+    return UserAuth(
+      uid: fbUser.uid,
+      displayName: 'Invitado',
+      email: null,
+      isAnonymous: true,
+      photoUrl: fbUser.photoURL,
+    );
+  }
 }

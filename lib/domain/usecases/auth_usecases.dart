@@ -18,3 +18,10 @@ class GetUserStreamUseCase {
   GetUserStreamUseCase(this.repository);
   Stream<UserAuth?> call() => repository.user;
 }
+
+class SignInAnonymouslyUseCase {
+  final AuthRepository repository;
+  SignInAnonymouslyUseCase(this.repository);
+  /// Inicia sesión anónima en Firebase
+  Future<UserAuth?> call() => repository.signInAnonymously();
+}

@@ -27,6 +27,8 @@ class CatalogueProvider extends ChangeNotifier {
   bool _showSplash = false;
   String? _scanError;
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
+  bool _isLoading = true;
+  bool get isLoading => _isLoading;
 
   void initCatalogue(String id) {
     // Cancelar la suscripción anterior si existe
@@ -64,6 +66,8 @@ class CatalogueProvider extends ChangeNotifier {
 
   // Modifica _initProducts para usar _accountId si está definido
   void _initProducts() {
+    _isLoading = true;
+    notifyListeners();
     _products = [];
     _lastScannedProduct = null;
     _lastScannedCode = null;
@@ -71,6 +75,7 @@ class CatalogueProvider extends ChangeNotifier {
     getProductsStreamUseCase().listen((snapshot) {
       // Convierte los documentos del snapshot en objetos ProductCatalogue y actualiza la lista interna.
       _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      _isLoading = false;
       notifyListeners(); // Notifica a los listeners que hubo un cambio en la lista de productos.
     });
   }

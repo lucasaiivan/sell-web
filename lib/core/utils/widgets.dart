@@ -69,7 +69,7 @@ class ComponentApp extends StatelessWidget {
     return avatar;
   }
   // BUTTONS 
-  Widget buttonAppbar({ required BuildContext context,Function() ?onTap,required String text,Color ?colorBackground ,Color ?colorAccent,IconData ?iconLeading ,IconData ?iconTrailing,EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0)}){ 
+  Widget buttonAppbar({ required BuildContext context,Function() ?onTap,required String text,Color ?colorBackground ,Color ?colorAccent,IconData ?iconLeading ,IconData ?iconTrailing,EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0),bool textOpacity = false}) { 
     
     // values default
     colorBackground ??= Theme.of(context).brightness == Brightness.dark?Colors.white:Colors.black;
@@ -93,7 +93,7 @@ class ComponentApp extends StatelessWidget {
                 iconLeading==null?Container():Icon(iconLeading,color: colorAccent,size: 24),
                 iconLeading==null?Container():const SizedBox(width:8),
                 // text
-                Flexible(child: Text(text,style: TextStyle(color: colorAccent,fontSize: 16 ),overflow: TextOverflow.ellipsis)), 
+                Flexible(child: Opacity(opacity:textOpacity?0.5:1,child: Text(text,style: TextStyle(color: colorAccent,fontSize: 16 ),overflow: TextOverflow.ellipsis))), 
                 iconTrailing==null?Container():const SizedBox(width:8), 
                 iconTrailing==null?Container():Icon(iconTrailing,color: colorAccent,size: 24),
               ],
@@ -103,7 +103,7 @@ class ComponentApp extends StatelessWidget {
       ),
     );
   } 
-  Widget button( {bool defaultStyle = false,double elevation=0,double fontSize = 14,double width = double.infinity,bool disable = false, Widget? icon, String text = '',required dynamic onPressed,EdgeInsets padding =const EdgeInsets.symmetric(horizontal: 12, vertical: 12),Color? colorButton= Colors.blue,Color colorAccent = Colors.white , EdgeInsets margin =const EdgeInsets.symmetric(horizontal: 12, vertical: 12), required BuildContext context}) {
+  Widget button( {bool defaultStyle = false,double elevation=0,double fontSize = 14,double width = double.infinity,bool disable = false, Widget? icon, String text = '',required dynamic onPressed,EdgeInsets padding =const EdgeInsets.symmetric(horizontal: 12, vertical: 12),Color? colorButton= Colors.blue,Color colorAccent = Colors.white , EdgeInsets margin =const EdgeInsets.symmetric(horizontal: 12, vertical: 12), required BuildContext context, double? iconSize, Size? minimumSize}) {
      
     // button : personalizado
     return AnimatedSwitcher(
@@ -124,8 +124,11 @@ class ComponentApp extends StatelessWidget {
               padding: padding,
               backgroundColor: colorButton,
               textStyle: TextStyle(color: colorAccent, fontWeight: FontWeight.w700),
+              minimumSize: minimumSize,
             ),
-            icon: icon ?? Container(),
+            icon: icon != null && iconSize != null
+                ? IconTheme(data: IconThemeData(size: iconSize), child: icon)
+                : (icon ?? Container()),
             label: Text(
               text,
               style: TextStyle(color: colorAccent, fontSize: fontSize),

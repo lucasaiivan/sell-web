@@ -13,9 +13,9 @@ import 'domain/usecases/auth_usecases.dart';
 import 'domain/usecases/catalogue_usecases.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
+import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/sell_page.dart';
-import 'presentation/pages/welcome_page.dart';
 
 void main() async{
 
@@ -36,6 +36,9 @@ void main() async{
             getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl()),
           )
         ),
+        ChangeNotifierProvider(
+          create: (_) => ThemeDataAppProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -47,47 +50,62 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'SellWeb',
-      home: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
-          if (authProvider.user != null) {
+    return Consumer<ThemeDataAppProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'SellWeb',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            useMaterial3: true,
+            brightness: Brightness.light,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+            useMaterial3: true,
+            brightness: Brightness.dark,
+          ),
+          themeMode: themeProvider.themeMode,
+          home: Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              if (authProvider.user != null) {
 
-            // Mostrar WelcomePage solo si no se ha seleccionado una cuenta
-            // ... 
-            // ...
-            // ...
+                // Mostrar WelcomePage solo si no se ha seleccionado una cuenta
+                // ... 
+                // ...
+                // ...
 
-            // Proveedor de catálogo solo cuando el usuario está autenticado
-            return MultiProvider(
-              providers: [
-                ChangeNotifierProvider(
-                  create: (_) {
-                    final userId = authProvider.user!.uid;
-                    final getProductsStreamUseCase = GetCatalogueStreamUseCase(
-                      CatalogueRepositoryImpl(id: userId),
-                    );
-                    final getProductByCodeUseCase = GetProductByCodeUseCase();
-                    final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
-                    return CatalogueProvider(
-                      getProductsStreamUseCase: getProductsStreamUseCase,
-                      getProductByCodeUseCase: getProductByCodeUseCase,
-                      isProductScannedUseCase: isProductScannedUseCase,
-                    );
-                  },
-                ),
-                ChangeNotifierProvider(
-                  create: (_) => SellProvider(),
-                ),
-              ],
-              child: SellPage(),
-            );
-          } else {
-            return LoginPage(authProvider: authProvider);
-          }
-        },
-      ),
+                // Proveedor de catálogo solo cuando el usuario está autenticado
+                return MultiProvider(
+                  providers: [
+                    ChangeNotifierProvider(
+                      create: (_) {
+                        final userId = authProvider.user!.uid;
+                        final getProductsStreamUseCase = GetCatalogueStreamUseCase(
+                          CatalogueRepositoryImpl(id: userId),
+                        );
+                        final getProductByCodeUseCase = GetProductByCodeUseCase();
+                        final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
+                        return CatalogueProvider(
+                          getProductsStreamUseCase: getProductsStreamUseCase,
+                          getProductByCodeUseCase: getProductByCodeUseCase,
+                          isProductScannedUseCase: isProductScannedUseCase,
+                        );
+                      },
+                    ),
+                    ChangeNotifierProvider(
+                      create: (_) => SellProvider(),
+                    ),
+                  ],
+                  child: SellPage(),
+                );
+              } else {
+                return LoginPage(authProvider: authProvider);
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }

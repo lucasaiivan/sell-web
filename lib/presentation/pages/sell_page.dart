@@ -10,6 +10,7 @@ import 'package:sellweb/domain/entities/user.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart'; 
+import '../providers/theme_data_app_provider.dart';
 import 'welcome_page.dart';
 
 class SellPage extends StatefulWidget {
@@ -141,8 +142,20 @@ class _SellPageState extends State<SellPage> {
                       }, 
                     );
                   },
+                ), 
+              // Botón para salir de la cuenta si hay una seleccionada
+              if (sellProvider.selectedAccount.id.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.close),
+                    label: const Text('Salir de la cuenta'),
+                    onPressed:(){
+                      sellProvider.removeSelectedAccount();
+                      Navigator.of(context).pop();
+                    },
+                  ),
                 ),
-              const SizedBox(height: 12),
             ],
           ),
         );
@@ -155,8 +168,7 @@ class _SellPageState extends State<SellPage> {
   Widget build(BuildContext context) { 
 
     return Consumer2<SellProvider, CatalogueProvider>(
-      builder: (_, sellProvider, catalogueProvider, _) {
-
+      builder: (_, sellProvider, catalogueProvider, _) { 
         if(sellProvider.selectedAccount.id == '') {
           // Si no hay cuenta seleccionada, seleccionar la primera cuenta disponible
           return WelcomePage(
@@ -171,7 +183,7 @@ class _SellPageState extends State<SellPage> {
             buildContext: context,
             provider: sellProvider,
           ),
-          drawer: Container(), // ... // implementar drawer
+          drawer: drawer,
           body: LayoutBuilder(
             builder: (context, constraints) {
 
@@ -227,77 +239,96 @@ class _SellPageState extends State<SellPage> {
     );
   }
 
-  PreferredSizeWidget appbar({required BuildContext buildContext, required SellProvider provider}) { 
-
-    return AppBar( 
-      titleSpacing: 0.0, 
-      title: ComponentApp().buttonAppbar( 
-        context:  buildContext,
-        onTap: (){
-          showModalBottomSheetSelectProducts(buildContext);
-        }, 
-        text: 'Vender',
-        iconLeading: Icons.search,
-        colorBackground: Theme.of(buildContext).colorScheme.outline.withValues(alpha: 0.1),//Colors.blueGrey.shade300.withOpacity(0.4),
-        colorAccent: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.7),
-        ),
+  /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
+  PreferredSizeWidget appbar({required BuildContext buildContext, required SellProvider provider}) {
+    final catalogueProvider = Provider.of<CatalogueProvider>(buildContext);
+    final bool isLoading = catalogueProvider.isLoading;
+    final bool isEmpty = !isLoading && catalogueProvider.products.isEmpty;
+    String catalogueLenght = Publications.getFormatAmount( value: catalogueProvider.products.length, );
+    // Si no hay productos y ya cargó, ocultar el buttonAppbar
+    return AppBar(
+      titleSpacing: 0.0,
+      title: (!isEmpty)
+          ? ComponentApp().buttonAppbar(
+            textOpacity: true,
+              context: buildContext,
+              onTap: () {
+                showModalBottomSheetSelectProducts(buildContext);
+              },
+              text: isLoading
+                  ? 'Cargando catálogo...'
+                  : '${catalogueLenght} productos en catálogo',
+              iconLeading: Icons.search,
+              colorBackground: Theme.of(buildContext).colorScheme.outline.withValues(alpha: 0.1),
+              colorAccent: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.5),
+            )
+          : null,
       centerTitle: false,
       actions: [
-
-        // text : mostrar cantidad de productos en el catalogo
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Consumer<CatalogueProvider>(
-            builder: (context, catalogueProvider, _) {
-              final bool isLoading = catalogueProvider.products.isEmpty;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(buildContext).colorScheme.primary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  isLoading ? 'Cargando...' : '${catalogueProvider.products.length} productos',
-                  style: TextStyle(
-                    color: Theme.of(buildContext).textTheme.bodyLarge!.color?.withOpacity(0.7),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        // button : seleccionar cuentas administradas , icono con texto del nombre de la cuenta seleccionada
-        TextButton(
-          onPressed: () => showModalBottomSheetSelectAccount(),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-          provider.selectedAccount.name.isNotEmpty ? provider.selectedAccount.name : 'Seleccionar cuenta',
-          style: const TextStyle(color: Colors.blue),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.account_circle_rounded, color: Colors.blue),
-            ],
-          ),
-        ),
-        // button : salir de la cuenta si esque hay una cuenta seleccionada
-        if (provider.selectedAccount.id.isNotEmpty) 
-            TextButton.icon(
-            icon: const SizedBox.shrink(),
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              const Text('Salir de la cuenta'),
-              const SizedBox(width: 8),
-              const Icon(Icons.logout_rounded),
-              ],
-            ),
-            onPressed: provider.removeSelectedAccount,
+        if (provider.ticketView)
+          TextButton.icon(
+            icon: const Icon(Icons.close),
+            label: const Text('Descartar ticket'),
+            onPressed: discartTicketAlertDialg,
           ),
       ],
     );
-  } 
+  }
+  Widget get drawer{
+
+    // provider 
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [ 
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [ 
+                  // button : button personalizado que abre el modal de selección de cuenta administradas
+                  accoutsAssociatedsButton(
+                    context: context,
+                    onTap: showModalBottomSheetSelectAccount, 
+
+                  ),
+                  const Spacer(),
+                  // button : cambiar brillo del temae
+                  IconButton(
+                  icon: Icon(Icons.brightness_6_rounded),
+                  tooltip: 'Cambiar brillo',
+                  onPressed: () {
+                    Provider.of<ThemeDataAppProvider>(context, listen: false).toggleTheme();
+                  },
+                ),
+                ],
+              ),
+            ),
+            // listitle : perfil de negocio, nombre de la cuenta seleccionada y avatar
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.black26,
+                backgroundImage: (sellProvider.selectedAccount.image.isNotEmpty && sellProvider.selectedAccount.image.contains('https://'))
+                    ? NetworkImage(sellProvider.selectedAccount.image)
+                    : null,
+                child: (sellProvider.selectedAccount.image.isEmpty)
+                    ? Text(sellProvider.selectedAccount.name.isNotEmpty ? sellProvider.selectedAccount.name[0] : '?',
+                        style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))
+                    : null,
+              ),
+              title: Text(sellProvider.selectedAccount.name, style: const TextStyle(fontSize: 18)),
+              subtitle: Text(sellProvider.selectedAccount.province, style: const TextStyle(fontSize: 14)),
+              onTap: () => showModalBottomSheetSelectAccount(),
+            ),
+              
+          ],
+        ),
+      ),
+    );
+  }
   Widget floatingActionButtonTicket({required SellProvider provider}) {
     final bool isConfirm = _showConfirmPurchaseButton;
     final String cobrarText = 'Cobrar ${provider.getTicket.listProduct.isEmpty ? '' : Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}';
@@ -353,9 +384,9 @@ class _SellPageState extends State<SellPage> {
               style: const TextStyle(color: Colors.white), // Color blanco explícito
             ),
           ),
-        ),
-      ),
-    );
+          )
+        )
+      );
   }
 
   Widget body({required SellProvider provider}) {
@@ -713,6 +744,7 @@ class _SellPageState extends State<SellPage> {
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final products = catalogueProvider.products;
     final TextEditingController searchController = TextEditingController();
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -736,10 +768,20 @@ class _SellPageState extends State<SellPage> {
                       product.nameMark.toLowerCase().contains(search) ||
                       product.code.toLowerCase().contains(search)
                     ).toList();
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
+                return Column( 
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    const Text('Catálogo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Text('Catálogo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                         const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () => Navigator.of(context).pop(),
+                          splashRadius: 20,
+                        ), 
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: searchController,
@@ -763,7 +805,7 @@ class _SellPageState extends State<SellPage> {
                             final product = filteredProducts[index];
                             return Card(
                               elevation: 0,
-                              color: Colors.blueGrey.shade50.withValues(alpha: 0.7),
+                              color: Colors.white.withValues(alpha: 0.03),
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               child: ListTile(
                                 title: Column(
@@ -1062,4 +1104,72 @@ class _ProductoItemState extends State<ProductoItem> {
             ),
           );
   }
+}
+
+/// Botón personalizado que muestra hasta 2 cuentas asociadas y un icono por defecto, con animación y superposición.
+Widget accoutsAssociatedsButton({required BuildContext context, required VoidCallback onTap, double iconSize = 30}) {
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  final accounts = authProvider.accountsAssociateds;
+  // Tomar hasta 2 cuentas para mostrar
+  final visibleAccounts = accounts.take(2).toList();
+  final double avatarSize = iconSize - 3; // Avatares 3dp más chicos que el icono principal
+  return InkWell(
+    borderRadius: BorderRadius.circular(32),
+    onTap: onTap,
+    child: SizedBox(
+      width: iconSize + (visibleAccounts.length * (avatarSize * 0.85)) + 8,
+      height: iconSize + 8,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          // Tercer avatar: segunda cuenta (si existe)
+          if (visibleAccounts.length > 1)
+            Positioned(
+              left: iconSize * 0.8,
+              child: CircleAvatar(
+                radius: avatarSize / 1.8,
+                backgroundColor: Colors.grey.shade400,
+                backgroundImage: (visibleAccounts[1].image.isNotEmpty && visibleAccounts[1].image.contains('https://'))
+                    ? NetworkImage(visibleAccounts[1].image)
+                    : null,
+                child: (visibleAccounts[1].image.isEmpty)
+                    ? Text(
+                        visibleAccounts[1].name.isNotEmpty ? visibleAccounts[1].name[0] : '?',
+                        style: TextStyle(fontSize: avatarSize * 0.7, color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                      )
+                    : null,
+              ).animate().slideX(begin: 0.5, end: 0, duration: 400.ms),
+            ),
+          // Segundo avatar: primer cuenta (si existe)
+          if (visibleAccounts.isNotEmpty)
+            Positioned(
+              left: iconSize * 0.4,
+              child: CircleAvatar(
+                radius: avatarSize / 1.8,
+                backgroundColor: Colors.grey,
+                backgroundImage: (visibleAccounts[0].image.isNotEmpty && visibleAccounts[0].image.contains('https://'))
+                    ? NetworkImage(visibleAccounts[0].image)
+                    : null,
+                child: (visibleAccounts[0].image.isEmpty)
+                    ? Text(
+                        visibleAccounts[0].name.isNotEmpty ? visibleAccounts[0].name[0] : '?',
+                        style: TextStyle(fontSize: avatarSize * 0.7, color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                      )
+                    : null,
+              ).animate().slideX(begin: 0.3, end: 0, duration: 350.ms),
+            ),
+          
+          // Primer avatar: icono por defecto
+          Positioned(
+            left: 0,
+            child: CircleAvatar(
+              radius: iconSize / 2,
+              backgroundColor: Colors.blueGrey.shade100,
+              child: Icon(Icons.autorenew_rounded, color: Colors.blueGrey, size: iconSize * 0.95),
+            ).animate().fade(duration: 300.ms),
+          ),
+        ],
+      ),
+    ),
+  );
 }

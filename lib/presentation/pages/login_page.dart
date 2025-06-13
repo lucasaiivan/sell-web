@@ -4,9 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_data_app_provider.dart';
 
 class LoginPage extends StatelessWidget {
   final AuthProvider authProvider;
@@ -15,65 +17,87 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
-    // Definir breakpoints
+    Widget content;
     if (width < 600) {
       // Móvil: apilar verticalmente
-      return Scaffold(
-        body: Column(
-          children: [
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: OnboardingIntroductionApp(),
-              ),
+      content = Column(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: OnboardingIntroductionApp(),
             ),
-            Expanded(
-              flex: 1,
-              child: _LoginForm(authProvider: authProvider),
-            ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 1,
+            child: _LoginForm(authProvider: authProvider),
+          ),
+        ],
       );
     } else if (width < 1024) {
       // Tablet: proporción 2/3 y 1/3
-      return Scaffold(
-        body: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: OnboardingIntroductionApp(),
-              ),
+      content = Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: OnboardingIntroductionApp(),
             ),
-            Expanded(
-              flex: 1,
-              child: _LoginForm(authProvider: authProvider),
-            ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 1,
+            child: _LoginForm(authProvider: authProvider),
+          ),
+        ],
       );
     } else {
       // Desktop: proporción 3/4 y 1/4
-      return Scaffold(
-        body: Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: OnboardingIntroductionApp(),
-              ),
+      content = Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: OnboardingIntroductionApp(),
             ),
-            Expanded(
-              flex: 1,
-              child: _LoginForm(authProvider: authProvider),
-            ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 1,
+            child: _LoginForm(authProvider: authProvider),
+          ),
+        ],
       );
     }
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          content,
+          // button : cambiar el brillo del tema
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Consumer<ThemeDataAppProvider>(
+              builder: (context, themeProvider, _) => Material(
+                color: Colors.transparent,
+                child: IconButton(
+                  icon: Icon(
+                    themeProvider.themeMode == ThemeMode.dark
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  tooltip: 'Cambiar brillo',
+                  onPressed: () => themeProvider.toggleTheme(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -86,11 +110,14 @@ class _LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<_LoginForm> {
+
   bool _acceptPolicy = false;
+
   @override
   Widget build(BuildContext context) {
+    
     final bool darkMode = Theme.of(context).brightness == Brightness.dark;
-    TextStyle defaultStyle = TextStyle(color: darkMode ? Colors.white : Colors.black);
+    TextStyle defaultStyle = TextStyle(color: darkMode ? Colors.white : Colors.black,fontSize: 12);
     TextStyle linkStyle = const TextStyle(color: Colors.blue);
     RichText text = RichText(
       textAlign: TextAlign.center,
@@ -153,6 +180,7 @@ class _LoginFormState extends State<_LoginForm> {
                   ), 
                   // ElevatedButton : Iniciar sesión con Google
                   ComponentApp().button(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),  
                     context: context,
                     text: "Iniciar sesión con Google", 
                     onPressed: _acceptPolicy
@@ -405,6 +433,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
             //  touch
           ],
         ),
+        
       ],
     );
   }

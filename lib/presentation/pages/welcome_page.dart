@@ -46,7 +46,7 @@ class WelcomePage extends StatelessWidget {
               child: Material(
               elevation:0,
               borderRadius: BorderRadius.circular(12),
-                color: Colors.blueGrey.shade50.withValues(alpha: 0.7),
+                color: Colors.white.withValues(alpha: 0.1),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () => onSelectAccount(account),
@@ -55,8 +55,7 @@ class WelcomePage extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.blue.shade100,
+                  CircleAvatar( 
                     child: Text(account.name.isNotEmpty ? account.name[0] : '?'),
                   ),
                   const SizedBox(width: 16),
@@ -65,7 +64,7 @@ class WelcomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(account.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text(account.country, style: const TextStyle(color: Colors.grey)),
+                      Opacity(opacity: 0.5,child: Text(account.country)),
                     ],
                     ),
                   ),
@@ -75,6 +74,35 @@ class WelcomePage extends StatelessWidget {
               ),
               ),
             )),
+
+            // Botón para cerrar sesión del usuario
+            if (authProvider.user?.email != null)
+              const SizedBox(height:50),
+              TextButton.icon(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirmar'),
+                    content: const Text('¿Seguro que deseas cerrar sesión?'),
+                    actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('Cerrar sesión'),
+                    ),
+                    ],
+                  ),
+                  );
+                  if (confirm == true) {
+                  await authProvider.signOut();
+                  }
+                }, 
+                icon: const Icon(Icons.logout),
+                label: const Text('Cerrar sesión'),)
         ],
         ),
       ),

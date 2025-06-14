@@ -51,5 +51,5 @@ class AuthProvider extends ChangeNotifier {
     _accountsAssociateds = [];
     notifyListeners();
   }
- 
+  // El método getAccountsWithDemo ahora está en GetUserAccountsUseCase
 }

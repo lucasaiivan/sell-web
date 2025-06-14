@@ -13,8 +13,12 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     
+    // providers
     final authProvider = Provider.of<AuthProvider>(context);
-    final accounts = authProvider.accountsAssociateds;
+    final accounts = authProvider.getUserAccountsUseCase.getAccountsWithDemo(
+      authProvider.accountsAssociateds,
+      isAnonymous: authProvider.user?.isAnonymous == true,
+    );
 
     return Scaffold(
       body: Stack(
@@ -28,29 +32,27 @@ class WelcomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                  const Icon(Icons.storefront, size: 80, color: Colors.blueGrey),
-                const SizedBox(height: 24),
-                const Text(
-                '¡Bienvenido!',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
+                const Icon(Icons.storefront, size: 80, color: Colors.blueGrey),
                 const SizedBox(height: 12),
-                  if (accounts.isNotEmpty)
+                const Text('¡Bienvenido!',style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                const SizedBox(height:50),
+                if (accounts.isNotEmpty)
                   const Text(
                     'Selecciona una cuenta para continuar',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
-                  if (accounts.isEmpty)
+                const SizedBox(height: 24),
+                // view notification : si no hay cuentas disponibles, muestra un mensaje informativo
+                if (accounts.isEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                    color: Colors.blueGrey.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blueGrey, width: 1),
-                    ),
+                      color: Colors.blueGrey.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blueGrey, width: 1),
+                      ),
                     child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -75,35 +77,40 @@ class WelcomePage extends StatelessWidget {
                 ...accounts.map((account) => Container(
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     constraints: const BoxConstraints(minWidth: 220, maxWidth: 320),
-                    child: Material(
-                    elevation:0,
-                    borderRadius: BorderRadius.circular(12),
+                    decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.1),
-                    child: InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => onSelectAccount(account),
-                      child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                        CircleAvatar( 
-                          child: Text(account.name.isNotEmpty ? account.name[0] : '?'),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(account.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            Opacity(opacity: 0.5,child: Text(account.country)),
-                          ],
+                      border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4), width:1),
+                    ),
+                    child: Material(
+                      elevation: 0,
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => onSelectAccount(account),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                child: Text(account.name.isNotEmpty ? account.name[0] : '?'),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(account.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    Opacity(opacity: 0.5, child: Text(account.country)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        ],
                       ),
-                      ),
-                    ),
                     ),
                   )),
                 const SizedBox(height: 30),

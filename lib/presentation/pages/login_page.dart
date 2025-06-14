@@ -183,9 +183,9 @@ class _LoginFormState extends State<_LoginForm> {
                   ), 
                   // ElevatedButton : Iniciar sesión con Google
                   ComponentApp().button(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),  
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),   
                     context: context,
-                    text: "Iniciar sesión con Google", 
+                    text: "INICIAR SESIÓN CON GOOGLE", 
                     onPressed: _acceptPolicy
                         ? () async {
                             await widget.authProvider.signInWithGoogle();
@@ -197,7 +197,7 @@ class _LoginFormState extends State<_LoginForm> {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     context: context,
                     colorButton: Colors.blueGrey,
-                    text: "Iniciar como invitado",
+                    text: "ENTRAR COMO INVITADO",
                     onPressed: () async {
                       await widget.authProvider.signInAsGuest();
                     },

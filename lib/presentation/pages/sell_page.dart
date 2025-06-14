@@ -102,7 +102,11 @@ class _SellPageState extends State<SellPage> {
         ),
       ),
       builder: (contextBottomSheet) {
-        final accounts = authProvider.accountsAssociateds;
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final accounts = authProvider.getUserAccountsUseCase.getAccountsWithDemo(
+          authProvider.accountsAssociateds,
+          isAnonymous: authProvider.user?.isAnonymous == true,
+        );
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -174,9 +178,22 @@ class _SellPageState extends State<SellPage> {
           return WelcomePage(
             onSelectAccount: (account) {
               // Selecciona la cuenta y recarga el catálogo
-              sellProvider.selectAccount(account: account,context: context); 
+              sellProvider.selectAccount(account: account,context: context);
+              // Si es demo, cargar productos demo
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+              if (account.id == 'demo' && authProvider.user?.isAnonymous == true) {
+                final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
+                catalogueProvider.loadDemoProducts(demoProducts);
+              }
             },
           );
+        }
+        // Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (sellProvider.selectedAccount.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
+          final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
+          catalogueProvider.loadDemoProducts(demoProducts);
         }
         return Scaffold(
           appBar: appbar(

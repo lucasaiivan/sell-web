@@ -93,5 +93,10 @@ class CatalogueProvider extends ChangeNotifier {
   /// Devuelve el stream de productos para ser usado directamente en la UI si es necesario.
   Stream<QuerySnapshot> get productsStream => getProductsStreamUseCase();
 
-  // 
+  /// Carga productos demo si la cuenta seleccionada es demo.
+  void loadDemoProducts(List<ProductCatalogue> demoProducts) {
+    _isLoading = false;
+    _products = demoProducts;
+    notifyListeners();
+  }
 }

@@ -1,5 +1,7 @@
 import '../entities/user.dart';
 import '../repositories/account_repository.dart';
+import '../entities/catalogue.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GetUserAccountsUseCase {
   final AccountRepository repository;
@@ -35,5 +37,44 @@ class GetUserAccountsUseCase {
     final profileAccount = await repository.getAccount(idAccount);
     if (profileAccount == null) throw Exception('Cuenta no encontrada'); 
     return profileAccount;
+  }
+
+  /// Devuelve la lista de cuentas asociadas, agregando una cuenta demo si el usuario es anónimo.
+  List<ProfileAccountModel> getAccountsWithDemo(List<ProfileAccountModel> accounts, {bool isAnonymous = false}) {
+    final List<ProfileAccountModel> result = List.from(accounts);
+    if (isAnonymous) {
+      result.add(
+        ProfileAccountModel(
+          id: 'demo',
+          name: 'Negocio de Prueba',
+          country: 'DemoLand',
+          province: 'DemoProvincia',
+          town: 'DemoCiudad',
+          image: '',
+          currencySign: '24',
+        ),
+      );
+    }
+    return result;
+  }
+
+  /// Devuelve una lista de productos de prueba para la cuenta demo.
+  List<ProductCatalogue> getDemoProducts({int count = 30}) {
+    return List.generate(count, (i) => ProductCatalogue(
+      id: 'demo_product_${i + 1}',
+      nameMark: 'Marca Demo',
+      image: '',
+      description: 'Producto de prueba #${i + 1}',
+      code: 'DEMO${(i + 1).toString().padLeft(3, '0')}',
+      salePrice: 10.0 + i,
+      quantityStock: 100 - i,
+      stock: true,
+      alertStock: 10,
+      currencySign: '24',
+      creation: Timestamp.now(),
+      upgrade: Timestamp.now(),
+      documentCreation: Timestamp.now(),
+      documentUpgrade: Timestamp.now(),
+    ));
   }
 }

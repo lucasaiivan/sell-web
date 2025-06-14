@@ -1,7 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
+import 'package:flutter/material.dart'; 
 
 class ComponentApp extends StatelessWidget {
   const ComponentApp({super.key});
@@ -162,88 +160,59 @@ class ComponentApp extends StatelessWidget {
       ),
     );
   }
-
-  
-
- 
-
   Widget buttonRoundAppBar({required void Function() onPressed,required BuildContext context,Widget ?child,required IconData icon,required EdgeInsets edgeInsets})  => Material(color: Colors.transparent,child: Center( child: Padding(padding: const EdgeInsets.all(8.0),child: Ink(decoration: ShapeDecoration(color: Brightness.dark==Theme.of(context).brightness?Colors.black:Colors.white,shape: const CircleBorder()), child: child==null?IconButton(icon: Icon(icon),color:Brightness.dark==Theme.of(context).brightness?Colors.white:Colors.black,onPressed: onPressed):child))));
 
+  /// FloatingActionButton personalizado para 3 variantes: icono, texto o ambos.
+  /// Usa FloatingActionButton.extended para texto o icono+texto, y FloatingActionButton para solo icono.
+  Widget floatingActionButtonApp({
+    String? text,
+    IconData? icon,
+    required VoidCallback onTap,
+    Color? buttonColor,
+    Color? textColor,
+    double? size, // tamaño del botón
+    bool widthInfinity = false,
+  }) {
+    final bool hasIcon = icon != null;
+    final bool hasText = text != null && text.isNotEmpty;
+    final double buttonSize = size ?? 56.0;
+    final Color effectiveButtonColor = buttonColor ?? Colors.blue;
+    final Color effectiveTextColor = textColor ?? Colors.white;
+
+    if (hasText) {
+      // FloatingActionButton.extended para texto o icono+texto
+      return SizedBox(
+        width: widthInfinity ? double.infinity : null,
+        height: buttonSize,
+        child: FloatingActionButton.extended(
+          onPressed: onTap,
+          backgroundColor: effectiveButtonColor,
+          foregroundColor: effectiveTextColor,
+          icon: hasIcon ? Icon(icon, size: buttonSize * 0.45) : null,
+          label: Text(
+            text,
+            style: TextStyle(fontSize: buttonSize * 0.28, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    } else if (hasIcon) {
+      // Solo icono
+      return SizedBox(
+        width: buttonSize,
+        height: buttonSize,
+        child: FloatingActionButton(
+          onPressed: onTap,
+          backgroundColor: effectiveButtonColor,
+          foregroundColor: effectiveTextColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(buttonSize * 0.5)),
+          child: Icon(icon, size: buttonSize * 0.5),
+        ),
+      );
+    } else {
+      return const SizedBox();
+    }
+  }
 
   
 }
 
-// AppMoneyInputFormatter : Formateador de texto para campos de dinero
-// Este formateador se encarga de formatear el texto de un campo de texto para que se vea como un monto de dinero
-class AppMoneyInputFormatter extends TextInputFormatter {
-
-  final String symbol; 
-  AppMoneyInputFormatter({this.symbol = ''});
-
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue,TextEditingValue newValue) { 
-    
-    // Eliminar cualquier cosa que no sea un número o una coma
-    var newText = newValue.text.replaceAll(RegExp(r'[^0-9,]'), '');
-    // elimina el 0 si es que esta al principioque existe de la primera posición
-    if (newText.length > 1 && newText[0] == '0') {
-      newText = newText.substring(1);
-    }
-
-    // Separar la parte entera y la parte decimal
-    var parts = newText.split(',');
-    var integerPart = parts[0];
-    var decimalPart = parts.length > 1 ? parts[1] : '';
-
-    // Limitar a 2 decimales
-    if (decimalPart.length > 2) {
-      decimalPart = decimalPart.substring(0, 2);
-    }
-
-    // Formatear la parte entera con puntos de miles
-    var buffer = StringBuffer();
-    for (var i = 0; i < integerPart.length; i++) {
-      if (i > 0 && (integerPart.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-      buffer.write(integerPart[i]);
-    }
-
-    // Construir el texto formateado
-    var formattedText = buffer.toString();
-    if (newText.contains(',')) {
-      formattedText += ',$decimalPart';
-    }
-
-    // Añadir el signo de dólar al principio
-    formattedText = '$symbol$formattedText';
-
-    // Mantener la posición del cursor
-    var selectionIndex = formattedText.length;
-    return TextEditingValue(
-      text: formattedText,
-      selection: TextSelection.collapsed(offset: selectionIndex),
-    );
-  }
-}
-//  AppMoneyTextEditingController : Controlador de texto para campos de dinero
-// Este controlador se encarga de manejar el valor de un campo de texto para que se vea como un monto de dinero
-class AppMoneyTextEditingController extends TextEditingController {
-  AppMoneyTextEditingController({String? value}) : super(text: value);
-
-  // Método para obtener el valor como double
-  double get doubleValue {
-    String textWithoutCommas = text.replaceAll('.', '').replaceAll(',', '.').replaceAll('\$','');
-    return double.tryParse(textWithoutCommas) ?? 0.0;
-  }
-
-  // Método para obtener el valor formateado como string
-  String get formattedValue {
-    return text;
-  }
-  // actualizar el valor del controlador
-  void updateValue(double value) {
-    // actualiza el nuevo valor teniendo en cuenta si tiene o no decimales
-    text = Publications.getFormatoPrecio(value: value);
-  }
-}

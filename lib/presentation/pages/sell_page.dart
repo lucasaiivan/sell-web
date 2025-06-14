@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart'; 
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/utils/widgets.dart';
+import 'package:sellweb/core/widgets/widgets.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import '../providers/sell_provider.dart';
@@ -188,7 +188,7 @@ class _SellPageState extends State<SellPage> {
             },
           );
         }
-        // Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo
+        // account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         if (sellProvider.selectedAccount.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
           final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
@@ -219,11 +219,18 @@ class _SellPageState extends State<SellPage> {
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: FloatingActionButton(
-                            backgroundColor: Colors.amber,
-                            onPressed: () => showDialogQuickSale(provider: sellProvider),
-                            child: const Icon(Icons.flash_on_rounded,
-                            color: Colors.white)).animate( delay: const Duration(milliseconds: 0),).fade(),
+                          child: Row(
+                            children: [
+                              // floatingActionButton : botón para agregar productos sin registrar al ticket
+                              FloatingActionButton(
+                                backgroundColor: Colors.amber,
+                                onPressed: () => showDialogQuickSale(provider: sellProvider),
+                                child: const Icon(Icons.flash_on_rounded,
+                                color: Colors.white)).animate( delay: const Duration(milliseconds: 0),).fade(),
+                              // floatingActionButton : para mostrar el ticket de venta
+                              
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -388,7 +395,10 @@ class _SellPageState extends State<SellPage> {
 
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
   Widget body({required SellProvider provider}) {
+
+    // widgetss
     Widget itemDefault = Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
+    
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount;

@@ -24,8 +24,7 @@ class _SellPageState extends State<SellPage> {
 
   String _barcodeBuffer = '';
   DateTime? _lastKey;
-  final FocusNode _focusNode = FocusNode();
-  bool _showConfirmPurchaseButton = false; 
+  final FocusNode _focusNode = FocusNode(); 
   bool _showConfirmedPurchase = false;
 
   void _onKey(KeyEvent event) async {  
@@ -88,7 +87,6 @@ class _SellPageState extends State<SellPage> {
   void showModalBottomSheetSelectAccount() {
 
     // provider
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final SellProvider sellProvider = Provider.of<SellProvider>(context, listen: false); 
 
     // dialog 
@@ -173,8 +171,9 @@ class _SellPageState extends State<SellPage> {
 
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, _) { 
-        if(sellProvider.selectedAccount.id == '') {
-          // Si no hay cuenta seleccionada, seleccionar la primera cuenta disponible
+
+        // Si no hay cuenta seleccionada, mostrar la página de bienvenida
+        if(sellProvider.selectedAccount.id == '') { 
           return WelcomePage(
             onSelectAccount: (account) {
               // Selecciona la cuenta y recarga el catálogo
@@ -205,12 +204,11 @@ class _SellPageState extends State<SellPage> {
             builder: (context, constraints) {
 
               return Row(
-                children: [
-                  
-                  /// [KeyboardListener] se utiliza para detectar y responder a eventos del Escaner de codigo de barra
+                children: [ 
                   Flexible(
                     child: Stack(
                       children: [
+                        /// [KeyboardListener] se utiliza para detectar y responder a eventos del Escaner de codigo de barra
                         KeyboardListener(
                           focusNode: _focusNode,
                           autofocus: true,
@@ -239,9 +237,7 @@ class _SellPageState extends State<SellPage> {
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: floatingActionButtonTicket(provider: sellProvider).animate(
-                            delay: const Duration(milliseconds: 0),
-                          ).fade(),
+                          child: floatingActionButtonTicket(provider: sellProvider).animate(delay: const Duration(milliseconds: 0)).fade(),
                         ),
                       ],
                     ),
@@ -274,10 +270,10 @@ class _SellPageState extends State<SellPage> {
               },
               text: isLoading
                   ? 'Cargando catálogo...'
-                  : '${catalogueLenght} productos en catálogo',
+                  : '$catalogueLenght productos en catálogo',
               iconLeading: Icons.search,
               colorBackground: Theme.of(buildContext).colorScheme.outline.withValues(alpha: 0.1),
-              colorAccent: Theme.of(buildContext).textTheme.bodyLarge!.color?.withValues(alpha: 0.5),
+              colorAccent: Theme.of(buildContext).textTheme.bodyLarge!.color ,
             )
           : null,
       centerTitle: false,
@@ -346,9 +342,7 @@ class _SellPageState extends State<SellPage> {
       ),
     );
   }
-  Widget floatingActionButtonTicket({required SellProvider provider}) {
-    final bool isConfirm = _showConfirmPurchaseButton;
-    final String cobrarText = 'Cobrar ${provider.getTicket.listProduct.isEmpty ? '' : Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}';
+  Widget floatingActionButtonTicket({required SellProvider provider}) { 
     final String confirmarText = 'Confirmar venta';
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 700;
@@ -357,70 +351,69 @@ class _SellPageState extends State<SellPage> {
     final double maxButtonWidth = ticketWidth > 0 ? ticketWidth - 40 : minButtonWidth; // padding
 
     if (_showConfirmedPurchase) return const SizedBox.shrink();
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      alignment: Alignment.centerLeft,
-      child: SizedBox(
-        width: isConfirm ? maxButtonWidth : null,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white, // Color del texto
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            minimumSize: Size(isConfirm ? maxButtonWidth : minButtonWidth, 48),
-            maximumSize: Size(isConfirm ? maxButtonWidth : double.infinity, 48),
+    return SizedBox(
+      width: maxButtonWidth,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white, // Color del texto
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          minimumSize: Size( maxButtonWidth , 48),
+          maximumSize: Size(maxButtonWidth, 48),
+        ),
+        onPressed: () async {
+          setState(() {
+              _showConfirmedPurchase = true;
+            });
+            await Future.delayed(const Duration(seconds: 2));
+            setState(() {
+              _showConfirmedPurchase = false;
+            });
+            provider.discartTicket(); 
+        },
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+          child: Text(
+            confirmarText ,
+            key: ValueKey(confirmarText),
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white), // Color blanco explícito
           ),
-          onPressed: () async {
-            if (isConfirm) {
-              setState(() {
-                _showConfirmedPurchase = true;
-              });
-              await Future.delayed(const Duration(seconds: 2));
-              setState(() {
-                _showConfirmedPurchase = false;
-              });
-              provider.discartTicket();
-              setState(() {
-                _showConfirmPurchaseButton = false;
-              });
-            } else {
-              setState(() {
-                _showConfirmPurchaseButton = true;
-              });
-            }
-          },
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-            child: Text(
-              isConfirm ? confirmarText : cobrarText,
-              key: ValueKey(isConfirm ? confirmarText : cobrarText),
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white), // Color blanco explícito
-            ),
-          ),
-          )
+        ),
         )
       );
   }
 
+  /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
   Widget body({required SellProvider provider}) {
+    Widget itemDefault = Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Ajusta el número de columnas según el ancho de pantalla para una experiencia uniforme
         int crossAxisCount;
-        if (constraints.maxWidth < 600) {
-          crossAxisCount = 3; // Móvil, ítems grandes
-        } else if (constraints.maxWidth < 800) {
+        if (constraints.maxWidth < 600) { // Ancho mínimo para móviles
+          crossAxisCount = 3;
+        } else if (constraints.maxWidth < 800) { // Ancho para tablets
           crossAxisCount = 4;
-        } else if (constraints.maxWidth < 1000) {
+        } else if (constraints.maxWidth < 1000) { // Ancho para pantallas medianas
           crossAxisCount = 5;
         } else {
-          crossAxisCount = 6;
+          crossAxisCount = 6; // Ancho para pantallas grandes
         }
         final List<ProductCatalogue> list = provider.selectedProducts.reversed.toList();
+        // Calcular cuántas filas caben en la vista
+        final double itemHeight = (constraints.maxWidth / crossAxisCount) * 1.1; // Ajusta el factor según el aspecto de los ítems
+        final int rowCount = (constraints.maxHeight / itemHeight).ceil();
+        final int minItemCount = rowCount * crossAxisCount;
+        int totalItems = list.length;
+        int remainder = totalItems % crossAxisCount;
+        int fillCount = remainder == 0 ? 0 : crossAxisCount - remainder;
+        int itemCount = totalItems + fillCount;
+        // Si la cantidad de ítems no llena la vista, agregar más itemDefault
+        if (itemCount < minItemCount) {
+          itemCount = minItemCount;
+        }
         return GridView.builder(
           padding: const EdgeInsets.all(12),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -428,12 +421,12 @@ class _SellPageState extends State<SellPage> {
             crossAxisSpacing: 1.0,
             mainAxisSpacing: 1.0,
           ),
-          itemCount: list.length + 17,
+          itemCount: itemCount,
           itemBuilder: (context, index) {
             if (index < list.length) {
               return ProductoItem(producto: list[index]);
             } else {
-              return Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.1));
+              return itemDefault;
             }
           },
         );
@@ -545,10 +538,7 @@ class _SellPageState extends State<SellPage> {
             ),
           ),
         ),
-        if (_showConfirmedPurchase)
-          Positioned.fill(
-            child: widgetConfirmedPurchase(context),
-          ),
+        if (_showConfirmedPurchase) Positioned.fill(child: widgetConfirmedPurchase(context)),
       ],
     );
   }

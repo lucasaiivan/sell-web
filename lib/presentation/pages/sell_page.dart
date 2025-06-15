@@ -1,3 +1,4 @@
+import 'dart:html' as html;
 import 'package:cached_network_image/cached_network_image.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -72,6 +73,8 @@ class _SellPageState extends State<SellPage> {
    @override
   void initState() {
     super.initState();
+    // Cambia el título de la pestaña al iniciar la página principal
+    html.document.title = 'Punto de venta';
     // sirve para que el teclado se enfoque automáticamente al iniciar la página 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
@@ -170,7 +173,7 @@ class _SellPageState extends State<SellPage> {
   Widget build(BuildContext context) { 
 
     return Consumer2<SellProvider, CatalogueProvider>(
-      builder: (_, sellProvider, catalogueProvider, _) { 
+      builder: (_, sellProvider, catalogueProvider, __) { 
 
         // Si no hay cuenta seleccionada, mostrar la página de bienvenida
         if(sellProvider.selectedAccount.id == '') { 
@@ -183,7 +186,9 @@ class _SellPageState extends State<SellPage> {
               final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
               if (account.id == 'demo' && authProvider.user?.isAnonymous == true) {
                 final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
-                catalogueProvider.loadDemoProducts(demoProducts);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  catalogueProvider.loadDemoProducts(demoProducts);
+                });
               }
             },
           );
@@ -192,7 +197,9 @@ class _SellPageState extends State<SellPage> {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         if (sellProvider.selectedAccount.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
           final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
-          catalogueProvider.loadDemoProducts(demoProducts);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            catalogueProvider.loadDemoProducts(demoProducts);
+          });
         }
         return Scaffold(
           appBar: appbar(
@@ -388,9 +395,8 @@ class _SellPageState extends State<SellPage> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Colors.white), // Color blanco explícito
           ),
-        ),
         )
-      );
+      ));
   }
 
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.

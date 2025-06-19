@@ -458,30 +458,39 @@ class _SellPageState extends State<SellPage> {
 
   Widget drawerTicket(BuildContext context) {
     // values
-    const EdgeInsets padding = EdgeInsets.symmetric(horizontal: 20, vertical: 1);
     final provider = Provider.of<SellProvider>(context);
     final ticket = provider.getTicket;
 
-    // style
-    Color borderColor = Colors.black;
-    Color backgroundColor = Colors.white;
-    const TextStyle textValuesStyle = TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold);
-    const TextStyle textDescrpitionStyle = TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold);
+    // style adaptado a tema
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    Color borderColor = colorScheme.onSurface;
+    // Usar un color suave que resalte más el ticket
+    Color backgroundColor = colorScheme.primary.withValues(alpha: 0.1) ;
+    final TextStyle textValuesStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface);
+    final TextStyle textDescrpitionStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 18, color: colorScheme.onSurface);
+    final TextStyle textSmallStyle = TextStyle(fontFamily: 'RobotoMono', fontSize: 13, color: colorScheme.onSurface.withOpacity(0.87));
+    final TextStyle textTotalStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 22, color: colorScheme.onPrimary);
 
-    // widgets
     Widget dividerLinesWidget = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-      child: Divider(
-        color: borderColor,
-        thickness: 0.5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
+      child: Row(children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return CustomPaint(
+                size: Size(constraints.maxWidth, 1),
+                painter: _DashedLinePainter(color: colorScheme.onSurface.withValues(alpha: 0.2)),
+              );
+            },
+          ),
+        ),
+      ]),
     );
- 
 
     return Stack(
       children: [
         AnimatedContainer(
-          // width : si es móvil, ocupa todo el ancho de la pantalla, si es desktop, 400px
           width:  isMobile(context) ? MediaQuery.of(context).size.width : 400,
           curve: Curves.fastOutSlowIn,
           duration: const Duration(milliseconds: 300),
@@ -490,75 +499,81 @@ class _SellPageState extends State<SellPage> {
             child: Card(
               clipBehavior: Clip.antiAlias,
               margin: const EdgeInsets.symmetric(horizontal: 8),
-              
               elevation: 0,
               color: backgroundColor,
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: borderColor.withValues(alpha: 0.7), width: 0.5),
+                side: BorderSide(color: borderColor.withValues(alpha: 0.2), width: 0.5),
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: ListView(
                 key: const Key('ticket'),
                 shrinkWrap: false,
                 children: [
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text('Ticket', textAlign: TextAlign.center, style: textDescrpitionStyle.copyWith(fontSize: 30, fontWeight: FontWeight.bold)),
-                  ),
-                  dividerLinesWidget,
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: padding,
-                    child: Row(
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Column(
                       children: [
-                        const Opacity(opacity: 0.7, child: Text('Productos:', style: textDescrpitionStyle)),
-                        const Spacer(),
-                        // Suma total de cantidades de todos los productos 
+                        Text(
+                          provider.selectedAccount.name.isNotEmpty
+                            ? provider.selectedAccount.name.toUpperCase()
+                            : 'TICKET',
+                          style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2),
+                        ),
+                        const SizedBox(height: 2),
+                        Text('compra', style: textSmallStyle),
+                        const SizedBox(height: 2),
+                        Text(DateTime.now().toString().substring(0, 19), style: textSmallStyle),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  // Lista de productos
-                  ...ticket.listPoduct.map((item) {
-                    final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                  const SizedBox(height: 10),
+                  dividerLinesWidget,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text('Cant.', style: textSmallStyle)),
+                        Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
+                        Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
-                          Expanded(child: Text(product.description, style: textValuesStyle)),
-                          Text('x${product.quantity}', style: textValuesStyle),
-                          const SizedBox(width: 8),
-                          Text((product.salePrice * product.quantity).toStringAsFixed(2), style: textValuesStyle),
-                        ],
-                      )
-                    );
-                  }),
-                  const SizedBox(height: 12),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                    color: Colors.green,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Text('Total', style: textDescrpitionStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                          Text('TOTAL', style: textTotalStyle),
                           const Spacer(),
-                          const SizedBox(width: 12),
-                          // Suma total considerando cantidades, ahora formateado
                           Text(
-                            Publications.getFormatoPrecio(value: ticket.listPoduct.fold<double>(0, (sum, item) {
-                              final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
-                              return sum + (product.salePrice * (product.quantity));
-                            })),
-                            style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
+                            Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                            style: textTotalStyle,
+                            textAlign: TextAlign.right,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Aquí puedes agregar widgets para métodos de pago, descuentos, vuelto, etc.
+                  ), 
+                  dividerLinesWidget,
+                  // Lista de productos
+                  ...ticket.listPoduct.map((item) {
+                    final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text('${product.quantity}', style: textValuesStyle)),
+                          Expanded(flex: 3, child: Text(product.description, style: textValuesStyle, overflow: TextOverflow.ellipsis)),
+                          Expanded(child: Text(Publications.getFormatoPrecio(value: product.salePrice * product.quantity), style: textValuesStyle, textAlign: TextAlign.right)),
+                        ],
+                      ),
+                    );
+                  }),
+                  dividerLinesWidget,
                 ],
               ),
             ),
@@ -570,32 +585,24 @@ class _SellPageState extends State<SellPage> {
   }
 
   Widget widgetConfirmedPurchase(BuildContext context) {
-    final provider = Provider.of<SellProvider>(context, listen: false);
-    Color background = Colors.green.shade400;
+    final provider = Provider.of<SellProvider>(context, listen: false); 
 
-    return Theme(
-      data: ThemeData(brightness: Brightness.dark),
-      child: Container(
-        color: background,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 60),
-              const SizedBox(height: 12),
-              const Text('¡Listo! Transacción exitosa', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300)),
-              const SizedBox(height: 20),
-              Text('Total: ${Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  provider.setTicketView(false);
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.white),
-                child: const Text('Volver a vender', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.all(20), 
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
+        color:Colors.green.shade400,
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 60),
+            const SizedBox(height: 12),
+            Text('¡Listo! Transacción exitosa', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300)),
+            const SizedBox(height: 20),
+            Text('Total: ${Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+            
+          ],
         ),
       ),
     );
@@ -905,6 +912,27 @@ class _SellPageState extends State<SellPage> {
       },
     );
   }
+}
+
+/// Dibuja una línea punteada horizontal para simular el corte de un ticket impreso.
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  _DashedLinePainter({this.color = Colors.black38});
+  @override
+  void paint(Canvas canvas, Size size) {
+    const dashWidth = 5.0;
+    const dashSpace = 4.0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 

@@ -235,8 +235,8 @@ class _SellPageState extends State<SellPage> {
                       ],
                     ),
                   ),
-                  // drawerTicket siempre visible en desktop cuando ticketView es true
-                  if ( sellProvider.ticketView && !isMobile(context) || !sellProvider.ticketView && sellProvider.getTicket.getProductsQuantity() != 0)
+                  // drawerTicket view
+                  if (!isMobile(context) || (isMobile(context) && sellProvider.ticketView))
                     Stack(
                       children: [
                         drawerTicket(context),
@@ -426,8 +426,12 @@ class _SellPageState extends State<SellPage> {
         final List<ProductCatalogue> list = provider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList().reversed.toList();
         // Calcular cuántas filas caben en la vista
         final double itemHeight = (constraints.maxWidth / crossAxisCount) * 1.1; // Ajusta el factor según el aspecto de los ítems
-        final int rowCount = (constraints.maxHeight / itemHeight).ceil();
-        final int minItemCount = rowCount * crossAxisCount;
+        int rowCount = 1;
+        int minItemCount = crossAxisCount;
+        if (constraints.maxHeight.isFinite && constraints.maxHeight > 0 && itemHeight > 0) {
+          rowCount = (constraints.maxHeight / itemHeight).ceil();
+          minItemCount = rowCount * crossAxisCount;
+        }
         int totalItems = list.length;
         int remainder = totalItems % crossAxisCount;
         int fillCount = remainder == 0 ? 0 : crossAxisCount - remainder;

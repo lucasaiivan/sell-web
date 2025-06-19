@@ -63,5 +63,11 @@ class AuthProvider extends ChangeNotifier {
     _accountsAssociateds = [];
     notifyListeners();
   }
-  // El método getAccountsWithDemo ahora está en GetUserAccountsUseCase
+  // ProfileAccountModel : devuelve los datos del perfil de la cuenta asociada del id pasado por parametro
+  ProfileAccountModel? getProfileAccountById(String id) {
+    return _accountsAssociateds.firstWhere(
+      (account) => account.id == id,
+      orElse: () => ProfileAccountModel(),
+    );  
+  }
 }

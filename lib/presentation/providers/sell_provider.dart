@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider_package;
 import 'package:sellweb/core/utils/fuctions.dart';
@@ -7,6 +8,7 @@ import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sellweb/domain/usecases/account_usecase.dart';
 
 class SellProvider extends ChangeNotifier {
   // Elimina la lista de productos seleccionados, ahora se usa TicketModel
@@ -15,11 +17,62 @@ class SellProvider extends ChangeNotifier {
   ProfileAccountModel selectedAccount = ProfileAccountModel();
   // keys para SharedPreferences
   static const String _selectedAccountKey = 'selected_account_id';
+  static const String _ticketKey = 'current_ticket';
 
   // Ticket actual en memoria
   TicketModel _ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
 
-  SellProvider();
+  final GetUserAccountsUseCase getUserAccountsUseCase;
+
+  /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
+  Future<void> _loadSelectedAccount() async {
+
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString(_selectedAccountKey);
+    if (id != null && id.isNotEmpty) {
+      selectedAccount = await fetchAccountById(id) ?? ProfileAccountModel();
+      notifyListeners();
+    }
+  }
+
+  SellProvider({required this.getUserAccountsUseCase}) {
+    _loadSelectedAccount().whenComplete(() => _loadTicket());
+  }
+
+  /// Obtiene los datos completos de la cuenta por su [id].
+  Future<ProfileAccountModel?> fetchAccountById(String id) async {
+    try {
+      return await getUserAccountsUseCase.getAccount(idAccount: id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Guarda el ticket actual en SharedPreferences.
+  Future<void> _saveTicket() async { 
+    final prefs = await SharedPreferences.getInstance(); 
+    await prefs.setString(_ticketKey, jsonEncode(_ticket.toJson()));
+
+  }
+
+  /// Carga el ticket guardado desde SharedPreferences.
+  Future<void> _loadTicket() async {
+
+    final prefs = await SharedPreferences.getInstance();
+    final ticketJson = prefs.getString(_ticketKey);
+    if (ticketJson != null ) { 
+      try {
+        _ticket = TicketModel.fromMap(_decodeJson(ticketJson));
+        notifyListeners();
+      } catch (_) {}
+    } 
+  }
+ 
+ 
+
+  /// Utilidad para decodificar de JSON.
+  Map<String, dynamic> _decodeJson(String source) =>
+      const JsonDecoder().convert(source) as Map<String, dynamic>;
 
   /// Agrega un producto al ticket actual.
   void addProduct(ProductCatalogue product, {bool replaceQuantity = false}) {
@@ -39,6 +92,7 @@ class SellProvider extends ChangeNotifier {
     if (!exist) {
       _ticket.listPoduct.add(product.toMap());
     }
+    _saveTicket();
     notifyListeners();
   }
 
@@ -47,6 +101,7 @@ class SellProvider extends ChangeNotifier {
     if (_ticket.listPoduct.isEmpty) {
       _ticketView = false;
     }
+    _saveTicket();
     notifyListeners();
   }
 
@@ -58,6 +113,7 @@ class SellProvider extends ChangeNotifier {
   void discartTicket() {
     _ticket.listPoduct.clear();
     _ticketView = false;
+    _saveTicket();
     notifyListeners();
   }
 
@@ -96,7 +152,7 @@ class SellProvider extends ChangeNotifier {
     } catch (e) {
       print('[SellProvider] Error al obtener el CatalogueProvider: $e');
     }
-
+    // Guarda la cuenta seleccionada
     await _saveSelectedAccount(account.id);
 
     // Inicializa el catálogo si se pudo obtener el provider

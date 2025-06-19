@@ -94,7 +94,7 @@ class MyApp extends StatelessWidget {
                       },
                     ),
                     ChangeNotifierProvider(
-                      create: (_) => SellProvider(),
+                      create: (_) => SellProvider(getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl())),
                     ),
                   ],
                   child: SellPage(),

@@ -181,31 +181,23 @@ class ComponentApp extends StatelessWidget {
 
     if (hasText) {
       // FloatingActionButton.extended para texto o icono+texto
-      return SizedBox(
-        width: widthInfinity ? double.infinity : null,
-        height: buttonSize,
-        child: FloatingActionButton.extended(
-          onPressed: onTap,
-          backgroundColor: effectiveButtonColor,
-          foregroundColor: effectiveTextColor,
-          icon: hasIcon ? Icon(icon, size: buttonSize * 0.45) : null,
-          label: Text(
-            text,
-            style: TextStyle(fontSize: buttonSize * 0.28, fontWeight: FontWeight.w600),
-          ),
+      return FloatingActionButton.extended(
+        onPressed: onTap,
+        backgroundColor: effectiveButtonColor,
+        foregroundColor: effectiveTextColor,
+        icon: hasIcon ? Icon(icon, size: buttonSize * 0.45) : null,
+        label: Text(
+          text,
+          style: TextStyle(fontSize: buttonSize * 0.28, fontWeight: FontWeight.w600),
         ),
       );
     } else if (hasIcon) {
       // Solo icono
-      return SizedBox(
-        width: buttonSize,
-        height: buttonSize,
-        child: FloatingActionButton(
-          onPressed: onTap,
-          backgroundColor: effectiveButtonColor,
-          foregroundColor: effectiveTextColor, 
-          child: Icon(icon, size: buttonSize * 0.5),
-        ),
+      return FloatingActionButton(
+        onPressed: onTap,
+        backgroundColor: effectiveButtonColor,
+        foregroundColor: effectiveTextColor, 
+        child: Icon(icon, size: buttonSize * 0.5),
       );
     } else {
       return const SizedBox();

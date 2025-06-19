@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart'; 
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
+import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/widgets.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
@@ -176,11 +177,9 @@ class _SellPageState extends State<SellPage> {
  
 
   @override
-  Widget build(BuildContext context) { 
-
+  Widget build(BuildContext context) {
     return Consumer2<SellProvider, CatalogueProvider>(
-      builder: (_, sellProvider, catalogueProvider, __) { 
-
+      builder: (_, sellProvider, catalogueProvider, __) {
         // Si no hay cuenta seleccionada, mostrar la página de bienvenida
         if(sellProvider.selectedAccount.id == '') { 
           return WelcomePage(
@@ -215,9 +214,8 @@ class _SellPageState extends State<SellPage> {
           drawer: drawer,
           body: LayoutBuilder(
             builder: (context, constraints) {
-
               return Row(
-                children: [ 
+                children: [
                   Flexible(
                     child: Stack(
                       children: [
@@ -228,47 +226,33 @@ class _SellPageState extends State<SellPage> {
                           onKeyEvent: _onKey,
                           child: body(provider: sellProvider),
                         ),
-                        // floatingActionButton
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: floatingActionButtonBody(sellProvider: sellProvider),
-                        ),
+                        // floatingActionButtonBody 
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: floatingActionButtonBody(sellProvider: sellProvider),
+                          ),
                       ],
                     ),
                   ),
-                  //  drawerTicket para mostrar el ticket de venta
-                  if (sellProvider.ticketView)
+                  // drawerTicket siempre visible en desktop cuando ticketView es true
+                  if ( sellProvider.ticketView && !isMobile(context) || !sellProvider.ticketView && sellProvider.getTicket.getProductsQuantity() != 0)
                     Stack(
                       children: [
                         drawerTicket(context),
-                        // floatingActionButtonTicket 
+                        // Solo botón de confirmar venta en desktop
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: Row(
-                            children: [
-                              floatingActionButtonTicket(provider: sellProvider).animate(delay: const Duration(milliseconds: 0)).fade(),
-                              const SizedBox(width: 8),
-                              // Botón para cerrar el ticket
-                              IconButton(
-                                icon: const Icon(Icons.close_rounded, color: Colors.red, size: 32),
-                                tooltip: 'Cerrar ticket',
-                                onPressed: () {
-                                  sellProvider.setTicketView(false);
-                                },
-                              ),
-                            ],
-                          ),
+                          child: floatingActionButtonTicket(provider: sellProvider, showClose: isMobile(context)),
                         ),
                       ],
                     ),
-
+                   
                 ],
               );
             },
           ),
-          //floatingActionButton: provider.ticketView ? floatingActionButtonTicket(provider: provider): floatingActionButton(provider: provider).animate( delay: const Duration( milliseconds:  0)).fade(),
         );
       },
     );
@@ -300,7 +284,8 @@ class _SellPageState extends State<SellPage> {
           : null,
       centerTitle: false,
       actions: [
-        if (provider.ticketView)
+        // Mostrar el botón según reglas: móvil+ticketView o desktop+productos seleccionados
+        if ((isMobile(buildContext) && provider.ticketView) || (!isMobile(buildContext) && provider.getTicket.getProductsQuantity() > 0))
           TextButton.icon(
             icon: const Icon(Icons.close),
             label: const Text('Descartar ticket'),
@@ -364,73 +349,58 @@ class _SellPageState extends State<SellPage> {
       ),
     );
   }
-  Widget floatingActionButtonTicket({required SellProvider provider}) { 
+  /// Botones para la vista del ticket. showClose controla si se muestra el botón de cerrar (solo en móvil).
+  Widget floatingActionButtonTicket({required SellProvider provider, bool showClose = true}) {
     final String confirmarText = 'Confirmar venta';
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 700;
-    final double ticketWidth = provider.ticketView ? (isMobile ? screenWidth : 400) : 0;
-    final double minButtonWidth = 150;
-    final double maxButtonWidth = ticketWidth > 0 ? ticketWidth - 40 : minButtonWidth; // padding
-
     if (_showConfirmedPurchase) return const SizedBox.shrink();
-    // elevatedButton : botón para confirmar la venta
-    return SizedBox(
-      width: maxButtonWidth,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom( 
-          foregroundColor: Colors.white, // Color del texto
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          minimumSize: Size( maxButtonWidth , 48),
-          maximumSize: Size(maxButtonWidth, 48),
-        ),
-        onPressed: () async {
-          setState(() {
+    return Row(
+      children: [
+        if (showClose)
+          ComponentApp().floatingActionButtonApp(
+            onTap: () {
+              provider.setTicketView(false);
+            },
+            widthInfinity: true,
+            icon: Icons.close_rounded,
+            buttonColor: Colors.grey.withValues(alpha: 0.8),
+          ).animate(delay: const Duration(milliseconds: 0)).fade(),
+        if (showClose) const SizedBox(width: 8),
+        ComponentApp().floatingActionButtonApp(
+          onTap: () async {
+            setState(() {
               _showConfirmedPurchase = true;
             });
             await Future.delayed(const Duration(seconds: 2));
             setState(() {
               _showConfirmedPurchase = false;
             });
-            provider.discartTicket(); 
-        },
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-          child: Text(
-            confirmarText ,
-            key: ValueKey(confirmarText),
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white), // Color blanco explícito
-          ),
-        )
-      ));
+            provider.discartTicket();
+          },
+          icon: Icons.check_circle_outline_rounded,
+          text: confirmarText,
+        ).animate(delay: const Duration(milliseconds: 0)).fade(),
+      ],
+    );
   }
-  Widget floatingActionButtonBody({ required SellProvider sellProvider}) {
+
+  /// Botones para la vista principal. Solo visible en móvil y cuando el ticket no está visible.
+  Widget floatingActionButtonBody({required SellProvider sellProvider}) { 
     return Row(
       children: [
-        // floatingActionButton : botón para agregar productos sin registrar al ticket
         ComponentApp().floatingActionButtonApp(
           onTap: () => showDialogQuickSale(provider: sellProvider),
-          icon: Icons.flash_on_rounded, 
-          buttonColor: Colors.amber
+          icon: Icons.flash_on_rounded,
+          buttonColor: Colors.amber,
         ).animate(delay: const Duration(milliseconds: 0)).fade(),
         const SizedBox(width: 8),
-        // floatingActionButton : para mostrar el ticket de venta 
-        ComponentApp().floatingActionButtonApp(
-          onTap: () {
-            sellProvider.setTicketView(!sellProvider.ticketView);
-            if (sellProvider.ticketView) {
-              // Si se muestra el ticket, enfocar el nodo de entrada
-              _focusNode.requestFocus();
-            }
-          }, 
+        // button : muestra el botón de cobrar si es móvil y el ticket no está visible
+        isMobile(context)?ComponentApp().floatingActionButtonApp(
+          onTap: () { 
+            sellProvider.setTicketView(true); 
+          },
           text: 'Cobrar ${sellProvider.getTicket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.getTicket.getTotalPrice)}',
-          buttonColor: sellProvider.getTicket.getTotalPrice == 0 
-            ? Colors.grey
-            : null,
-        ), 
-        
+          buttonColor: sellProvider.getTicket.getTotalPrice == 0 ? Colors.grey : null,
+        ): const SizedBox.shrink(),
       ],
     );
   }
@@ -452,7 +422,8 @@ class _SellPageState extends State<SellPage> {
         } else {
           crossAxisCount = 6; // Ancho para pantallas grandes
         }
-        final List<ProductCatalogue> list = provider.selectedProducts.reversed.toList();
+        // Usar los productos seleccionados del ticket
+        final List<ProductCatalogue> list = provider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList().reversed.toList();
         // Calcular cuántas filas caben en la vista
         final double itemHeight = (constraints.maxWidth / crossAxisCount) * 1.1; // Ajusta el factor según el aspecto de los ítems
         final int rowCount = (constraints.maxHeight / itemHeight).ceil();
@@ -505,14 +476,13 @@ class _SellPageState extends State<SellPage> {
         thickness: 0.5,
       ),
     );
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 700;
+ 
 
     return Stack(
       children: [
         AnimatedContainer(
-          width: provider.ticketView ? (isMobile ? screenWidth : 400) : 0,
+          // width : si es móvil, ocupa todo el ancho de la pantalla, si es desktop, 400px
+          width:  isMobile(context) ? MediaQuery.of(context).size.width : 400,
           curve: Curves.fastOutSlowIn,
           duration: const Duration(milliseconds: 300),
           child: Padding(
@@ -561,7 +531,7 @@ class _SellPageState extends State<SellPage> {
                           const SizedBox(width: 8),
                           Text((product.salePrice * product.quantity).toStringAsFixed(2), style: textValuesStyle),
                         ],
-                      ),
+                      )
                     );
                   }),
                   const SizedBox(height: 12),
@@ -894,16 +864,27 @@ class _SellPageState extends State<SellPage> {
                                     ),
                                     const SizedBox(width: 8),
                                     // Mostrar cantidad seleccionada si es mayor a 0
-                                    if (sellProvider.selectedProducts.any((p) => p.id == product.id && p.quantity > 0))
-                                      Chip(
-                                        label: Text(
-                                          sellProvider.selectedProducts.firstWhere((p) => p.id == product.id).quantity.toString(),
-                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                        ),
-                                        backgroundColor: Colors.blueGrey.shade400,
-                                        visualDensity: VisualDensity.compact,
-                                        padding: EdgeInsets.zero,
-                                      ),
+                                    () {
+                                      final ticketProducts = sellProvider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList();
+                                      ProductCatalogue? selectedProduct;
+                                      try {
+                                        selectedProduct = ticketProducts.firstWhere((p) => p.id == product.id && p.quantity > 0);
+                                      } catch (_) {
+                                        selectedProduct = null;
+                                      }
+                                      if (selectedProduct != null) {
+                                        return Chip(
+                                          label: Text(
+                                            selectedProduct.quantity.toString(),
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                          ),
+                                          backgroundColor: Colors.blueGrey.shade400,
+                                          visualDensity: VisualDensity.compact,
+                                          padding: EdgeInsets.zero,
+                                        );
+                                      }
+                                      return SizedBox.shrink();
+                                    }(),
                                   ],
                                 ),
                                 onTap: () {

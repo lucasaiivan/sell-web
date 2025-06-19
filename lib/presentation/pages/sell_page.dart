@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+import 'package:web/web.dart' as html;
 import 'package:cached_network_image/cached_network_image.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +23,7 @@ class SellPage extends StatefulWidget {
 
 class _SellPageState extends State<SellPage> {
 
+  // variables
   String _barcodeBuffer = '';
   DateTime? _lastKey;
   final FocusNode _focusNode = FocusNode(); 
@@ -73,6 +74,11 @@ class _SellPageState extends State<SellPage> {
    @override
   void initState() {
     super.initState();
+    // si es web ? 
+    if (html.window.location.href.contains('web')) {
+      // Enfoca el nodo de entrada para que el teclado se muestre automáticamente
+      _focusNode.requestFocus();
+    }
     // Cambia el título de la pestaña al iniciar la página principal
     html.document.title = 'Punto de venta';
     // sirve para que el teclado se enfoque automáticamente al iniciar la página 
@@ -155,8 +161,8 @@ class _SellPageState extends State<SellPage> {
                   child: TextButton.icon(
                     icon: const Icon(Icons.close),
                     label: const Text('Salir de la cuenta'),
-                    onPressed:(){
-                      sellProvider.removeSelectedAccount();
+                    onPressed:() async {
+                      await sellProvider.removeSelectedAccount();
                       Navigator.of(context).pop();
                     },
                   ),
@@ -178,9 +184,9 @@ class _SellPageState extends State<SellPage> {
         // Si no hay cuenta seleccionada, mostrar la página de bienvenida
         if(sellProvider.selectedAccount.id == '') { 
           return WelcomePage(
-            onSelectAccount: (account) {
+            onSelectAccount: (account) async {
               // Selecciona la cuenta y recarga el catálogo
-              sellProvider.selectAccount(account: account,context: context);
+              await sellProvider.selectAccount(account: account,context: context);
               // Si es demo, cargar productos demo
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
@@ -226,18 +232,7 @@ class _SellPageState extends State<SellPage> {
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: Row(
-                            children: [
-                              // floatingActionButton : botón para agregar productos sin registrar al ticket
-                              FloatingActionButton(
-                                backgroundColor: Colors.amber,
-                                onPressed: () => showDialogQuickSale(provider: sellProvider),
-                                child: const Icon(Icons.flash_on_rounded,
-                                color: Colors.white)).animate( delay: const Duration(milliseconds: 0),).fade(),
-                              // floatingActionButton : para mostrar el ticket de venta
-                              
-                            ],
-                          ),
+                          child: floatingActionButtonBody(sellProvider: sellProvider),
                         ),
                       ],
                     ),
@@ -251,7 +246,20 @@ class _SellPageState extends State<SellPage> {
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: floatingActionButtonTicket(provider: sellProvider).animate(delay: const Duration(milliseconds: 0)).fade(),
+                          child: Row(
+                            children: [
+                              floatingActionButtonTicket(provider: sellProvider).animate(delay: const Duration(milliseconds: 0)).fade(),
+                              const SizedBox(width: 8),
+                              // Botón para cerrar el ticket
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, color: Colors.red, size: 32),
+                                tooltip: 'Cerrar ticket',
+                                onPressed: () {
+                                  sellProvider.setTicketView(false);
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -365,11 +373,11 @@ class _SellPageState extends State<SellPage> {
     final double maxButtonWidth = ticketWidth > 0 ? ticketWidth - 40 : minButtonWidth; // padding
 
     if (_showConfirmedPurchase) return const SizedBox.shrink();
+    // elevatedButton : botón para confirmar la venta
     return SizedBox(
       width: maxButtonWidth,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+        style: ElevatedButton.styleFrom( 
           foregroundColor: Colors.white, // Color del texto
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -398,7 +406,34 @@ class _SellPageState extends State<SellPage> {
         )
       ));
   }
-
+  Widget floatingActionButtonBody({ required SellProvider sellProvider}) {
+    return Row(
+      children: [
+        // floatingActionButton : botón para agregar productos sin registrar al ticket
+        ComponentApp().floatingActionButtonApp(
+          onTap: () => showDialogQuickSale(provider: sellProvider),
+          icon: Icons.flash_on_rounded, 
+          buttonColor: Colors.amber
+        ).animate(delay: const Duration(milliseconds: 0)).fade(),
+        const SizedBox(width: 8),
+        // floatingActionButton : para mostrar el ticket de venta 
+        ComponentApp().floatingActionButtonApp(
+          onTap: () {
+            sellProvider.setTicketView(!sellProvider.ticketView);
+            if (sellProvider.ticketView) {
+              // Si se muestra el ticket, enfocar el nodo de entrada
+              _focusNode.requestFocus();
+            }
+          }, 
+          text: 'Cobrar ${sellProvider.getTicket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.getTicket.getTotalPrice)}',
+          buttonColor: sellProvider.getTicket.getTotalPrice == 0 
+            ? Colors.grey
+            : null,
+        ), 
+        
+      ],
+    );
+  }
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
   Widget body({required SellProvider provider}) {
 
@@ -509,24 +544,26 @@ class _SellPageState extends State<SellPage> {
                       children: [
                         const Opacity(opacity: 0.7, child: Text('Productos:', style: textDescrpitionStyle)),
                         const Spacer(),
-                        // Suma total de cantidades de todos los productos
-                        Text(ticket.listProduct.fold<int>(0, (sum, item) => sum + item.quantity).toString(), style: textValuesStyle),
+                        // Suma total de cantidades de todos los productos 
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
                   // Lista de productos
-                  ...ticket.listProduct.map((item) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(item.description, style: textValuesStyle)),
-                        Text('x${item.quantity}', style: textValuesStyle),
-                        const SizedBox(width: 8),
-                        Text((item.salePrice * item.quantity).toStringAsFixed(2), style: textValuesStyle),
-                      ],
-                    ),
-                  )),
+                  ...ticket.listPoduct.map((item) {
+                    final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(product.description, style: textValuesStyle)),
+                          Text('x${product.quantity}', style: textValuesStyle),
+                          const SizedBox(width: 8),
+                          Text((product.salePrice * product.quantity).toStringAsFixed(2), style: textValuesStyle),
+                        ],
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 12),
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
@@ -540,7 +577,10 @@ class _SellPageState extends State<SellPage> {
                           const SizedBox(width: 12),
                           // Suma total considerando cantidades, ahora formateado
                           Text(
-                            Publications.getFormatoPrecio(value: ticket.listProduct.fold<double>(0, (sum, item) => sum + (item.salePrice * (item.quantity)))),
+                            Publications.getFormatoPrecio(value: ticket.listPoduct.fold<double>(0, (sum, item) {
+                              final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
+                              return sum + (product.salePrice * (product.quantity));
+                            })),
                             style: textValuesStyle.copyWith(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
                           ),
                         ],

@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Proveedor para manejar el tema (brillo) de la app
+import '../../core/services/theme_service.dart';
+
+/// Proveedor para manejar el tema (brillo) de la app usando ThemeService
 class ThemeDataAppProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
+  final ThemeService _themeService = ThemeService();
   static const _key = 'theme_mode';
 
   ThemeDataAppProvider() {
     _loadTheme();
+    _themeService.themeModeNotifier.addListener(() {
+      notifyListeners();
+    });
   }
 
-  ThemeMode get themeMode => _themeMode;
+  ThemeMode get themeMode => _themeService.themeMode;
 
   /// Cambia entre modo claro y oscuro
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    final newMode = _themeService.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeService.setThemeMode(newMode);
     _saveTheme();
-    notifyListeners();
   }
 
   /// Carga el tema guardado
@@ -24,16 +29,15 @@ class ThemeDataAppProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final mode = prefs.getString(_key);
     if (mode == 'dark') {
-      _themeMode = ThemeMode.dark;
+      _themeService.setThemeMode(ThemeMode.dark);
     } else {
-      _themeMode = ThemeMode.light;
+      _themeService.setThemeMode(ThemeMode.light);
     }
-    notifyListeners();
   }
 
   /// Guarda el tema seleccionado
   Future<void> _saveTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, _themeMode == ThemeMode.dark ? 'dark' : 'light');
+    await prefs.setString(_key, _themeService.themeMode == ThemeMode.dark ? 'dark' : 'light');
   }
 }

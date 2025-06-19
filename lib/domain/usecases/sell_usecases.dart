@@ -1,5 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/domain/entities/ticket_model.dart';
 ///
 /// Contiene los casos de uso relacionados con la venta.
 /// 
@@ -32,7 +33,10 @@ class SellUseCases {
   }
 
   /// - [getTicket]: Genera un ticket a partir de la lista de productos seleccionados.
-  Ticket getTicket(List<ProductCatalogue> selectedProducts) {
-    return Ticket(listProduct: selectedProducts);
+  TicketModel getTicket(List<ProductCatalogue> selectedProducts) {
+    return TicketModel(
+      listPoduct: selectedProducts.map((e) => e.toMap()).toList(),
+      creation: Timestamp.now(),
+    );
   }
 }

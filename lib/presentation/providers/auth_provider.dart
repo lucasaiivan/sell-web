@@ -22,24 +22,36 @@ class AuthProvider extends ChangeNotifier {
     required this.getUserStreamUseCase,
     required this.getUserAccountsUseCase,
   }) { 
+    // Escucha los cambios en el usuario autenticado y actualiza el estado
     getUserStreamUseCase().listen((user) async {
       _user = user;
       if (_user != null) {
+        // Notifica a los listeners que el usuario ha cambiado
         await getUserAssociatedAccount();
+      } else {
+        // Si el usuario es nulo, limpia las cuentas asociadas
+        _accountsAssociateds = [];
+        notifyListeners();
       }
-      notifyListeners();
     });
   }
-
+  // Inicia sesión con Google usando el caso de uso
   Future<void> signInWithGoogle() async {
     await signInWithGoogleUseCase();
   }
-
+  // Cierra sesión usando el caso de uso
   Future<void> signOut() async {
     await signOutUseCase();
   }
-  // Obtiene las cuentas asociadas al usuario actual
+  // Obtiene las cuentas asociadas al usuario actual, incluyendo demo si es anónimo
   Future<void> getUserAssociatedAccount() async {
+    if (_user == null) return;
+    if (_user!.isAnonymous == true) {
+      _accountsAssociateds = [];
+      // Solo notifica, la demo se agrega en getAccountsWithDemo
+      notifyListeners();
+      return;
+    }
     if (_user?.email == null) return;
     _accountsAssociateds = await getUserAccountsUseCase.getProfilesAccountsAsociateds(_user!.email!);
     notifyListeners();

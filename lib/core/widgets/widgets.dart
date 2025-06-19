@@ -163,7 +163,7 @@ class ComponentApp extends StatelessWidget {
   Widget buttonRoundAppBar({required void Function() onPressed,required BuildContext context,Widget ?child,required IconData icon,required EdgeInsets edgeInsets})  => Material(color: Colors.transparent,child: Center( child: Padding(padding: const EdgeInsets.all(8.0),child: Ink(decoration: ShapeDecoration(color: Brightness.dark==Theme.of(context).brightness?Colors.black:Colors.white,shape: const CircleBorder()), child: child==null?IconButton(icon: Icon(icon),color:Brightness.dark==Theme.of(context).brightness?Colors.white:Colors.black,onPressed: onPressed):child))));
 
   /// FloatingActionButton personalizado para 3 variantes: icono, texto o ambos.
-  /// Usa FloatingActionButton.extended para texto o icono+texto, y FloatingActionButton para solo icono.
+  /// Por defecto el color es azul (Material 3)
   Widget floatingActionButtonApp({
     String? text,
     IconData? icon,
@@ -203,8 +203,7 @@ class ComponentApp extends StatelessWidget {
         child: FloatingActionButton(
           onPressed: onTap,
           backgroundColor: effectiveButtonColor,
-          foregroundColor: effectiveTextColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(buttonSize * 0.5)),
+          foregroundColor: effectiveTextColor, 
           child: Icon(icon, size: buttonSize * 0.5),
         ),
       );

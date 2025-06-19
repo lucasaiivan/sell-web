@@ -42,6 +42,7 @@ class AuthRepositoryImpl implements AuthRepository {
           uid: fbUser.uid,
           displayName: fbUser.displayName,
           email: fbUser.email,
+          isAnonymous: fbUser.isAnonymous, // <-- Asegura que siempre se asigne
           photoUrl: fbUser.photoURL,
         );
       });

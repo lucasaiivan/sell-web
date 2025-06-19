@@ -297,8 +297,12 @@ class ProductCatalogue {
 }
 
   factory ProductCatalogue.fromMap(Map data) {
+    Timestamp parseTimestamp(dynamic value) {
+      if (value is Timestamp) return value;
+      if (value is int) return Timestamp.fromMillisecondsSinceEpoch(value);
+      return Timestamp.now();
+    }
     return ProductCatalogue(
-      // Valores del producto
       id: data.containsKey('id')? data['id'] :'',
       verified: data.containsKey('verified')? data['verified']: data['verificado'] ?? false,
       reviewed: data.containsKey('reviewed')? data['reviewed']: data['revisado'] ?? false,
@@ -317,22 +321,20 @@ class ProductCatalogue {
       nameCategory: data.containsKey('nameCategory')?data['nameCategory']:data['categoriaName'] ?? '',
       subcategory: data.containsKey('subcategory')?data['subcategory']:data['subcategoria'] ?? '',
       nameSubcategory: data.containsKey('nameSubcategory')?data['nameSubcategory']:data['subcategoriaName'] ?? '',
-      upgrade: data.containsKey('upgrade')? data['upgrade']: data['timestamp_actualizacion'] ?? Timestamp.now(),
-      creation: data.containsKey('creation')? data['creation']: data['timestamp_creation'] ?? Timestamp.now(),
-      documentCreation: data.containsKey('documentCreation')? data['documentCreation']: data['documentCreation'] ?? Timestamp.now(),
-      documentUpgrade: data.containsKey('documentUpgrade')? data['documentUpgrade']: data['documentUpgrade'] ?? Timestamp.now(),
+      upgrade: parseTimestamp(data['upgrade'] ?? data['timestamp_actualizacion']),
+      creation: parseTimestamp(data['creation'] ?? data['timestamp_creation']),
+      documentCreation: parseTimestamp(data['documentCreation']),
+      documentUpgrade: parseTimestamp(data['documentUpgrade']),
       documentIdCreation: data.containsKey('documentIdCreation')? data['documentIdCreation']: data['documentIdCreation'] ?? '',
       documentIdUpgrade: data.containsKey('documentIdUpgrade')? data['documentIdUpgrade']: data['documentIdUpgrade'] ?? '',
-      // valores de la cuenta
-      salePrice: data.containsKey('salePrice') ? data['salePrice'].toDouble()??0.0.toDouble() :0.0.toDouble(),
-      purchasePrice: data.containsKey('purchasePrice') ? data['purchasePrice'].toDouble()??0.0.toDouble():0.0.toDouble(),
+      salePrice: data.containsKey('salePrice') ? (data['salePrice'] is int ? (data['salePrice'] as int).toDouble() : data['salePrice'] ?? 0.0) : 0.0,
+      purchasePrice: data.containsKey('purchasePrice') ? (data['purchasePrice'] is int ? (data['purchasePrice'] as int).toDouble() : data['purchasePrice'] ?? 0.0) : 0.0,
       currencySign: data.containsKey('currencySign')?data['currencySign']:data['signo_moneda'] ?? '',
       quantityStock: data.containsKey('quantityStock')? data['quantityStock'] : 0,
       sales: data.containsKey('sales')? data['sales'] : 0,
       stock:  data.containsKey('stock')? data['stock'] : false,
       alertStock: data.containsKey('alertStock')?data['alertStock'] : 5,
       revenue: data.containsKey('revenue')?data['revenue'] : 0.0,
-      // values of app
       quantity: data.containsKey('quantity') ? data['quantity'] : 1, 
       local: data.containsKey('local')? data['local'] : false,
     );

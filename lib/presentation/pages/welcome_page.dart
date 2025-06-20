@@ -12,11 +12,10 @@ class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key, required this.onSelectAccount});
 
   @override
-  Widget build(BuildContext context) {
-    html.document.title = 'Bienvenido';
+  Widget build(BuildContext context) { 
 
     // providers
-    final authProvider = Provider.of<AuthProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context); 
     List<ProfileAccountModel> accounts = authProvider.getUserAccountsUseCase
         .getAccountsWithDemo(authProvider.accountsAssociateds,
             isAnonymous: authProvider.user?.isAnonymous == true);
@@ -47,7 +46,9 @@ class WelcomePage extends StatelessWidget {
                     ),
                   const SizedBox(height: 24),
                   // view notification : si no hay cuentas disponibles, muestra un mensaje informativo
-                  if (accounts.isEmpty)
+                  if(authProvider.isLoadingAccounts)
+                    const Center(child: CircularProgressIndicator()),
+                  if (accounts.isEmpty && authProvider.isLoadingAccounts == false)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),

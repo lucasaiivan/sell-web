@@ -236,7 +236,7 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // drawerTicket view
-                  if (!isMobile(context) || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) && sellProvider.getTicket.getProductsQuantity() !=0 || (isMobile(context) && sellProvider.ticketView))
                     Stack(
                       children: [
                         drawerTicket(context),
@@ -464,7 +464,7 @@ class _SellPageState extends State<SellPage> {
     Color backgroundColor = colorScheme.primary.withValues(alpha: 0.1) ;
     final TextStyle textValuesStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface);
     final TextStyle textDescrpitionStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 18, color: colorScheme.onSurface);
-    final TextStyle textSmallStyle = TextStyle(fontFamily: 'RobotoMono', fontSize: 13, color: colorScheme.onSurface.withOpacity(0.87));
+    final TextStyle textSmallStyle = TextStyle(fontFamily: 'RobotoMono', fontSize: 13, color: colorScheme.onSurface.withValues(alpha:0.87));
     final TextStyle textTotalStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 22, color: colorScheme.onPrimary);
 
     Widget dividerLinesWidget = Padding(
@@ -522,17 +522,7 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  dividerLinesWidget,
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text('Cant.', style: textSmallStyle)),
-                        Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
-                        Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
-                      ],
-                    ),
-                  ),
+                  // view : total del monto del ticket
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
                     child: Container(
@@ -553,6 +543,18 @@ class _SellPageState extends State<SellPage> {
                       ),
                     ),
                   ), 
+                  dividerLinesWidget,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text('Cant.', style: textSmallStyle)),
+                        Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
+                        Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
+                      ],
+                    ),
+                  ),
+                  
                   dividerLinesWidget,
                   // Lista de productos
                   ...ticket.listPoduct.map((item) {
@@ -838,62 +840,14 @@ class _SellPageState extends State<SellPage> {
                           itemCount: filteredProducts.length,
                           itemBuilder: (context, index) {
                             final product = filteredProducts[index];
-                            return Card(
-                              elevation: 0,
-                              color: Colors.white.withValues(alpha: 0.03),
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              child: ListTile(
-                                title: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(product.description),
-                                    Text(
-                                      product.nameMark.isNotEmpty ? product.nameMark : '',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.blueGrey.shade700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Text(product.code),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      Publications.getFormatoPrecio(value: product.salePrice),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    // Mostrar cantidad seleccionada si es mayor a 0
-                                    () {
-                                      final ticketProducts = sellProvider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList();
-                                      ProductCatalogue? selectedProduct;
-                                      try {
-                                        selectedProduct = ticketProducts.firstWhere((p) => p.id == product.id && p.quantity > 0);
-                                      } catch (_) {
-                                        selectedProduct = null;
-                                      }
-                                      if (selectedProduct != null) {
-                                        return Chip(
-                                          label: Text(
-                                            selectedProduct.quantity.toString(),
-                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                          ),
-                                          backgroundColor: Colors.blueGrey.shade400,
-                                          visualDensity: VisualDensity.compact,
-                                          padding: EdgeInsets.zero,
-                                        );
-                                      }
-                                      return SizedBox.shrink();
-                                    }(),
-                                  ],
-                                ),
-                                onTap: () {
-                                  sellProvider.addProduct(product.copyWith());
-                                  setState(() {}); // Actualiza la vista del modal al seleccionar
-                                },
-                              ),
+                            return buildProductListItem(
+                              product: product,
+                              sellProvider: sellProvider,
+                              onTap: () {
+                                sellProvider.addProduct(product.copyWith());
+                                setState(() {}); // Actualiza la vista del modal al seleccionar
+                              },
+                              setState: setState,
                             );
                           },
                         ),
@@ -905,6 +859,101 @@ class _SellPageState extends State<SellPage> {
           ),
         );
       },
+    );
+  }
+
+  /// Construye el widget de un producto para la lista del modal de selección.
+  /// Mejora la UI siguiendo Material 3 y muestra cantidad seleccionada si aplica.
+  Widget buildProductListItem({
+    required ProductCatalogue product,
+    required SellProvider sellProvider,
+    required void Function() onTap,
+    required StateSetter setState,
+  }) {
+    final ticketProducts = sellProvider.getTicket.listPoduct
+        .map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item))
+        .toList();
+    ProductCatalogue? selectedProduct;
+    try {
+      selectedProduct = ticketProducts.firstWhere((p) => p.id == product.id && p.quantity > 0);
+    } catch (_) {
+      selectedProduct = null;
+    }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Card(
+      elevation:0,
+      color: selectedProduct != null
+          ? colorScheme.primaryContainer.withValues(alpha: 0.18)
+          : colorScheme.surface.withValues(alpha:0.95),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: selectedProduct != null
+            ? BorderSide(color: colorScheme.primary, width: 1.2)
+            : BorderSide.none,
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              product.description,
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (product.nameMark.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  product.nameMark,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            product.code,
+            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.secondary),
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              Publications.getFormatoPrecio(value: product.salePrice),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+                fontSize: 17,
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (selectedProduct != null)
+              Chip(
+                label: Text(
+                  selectedProduct.quantity.toString(),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: colorScheme.primary,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+              ),
+          ],
+        ),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        hoverColor: colorScheme.primaryContainer.withOpacity(0.12),
+      ),
     );
   }
 }

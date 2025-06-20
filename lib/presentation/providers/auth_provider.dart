@@ -14,6 +14,8 @@ class AuthProvider extends ChangeNotifier {
   UserAuth? get user => _user;
   List<ProfileAccountModel> _accountsAssociateds = [];
   List<ProfileAccountModel> get accountsAssociateds => _accountsAssociateds;
+  bool _isLoadingAccounts = false;
+  bool get isLoadingAccounts => _isLoadingAccounts;
   
 
   AuthProvider({
@@ -46,14 +48,21 @@ class AuthProvider extends ChangeNotifier {
   // Obtiene las cuentas asociadas al usuario actual, incluyendo demo si es anónimo
   Future<void> getUserAssociatedAccount() async {
     if (_user == null) return;
+    _isLoadingAccounts = true;
+    notifyListeners();
     if (_user!.isAnonymous == true) {
       _accountsAssociateds = [];
-      // Solo notifica, la demo se agrega en getAccountsWithDemo
+      _isLoadingAccounts = false;
       notifyListeners();
       return;
     }
-    if (_user?.email == null) return;
+    if (_user?.email == null) {
+      _isLoadingAccounts = false;
+      notifyListeners();
+      return;
+    }
     _accountsAssociateds = await getUserAccountsUseCase.getProfilesAccountsAsociateds(_user!.email!);
+    _isLoadingAccounts = false;
     notifyListeners();
   }
   /// Inicia sesión como invitado usando Firebase Auth anónimo

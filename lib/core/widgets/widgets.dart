@@ -65,8 +65,51 @@ class ComponentApp extends StatelessWidget {
     );
 
     return avatar;
+  } 
+  // button : Botón de búsqueda para AppBar, configurable con icono, colores y acción.
+  Widget searchButtonAppBar({
+    required BuildContext context,
+    required VoidCallback onPressed,
+    required String label,
+    IconData icon = Icons.search,
+    Color? color,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all((color ?? colorScheme.primaryContainer).withValues(alpha: 0.5)),
+        foregroundColor: WidgetStateProperty.all(textColor ?? colorScheme.onPrimaryContainer),
+        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        elevation: WidgetStateProperty.all(0), // Sin elevación en ningún estado
+      ),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: iconColor ?? textColor ?? colorScheme.onPrimaryContainer),
+          const SizedBox(width: 8),
+          Opacity(
+            opacity: 0.6,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: textColor ?? colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
-  // BUTTONS 
   Widget buttonAppbar({ required BuildContext context,Function() ?onTap,required String text,Color ?colorBackground ,Color ?colorAccent,IconData ?iconLeading ,IconData ?iconTrailing,EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0),bool textOpacity = false}) { 
     
     // values default

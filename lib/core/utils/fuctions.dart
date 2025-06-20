@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -286,6 +287,23 @@ class Utils {
       await Share.shareXFiles([XFile(file.path)], text: 'Compartir Ticket'); 
     }
   }
+
+  /// Obtiene la URL de descarga de una imagen almacenada en Firebase Storage.
+  Future<String> getImageUrl(String imagePath) async {
+    // print : test 
+    print('--------- [getImageUrl] imagePath: $imagePath');
+  try {
+    final ref = FirebaseStorage.instance.ref(imagePath);
+    final url = await ref.getDownloadURL();
+    // print : test
+    print('--------- [getImageUrl] URL: $url');
+    return url;
+  } catch (e) {
+    print("Error al obtener la URL de descarga: $e");
+    print('--------- [getImageUrl] Error: $e');
+    return '';
+  }
+}
 }
 
 // AppMoneyInputFormatter : Formateador de texto para campos de dinero

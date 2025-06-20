@@ -262,25 +262,16 @@ class _SellPageState extends State<SellPage> {
   PreferredSizeWidget appbar({required BuildContext buildContext, required SellProvider provider}) {
     final catalogueProvider = Provider.of<CatalogueProvider>(buildContext);
     final bool isLoading = catalogueProvider.isLoading;
-    final bool isEmpty = !isLoading && catalogueProvider.products.isEmpty;
-    String catalogueLenght = Publications.getFormatAmount( value: catalogueProvider.products.length, );
+    final bool isEmpty = !isLoading && catalogueProvider.products.isEmpty; 
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
     return AppBar(
       titleSpacing: 0.0,
       title: (!isEmpty)
-          ? ComponentApp().buttonAppbar(
-            textOpacity: true,
-              context: buildContext,
-              onTap: () {
-                showModalBottomSheetSelectProducts(buildContext);
-              },
-              text: isLoading
-                  ? 'Cargando catálogo...'
-                  : '$catalogueLenght productos en catálogo',
-              iconLeading: Icons.search,
-              colorBackground: Theme.of(buildContext).colorScheme.outline.withValues(alpha: 0.1),
-              colorAccent: Theme.of(buildContext).textTheme.bodyLarge!.color ,
-            )
+          ? ComponentApp().searchButtonAppBar(
+              context: buildContext, 
+              onPressed: () => showModalBottomSheetSelectProducts(buildContext), 
+              label: 'Buscar producto',
+          )
           : null,
       centerTitle: false,
       actions: [
@@ -1130,7 +1121,7 @@ class _ProductoItemState extends State<ProductoItem> {
             ? widget.producto.description.substring(0, 3)
             : widget.producto.description.substring(0, 1)
         : Publications.getFormatoPrecio(
-            value: widget.producto.salePrice * widget.producto.quantity);
+            value: widget.producto.salePrice * widget.producto.quantity); 
     return widget.producto.image != "" && !widget.producto.local
         ? SizedBox(
             width: double.infinity,

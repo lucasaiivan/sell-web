@@ -89,6 +89,7 @@ flutter:
       - assets/sell05.jpeg
       - assets/sell06.jpeg
       - assets/stock.jpeg
+      - assets/product_default.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

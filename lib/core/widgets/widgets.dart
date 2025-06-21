@@ -10,6 +10,7 @@ class ComponentApp extends StatelessWidget {
     // set  
     return Container();
   }
+  // 
   // view : grafico de barra para mostrar el progreso de carga de la app
   PreferredSize linearProgressBarApp({Color color = Colors.blue}) {
     return PreferredSize(
@@ -81,7 +82,7 @@ class ComponentApp extends StatelessWidget {
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all((color ?? colorScheme.primaryContainer).withValues(alpha: 0.5)),
         foregroundColor: WidgetStateProperty.all(textColor ?? colorScheme.onPrimaryContainer),
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16, vertical: 16)),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -247,6 +248,47 @@ class ComponentApp extends StatelessWidget {
     }
   }
 
-  
+  /// Devuelve una imagen de producto redondeada 1:1, usando red de ser posible o un recurso local por defecto.
+  Widget imageProduct({
+    String? imageUrl,
+    double size = 64.0,
+    Color? backgroundColor,
+  }) {
+    final Color bg = backgroundColor ?? Colors.blueGrey.withValues(alpha: 0.1);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        color: bg,
+        width: size,
+        height: size,
+        child: imageUrl != null && imageUrl.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                width: size,
+                height: size,
+                errorWidget: (context, url, error) => Image.asset(
+                  'assets/product_default.png',
+                  fit: BoxFit.cover,
+                  width: size,
+                  height: size,
+                ),
+                placeholder: (context, url) => Center(
+                  child: SizedBox(
+                    width: size * 0.4,
+                    height: size * 0.4,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            : Image.asset(
+                'assets/product_default.png',
+                fit: BoxFit.cover,
+                width: size,
+                height: size,
+              ),
+      ),
+    );
+  }
 }
 

@@ -264,6 +264,7 @@ class _SellPageState extends State<SellPage> {
     final bool isEmpty = !isLoading && catalogueProvider.products.isEmpty; 
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
     return AppBar(
+      toolbarHeight: 70,
       titleSpacing: 0.0,
       title: (!isEmpty)
           ? ComponentApp().searchButtonAppBar(
@@ -272,7 +273,7 @@ class _SellPageState extends State<SellPage> {
               label: 'Buscar producto',
           )
           : null,
-      centerTitle: false,
+      centerTitle: false, 
       actions: [
         // Mostrar el botón según reglas: móvil+ticketView o desktop+productos seleccionados
         if ((isMobile(buildContext) && provider.ticketView) || (!isMobile(buildContext) && provider.getTicket.getProductsQuantity() > 0))
@@ -717,12 +718,9 @@ class _SellPageState extends State<SellPage> {
               width: double.infinity,
               child: Padding(
                 padding: const EdgeInsets.only(right:20,left:20, bottom:20),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom( 
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: () {
+                child: ComponentApp().button(
+                  text: 'Agregar producto',
+                  onPressed:(){
                     if (textEditingControllerAddFlashPrice.doubleValue <= 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('El precio debe ser mayor a cero')),
@@ -736,9 +734,8 @@ class _SellPageState extends State<SellPage> {
                     textEditingControllerAddFlashPrice.clear();
                     textEditingControllerAddFlashDescription.clear();
                     Navigator.of(dialogContext).pop();
-                  },
-                  child: const Text('Agregar', style: TextStyle(fontSize: 16)),
-                ),
+                  }, 
+                  context: context)
               ),
             ),
           ],
@@ -890,6 +887,9 @@ class _SellPageState extends State<SellPage> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        // imagen : imagen del producto cuadrada con un borde redondeado utilizando [cached_network_image]
+        leading: ComponentApp().imageProduct(imageUrl: product.image,size: 50,),
+        
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1050,87 +1050,150 @@ class _ProductoItemState extends State<ProductoItem> {
                 mouseCursor: MouseCursor.uncontrolled,
                 onTap: () {
                   final originalContext = context; // <-- Guardar el contexto original
-                  showDialog(
+                  // dialog : mostrar el diálogo de edición del producto
+                    showDialog(
                     context: context,
                     builder: (dialogContext) {
                       int cantidad = widget.producto.quantity;
+                      // Definir ancho uniforme según plataforma
+                      double dialogWidth = MediaQuery.of(dialogContext).size.width;
+                      if (dialogWidth > 400) {
+                      dialogWidth = 400;
+                      } else if (dialogWidth < 320) {
+                      dialogWidth = 320;
+                      }
                       return StatefulBuilder(
-                        builder: (context, setState) {
-                          return AlertDialog(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            backgroundColor: Theme.of(dialogContext).colorScheme.surface,
-                            title: Text(widget.producto.description, style: Theme.of(dialogContext).textTheme.titleLarge),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      builder: (context, setState) {
+                        return AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+                        contentPadding: const EdgeInsets.all(24),
+                        title: Row(
+                          children: [
+                            Text(widget.producto.nameMark,maxLines: 1,overflow: TextOverflow.clip, style: Theme.of(dialogContext).textTheme.titleLarge),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => Navigator.of(originalContext).pop(),
+                              splashRadius: 20,
+                              color: Theme.of(dialogContext).colorScheme.onSurface,
+                            ),
+                          ],
+                        ),
+
+                        content: SizedBox(
+                          width: dialogWidth,
+                          child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                            children: [
+                              // image : avatar del producto
+                              SizedBox(
+                                width: 100,
+                                height: 100,
+                                child: ComponentApp().imageProduct(imageUrl: widget.producto.image),
+                              ),
+                              // view : información del producto
+                              Flexible(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal:12.0),
+                                child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // text : descripción del producto
+                                  Text(widget.producto.description, 
+                                  style: Theme.of(dialogContext).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // text : precio de venta del producto
+                                  Text(Publications.getFormatoPrecio(value: widget.producto.salePrice), style:TextStyle(fontSize: 24,fontWeight: FontWeight.bold,color: Theme.of(dialogContext).colorScheme.primary)),
+                                ],
+                                ),
+                              ),
+                              ),
+                            ],
+                            ), 
+                            const SizedBox(height: 16),
+                            Text('Código: ${widget.producto.code}', style: Theme.of(dialogContext).textTheme.bodyMedium), 
+                            // view : precio por la cantidad seleccionada del producto  en un pequeño contenedor resaltando en ui 
+                            Row(
                               children: [
-                                if (widget.producto.image.isNotEmpty)
-                                  Center(
-                                  child: SizedBox(
-                                      width: 300,
-                                      height: 300,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.network(
-                                      widget.producto.image, 
-                                      fit: BoxFit.cover,
-                                      ),
-                                    ),
+                                const Spacer(),
+                                Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(dialogContext).colorScheme.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
+                                  child: Text(
+                                    ' ${Publications.getFormatoPrecio(value: widget.producto.salePrice * cantidad)}',
+                                    style: TextStyle(color: Theme.of(dialogContext).colorScheme.primary, fontWeight: FontWeight.bold),
                                   ),
-                                const SizedBox(height: 16),
-                                Text('Código: ${widget.producto.code}', style: Theme.of(dialogContext).textTheme.bodyMedium),
-                                Text('Precio: [200m${Publications.getFormatoPrecio(value: widget.producto.salePrice)}[0m', style: Theme.of(dialogContext).textTheme.bodyMedium),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    const Text('Cantidad:', style: TextStyle(fontWeight: FontWeight.bold)),
-                                    const SizedBox(width: 12),
-                                    IconButton(
-                                      icon: const Icon(Icons.remove_circle_outline),
-                                      onPressed: cantidad > 1 ? () => setState(() => cantidad--) : null,
-                                      color: Theme.of(dialogContext).colorScheme.primary,
-                                    ),
-                                    Text('$cantidad', style: Theme.of(dialogContext).textTheme.titleMedium),
-                                    IconButton(
-                                      icon: const Icon(Icons.add_circle_outline),
-                                      onPressed: () => setState(() => cantidad++),
-                                      color: Theme.of(dialogContext).colorScheme.primary,
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),
-                            actions: [
-                              TextButton.icon(
-                                icon: const Icon(Icons.delete_outline),
-                                label: const Text('Eliminar'),
-                                style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
-                                onPressed: () {
-                                  Provider.of<SellProvider>(originalContext, listen: false).removeProduct(widget.producto);
-                                  Navigator.of(originalContext).pop();
-                                },
-                              ),
-                              TextButton(
-                                child: const Text('Cancelar'),
-                                onPressed: () => Navigator.of(originalContext).pop(),
-                              ),
-                              FilledButton(
-                                child: const Text('Guardar'),
-                                onPressed: () {
+                            // view : componentes para seleccionar la cantidad
+                            Row(
+                            children: [
+                              const Spacer(), 
+                              IconButton(  
+                                icon: const Icon(Icons.remove_circle_outline,size: 50,),
+                                onPressed: cantidad > 1 ? (){
+                                  // disminuir la cantidad y actualizar el estado el provider 
+                                  cantidad--;
                                   Provider.of<SellProvider>(originalContext, listen: false).addProduct(
-                                    widget.producto.copyWith(quantity: cantidad),
-                                    replaceQuantity: true,
+                                  widget.producto.copyWith(quantity: cantidad),
+                                  replaceQuantity: true,
                                   );
-                                  Navigator.of(originalContext).pop();
-                                },
+                                  setState(() {});
+                                } : null,
+                                color: Theme.of(dialogContext).colorScheme.primary,
+                              ),
+                              // text : cantidad del producto seleccionado
+                              Text('$cantidad', style:TextStyle(fontSize: 24,fontWeight: FontWeight.bold,color: Theme.of(dialogContext).colorScheme.primary)),
+                              IconButton(
+                              icon: const Icon(Icons.add_circle_outline, size: 50),
+                              onPressed: () {
+                                // aumentar la cantidad y actualizar el estado el provider 
+                                cantidad++;
+                                Provider.of<SellProvider>(originalContext, listen: false).addProduct(
+                                widget.producto.copyWith(quantity: cantidad),
+                                replaceQuantity: true,
+                                );
+                                setState(() {});
+                              },
+                              color: Theme.of(dialogContext).colorScheme.primary,
                               ),
                             ],
-                          );
-                        },
+                            ),
+                          ],
+                          ),
+                        ),
+                        actions: [
+                          TextButton.icon(
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Eliminar'),
+                          style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
+                          onPressed: () {
+                            Provider.of<SellProvider>(originalContext, listen: false).removeProduct(widget.producto);
+                            Navigator.of(originalContext).pop();
+                          },
+                          ),
+                          TextButton(
+                          child: const Text('Cancelar'),
+                          onPressed: () => Navigator.of(originalContext).pop(),
+                          ), 
+                        ],
+                        );
+                      },
                       );
                     },
-                  );
+                    );
                 },  
               ),
             ),

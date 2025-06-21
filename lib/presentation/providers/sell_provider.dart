@@ -11,10 +11,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 
 class SellProvider extends ChangeNotifier {
-  // Elimina la lista de productos seleccionados, ahora se usa TicketModel
-  bool _ticketView = false; // si mostramos vista de ticket o no
+  
+  bool _ticketView = false; // Indica si se debe mostrar la vista del ticket
   bool get ticketView => _ticketView; 
-  ProfileAccountModel selectedAccount = ProfileAccountModel();
+  ProfileAccountModel profileAccountSelected = ProfileAccountModel();
   // keys para SharedPreferences
   static const String _selectedAccountKey = 'selected_account_id';
   static const String _ticketKey = 'current_ticket';
@@ -24,13 +24,21 @@ class SellProvider extends ChangeNotifier {
 
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
+  // clean data : limpieza de datos cada vez que cambiar de cuenta o cierrar sesión
+  void cleanData() {
+    profileAccountSelected = ProfileAccountModel();
+    _ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
+    _ticketView = false;  
+    _saveTicket();  
+  }
+
   /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
   Future<void> _loadSelectedAccount() async {
 
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString(_selectedAccountKey);
     if (id != null && id.isNotEmpty) {
-      selectedAccount = await fetchAccountById(id) ?? ProfileAccountModel();
+      profileAccountSelected = await fetchAccountById(id) ?? ProfileAccountModel();
       notifyListeners();
     }
   }
@@ -52,7 +60,6 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveTicket() async { 
     final prefs = await SharedPreferences.getInstance(); 
     await prefs.setString(_ticketKey, jsonEncode(_ticket.toJson()));
-
   }
 
   /// Carga el ticket guardado desde SharedPreferences.
@@ -67,6 +74,7 @@ class SellProvider extends ChangeNotifier {
       } catch (_) {}
     } 
   }
+
  
  
 
@@ -135,15 +143,12 @@ class SellProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_selectedAccountKey, id);
   }
-
-  Future<void> _removeSelectedAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_selectedAccountKey);
-  }
+ 
 
   Future<void> selectAccount({required ProfileAccountModel account, required BuildContext context}) async {
-    selectedAccount = account.copyWith(); 
-    _ticketView = false; // Ocultar la vista de ticket
+
+    cleanData(); // Limpiar datos del ticket y productos
+    profileAccountSelected = account.copyWith();  // asignamos los valores de la cuenta seleccionada 
 
     // Accede al provider antes de cualquier await
     CatalogueProvider? catalogueProvider;
@@ -163,10 +168,11 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-   /// Quita la cuenta seleccionada y notifica a los listeners.
+   /// Quita la cuenta (negocio) seleccionada y notifica a los listeners.
   Future<void> removeSelectedAccount() async {
-    selectedAccount = ProfileAccountModel();
-    await _removeSelectedAccount();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_selectedAccountKey);
+    cleanData();
     notifyListeners();
   }
 }

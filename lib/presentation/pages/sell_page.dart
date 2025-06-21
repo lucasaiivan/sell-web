@@ -30,49 +30,7 @@ class _SellPageState extends State<SellPage> {
   final FocusNode _focusNode = FocusNode(); 
   bool _showConfirmedPurchase = false;
 
-  void _onKey(KeyEvent event) async {  
-    // Detecta un código de barras válido por velocidad de tipeo y enter
-    if (event is KeyDownEvent && event.character != null) {
-      final now = DateTime.now();
-      // Si pasa más de 100ms entre teclas, se asume que es un nuevo escaneo
-      if (_lastKey != null && now.difference(_lastKey!) > const Duration(milliseconds: 500)) {
-        _barcodeBuffer = '';
-      }
-      _lastKey = now;
-      // Agrega el carácter al buffer
-      _barcodeBuffer += event.character!;
-      // espera 100 ms antes de procesar el buffer
-      await Future.delayed(const Duration(milliseconds: 200)).whenComplete(() {
-        // Si el buffer tiene más de 6 caracteres, se asume que es un código de barras completo
-        if (_barcodeBuffer.length > 6) {
-          // Procesa el código de barras
-          scanCodeProduct(code: _barcodeBuffer);
-          // Limpia el buffer
-          _barcodeBuffer = '';
-        }
-      }); 
-
-
-    } 
-  }
-
-  void scanCodeProduct({required String code}) {
-
-    final context = _focusNode.context;
-    if (context == null) return;
-    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
-    final homeProvider = Provider.of<SellProvider>(context, listen: false);
-    final product = catalogueProvider.getProductByCode(code);
-    
-    if (product != null) {
-      // agrega el producto al carrito de compras
-      homeProvider.addProduct(product.copyWith()); 
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Producto no encontrado: $code')) );
-    }
-  }
-
-   @override
+  @override
   void initState() {
     super.initState();
     // si es web ? 
@@ -94,101 +52,23 @@ class _SellPageState extends State<SellPage> {
     super.dispose();
   }
 
-  void showModalBottomSheetSelectAccount() {
-
-    // provider
-    final SellProvider sellProvider = Provider.of<SellProvider>(context, listen: false); 
-
-    // dialog 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      builder: (contextBottomSheet) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        final accounts = authProvider.getUserAccountsUseCase.getAccountsWithDemo(
-          authProvider.accountsAssociateds,
-          isAnonymous: authProvider.user?.isAnonymous == true,
-        );
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  children: [
-                    const Text('Seleccionar cuenta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-              ),
-              if (accounts.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('No tienes cuentas asociadas'),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: accounts.length,
-                  itemBuilder: (_, index) {
-
-                    final account = accounts[index];
-
-                    return buttonListTileItemCuenta(
-                      perfilNegocio: account,
-                      isSelected: sellProvider.selectedAccount.id  == account.id,
-                      onTap: () {
-                         sellProvider.selectAccount(account: account, context: context);
-                         Navigator.of(context).pop();
-                      }, 
-                    );
-                  },
-                ), 
-              // Botón para salir de la cuenta si hay una seleccionada
-              if (sellProvider.selectedAccount.id.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.close),
-                    label: const Text('Salir de la cuenta'),
-                    onPressed:() async {
-                      await sellProvider.removeSelectedAccount();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
- 
-
   @override
   Widget build(BuildContext context) {
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
+        
         // Si no hay cuenta seleccionada, mostrar la página de bienvenida
-        if(sellProvider.selectedAccount.id == '') { 
+        if(sellProvider.profileAccountSelected.id == '') { 
+          // provider : authProvider y catalogueProvider
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+
           return WelcomePage(
             onSelectAccount: (account) async {
               // Selecciona la cuenta y recarga el catálogo
               await sellProvider.selectAccount(account: account,context: context);
               // Si es demo, cargar productos demo
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+              
               if (account.id == 'demo' && authProvider.user?.isAnonymous == true) {
                 final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -200,7 +80,7 @@ class _SellPageState extends State<SellPage> {
         }
         // account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (sellProvider.selectedAccount.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
+        if (sellProvider.profileAccountSelected.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
           final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             catalogueProvider.loadDemoProducts(demoProducts);
@@ -252,6 +132,125 @@ class _SellPageState extends State<SellPage> {
                 ],
               );
             },
+          ),
+        );
+      },
+    );
+  }
+
+  // FUCTIONS
+  void _onKey(KeyEvent event) async {  
+    // Detecta un código de barras válido por velocidad de tipeo y enter
+    if (event is KeyDownEvent && event.character != null) {
+      final now = DateTime.now();
+      // Si pasa más de 100ms entre teclas, se asume que es un nuevo escaneo
+      if (_lastKey != null && now.difference(_lastKey!) > const Duration(milliseconds: 500)) {
+        _barcodeBuffer = '';
+      }
+      _lastKey = now;
+      // Agrega el carácter al buffer
+      _barcodeBuffer += event.character!;
+      // espera 100 ms antes de procesar el buffer
+      await Future.delayed(const Duration(milliseconds: 200)).whenComplete(() {
+        // Si el buffer tiene más de 6 caracteres, se asume que es un código de barras completo
+        if (_barcodeBuffer.length > 6) {
+          // Procesa el código de barras
+          scanCodeProduct(code: _barcodeBuffer);
+          // Limpia el buffer
+          _barcodeBuffer = '';
+        }
+      }); 
+
+
+    } 
+  }
+
+  void scanCodeProduct({required String code}) {
+
+    final context = _focusNode.context;
+    if (context == null) return;
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+    final homeProvider = Provider.of<SellProvider>(context, listen: false);
+    final product = catalogueProvider.getProductByCode(code);
+    
+    if (product != null) {
+      // agrega el producto al carrito de compras
+      homeProvider.addProduct(product.copyWith()); 
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Producto no encontrado: $code')) );
+    }
+  }
+  void showModalBottomSheetSelectAccount() {
+
+    // provider
+    final SellProvider sellProvider = Provider.of<SellProvider>(context, listen: false); 
+
+    // dialog 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder( borderRadius: BorderRadius.only(topLeft: Radius.circular(20),topRight: Radius.circular(20))),
+      builder: (contextBottomSheet) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final accounts = authProvider.getUserAccountsUseCase.getAccountsWithDemo(
+          authProvider.accountsAssociateds,
+          isAnonymous: authProvider.user?.isAnonymous == true,
+        );
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    const Text('Seleccionar cuenta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              if (accounts.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No tienes cuentas asociadas'),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: accounts.length,
+                  itemBuilder: (_, index) {
+
+                    final account = accounts[index];
+
+                    return buttonListTileItemCuenta(
+                      perfilNegocio: account,
+                      isSelected: sellProvider.profileAccountSelected.id  == account.id,
+                      onTap: () {
+                        // Selecciona la cuenta y cierra el modal
+                         sellProvider.selectAccount(account: account, context: context);
+                         Navigator.of(context).pop();
+                      }, 
+                    );
+                  },
+                ), 
+              // Botón para salir de la cuenta si hay una seleccionada
+              if (sellProvider.profileAccountSelected.id.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.close),
+                    label: const Text('Salir de la cuenta'),
+                    onPressed:() async {
+                      await sellProvider.removeSelectedAccount();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -322,16 +321,16 @@ class _SellPageState extends State<SellPage> {
             ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.black26,
-                backgroundImage: (sellProvider.selectedAccount.image.isNotEmpty && sellProvider.selectedAccount.image.contains('https://'))
-                    ? NetworkImage(sellProvider.selectedAccount.image)
+                backgroundImage: (sellProvider.profileAccountSelected.image.isNotEmpty && sellProvider.profileAccountSelected.image.contains('https://'))
+                    ? NetworkImage(sellProvider.profileAccountSelected.image)
                     : null,
-                child: (sellProvider.selectedAccount.image.isEmpty)
-                    ? Text(sellProvider.selectedAccount.name.isNotEmpty ? sellProvider.selectedAccount.name[0] : '?',
+                child: (sellProvider.profileAccountSelected.image.isEmpty)
+                    ? Text(sellProvider.profileAccountSelected.name.isNotEmpty ? sellProvider.profileAccountSelected.name[0] : '?',
                         style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))
                     : null,
               ),
-              title: Text(sellProvider.selectedAccount.name, style: const TextStyle(fontSize: 18)),
-              subtitle: Text(sellProvider.selectedAccount.province, style: const TextStyle(fontSize: 14)),
+              title: Text(sellProvider.profileAccountSelected.name, style: const TextStyle(fontSize: 18)),
+              subtitle: Text(sellProvider.profileAccountSelected.province, style: const TextStyle(fontSize: 14)),
               onTap: () => showModalBottomSheetSelectAccount(),
             ),
               
@@ -509,8 +508,8 @@ class _SellPageState extends State<SellPage> {
                     child: Column(
                       children: [
                         Text(
-                          provider.selectedAccount.name.isNotEmpty
-                            ? provider.selectedAccount.name.toUpperCase()
+                          provider.profileAccountSelected.name.isNotEmpty
+                            ? provider.profileAccountSelected.name.toUpperCase()
                             : 'TICKET',
                           style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2),
                         ),
@@ -831,8 +830,11 @@ class _SellPageState extends State<SellPage> {
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 16),
-                    if (filteredProducts.isEmpty)
+                    if (filteredProducts.isEmpty && search.isEmpty)
                       const Text('No hay productos disponibles'),
+                    if (filteredProducts.isEmpty && search.isNotEmpty)
+                      const Text('Sin resultados',
+                        style: TextStyle(color: Colors.grey)),
                     if (filteredProducts.isNotEmpty)
                       Flexible(
                         child: ListView.builder(
@@ -864,15 +866,8 @@ class _SellPageState extends State<SellPage> {
 
   /// Construye el widget de un producto para la lista del modal de selección.
   /// Mejora la UI siguiendo Material 3 y muestra cantidad seleccionada si aplica.
-  Widget buildProductListItem({
-    required ProductCatalogue product,
-    required SellProvider sellProvider,
-    required void Function() onTap,
-    required StateSetter setState,
-  }) {
-    final ticketProducts = sellProvider.getTicket.listPoduct
-        .map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item))
-        .toList();
+  Widget buildProductListItem({required ProductCatalogue product,required SellProvider sellProvider,required void Function() onTap,required StateSetter setState }) {
+    final ticketProducts = sellProvider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList();
     ProductCatalogue? selectedProduct;
     try {
       selectedProduct = ticketProducts.firstWhere((p) => p.id == product.id && p.quantity > 0);

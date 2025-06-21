@@ -1,1 +1,1 @@
-{"hosting":{"site":"commer-ef151-b5fde","public":"build/web"},"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"commer-ef151","configurations":{"web":"1:232181553323:web:09eb353cc175e0479b3fee"}}}}}}
+{"hosting":{"site":"commer-ef151-b5fde","public":"build/web"},"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"commer-ef151","configurations":{"web":"1:232181553323:web:09eb353cc175e0479b3fee"}}}}},"storage":{"rules":"storage.rules"}}

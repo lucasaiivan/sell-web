@@ -282,13 +282,11 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
     return AppBar(
       toolbarHeight: 70,
       titleSpacing: 0.0,
-      title: (!isEmpty)
-          ? ComponentApp().searchButtonAppBar(
-              context: buildContext, 
-              onPressed: () => showModalBottomSheetSelectProducts(buildContext), 
-              label: 'Buscar producto',
-          )
-          : null,
+      title: ComponentApp().searchButtonAppBar(
+        context: buildContext, 
+        onPressed: isEmpty?(){}: () => showModalBottomSheetSelectProducts(buildContext), 
+        label:isLoading?'Cargando...': isEmpty? 'No hay productos disponibles' : 'Buscar productos',
+      ),
       centerTitle: false, 
       actions: [
         // Mostrar el botón según reglas: móvil+ticketView o desktop+productos seleccionados
@@ -498,117 +496,92 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
         ),
       ]),
     );
-
-    return Stack(
-      children: [
-        AnimatedContainer(
-          width:  isMobile(context) ? MediaQuery.of(context).size.width : 400,
-          curve: Curves.fastOutSlowIn,
-          duration: const Duration(milliseconds: 300),
-          child: Card(
-            clipBehavior: Clip.antiAlias,
-            margin: const EdgeInsets.symmetric(horizontal:12, vertical: 12),
-            elevation: 0,
-            color: backgroundColor,
-            shape: RoundedRectangleBorder(side: BorderSide(color: borderColor.withValues(alpha: 0.2), width: 0.5),borderRadius: BorderRadius.circular(8.0)),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                children: [
-                  // view : encabezado del ticket
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          provider.profileAccountSelected.name.isNotEmpty
-                            ? provider.profileAccountSelected.name.toUpperCase()
-                            : 'TICKET',
-                          style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2),
-                        ),
-                        const SizedBox(height: 2),
-                        Text('compra', style: textSmallStyle),
-                        const SizedBox(height: 2),
-                        Text(DateTime.now().toString().substring(0, 19), style: textSmallStyle),
-                      ],
+    return _showConfirmedPurchase?widgetConfirmedPurchase(context:context,width:isMobile(context) ? MediaQuery.of(context).size.width : 400).animate().scale(duration: 600.ms,curve: Curves.elasticOut,begin: const Offset(0.8, 0.8),end: const Offset(1, 1)) : AnimatedContainer(
+      width:  isMobile(context) ? MediaQuery.of(context).size.width : 400,
+      curve: Curves.fastOutSlowIn,
+      duration: const Duration(milliseconds: 300),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(horizontal:12, vertical: 12),
+        elevation: 0,
+        color: backgroundColor,
+        shape: RoundedRectangleBorder(side: BorderSide(color: borderColor.withValues(alpha: 0.2), width: 0.5),borderRadius: BorderRadius.circular(8.0)),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            children: [
+              // view : encabezado del ticket
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      provider.profileAccountSelected.name.isNotEmpty
+                        ? provider.profileAccountSelected.name.toUpperCase()
+                        : 'TICKET',
+                      style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2),
                     ),
-                  ),
-                  // view : listado de productos del ticket
-                  dividerLinesWidget,
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text('Cant.', style: textSmallStyle)),
-                        Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
-                        Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
-                      ],
-                    ),
-                  ), 
-                  dividerLinesWidget,
-                  Flexible(
-                    child: ListView(
-                      key: const Key('ticket'),
-                      shrinkWrap: false,
-                      children: [ 
-                        
-                        // Lista de productos
-                        ...ticket.listPoduct.map((item) {
-                          final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                            child: Row(
-                              children: [
-                                Expanded(child: Text('${product.quantity}', style: textValuesStyle)),
-                                Expanded(flex: 3, child: Text(product.description, style: textValuesStyle, overflow: TextOverflow.ellipsis)),
-                                Expanded(child: Text(Publications.getFormatoPrecio(value: product.salePrice * product.quantity), style: textValuesStyle, textAlign: TextAlign.right)),
-                              ],
-                            ),
-                          );
-                        }), 
-                      ],
-                    ),
-                  ),
-                  // view : total del monto del ticket
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Row(
-                        children: [
-                          Text('TOTAL', style: textTotalStyle),
-                          const Spacer(),
-                          Text(
-                            Publications.getFormatoPrecio(value: ticket.getTotalPrice),
-                            style: textTotalStyle,
-                            textAlign: TextAlign.right,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ), 
-                  Row(
-                    children: [
-                      const Spacer(),
-                      floatingActionButtonTicket(provider: provider, showClose: isMobile(context)),
-                    ],
-                  )
-                ],
+                    const SizedBox(height: 2),
+                    Text('compra', style: textSmallStyle),
+                    const SizedBox(height: 2),
+                    Text(DateTime.now().toString().substring(0, 19), style: textSmallStyle),
+                  ],
+                ),
               ),
-            ),
+              // view : listado de productos del ticket
+              dividerLinesWidget,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(child: Text('Cant.', style: textSmallStyle)),
+                    Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
+                    Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
+                  ],
+                ),
+              ), 
+              dividerLinesWidget,
+              Flexible(
+                child: _TicketProductListWithIndicator(ticket: ticket, textValuesStyle: textValuesStyle),
+              ),
+              // view : total del monto del ticket
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      Text('TOTAL', style: textTotalStyle),
+                      const Spacer(),
+                      Text(
+                        Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                        style: textTotalStyle,
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ),
+                ),
+              ), 
+              Row(
+                children: [
+                  const Spacer(),
+                  floatingActionButtonTicket(provider: provider, showClose: isMobile(context)),
+                ],
+              )
+            ],
           ),
         ),
-        if (_showConfirmedPurchase) Positioned.fill(child: widgetConfirmedPurchase(context)),
-      ],
+      ),
     );
   }
 
-  Widget widgetConfirmedPurchase(BuildContext context) {
+  Widget widgetConfirmedPurchase({required BuildContext context,double width = 400}) {
     final provider = Provider.of<SellProvider>(context, listen: false); 
 
     return Container(
+      width: width,
       padding: const EdgeInsets.all(20), 
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
         color:Colors.green.shade400,
@@ -619,7 +592,7 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
           children: [
             const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 60),
             const SizedBox(height: 12),
-            Text('¡Listo! Transacción exitosa', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w300)),
+            Text('Transacción realizada con éxito', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
             const SizedBox(height: 20),
             Text('Total: ${Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
             
@@ -1370,4 +1343,115 @@ Widget accoutsAssociatedsButton({required BuildContext context, required VoidCal
       ),
     ),
   );
+}
+
+/// Widget personalizado que muestra la lista de productos en el ticket con un indicador de "items ocultos" si es necesario.
+class _TicketProductListWithIndicator extends StatefulWidget {
+  final dynamic ticket;
+  final TextStyle textValuesStyle;
+  const _TicketProductListWithIndicator({required this.ticket, required this.textValuesStyle});
+
+  @override
+  State<_TicketProductListWithIndicator> createState() => _TicketProductListWithIndicatorState();
+}
+
+class _TicketProductListWithIndicatorState extends State<_TicketProductListWithIndicator> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showIndicator = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updateIndicator);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateIndicator());
+  }
+
+  void _updateIndicator() {
+    if (!_scrollController.hasClients) return;
+    final max = _scrollController.position.maxScrollExtent;
+    final offset = _scrollController.offset;
+    final show = max > 0 && offset < max - 8;
+    if (_showIndicator != show) {
+      setState(() => _showIndicator = show);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_updateIndicator);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> items = widget.ticket.listPoduct.map<Widget>((item) {
+      final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        child: Row(
+          children: [
+            Expanded(child: Text('${product.quantity}', style: widget.textValuesStyle)),
+            Expanded(flex: 3, child: Text(product.description, style: widget.textValuesStyle, overflow: TextOverflow.ellipsis)),
+            Expanded(child: Text(Publications.getFormatoPrecio(value: product.salePrice * product.quantity), style: widget.textValuesStyle, textAlign: TextAlign.right)),
+          ],
+        ),
+      );
+    }).toList(growable: false);
+
+    return Stack(
+      children: [
+        ListView(
+          key: const Key('ticket'),
+          controller: _scrollController,
+          shrinkWrap: false,
+          children: items,
+        ),
+        if (_showIndicator)
+            Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Center(
+              child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+                ],
+                border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                Icon(Icons.keyboard_arrow_down_rounded, size: 22, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Hay más ítems',
+                  style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                  ),
+                ),
+                ],
+              ),
+              ),
+            ),
+            ),
+        
+      ],
+    );
+  }
 }

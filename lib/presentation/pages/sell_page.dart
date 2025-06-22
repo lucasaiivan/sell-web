@@ -284,8 +284,25 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
       titleSpacing: 0.0,
       title: ComponentApp().searchButtonAppBar(
         context: buildContext, 
-        onPressed: isEmpty?(){}: () => showModalBottomSheetSelectProducts(buildContext), 
-        label:isLoading?'Cargando...': isEmpty? 'No hay productos disponibles' : 'Buscar productos',
+        onPressed: (isLoading || isEmpty)
+            ? () {}
+            : () => showModalBottomSheetSelectProducts(buildContext),
+        label: isLoading
+            ? 'Cargando...'
+            : isEmpty
+                ? 'No hay productos disponibles'
+                : 'Buscar productos',
+        color: isLoading
+            ? Colors.grey.shade300
+            : isEmpty
+                ? Colors.grey.shade200
+                : Theme.of(buildContext).colorScheme.primaryContainer,
+        textColor: isLoading || isEmpty
+            ? Colors.grey.shade600
+            : Theme.of(buildContext).colorScheme.onPrimaryContainer,
+        iconColor: isLoading || isEmpty
+            ? Colors.grey.shade600
+            : Theme.of(buildContext).colorScheme.onPrimaryContainer,
       ),
       centerTitle: false, 
       actions: [

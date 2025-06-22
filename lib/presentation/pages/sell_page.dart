@@ -117,17 +117,7 @@ class _SellPageState extends State<SellPage> {
                   ),
                   // drawerTicket view
                   if (!isMobile(context) && sellProvider.getTicket.getProductsQuantity() !=0 || (isMobile(context) && sellProvider.ticketView))
-                    Stack(
-                      children: [
-                        drawerTicket(context),
-                        // Solo botón de confirmar venta en desktop
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: floatingActionButtonTicket(provider: sellProvider, showClose: isMobile(context)),
-                        ),
-                      ],
-                    ),
+                    drawerTicket(context),
                    
                 ],
               );
@@ -177,9 +167,35 @@ class _SellPageState extends State<SellPage> {
       // agrega el producto al carrito de compras
       homeProvider.addProduct(product.copyWith()); 
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Producto no encontrado: $code')) );
+      mostrarProductoNoEncontradoDialog(context); 
     }
   }
+  /// Muestra un AlertDialog temporal con mensaje de error y color naranja.7798164160687
+/// Se cierra automáticamente después de [duracion] milisegundos.
+Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duracion = 1500}) async {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Colors.orange.shade100,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.orange, size: 32), 
+          const SizedBox(height: 8),
+          Text('Producto no encontrado',style: TextStyle(color: Colors.orange,fontWeight: FontWeight.bold)),
+        ],
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+  );
+  await Future.delayed(Duration(milliseconds: duracion));
+  // ignore: use_build_context_synchronously
+  if (Navigator.of(context).canPop()) {
+    // ignore: use_build_context_synchronously
+    Navigator.of(context).pop();
+  }
+}
   void showModalBottomSheetSelectAccount() {
 
     // provider
@@ -489,22 +505,17 @@ class _SellPageState extends State<SellPage> {
           width:  isMobile(context) ? MediaQuery.of(context).size.width : 400,
           curve: Curves.fastOutSlowIn,
           duration: const Duration(milliseconds: 300),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Card(
-              clipBehavior: Clip.antiAlias,
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              elevation: 0,
-              color: backgroundColor,
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: borderColor.withValues(alpha: 0.2), width: 0.5),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: ListView(
-                key: const Key('ticket'),
-                shrinkWrap: false,
+          child: Card(
+            clipBehavior: Clip.antiAlias,
+            margin: const EdgeInsets.symmetric(horizontal:12, vertical: 12),
+            elevation: 0,
+            color: backgroundColor,
+            shape: RoundedRectangleBorder(side: BorderSide(color: borderColor.withValues(alpha: 0.2), width: 0.5),borderRadius: BorderRadius.circular(8.0)),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
                 children: [
-                  const SizedBox(height: 16),
+                  // view : encabezado del ticket
                   Center(
                     child: Column(
                       children: [
@@ -521,7 +532,42 @@ class _SellPageState extends State<SellPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  // view : listado de productos del ticket
+                  dividerLinesWidget,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text('Cant.', style: textSmallStyle)),
+                        Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
+                        Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
+                      ],
+                    ),
+                  ), 
+                  dividerLinesWidget,
+                  Flexible(
+                    child: ListView(
+                      key: const Key('ticket'),
+                      shrinkWrap: false,
+                      children: [ 
+                        
+                        // Lista de productos
+                        ...ticket.listPoduct.map((item) {
+                          final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                            child: Row(
+                              children: [
+                                Expanded(child: Text('${product.quantity}', style: textValuesStyle)),
+                                Expanded(flex: 3, child: Text(product.description, style: textValuesStyle, overflow: TextOverflow.ellipsis)),
+                                Expanded(child: Text(Publications.getFormatoPrecio(value: product.salePrice * product.quantity), style: textValuesStyle, textAlign: TextAlign.right)),
+                              ],
+                            ),
+                          );
+                        }), 
+                      ],
+                    ),
+                  ),
                   // view : total del monto del ticket
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
@@ -543,34 +589,12 @@ class _SellPageState extends State<SellPage> {
                       ),
                     ),
                   ), 
-                  dividerLinesWidget,
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text('Cant.', style: textSmallStyle)),
-                        Expanded(flex: 3, child: Text('Producto', style: textSmallStyle)),
-                        Expanded(child: Text('Precio', style: textSmallStyle, textAlign: TextAlign.right)),
-                      ],
-                    ),
-                  ),
-                  
-                  dividerLinesWidget,
-                  // Lista de productos
-                  ...ticket.listPoduct.map((item) {
-                    final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                      child: Row(
-                        children: [
-                          Expanded(child: Text('${product.quantity}', style: textValuesStyle)),
-                          Expanded(flex: 3, child: Text(product.description, style: textValuesStyle, overflow: TextOverflow.ellipsis)),
-                          Expanded(child: Text(Publications.getFormatoPrecio(value: product.salePrice * product.quantity), style: textValuesStyle, textAlign: TextAlign.right)),
-                        ],
-                      ),
-                    );
-                  }),
-                  dividerLinesWidget,
+                  Row(
+                    children: [
+                      const Spacer(),
+                      floatingActionButtonTicket(provider: provider, showClose: isMobile(context)),
+                    ],
+                  )
                 ],
               ),
             ),

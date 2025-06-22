@@ -511,26 +511,28 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
           child: Column(
             children: [
               // view : encabezado del ticket
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      provider.profileAccountSelected.name.isNotEmpty
-                        ? provider.profileAccountSelected.name.toUpperCase()
-                        : 'TICKET',
-                      style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2),
+              Column(
+                children: [
+                  Text(provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name.toUpperCase(): 'TICKET',style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2) ),
+                  const SizedBox(height: 2),
+                  Text('compra', style: textSmallStyle),
+                  const SizedBox(height: 2),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Text('fecha:', style: textSmallStyle),
+                        const Spacer(),
+                        Text(DateTime.now().toString().substring(0, 11)),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text('compra', style: textSmallStyle),
-                    const SizedBox(height: 2),
-                    Text(DateTime.now().toString().substring(0, 19), style: textSmallStyle),
-                  ],
-                ),
+                  ),
+                ],
               ),
               // view : listado de productos del ticket
               dividerLinesWidget,
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Row(
                   children: [
                     Expanded(child: Text('Cant.', style: textSmallStyle)),
@@ -543,25 +545,24 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
               Flexible(
                 child: _TicketProductListWithIndicator(ticket: ticket, textValuesStyle: textValuesStyle),
               ),
+              // view : cantidad total de artículos
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(
+                  children: [ 
+                    Text('Artículos:', style: textSmallStyle),
+                    const SizedBox(width: 8),
+                    Text('${ticket.getProductsQuantity()}', style: textDescrpitionStyle.copyWith(fontSize: 16, color: colorScheme.primary)),
+                  ],
+                ),
+              ),
               // view : total del monto del ticket
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    children: [
-                      Text('TOTAL', style: textTotalStyle),
-                      const Spacer(),
-                      Text(
-                        Publications.getFormatoPrecio(value: ticket.getTotalPrice),
-                        style: textTotalStyle,
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.only(left: 12, right: 12, top: 5, bottom: 20),
+                child: _TotalBounce(
+                  total: ticket.getTotalPrice,
+                  textStyle: textTotalStyle,
+                  color: colorScheme.primary,
                 ),
               ), 
               Row(
@@ -815,8 +816,8 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
                     const SizedBox(height: 12),
                     TextField(
                       controller: searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar producto, marca o código',
+                      decoration: InputDecoration(
+                        hintText: 'Buscar entre ${Publications.getFormatAmount(value: products.length)} productos, marca, código',
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
                         isDense: true,
@@ -1452,6 +1453,80 @@ class _TicketProductListWithIndicatorState extends State<_TicketProductListWithI
             ),
         
       ],
+    );
+  }
+}
+
+/// Widget animado que muestra el total con un leve rebote al cambiar el valor.
+/// El rebote es visible desde el inicio y cada vez que cambia el total.
+class _TotalBounce extends StatefulWidget {
+  final double total;
+  final TextStyle textStyle;
+  final Color color;
+  const _TotalBounce({
+    required this.total,
+    required this.textStyle,
+    required this.color,
+  });
+
+  @override
+  State<_TotalBounce> createState() => _TotalBounceState();
+}
+
+class _TotalBounceState extends State<_TotalBounce> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  double? _oldTotal;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 260),
+      vsync: this,
+    );
+    _scale = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
+    _oldTotal = widget.total;
+    // Inicia la animación al mostrar el widget por primera vez
+    _controller.forward(from: 0);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TotalBounce oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.total != _oldTotal) {
+      _controller.forward(from: 0);
+      _oldTotal = widget.total;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scale,
+      child: Container(
+        decoration: BoxDecoration(
+          color: widget.color,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Text('TOTAL', style: widget.textStyle),
+            const Spacer(),
+            Text(
+              Publications.getFormatoPrecio(value: widget.total),
+              style: widget.textStyle,
+              textAlign: TextAlign.right,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

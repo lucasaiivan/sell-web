@@ -477,9 +477,9 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
     // Usar un color suave que resalte más el ticket
     Color backgroundColor = colorScheme.primary.withValues(alpha: 0.1) ;
     final TextStyle textValuesStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 16, color: colorScheme.onSurface);
-    final TextStyle textDescrpitionStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 18, color: colorScheme.onSurface);
+    final TextStyle textDescrpitionStyle = TextStyle(fontFamily: 'RobotoMono', fontSize: 18, color: colorScheme.onSurface);
     final TextStyle textSmallStyle = TextStyle(fontFamily: 'RobotoMono', fontSize: 13, color: colorScheme.onSurface.withValues(alpha:0.87));
-    final TextStyle textTotalStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 22, color: colorScheme.onPrimary);
+    final TextStyle textTotalStyle = TextStyle(fontFamily: 'RobotoMono', fontWeight: FontWeight.bold, fontSize: 24, color: colorScheme.onPrimary);
 
     Widget dividerLinesWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
@@ -545,26 +545,57 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
               Flexible(
                 child: _TicketProductListWithIndicator(ticket: ticket, textValuesStyle: textValuesStyle),
               ),
+              dividerLinesWidget,
               // view : cantidad total de artículos
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Row(
                   children: [ 
                     Text('Artículos:', style: textSmallStyle),
-                    const SizedBox(width: 8),
-                    Text('${ticket.getProductsQuantity()}', style: textDescrpitionStyle.copyWith(fontSize: 16, color: colorScheme.primary)),
+                    const Spacer(),
+                    Text('${ticket.getProductsQuantity()}', style: textDescrpitionStyle),
                   ],
                 ),
               ),
+              dividerLinesWidget,
+              // view : vuelto (solo si corresponde)
+              if (ticket.valueReceived > 0 && ticket.valueReceived >= ticket.getTotalPrice)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 12, bottom:5,top: 5),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [ 
+                      const Spacer(),
+                      Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color:  Colors.blue.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
+                        style: textDescrpitionStyle.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      ),
+                    ],
+                  ),
+                ),
               // view : total del monto del ticket
               Padding(
-                padding: const EdgeInsets.only(left: 12, right: 12, top: 5, bottom: 20),
+                padding: const EdgeInsets.only(left: 12, right: 12, top: 5, bottom: 4),
                 child: _TotalBounce(
                   total: ticket.getTotalPrice,
                   textStyle: textTotalStyle,
                   color: colorScheme.primary,
                 ),
-              ), 
+              ),
+              
+              // view: Métodos de pago (ChipCheck)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom:0),
+                child: paymentMethodChips(),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   const Spacer(),
@@ -575,6 +606,41 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
           ),
         ),
       ),
+    );
+  }
+
+  Widget paymentMethodChips() {
+    final provider = Provider.of<SellProvider>(context, listen: false);
+    return Wrap(
+      spacing: 5, 
+      alignment: WrapAlignment.center,
+      children: [
+        // choiceChip : pago con efectivo
+        ChoiceChip( 
+          label: const Text('Efectivo'),
+          selected: provider.getTicket.payMode == 'effective',
+          onSelected: (bool selected) { 
+            if (selected) { dialogSelectedIncomeCash();}  
+            provider.setPayMode(payMode: selected ? 'effective' : '');
+          }, 
+        ),
+        // choiceChip : pago con mercado pago
+        ChoiceChip(
+          label: const Text('Mercado Pago'),
+          selected: provider.getTicket.payMode == 'mercadopago',
+          onSelected: (bool selected) {  
+            provider.setPayMode(payMode: selected ? 'mercadopago' : '');
+          },
+        ),
+        // choiceChip : pago con tarjeta de credito/debito
+        ChoiceChip(
+          label: const Text('Tarjeta Deb/Cred'),
+          selected: provider.getTicket.payMode == 'card',
+          onSelected: (bool selected) {  
+            provider.setPayMode(payMode: selected ? 'card' : '');
+          },
+        ),
+      ],
     );
   }
 
@@ -602,7 +668,119 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
       ),
     );
   }
-
+  /// Muestra un diálogo Material 3 para ingresar el monto recibido, con formateo y cálculo de vuelto.
+  void dialogSelectedIncomeCash() {
+    final provider = Provider.of<SellProvider>(context, listen: false);
+    final controller = AppMoneyTextEditingController();
+    double vuelto = 0;
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final total = provider.getTicket.getTotalPrice;
+            final theme = Theme.of(context);
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              backgroundColor: theme.colorScheme.surface,
+              title: const Text('Cobro en efectivo'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [AppMoneyInputFormatter(symbol: provider.getTicket.currencySymbol)],
+                    autofocus: true,
+                    style: theme.textTheme.titleLarge,
+                    decoration: InputDecoration(
+                      labelText: 'Monto recibido',
+                      prefixIcon: const Icon(Icons.attach_money),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest,
+                    ),
+                    onChanged: (_) {
+                      setState(() {
+                        vuelto = controller.doubleValue - total;
+                        
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Total:', style: theme.textTheme.bodyLarge),
+                      Text(Publications.getFormatoPrecio(value: total), style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Vuelto:', style: theme.textTheme.bodyLarge),
+                      Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: vuelto < 0
+                          ? theme.colorScheme.error.withValues(alpha: 0.08)
+                          : theme.colorScheme.secondaryContainer.withValues(alpha:0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: theme.textTheme.bodyLarge!.copyWith(
+                        color: vuelto < 0 ? theme.colorScheme.error : theme.colorScheme.secondary,
+                        fontWeight: FontWeight.bold,
+                        ),
+                        child: Text(Publications.getFormatoPrecio(value: vuelto < 0 ? 0 : vuelto),style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold,fontSize: 24 )),
+                      ),
+                      ),
+                    ],
+                  ),
+                  if (vuelto < 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 20),
+                          const SizedBox(width: 6),
+                          Text('El monto recibido es insuficiente', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error)),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton.icon(
+                  icon: const Icon(Icons.check),
+                  label: const Text('Confirmar'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    textStyle: theme.textTheme.labelLarge,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: vuelto >= 0 && controller.doubleValue > 0
+                      ? () {
+                          provider.setReceivedCash(controller.doubleValue);
+                          Navigator.of(dialogContext).pop();
+                        }
+                      : null,
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
   void discartTicketAlertDialg() {
     showDialog(
       context: context,

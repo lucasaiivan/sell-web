@@ -175,4 +175,29 @@ class SellProvider extends ChangeNotifier {
     cleanData();
     notifyListeners();
   }
+
+  /// Actualiza el método de pago del ticket y notifica a los listeners.
+  void setPayMode({String payMode = 'effective'}) {
+    _ticket.payMode = payMode;
+    // Si el método de pago NO es efectivo, restaurar el monto recibido a 0
+    if (payMode != 'effective') {
+      _ticket.valueReceived = 0.0;
+    }
+    _saveTicket();
+    notifyListeners();
+  }
+
+  /// Asigna el monto recibido en efectivo por el cliente para calcular el vuelto.
+  void addIncomeCash({double value = 0.0}) {
+    _ticket.valueReceived = value;
+    _saveTicket();
+    notifyListeners();
+  }
+
+  /// Actualiza el valor recibido en efectivo para el ticket actual.
+  void setReceivedCash(double value) {
+    _ticket.valueReceived = value;
+    _saveTicket();
+    notifyListeners();
+  }
 }

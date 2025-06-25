@@ -167,33 +167,78 @@ class _SellPageState extends State<SellPage> {
       // agrega el producto al carrito de compras
       homeProvider.addProduct(product.copyWith()); 
     } else {
-      mostrarProductoNoEncontradoDialog(context); 
+      // method : mostrar dialog cuando no se encuentra el producto
+      showDialogProductoNoEncontrado(context,code: code);
     }
   }
-  /// Muestra un AlertDialog temporal con mensaje de error y color naranja.7798164160687
-/// Se cierra automáticamente después de [duracion] milisegundos.
-Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duracion = 1500}) async {
-  showDialog(
+  /// Muestra un AlertDialog temporal con mensaje de error y opciones para crear o agregar producto.
+/// Se cierra automáticamente después de [duracion] milisegundos si no se elige una acción.
+Future<void> showDialogProductoNoEncontrado(BuildContext context, {required String code }) async {
+  bool accionRealizada = false;
+  await showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Colors.orange.shade100,
+    barrierDismissible: true,
+    builder: (context) => AlertDialog( 
+      // title : titulo del dialog y button cerrar
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(code, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              accionRealizada = true;
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, color: Colors.orange, size: 32), 
+        children: [    
+          // text : mensaje 'No se encontró el producto'
+          const SizedBox(height:10), 
+          const Icon(Icons.error_outline, color: Colors.orange, size: 30),
           const SizedBox(height: 8),
-          Text('Producto no encontrado',style: TextStyle(color: Colors.orange,fontWeight: FontWeight.bold)),
+          const Text('No se encontró el producto', textAlign: TextAlign.center, style: TextStyle(fontSize: 20,color: Colors.orange, fontWeight: FontWeight.w600)),  
+          const SizedBox(height:30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              // button : cancelar
+              TextButton(
+                child: const Text('Cancelar'),
+                onPressed: () {
+                  accionRealizada = true;
+                  Navigator.of(context).pop();
+                },
+              ),
+              // button : Agregar producto
+              ElevatedButton( 
+                child: const Text('Crear producto'),
+                onPressed: () {
+                  accionRealizada = true;
+                  Navigator.of(context).pop();
+                  // TODO: Implementa la lógica para crear producto
+                  // showDialogCrearProducto(context);
+                },
+              ), 
+            ],
+          ),
         ],
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
-  await Future.delayed(Duration(milliseconds: duracion));
-  // ignore: use_build_context_synchronously
-  if (Navigator.of(context).canPop()) {
-    // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
+  // Si el usuario no presionó ninguna acción, cerrar automáticamente después de la duración
+  if (!accionRealizada) {
+    await Future.delayed(Duration(milliseconds: 3000));
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 }
   void showModalBottomSheetSelectAccount() {
@@ -631,6 +676,7 @@ Future<void> mostrarProductoNoEncontradoDialog(BuildContext context, {int duraci
     return Wrap(
       spacing: 5, 
       alignment: WrapAlignment.center,
+      runSpacing: 5,
       children: [
         // choiceChip : pago con efectivo
         ChoiceChip( 

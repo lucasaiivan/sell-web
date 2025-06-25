@@ -365,7 +365,8 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
 
     // provider 
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
-
+    // theme
+    final theme = Theme.of(context);
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -385,7 +386,9 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                   const Spacer(),
                   // button : cambiar brillo del temae
                   IconButton(
-                  icon: Icon(Icons.brightness_6_rounded),
+                  icon: theme.brightness == Brightness.light
+                      ? const Icon(Icons.dark_mode_rounded)
+                      : const Icon(Icons.light_mode_rounded),
                   tooltip: 'Cambiar brillo',
                   onPressed: () {
                     Provider.of<ThemeDataAppProvider>(context, listen: false).toggleTheme();

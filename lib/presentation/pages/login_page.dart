@@ -89,9 +89,7 @@ class LoginPage extends StatelessWidget {
                 color: Colors.transparent,
                 child: IconButton(
                   icon: Icon(
-                    themeProvider.themeMode == ThemeMode.dark
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
+                    themeProvider.themeMode == ThemeMode.dark?Icons.light_mode:Icons.dark_mode,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   tooltip: 'Cambiar brillo',

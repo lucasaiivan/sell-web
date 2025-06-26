@@ -16,14 +16,14 @@ import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/sell_page.dart';
+import 'presentation/pages/welcome_page.dart';
 
 void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform );
-
+  // Inicializar repositorios paara autenticació del usuario
   final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance,GoogleSignIn()); 
-
 
   runApp(
     MultiProvider(
@@ -69,41 +69,45 @@ class MyApp extends StatelessWidget {
           themeMode: themeProvider.themeMode,
           home: Consumer<AuthProvider>(
             builder: (context, authProvider, _) {
+
               if (authProvider.user != null) {
+                return ChangeNotifierProvider(
+                  create: (_) => SellProvider(getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl())),
+                  child: Consumer<SellProvider>(
+                    builder: (context, sellProvider, _) {
 
-                // Mostrar WelcomePage solo si no se ha seleccionado una cuenta
-                // ... 
-                // ...
-                // ...
-
-                // Proveedor de catálogo solo cuando el usuario está autenticado
-                return MultiProvider(
-                  providers: [
-                    ChangeNotifierProvider(
-                      create: (_) {
-                        final userId = authProvider.user!.uid;
-                        final getProductsStreamUseCase = GetCatalogueStreamUseCase(
-                          CatalogueRepositoryImpl(id: userId),
+                      // Si no hay cuenta seleccionada, mostrar WelcomePage para seleccionar una cuenta
+                      if (sellProvider.profileAccountSelected.id == '') {
+                        return WelcomePage(
+                          onSelectAccount: (account) async {
+                            await sellProvider.initAccount(account: account, context: context);
+                          },
                         );
-                        final getProductByCodeUseCase = GetProductByCodeUseCase();
-                        final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
-                        return CatalogueProvider(
-                          getProductsStreamUseCase: getProductsStreamUseCase,
-                          getProductByCodeUseCase: getProductByCodeUseCase,
-                          isProductScannedUseCase: isProductScannedUseCase,
-                          getPublicProductByCodeUseCase: GetPublicProductByCodeUseCase(
-                            CatalogueRepositoryImpl(), // Sin id para acceso público
-                          ), addProductToCatalogueUseCase: AddProductToCatalogueUseCase(
-                            CatalogueRepositoryImpl(id: userId),
+                      }
+                      // Si hay cuenta seleccionada, inicializar el CatalogueProvider con el id correcto
+                      final accountId = sellProvider.profileAccountSelected.id;
+                      final getProductsStreamUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: accountId));
+                      final getProductByCodeUseCase = GetProductByCodeUseCase();
+                      final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
+                      final getPublicProductByCodeUseCase = GetPublicProductByCodeUseCase(CatalogueRepositoryImpl());
+                      final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(CatalogueRepositoryImpl(id: accountId));
+
+                      return MultiProvider(
+                        providers: [
+                          ChangeNotifierProvider(
+                            create: (_) => CatalogueProvider(
+                              getProductsStreamUseCase: getProductsStreamUseCase,
+                              getProductByCodeUseCase: getProductByCodeUseCase,
+                              isProductScannedUseCase: isProductScannedUseCase,
+                              getPublicProductByCodeUseCase: getPublicProductByCodeUseCase,
+                              addProductToCatalogueUseCase: addProductToCatalogueUseCase,
+                            ),
                           ),
-                        );
-                      },
-                    ),
-                    ChangeNotifierProvider(
-                      create: (_) => SellProvider(getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl())),
-                    ),
-                  ],
-                  child: SellPage(),
+                        ],
+                        child: SellPage(),
+                      );
+                    },
+                  ),
                 );
               } else {
                 return LoginPage(authProvider: authProvider);

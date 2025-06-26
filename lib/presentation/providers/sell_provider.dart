@@ -14,7 +14,7 @@ class SellProvider extends ChangeNotifier {
 
   // Caso de uso para obtener las cuentas del usuario
   final GetUserAccountsUseCase getUserAccountsUseCase;
-
+ 
   // Indica si se debe mostrar la vista del ticket
   bool _ticketView = false; // Indica si se debe mostrar la vista del ticket
   bool get ticketView => _ticketView; 

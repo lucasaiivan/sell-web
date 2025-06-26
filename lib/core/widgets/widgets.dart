@@ -251,7 +251,7 @@ class ComponentApp extends StatelessWidget {
   /// Devuelve una imagen de producto redondeada 1:1, usando red de ser posible o un recurso local por defecto.
   Widget imageProduct({
     String? imageUrl,
-    double size = 64.0,
+    double? size,
     Color? backgroundColor,
   }) {
     final Color bg = backgroundColor ?? Colors.blueGrey.withValues(alpha: 0.1);
@@ -275,9 +275,9 @@ class ComponentApp extends StatelessWidget {
                 ),
                 placeholder: (context, url) => Center(
                   child: SizedBox(
-                    width: size * 0.4,
-                    height: size * 0.4,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  width: size != null ? size * 0.3 : 24,
+                  height: size != null ? size * 0.3 : 24,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
               )

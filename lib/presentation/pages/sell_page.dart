@@ -1,3 +1,4 @@
+import 'package:sellweb/core/widgets/money_input_text_field.dart';
 import 'package:web/web.dart' as html;
 import 'package:cached_network_image/cached_network_image.dart'; 
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart'; 
 import '../providers/theme_data_app_provider.dart';
-import 'welcome_page.dart';
+import 'welcome_page.dart'; 
 
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
@@ -168,9 +169,7 @@ class _SellPageState extends State<SellPage> {
       if (publicProduct != null) {
         final productCatalogue = publicProduct.convertProductCatalogue();
         // ignore: use_build_context_synchronously
-        showDialogAgregarProductoPublico(context, product: productCatalogue, onAdd: () {
-          homeProvider.addProduct(productCatalogue);
-        });
+        showDialogAgregarProductoPublico(context, product: productCatalogue );
       } else {
         // ignore: use_build_context_synchronously
         showDialogProductoNoEncontrado(context, code: code);
@@ -179,66 +178,182 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Muestra un diálogo cuando se encuentra un producto en la base pública y permite agregarlo a la lista seleccionada.
-  Future<void> showDialogAgregarProductoPublico(BuildContext context, {required ProductCatalogue product, required VoidCallback onAdd}) async {
+  Future<void> showDialogAgregarProductoPublico(BuildContext context, {required ProductCatalogue product }) async {
+    
+    // variables
+    bool checkAddCatalogue = true; // Checkbox para agregar al catálogo
+    final priceController = AppMoneyTextEditingController(); 
+    String? errorText;
+    var checkActiveColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.5);
+
+    // provider
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+
     await showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (context) => AlertDialog(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(product.code, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 16),
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: Colors.green.withValues(alpha: 0.15),
-              child: const Icon(Icons.cloud_download, color: Colors.green, size: 36),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Producto encontrado en la base pública',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                color: Colors.green.shade800,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(product.description, textAlign: TextAlign.center),
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final theme = Theme.of(context);
+           
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            backgroundColor: theme.colorScheme.surface,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Spacer(),
-                TextButton(
-                  child: const Text('Cancelar'),
-                  onPressed: () => Navigator.of(context).pop(),
+                // icon and text : neuvo producto encontrado
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.green.withValues(alpha: 0.15),
+                  child: const Icon(Icons.cloud_download, color: Colors.green, size: 26),
                 ),
-                ElevatedButton(
-                  child: const Text('Agregar'),
-                  onPressed: () {
-                    onAdd();
-                    Navigator.of(context).pop();
-                  },
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0), 
+                  child: const Text('Nuevo producto en el catálogo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-          ],
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [ 
+                // Código de barra debajo del nombre/marca
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                  children: [
+                    const Icon(Icons.qr_code_2, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Flexible(
+                    child: Text(
+                      product.code,
+                      style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                      fontFamily: 'RobotoMono',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    ),
+                  ],
+                  ),
+                ),
+                // view product : avatar, título y descripción
+                Padding(
+                  padding: const EdgeInsets.all(30.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Avatar circular con la inicial del producto o imagen si existe
+                      ComponentApp().imageProduct(imageUrl: product.image, size: 50),
+                      const SizedBox(width: 16),
+                      // text : nombre del producto, marca y código de barra
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start, // Alinea a la izquierda
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                product.description,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (product.nameMark.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    product.nameMark,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                MoneyInputTextField(
+                  controller: priceController,
+                  labelText: 'Precio de venta',
+                  autofocus: true,
+                  style: theme.textTheme.titleLarge,
+                  onChanged: (_) {
+                  setState(() {
+                    errorText = null;
+                  });
+                  },
+                ),
+                const SizedBox(height:12),
+                // CheckboxListTile : agregar al catálogo
+                Container(
+                  decoration: BoxDecoration(border: Border.all(color:  checkActiveColor,width: 0.5),color: checkAddCatalogue? checkActiveColor.withValues(alpha: 0.2):null,borderRadius: BorderRadius.circular(5)), 
+                  child: CheckboxListTile(
+                    title: const Text('Agregar al catálogo'),
+                    value:  checkAddCatalogue,
+                    onChanged: (bool? value) { 
+                      setState(() {
+                        checkAddCatalogue = value ?? false;
+                        checkActiveColor = value == true ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+                      });
+                    },
+                    controlAffinity: ListTileControlAffinity.leading, // Alinea el checkbox a la izquierda
+                  ),
+                ),
+                // Si hay un error, mostrarlo debajo del campo de texto
+                if (errorText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(errorText!, style: TextStyle(color: theme.colorScheme.error)),
+                  ),
+                const SizedBox(height: 24),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancelar'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              FilledButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Agregar'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  textStyle: theme.textTheme.labelLarge,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  final price = priceController.doubleValue;
+                  if (price <= 0) {
+                    setState(() {
+                      errorText = 'Ingrese un precio válido';
+                    });
+                    return;
+                  }
+                  // Aquí podrías pasar el precio a onAdd si lo necesitas
+                  sellProvider.addProduct(product.copyWith(salePrice: price));
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -845,23 +960,14 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
+                  MoneyInputTextField(
                     controller: controller,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [AppMoneyInputFormatter()],
+                    labelText: 'Monto recibido',
                     autofocus: true,
-                    style: theme.textTheme.titleLarge,
-                    decoration: InputDecoration(
-                      labelText: 'Monto recibido',
-                      prefixIcon: const Icon(Icons.attach_money),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest,
-                    ),
-                    onChanged: (_) {
+                    style: theme.textTheme.titleLarge, 
+                    onChanged: (value) {
                       setState(() {
-                        vuelto = controller.doubleValue - total;
-                        
+                        vuelto = value - total;
                       });
                     },
                   ),
@@ -879,21 +985,21 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                     children: [
                       Text('Vuelto:', style: theme.textTheme.bodyLarge),
                       Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: vuelto < 0
-                          ? theme.colorScheme.error.withValues(alpha: 0.08)
-                          : theme.colorScheme.secondaryContainer.withValues(alpha:0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: theme.textTheme.bodyLarge!.copyWith(
-                        color: vuelto < 0 ? theme.colorScheme.error : theme.colorScheme.secondary,
-                        fontWeight: FontWeight.bold,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: vuelto < 0
+                            ? theme.colorScheme.error.withValues(alpha: 0.08)
+                            : theme.colorScheme.secondaryContainer.withValues(alpha:0.5),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(Publications.getFormatoPrecio(value: vuelto < 0 ? 0 : vuelto),style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold,fontSize: 24 )),
-                      ),
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: theme.textTheme.bodyLarge!.copyWith(
+                            color: vuelto < 0 ? theme.colorScheme.error : theme.colorScheme.secondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          child: Text(Publications.getFormatoPrecio(value: vuelto < 0 ? 0 : vuelto),style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold,fontSize: 24 )),
+                        ),
                       ),
                     ],
                   ),
@@ -1370,7 +1476,7 @@ class _ProductoItemState extends State<ProductoItem> {
               // Cambiar Flexible por Expanded para evitar error de argumentos
                 Expanded(
                 flex: 2,
-                child: contentImage(),
+                child: Center(child: contentImage()),
                 ),
               contentInfo(),
           ],
@@ -1563,27 +1669,7 @@ class _ProductoItemState extends State<ProductoItem> {
         : Publications.getFormatoPrecio(
             value: widget.producto.salePrice * widget.producto.quantity); 
     return widget.producto.image != "" && !widget.producto.local
-        ? SizedBox(
-            width: double.infinity,
-            child: CachedNetworkImage(
-              fadeInDuration: const Duration(milliseconds: 200),
-              fit: BoxFit.cover,
-              imageUrl: widget.producto.image,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[100],
-                child: Center(
-                  child: Text(description, style: const TextStyle(fontSize: 24.0, color: Colors.grey,overflow: TextOverflow.clip )),
-                ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[100],
-                child: Center(
-                  child: Text(description,
-                      style:  const TextStyle(fontSize: 24.0, color: Colors.grey,overflow: TextOverflow.clip)),
-                ),
-              ),
-            ),
-          )
+        ? ComponentApp().imageProduct(imageUrl:widget.producto.image)
         : Container(
             color: Colors.grey[100],
             child: Center(

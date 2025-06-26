@@ -66,7 +66,7 @@ class _SellPageState extends State<SellPage> {
           return WelcomePage(
             onSelectAccount: (account) async {
               // Selecciona la cuenta y recarga el catálogo
-              await sellProvider.selectAccount(account: account,context: context);
+              await sellProvider.initAccount(account: account,context: context);
               // Si es demo, cargar productos demo
               
               if (account.id == 'demo' && authProvider.user?.isAnonymous == true) {
@@ -116,7 +116,7 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // drawerTicket view
-                  if (!isMobile(context) && sellProvider.getTicket.getProductsQuantity() !=0 || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() !=0 || (isMobile(context) && sellProvider.ticketView))
                     drawerTicket(context),
                    
                 ],
@@ -198,12 +198,25 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [    
-          // text : mensaje 'No se encontró el producto'
-          const SizedBox(height:10), 
-          const Icon(Icons.error_outline, color: Colors.orange, size: 30),
-          const SizedBox(height: 8),
-          const Text('No se encontró el producto', textAlign: TextAlign.center, style: TextStyle(fontSize: 20,color: Colors.orange, fontWeight: FontWeight.w600)),  
-          const SizedBox(height:30),
+            // Mensaje mejorado: No se encontró el producto
+            const SizedBox(height: 16),
+            CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.orange.withOpacity(0.15),
+            child: const Icon(Icons.search_off_rounded, color: Colors.orange, size: 36),
+            ),
+            const SizedBox(height: 14),
+            Text(
+            'Producto no encontrado',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 22,
+              color: Colors.orange.shade800,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+            ),
+            const SizedBox(height: 30),  
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -236,7 +249,9 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
   // Si el usuario no presionó ninguna acción, cerrar automáticamente después de la duración
   if (!accionRealizada) {
     await Future.delayed(Duration(milliseconds: 3000));
+    // ignore: use_build_context_synchronously
     if (Navigator.of(context).canPop()) {
+      // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
     }
   }
@@ -292,7 +307,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                       isSelected: sellProvider.profileAccountSelected.id  == account.id,
                       onTap: () {
                         // Selecciona la cuenta y cierra el modal
-                         sellProvider.selectAccount(account: account, context: context);
+                         sellProvider.initAccount(account: account, context: context);
                          Navigator.of(context).pop();
                       }, 
                     );
@@ -307,6 +322,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                     label: const Text('Salir de la cuenta'),
                     onPressed:() async {
                       await sellProvider.removeSelectedAccount();
+                      // ignore: use_build_context_synchronously
                       Navigator.of(context).pop();
                     },
                   ),
@@ -327,11 +343,14 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     return AppBar(
       toolbarHeight: 70,
       titleSpacing: 0.0,
-      title: ComponentApp().searchButtonAppBar(
+      title: ComponentApp().searchButtonAppBar( 
         context: buildContext, 
         onPressed: (isLoading || isEmpty)
             ? () {}
             : () => showModalBottomSheetSelectProducts(buildContext),
+        icon: isLoading || isEmpty
+            ? SizedBox(width: 20, height: 20,child: const CircularProgressIndicator(strokeWidth:2))
+            : const Icon(Icons.search_rounded),
         label: isLoading
             ? 'Cargando...'
             : isEmpty
@@ -352,7 +371,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
       centerTitle: false, 
       actions: [
         // Mostrar el botón según reglas: móvil+ticketView o desktop+productos seleccionados
-        if ((isMobile(buildContext) && provider.ticketView) || (!isMobile(buildContext) && provider.getTicket.getProductsQuantity() > 0))
+        if ((isMobile(buildContext) && provider.ticketView) || (!isMobile(buildContext) && provider.ticket.getProductsQuantity() > 0))
           TextButton.icon(
             icon: const Icon(Icons.close),
             label: const Text('Descartar ticket'),
@@ -468,8 +487,8 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
           onTap: () { 
             sellProvider.setTicketView(true); 
           },
-          text: 'Cobrar ${sellProvider.getTicket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.getTicket.getTotalPrice)}',
-          buttonColor: sellProvider.getTicket.getTotalPrice == 0 ? Colors.grey : null,
+          text: 'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.ticket.getTotalPrice)}',
+          buttonColor: sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
         ): const SizedBox.shrink(),
       ],
     );
@@ -493,7 +512,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
           crossAxisCount = 6; // Ancho para pantallas grandes
         }
         // Usar los productos seleccionados del ticket
-        final List<ProductCatalogue> list = provider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList().reversed.toList();
+        final List<ProductCatalogue> list = provider.ticket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList().reversed.toList();
         // Calcular cuántas filas caben en la vista
         final double itemHeight = (constraints.maxWidth / crossAxisCount) * 1.1; // Ajusta el factor según el aspecto de los ítems
         int rowCount = 1;
@@ -533,7 +552,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
   Widget drawerTicket(BuildContext context) {
     // values
     final provider = Provider.of<SellProvider>(context);
-    final ticket = provider.getTicket;
+    final ticket = provider.ticket;
 
     // style adaptado a tema
     final theme = Theme.of(context);
@@ -684,7 +703,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         // choiceChip : pago con efectivo
         ChoiceChip( 
           label: const Text('Efectivo'),
-          selected: provider.getTicket.payMode == 'effective',
+          selected: provider.ticket.payMode == 'effective',
           onSelected: (bool selected) { 
             if (selected) { dialogSelectedIncomeCash();}  
             provider.setPayMode(payMode: selected ? 'effective' : '');
@@ -693,7 +712,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         // choiceChip : pago con mercado pago
         ChoiceChip(
           label: const Text('Mercado Pago'),
-          selected: provider.getTicket.payMode == 'mercadopago',
+          selected: provider.ticket.payMode == 'mercadopago',
           onSelected: (bool selected) {  
             provider.setPayMode(payMode: selected ? 'mercadopago' : '');
           },
@@ -701,7 +720,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         // choiceChip : pago con tarjeta de credito/debito
         ChoiceChip(
           label: const Text('Tarjeta Deb/Cred'),
-          selected: provider.getTicket.payMode == 'card',
+          selected: provider.ticket.payMode == 'card',
           onSelected: (bool selected) {  
             provider.setPayMode(payMode: selected ? 'card' : '');
           },
@@ -727,7 +746,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
             const SizedBox(height: 12),
             Text('Transacción realizada con éxito', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
             const SizedBox(height: 20),
-            Text('Total: ${Publications.getFormatoPrecio(value: provider.getTicket.getTotalPrice)}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+            Text('Total: ${Publications.getFormatoPrecio(value: provider.ticket.getTotalPrice)}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
             
           ],
         ),
@@ -744,7 +763,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
-            final total = provider.getTicket.getTotalPrice;
+            final total = provider.ticket.getTotalPrice;
             final theme = Theme.of(context);
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -757,7 +776,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                   TextField(
                     controller: controller,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [AppMoneyInputFormatter(symbol: provider.getTicket.currencySymbol)],
+                    inputFormatters: [AppMoneyInputFormatter(symbol: provider.ticket.currencySymbol)],
                     autofocus: true,
                     style: theme.textTheme.titleLarge,
                     decoration: InputDecoration(
@@ -1106,7 +1125,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
   /// Construye el widget de un producto para la lista del modal de selección.
   /// Mejora la UI siguiendo Material 3 y muestra cantidad seleccionada si aplica.
   Widget buildProductListItem({required ProductCatalogue product,required SellProvider sellProvider,required void Function() onTap,required StateSetter setState }) {
-    final ticketProducts = sellProvider.getTicket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList();
+    final ticketProducts = sellProvider.ticket.listPoduct.map((item) => item is ProductCatalogue ? item : ProductCatalogue.fromMap(item)).toList();
     ProductCatalogue? selectedProduct;
     try {
       selectedProduct = ticketProducts.firstWhere((p) => p.id == product.id && p.quantity > 0);

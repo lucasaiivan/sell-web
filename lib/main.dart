@@ -31,6 +31,7 @@ void main() async{
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             signInWithGoogleUseCase: SignInWithGoogleUseCase(authRepository),
+            signInSilentlyUseCase: SignInSilentlyUseCase(authRepository),
             signOutUseCase: SignOutUseCase(authRepository),
             getUserStreamUseCase: GetUserStreamUseCase(authRepository),
             getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl()),

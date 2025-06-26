@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 class AuthProvider extends ChangeNotifier {
 
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
+  final SignInSilentlyUseCase signInSilentlyUseCase;
   final SignOutUseCase signOutUseCase;
   final GetUserStreamUseCase getUserStreamUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
@@ -20,6 +21,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider({
     required this.signInWithGoogleUseCase,
+    required this.signInSilentlyUseCase,
     required this.signOutUseCase,
     required this.getUserStreamUseCase,
     required this.getUserAccountsUseCase,
@@ -36,6 +38,14 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
+    
+    // Intenta autenticación silenciosa al inicializar
+    _initializeSilentSignIn();
+  }
+  
+  /// Inicializa autenticación silenciosa para mejorar UX
+  Future<void> _initializeSilentSignIn() async {
+    await signInSilently();
   }
   // Inicia sesión con Google usando el caso de uso
   Future<void> signInWithGoogle() async {
@@ -71,6 +81,10 @@ class AuthProvider extends ChangeNotifier {
     _user = user;
     _accountsAssociateds = [];
     notifyListeners();
+  }
+  // Intenta iniciar sesión silenciosamente con Google
+  Future<void> signInSilently() async {
+    await signInSilentlyUseCase();
   }
   // ProfileAccountModel : devuelve los datos del perfil de la cuenta asociada del id pasado por parametro
   ProfileAccountModel? getProfileAccountById(String id) {

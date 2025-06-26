@@ -72,7 +72,7 @@ class ComponentApp extends StatelessWidget {
     required BuildContext context,
     required VoidCallback onPressed,
     required String label,
-    IconData icon = Icons.search,
+    Widget icon = const Icon(Icons.search),
     Color? color,
     Color? textColor,
     Color? iconColor,
@@ -94,7 +94,7 @@ class ComponentApp extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: iconColor ?? textColor ?? colorScheme.onPrimaryContainer),
+          icon,
           const SizedBox(width: 8),
           Opacity(
             opacity: 0.6,

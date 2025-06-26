@@ -42,9 +42,12 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   void _initCatalogueWithUseCase(GetCatalogueStreamUseCase useCase) {
+    _isLoading = true;
+    notifyListeners();
     _catalogueSubscription?.cancel();
     _catalogueSubscription = useCase().listen((snapshot) {
       _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      _isLoading = false;
       notifyListeners();
     });
   }

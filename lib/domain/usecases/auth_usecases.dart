@@ -25,3 +25,9 @@ class SignInAnonymouslyUseCase {
   /// Inicia sesión anónima en Firebase
   Future<UserAuth?> call() => repository.signInAnonymously();
 }
+
+class SignInSilentlyUseCase {
+  final AuthRepository repository;
+  SignInSilentlyUseCase(this.repository);
+  Future<UserAuth?> call() => repository.signInSilently();
+}

@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
 
 class WelcomePage extends StatelessWidget {
+  
   final Future<void> Function(ProfileAccountModel) onSelectAccount;
 
   const WelcomePage({super.key, required this.onSelectAccount});

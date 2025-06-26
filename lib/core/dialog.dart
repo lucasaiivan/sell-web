@@ -3,16 +3,19 @@ import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/widgets/money_input_text_field.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Muestra un diálogo cuando se encuentra un producto en la base pública y permite agregarlo a la lista seleccionada.
-Future<void> showDialogAgregarProductoPublico(BuildContext context, {required ProductCatalogue product }) async {
+Future<void> showDialogAgregarProductoPublico(BuildContext context, {required ProductCatalogue product, String? errorMessage }) async {
+  // Variables
   bool checkAddCatalogue = true; // Checkbox para agregar al catálogo
   final priceController = AppMoneyTextEditingController(); 
-  String? errorText;
+  String? errorText = errorMessage;
   var checkActiveColor = Theme.of(context).colorScheme.primary.withAlpha(128);
-
+  // Proveedores
   final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
+  final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
 
   await showDialog(
     context: context,
@@ -129,12 +132,14 @@ Future<void> showDialogAgregarProductoPublico(BuildContext context, {required Pr
                 child: CheckboxListTile(
                   title: const Text('Agregar al catálogo'),
                   value:  checkAddCatalogue,
-                  onChanged: (bool? value) { 
+                    onChanged: (bool? value) { 
                     setState(() {
                       checkAddCatalogue = value ?? false;
-                      checkActiveColor = value == true ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withAlpha(128);
+                      checkActiveColor = value == true
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface.withAlpha(128);
                     });
-                  },
+                    },
                   controlAffinity: ListTileControlAffinity.leading, // Alinea el checkbox a la izquierda
                 ),
               ),
@@ -160,7 +165,7 @@ Future<void> showDialogAgregarProductoPublico(BuildContext context, {required Pr
                 textStyle: theme.textTheme.labelLarge,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () {
+              onPressed: () async {
                 final price = priceController.doubleValue;
                 if (price <= 0) {
                   setState(() {
@@ -168,8 +173,20 @@ Future<void> showDialogAgregarProductoPublico(BuildContext context, {required Pr
                   });
                   return;
                 }
-                sellProvider.addProduct(product.copyWith(salePrice: price));
-                Navigator.of(context).pop();
+                final productToAdd = product.copyWith(salePrice: price);
+                // Agregar siempre a la lista de productos seleccionados del ticket
+                sellProvider.addProductsticket(productToAdd);
+                Navigator.of(context).pop(); // Cierra el diálogo de inmediato
+                // Procesar en segundo plano la adición al catálogo
+                if (checkAddCatalogue && productToAdd.id.isNotEmpty) {
+                  try {
+                    await catalogueProvider.addProductToCatalogue(productToAdd);
+                  } catch (e) {
+                    // Si falla, reabrir el diálogo con mensaje de error
+                    // ignore: use_build_context_synchronously
+                    showDialogAgregarProductoPublico(context, product: product, errorMessage: 'Error al guardar en el catálogo. Intente nuevamente.');
+                  }
+                }
               },
             ),
           ],

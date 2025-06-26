@@ -93,6 +93,8 @@ class MyApp extends StatelessWidget {
                           isProductScannedUseCase: isProductScannedUseCase,
                           getPublicProductByCodeUseCase: GetPublicProductByCodeUseCase(
                             CatalogueRepositoryImpl(), // Sin id para acceso público
+                          ), addProductToCatalogueUseCase: AddProductToCatalogueUseCase(
+                            CatalogueRepositoryImpl(id: userId),
                           ),
                         );
                       },

@@ -163,7 +163,7 @@ class _SellPageState extends State<SellPage> {
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
     if (product != null) {
-      homeProvider.addProduct(product.copyWith());
+      homeProvider.addProductsticket(product.copyWith());
     } else {
       final publicProduct = await catalogueProvider.getPublicProductByCode(code);
       if (publicProduct != null) {
@@ -1104,7 +1104,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                               product: product,
                               sellProvider: sellProvider,
                               onTap: () {
-                                sellProvider.addProduct(product.copyWith());
+                                sellProvider.addProductsticket(product.copyWith());
                                 setState(() {}); // Actualiza la vista del modal al seleccionar
                               },
                               setState: setState,
@@ -1407,7 +1407,7 @@ class _ProductoItemState extends State<ProductoItem> {
                                 onPressed: cantidad > 1 ? (){
                                   // disminuir la cantidad y actualizar el estado el provider 
                                   cantidad--;
-                                  Provider.of<SellProvider>(originalContext, listen: false).addProduct(
+                                  Provider.of<SellProvider>(originalContext, listen: false).addProductsticket(
                                   widget.producto.copyWith(quantity: cantidad),
                                   replaceQuantity: true,
                                   );
@@ -1422,7 +1422,7 @@ class _ProductoItemState extends State<ProductoItem> {
                               onPressed: () {
                                 // aumentar la cantidad y actualizar el estado el provider 
                                 cantidad++;
-                                Provider.of<SellProvider>(originalContext, listen: false).addProduct(
+                                Provider.of<SellProvider>(originalContext, listen: false).addProductsticket(
                                 widget.producto.copyWith(quantity: cantidad),
                                 replaceQuantity: true,
                                 );

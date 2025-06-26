@@ -88,7 +88,7 @@ class SellProvider extends ChangeNotifier {
   Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
 
   /// Agrega un producto al ticket actual.
-  void addProduct(ProductCatalogue product, {bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product, {bool replaceQuantity = false}) {
     // Si el producto ya existe y replaceQuantity es true, actualiza la cantidad
     bool exist = false;
     for (var i = 0; i < ticket.listPoduct.length; i++) {
@@ -137,7 +137,7 @@ class SellProvider extends ChangeNotifier {
       description: description,
       salePrice: salePrice, 
     );
-    addProduct(product, replaceQuantity: true);
+    addProductsticket(product, replaceQuantity: true);
     notifyListeners();
   }
  

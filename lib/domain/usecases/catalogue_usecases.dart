@@ -35,3 +35,9 @@ class IsProductScannedUseCase {
     return product != null;
   }
 }
+
+class AddProductToCatalogueUseCase {
+  final CatalogueRepository repository;
+  AddProductToCatalogueUseCase(this.repository);
+  Future<void> call(ProductCatalogue product, String accountId) => repository.addProductToCatalogue(product, accountId);
+}

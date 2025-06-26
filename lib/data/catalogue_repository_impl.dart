@@ -27,4 +27,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     }
     return null;
   }
+
+  @override
+  Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
+    if (product.id.isEmpty) return;
+    final ref = FirebaseFirestore.instance.collection('/ACCOUNTS/$accountId/CATALOGUE');
+    await ref.doc(product.id).set(product.toMap(), SetOptions(merge: true));
+  }
 }

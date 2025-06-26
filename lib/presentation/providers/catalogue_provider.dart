@@ -11,12 +11,14 @@ class CatalogueProvider extends ChangeNotifier {
   final GetProductByCodeUseCase getProductByCodeUseCase;
   final IsProductScannedUseCase isProductScannedUseCase;
   final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
+  final AddProductToCatalogueUseCase addProductToCatalogueUseCase;
 
   CatalogueProvider({
     required this.getProductsStreamUseCase,
     required this.getProductByCodeUseCase,
     required this.isProductScannedUseCase,
     required this.getPublicProductByCodeUseCase,
+    required this.addProductToCatalogueUseCase,
   }) {
     _initProducts();
   }
@@ -32,12 +34,15 @@ class CatalogueProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool get isLoading => _isLoading;
 
+  String? _accountId;
+
   void initCatalogue(String id) {
     // Cancelar la suscripción anterior si existe
     _catalogueSubscription?.cancel();
     // Limpiar productos y notificar a la UI inmediatamente
     _products = [];
     notifyListeners();
+    _accountId = id; // Asignar el ID de la cuenta actual
     // case use : Crear un nuevo caso de uso con el ID proporcionado y reiniciar la suscripción
     final newUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: id));
     _initCatalogueWithUseCase(newUseCase);
@@ -123,5 +128,13 @@ class CatalogueProvider extends ChangeNotifier {
     _isLoading = false;
     _products = demoProducts;
     notifyListeners();
+  }
+
+  /// Agrega un producto al catálogo de la cuenta actual usando el caso de uso
+  Future<void> addProductToCatalogue(ProductCatalogue product) async { 
+    // Si el id está vacío o nulo, asignar el código como id
+    final productToSave = (product.id.isEmpty)? product.copyWith(id: product.code) : product;
+    _accountId ??= CatalogueRepositoryImpl().id; // Asegurarse de que _accountId tenga un valor 
+    await addProductToCatalogueUseCase(productToSave, _accountId!);
   }
 }

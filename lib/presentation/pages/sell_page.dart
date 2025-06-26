@@ -115,7 +115,7 @@ class _SellPageState extends State<SellPage> {
                       ],
                     ),
                   ),
-                  // drawerTicket view
+                  // drawerTicket view : visualización del ticket con los datos de la compra
                   if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() !=0 || (isMobile(context) && sellProvider.ticketView))
                     drawerTicket(context),
                    
@@ -155,22 +155,94 @@ class _SellPageState extends State<SellPage> {
     } 
   }
 
-  void scanCodeProduct({required String code}) {
-
+  void scanCodeProduct({required String code}) async {
     final context = _focusNode.context;
     if (context == null) return;
     final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
-    
     if (product != null) {
-      // agrega el producto al carrito de compras
-      homeProvider.addProduct(product.copyWith()); 
+      homeProvider.addProduct(product.copyWith());
     } else {
-      // method : mostrar dialog cuando no se encuentra el producto
-      showDialogProductoNoEncontrado(context,code: code);
+      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
+      if (publicProduct != null) {
+        final productCatalogue = publicProduct.convertProductCatalogue();
+        // ignore: use_build_context_synchronously
+        showDialogAgregarProductoPublico(context, product: productCatalogue, onAdd: () {
+          homeProvider.addProduct(productCatalogue);
+        });
+      } else {
+        // ignore: use_build_context_synchronously
+        showDialogProductoNoEncontrado(context, code: code);
+      }
     }
   }
+
+  /// Muestra un diálogo cuando se encuentra un producto en la base pública y permite agregarlo a la lista seleccionada.
+  Future<void> showDialogAgregarProductoPublico(BuildContext context, {required ProductCatalogue product, required VoidCallback onAdd}) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(product.code, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 16),
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.green.withValues(alpha: 0.15),
+              child: const Icon(Icons.cloud_download, color: Colors.green, size: 36),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Producto encontrado en la base pública',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.green.shade800,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(product.description, textAlign: TextAlign.center),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                TextButton(
+                  child: const Text('Cancelar'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Agregar'),
+                  onPressed: () {
+                    onAdd();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+ 
   /// Muestra un AlertDialog temporal con mensaje de error y opciones para crear o agregar producto.
 /// Se cierra automáticamente después de [duracion] milisegundos si no se elige una acción.
 Future<void> showDialogProductoNoEncontrado(BuildContext context, {required String code }) async {
@@ -202,7 +274,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
             const SizedBox(height: 16),
             CircleAvatar(
             radius: 28,
-            backgroundColor: Colors.orange.withOpacity(0.15),
+            backgroundColor: Colors.orange.withValues(alpha: 0.15),
             child: const Icon(Icons.search_off_rounded, color: Colors.orange, size: 36),
             ),
             const SizedBox(height: 14),
@@ -776,7 +848,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                   TextField(
                     controller: controller,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [AppMoneyInputFormatter(symbol: provider.ticket.currencySymbol)],
+                    inputFormatters: [AppMoneyInputFormatter()],
                     autofocus: true,
                     style: theme.textTheme.titleLarge,
                     decoration: InputDecoration(

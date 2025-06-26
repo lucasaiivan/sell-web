@@ -10,11 +10,13 @@ class CatalogueProvider extends ChangeNotifier {
   final GetCatalogueStreamUseCase getProductsStreamUseCase;
   final GetProductByCodeUseCase getProductByCodeUseCase;
   final IsProductScannedUseCase isProductScannedUseCase;
+  final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
 
   CatalogueProvider({
     required this.getProductsStreamUseCase,
     required this.getProductByCodeUseCase,
     required this.isProductScannedUseCase,
+    required this.getPublicProductByCodeUseCase,
   }) {
     _initProducts();
   }
@@ -88,9 +90,29 @@ class CatalogueProvider extends ChangeNotifier {
     return getProductByCodeUseCase(_products, code);
   }
 
-  /// Verifica si un producto con el código dado ya fue escaneado usando el caso de uso correspondiente.
-  bool getIsProductScanned(String code) {
-    return isProductScannedUseCase(_products, code);
+  /// Busca un producto público por código de barra en la base pública.
+  Future<Product?> getPublicProductByCode(String code) async {
+    return await getPublicProductByCodeUseCase(code);
+  }
+
+  /// Intenta escanear un producto: si no está en el catálogo, busca en la base pública y lo agrega a la lista seleccionada si el usuario acepta.
+  Future<void> scanProduct(String code, {required Function(Product) onFoundInPublic}) async {
+    final localProduct = getProductByCode(code);
+    if (localProduct != null) {
+      _lastScannedProduct = localProduct;
+      _lastScannedCode = code;
+      notifyListeners();
+      return;
+    }
+    // Buscar en la base pública
+    final publicProduct = await getPublicProductByCode(code);
+    if (publicProduct != null) {
+      // Llamar callback para que la UI decida si agregarlo
+      onFoundInPublic(publicProduct);
+    } else {
+      _scanError = 'Producto no encontrado';
+      notifyListeners();
+    }
   }
 
   /// Devuelve el stream de productos para ser usado directamente en la UI si es necesario.

@@ -19,6 +19,13 @@ class GetProductByCodeUseCase {
   }
 }
 
+class GetPublicProductByCodeUseCase {
+  final CatalogueRepository repository;
+  GetPublicProductByCodeUseCase(this.repository);
+  // Busca un producto público por código de barra
+  Future<Product?> call(String code) => repository.getPublicProductByCode(code);
+}
+
 class IsProductScannedUseCase {
   final GetProductByCodeUseCase getProductByCodeUseCase;
   IsProductScannedUseCase(this.getProductByCodeUseCase);

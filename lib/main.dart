@@ -54,8 +54,8 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeDataAppProvider>(
       builder: (context, themeProvider, _) {
         return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'SellWeb',
+          debugShowCheckedModeBanner: false, 
+          title: 'Punto de Venta',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
             useMaterial3: true,
@@ -91,6 +91,9 @@ class MyApp extends StatelessWidget {
                           getProductsStreamUseCase: getProductsStreamUseCase,
                           getProductByCodeUseCase: getProductByCodeUseCase,
                           isProductScannedUseCase: isProductScannedUseCase,
+                          getPublicProductByCodeUseCase: GetPublicProductByCodeUseCase(
+                            CatalogueRepositoryImpl(), // Sin id para acceso público
+                          ),
                         );
                       },
                     ),

@@ -1,6 +1,5 @@
 import 'package:sellweb/core/widgets/money_input_text_field.dart';
-import 'package:web/web.dart' as html;
-import 'package:cached_network_image/cached_network_image.dart'; 
+import 'package:web/web.dart' as html; 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart'; 

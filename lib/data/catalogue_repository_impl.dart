@@ -30,8 +30,19 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
 
   @override
   Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
-    if (product.id.isEmpty) return;
-    final ref = FirebaseFirestore.instance.collection('/ACCOUNTS/$accountId/CATALOGUE');
-    await ref.doc(product.id).set(product.toMap(), SetOptions(merge: true));
+    if (product.id.isEmpty) {
+      throw ArgumentError('El producto debe tener un ID válido');
+    }
+    if (accountId.isEmpty) {
+      throw ArgumentError('El ID de la cuenta no puede estar vacío');
+    }
+    
+    try {
+      final ref = FirebaseFirestore.instance.collection('/ACCOUNTS/$accountId/CATALOGUE');
+      final productMap = product.toMap();
+      await ref.doc(product.id).set(productMap, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception('Error al guardar en Firestore: $e');
+    }
   }
 }

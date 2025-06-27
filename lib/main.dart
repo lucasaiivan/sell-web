@@ -84,7 +84,7 @@ class MyApp extends StatelessWidget {
                           },
                         );
                       }
-                      // Si hay cuenta seleccionada, inicializar el CatalogueProvider con el id correcto
+                      // Si hay cuenta seleccionada, usar MultiProvider para ambos providers
                       final accountId = sellProvider.profileAccountSelected.id;
                       final getProductsStreamUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: accountId));
                       final getProductByCodeUseCase = GetProductByCodeUseCase();
@@ -94,6 +94,9 @@ class MyApp extends StatelessWidget {
 
                       return MultiProvider(
                         providers: [
+                          // Reutilizar el SellProvider existente del contexto padre
+                          ChangeNotifierProvider.value(value: sellProvider),
+                          // Crear el CatalogueProvider
                           ChangeNotifierProvider(
                             create: (_) => CatalogueProvider(
                               getProductsStreamUseCase: getProductsStreamUseCase,
@@ -104,7 +107,7 @@ class MyApp extends StatelessWidget {
                             ),
                           ),
                         ],
-                        child: SellPage(),
+                        child: const SellPage(),
                       );
                     },
                   ),

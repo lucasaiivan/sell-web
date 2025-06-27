@@ -115,8 +115,14 @@ class Product {
     creation = data.containsKey('creation')? data['creation']: data['timestamp_creation'] ?? Timestamp.now();
   }
   ProductCatalogue convertProductCatalogue() {
-    //  create value
-    ProductCatalogue productCatalogue =   ProductCatalogue(upgrade: Timestamp.now(), creation: Timestamp.now(),documentCreation: Timestamp.now(),documentUpgrade: Timestamp.now() );
+    //  create value con local = true para indicar que es un producto agregado al catálogo local
+    ProductCatalogue productCatalogue = ProductCatalogue(
+      upgrade: Timestamp.now(), 
+      creation: Timestamp.now(),
+      documentCreation: creation,
+      documentUpgrade: upgrade,
+      local: true, // Marcar como producto local del catálogo
+    );
     //  set
     productCatalogue.id = id;
     productCatalogue.followers = followers;
@@ -130,7 +136,9 @@ class Product {
     productCatalogue.description = description;
     productCatalogue.code = code;
     productCatalogue.documentUpgrade = upgrade;
-    productCatalogue.documentCreation = creation; 
+    productCatalogue.documentCreation = creation;
+    productCatalogue.documentIdCreation = idUserCreation;
+    productCatalogue.documentIdUpgrade = idUserUpgrade;
 
     return productCatalogue;
   }
@@ -384,15 +392,15 @@ class ProductCatalogue {
 
   Map<String, dynamic> toMap() => {
         "id": id,
-        'local':local,
+        'local': local,
         "verified": verified,
         'reviewed': reviewed,
-        'followers':followers,
-        'outstanding':outstanding,
+        'followers': followers,
+        'outstanding': outstanding,
         "favorite": favorite,
         "idMark": idMark,
         "nameMark": nameMark,
-        'imageMark':imageMark,
+        'imageMark': imageMark,
         "image": image,
         "description": description,
         "code": code,
@@ -416,6 +424,7 @@ class ProductCatalogue {
         "quantityStock": quantityStock,
         "sales": sales,
         "alertStock": alertStock,
+        "revenue": revenue, // agregamos revenue que faltaba
       };
 
   Map<String, dynamic> toJson() => {

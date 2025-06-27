@@ -134,7 +134,27 @@ class CatalogueProvider extends ChangeNotifier {
   Future<void> addProductToCatalogue(ProductCatalogue product) async { 
     // Si el id está vacío o nulo, asignar el código como id
     final productToSave = (product.id.isEmpty)? product.copyWith(id: product.code) : product;
-    _accountId ??= CatalogueRepositoryImpl().id; // Asegurarse de que _accountId tenga un valor 
-    await addProductToCatalogueUseCase(productToSave, _accountId!);
+
+    // mensaje por consola para depuración
+    if (kDebugMode) {
+      print('--------------------------- Guardando producto en catálogo: ${productToSave.id}, Código: ${productToSave.code}, id de cuenta: $_accountId');
+    }
+     
+     
+    
+    try {
+      await addProductToCatalogueUseCase(productToSave, _accountId!);
+      // Opcional: actualizar la lista local inmediatamente
+      final existingIndex = _products.indexWhere((p) => p.id == productToSave.id);
+      if (existingIndex >= 0) {
+        _products[existingIndex] = productToSave;
+      } else {
+        _products.add(productToSave);
+      }
+      notifyListeners();
+    } catch (e) {
+      // Relanzar el error con más contexto
+      throw Exception('--------------------------- Error al guardar producto en catálogo: $e');
+    }
   }
 }

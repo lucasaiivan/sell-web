@@ -77,7 +77,7 @@ class MyApp extends StatelessWidget {
                     builder: (context, sellProvider, _) {
 
                       // Si no hay cuenta seleccionada, mostrar WelcomePage para seleccionar una cuenta
-                      if (sellProvider.profileAccountSelected.id == '') {
+                      if (sellProvider.profileAccountSelected.id == '') { 
                         return WelcomePage(
                           onSelectAccount: (account) async {
                             await sellProvider.initAccount(account: account, context: context);
@@ -87,7 +87,7 @@ class MyApp extends StatelessWidget {
                       // Si hay cuenta seleccionada, usar MultiProvider para ambos providers
                       final accountId = sellProvider.profileAccountSelected.id;
                       final getProductsStreamUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: accountId));
-                      final getProductByCodeUseCase = GetProductByCodeUseCase();
+                      final getProductByCodeUseCase = GetProductByCodeUseCase(); 
                       final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
                       final getPublicProductByCodeUseCase = GetPublicProductByCodeUseCase(CatalogueRepositoryImpl());
                       final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(CatalogueRepositoryImpl(id: accountId));

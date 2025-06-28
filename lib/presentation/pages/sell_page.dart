@@ -1239,19 +1239,6 @@ class _DashedLinePainter extends CustomPainter {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ProductoItem extends StatefulWidget {
   final ProductCatalogue producto;
 
@@ -1280,11 +1267,11 @@ class _ProductoItemState extends State<ProductoItem> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       clipBehavior: Clip.antiAlias,
       child: Stack(  
-        children: [
-          // view : alert stock, image and info
+        children: [ 
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // view : alerta de stock bajo o sin stock
               alertStockText == ''
                   ? Container()
                   : Container(
@@ -1483,14 +1470,11 @@ class _ProductoItemState extends State<ProductoItem> {
   // WIDGETS COMPONETS
 
   Widget contentImage() {
+
     // var
-    String description = widget.producto.description != ''
-        ? widget.producto.description.length >= 3
-            ? widget.producto.description.substring(0, 3)
-            : widget.producto.description.substring(0, 1)
-        : Publications.getFormatoPrecio(
-            value: widget.producto.salePrice * widget.producto.quantity); 
-    return widget.producto.image != "" && !widget.producto.local
+    String description = widget.producto.description != ''? widget.producto.description.length >= 3? widget.producto.description.substring(0, 3) : widget.producto.description.substring(0, 1): Publications.getFormatoPrecio(value: widget.producto.salePrice * widget.producto.quantity); 
+
+    return widget.producto.image != "" 
         ? ComponentApp().imageProduct(imageUrl:widget.producto.image)
         : Container(
             color: Colors.grey[100],

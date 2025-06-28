@@ -32,10 +32,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
     if (product.id.isEmpty) {
       throw ArgumentError('El producto debe tener un ID válido');
-    }
-    if (accountId.isEmpty) {
-      throw ArgumentError('El ID de la cuenta no puede estar vacío');
-    }
+    } 
     
     try {
       final ref = FirebaseFirestore.instance.collection('/ACCOUNTS/$accountId/CATALOGUE');

@@ -254,9 +254,9 @@ class ComponentApp extends StatelessWidget {
     double? size,
     Color? backgroundColor,
   }) {
-    final Color bg = backgroundColor ?? Colors.blueGrey.withValues(alpha: 0.1);
+    final Color bg = backgroundColor ?? Colors.white;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
         color: bg,
         width: size,

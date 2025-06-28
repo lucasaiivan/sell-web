@@ -2,8 +2,7 @@ import 'dart:async';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; 
 import '../../domain/usecases/catalogue_usecases.dart';
 
 class CatalogueProvider extends ChangeNotifier {
@@ -34,7 +33,9 @@ class CatalogueProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool get isLoading => _isLoading;
 
-  String? _accountId;
+  String _accountId = '';
+  String? get accountId => _accountId; // Getter para el ID de la cuenta actual
+  set accountId(String? id) => _accountId = id ?? '';
 
   void initCatalogue(String id) {
     // Cancelar la suscripción anterior si existe
@@ -42,7 +43,7 @@ class CatalogueProvider extends ChangeNotifier {
     // Limpiar productos y notificar a la UI inmediatamente
     _products = [];
     notifyListeners();
-    _accountId = id; // Asignar el ID de la cuenta actual
+    accountId = id; // Asignar el ID de la cuenta actual
     // case use : Crear un nuevo caso de uso con el ID proporcionado y reiniciar la suscripción
     final newUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: id));
     _initCatalogueWithUseCase(newUseCase);
@@ -90,7 +91,7 @@ class CatalogueProvider extends ChangeNotifier {
     });
   }
 
-  /// Busca un producto por su código en la lista interna de productos usando el caso de uso correspondiente.
+  /// Busca un producto por su código en la lista del catálogo.
   ProductCatalogue? getProductByCode(String code) {
     return getProductByCodeUseCase(_products, code);
   }
@@ -132,25 +133,15 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Agrega un producto al catálogo de la cuenta actual usando el caso de uso
   Future<void> addProductToCatalogue(ProductCatalogue product) async { 
+
     // Si el id está vacío o nulo, asignar el código como id
     final productToSave = (product.id.isEmpty)? product.copyWith(id: product.code) : product;
-
-    // mensaje por consola para depuración
-    if (kDebugMode) {
-      print('--------------------------- Guardando producto en catálogo: ${productToSave.id}, Código: ${productToSave.code}, id de cuenta: $_accountId');
-    }
-     
-     
     
+    if (accountId == null || accountId!.isEmpty) {
+      throw Exception('El ID de la cuenta no está definido o es nulo. Por favor, inicializa el catálogo con un ID de cuenta válido.');
+    }
     try {
-      await addProductToCatalogueUseCase(productToSave, _accountId!);
-      // Opcional: actualizar la lista local inmediatamente
-      final existingIndex = _products.indexWhere((p) => p.id == productToSave.id);
-      if (existingIndex >= 0) {
-        _products[existingIndex] = productToSave;
-      } else {
-        _products.add(productToSave);
-      }
+      await addProductToCatalogueUseCase(productToSave, accountId!);  
       notifyListeners();
     } catch (e) {
       // Relanzar el error con más contexto
@@ -158,3 +149,4 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 }
+ 

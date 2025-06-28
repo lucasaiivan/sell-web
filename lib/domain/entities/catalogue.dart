@@ -115,13 +115,12 @@ class Product {
     creation = data.containsKey('creation')? data['creation']: data['timestamp_creation'] ?? Timestamp.now();
   }
   ProductCatalogue convertProductCatalogue() {
-    //  create value con local = true para indicar que es un producto agregado al catálogo local
+    // convierte la entidad [Product] a [ProductCatalogue]
     ProductCatalogue productCatalogue = ProductCatalogue(
-      upgrade: Timestamp.now(), 
-      creation: Timestamp.now(),
+      upgrade: upgrade,
+      creation: creation,
       documentCreation: creation,
       documentUpgrade: upgrade,
-      local: true, // Marcar como producto local del catálogo
     );
     //  set
     productCatalogue.id = id;
@@ -165,7 +164,7 @@ class ProductCatalogue {
   int followers = 0; // seguidores
   
   // variables del catalogo de la cuenta
-  bool local = false; // producto local
+  bool local = false; // 
   Timestamp creation =Timestamp.now(); // Marca de tiempo ( hora en que se creo el documento en el catalogo de la cuenta  )
   Timestamp upgrade = Timestamp.now(); // Marca de tiempo ( hora en que se actualizo el precio de venta al publico ) 
   bool favorite = false;  

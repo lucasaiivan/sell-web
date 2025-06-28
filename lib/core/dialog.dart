@@ -177,7 +177,7 @@ Future<void> showDialogAgregarProductoPublico(BuildContext context, {required Pr
                 // Agregar siempre a la lista de productos seleccionados del ticket
                 sellProvider.addProductsticket(productToAdd);
                 Navigator.of(context).pop(); // Cierra el diálogo de inmediato
-                // Procesar en segundo plano la adición al catálogo
+                // Procesar en segundo plano la adición al catálogo 
                 if (checkAddCatalogue && productToAdd.id.isNotEmpty) {
                   try {
                     await catalogueProvider.addProductToCatalogue(productToAdd);

@@ -36,7 +36,7 @@ class CatalogueProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   String _accountId = '';
-  String? get accountId => _accountId; // Getter para el ID de la cuenta actual
+  String get accountId => _accountId; // Getter para el ID de la cuenta actual
   set accountId(String? id) {
     if (id == null || id.isEmpty) {
       throw Exception('El ID de la cuenta no puede ser nulo ni vacío.');
@@ -60,9 +60,10 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   void _initCatalogueWithUseCase(GetCatalogueStreamUseCase useCase) {
-    _isLoading = true;
-    notifyListeners();
-    _catalogueSubscription?.cancel();
+    _isLoading = true; // Indica que se está cargando el catálogo
+    notifyListeners(); 
+    _catalogueSubscription?.cancel(); // Cancelar cualquier suscripción anteriors
+    // Reiniciar la lista de productos
     _catalogueSubscription = useCase().listen((snapshot) {
       _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
       _isLoading = false;
@@ -157,7 +158,7 @@ class CatalogueProvider extends ChangeNotifier {
       throw Exception('--------------------------- El ID de la cuenta no está definido o es nulo. Por favor, inicializa el catálogo con un ID de cuenta válido.');
     }
     try {
-      await addProductToCatalogueUseCase(productToSave, accountId!);  
+      await addProductToCatalogueUseCase(productToSave, accountId);  
       notifyListeners();
     } catch (e) {
       // Relanzar el error con más contexto

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:sellweb/core/utils/fuctions.dart';
+
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,9 +37,17 @@ class CatalogueProvider extends ChangeNotifier {
 
   String _accountId = '';
   String? get accountId => _accountId; // Getter para el ID de la cuenta actual
-  set accountId(String? id) => _accountId = id ?? '';
+  set accountId(String? id) {
+    if (id == null || id.isEmpty) {
+      throw Exception('El ID de la cuenta no puede ser nulo ni vacío.');
+    }
+    _accountId = id;
+  }
 
   void initCatalogue(String id) {
+    if (id.isEmpty) {
+      throw Exception('El ID de la cuenta no puede ser vacío al inicializar el catálogo.');
+    }
     // Cancelar la suscripción anterior si existe
     _catalogueSubscription?.cancel();
     // Limpiar productos y notificar a la UI inmediatamente
@@ -135,10 +145,16 @@ class CatalogueProvider extends ChangeNotifier {
   Future<void> addProductToCatalogue(ProductCatalogue product) async { 
 
     // Si el id está vacío o nulo, asignar el código como id
-    final productToSave = (product.id.isEmpty)? product.copyWith(id: product.code) : product;
+    final productToSave =  product.copyWith(
+      creation: Utils().getTimestampNow(), // fecha de creación del producto 
+      upgrade: Utils().getTimestampNow(), // fecha de actualización del producto
+      )  ;
+
+    print('--------------------------- Guardando producto en catálogo: ${productToSave.toMap()}' );
+    print('--------------------------- ID de cuenta actual: $accountId');
     
-    if (accountId == null || accountId!.isEmpty) {
-      throw Exception('El ID de la cuenta no está definido o es nulo. Por favor, inicializa el catálogo con un ID de cuenta válido.');
+    if (accountId == '' ) {
+      throw Exception('--------------------------- El ID de la cuenta no está definido o es nulo. Por favor, inicializa el catálogo con un ID de cuenta válido.');
     }
     try {
       await addProductToCatalogueUseCase(productToSave, accountId!);  
@@ -148,5 +164,7 @@ class CatalogueProvider extends ChangeNotifier {
       throw Exception('--------------------------- Error al guardar producto en catálogo: $e');
     }
   }
+
+  /// Devuelve el ID de la cuenta actual (útil para otros providers o casos de uso)
+  String getCurrentAccountId() => _accountId;
 }
- 

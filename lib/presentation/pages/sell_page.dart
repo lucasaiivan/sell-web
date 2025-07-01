@@ -146,7 +146,8 @@ class _SellPageState extends State<SellPage> {
         // Si el buffer tiene más de 6 caracteres, se asume que es un código de barras completo
         if (_barcodeBuffer.length > 6) {
           // Procesa el código de barras
-          scanCodeProduct(code: _barcodeBuffer);
+          String codeTest = '7794640173066';
+          scanCodeProduct(code: codeTest);
           // Limpia el buffer
           _barcodeBuffer = '';
         }
@@ -163,8 +164,10 @@ class _SellPageState extends State<SellPage> {
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
     if (product != null) {
+      // Si se encuentra el producto en el catálogo, agregarlo al ticket
       homeProvider.addProductsticket(product.copyWith());
     } else {
+      // Si no se encuentra el producto en el catálogo, buscar en la base pública
       final publicProduct = await catalogueProvider.getPublicProductByCode(code);
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
@@ -366,12 +369,12 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                 ? 'No hay productos disponibles'
                 : 'Buscar productos',
         color: isLoading
-            ? Colors.grey.shade300
+            ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.5)
             : isEmpty
                 ? Colors.grey.shade200
                 : Theme.of(buildContext).colorScheme.primaryContainer,
         textColor: isLoading || isEmpty
-            ? Colors.grey.shade600
+            ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.5)
             : Theme.of(buildContext).colorScheme.onPrimaryContainer,
         iconColor: isLoading || isEmpty
             ? Colors.grey.shade600

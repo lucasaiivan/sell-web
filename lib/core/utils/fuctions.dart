@@ -304,6 +304,9 @@ class Utils {
     return '';
   }
 }
+
+  // TimesTamp : devuelve una marca de tiempo actual
+  Timestamp getTimestampNow() => Timestamp.now(); 
 }
 
 // AppMoneyInputFormatter : Formateador de texto para campos de dinero

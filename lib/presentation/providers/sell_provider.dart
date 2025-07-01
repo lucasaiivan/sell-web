@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider_package;
 import 'package:sellweb/core/utils/fuctions.dart';
+import 'package:sellweb/core/utils/shared_prefs_keys.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart'; 
 import 'package:sellweb/domain/entities/ticket_model.dart';
@@ -21,9 +22,7 @@ class SellProvider extends ChangeNotifier {
   bool get ticketView => _ticketView; 
   // Cuenta seleccionada actualmente
   ProfileAccountModel profileAccountSelected = ProfileAccountModel();
-  // keys para SharedPreferences
-  static const String _selectedAccountKey = 'selected_account_id';
-  static const String _ticketKey = 'current_ticket';
+  
   // Ticket actual en memoria
   TicketModel _ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
   TicketModel get ticket => _ticket;
@@ -45,7 +44,7 @@ class SellProvider extends ChangeNotifier {
   Future<void> _loadSelectedAccount() async {
 
     final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString(_selectedAccountKey);
+    final id = prefs.getString(SharedPrefsKeys.selectedAccountId);
     if (id != null && id.isNotEmpty) {
       profileAccountSelected = await fetchAccountById(id) ?? ProfileAccountModel();
       notifyListeners();
@@ -68,14 +67,14 @@ class SellProvider extends ChangeNotifier {
   /// Guarda el ticket actual en SharedPreferences.
   Future<void> _saveTicket() async { 
     final prefs = await SharedPreferences.getInstance(); 
-    await prefs.setString(_ticketKey, jsonEncode(ticket.toJson()));
+    await prefs.setString(SharedPrefsKeys.currentTicket, jsonEncode(ticket.toJson()));
   }
 
   /// Carga el ticket guardado desde SharedPreferences.
   Future<void> _loadTicket() async {
 
     final prefs = await SharedPreferences.getInstance();
-    final ticketJson = prefs.getString(_ticketKey);
+    final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
     if (ticketJson != null ) { 
       try {
         ticket = TicketModel.fromMap(_decodeJson(ticketJson));
@@ -145,7 +144,7 @@ class SellProvider extends ChangeNotifier {
 
   Future<void> _saveSelectedAccount(String id) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_selectedAccountKey, id);
+    await prefs.setString(SharedPrefsKeys.selectedAccountId, id);
   }
  
   /// Selecciona una cuenta (negocio) y actualiza el catálogo.
@@ -174,7 +173,7 @@ class SellProvider extends ChangeNotifier {
    /// Quita la cuenta (negocio) seleccionada y notifica a los listeners.
   Future<void> removeSelectedAccount() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_selectedAccountKey);
+    await prefs.remove(SharedPrefsKeys.selectedAccountId);
     cleanData();
     notifyListeners();
   }

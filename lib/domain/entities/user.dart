@@ -293,10 +293,10 @@ class ProfileAccountModel {
   bool trial = false;
   late Timestamp trialStart;
   late Timestamp trialEnd;
-  String countrycode = "";
-  String country = "";
-  String province = "";
-  String town = "";
+  String countrycode = ""; // codigo de pais
+  String country = ""; // pais
+  String province = ""; // provincia
+  String town = ""; // ciudad
 
   ProfileAccountModel({
     this.id = "",

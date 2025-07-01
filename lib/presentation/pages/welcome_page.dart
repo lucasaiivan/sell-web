@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
+import 'package:sellweb/core/widgets/widgets.dart'; 
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
@@ -106,11 +107,10 @@ class WelcomePage extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    CircleAvatar(
-                                      child: Text(
-                                          account.name.isNotEmpty
-                                              ? account.name[0]
-                                              : '?'),
+                                    // avatar : muestra la imagen del perfil de la cuenta
+                                    ComponentApp().userAvatarCircle(
+                                      urlImage: account.image,
+                                      text: account.country.isNotEmpty ? account.name[0].toUpperCase() : '',
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
@@ -118,13 +118,19 @@ class WelcomePage extends StatelessWidget {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
+                                          // text : muestra el nombre de la cuenta
                                           Text(account.name,
                                               style: const TextStyle(
                                                   fontWeight:
                                                       FontWeight.w600)),
+                                          // text : muestra la ubicación de la cuenta
                                           Opacity(
+                                            // isNotEmpty : es 
                                               opacity: 0.5,
-                                              child: Text(account.country)),
+                                              child: Text(account.town.isNotEmpty?account.town:account.province.isNotEmpty?account.province:account.country.isNotEmpty?account.country:account.countrycode,
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey))),
                                         ],
                                       ),
                                     ),

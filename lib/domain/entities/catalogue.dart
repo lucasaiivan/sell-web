@@ -411,10 +411,10 @@ class ProductCatalogue {
         "nameSubcategory": nameSubcategory,
         "salePrice": salePrice,
         "purchasePrice": purchasePrice,
-        "creation": creation.millisecondsSinceEpoch, // convertimos a milisegundos
-        "upgrade": upgrade.millisecondsSinceEpoch, // convertimos a milisegundos
-        "documentCreation": documentCreation.millisecondsSinceEpoch, // convertimos a milisegundos
-        "documentUpgrade": documentUpgrade.millisecondsSinceEpoch, // convertimos a milisegundos
+        "creation": creation, // guardamos como Timestamp para compatibilidad
+        "upgrade": upgrade, // guardamos como Timestamp para compatibilidad
+        "documentCreation": documentCreation, // guardamos como Timestamp para compatibilidad
+        "documentUpgrade": documentUpgrade, // guardamos como Timestamp para compatibilidad
         'documentIdCreation': documentIdCreation,
         'documentIdUpgrade': documentIdUpgrade,
         "currencySign": currencySign,
@@ -766,8 +766,7 @@ class ReportProduct {
       time: data['time'],
     );
   }
-  ReportProduct.fromDocumentSnapshot(
-      {required DocumentSnapshot documentSnapshot}) {
+  ReportProduct.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
     Map data = documentSnapshot.data() as Map;
 
     id = data['id'] ?? '';

@@ -374,24 +374,16 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
             ? () {}
             : () => showModalBottomSheetSelectProducts(buildContext),
         icon: isLoading || isEmpty
-            ? SizedBox(width: 20, height: 20,child: const CircularProgressIndicator(strokeWidth:2))
-            : const Icon(Icons.search_rounded),
+            ? SizedBox(width: 20, height: 20,child: CircularProgressIndicator(strokeWidth:2,color:Theme.of(buildContext).colorScheme.primaryContainer))
+            : Icon(Icons.search_rounded),
         label: isLoading
             ? 'Cargando...'
             : isEmpty
                 ? 'No hay productos disponibles'
                 : 'Buscar productos',
-        color: isLoading
-            ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.5)
-            : isEmpty
-                ? Colors.grey.shade200
-                : Theme.of(buildContext).colorScheme.primaryContainer,
-        textColor: isLoading || isEmpty
-            ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.5)
-            : Theme.of(buildContext).colorScheme.onPrimaryContainer,
-        iconColor: isLoading || isEmpty
-            ? Colors.grey.shade600
-            : Theme.of(buildContext).colorScheme.onPrimaryContainer,
+        color: Theme.of(buildContext).colorScheme.primaryContainer,
+        textColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
+        iconColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
       ),
       centerTitle: false, 
       actions: [

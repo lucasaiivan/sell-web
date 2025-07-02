@@ -25,9 +25,7 @@ class CatalogueProvider extends ChangeNotifier {
     required this.getPublicProductByCodeUseCase,
     required this.addProductToCatalogueUseCase,
     required this.getUserAccountsUseCase,
-  }) {
-    _initProducts();
-  }
+  });  // Removido _initProducts() del constructor
 
   List<ProductCatalogue> _products = [];
   List<ProductCatalogue> get products => _products;
@@ -100,22 +98,6 @@ class CatalogueProvider extends ChangeNotifier {
   ProductCatalogue? get lastScannedProduct => _lastScannedProduct; // Devuelve el último producto escaneado
   String? get lastScannedCode => _lastScannedCode; // Devuelve el último código escaneado
   String? get scanError => _scanError; // Devuelve el error de escaneo si existe
-
-  // Modifica _initProducts para usar _accountId si está definido
-  void _initProducts() {
-    _isLoading = true;
-    notifyListeners();
-    _products = [];
-    _lastScannedProduct = null;
-    _lastScannedCode = null;
-    _scanError = null;
-    getProductsStreamUseCase().listen((snapshot) {
-      // Convierte los documentos del snapshot en objetos ProductCatalogue y actualiza la lista interna.
-      _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
-      _isLoading = false;
-      notifyListeners(); // Notifica a los listeners que hubo un cambio en la lista de productos.
-    });
-  }
 
   /// Busca un producto por su código en la lista del catálogo.
   ProductCatalogue? getProductByCode(String code) {

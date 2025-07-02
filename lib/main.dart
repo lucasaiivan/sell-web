@@ -77,32 +77,43 @@ void main() async{
                           },
                         );
                       }
-                      // Si hay cuenta seleccionada, usar MultiProvider para ambos providers
-                      final accountId = sellProvider.profileAccountSelected.id;
-                      final getProductsStreamUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: accountId));
-                      final getProductByCodeUseCase = GetProductByCodeUseCase(); 
-                      final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
-                      final getPublicProductByCodeUseCase = GetPublicProductByCodeUseCase(CatalogueRepositoryImpl());
-                      final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(CatalogueRepositoryImpl(id: accountId));
-                      final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
+                      // Si hay cuenta seleccionada, usar Consumer para reaccionar a cambios
+                      return Consumer<SellProvider>(
+                        builder: (context, sellProvider, _) {
+                          final accountId = sellProvider.profileAccountSelected.id;
+                          final getProductsStreamUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: accountId));
+                          final getProductByCodeUseCase = GetProductByCodeUseCase(); 
+                          final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
+                          final getPublicProductByCodeUseCase = GetPublicProductByCodeUseCase(CatalogueRepositoryImpl());
+                          final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(CatalogueRepositoryImpl(id: accountId));
+                          final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
-                      return MultiProvider(
-                        providers: [
-                          // Reutilizar el SellProvider existente del contexto padre
-                          ChangeNotifierProvider.value(value: sellProvider),
-                          // Crear el CatalogueProvider
-                          ChangeNotifierProvider(
-                            create: (_) => CatalogueProvider(
-                              getProductsStreamUseCase: getProductsStreamUseCase,
-                              getProductByCodeUseCase: getProductByCodeUseCase,
-                              isProductScannedUseCase: isProductScannedUseCase,
-                              getPublicProductByCodeUseCase: getPublicProductByCodeUseCase,
-                              addProductToCatalogueUseCase: addProductToCatalogueUseCase,
-                              getUserAccountsUseCase: getUserAccountsUseCase,
-                            ),
-                          ),
-                        ],
-                        child: const SellPage(),
+                          return MultiProvider(
+                            // Usar key para forzar la recreación cuando cambia la cuenta
+                            key: ValueKey('catalogue_$accountId'),
+                            providers: [
+                              // Reutilizar el SellProvider existente del contexto padre
+                              ChangeNotifierProvider.value(value: sellProvider),
+                              // Crear el CatalogueProvider con la cuenta actual
+                              ChangeNotifierProvider(
+                                create: (_) {
+                                  final provider = CatalogueProvider(
+                                    getProductsStreamUseCase: getProductsStreamUseCase,
+                                    getProductByCodeUseCase: getProductByCodeUseCase,
+                                    isProductScannedUseCase: isProductScannedUseCase,
+                                    getPublicProductByCodeUseCase: getPublicProductByCodeUseCase,
+                                    addProductToCatalogueUseCase: addProductToCatalogueUseCase,
+                                    getUserAccountsUseCase: getUserAccountsUseCase,
+                                  );
+                                  // Inicializar el catálogo con el ID de la cuenta seleccionada
+                                  provider.initCatalogue(accountId);
+                                  return provider;
+                                },
+                              ),
+                            ],
+                            child: const SellPage(),
+                          );
+                        },
                       );
                     },
                   ),

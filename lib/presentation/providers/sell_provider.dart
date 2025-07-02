@@ -1,13 +1,10 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'dart:convert'; 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart' as provider_package;
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/shared_prefs_keys.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart'; 
 import 'package:sellweb/domain/entities/ticket_model.dart';
-import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
@@ -155,17 +152,6 @@ class SellProvider extends ChangeNotifier {
 
     // Guarda la cuenta seleccionada y espera a que termine
     await _saveSelectedAccount(profileAccountSelected.id);
-
-    // Intenta acceder al CatalogueProvider de manera segura
-    try {
-      final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
-      catalogueProvider.initCatalogue(profileAccountSelected.id);
-    } catch (e) {
-      // Si el CatalogueProvider no está disponible, se inicializará cuando se cree
-      if (kDebugMode) {
-        print('CatalogueProvider not found in context, it will be initialized when created: $e');
-      }
-    }
     
     // Notifica solo una vez al final
     notifyListeners();

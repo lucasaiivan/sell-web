@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/widgets/money_input_text_field.dart';
+import 'package:sellweb/core/widgets/widgets.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
@@ -14,6 +15,9 @@ Future<void> showDialogAgregarProductoPublico(
   String? errorMessage,
   bool isNew = false, // true: crear producto nuevo en base pública, false: agregar existente al catálogo
 }) async {
+
+  // style 
+  Color infoContainerColor = isNew ? Colors.orange:Colors.red;
   // Variables
   bool checkAddCatalogue = true; // Checkbox para agregar al catálogo 
   final priceController = AppMoneyTextEditingController(); 
@@ -25,6 +29,7 @@ Future<void> showDialogAgregarProductoPublico(
   final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
   final authProvider = provider_package.Provider.of<AuthProvider>(context, listen: false);
 
+
   await showDialog(
     context: context,
     barrierDismissible: true,
@@ -35,24 +40,8 @@ Future<void> showDialogAgregarProductoPublico(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: theme.colorScheme.surface,
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: isNew ? Colors.blue.withAlpha(38) : Colors.green.withAlpha(38),
-                child: Icon(
-                  isNew ? Icons.add_circle : Icons.cloud_download, 
-                  color: isNew ? Colors.blue : Colors.green, 
-                  size: 26
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(
-                  isNew ? 'Crear nuevo producto' : 'Producto encontrado',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+              Text(product.code),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -60,85 +49,120 @@ Future<void> showDialogAgregarProductoPublico(
               ),
             ],
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
+          content: SingleChildScrollView(  
+            child: Column(  
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [ 
-                Padding(
-                  padding: const EdgeInsets.all(30.0),
-                  child: Row(
+                // title : titulo informativo
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration( color: infoContainerColor.withValues(alpha: 0.1),borderRadius: BorderRadius.circular(12)),
+                  child: Row( 
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Avatar circular con la inicial del producto o imagen si existe
-                      CircleAvatar(
-                        radius: 25,
-                        backgroundImage: product.image.isNotEmpty ? NetworkImage(product.image) : null,
-                        child: product.image.isEmpty ? Text(product.description.isNotEmpty ? product.description[0] : '?') : null,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+                        child: Icon(
+                          isNew ? Icons.add_circle_outline : Icons.download_outlined, 
+                          color:infoContainerColor, 
+                          size: 24,
+                        ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Campo de descripción editable si isNew
-                              if (isNew)
-                                TextField(
-                                  controller: descriptionController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Descripción del producto',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  maxLines: 2,
-                                  onChanged: (_) {
-                                    setState(() {
-                                      errorText = null;
-                                    });
-                                  },
-                                )
-                              else
-                                Text(
-                                  product.description,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              const SizedBox(height: 8),
-                              // Información de marca y código
-                              Row(
-                                children: [
-                                  // text : marca del producto
-                                  if (product.nameMark.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 2),
-                                      child: Text(
-                                        product.nameMark,
-                                        style: TextStyle(
-                                          color: Colors.grey.shade700,
-                                          fontSize: 14,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  // icon divisor punto 
-                                  if (product.nameMark.isNotEmpty)
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                      child: Icon(Icons.circle, size: 4, color: Colors.grey),
-                                    ), 
-                                ],
-                              ),
-                            ],
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: Text(
+                          isNew ? 'Crear nuevo producto' : 'Nuevo producto',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: isNew 
+                                ? theme.colorScheme.onPrimaryContainer
+                                : theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Información del producto
+                isNew?Container()
+                  :Padding(
+                    padding: const EdgeInsets.only(bottom:30, top: 20),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        // Avatar circular con la inicial del producto o imagen si existe
+                        ComponentApp().imageProduct(imageUrl:product.image,size:50),
+                        const SizedBox(width: 16),
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // text : nombre del producto
+                                product.description.isEmpty?Container()
+                                  :Text(
+                                  product.description,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                // Información de marca y código
+                                Row(
+                                  children: [
+                                    // text : marca del producto
+                                    if (product.nameMark.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Text(
+                                          product.nameMark,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade700,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    // icon divisor punto 
+                                    if (product.nameMark.isNotEmpty)
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 4.0),
+                                        child: Icon(Icons.circle, size: 4, color: Colors.grey),
+                                      ), 
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ),
+                // Campo de descripción editable si isNew
+                if (isNew)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción del producto',
+                        border: OutlineInputBorder(),
+                      ), 
+                      onChanged: (_) {
+                        setState(() {
+                          errorText = null;
+                        });
+                      },
+                    ),
+                  ),
                 MoneyInputTextField(
                   controller: priceController,
                   labelText: 'Precio de venta',

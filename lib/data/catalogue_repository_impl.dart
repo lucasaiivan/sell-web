@@ -6,15 +6,13 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   final String? id;
   CatalogueRepositoryImpl({this.id});
 
+  // stream : Devolverá un stream de productos del catálogo  de la cuenta del negocio seleccionada.
   @override
-  Stream<QuerySnapshot> getCatalogueStream() { 
-    if (id == null) {
-      // Si no hay usuario autenticado ni userId inyectado, retorna un stream vacío
-      return const Stream.empty();
-    }
+  Stream<QuerySnapshot> getCatalogueStream() {  
+    if (id == null) { return const Stream.empty(); }
     return FirebaseFirestore.instance.collection('/ACCOUNTS/$id/CATALOGUE').snapshots();
   }
-
+  // future : buscará un producto por su ID en la (base de datos) publica de productos
   @override
   Future<Product?> getPublicProductByCode(String code) async {
     final query = await FirebaseFirestore.instance
@@ -27,7 +25,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     }
     return null;
   }
-
+  //  future : agregar un nuevo producto al catálogo de la cuenta del negocio seleccionada
   @override
   Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
     if (product.id.isEmpty) {
@@ -40,6 +38,21 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       await ref.doc(product.id).set(productMap, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Error al guardar en Firestore: $e');
+    }
+  }
+
+  // future : crear un nuevo producto en la base de datos pública de productos
+  @override
+  Future<void> createPublicProduct(Product product) async {
+    if (product.id.isEmpty) {
+      throw ArgumentError('El producto debe tener un ID válido');
+    } 
+    try {
+      final ref = FirebaseFirestore.instance.collection('/APP/ARG/PRODUCTOS');
+      final productMap = product.toJson();
+      await ref.doc(product.id).set(productMap, SetOptions(merge: false));
+    } catch (e) {
+      throw Exception('Error al crear producto público en Firestore: $e');
     }
   }
 }

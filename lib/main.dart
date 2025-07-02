@@ -81,11 +81,13 @@ void main() async{
                       return Consumer<SellProvider>(
                         builder: (context, sellProvider, _) {
                           final accountId = sellProvider.profileAccountSelected.id;
-                          final getProductsStreamUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: accountId));
+                          final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+                          final getProductsStreamUseCase = GetCatalogueStreamUseCase(catalogueRepository);
                           final getProductByCodeUseCase = GetProductByCodeUseCase(); 
                           final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
                           final getPublicProductByCodeUseCase = GetPublicProductByCodeUseCase(CatalogueRepositoryImpl());
-                          final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(CatalogueRepositoryImpl(id: accountId));
+                          final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(catalogueRepository);
+                          final createPublicProductUseCase = CreatePublicProductUseCase(catalogueRepository);
                           final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
                           return MultiProvider(
@@ -103,6 +105,7 @@ void main() async{
                                     isProductScannedUseCase: isProductScannedUseCase,
                                     getPublicProductByCodeUseCase: getPublicProductByCodeUseCase,
                                     addProductToCatalogueUseCase: addProductToCatalogueUseCase,
+                                    createPublicProductUseCase: createPublicProductUseCase,
                                     getUserAccountsUseCase: getUserAccountsUseCase,
                                   );
                                   // Inicializar el catálogo con el ID de la cuenta seleccionada

@@ -175,8 +175,7 @@ class _SellPageState extends State<SellPage> {
         showDialogAgregarProductoPublico(context, product: productCatalogue );
       } else {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
-        // ignore: use_build_context_synchronously
-        showDialogProductoNoEncontrado(context, code: code);
+        showDialogAgregarProductoPublico(context,isNew: true, product: ProductCatalogue(id:code,code: code) );
       }
     }
   }

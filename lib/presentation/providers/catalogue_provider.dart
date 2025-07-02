@@ -16,6 +16,7 @@ class CatalogueProvider extends ChangeNotifier {
   final IsProductScannedUseCase isProductScannedUseCase;
   final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
   AddProductToCatalogueUseCase addProductToCatalogueUseCase;
+  CreatePublicProductUseCase createPublicProductUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
   CatalogueProvider({
@@ -24,6 +25,7 @@ class CatalogueProvider extends ChangeNotifier {
     required this.isProductScannedUseCase,
     required this.getPublicProductByCodeUseCase,
     required this.addProductToCatalogueUseCase,
+    required this.createPublicProductUseCase,
     required this.getUserAccountsUseCase,
   });  // Removido _initProducts() del constructor
 
@@ -62,6 +64,7 @@ class CatalogueProvider extends ChangeNotifier {
     final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
     getProductsStreamUseCase = GetCatalogueStreamUseCase(newCatalogueRepository);
     addProductToCatalogueUseCase = AddProductToCatalogueUseCase(newCatalogueRepository);
+    createPublicProductUseCase = CreatePublicProductUseCase(newCatalogueRepository);
     
     // Inicializar el stream de productos para la nueva cuenta
     _catalogueSubscription = getProductsStreamUseCase().listen(
@@ -164,5 +167,33 @@ class CatalogueProvider extends ChangeNotifier {
       throw Exception('--------------------------- Error al guardar producto en catálogo: $e');
     }
   }
- 
+
+  /// Crea un nuevo producto en la base de datos pública
+  Future<void> createPublicProduct(Product product) async {
+    try {
+      // Asignar timestamp si no tienen valores
+      final productToSave = Product(
+        id: product.id,
+        idMark: product.idMark,
+        nameMark: product.nameMark,
+        imageMark: product.imageMark,
+        description: product.description,
+        image: product.image,
+        code: product.code,
+        followers: product.followers,
+        favorite: product.favorite,
+        verified: product.verified,
+        reviewed: product.reviewed,
+        creation: product.creation,
+        upgrade: Utils().getTimestampNow(),
+        idUserCreation: product.idUserCreation,
+        idUserUpgrade: product.idUserUpgrade,
+      );
+
+      await createPublicProductUseCase(productToSave);
+      print('Producto público creado exitosamente: ${productToSave.id}');
+    } catch (e) {
+      throw Exception('Error al crear producto público: $e');
+    }
+  }
 }

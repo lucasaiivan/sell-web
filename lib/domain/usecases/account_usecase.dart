@@ -3,10 +3,20 @@ import '../repositories/account_repository.dart';
 import '../entities/catalogue.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// case use : Cuentas asociada
 class GetUserAccountsUseCase {
   final AccountRepository repository;
 
   GetUserAccountsUseCase(this.repository);
+
+  /// Guarda el ID de la cuenta seleccionada
+  Future<void> saveSelectedAccountId(String accountId) => repository.saveSelectedAccountId(accountId);
+
+  /// Obtiene el ID de la cuenta seleccionada
+  Future<String?> getSelectedAccountId() => repository.getSelectedAccountId();
+
+  /// Remueve el ID de la cuenta seleccionada
+  Future<void> removeSelectedAccountId() => repository.removeSelectedAccountId();
 
   /// Obtiene los administradores de cuentas asociados a un usuario por el email
   Future<List<AdminModel>> getAccountAdmins(String email) => repository.getUserAccounts(email);
@@ -79,4 +89,6 @@ class GetUserAccountsUseCase {
   }
 
    
+
+  
 }

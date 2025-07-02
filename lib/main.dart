@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
@@ -22,8 +23,13 @@ void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform );
-  // Inicializar repositorios paara autenticació del usuario
+  
+  // Inicializar SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  
+  // Inicializar repositorios para autenticación del usuario
   final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance,GoogleSignIn()); 
+  final accountRepository = AccountRepositoryImpl(prefs: prefs);
 
   runApp(
     MultiProvider(
@@ -34,46 +40,33 @@ void main() async{
             signInSilentlyUseCase: SignInSilentlyUseCase(authRepository),
             signOutUseCase: SignOutUseCase(authRepository),
             getUserStreamUseCase: GetUserStreamUseCase(authRepository),
-            getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl()),
-          )
+            getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
+          ),
         ),
-        ChangeNotifierProvider(
-          create: (_) => ThemeDataAppProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
       ],
-      child: const MyApp(),
-    ),
-  );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeDataAppProvider>(
-      builder: (context, themeProvider, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false, 
-          title: 'Punto de Venta',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-            brightness: Brightness.light,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
-            useMaterial3: true,
-            brightness: Brightness.dark,
-          ),
-          themeMode: themeProvider.themeMode,
-          home: Consumer<AuthProvider>(
-            builder: (context, authProvider, _) {
-
-              if (authProvider.user != null) {
-                return ChangeNotifierProvider(
-                  create: (_) => SellProvider(getUserAccountsUseCase: GetUserAccountsUseCase(AccountRepositoryImpl())),
-                  child: Consumer<SellProvider>(
+      child: Consumer<ThemeDataAppProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Sell Web',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              useMaterial3: true,
+              brightness: Brightness.light,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+              useMaterial3: true,
+              brightness: Brightness.dark,
+            ),
+            themeMode: themeProvider.themeMode,
+            home: Consumer<AuthProvider>(
+              builder: (context, authProvider, _) {
+                if (authProvider.user != null) {
+                  return ChangeNotifierProvider(
+                    create: (_) => SellProvider(getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository)),
+                    child: Consumer<SellProvider>(
                     builder: (context, sellProvider, _) {
 
                       // Si no hay cuenta seleccionada, mostrar WelcomePage para seleccionar una cuenta
@@ -91,6 +84,7 @@ class MyApp extends StatelessWidget {
                       final isProductScannedUseCase = IsProductScannedUseCase(getProductByCodeUseCase);
                       final getPublicProductByCodeUseCase = GetPublicProductByCodeUseCase(CatalogueRepositoryImpl());
                       final addProductToCatalogueUseCase = AddProductToCatalogueUseCase(CatalogueRepositoryImpl(id: accountId));
+                      final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
                       return MultiProvider(
                         providers: [
@@ -104,6 +98,7 @@ class MyApp extends StatelessWidget {
                               isProductScannedUseCase: isProductScannedUseCase,
                               getPublicProductByCodeUseCase: getPublicProductByCodeUseCase,
                               addProductToCatalogueUseCase: addProductToCatalogueUseCase,
+                              getUserAccountsUseCase: getUserAccountsUseCase,
                             ),
                           ),
                         ],
@@ -119,6 +114,6 @@ class MyApp extends StatelessWidget {
           ),
         );
       },
-    );
-  }
+    ),)
+  );
 }

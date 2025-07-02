@@ -145,9 +145,8 @@ class _SellPageState extends State<SellPage> {
       await Future.delayed(const Duration(milliseconds: 200)).whenComplete(() {
         // Si el buffer tiene más de 6 caracteres, se asume que es un código de barras completo
         if (_barcodeBuffer.length > 6) {
-          // Procesa el código de barras
-          String codeTest = '7794640173066';
-          scanCodeProduct(code: codeTest);
+          // Procesa el código de barras 
+          scanCodeProduct(code: _barcodeBuffer);
           // Limpia el buffer
           _barcodeBuffer = '';
         }
@@ -352,9 +351,23 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     final bool isLoading = catalogueProvider.isLoading;
     final bool isEmpty = !isLoading && catalogueProvider.products.isEmpty; 
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
-    return AppBar(
+    return AppBar(  
       toolbarHeight: 70,
-      titleSpacing: 0.0,
+      titleSpacing: 0,
+      // avatar 
+      leading: Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => Scaffold.of(context).openDrawer(),
+            child: ComponentApp().userAvatarCircle(
+              urlImage: provider.profileAccountSelected.image,
+              text: provider.profileAccountSelected.name,
+              radius: 20, // Radio normal, el padding controla el tamaño visual
+            ),
+          ),
+        ),
+      ),
       title: ComponentApp().searchButtonAppBar( 
         context: buildContext, 
         onPressed: (isLoading || isEmpty)
@@ -430,19 +443,52 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
             ),
             // listitle : perfil de negocio, nombre de la cuenta seleccionada y avatar
             ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.black26,
-                backgroundImage: (sellProvider.profileAccountSelected.image.isNotEmpty && sellProvider.profileAccountSelected.image.contains('https://'))
-                    ? NetworkImage(sellProvider.profileAccountSelected.image)
-                    : null,
-                child: (sellProvider.profileAccountSelected.image.isEmpty)
-                    ? Text(sellProvider.profileAccountSelected.name.isNotEmpty ? sellProvider.profileAccountSelected.name[0] : '?',
-                        style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold))
-                    : null,
-              ),
+              leading: ComponentApp().userAvatarCircle(urlImage: sellProvider.profileAccountSelected.image,text: sellProvider.profileAccountSelected.name),
               title: Text(sellProvider.profileAccountSelected.name, style: const TextStyle(fontSize: 18)),
               subtitle: Text(sellProvider.profileAccountSelected.province, style: const TextStyle(fontSize: 14)),
               onTap: () => showModalBottomSheetSelectAccount(),
+            ),
+            // view : Mas funciones en nuesta app 
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Divider(thickness: 1, color: Colors.grey.shade300),
+                  const SizedBox(height: 8),
+                  Text(
+                  '¡Descubre todas las funciones en nuestra app móvil!',
+                  style: TextStyle(
+                    color: Colors.blueGrey.shade700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon:Icon(Icons.link_rounded, size: 22, color: Colors.white),
+                    label: const Text('Ver en Play Store'),
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                    alignment: Alignment.centerLeft,
+                    ),
+                    onPressed: () {
+                    html.window.open(
+                      'https://play.google.com/store/apps/details?id=tu.paquete.app', // Reemplaza con tu URL real
+                      '_blank',
+                    );
+                    },
+                  ),
+                  ),
+                ],
+              ),
             ),
               
           ],

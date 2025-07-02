@@ -423,9 +423,10 @@ class ProductCatalogue {
         "quantityStock": quantityStock,
         "sales": sales,
         "alertStock": alertStock,
-        "revenue": revenue, // agregamos revenue que faltaba
+        "revenue": revenue,  
       };
 
+  // convierte los datos a primitivos guardar en shared preferences
   Map<String, dynamic> toJson() => {
         "id": id,
         'local':local,
@@ -460,6 +461,7 @@ class ProductCatalogue {
         "quantityStock": quantityStock,
         "sales": sales,
         "alertStock": alertStock,
+        "revenue": revenue,
       };
   factory ProductCatalogue.mapRefactoring(Map<dynamic, dynamic> data ){
     return ProductCatalogue(
@@ -485,10 +487,10 @@ class ProductCatalogue {
       salePrice: data['salePrice'] ?? 0.0,
       purchasePrice: data['purchasePrice'] ?? 0.0,
       currencySign: data['currencySign'] ?? '',
-      creation: Timestamp.fromMillisecondsSinceEpoch(data['creation']),
-      upgrade: Timestamp.fromMillisecondsSinceEpoch(data['upgrade']),
-      documentCreation: Timestamp.fromMillisecondsSinceEpoch(data['documentCreation']),
-      documentUpgrade: Timestamp.fromMillisecondsSinceEpoch(data['documentUpgrade']),
+      creation: data['creation']?? Timestamp.now(),
+      upgrade: data['upgrade']?? Timestamp.now(),
+      documentCreation: data['documentCreation']?? Timestamp.now(),
+      documentUpgrade: data['documentUpgrade']?? Timestamp.now(),
       documentIdCreation: data['documentIdCreation'] ?? '',
       documentIdUpgrade: data['documentIdUpgrade'] ?? '',
       quantityStock: data['quantityStock'] ?? 0,

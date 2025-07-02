@@ -34,7 +34,7 @@ class ComponentApp extends StatelessWidget {
   Widget userAvatarCircle({ Color? background,IconData? iconData,bool empty=false,String urlImage='',String text = '', double radius = 20.0}) {
     
     // style
-    Color? backgroundColor =background  ;
+    Color? backgroundColor = background  ;
     // widgets
     late Widget avatar;
     late Widget iconDefault;
@@ -46,7 +46,8 @@ class ComponentApp extends StatelessWidget {
       iconDefault = Text( text.substring( 0,1),style: const TextStyle(color: Colors.white));
     }else{
       iconDefault = Container();
-    }
+    } 
+    // si el background es transparente
     
     // crear avatar
     avatar = urlImage == ''

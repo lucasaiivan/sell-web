@@ -42,10 +42,11 @@ class SellProvider extends ChangeNotifier {
 
   /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
   Future<void> _loadSelectedAccount() async {
-
+    // shared preferences : Cargar la cuenta seleccionada desde SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString(SharedPrefsKeys.selectedAccountId);
-    if (id != null && id.isNotEmpty) {
+    // Si hay un ID de cuenta guardado, intenta cargar la cuenta
+    if (id != null && id.isNotEmpty) { 
       profileAccountSelected = await fetchAccountById(id) ?? ProfileAccountModel();
       notifyListeners();
     }
@@ -77,7 +78,7 @@ class SellProvider extends ChangeNotifier {
     final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
     if (ticketJson != null ) { 
       try {
-        ticket = TicketModel.fromMap(_decodeJson(ticketJson));
+        ticket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         notifyListeners();
       } catch (_) {}
     } 

@@ -6,13 +6,17 @@ import '../../domain/entities/catalogue.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart'; 
 import '../../domain/usecases/catalogue_usecases.dart';
+import '../../domain/usecases/account_usecase.dart';
 
 class CatalogueProvider extends ChangeNotifier {
-  final GetCatalogueStreamUseCase getProductsStreamUseCase;
+
+  // Casos de uso para interactuar con el catálogo
+  GetCatalogueStreamUseCase getProductsStreamUseCase;
   final GetProductByCodeUseCase getProductByCodeUseCase;
   final IsProductScannedUseCase isProductScannedUseCase;
   final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
-  final AddProductToCatalogueUseCase addProductToCatalogueUseCase;
+  AddProductToCatalogueUseCase addProductToCatalogueUseCase;
+  final GetUserAccountsUseCase getUserAccountsUseCase;
 
   CatalogueProvider({
     required this.getProductsStreamUseCase,
@@ -20,6 +24,7 @@ class CatalogueProvider extends ChangeNotifier {
     required this.isProductScannedUseCase,
     required this.getPublicProductByCodeUseCase,
     required this.addProductToCatalogueUseCase,
+    required this.getUserAccountsUseCase,
   }) {
     _initProducts();
   }
@@ -35,41 +40,51 @@ class CatalogueProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool get isLoading => _isLoading;
 
-  String _accountId = '';
-  String get accountId => _accountId; // Getter para el ID de la cuenta actual
-  set accountId(String? id) {
-    if (id == null || id.isEmpty) {
-      throw Exception('El ID de la cuenta no puede ser nulo ni vacío.');
-    }
-    _accountId = id;
-  }
-
-  void initCatalogue(String id) {
+  /// Inicializa el catálogo para una cuenta específica
+  void initCatalogue(String id) { 
+    // Validar que el ID no esté vacío
     if (id.isEmpty) {
-      throw Exception('El ID de la cuenta no puede ser vacío al inicializar el catálogo.');
+      throw Exception('El ID de la cuenta no puede estar vacío.'); 
     }
+    
     // Cancelar la suscripción anterior si existe
     _catalogueSubscription?.cancel();
-    // Limpiar productos y notificar a la UI inmediatamente
+    
+    // Reinicializar el estado del catálogo
+    _isLoading = true;
     _products = [];
+    _lastScannedProduct = null;
+    _lastScannedCode = null;
+    _scanError = null;
+    
+    // Notificar cambios inmediatamente para mostrar el estado de carga
     notifyListeners();
-    accountId = id; // Asignar el ID de la cuenta actual
-    // case use : Crear un nuevo caso de uso con el ID proporcionado y reiniciar la suscripción
-    final newUseCase = GetCatalogueStreamUseCase(CatalogueRepositoryImpl(id: id));
-    _initCatalogueWithUseCase(newUseCase);
+    
+    // Crear nuevos casos de uso con el nuevo ID de cuenta
+    final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
+    getProductsStreamUseCase = GetCatalogueStreamUseCase(newCatalogueRepository);
+    addProductToCatalogueUseCase = AddProductToCatalogueUseCase(newCatalogueRepository);
+    
+    // Inicializar el stream de productos para la nueva cuenta
+    _catalogueSubscription = getProductsStreamUseCase().listen(
+      (snapshot) {
+        // Convertir los documentos del snapshot en objetos ProductCatalogue
+        _products = snapshot.docs
+            .map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
+            .toList();
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (error) {
+        // Manejar errores del stream
+        print('Error al cargar productos del catálogo: $error');
+        _isLoading = false;
+        _products = [];
+        notifyListeners();
+      },
+    );
   }
 
-  void _initCatalogueWithUseCase(GetCatalogueStreamUseCase useCase) {
-    _isLoading = true; // Indica que se está cargando el catálogo
-    notifyListeners(); 
-    _catalogueSubscription?.cancel(); // Cancelar cualquier suscripción anteriors
-    // Reiniciar la lista de productos
-    _catalogueSubscription = useCase().listen((snapshot) {
-      _products = snapshot.docs.map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>)).toList();
-      _isLoading = false;
-      notifyListeners();
-    });
-  }
 
   @override
   void dispose() {
@@ -141,10 +156,12 @@ class CatalogueProvider extends ChangeNotifier {
     _products = demoProducts;
     notifyListeners();
   }
+ 
 
   /// Agrega un producto al catálogo de la cuenta actual usando el caso de uso
   Future<void> addProductToCatalogue(ProductCatalogue product) async { 
-
+    final accountId = await getUserAccountsUseCase.getSelectedAccountId();
+    
     // Si el id está vacío o nulo, asignar el código como id
     final productToSave =  product.copyWith(
       creation: Utils().getTimestampNow(), // fecha de creación del producto 
@@ -154,7 +171,7 @@ class CatalogueProvider extends ChangeNotifier {
     print('--------------------------- Guardando producto en catálogo: ${productToSave.toMap()}' );
     print('--------------------------- ID de cuenta actual: $accountId');
     
-    if (accountId == '' ) {
+    if (accountId == null || accountId.isEmpty) {
       throw Exception('--------------------------- El ID de la cuenta no está definido o es nulo. Por favor, inicializa el catálogo con un ID de cuenta válido.');
     }
     try {
@@ -165,7 +182,5 @@ class CatalogueProvider extends ChangeNotifier {
       throw Exception('--------------------------- Error al guardar producto en catálogo: $e');
     }
   }
-
-  /// Devuelve el ID de la cuenta actual (útil para otros providers o casos de uso)
-  String getCurrentAccountId() => _accountId;
+ 
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
+import 'package:sellweb/core/widgets/input_text_field.dart';
 import 'package:sellweb/core/widgets/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/widgets.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
@@ -41,7 +42,24 @@ Future<void> showDialogAgregarProductoPublico(
           backgroundColor: theme.colorScheme.surface,
           title: Row(
             children: [
-              Text(product.code),
+              Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row( 
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isNew ? Icons.add_circle : Icons.add,
+                        color: infoContainerColor,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isNew ? 'Crear producto' : 'Agregar al catálogo',
+                        style: theme.textTheme.titleLarge?.copyWith(color: infoContainerColor),
+                      ),
+                    ],
+                  ),
+                ),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -54,39 +72,26 @@ Future<void> showDialogAgregarProductoPublico(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [ 
-                // title : titulo informativo
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration( color: infoContainerColor.withValues(alpha: 0.1),borderRadius: BorderRadius.circular(12)),
-                  child: Row( 
-                    crossAxisAlignment: CrossAxisAlignment.center,
+
+                // text : codigo del producto
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-                        child: Icon(
-                          isNew ? Icons.add_circle_outline : Icons.download_outlined, 
-                          color:infoContainerColor, 
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Flexible(
+                      const Icon(Icons.qr_code, size: 22, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Expanded(
                         child: Text(
-                          isNew ? 'Crear nuevo producto' : 'Nuevo producto',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: isNew 
-                                ? theme.colorScheme.onPrimaryContainer
-                                : theme.colorScheme.onSecondaryContainer,
-                          ),
+                          product.code.isNotEmpty ? product.code : 'Sin código',
+                          style: const TextStyle(fontSize: 16, color: Colors.black87),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Información del producto
+                
+                // view :Información del producto
                 isNew?Container()
                   :Padding(
                     padding: const EdgeInsets.only(bottom:30, top: 20),
@@ -146,28 +151,22 @@ Future<void> showDialogAgregarProductoPublico(
                       ],
                     ),
                 ),
-                // Campo de descripción editable si isNew
+                // input : Descripción del producto
                 if (isNew)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: TextField(
+                    child: InputTextField(
                       controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Descripción del producto',
-                        border: OutlineInputBorder(),
-                      ), 
-                      onChanged: (_) {
-                        setState(() {
-                          errorText = null;
-                        });
-                      },
+                      labelText: 'Descripción del producto',
+                      hintText: 'Ingrese una descripción',
+                      errorText: errorText,
                     ),
                   ),
+                // input : Precio de venta
                 MoneyInputTextField(
                   controller: priceController,
                   labelText: 'Precio de venta',
                   autofocus: true,
-                  style: theme.textTheme.titleLarge,
                   onChanged: (_) {
                     setState(() {
                       errorText = null;
@@ -211,7 +210,7 @@ Future<void> showDialogAgregarProductoPublico(
               onPressed: () => Navigator.of(context).pop(),
             ),
             FilledButton.icon(
-              icon: Icon(isNew ? Icons.add_circle : Icons.add),
+              icon: Icon( Icons.add_circle_outline_sharp),
               label: Text(isNew ? 'Crear' : 'Agregar'),
               style: FilledButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,

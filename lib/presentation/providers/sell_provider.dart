@@ -122,7 +122,7 @@ class SellProvider extends ChangeNotifier {
   }
 
   void discartTicket() {
-    ticket.listPoduct.clear();
+    ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
     _ticketView = false;
     _saveTicket();
     notifyListeners();

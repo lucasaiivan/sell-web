@@ -380,6 +380,6 @@ class AppMoneyTextEditingController extends TextEditingController {
   // actualizar el valor del controlador
   void updateValue(double value) {
     // actualiza el nuevo valor teniendo en cuenta si tiene o no decimales
-    text = Publications.getFormatoPrecio(value: value);
+    text = Publications.getFormatoPrecio(value: value,moneda:'');
   }
 }

@@ -1,3 +1,4 @@
+import 'package:sellweb/core/widgets/input_text_field.dart';
 import 'package:sellweb/core/widgets/money_input_text_field.dart';
 import 'package:web/web.dart' as html; 
 import 'package:flutter/material.dart';
@@ -399,7 +400,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                       text: 'Seleccionar caja', 
                       onTap: (){
                         // ...
-                        // implementar lógica para seleccionar caja ... 
+                        // implementar lógica para seleccionar caja ...   
                         // ... 
                       },
                     ),
@@ -674,11 +675,11 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               Column(
                 children: [
                   Text(provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name.toUpperCase(): 'TICKET',style: textDescrpitionStyle.copyWith(fontSize: 22, letterSpacing: 2) ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height:1),
                   Text('compra', style: textSmallStyle),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical:0),
                     child: Row(
                       children: [
                         Text('fecha:', style: textSmallStyle),
@@ -692,7 +693,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               // view : listado de productos del ticket
               dividerLinesWidget,
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical:0),
                 child: Row(
                   children: [
                     Expanded(child: Text('Cant.', style: textSmallStyle)),
@@ -708,7 +709,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               dividerLinesWidget,
               // view : cantidad total de artículos
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical:0),
                 child: Row(
                   children: [ 
                     Text('Artículos:', style: textSmallStyle),
@@ -718,6 +719,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                 ),
               ),
               dividerLinesWidget,
+              const SizedBox(height: 5),
               // view : vuelto (solo si corresponde)
               if (ticket.valueReceived > 0 && ticket.valueReceived >= ticket.getTotalPrice)
                 Padding(
@@ -726,16 +728,39 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [ 
                       const Spacer(),
-                      Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color:  Colors.blue.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
-                        style: textDescrpitionStyle.copyWith(fontWeight: FontWeight.bold),
-                      ),
+                      // button : editar monto recibido y mostrar vuelto
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => dialogSelectedIncomeCash(initialAmount: ticket.valueReceived),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.blue.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
+                                  style: textDescrpitionStyle.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -753,7 +778,15 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               // view: Métodos de pago (ChipCheck)
               Padding(
                 padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom:0),
-                child: paymentMethodChips(),
+                child: Column(
+                  children: [
+                    // Texto de métodos de pago
+                    Text('Métodos de pago:', style: textSmallStyle),
+                    const SizedBox(height: 6),
+                    // Chips de métodos de pago
+                    paymentMethodChips(),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -829,11 +862,20 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
       ),
     );
   }
-  /// Muestra un diálogo Material 3 para ingresar el monto recibido, con formateo y cálculo de vuelto.
-  void dialogSelectedIncomeCash() {
+  /// Muestra un diálogo para ingresar el monto recibido, con formateo y cálculo de vuelto.
+  void dialogSelectedIncomeCash({double? initialAmount}) {
+
     final provider = Provider.of<SellProvider>(context, listen: false);
     final controller = AppMoneyTextEditingController();
-    double vuelto = 0;
+    
+    // Si se proporciona un monto inicial, establecerlo en el controlador
+    if (initialAmount != null && initialAmount > 0) {
+      controller.updateValue(initialAmount);
+    }
+    
+    double vuelto = (initialAmount ?? 0) - provider.ticket.getTotalPrice;
+    String? errorText; // Variable para controlar el mensaje de error
+    
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -841,6 +883,20 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
           builder: (context, setState) {
             final total = provider.ticket.getTotalPrice;
             final theme = Theme.of(context);
+            
+            // Lista de chips filtrada: solo mostrar montos que no excedan el valor del ticket
+            final availableAmounts = [1000, 2000, 5000, 10000, 20000]
+                .where((amount) => amount >= total)
+                .toList();
+            
+            // Función para confirmar la operación - reutilizable para botón y Enter
+            void confirmOperation() {
+              if (errorText == null && vuelto >= 0 && controller.doubleValue > 0) {
+                provider.setReceivedCash(controller.doubleValue);
+                Navigator.of(dialogContext).pop();
+              }
+            }
+            
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               backgroundColor: theme.colorScheme.surface,
@@ -852,14 +908,59 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                   MoneyInputTextField(
                     controller: controller,
                     labelText: 'Monto recibido',
+                    errorText: errorText,
                     autofocus: true,
                     style: theme.textTheme.titleLarge, 
                     onChanged: (value) {
                       setState(() {
                         vuelto = value - total;
+                        // Actualizar mensaje de error basado en el valor ingresado
+                        if (value > 0 && value < total) {
+                          errorText = 'El monto recibido es insuficiente';
+                        } else {
+                          errorText = null;
+                        }
                       });
                     },
+                    onSubmitted: (value) {
+                      // Confirmar operación al presionar Enter
+                      confirmOperation();
+                    },
                   ),
+                  const SizedBox(height: 12),
+                  // Chips con valores rápidos: solo mostrar montos que no excedan el total
+                  if (availableAmounts.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.center,
+                      children: availableAmounts.map((amount) {
+                        return ActionChip(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          label: Text(
+                            Publications.getFormatoPrecio(value: amount.toDouble()),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                          onPressed: () {
+                            controller.updateValue(amount.toDouble());
+                            setState(() {
+                              vuelto = amount.toDouble() - total;
+                              errorText = null; // Limpiar error al seleccionar chip válido
+                            });
+                          },
+                          backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                          side: BorderSide(
+                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                            width: 0.5,
+                          ),
+                          visualDensity: VisualDensity.compact,
+                        );
+                      }).toList(),
+                    ),
                   const SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -892,17 +993,6 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                       ),
                     ],
                   ),
-                  if (vuelto < 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: theme.colorScheme.error, size: 20),
-                          const SizedBox(width: 6),
-                          Text('El monto recibido es insuficiente', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error)),
-                        ],
-                      ),
-                    ),
                 ],
               ),
               actions: [
@@ -919,11 +1009,8 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                     textStyle: theme.textTheme.labelLarge,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: vuelto >= 0 && controller.doubleValue > 0
-                      ? () {
-                          provider.setReceivedCash(controller.doubleValue);
-                          Navigator.of(dialogContext).pop();
-                        }
+                  onPressed: errorText == null && vuelto >= 0 && controller.doubleValue > 0
+                      ? confirmOperation
                       : null,
                 ),
               ],
@@ -961,9 +1048,29 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
   void showDialogQuickSale({required SellProvider provider}) {
  
     // Controllers
-    final AppMoneyTextEditingController textEditingControllerAddFlashPrice =  AppMoneyTextEditingController( );
+    final AppMoneyTextEditingController textEditingControllerAddFlashPrice = AppMoneyTextEditingController();
     final TextEditingController textEditingControllerAddFlashDescription = TextEditingController();
-    final FocusNode myFocusNode = FocusNode();
+
+    /// Función para procesar la venta rápida
+    void processQuickSale() {
+      if (textEditingControllerAddFlashPrice.doubleValue <= 0) {
+        ComponentApp().showMessageAlertApp(
+          context: context,
+          title: 'Error',
+          message: 'El precio debe ser mayor a cero',
+        );
+        return;
+      }
+      
+      provider.addQuickProduct(
+        description: textEditingControllerAddFlashDescription.text,
+        salePrice: textEditingControllerAddFlashPrice.doubleValue,
+      );
+      
+      textEditingControllerAddFlashPrice.clear();
+      textEditingControllerAddFlashDescription.clear();
+      Navigator.of(context).pop();
+    }
 
     showDialog(
       context: context,
@@ -971,11 +1078,16 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           titlePadding: const EdgeInsets.only(left: 20, right: 8, top: 16, bottom: 0),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          actionsPadding: const EdgeInsets.only(right: 8, bottom: 8),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          actionsPadding: const EdgeInsets.only(right: 20, left: 20, bottom: 20),
           title: Row(
             children: [
-              const Expanded(child: Text('Venta rápida', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+              const Expanded(
+                child: Text(
+                  'Venta rápida', 
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.close_rounded),
                 splashRadius: 18,
@@ -983,87 +1095,37 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               ),
             ],
           ),
-          content: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: SizedBox(
-              width: 320,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    autofocus: true,
-                    controller: textEditingControllerAddFlashPrice,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                    inputFormatters: [
-                        AppMoneyInputFormatter(symbol: '')
-                      ],
-                    decoration: InputDecoration(
-                      labelText: "Precio",
-                      prefixIcon: const Icon(Icons.attach_money_rounded),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-                      border: OutlineInputBorder(borderSide:  BorderSide( )),
-                      enabledBorder: OutlineInputBorder(borderSide:  BorderSide( ), )
-                    ),
-                    style: const TextStyle(fontSize: 16.0),
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    focusNode: myFocusNode,
-                    controller: textEditingControllerAddFlashDescription,
-                    decoration: InputDecoration(
-                      labelText: "Descripción (opcional)",
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
-                      border: OutlineInputBorder(borderSide:  BorderSide( )),
-                        enabledBorder: OutlineInputBorder(borderSide:  BorderSide( ), )
-                    ),
-                    style: const TextStyle(fontSize: 16.0),
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (value) {
-                      if (textEditingControllerAddFlashPrice.doubleValue <= 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('El precio debe ser mayor a cero')),
-                        );
-                        return;
-                      }
-                      provider.addQuickProduct(
-                        description: textEditingControllerAddFlashDescription.text,
-                        salePrice: textEditingControllerAddFlashPrice.doubleValue,
-                      );
-                      textEditingControllerAddFlashPrice.clear();
-                      textEditingControllerAddFlashDescription.clear();
-                      Navigator.of(dialogContext).pop();
-                    },
-                  ),
-                ],
-              ),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Campo de precio usando MoneyInputTextField de ComponentApp
+                MoneyInputTextField(
+                  controller: textEditingControllerAddFlashPrice,
+                  labelText: 'Precio',
+                  autofocus: true,
+                  onSubmitted: (value) => processQuickSale(),
+                ),
+                const SizedBox(height: 20),
+                // Campo de descripción usando InputTextField de ComponentApp
+                InputTextField(
+                  controller: textEditingControllerAddFlashDescription,
+                  labelText: 'Descripción (opcional)',
+                  hintText: 'Ingrese una descripción del producto',
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (value) => processQuickSale(),
+                ),
+              ],
             ),
           ),
           actions: [
             SizedBox(
               width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.only(right:20,left:20, bottom:20),
-                child: ComponentApp().button(
-                  text: 'Agregar producto',
-                  onPressed:(){
-                    if (textEditingControllerAddFlashPrice.doubleValue <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('El precio debe ser mayor a cero')),
-                      );
-                      return;
-                    }
-                    provider.addQuickProduct(
-                      description: textEditingControllerAddFlashDescription.text,
-                      salePrice: textEditingControllerAddFlashPrice.doubleValue,
-                    );
-                    textEditingControllerAddFlashPrice.clear();
-                    textEditingControllerAddFlashDescription.clear();
-                    Navigator.of(dialogContext).pop();
-                  }, 
-                  context: context)
+              child: ComponentApp().button(
+                text: 'Agregar producto', 
+                onPressed: processQuickSale,
+                context: dialogContext,
               ),
             ),
           ],
@@ -1188,6 +1250,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
       },
     );
   }
+ 
 
   /// Construye el widget de un producto para la lista del modal de selección.
   /// Mejora la UI siguiendo Material 3 y muestra cantidad seleccionada si aplica.
@@ -1275,7 +1338,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         ),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        hoverColor: colorScheme.primaryContainer.withOpacity(0.12),
+        hoverColor: colorScheme.primaryContainer.withValues(alpha: 0.12),
       ),
     );
   }
@@ -1683,7 +1746,7 @@ class _TicketProductListWithIndicatorState extends State<_TicketProductListWithI
     final List<Widget> items = widget.ticket.listPoduct.map<Widget>((item) {
       final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical:0),
         child: Row(
           children: [
             Expanded(child: Text('${product.quantity}', style: widget.textValuesStyle)),
@@ -1712,17 +1775,17 @@ class _TicketProductListWithIndicatorState extends State<_TicketProductListWithI
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
                 ],
                 border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
                 width: 1,
                 ),
               ),

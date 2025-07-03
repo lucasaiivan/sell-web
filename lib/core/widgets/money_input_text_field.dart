@@ -7,7 +7,9 @@ import 'package:sellweb/core/utils/fuctions.dart';
 class MoneyInputTextField extends StatelessWidget {
   final AppMoneyTextEditingController controller;
   final void Function(double value)? onChanged;
+  final void Function(double value)? onSubmitted;
   final String labelText;
+  final String? errorText;
   final Color? fillColor;
   final List<TextInputFormatter>? inputFormatters;
   final bool autofocus;
@@ -17,7 +19,9 @@ class MoneyInputTextField extends StatelessWidget {
     super.key,
     required this.controller,
     this.onChanged,
+    this.onSubmitted,
     this.labelText = 'Monto',
+    this.errorText,
     this.fillColor,
     this.inputFormatters,
     this.autofocus = false,
@@ -33,8 +37,10 @@ class MoneyInputTextField extends StatelessWidget {
       inputFormatters: inputFormatters ?? [AppMoneyInputFormatter()],
       autofocus: autofocus,
       style: style ?? theme.textTheme.titleLarge,
+      textInputAction: TextInputAction.done,
       decoration: InputDecoration(
         labelText: labelText,
+        errorText: errorText,
         prefixIcon: const Icon(Icons.attach_money),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
@@ -46,6 +52,11 @@ class MoneyInputTextField extends StatelessWidget {
         if (onChanged != null) {
           // Usar el getter doubleValue del controlador, que siempre está formateado correctamente
           onChanged!(controller.doubleValue);
+        }
+      },
+      onSubmitted: (value) {
+        if (onSubmitted != null) {
+          onSubmitted!(controller.doubleValue);
         }
       },
     );

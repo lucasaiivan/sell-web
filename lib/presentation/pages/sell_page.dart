@@ -353,47 +353,74 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     return AppBar(  
       toolbarHeight: 70,
       titleSpacing: 0,
-      // avatar 
-      leading: Builder(
-        builder: (context) => Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: () => Scaffold.of(context).openDrawer(),
-            child: ComponentApp().userAvatarCircle(
-              urlImage: provider.profileAccountSelected.image,
-              text: provider.profileAccountSelected.name,
-              radius: 20, // Radio normal, el padding controla el tamaño visual
-            ),
+      // Agregar espacio adicional desde la barra de estado
+      elevation: 0, 
+      leading: Container(),
+      scrolledUnderElevation: 0,
+      // Usar flexibleSpace para controlar mejor el espaciado
+      flexibleSpace: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.only(top: 20.0,bottom:12,left: 12,right: 12), // Espacio adicional desde la barra de estado
+          child: Row(
+            children: [
+              // Avatar con padding personalizado
+              Builder(
+                builder: (context) => GestureDetector(
+                  onTap: () => Scaffold.of(context).openDrawer(),
+                  child: ComponentApp().userAvatarCircle(
+                    urlImage: provider.profileAccountSelected.image,
+                    text: provider.profileAccountSelected.name,
+                    radius: 18,
+                  ),
+                ),
+              ),
+              // Botón de búsqueda expandido
+              Padding(
+                padding: const EdgeInsets.only( left: 20.0, right: 8.0),
+                child: ComponentApp().searchButtonAppBar( 
+                  height: 40,
+                  context: buildContext, 
+                  onPressed: (isLoading || isEmpty)? () {}: () => showModalBottomSheetSelectProducts(buildContext),
+                  icon: isLoading || isEmpty ? SizedBox(width: 20, height: 20,child: CircularProgressIndicator(strokeWidth:2,color:Theme.of(buildContext).colorScheme.primaryContainer)): Icon(Icons.search_rounded),
+                  label: isLoading?'Cargando...':isEmpty?'No hay productos disponibles': 'Buscar productos',
+                  color: Theme.of(buildContext).colorScheme.primaryContainer,
+                  textColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
+                  iconColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const Spacer(),
+              // Acciones del AppBar
+              Row(
+                children: [
+                  // Botón de caja actual
+                  if (!provider.ticketView)
+                    ComponentApp().buttonAppbar( 
+                      context: buildContext,
+                      text: 'Seleccionar caja', 
+                      onTap: (){
+                        // ...
+                        // implementar lógica para seleccionar caja ... 
+                        // ... 
+                      },
+                    ),
+                  // Botón de descartar ticket (existente)
+                  ((isMobile(buildContext) && provider.ticketView) || (!isMobile(buildContext) && provider.ticket.getProductsQuantity() > 0)) ?
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0, left:12.0),
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.close),
+                        label: const Text('Descartar ticket'),
+                        onPressed: discartTicketAlertDialg,
+                      ),
+                    ):Container(),
+                ],
+              )
+            ],
           ),
         ),
       ),
-      title: ComponentApp().searchButtonAppBar( 
-        context: buildContext, 
-        onPressed: (isLoading || isEmpty)
-            ? () {}
-            : () => showModalBottomSheetSelectProducts(buildContext),
-        icon: isLoading || isEmpty
-            ? SizedBox(width: 20, height: 20,child: CircularProgressIndicator(strokeWidth:2,color:Theme.of(buildContext).colorScheme.primaryContainer))
-            : Icon(Icons.search_rounded),
-        label: isLoading
-            ? 'Cargando...'
-            : isEmpty
-                ? 'No hay productos disponibles'
-                : 'Buscar productos',
-        color: Theme.of(buildContext).colorScheme.primaryContainer,
-        textColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
-        iconColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
-      ),
-      centerTitle: false, 
-      actions: [
-        // Mostrar el botón según reglas: móvil+ticketView o desktop+productos seleccionados
-        if ((isMobile(buildContext) && provider.ticketView) || (!isMobile(buildContext) && provider.ticket.getProductsQuantity() > 0))
-          TextButton.icon(
-            icon: const Icon(Icons.close),
-            label: const Text('Descartar ticket'),
-            onPressed: discartTicketAlertDialg,
-          ),
-      ],
+      // Remover las propiedades leading, title y actions ya que están en flexibleSpace
+      centerTitle: false,
     );
   }
   Widget get drawer{

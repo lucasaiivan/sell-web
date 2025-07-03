@@ -76,41 +76,81 @@ class ComponentApp extends StatelessWidget {
     Widget icon = const Icon(Icons.search),
     Color? color,
     Color? textColor,
-    Color? iconColor,
+    Color? iconColor, 
+    double? fontSize,
+    double? iconSize,
+    EdgeInsetsGeometry? padding,
+    double? width,
+    double? height,
   }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return ElevatedButton(
+    
+    // Calcular tamaños adaptativos basados en las dimensiones
+    final double effectiveHeight = height ?? 40.0;
+    final double adaptiveFontSize = fontSize ?? (effectiveHeight * 0.33);
+    final double adaptiveIconSize = iconSize ?? (effectiveHeight * 0.5);
+    final double adaptivePaddingHorizontal = effectiveHeight * 0.33;
+    final double adaptivePaddingVertical = effectiveHeight * 0.25;
+    final double adaptiveSpacing = effectiveHeight * 0.15;
+    
+    Widget button = ElevatedButton(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all((color ?? colorScheme.primaryContainer).withValues(alpha: 0.5)),
         foregroundColor: WidgetStateProperty.all(textColor ?? colorScheme.onPrimaryContainer),
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16, vertical: 16)),
+        padding: WidgetStateProperty.all(
+          padding ?? EdgeInsets.symmetric(
+            horizontal: adaptivePaddingHorizontal, 
+            vertical: adaptivePaddingVertical
+          )
+        ),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(effectiveHeight * 0.25), // Radio proporcional
           ),
         ),
-        elevation: WidgetStateProperty.all(0), // Sin elevación en ningún estado
+        elevation: WidgetStateProperty.all(0),
       ),
       onPressed: onPressed,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          icon,
-          const SizedBox(width: 8),
-          Opacity(
-            opacity: 0.6,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: textColor ?? colorScheme.onPrimaryContainer,
+          IconTheme(
+            data: IconThemeData(
+              size: adaptiveIconSize,
+              color: iconColor ?? textColor ?? colorScheme.onPrimaryContainer,
+            ),
+            child: icon,
+          ),
+          SizedBox(width: adaptiveSpacing),
+          Flexible(
+            child: Opacity(
+              opacity: 0.6,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: adaptiveFontSize,
+                  fontWeight: FontWeight.w500,
+                  color: textColor ?? colorScheme.onPrimaryContainer,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ),
         ],
       ),
     );
+
+    // Aplicar dimensiones con contenedor fijo
+    if (width != null || height != null) {
+      return SizedBox(
+        width: width,
+        height: height,
+        child: button,
+      );
+    }
+    
+    return button;
   }
   Widget buttonAppbar({ required BuildContext context,Function() ?onTap,required String text,Color ?colorBackground ,Color ?colorAccent,IconData ?iconLeading ,IconData ?iconTrailing,EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0),bool textOpacity = false}) { 
     
@@ -120,30 +160,57 @@ class ComponentApp extends StatelessWidget {
 
     return Padding(
       padding: padding,
-      child: Material(
-        clipBehavior: Clip.antiAlias, 
-        color: colorBackground,
-        borderRadius: BorderRadius.circular(25),
-        elevation: 0,
-        child: InkWell(
-          onTap:  onTap,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 14, right: 20, top: 8, bottom: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // icon leading
-                iconLeading==null?Container():Icon(iconLeading,color: colorAccent,size: 24),
-                iconLeading==null?Container():const SizedBox(width:8),
-                // text
-                Flexible(child: Opacity(opacity:textOpacity?0.5:1,child: Text(text,style: TextStyle(color: colorAccent,fontSize: 16 ),overflow: TextOverflow.ellipsis))), 
-                iconTrailing==null?Container():const SizedBox(width:8), 
-                iconTrailing==null?Container():Icon(iconTrailing,color: colorAccent,size: 24),
-              ],
+      child: iconLeading != null || iconTrailing != null
+          ? ElevatedButton.icon(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorBackground,
+                foregroundColor: colorAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                elevation: 0,
+                padding: const EdgeInsets.only(left: 14, right: 20, top: 8, bottom: 8),
+              ),
+              icon: iconLeading != null 
+                  ? Icon(iconLeading, color: colorAccent, size: 24)
+                  : const SizedBox.shrink(),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Opacity(
+                      opacity: textOpacity ? 0.5 : 1,
+                      child: Text(
+                        text,
+                        style: TextStyle(color: colorAccent ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  if (iconTrailing != null) ...[
+                    const SizedBox(width: 8),
+                    Icon(iconTrailing, color: colorAccent, size: 24),
+                  ],
+                ],
+              ),
+            )
+          : ElevatedButton(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorBackground,
+                foregroundColor: colorAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                elevation: 0,
+                padding: const EdgeInsets.only(left: 14, right: 20, top: 8, bottom: 8),
+              ),
+              child: Opacity(
+                opacity: textOpacity ? 0.5 : 1,
+                child: Text(
+                  text,
+                  style: TextStyle(color: colorAccent ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   } 
   Widget button( {bool defaultStyle = false,double elevation=0,double fontSize = 14,double width = double.infinity,bool disable = false, Widget? icon, String text = '',required dynamic onPressed,EdgeInsets padding =const EdgeInsets.symmetric(horizontal: 12, vertical: 12),Color? colorButton= Colors.blue,Color colorAccent = Colors.white , EdgeInsets margin =const EdgeInsets.symmetric(horizontal: 12, vertical: 12), required BuildContext context, double? iconSize, Size? minimumSize}) {
@@ -204,15 +271,14 @@ class ComponentApp extends StatelessWidget {
         duration: const Duration(seconds: 3),
       ),
     );
-  }
-  Widget buttonRoundAppBar({required void Function() onPressed,required BuildContext context,Widget ?child,required IconData icon,required EdgeInsets edgeInsets})  => Material(color: Colors.transparent,child: Center( child: Padding(padding: const EdgeInsets.all(8.0),child: Ink(decoration: ShapeDecoration(color: Brightness.dark==Theme.of(context).brightness?Colors.black:Colors.white,shape: const CircleBorder()), child: child==null?IconButton(icon: Icon(icon),color:Brightness.dark==Theme.of(context).brightness?Colors.white:Colors.black,onPressed: onPressed):child))));
+  } 
 
   /// FloatingActionButton personalizado para 3 variantes: icono, texto o ambos.
   /// Por defecto el color es azul (Material 3)
   Widget floatingActionButtonApp({
     String? text,
     IconData? icon,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
     Color? buttonColor,
     Color? textColor,
     double? size, // tamaño del botón
@@ -221,8 +287,8 @@ class ComponentApp extends StatelessWidget {
     final bool hasIcon = icon != null;
     final bool hasText = text != null && text.isNotEmpty;
     final double buttonSize = size ?? 56.0;
-    final Color effectiveButtonColor = buttonColor ?? Colors.blue;
-    final Color effectiveTextColor = textColor ?? Colors.white;
+    final Color effectiveButtonColor = buttonColor ?? Colors.blue; // Color por defecto azul
+    final Color effectiveTextColor = textColor ??  Colors.white; // Color de texto por defecto blanco
 
     if (hasText) {
       // FloatingActionButton.extended para texto o icono+texto

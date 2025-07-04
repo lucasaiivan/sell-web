@@ -11,6 +11,117 @@ class WelcomePage extends StatelessWidget {
 
   const WelcomePage({super.key, required this.onSelectAccount});
 
+  /// Obtiene la ubicación prioritaria de la cuenta
+  String _getAccountLocation(ProfileAccountModel account) {
+    if (account.town.isNotEmpty) return account.town;
+    if (account.province.isNotEmpty) return account.province;
+    if (account.country.isNotEmpty) return account.country;
+    if (account.countrycode.isNotEmpty) return account.countrycode;
+    return '';
+  }
+
+  /// Construye una tarjeta de cuenta con avatar, nombre y ubicación mejorada
+  Widget _buildAccountCard(BuildContext context, ProfileAccountModel account) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Obtener la ubicación con prioridad
+    final location = _getAccountLocation(account);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+      constraints: const BoxConstraints(minWidth: 240, maxWidth: 360),
+      child: Card(
+        elevation: 2,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2),width: 1)),
+        surfaceTintColor: colorScheme.surfaceTint,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async => await onSelectAccount(account),
+          splashColor: colorScheme.primary.withValues(alpha: 0.1),
+          highlightColor: colorScheme.primary.withValues(alpha: 0.05),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Avatar mejorado con sombra sutil
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ComponentApp().userAvatarCircle(
+                    urlImage: account.image,
+                    text: account.name.isNotEmpty ? account.name[0].toUpperCase() : '',
+                    radius: 24,
+                    background: colorScheme.primaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Nombre de la cuenta con mejor tipografía
+                      Text(
+                        account.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (location.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        // Ubicación con icono y mejor estilo
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 14,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                location,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // Icono de flecha para indicar acción
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) { 
 
@@ -80,102 +191,48 @@ class WelcomePage extends StatelessWidget {
                     ),
                   // view : muestra lista de cuentas asociadas al usuario
                   if (accounts.isNotEmpty)
-                    ...accounts.map((account) => Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          constraints: const BoxConstraints(
-                              minWidth: 220, maxWidth: 320),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withValues(alpha: 0.4),
-                                width: 1),
-                          ),
-                          child: Material(
-                            elevation: 0,
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () async => await onSelectAccount(account),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // avatar : muestra la imagen del perfil de la cuenta
-                                    ComponentApp().userAvatarCircle(
-                                      urlImage: account.image,
-                                      text: account.country.isNotEmpty ? account.name[0].toUpperCase() : '',
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // text : muestra el nombre de la cuenta
-                                          Text(account.name,
-                                              style: const TextStyle(
-                                                  fontWeight:
-                                                      FontWeight.w600)),
-                                          // text : muestra la ubicación de la cuenta
-                                          Opacity(
-                                            // isNotEmpty : es 
-                                              opacity: 0.5,
-                                              child: Text(account.town.isNotEmpty?account.town:account.province.isNotEmpty?account.province:account.country.isNotEmpty?account.country:account.countrycode,
-                                                  style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.grey))),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        )),
+                    ...accounts.map((account) => _buildAccountCard(context, account)),
                   const SizedBox(height: 30),
                   // Botón para cerrar sesión del usuario
                   if (authProvider.user?.email != null)
                     const SizedBox(height: 50),
                   // text : Mostrar el correo electrónico del usuario
-                  Text(
-                    authProvider.user?.email ?? 'Invitado',
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  // button : Cerrar sesión de Firebase Auth
-                  TextButton.icon(
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Confirmar'),
-                          content:
-                              const Text('¿Seguro que deseas cerrar sesión?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Cancelar'),
+                  authProvider.isLoadingAccounts?Container():
+                  Column(
+                    children: [
+                      Text(
+                        authProvider.user?.email ?? 'Invitado',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      // button : Cerrar sesión de Firebase Auth
+                      TextButton.icon(
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Confirmar'),
+                              content:
+                                  const Text('¿Seguro que deseas cerrar sesión?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: const Text('Cerrar sesión'),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              child: const Text('Cerrar sesión'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        await authProvider.signOut();
-                      }
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Cerrar sesión'),
+                          );
+                          if (confirm == true) {
+                            await authProvider.signOut();
+                          }
+                        },
+                        icon: const Icon(Icons.logout),
+                        label: const Text('Cerrar sesión'),
+                      ),
+                    ],
                   )
                 ],
               ),

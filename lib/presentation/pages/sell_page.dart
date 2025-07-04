@@ -1,4 +1,3 @@
-import 'package:sellweb/core/widgets/input_text_field.dart';
 import 'package:sellweb/core/widgets/money_input_text_field.dart';
 import 'package:web/web.dart' as html; 
 import 'package:flutter/material.dart';
@@ -554,7 +553,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     return Row(
       children: [
         ComponentApp().floatingActionButtonApp(
-          onTap: () => showDialogQuickSale(provider: sellProvider),
+          onTap: () => showDialogQuickSale(context, provider: sellProvider),
           icon: Icons.flash_on_rounded,
           buttonColor: Colors.amber,
         ).animate(delay: const Duration(milliseconds: 0)).fade(),
@@ -1045,94 +1044,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     );
   }
 
-  void showDialogQuickSale({required SellProvider provider}) {
- 
-    // Controllers
-    final AppMoneyTextEditingController textEditingControllerAddFlashPrice = AppMoneyTextEditingController();
-    final TextEditingController textEditingControllerAddFlashDescription = TextEditingController();
 
-    /// Función para procesar la venta rápida
-    void processQuickSale() {
-      if (textEditingControllerAddFlashPrice.doubleValue <= 0) {
-        ComponentApp().showMessageAlertApp(
-          context: context,
-          title: 'Error',
-          message: 'El precio debe ser mayor a cero',
-        );
-        return;
-      }
-      
-      provider.addQuickProduct(
-        description: textEditingControllerAddFlashDescription.text,
-        salePrice: textEditingControllerAddFlashPrice.doubleValue,
-      );
-      
-      textEditingControllerAddFlashPrice.clear();
-      textEditingControllerAddFlashDescription.clear();
-      Navigator.of(context).pop();
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          titlePadding: const EdgeInsets.only(left: 20, right: 8, top: 16, bottom: 0),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          actionsPadding: const EdgeInsets.only(right: 20, left: 20, bottom: 20),
-          title: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Venta rápida', 
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded),
-                splashRadius: 18,
-                onPressed: () => Navigator.of(dialogContext).pop(),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: 320,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Campo de precio usando MoneyInputTextField de ComponentApp
-                MoneyInputTextField(
-                  controller: textEditingControllerAddFlashPrice,
-                  labelText: 'Precio',
-                  autofocus: true,
-                  onSubmitted: (value) => processQuickSale(),
-                ),
-                const SizedBox(height: 20),
-                // Campo de descripción usando InputTextField de ComponentApp
-                InputTextField(
-                  controller: textEditingControllerAddFlashDescription,
-                  labelText: 'Descripción (opcional)',
-                  hintText: 'Ingrese una descripción del producto',
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (value) => processQuickSale(),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ComponentApp().button(
-                text: 'Agregar producto', 
-                onPressed: processQuickSale,
-                context: dialogContext,
-              ),
-            ),
-          ],
-        );
-      },
-    );  
-  }
 
   /// Muestra una cuenta con un icono check si está seleccionada.
   Widget buttonListTileItemCuenta({

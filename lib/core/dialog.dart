@@ -358,7 +358,7 @@ Future<void> showDialogAgregarProductoPublico(
 }) async {
 
   // style 
-  Color infoContainerColor = isNew ? Colors.orange:Colors.red;
+  Color? infoContainerColor = isNew ? Colors.orange:null;
   // Variables
   bool checkAddCatalogue = true; // Checkbox para agregar al catálogo 
   final priceController = AppMoneyTextEditingController(); 
@@ -384,20 +384,9 @@ Future<void> showDialogAgregarProductoPublico(
             children: [
               Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row( 
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isNew ? Icons.add_circle : Icons.add,
-                        color: infoContainerColor,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        isNew ? 'Crear producto' : 'Agregar al catálogo',
-                        style: theme.textTheme.titleLarge?.copyWith(color: infoContainerColor),
-                      ),
-                    ],
+                  child: Text(
+                    isNew ? 'Crear producto' : 'Nuevo producto',
+                    style: theme.textTheme.titleLarge?.copyWith(color: infoContainerColor),
                   ),
                 ),
               const Spacer(),
@@ -423,7 +412,7 @@ Future<void> showDialogAgregarProductoPublico(
                       Expanded(
                         child: Text(
                           product.code.isNotEmpty ? product.code : 'Sin código',
-                          style: const TextStyle(fontSize: 16, color: Colors.black87),
+                          style: const TextStyle(fontSize: 16 ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -494,7 +483,7 @@ Future<void> showDialogAgregarProductoPublico(
                 // input : Descripción del producto
                 if (isNew)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: 20),
                     child: InputTextField(
                       controller: descriptionController,
                       labelText: 'Descripción del producto',
@@ -539,8 +528,7 @@ Future<void> showDialogAgregarProductoPublico(
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(errorText!, style: TextStyle(color: theme.colorScheme.error)),
-                  ),
-                const SizedBox(height: 24),
+                  ), 
               ],
             ),
           ),
@@ -678,4 +666,93 @@ Future<void> showDialogAgregarProductoPublico(
       },
     ),
   );
+}
+
+/// Muestra un diálogo para realizar una venta rápida
+Future<void> showDialogQuickSale(BuildContext context, {required SellProvider provider}) async {
+  // Controllers
+  final AppMoneyTextEditingController textEditingControllerAddFlashPrice = AppMoneyTextEditingController();
+  final TextEditingController textEditingControllerAddFlashDescription = TextEditingController();
+
+  /// Función para procesar la venta rápida
+  void processQuickSale() {
+    if (textEditingControllerAddFlashPrice.doubleValue <= 0) {
+      ComponentApp().showMessageAlertApp(
+        context: context,
+        title: 'Error',
+        message: 'El precio debe ser mayor a cero',
+      );
+      return;
+    }
+    
+    provider.addQuickProduct(
+      description: textEditingControllerAddFlashDescription.text,
+      salePrice: textEditingControllerAddFlashPrice.doubleValue,
+    );
+    
+    textEditingControllerAddFlashPrice.clear();
+    textEditingControllerAddFlashDescription.clear();
+    Navigator.of(context).pop();
+  }
+
+  await showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.only(left: 20, right: 8, top: 16, bottom: 0),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        actionsPadding: const EdgeInsets.only(right: 20, left: 20, bottom: 20),
+        title: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Venta rápida', 
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close_rounded),
+              splashRadius: 18,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Campo de precio usando MoneyInputTextField de ComponentApp
+              MoneyInputTextField(
+                controller: textEditingControllerAddFlashPrice,
+                labelText: 'Precio',
+                autofocus: true,
+                onSubmitted: (value) => processQuickSale(),
+              ),
+              const SizedBox(height: 20),
+              // Campo de descripción usando InputTextField de ComponentApp
+              InputTextField(
+                controller: textEditingControllerAddFlashDescription,
+                labelText: 'Descripción (opcional)',
+                hintText: 'Ingrese una descripción del producto',
+                textInputAction: TextInputAction.done,
+                onSubmitted: (value) => processQuickSale(),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ComponentApp().button( 
+              text: 'Agregar producto', 
+              onPressed: processQuickSale,
+              context: dialogContext,
+            ),
+          ),
+        ],
+      );
+    },
+  );  
 }

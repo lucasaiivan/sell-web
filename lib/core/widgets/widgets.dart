@@ -32,9 +32,7 @@ class ComponentApp extends StatelessWidget {
   }
   // view : imagen avatar del usuario
   Widget userAvatarCircle({ Color? background,IconData? iconData,bool empty=false,String urlImage='',String text = '', double radius = 20.0}) {
-    
-    // style
-    Color? backgroundColor = background  ;
+     
     // widgets
     late Widget avatar;
     late Widget iconDefault;
@@ -51,15 +49,15 @@ class ComponentApp extends StatelessWidget {
     
     // crear avatar
     avatar = urlImage == ''
-      ? CircleAvatar(backgroundColor:backgroundColor,radius:radius, child: Center(child: iconDefault))
+      ? CircleAvatar(backgroundColor:background,radius:radius, child: Center(child: iconDefault))
         : CachedNetworkImage(
           imageUrl: urlImage,
-          placeholder: (context, url) => CircleAvatar(backgroundColor:backgroundColor,radius:radius, child:iconDefault),
+          placeholder: (context, url) => CircleAvatar(backgroundColor:background,radius:radius, child:iconDefault),
           imageBuilder: (context, image) => CircleAvatar(backgroundImage: image,radius:radius),
           errorWidget: (context, url, error) {
             // return : un circleView con la inicial de nombre como icon 
             return CircleAvatar(
-              backgroundColor: backgroundColor,
+              backgroundColor: background,
               radius:radius,
               child: Center(child: iconDefault),
               );
@@ -213,7 +211,7 @@ class ComponentApp extends StatelessWidget {
             ),
     );
   } 
-  Widget button( {bool defaultStyle = false,double elevation=0,double fontSize = 14,double width = double.infinity,bool disable = false, Widget? icon, String text = '',required dynamic onPressed,EdgeInsets padding =const EdgeInsets.symmetric(horizontal: 12, vertical: 12),Color? colorButton= Colors.blue,Color colorAccent = Colors.white , EdgeInsets margin =const EdgeInsets.symmetric(horizontal: 12, vertical: 12), required BuildContext context, double? iconSize, Size? minimumSize}) {
+  Widget button( {bool defaultStyle = false,double elevation=0,double fontSize = 14,double width = double.infinity,bool disable = false, Widget? icon, String text = '',required dynamic onPressed,EdgeInsets padding =const EdgeInsets.symmetric(horizontal: 12, vertical:20),Color? colorButton= Colors.blue,Color colorAccent = Colors.white , EdgeInsets margin =const EdgeInsets.symmetric(horizontal: 12, vertical: 12), required BuildContext context, double? iconSize, Size? minimumSize}) {
      
     // button : personalizado
     return AnimatedSwitcher(

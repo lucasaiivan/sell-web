@@ -17,6 +17,10 @@ class SellProvider extends ChangeNotifier {
   // Indica si se debe mostrar la vista del ticket
   bool _ticketView = false; // Indica si se debe mostrar la vista del ticket
   bool get ticketView => _ticketView; 
+  
+  // Indica si se debe imprimir el ticket al confirmar la venta
+  bool _shouldPrintTicket = false;
+  bool get shouldPrintTicket => _shouldPrintTicket; 
   // Cuenta seleccionada actualmente
   ProfileAccountModel profileAccountSelected = ProfileAccountModel();
   
@@ -33,7 +37,8 @@ class SellProvider extends ChangeNotifier {
   void cleanData() {
     profileAccountSelected = ProfileAccountModel();
     ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
-    _ticketView = false;  
+    _ticketView = false;
+    _shouldPrintTicket = false;
     _saveTicket();  
   }
 
@@ -124,6 +129,7 @@ class SellProvider extends ChangeNotifier {
   void discartTicket() {
     ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
     _ticketView = false;
+    _shouldPrintTicket = false;
     _saveTicket();
     notifyListeners();
   }
@@ -187,6 +193,12 @@ class SellProvider extends ChangeNotifier {
   void setReceivedCash(double value) {
     ticket.valueReceived = value;
     _saveTicket();
+    notifyListeners();
+  }
+
+  /// Establece si se debe imprimir el ticket al confirmar la venta.
+  void setShouldPrintTicket(bool value) {
+    _shouldPrintTicket = value;
     notifyListeners();
   }
 }

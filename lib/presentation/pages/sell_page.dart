@@ -15,6 +15,8 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
 import 'welcome_page.dart'; 
 import 'package:sellweb/core/dialog.dart';
+import 'package:sellweb/core/services/thermal_printer_service.dart';
+import 'package:sellweb/core/widgets/printer_config_dialog.dart';
 
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
@@ -392,6 +394,29 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               // Acciones del AppBar
               Row(
                 children: [
+                  // Ícono de estado de impresora
+                  Consumer<SellProvider>(
+                    builder: (context, _, __) {
+                      return FutureBuilder<bool>(
+                        future: _checkPrinterStatus(),
+                        builder: (context, snapshot) {
+                          final isConnected = snapshot.data ?? false;
+                          return IconButton(
+                            icon: Icon(
+                              Icons.print,
+                              color: isConnected 
+                                ? Colors.green 
+                                : Theme.of(buildContext).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            tooltip: isConnected 
+                              ? 'Impresora conectada - Configurar' 
+                              : 'Configurar impresora',
+                            onPressed: () => _showPrinterConfigDialog(buildContext),
+                          );
+                        },
+                      );
+                    },
+                  ),
                   // Botón de caja actual
                   if (!provider.ticketView)
                     ComponentApp().buttonAppbar( 
@@ -532,6 +557,11 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         if (showClose) const SizedBox(width: 8),
         ComponentApp().floatingActionButtonApp(
           onTap: () async {
+            // Imprimir ticket si está habilitado y hay impresora conectada
+            if (provider.shouldPrintTicket) {
+              await _printCurrentTicket(provider, context);
+            }
+            
             setState(() {
               _showConfirmedPurchase = true;
             });
@@ -788,6 +818,67 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                 ),
               ),
               const SizedBox(height: 12),
+              
+              // Checkbox para imprimir ticket
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Consumer<SellProvider>(
+                      builder: (context, sellProvider, __) {
+                        return FutureBuilder<bool>(
+                          future: _checkPrinterStatus(),
+                          builder: (context, snapshot) {
+                            final isConnected = snapshot.data ?? false;
+                            return Checkbox(
+                              value: sellProvider.shouldPrintTicket && isConnected,
+                              onChanged: isConnected 
+                                ? (bool? value) {
+                                    sellProvider.setShouldPrintTicket(value ?? false);
+                                  }
+                                : null,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    Expanded(
+                      child: Consumer<SellProvider>(
+                        builder: (context, sellProvider, __) {
+                          return FutureBuilder<bool>(
+                            future: _checkPrinterStatus(),
+                            builder: (context, snapshot) {
+                              final isConnected = snapshot.data ?? false;
+                              return GestureDetector(
+                                onTap: isConnected 
+                                  ? () {
+                                      sellProvider.setShouldPrintTicket(!sellProvider.shouldPrintTicket);
+                                    }
+                                  : () => _showPrinterConfigDialog(context),
+                                child: Text(
+                                  isConnected 
+                                    ? 'Imprimir ticket'
+                                    : 'Configurar impresora para imprimir',
+                                  style: textSmallStyle.copyWith(
+                                    color: isConnected 
+                                      ? colorScheme.onSurface
+                                      : colorScheme.primary,
+                                    decoration: isConnected 
+                                      ? null 
+                                      : TextDecoration.underline,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              
               Row(
                 children: [
                   const Spacer(),
@@ -1663,3 +1754,84 @@ class _TotalBounceState extends State<_TotalBounce> with SingleTickerProviderSta
     );
   }
 }
+/// Verifica el estado de conexión de la impresora térmica
+  Future<bool> _checkPrinterStatus() async {
+    final printerService = ThermalPrinterService();
+    await printerService.initialize();
+    return printerService.isConnected;
+  }
+
+  /// Muestra el diálogo de configuración de impresora
+  void _showPrinterConfigDialog(BuildContext context) {
+    showPrinterConfigDialog(context);
+  }
+
+  /// Imprime el ticket actual usando el servicio de impresora térmica
+  Future<void> _printCurrentTicket(SellProvider provider, BuildContext context) async {
+    try {
+      final printerService = ThermalPrinterService();
+      await printerService.initialize();
+      
+      if (!printerService.isConnected) {
+        // Mostrar snackbar si no hay impresora conectada
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay impresora conectada'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Preparar datos del ticket para impresión
+      final products = provider.ticket.listPoduct.map((item) {
+        final product = item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
+        return {
+          'quantity': product.quantity,
+          'description': product.description,
+          'price': '\$${(product.salePrice * product.quantity).toStringAsFixed(2)}',
+        };
+      }).toList();
+
+      // Determinar método de pago
+      String paymentMethod = 'Efectivo';
+      switch (provider.ticket.payMode) {
+        case 'mercadopago':
+          paymentMethod = 'Mercado Pago';
+          break;
+        case 'card':
+          paymentMethod = 'Tarjeta Déb/Créd';
+          break;
+        default:
+          paymentMethod = 'Efectivo';
+      }
+
+      // Imprimir ticket
+      final success = await printerService.printTicket(
+        businessName: provider.profileAccountSelected.name.isNotEmpty 
+          ? provider.profileAccountSelected.name 
+          : 'PUNTO DE VENTA',
+        products: products,
+        total: provider.ticket.getTotalPrice,
+        paymentMethod: paymentMethod,
+        cashReceived: provider.ticket.valueReceived > 0 ? provider.ticket.valueReceived : null,
+        change: provider.ticket.valueReceived > provider.ticket.getTotalPrice 
+          ? provider.ticket.valueReceived - provider.ticket.getTotalPrice 
+          : null,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? 'Ticket impreso correctamente' : 'Error al imprimir ticket'),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al imprimir: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }

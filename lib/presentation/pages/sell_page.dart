@@ -894,15 +894,26 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
               ),
               const SizedBox(height: 12),
               
-              // CheckboxListTile para imprimir ticket
+              // CheckboxListTile para imprimir ticket con contenedor discreto
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Consumer<SellProvider>(
                   builder: (context, sellProvider, __) {
-                    return Card(
-                      elevation: 0,
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: sellProvider.shouldPrintTicket 
+                            ? colorScheme.primary.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        color: !sellProvider.shouldPrintTicket 
+                          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+                          : colorScheme.primaryContainer.withValues(alpha: 0.7),
+                      ),
                       child: CheckboxListTile(
+                        dense: true,
                         value: sellProvider.shouldPrintTicket,
                         onChanged: (bool? value) {
                           sellProvider.setShouldPrintTicket(value ?? false);
@@ -910,15 +921,22 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                         title: Text(
                           'Imprimir ticket',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface,
+                            color: sellProvider.shouldPrintTicket 
+                              ? colorScheme.primary
+                              : colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         secondary: Icon(
                           sellProvider.shouldPrintTicket ? Icons.receipt_long : Icons.receipt_long_outlined,
-                          color: sellProvider.shouldPrintTicket ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: sellProvider.shouldPrintTicket 
+                            ? colorScheme.primary 
+                            : colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     );
                   },

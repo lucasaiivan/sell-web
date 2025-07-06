@@ -39,7 +39,8 @@ class SellProvider extends ChangeNotifier {
     ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
     _ticketView = false;
     _shouldPrintTicket = false;
-    _saveTicket();  
+    _saveTicket();
+    _saveShouldPrintTicket(); // Limpiar el estado del checkbox también
   }
 
   /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
@@ -55,7 +56,10 @@ class SellProvider extends ChangeNotifier {
   }
 
   SellProvider({required this.getUserAccountsUseCase}) {
-    _loadSelectedAccount().whenComplete(() => _loadTicket());
+    _loadSelectedAccount().whenComplete(() {
+      _loadTicket();
+      _loadShouldPrintTicket();
+    });
   }
 
   /// Obtiene los datos completos de la cuenta por su [id].
@@ -129,7 +133,7 @@ class SellProvider extends ChangeNotifier {
   void discartTicket() {
     ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
     _ticketView = false;
-    _shouldPrintTicket = false;
+    // Mantener _shouldPrintTicket para preservar la preferencia del usuario
     _saveTicket();
     notifyListeners();
   }
@@ -196,9 +200,23 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Establece si se debe imprimir el ticket al confirmar la venta.
+  /// Establece si se debe imprimir el ticket al confirmar la venta y persiste el estado.
   void setShouldPrintTicket(bool value) {
     _shouldPrintTicket = value;
+    _saveShouldPrintTicket();
     notifyListeners();
+  }
+
+  /// Carga el estado del checkbox de impresión desde SharedPreferences.
+  Future<void> _loadShouldPrintTicket() async {
+    final prefs = await SharedPreferences.getInstance();
+    _shouldPrintTicket = prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+    notifyListeners();
+  }
+
+  /// Guarda el estado del checkbox de impresión en SharedPreferences.
+  Future<void> _saveShouldPrintTicket() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(SharedPrefsKeys.shouldPrintTicket, _shouldPrintTicket);
   }
 }

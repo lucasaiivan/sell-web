@@ -14,7 +14,7 @@ import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart'; 
 import '../providers/theme_data_app_provider.dart';
 import 'welcome_page.dart'; 
-import 'package:sellweb/core/dialog.dart';
+import 'package:sellweb/core/widgets/dialog.dart';
 import 'package:sellweb/core/services/thermal_printer_service.dart';
 import 'package:sellweb/core/widgets/printer_config_dialog.dart';
 import 'package:sellweb/core/widgets/ticket_options_dialog.dart';
@@ -975,25 +975,251 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     );
   }
 
-  Widget widgetConfirmedPurchase({required BuildContext context,double width = 400}) {
-    final provider = Provider.of<SellProvider>(context, listen: false); 
+  Widget widgetConfirmedPurchase({required BuildContext context, double width = 400}) {
+    final provider = Provider.of<SellProvider>(context, listen: false);
+    final theme = Theme.of(context);
+    final ticket = provider.ticket;
+
+    // Obtener información del método de pago
+    String paymentMethodText = _getPaymentMethodDisplayText(ticket.payMode);
+    IconData paymentIcon = _getPaymentMethodIcon(ticket.payMode);
 
     return Container(
       width: width,
-      padding: const EdgeInsets.all(20), 
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
-        color:Colors.green.shade400,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.green.shade400,
+            Colors.green.shade600,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 60),
-            const SizedBox(height: 12),
-            Text('Transacción realizada con éxito', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
-            const SizedBox(height: 20),
-            Text('Total: ${Publications.getFormatoPrecio(value: provider.ticket.getTotalPrice)}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+            // Icono principal con efecto circular
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 60,
+              ),
+            ),
             
+            const SizedBox(height: 24),
+            
+            // Título principal
+            Text(
+              '¡Venta exitosa!',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Subtítulo
+            Text(
+              'Transacción completada correctamente',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Card con detalles de la venta
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Total de la venta
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total vendido:',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'RobotoMono',
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Divider
+                  Container(
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Información adicional
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Cantidad de artículos
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Artículos',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${ticket.getProductsQuantity()}',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      // Método de pago
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Método de pago',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                paymentIcon,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                paymentMethodText,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  
+                  // Mostrar vuelto si aplica
+                  if (ticket.valueReceived > 0 && ticket.valueReceived > ticket.getTotalPrice) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Vuelto a entregar',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            Publications.getFormatoPrecio(
+                              value: ticket.valueReceived - ticket.getTotalPrice,
+                            ),
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'RobotoMono',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Información de fecha y hora
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _getFormattedDateTime(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontFamily: 'RobotoMono',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -1811,6 +2037,40 @@ class _TotalBounceState extends State<_TotalBounce> with SingleTickerProviderSta
   /// Muestra el diálogo de configuración de impresora
   void _showPrinterConfigDialog(BuildContext context) {
     showPrinterConfigDialog(context);
+  }
+
+  /// Obtiene el texto a mostrar para el método de pago
+  String _getPaymentMethodDisplayText(String payMode) {
+    switch (payMode) {
+      case 'effective':
+        return 'Efectivo';
+      case 'mercadopago':
+        return 'Mercado Pago';
+      case 'card':
+        return 'Tarjeta';
+      default:
+        return 'Sin especificar';
+    }
+  }
+
+  /// Obtiene el icono correspondiente al método de pago
+  IconData _getPaymentMethodIcon(String payMode) {
+    switch (payMode) {
+      case 'effective':
+        return Icons.payments_rounded;
+      case 'mercadopago':
+        return Icons.account_balance_wallet_rounded;
+      case 'card':
+        return Icons.credit_card_rounded;
+      default:
+        return Icons.help_outline_rounded;
+    }
+  }
+
+  /// Obtiene la fecha y hora formateada para mostrar en la confirmación
+  String _getFormattedDateTime() {
+    final now = DateTime.now();
+    return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
 
 

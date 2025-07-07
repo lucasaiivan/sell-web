@@ -607,8 +607,16 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
         if (showClose) const SizedBox(width: 8),
         ComponentApp().floatingActionButtonApp(
           onTap: () async {
+            // Mostrar confirmación de venta completada inmediatamente
+            setState(() {
+              _showConfirmedPurchase = true;
+            });
+            
             // Solo mostrar diálogo de opciones si el checkbox está activo
             if (provider.shouldPrintTicket) {
+              // Esperar un breve momento para que se vea la animación de venta exitosa
+              await Future.delayed(const Duration(milliseconds: 800));
+              
               await showTicketOptionsDialog(
                 context: context,
                 ticket: provider.ticket,
@@ -616,29 +624,22 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                   ? provider.profileAccountSelected.name 
                   : 'PUNTO DE VENTA',
                 onComplete: () {
-                  // Mostrar confirmación de venta completada
-                  setState(() {
-                    _showConfirmedPurchase = true;
-                  });
-                  
-                  // Ocultar confirmación y limpiar ticket después de 2 segundos
-                  Future.delayed(const Duration(seconds: 2)).then((_) {
-                    if (mounted) {
-                      setState(() {
-                        _showConfirmedPurchase = false;
-                      });
-                      provider.discartTicket();
-                    }
-                  });
+                  // Este callback se ejecuta solo cuando se completa exitosamente
                 },
               );
-            } else {
-              // Si el checkbox no está activo, confirmar venta directamente
-              setState(() {
-                _showConfirmedPurchase = true;
-              });
               
-              // Ocultar confirmación y limpiar ticket después de 2 segundos
+              // Este código se ejecuta siempre, independientemente de si se cancela o completa el diálogo
+              // Limpiar ticket después del diálogo (cancelado o completado)
+              Future.delayed(const Duration(milliseconds: 500)).then((_) {
+                if (mounted) {
+                  setState(() {
+                    _showConfirmedPurchase = false;
+                  });
+                  provider.discartTicket();
+                }
+              });
+            } else {
+              // Si el checkbox no está activo, solo esperar y limpiar ticket
               Future.delayed(const Duration(seconds: 2)).then((_) {
                 if (mounted) {
                   setState(() {
@@ -922,7 +923,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
                           sellProvider.setShouldPrintTicket(value ?? false);
                         },
                         title: Text(
-                          'Imprimir ticket',
+                          'Ticket',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: sellProvider.shouldPrintTicket 
                               ? colorScheme.primary

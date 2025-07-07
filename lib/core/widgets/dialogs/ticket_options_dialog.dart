@@ -353,25 +353,21 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
       if (mounted) {
         Navigator.of(context).pop();
 
-        // Mostrar mensaje de éxito
+        // Mostrar mensaje de éxito con mejor UI
         if (successMessages.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(successMessages.join('\n')),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
+          _showCustomSnackBar(
+            context: context,
+            message: successMessages.join('\n'),
+            isSuccess: true,
           );
         }
 
-        // Mostrar errores si los hay
+        // Mostrar errores si los hay con mejor UI
         if (errorMessages.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessages.join('\n')),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
+          _showCustomSnackBar(
+            context: context,
+            message: errorMessages.join('\n'),
+            isSuccess: false,
           );
         }
 
@@ -382,16 +378,90 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al procesar opciones: $e'),
-            backgroundColor: Colors.red,
-          ),
+        _showCustomSnackBar(
+          context: context,
+          message: 'Error al procesar opciones: $e',
+          isSuccess: false,
         );
       }
     }
 
     setState(() => _isProcessing = false);
+  }
+
+  /// Muestra un SnackBar personalizado con mejor UI y Material 3
+  void _showCustomSnackBar({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    final theme = Theme.of(context);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              // Icono con contenedor circular
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isSuccess ? Icons.check_circle : Icons.error,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Mensaje
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isSuccess ? '¡Éxito!' : 'Error',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      message,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: isSuccess 
+          ? const Color(0xFF2E7D3C) // Verde más oscuro y distintivo
+          : const Color(0xFFD32F2F), // Rojo Material Design
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 80), // Margen desde abajo para evitar interferencia
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 8,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Cerrar',
+          textColor: Colors.white.withValues(alpha: 0.8),
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
   }
 }
 

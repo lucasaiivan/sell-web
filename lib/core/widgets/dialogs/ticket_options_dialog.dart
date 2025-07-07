@@ -398,11 +398,11 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 /// Función helper para mostrar el diálogo de opciones de ticket
 Future<void> showTicketOptionsDialog({
   required BuildContext context,
-  required TicketModel ticket,
+  required ticket,
   required String businessName,
   required VoidCallback onComplete,
-}) {
-  return showDialog<void>(
+}) async {
+  await showDialog(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {

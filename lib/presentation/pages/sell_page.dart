@@ -1,23 +1,26 @@
-import 'package:sellweb/core/widgets/money_input_text_field.dart';
+ 
 import 'package:web/web.dart' as html; 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart'; 
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/widgets/widgets.dart';
+import 'package:sellweb/core/utils/responsive.dart'; 
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
+import 'package:sellweb/core/widgets/dialogs/add_product_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/quick_sale_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/product_edit_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/ticket_options_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/printer_config_dialog.dart';
+import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
+import 'package:sellweb/core/widgets/component_app_legacy.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart'; 
 import '../providers/theme_data_app_provider.dart';
-import 'welcome_page.dart'; 
-import 'package:sellweb/core/widgets/dialog.dart';
-import 'package:sellweb/core/services/thermal_printer_service.dart';
-import 'package:sellweb/core/widgets/printer_config_dialog.dart';
-import 'package:sellweb/core/widgets/ticket_options_dialog.dart';
+import 'welcome_page.dart';  
+import 'package:sellweb/core/services/thermal_printer_service.dart'; 
 
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
@@ -175,10 +178,10 @@ class _SellPageState extends State<SellPage> {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
         final productCatalogue = publicProduct.convertProductCatalogue();
         // ignore: use_build_context_synchronously
-        showDialogAgregarProductoPublico(context, product: productCatalogue );
+        showAddProductDialog(context, product: productCatalogue);
       } else {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
-        showDialogAgregarProductoPublico(context,isNew: true, product: ProductCatalogue(id:code,code: code) );
+        showAddProductDialog(context, isNew: true, product: ProductCatalogue(id: code, code: code));
       }
     }
   }
@@ -658,7 +661,7 @@ Future<void> showDialogProductoNoEncontrado(BuildContext context, {required Stri
     return Row(
       children: [
         ComponentApp().floatingActionButtonApp(
-          onTap: () => showDialogQuickSale(context, provider: sellProvider),
+          onTap: () => showQuickSaleDialog(context, provider: sellProvider),
           icon: Icons.flash_on_rounded,
           buttonColor: Colors.amber,
         ).animate(delay: const Duration(milliseconds: 0)).fade(),
@@ -2054,7 +2057,12 @@ class _TotalBounceState extends State<_TotalBounce> with SingleTickerProviderSta
 
   /// Muestra el diálogo de configuración de impresora
   void _showPrinterConfigDialog(BuildContext context) {
-    showPrinterConfigDialog(context);
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return const PrinterConfigDialog();
+      },
+    );
   }
 
   /// Obtiene el texto a mostrar para el método de pago

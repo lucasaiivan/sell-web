@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart'; 
 
+/// Clase legacy de ComponentApp para compatibilidad hacia atrás
+/// Se recomienda usar los widgets específicos de las nuevas categorías
 class ComponentApp extends StatelessWidget {
   const ComponentApp({super.key});
  

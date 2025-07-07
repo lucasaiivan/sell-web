@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/widgets.dart'; 
+import 'package:sellweb/core/widgets/component_app_legacy.dart'; 
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';

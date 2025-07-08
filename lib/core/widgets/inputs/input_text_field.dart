@@ -86,14 +86,14 @@ class InputTextField extends StatelessWidget {
         errorText: errorText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
-        contentPadding: contentPadding ?? 
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        
+        contentPadding: contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
         // Configuración de bordes y colores
         filled: true,
-        fillColor: fillColor ?? 
-          colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        
+        fillColor: fillColor ??
+            colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+
         // Borde normal
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -102,7 +102,7 @@ class InputTextField extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        
+
         // Borde cuando está habilitado
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -111,7 +111,7 @@ class InputTextField extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        
+
         // Borde cuando está enfocado
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -120,7 +120,7 @@ class InputTextField extends StatelessWidget {
             width: 2.0,
           ),
         ),
-        
+
         // Borde cuando tiene error
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -129,7 +129,7 @@ class InputTextField extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        
+
         // Borde cuando está enfocado y tiene error
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -138,7 +138,7 @@ class InputTextField extends StatelessWidget {
             width: 2.0,
           ),
         ),
-        
+
         // Borde cuando está deshabilitado
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
@@ -234,10 +234,15 @@ class FormInputTextField extends StatelessWidget {
         helperText: helperText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
-        contentPadding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         // Configuración de bordes y colores usando los mismos estilos que InputTextField
         filled: true,
-        fillColor: fillColor ?? Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3), 
+        fillColor: fillColor ??
+            Theme.of(context)
+                .colorScheme
+                .secondaryContainer
+                .withValues(alpha: 0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
@@ -245,7 +250,7 @@ class FormInputTextField extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        
+
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
@@ -253,7 +258,7 @@ class FormInputTextField extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        
+
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
@@ -261,7 +266,7 @@ class FormInputTextField extends StatelessWidget {
             width: 2.0,
           ),
         ),
-        
+
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
@@ -269,7 +274,7 @@ class FormInputTextField extends StatelessWidget {
             width: 1.0,
           ),
         ),
-        
+
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
@@ -277,11 +282,12 @@ class FormInputTextField extends StatelessWidget {
             width: 2.0,
           ),
         ),
-        
+
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
             width: 1.0,
           ),
         ),

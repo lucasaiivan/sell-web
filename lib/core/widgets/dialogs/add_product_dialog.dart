@@ -13,20 +13,24 @@ import 'package:provider/provider.dart' as provider_package;
 /// Muestra un diálogo para agregar un producto al catálogo o crear uno nuevo
 Future<void> showAddProductDialog(
   BuildContext context, {
-  required ProductCatalogue product, 
+  required ProductCatalogue product,
   String? errorMessage,
   bool isNew = false,
 }) async {
   // Variables
   bool checkAddCatalogue = true;
-  final priceController = AppMoneyTextEditingController(); 
-  final descriptionController = TextEditingController(text: product.description); 
+  final priceController = AppMoneyTextEditingController();
+  final descriptionController =
+      TextEditingController(text: product.description);
   String? errorText = errorMessage;
-  
+
   // Proveedores
-  final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
-  final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
-  final authProvider = provider_package.Provider.of<AuthProvider>(context, listen: false);
+  final sellProvider =
+      provider_package.Provider.of<SellProvider>(context, listen: false);
+  final catalogueProvider =
+      provider_package.Provider.of<CatalogueProvider>(context, listen: false);
+  final authProvider =
+      provider_package.Provider.of<AuthProvider>(context, listen: false);
 
   await showDialog(
     context: context,
@@ -35,14 +39,15 @@ Future<void> showAddProductDialog(
       builder: (context, setState) {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-        
+
         // Colores para el checkbox
-        Color checkActiveColor = checkAddCatalogue 
+        Color checkActiveColor = checkAddCatalogue
             ? colorScheme.primary
             : colorScheme.onSurface.withValues(alpha: 0.5);
-        
+
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: colorScheme.surface,
           title: Row(
             children: [
@@ -60,17 +65,17 @@ Future<void> showAddProductDialog(
               ),
             ],
           ),
-          content: SingleChildScrollView(  
-            child: Column(  
+          content: SingleChildScrollView(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
-              children: [ 
+              children: [
                 // Código del producto
                 _buildProductCodeSection(product),
-                
+
                 // Información del producto (solo si no es nuevo)
                 if (!isNew) _buildProductInfoSection(product),
-                
+
                 // Campo de descripción para productos nuevos
                 if (isNew) ...[
                   InputTextField(
@@ -81,7 +86,7 @@ Future<void> showAddProductDialog(
                   ),
                   const SizedBox(height: 20),
                 ],
-                
+
                 // Campo de precio
                 MoneyInputTextField(
                   controller: priceController,
@@ -93,13 +98,13 @@ Future<void> showAddProductDialog(
                     });
                   },
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Checkbox para agregar al catálogo
                 _buildCatalogueCheckbox(
-                  checkAddCatalogue, 
-                  checkActiveColor, 
+                  checkAddCatalogue,
+                  checkActiveColor,
                   colorScheme,
                   (value) {
                     setState(() {
@@ -107,16 +112,16 @@ Future<void> showAddProductDialog(
                     });
                   },
                 ),
-                
+
                 // Mostrar error si existe
                 if (errorText != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      errorText!, 
+                      errorText!,
                       style: TextStyle(color: colorScheme.error),
                     ),
-                  ), 
+                  ),
               ],
             ),
           ),
@@ -132,7 +137,8 @@ Future<void> showAddProductDialog(
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
                 textStyle: theme.textTheme.labelLarge,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => _processAddProduct(
                 context,
@@ -196,7 +202,8 @@ Widget _buildProductInfoSection(ProductCatalogue product) {
                 if (product.description.isNotEmpty)
                   Text(
                     product.description,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -241,7 +248,7 @@ Widget _buildCatalogueCheckbox(
       border: Border.all(color: checkActiveColor, width: 0.5),
       color: checkAddCatalogue ? checkActiveColor.withValues(alpha: 0.2) : null,
       borderRadius: BorderRadius.circular(5),
-    ), 
+    ),
     child: CheckboxListTile(
       title: const Text('Agregar al catálogo'),
       value: checkAddCatalogue,
@@ -264,7 +271,7 @@ Future<void> _processAddProduct(
   AuthProvider authProvider,
 ) async {
   final price = priceController.doubleValue;
-  
+
   // Validar precio
   if (price <= 0) {
     setState(() {
@@ -284,7 +291,8 @@ Future<void> _processAddProduct(
   try {
     // Crear producto actualizado
     final updatedProduct = product.copyWith(
-      description: isNew ? descriptionController.text.trim() : product.description,
+      description:
+          isNew ? descriptionController.text.trim() : product.description,
       code: product.code,
       salePrice: price,
     );
@@ -328,8 +336,8 @@ Future<void> _createNewProduct(
 ) async {
   try {
     final publicProduct = Product(
-      id: updatedProduct.id.isEmpty 
-          ? 'prod_${DateTime.now().millisecondsSinceEpoch}' 
+      id: updatedProduct.id.isEmpty
+          ? 'prod_${DateTime.now().millisecondsSinceEpoch}'
           : updatedProduct.id,
       code: updatedProduct.code,
       description: updatedProduct.description,
@@ -346,9 +354,9 @@ Future<void> _createNewProduct(
       favorite: false,
       followers: 0,
     );
-    
+
     await catalogueProvider.createPublicProduct(publicProduct);
-    
+
     if (addToCatalogue) {
       final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
       await catalogueProvider.addProductToCatalogue(finalProduct);
@@ -357,8 +365,8 @@ Future<void> _createNewProduct(
     // Reabrir diálogo con error si falla
     if (context.mounted) {
       showAddProductDialog(
-        context, 
-        product: originalProduct, 
+        context,
+        product: originalProduct,
         errorMessage: 'Error al crear producto público: ${e.toString()}',
         isNew: true,
       );
@@ -378,8 +386,8 @@ Future<void> _addExistingProduct(
     // Reabrir diálogo con error si falla
     if (context.mounted) {
       showAddProductDialog(
-        context, 
-        product: originalProduct, 
+        context,
+        product: originalProduct,
         errorMessage: 'Error al guardar en el catálogo: ${e.toString()}',
         isNew: false,
       );

@@ -37,7 +37,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
   Future<void> _checkPrinterAndSetDefaults() async {
     final printerService = ThermalPrinterService();
     await printerService.initialize();
-    
+
     setState(() {
       // Si hay impresora conectada, activar impresión por defecto
       if (printerService.isConnected) {
@@ -75,7 +75,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Opción: Descargar PDF
           _buildOptionTile(
             icon: Icons.download,
@@ -85,9 +85,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
             onChanged: (value) => setState(() => _downloadPdf = value ?? false),
             iconColor: Colors.blue,
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Opción: Imprimir directamente
           FutureBuilder<bool>(
             future: _checkPrinterStatus(),
@@ -96,21 +96,21 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
               return _buildOptionTile(
                 icon: Icons.print,
                 title: 'Imprimir directamente',
-                subtitle: isConnected 
-                  ? 'Enviar a impresora térmica'
-                  : 'No hay impresora conectada',
+                subtitle: isConnected
+                    ? 'Enviar a impresora térmica'
+                    : 'No hay impresora conectada',
                 value: _printDirectly && isConnected,
-                onChanged: isConnected 
-                  ? (value) => setState(() => _printDirectly = value ?? false)
-                  : null,
+                onChanged: isConnected
+                    ? (value) => setState(() => _printDirectly = value ?? false)
+                    : null,
                 iconColor: isConnected ? Colors.green : Colors.grey,
                 enabled: isConnected,
               );
             },
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Opción: Compartir
           _buildOptionTile(
             icon: Icons.share,
@@ -120,19 +120,20 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
             onChanged: (value) => setState(() => _shareTicket = value ?? false),
             iconColor: Colors.orange,
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Opción: Imprimir en navegador
           _buildOptionTile(
             icon: Icons.print_outlined,
             title: 'Imprimir en navegador',
             subtitle: 'Abrir administrador de impresión con PDF',
             value: _printBrowser,
-            onChanged: (value) => setState(() => _printBrowser = value ?? false),
+            onChanged: (value) =>
+                setState(() => _printBrowser = value ?? false),
             iconColor: Colors.purple,
           ),
-          
+
           if (_isProcessing) ...[
             const SizedBox(height: 20),
             const Center(
@@ -160,9 +161,13 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         FilledButton.icon(
           icon: const Icon(Icons.check),
           label: const Text('Procesar'),
-          onPressed: _isProcessing || (!_downloadPdf && !_printDirectly && !_shareTicket && !_printBrowser)
-            ? null 
-            : _processTicketOptions,
+          onPressed: _isProcessing ||
+                  (!_downloadPdf &&
+                      !_printDirectly &&
+                      !_shareTicket &&
+                      !_printBrowser)
+              ? null
+              : _processTicketOptions,
           style: FilledButton.styleFrom(
             backgroundColor: colorScheme.primary,
             foregroundColor: colorScheme.onPrimary,
@@ -188,14 +193,14 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: enabled 
-            ? colorScheme.outline.withValues(alpha: 0.2)
-            : colorScheme.outline.withValues(alpha: 0.1),
+          color: enabled
+              ? colorScheme.outline.withValues(alpha: 0.2)
+              : colorScheme.outline.withValues(alpha: 0.1),
         ),
         borderRadius: BorderRadius.circular(12),
         color: enabled && value
-          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-          : null,
+            ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+            : null,
       ),
       child: CheckboxListTile(
         value: value,
@@ -203,9 +208,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         secondary: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: enabled 
-              ? iconColor.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.1),
+            color: enabled
+                ? iconColor.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -217,18 +222,18 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         title: Text(
           title,
           style: theme.textTheme.titleSmall?.copyWith(
-            color: enabled 
-              ? colorScheme.onSurface
-              : colorScheme.onSurface.withValues(alpha: 0.5),
+            color: enabled
+                ? colorScheme.onSurface
+                : colorScheme.onSurface.withValues(alpha: 0.5),
             fontWeight: FontWeight.w600,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: enabled 
-              ? colorScheme.onSurface.withValues(alpha: 0.7)
-              : colorScheme.onSurface.withValues(alpha: 0.4),
+            color: enabled
+                ? colorScheme.onSurface.withValues(alpha: 0.7)
+                : colorScheme.onSurface.withValues(alpha: 0.4),
           ),
         ),
         controlAffinity: ListTileControlAffinity.trailing,
@@ -259,7 +264,8 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         return {
           'quantity': product['quantity'],
           'description': product['description'],
-          'price': '\$${(product['salePrice'] * product['quantity']).toStringAsFixed(2)}',
+          'price':
+              '\$${(product['salePrice'] * product['quantity']).toStringAsFixed(2)}',
         };
       }).toList();
 
@@ -286,10 +292,12 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           products: products,
           total: widget.ticket.getTotalPrice,
           paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0 ? widget.ticket.valueReceived : null,
-          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice 
-            ? widget.ticket.valueReceived - widget.ticket.getTotalPrice 
-            : null,
+          cashReceived: widget.ticket.valueReceived > 0
+              ? widget.ticket.valueReceived
+              : null,
+          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
+              ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
+              : null,
         );
 
         if (printSuccess) {
@@ -305,10 +313,12 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           products: products,
           total: widget.ticket.getTotalPrice,
           paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0 ? widget.ticket.valueReceived : null,
-          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice 
-            ? widget.ticket.valueReceived - widget.ticket.getTotalPrice 
-            : null,
+          cashReceived: widget.ticket.valueReceived > 0
+              ? widget.ticket.valueReceived
+              : null,
+          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
+              ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
+              : null,
           ticketId: widget.ticket.id,
         );
 
@@ -335,10 +345,12 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           products: products,
           total: widget.ticket.getTotalPrice,
           paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0 ? widget.ticket.valueReceived : null,
-          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice 
-            ? widget.ticket.valueReceived - widget.ticket.getTotalPrice 
-            : null,
+          cashReceived: widget.ticket.valueReceived > 0
+              ? widget.ticket.valueReceived
+              : null,
+          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
+              ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
+              : null,
           ticketId: widget.ticket.id,
         );
 
@@ -374,7 +386,6 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         // Completar proceso
         widget.onComplete();
       }
-
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop();
@@ -396,7 +407,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     required bool isSuccess,
   }) {
     final theme = Theme.of(context);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Container(
@@ -443,11 +454,12 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
             ],
           ),
         ),
-        backgroundColor: isSuccess 
-          ? const Color(0xFF2E7D3C) // Verde más oscuro y distintivo
-          : const Color(0xFFD32F2F), // Rojo Material Design
+        backgroundColor: isSuccess
+            ? const Color(0xFF2E7D3C) // Verde más oscuro y distintivo
+            : const Color(0xFFD32F2F), // Rojo Material Design
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 80), // Margen desde abajo para evitar interferencia
+        margin: const EdgeInsets.fromLTRB(
+            16, 0, 16, 80), // Margen desde abajo para evitar interferencia
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

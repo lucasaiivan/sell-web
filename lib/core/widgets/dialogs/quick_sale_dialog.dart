@@ -12,7 +12,8 @@ Future<void> showQuickSaleDialog(
   required SellProvider provider,
 }) async {
   // Controllers
-  final AppMoneyTextEditingController priceController = AppMoneyTextEditingController();
+  final AppMoneyTextEditingController priceController =
+      AppMoneyTextEditingController();
   final TextEditingController descriptionController = TextEditingController();
 
   /// Función para procesar la venta rápida
@@ -25,12 +26,12 @@ Future<void> showQuickSaleDialog(
       );
       return;
     }
-    
+
     provider.addQuickProduct(
       description: descriptionController.text,
       salePrice: priceController.doubleValue,
     );
-    
+
     priceController.clear();
     descriptionController.clear();
     Navigator.of(context).pop();
@@ -41,14 +42,16 @@ Future<void> showQuickSaleDialog(
     builder: (BuildContext dialogContext) {
       return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.only(left: 20, right: 8, top: 16, bottom: 0),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        titlePadding:
+            const EdgeInsets.only(left: 20, right: 8, top: 16, bottom: 0),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         actionsPadding: const EdgeInsets.only(right: 20, left: 20, bottom: 20),
         title: Row(
           children: [
             const Expanded(
               child: Text(
-                'Venta rápida', 
+                'Venta rápida',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -95,5 +98,5 @@ Future<void> showQuickSaleDialog(
         ],
       );
     },
-  );  
+  );
 }

@@ -15,29 +15,29 @@ Future<void> showProductEditDialog(
   VoidCallback? onProductUpdated,
 }) async {
   final originalContext = context;
-  
+
   await showDialog(
     context: context,
     builder: (dialogContext) {
       int cantidad = producto.quantity;
-      
+
       // Validaciones de datos para evitar errores con productos vacíos
-      final String productName = producto.nameMark.isNotEmpty 
-          ? producto.nameMark 
-          : (producto.description.isNotEmpty 
+      final String productName = producto.nameMark.isNotEmpty
+          ? producto.nameMark
+          : (producto.description.isNotEmpty
               ? producto.description.split(' ').take(2).join(' ')
               : 'Producto');
-      
-      final String productDescription = producto.description.isNotEmpty 
-          ? producto.description 
+
+      final String productDescription = producto.description.isNotEmpty
+          ? producto.description
           : 'Producto de venta rápida';
-      
-      final String productCode = producto.code.isNotEmpty 
-          ? producto.code 
-          : 'Sin código';
-      
-      final bool isQuickSaleProduct = producto.id.isEmpty || producto.id.startsWith('quick_');
-      
+
+      final String productCode =
+          producto.code.isNotEmpty ? producto.code : 'Sin código';
+
+      final bool isQuickSaleProduct =
+          producto.id.isEmpty || producto.id.startsWith('quick_');
+
       // Definir ancho uniforme según plataforma
       double dialogWidth = MediaQuery.of(dialogContext).size.width;
       if (dialogWidth > 400) {
@@ -45,11 +45,12 @@ Future<void> showProductEditDialog(
       } else if (dialogWidth < 320) {
         dialogWidth = 320;
       }
-      
+
       return StatefulBuilder(
         builder: (statefulContext, setState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             backgroundColor: Theme.of(dialogContext).colorScheme.surface,
             contentPadding: const EdgeInsets.all(24),
             title: Row(
@@ -60,7 +61,10 @@ Future<void> showProductEditDialog(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Theme.of(dialogContext).colorScheme.secondary.withValues(alpha: 0.2),
+                          color: Theme.of(dialogContext)
+                              .colorScheme
+                              .secondary
+                              .withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Icon(
@@ -71,7 +75,9 @@ Future<void> showProductEditDialog(
                       )
                     : UserAvatar(
                         imageUrl: producto.imageMark,
-                        text: producto.nameMark.isNotEmpty ? producto.nameMark : productName,
+                        text: producto.nameMark.isNotEmpty
+                            ? producto.nameMark
+                            : productName,
                       ),
                 const SizedBox(width: 12),
                 // Título del producto
@@ -88,10 +94,15 @@ Future<void> showProductEditDialog(
                       if (isQuickSaleProduct)
                         Text(
                           'Venta rápida',
-                          style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(dialogContext).colorScheme.secondary,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(dialogContext)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(dialogContext)
+                                    .colorScheme
+                                    .secondary,
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                     ],
                   ),
@@ -111,16 +122,17 @@ Future<void> showProductEditDialog(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Información principal del producto
-                  _buildProductInfo(dialogContext, producto, productDescription, productCode),
-                  
+                  _buildProductInfo(
+                      dialogContext, producto, productDescription, productCode),
+
                   const SizedBox(height: 20),
-                  
+
                   // Sección de cantidad y total
                   _buildQuantityControls(
-                    dialogContext, 
-                    originalContext, 
-                    producto, 
-                    cantidad, 
+                    dialogContext,
+                    originalContext,
+                    producto,
+                    cantidad,
                     setState,
                   ),
                 ],
@@ -133,10 +145,12 @@ Future<void> showProductEditDialog(
                 label: const Text('Eliminar'),
                 style: TextButton.styleFrom(
                   foregroundColor: Theme.of(dialogContext).colorScheme.error,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 onPressed: () {
-                  provider_package.Provider.of<SellProvider>(originalContext, listen: false)
+                  provider_package.Provider.of<SellProvider>(originalContext,
+                          listen: false)
                       .removeProduct(producto);
                   Navigator.of(originalContext).pop();
                   onProductUpdated?.call();
@@ -145,7 +159,8 @@ Future<void> showProductEditDialog(
               // Botón cerrar
               TextButton(
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 onPressed: () => Navigator.of(originalContext).pop(),
                 child: const Text('Cerrar'),
@@ -167,7 +182,10 @@ Widget _buildProductInfo(
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      color: Theme.of(context)
+          .colorScheme
+          .surfaceContainerHighest
+          .withValues(alpha: 0.3),
       borderRadius: BorderRadius.circular(16),
     ),
     child: Row(
@@ -198,8 +216,8 @@ Widget _buildProductInfo(
               Text(
                 productDescription,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 2,
               ),
@@ -208,15 +226,18 @@ Widget _buildProductInfo(
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   productCode,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontFamily: 'monospace',
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontFamily: 'monospace',
+                      ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -254,9 +275,9 @@ Widget _buildQuantityControls(
           Text(
             'Cantidad',
             style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
+                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
           ),
           // Controles de cantidad
           Row(
@@ -271,11 +292,12 @@ Widget _buildQuantityControls(
                 setState,
                 isIncrement: false,
               ),
-              
+
               // Cantidad actual
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Theme.of(dialogContext).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
@@ -285,11 +307,12 @@ Widget _buildQuantityControls(
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(dialogContext).colorScheme.onPrimaryContainer,
+                    color:
+                        Theme.of(dialogContext).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ),
-              
+
               // Botón aumentar
               _buildQuantityButton(
                 dialogContext,
@@ -303,15 +326,18 @@ Widget _buildQuantityControls(
           ),
         ],
       ),
-      
+
       const SizedBox(height: 12),
-      
+
       // Total calculado
       Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Theme.of(dialogContext).colorScheme.primary.withValues(alpha: 0.08),
+          color: Theme.of(dialogContext)
+              .colorScheme
+              .primary
+              .withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -320,12 +346,13 @@ Widget _buildQuantityControls(
             Text(
               'Total',
               style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
+                    color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
             Text(
-              Publications.getFormatoPrecio(value: producto.salePrice * cantidad),
+              Publications.getFormatoPrecio(
+                  value: producto.salePrice * cantidad),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -348,12 +375,12 @@ Widget _buildQuantityButton(
   required bool isIncrement,
 }) {
   final bool isEnabled = isIncrement || cantidad > 1;
-  
+
   return Container(
     width: 36,
     height: 36,
     decoration: BoxDecoration(
-      color: isEnabled 
+      color: isEnabled
           ? Theme.of(dialogContext).colorScheme.primary.withValues(alpha: 0.12)
           : Theme.of(dialogContext).colorScheme.outline.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(8),
@@ -367,7 +394,8 @@ Widget _buildQuantityButton(
       onPressed: isEnabled
           ? () {
               final newQuantity = isIncrement ? cantidad + 1 : cantidad - 1;
-              provider_package.Provider.of<SellProvider>(originalContext, listen: false)
+              provider_package.Provider.of<SellProvider>(originalContext,
+                      listen: false)
                   .addProductsticket(
                 producto.copyWith(quantity: newQuantity),
                 replaceQuantity: true,
@@ -375,7 +403,7 @@ Widget _buildQuantityButton(
               setState(() {});
             }
           : null,
-      color: isEnabled 
+      color: isEnabled
           ? Theme.of(dialogContext).colorScheme.primary
           : Theme.of(dialogContext).colorScheme.outline,
     ),

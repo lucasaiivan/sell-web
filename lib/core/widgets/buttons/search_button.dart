@@ -33,7 +33,7 @@ class SearchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    
+
     // Calcular tamaños adaptativos basados en las dimensiones
     final double effectiveHeight = height ?? 40.0;
     final double adaptiveFontSize = fontSize ?? (effectiveHeight * 0.33);
@@ -41,7 +41,7 @@ class SearchButton extends StatelessWidget {
     final double adaptivePaddingHorizontal = effectiveHeight * 0.33;
     final double adaptivePaddingVertical = effectiveHeight * 0.25;
     final double adaptiveSpacing = effectiveHeight * 0.15;
-    
+
     Widget button = ElevatedButton(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(
@@ -51,10 +51,11 @@ class SearchButton extends StatelessWidget {
           textColor ?? colorScheme.onPrimaryContainer,
         ),
         padding: WidgetStateProperty.all(
-          padding ?? EdgeInsets.symmetric(
-            horizontal: adaptivePaddingHorizontal, 
-            vertical: adaptivePaddingVertical,
-          ),
+          padding ??
+              EdgeInsets.symmetric(
+                horizontal: adaptivePaddingHorizontal,
+                vertical: adaptivePaddingVertical,
+              ),
         ),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
@@ -102,7 +103,7 @@ class SearchButton extends StatelessWidget {
         child: button,
       );
     }
-    
+
     return button;
   }
 }

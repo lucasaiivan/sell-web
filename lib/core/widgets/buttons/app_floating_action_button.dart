@@ -26,14 +26,15 @@ class AppFloatingActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     final bool hasIcon = icon != null;
     final bool hasText = text != null && text!.isNotEmpty;
     final double buttonSize = size ?? 56.0;
-    
+
     // Colores efectivos con fallback a Material 3
     final Color effectiveButtonColor = buttonColor ?? colorScheme.primary;
-    final Color effectiveForegroundColor = foregroundColor ?? colorScheme.onPrimary;
+    final Color effectiveForegroundColor =
+        foregroundColor ?? colorScheme.onPrimary;
 
     if (hasText && (extended || hasIcon)) {
       // FloatingActionButton.extended para texto o icono+texto

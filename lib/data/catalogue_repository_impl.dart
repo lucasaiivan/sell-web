@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/repositories/catalogue_repository.dart';
 import '../domain/entities/catalogue.dart';
 
@@ -8,10 +8,15 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
 
   // stream : Devolverá un stream de productos del catálogo  de la cuenta del negocio seleccionada.
   @override
-  Stream<QuerySnapshot> getCatalogueStream() {  
-    if (id == null) { return const Stream.empty(); }
-    return FirebaseFirestore.instance.collection('/ACCOUNTS/$id/CATALOGUE').snapshots();
+  Stream<QuerySnapshot> getCatalogueStream() {
+    if (id == null) {
+      return const Stream.empty();
+    }
+    return FirebaseFirestore.instance
+        .collection('/ACCOUNTS/$id/CATALOGUE')
+        .snapshots();
   }
+
   // future : buscará un producto por su ID en la (base de datos) publica de productos
   @override
   Future<Product?> getPublicProductByCode(String code) async {
@@ -25,15 +30,18 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     }
     return null;
   }
+
   //  future : agregar un nuevo producto al catálogo de la cuenta del negocio seleccionada
   @override
-  Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
+  Future<void> addProductToCatalogue(
+      ProductCatalogue product, String accountId) async {
     if (product.id.isEmpty) {
       throw ArgumentError('El producto debe tener un ID válido');
-    } 
-    
+    }
+
     try {
-      final ref = FirebaseFirestore.instance.collection('/ACCOUNTS/$accountId/CATALOGUE');
+      final ref = FirebaseFirestore.instance
+          .collection('/ACCOUNTS/$accountId/CATALOGUE');
       final productMap = product.toMap();
       await ref.doc(product.id).set(productMap, SetOptions(merge: true));
     } catch (e) {
@@ -46,7 +54,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   Future<void> createPublicProduct(Product product) async {
     if (product.id.isEmpty) {
       throw ArgumentError('El producto debe tener un ID válido');
-    } 
+    }
     try {
       final ref = FirebaseFirestore.instance.collection('/APP/ARG/PRODUCTOS');
       final productMap = product.toJson();

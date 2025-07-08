@@ -19,7 +19,9 @@ class ThemeDataAppProvider extends ChangeNotifier {
 
   /// Cambia entre modo claro y oscuro
   void toggleTheme() {
-    final newMode = _themeService.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    final newMode = _themeService.themeMode == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
     _themeService.setThemeMode(newMode);
     _saveTheme();
   }
@@ -38,6 +40,7 @@ class ThemeDataAppProvider extends ChangeNotifier {
   /// Guarda el tema seleccionado
   Future<void> _saveTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, _themeService.themeMode == ThemeMode.dark ? 'dark' : 'light');
+    await prefs.setString(
+        _key, _themeService.themeMode == ThemeMode.dark ? 'dark' : 'light');
   }
 }

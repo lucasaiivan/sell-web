@@ -1,29 +1,28 @@
-import 'dart:convert'; 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/shared_prefs_keys.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/domain/entities/user.dart'; 
+import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 
 class SellProvider extends ChangeNotifier {
-
   // Caso de uso para obtener las cuentas del usuario
   final GetUserAccountsUseCase getUserAccountsUseCase;
- 
+
   // Indica si se debe mostrar la vista del ticket
   bool _ticketView = false; // Indica si se debe mostrar la vista del ticket
-  bool get ticketView => _ticketView; 
-  
+  bool get ticketView => _ticketView;
+
   // Indica si se debe imprimir el ticket al confirmar la venta
   bool _shouldPrintTicket = false;
-  bool get shouldPrintTicket => _shouldPrintTicket; 
+  bool get shouldPrintTicket => _shouldPrintTicket;
   // Cuenta seleccionada actualmente
   ProfileAccountModel profileAccountSelected = ProfileAccountModel();
-  
+
   // Ticket actual en memoria
   TicketModel _ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
   TicketModel get ticket => _ticket;
@@ -31,12 +30,11 @@ class SellProvider extends ChangeNotifier {
     _ticket = value;
     notifyListeners();
   }
-  
 
   // clean data : limpieza de datos cada vez que cambiar de cuenta o cierrar sesión
   void cleanData() {
     profileAccountSelected = ProfileAccountModel();
-    ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
+    ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
     _ticketView = false;
     _shouldPrintTicket = false;
     _saveTicket();
@@ -49,8 +47,9 @@ class SellProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString(SharedPrefsKeys.selectedAccountId);
     // Si hay un ID de cuenta guardado, intenta cargar la cuenta
-    if (id != null && id.isNotEmpty) { 
-      profileAccountSelected = await fetchAccountById(id) ?? ProfileAccountModel();
+    if (id != null && id.isNotEmpty) {
+      profileAccountSelected =
+          await fetchAccountById(id) ?? ProfileAccountModel();
       notifyListeners();
     }
   }
@@ -72,30 +71,31 @@ class SellProvider extends ChangeNotifier {
   }
 
   /// Guarda el ticket actual en SharedPreferences.
-  Future<void> _saveTicket() async { 
-    final prefs = await SharedPreferences.getInstance(); 
-    await prefs.setString(SharedPrefsKeys.currentTicket, jsonEncode(ticket.toJson()));
+  Future<void> _saveTicket() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+        SharedPrefsKeys.currentTicket, jsonEncode(ticket.toJson()));
   }
 
   /// Carga el ticket guardado desde SharedPreferences.
   Future<void> _loadTicket() async {
-
     final prefs = await SharedPreferences.getInstance();
     final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
-    if (ticketJson != null ) { 
+    if (ticketJson != null) {
       try {
         ticket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         notifyListeners();
       } catch (_) {}
-    } 
+    }
   }
 
- 
   /// Utilidad para decodificar de JSON.
-  Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
+  Map<String, dynamic> _decodeJson(String source) =>
+      const JsonDecoder().convert(source) as Map<String, dynamic>;
 
   /// Agrega un producto al ticket actual.
-  void addProductsticket(ProductCatalogue product, {bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,
+      {bool replaceQuantity = false}) {
     // Si el producto ya existe y replaceQuantity es true, actualiza la cantidad
     bool exist = false;
     for (var i = 0; i < ticket.listPoduct.length; i++) {
@@ -103,7 +103,8 @@ class SellProvider extends ChangeNotifier {
         if (replaceQuantity) {
           ticket.listPoduct[i]['quantity'] = product.quantity;
         } else {
-          ticket.listPoduct[i]['quantity'] += (product.quantity > 0 ? product.quantity : 1);
+          ticket.listPoduct[i]['quantity'] +=
+              (product.quantity > 0 ? product.quantity : 1);
         }
         exist = true;
         break;
@@ -131,43 +132,46 @@ class SellProvider extends ChangeNotifier {
   }
 
   void discartTicket() {
-    ticket = TicketModel(listPoduct: [], creation: Timestamp.now()); 
+    ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
     _ticketView = false;
     // Mantener _shouldPrintTicket para preservar la preferencia del usuario
     _saveTicket();
     notifyListeners();
   }
 
-  void addQuickProduct({required String description, required double salePrice}) {
+  void addQuickProduct(
+      {required String description, required double salePrice}) {
     var id = Publications.generateUid();
     var product = ProductCatalogue(
       id: id,
       description: description,
-      salePrice: salePrice, 
+      salePrice: salePrice,
     );
     addProductsticket(product, replaceQuantity: true);
     notifyListeners();
   }
- 
 
   Future<void> _saveSelectedAccount(String id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(SharedPrefsKeys.selectedAccountId, id);
   }
- 
+
   /// Selecciona una cuenta (negocio) y actualiza el catálogo.
-  Future<void> initAccount({required ProfileAccountModel account, required BuildContext context}) async {
+  Future<void> initAccount(
+      {required ProfileAccountModel account,
+      required BuildContext context}) async {
     cleanData(); // Limpiar datos del ticket y productos
-    profileAccountSelected = account.copyWith();  // Asignamos los valores de la cuenta seleccionada
+    profileAccountSelected =
+        account.copyWith(); // Asignamos los valores de la cuenta seleccionada
 
     // Guarda la cuenta seleccionada y espera a que termine
     await _saveSelectedAccount(profileAccountSelected.id);
-    
+
     // Notifica solo una vez al final
     notifyListeners();
   }
 
-   /// Quita la cuenta (negocio) seleccionada y notifica a los listeners.
+  /// Quita la cuenta (negocio) seleccionada y notifica a los listeners.
   Future<void> removeSelectedAccount() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(SharedPrefsKeys.selectedAccountId);
@@ -210,7 +214,8 @@ class SellProvider extends ChangeNotifier {
   /// Carga el estado del checkbox de impresión desde SharedPreferences.
   Future<void> _loadShouldPrintTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    _shouldPrintTicket = prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+    _shouldPrintTicket =
+        prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
     notifyListeners();
   }
 

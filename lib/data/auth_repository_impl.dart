@@ -14,22 +14,24 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       // Usar signInSilently primero para verificar si ya hay sesión activa
       GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
-      
+
       // Si no hay sesión silenciosa, intentar login interactivo
       googleUser ??= await _googleSignIn.signIn();
-      
+
       if (googleUser == null) return null;
-      
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final credential = fb_auth.GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
       final fbUser = userCredential.user;
       if (fbUser == null) return null;
-      
+
       return UserAuth(
         uid: fbUser.uid,
         displayName: fbUser.displayName,
@@ -77,19 +79,22 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserAuth?> signInSilently() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
+      final GoogleSignInAccount? googleUser =
+          await _googleSignIn.signInSilently();
       if (googleUser == null) return null;
-      
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final credential = fb_auth.GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
       final fbUser = userCredential.user;
       if (fbUser == null) return null;
-      
+
       return UserAuth(
         uid: fbUser.uid,
         displayName: fbUser.displayName,

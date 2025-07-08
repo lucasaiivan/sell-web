@@ -14,7 +14,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   final _printerService = ThermalPrinterService();
   final _vendorIdController = TextEditingController();
   final _productIdController = TextEditingController();
-  
+
   bool _isConnecting = false;
   String? _statusMessage;
   bool _isSuccess = false;
@@ -29,25 +29,26 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
     if (_printerService.isConnected) {
       final connectionDetails = _printerService.detailedConnectionInfo;
       final printerName = connectionDetails['printerName'] ?? 'Impresora USB';
-      final connectionType = connectionDetails['connectionType'] ?? 'Desconocido';
+      final connectionType =
+          connectionDetails['connectionType'] ?? 'Desconocido';
       final interface = connectionDetails['interface'];
       final endpoint = connectionDetails['endpoint'];
       final vendorId = connectionDetails['vendorId'];
       final productId = connectionDetails['productId'];
-      
+
       String statusText = '✅ Impresora conectada: $printerName\n';
       statusText += '📋 Tipo: $connectionType\n';
-      
+
       if (interface != null && endpoint != null) {
         statusText += '🔌 Interface: $interface, Endpoint: $endpoint\n';
       }
-      
+
       if (vendorId != null || productId != null) {
         statusText += '🆔 IDs: ${vendorId ?? 'Auto'}/${productId ?? 'Auto'}\n';
       }
-      
+
       statusText += '🟢 Estado: Operativa';
-      
+
       _statusMessage = statusText;
       _isSuccess = true;
     }
@@ -71,7 +72,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
       // Parsear IDs si se proporcionaron
       int? vendorId;
       int? productId;
-      
+
       if (_vendorIdController.text.isNotEmpty) {
         vendorId = int.tryParse(_vendorIdController.text);
         if (vendorId == null) {
@@ -83,7 +84,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           return;
         }
       }
-      
+
       if (_productIdController.text.isNotEmpty) {
         productId = int.tryParse(_productIdController.text);
         if (productId == null) {
@@ -106,8 +107,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           // Recargar el estado con información detallada
           _loadCurrentStatus();
         } else {
-          String errorDetails = _printerService.lastError ?? 'Error desconocido';
-          
+          String errorDetails =
+              _printerService.lastError ?? 'Error desconocido';
+
           // Proporcionar mensajes más específicos basados en el error
           if (errorDetails.contains('transferOut')) {
             _statusMessage = '❌ Error de comunicación USB. Intente:\n'
@@ -126,7 +128,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 '• Actualizar la página\n'
                 '• Usar Chrome o Edge\n'
                 '• Permitir acceso USB cuando se solicite';
-          } else if (errorDetails.contains('conexión con ninguna configuración')) {
+          } else if (errorDetails
+              .contains('conexión con ninguna configuración')) {
             _statusMessage = '❌ No se pudo configurar automáticamente.\n'
                 'Intente especificar Vendor ID y Product ID\n'
                 'en la configuración avanzada.';
@@ -184,7 +187,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
         _isSuccess = true;
       } else {
         String errorDetails = _printerService.lastError ?? 'Error al imprimir';
-        
+
         if (errorDetails.contains('Conexión USB perdida')) {
           _statusMessage = '❌ Conexión perdida durante impresión\n'
               '🔌 Reconecte la impresora e intente nuevamente';
@@ -222,14 +225,14 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _printerService.isConnected 
-                ? Colors.green.withValues(alpha: 0.2)
-                : Colors.grey.withValues(alpha: 0.2),
+              color: _printerService.isConnected
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.grey.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _printerService.isConnected 
-                  ? Colors.green.withValues(alpha: 0.5)
-                  : Colors.grey.withValues(alpha: 0.5),
+                color: _printerService.isConnected
+                    ? Colors.green.withValues(alpha: 0.5)
+                    : Colors.grey.withValues(alpha: 0.5),
                 width: 1,
               ),
             ),
@@ -237,21 +240,21 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  _printerService.isConnected 
-                    ? Icons.check_circle 
-                    : Icons.radio_button_unchecked,
+                  _printerService.isConnected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   size: 14,
-                  color: _printerService.isConnected 
-                    ? Colors.green.shade700 
-                    : Colors.grey.shade600,
+                  color: _printerService.isConnected
+                      ? Colors.green.shade700
+                      : Colors.grey.shade600,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   _printerService.isConnected ? 'Conectada' : 'Desconectada',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: _printerService.isConnected 
-                      ? Colors.green.shade700 
-                      : Colors.grey.shade600,
+                    color: _printerService.isConnected
+                        ? Colors.green.shade700
+                        : Colors.grey.shade600,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -310,7 +313,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
 
             // Estado actual
@@ -319,14 +322,14 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _isSuccess 
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.orange.withValues(alpha: 0.1),
+                  color: _isSuccess
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: _isSuccess 
-                      ? Colors.green.withValues(alpha: 0.3)
-                      : Colors.orange.withValues(alpha: 0.3),
+                    color: _isSuccess
+                        ? Colors.green.withValues(alpha: 0.3)
+                        : Colors.orange.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -341,7 +344,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                       child: Text(
                         _statusMessage!,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: _isSuccess ? Colors.green.shade700 : Colors.orange.shade700,
+                          color: _isSuccess
+                              ? Colors.green.shade700
+                              : Colors.orange.shade700,
                         ),
                       ),
                     ),
@@ -386,41 +391,43 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                     const SizedBox(height: 8),
                     Builder(
                       builder: (context) {
-                        final connectionDetails = _printerService.detailedConnectionInfo;
+                        final connectionDetails =
+                            _printerService.detailedConnectionInfo;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildInfoRow(
-                              '🖨️ Nombre:', 
+                              '🖨️ Nombre:',
                               connectionDetails['printerName'] ?? 'Sin nombre',
                               theme,
                             ),
                             _buildInfoRow(
-                              '🔧 Configuración:', 
-                              connectionDetails['connectionType'] ?? 'Automática',
+                              '🔧 Configuración:',
+                              connectionDetails['connectionType'] ??
+                                  'Automática',
                               theme,
                             ),
                             if (connectionDetails['interface'] != null)
                               _buildInfoRow(
-                                '🔌 Interface USB:', 
+                                '🔌 Interface USB:',
                                 connectionDetails['interface'].toString(),
                                 theme,
                               ),
                             if (connectionDetails['endpoint'] != null)
                               _buildInfoRow(
-                                '📡 Endpoint:', 
+                                '📡 Endpoint:',
                                 connectionDetails['endpoint'].toString(),
                                 theme,
                               ),
                             if (connectionDetails['vendorId'] != null)
                               _buildInfoRow(
-                                '🆔 Vendor ID:', 
+                                '🆔 Vendor ID:',
                                 connectionDetails['vendorId'].toString(),
                                 theme,
                               ),
                             if (connectionDetails['productId'] != null)
                               _buildInfoRow(
-                                '🏷️ Product ID:', 
+                                '🏷️ Product ID:',
                                 connectionDetails['productId'].toString(),
                                 theme,
                               ),
@@ -491,7 +498,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           onPressed: _isConnecting ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        
+
         // Botón de desconectar (solo si está conectado)
         if (_printerService.isConnected && !_isConnecting)
           TextButton(
@@ -501,24 +508,24 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
               style: TextStyle(color: Colors.red.shade700),
             ),
           ),
-        
+
         // Botón de prueba (solo si está conectado)
         if (_printerService.isConnected && !_isConnecting)
           TextButton(
             onPressed: _testPrint,
             child: const Text('Probar'),
           ),
-        
+
         // Botón de conectar
         FilledButton(
           onPressed: _isConnecting ? null : _connectPrinter,
           child: _isConnecting
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Text(_printerService.isConnected ? 'Reconectar' : 'Conectar'),
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(_printerService.isConnected ? 'Reconectar' : 'Conectar'),
         ),
       ],
     );

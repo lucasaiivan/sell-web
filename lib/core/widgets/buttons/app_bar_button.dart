@@ -28,11 +28,11 @@ class AppBarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    final Color effectiveBackground = colorBackground ?? 
-        (isDark ? Colors.white : Colors.black);
-    final Color effectiveAccent = colorAccent ?? 
-        (isDark ? Colors.black : Colors.white);
+
+    final Color effectiveBackground =
+        colorBackground ?? (isDark ? Colors.white : Colors.black);
+    final Color effectiveAccent =
+        colorAccent ?? (isDark ? Colors.black : Colors.white);
 
     return Padding(
       padding: padding,
@@ -43,12 +43,12 @@ class AppBarButton extends StatelessWidget {
   Widget _buildButton(Color backgroundColor, Color accentColor) {
     final bool hasLeadingIcon = iconLeading != null;
     final bool hasTrailingIcon = iconTrailing != null;
-    
+
     if (hasLeadingIcon || hasTrailingIcon) {
       return ElevatedButton.icon(
         onPressed: onTap,
         style: _buildButtonStyle(backgroundColor, accentColor),
-        icon: hasLeadingIcon 
+        icon: hasLeadingIcon
             ? Icon(iconLeading, color: accentColor, size: 24)
             : const SizedBox.shrink(),
         label: Row(
@@ -72,7 +72,7 @@ class AppBarButton extends StatelessWidget {
         ),
       );
     }
-    
+
     return ElevatedButton(
       onPressed: onTap,
       style: _buildButtonStyle(backgroundColor, accentColor),

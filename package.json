@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "analyze": "flutter analyze",
+    "format": "dart format .",
+    "build": "flutter build web --release --dart-define=Dart2jsOptimization=O4",
+    "deploy": "firebase deploy --only hosting",
+    "predeploy": "flutter clean && flutter pub get && dart format . && flutter build web --release --dart-define=Dart2jsOptimization=O4",
+    "full-deploy": "npm run predeploy && npm run deploy"
+  },
   "dependencies": {
     "firebase": "^11.9.1"
   }

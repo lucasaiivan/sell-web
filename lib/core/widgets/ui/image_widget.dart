@@ -22,8 +22,8 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color effectiveBackground = backgroundColor ?? 
-        Theme.of(context).colorScheme.surface;
+    final Color effectiveBackground =
+        backgroundColor ?? Theme.of(context).colorScheme.surface;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),

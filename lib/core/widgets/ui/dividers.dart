@@ -45,7 +45,7 @@ class DotDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor = color ?? Colors.black;
-    
+
     return Padding(
       padding: padding,
       child: Icon(

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/component_app_legacy.dart'; 
+import 'package:sellweb/core/widgets/component_app_legacy.dart';
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
 
 class WelcomePage extends StatelessWidget {
-  
   final Future<void> Function(ProfileAccountModel) onSelectAccount;
 
   const WelcomePage({super.key, required this.onSelectAccount});
@@ -24,17 +23,20 @@ class WelcomePage extends StatelessWidget {
   Widget _buildAccountCard(BuildContext context, ProfileAccountModel account) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Obtener la ubicación con prioridad
     final location = _getAccountLocation(account);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       constraints: const BoxConstraints(minWidth: 240, maxWidth: 360),
       child: Card(
         elevation: 2,
         shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2),width: 1)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.2), width: 1)),
         surfaceTintColor: colorScheme.surfaceTint,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -59,7 +61,9 @@ class WelcomePage extends StatelessWidget {
                   ),
                   child: ComponentApp().userAvatarCircle(
                     urlImage: account.image,
-                    text: account.name.isNotEmpty ? account.name[0].toUpperCase() : '',
+                    text: account.name.isNotEmpty
+                        ? account.name[0].toUpperCase()
+                        : '',
                     radius: 24,
                     background: colorScheme.primaryContainer,
                   ),
@@ -123,10 +127,9 @@ class WelcomePage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) { 
-
+  Widget build(BuildContext context) {
     // providers
-    final authProvider = Provider.of<AuthProvider>(context); 
+    final authProvider = Provider.of<AuthProvider>(context);
     List<ProfileAccountModel> accounts = authProvider.getUserAccountsUseCase
         .getAccountsWithDemo(authProvider.accountsAssociateds,
             isAnonymous: authProvider.user?.isAnonymous == true);
@@ -143,7 +146,8 @@ class WelcomePage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.storefront, size: 80, color: Colors.blueGrey),
+                  const Icon(Icons.storefront,
+                      size: 80, color: Colors.blueGrey),
                   const SizedBox(height: 12),
                   const Text('¡Bienvenido!',
                       style:
@@ -157,9 +161,10 @@ class WelcomePage extends StatelessWidget {
                     ),
                   const SizedBox(height: 24),
                   // view notification : si no hay cuentas disponibles, muestra un mensaje informativo
-                  if(authProvider.isLoadingAccounts)
+                  if (authProvider.isLoadingAccounts)
                     const Center(child: CircularProgressIndicator()),
-                  if (accounts.isEmpty && authProvider.isLoadingAccounts == false)
+                  if (accounts.isEmpty &&
+                      authProvider.isLoadingAccounts == false)
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
@@ -191,49 +196,54 @@ class WelcomePage extends StatelessWidget {
                     ),
                   // view : muestra lista de cuentas asociadas al usuario
                   if (accounts.isNotEmpty)
-                    ...accounts.map((account) => _buildAccountCard(context, account)),
+                    ...accounts
+                        .map((account) => _buildAccountCard(context, account)),
                   const SizedBox(height: 30),
                   // Botón para cerrar sesión del usuario
                   if (authProvider.user?.email != null)
                     const SizedBox(height: 50),
                   // text : Mostrar el correo electrónico del usuario
-                  authProvider.isLoadingAccounts?Container():
-                  Column(
-                    children: [
-                      Text(
-                        authProvider.user?.email ?? 'Invitado',
-                        style: const TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                      // button : Cerrar sesión de Firebase Auth
-                      TextButton.icon(
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Confirmar'),
-                              content:
-                                  const Text('¿Seguro que deseas cerrar sesión?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(false),
-                                  child: const Text('Cancelar'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
-                                  child: const Text('Cerrar sesión'),
-                                ),
-                              ],
+                  authProvider.isLoadingAccounts
+                      ? Container()
+                      : Column(
+                          children: [
+                            Text(
+                              authProvider.user?.email ?? 'Invitado',
+                              style: const TextStyle(
+                                  fontSize: 16, color: Colors.grey),
                             ),
-                          );
-                          if (confirm == true) {
-                            await authProvider.signOut();
-                          }
-                        },
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Cerrar sesión'),
-                      ),
-                    ],
-                  )
+                            // button : Cerrar sesión de Firebase Auth
+                            TextButton.icon(
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Confirmar'),
+                                    content: const Text(
+                                        '¿Seguro que deseas cerrar sesión?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        child: const Text('Cerrar sesión'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await authProvider.signOut();
+                                }
+                              },
+                              icon: const Icon(Icons.logout),
+                              label: const Text('Cerrar sesión'),
+                            ),
+                          ],
+                        )
                 ],
               ),
             ),

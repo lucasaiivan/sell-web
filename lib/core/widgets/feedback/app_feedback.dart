@@ -12,7 +12,7 @@ class AppFeedback {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -27,7 +27,7 @@ class AppFeedback {
             Text(message),
           ],
         ),
-        backgroundColor: backgroundColor ?? 
+        backgroundColor: backgroundColor ??
             (theme.brightness == Brightness.dark
                 ? colorScheme.surfaceContainerHigh
                 : colorScheme.surface),

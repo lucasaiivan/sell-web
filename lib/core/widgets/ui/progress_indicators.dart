@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Barra de progreso lineal personalizada para la aplicación
-class AppLinearProgressBar extends StatelessWidget implements PreferredSizeWidget {
+class AppLinearProgressBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final Color? color;
   final Color? backgroundColor;
   final double minHeight;
@@ -23,8 +24,8 @@ class AppLinearProgressBar extends StatelessWidget implements PreferredSizeWidge
     return LinearProgressIndicator(
       minHeight: minHeight,
       value: value,
-      backgroundColor: backgroundColor ?? 
-          colorScheme.surface.withValues(alpha: 0.3),
+      backgroundColor:
+          backgroundColor ?? colorScheme.surface.withValues(alpha: 0.3),
       valueColor: AlwaysStoppedAnimation<Color>(
         color ?? colorScheme.primary,
       ),

@@ -53,14 +53,12 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: "AIzaSyB0aDRPe-b86LjqEpbWqL2m3N2_H3Ora0M",
-    authDomain: "commer-ef151.firebaseapp.com",
-    databaseURL: "https://commer-ef151.firebaseio.com",
-    projectId: "commer-ef151",
-    storageBucket: "commer-ef151.appspot.com",
-    messagingSenderId: "232181553323",
-    appId: "1:232181553323:web:42281e8ed0eab5ba9b3fee",
-    measurementId: "G-W2S3NL0B9H"
-  );
-
+      apiKey: "AIzaSyB0aDRPe-b86LjqEpbWqL2m3N2_H3Ora0M",
+      authDomain: "commer-ef151.firebaseapp.com",
+      databaseURL: "https://commer-ef151.firebaseio.com",
+      projectId: "commer-ef151",
+      storageBucket: "commer-ef151.appspot.com",
+      messagingSenderId: "232181553323",
+      appId: "1:232181553323:web:42281e8ed0eab5ba9b3fee",
+      measurementId: "G-W2S3NL0B9H");
 }

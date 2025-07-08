@@ -1,18 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 
 /// Clase legacy de ComponentApp para compatibilidad hacia atrás
 /// Se recomienda usar los widgets específicos de las nuevas categorías
 class ComponentApp extends StatelessWidget {
   const ComponentApp({super.key});
- 
+
   @override
   Widget build(BuildContext context) {
-
-    // set  
+    // set
     return Container();
   }
-  // 
+
+  //
   // view : grafico de barra para mostrar el progreso de carga de la app
   PreferredSize linearProgressBarApp({Color color = Colors.blue}) {
     return PreferredSize(
@@ -22,52 +22,74 @@ class ComponentApp extends StatelessWidget {
             backgroundColor: Colors.white.withValues(alpha: 0.3),
             valueColor: AlwaysStoppedAnimation<Color>(color)));
   }
-  // view : grafico divisor estandar de la app 
+
+  // view : grafico divisor estandar de la app
   Divider divider({double thickness = 0.3}) {
     return Divider(
-      thickness: thickness,height: 0, 
+      thickness: thickness,
+      height: 0,
     );
   }
+
   // view : grafico punto divisor estandar de la app
-  Widget dividerDot({double size = 4.0,Color color = Colors.black}) {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 3), child:Icon(Icons.circle,size:size, color: color.withValues(alpha: 0.4)));
+  Widget dividerDot({double size = 4.0, Color color = Colors.black}) {
+    return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Icon(Icons.circle,
+            size: size, color: color.withValues(alpha: 0.4)));
   }
+
   // view : imagen avatar del usuario
-  Widget userAvatarCircle({ Color? background,IconData? iconData,bool empty=false,String urlImage='',String text = '', double radius = 20.0}) {
-     
+  Widget userAvatarCircle(
+      {Color? background,
+      IconData? iconData,
+      bool empty = false,
+      String urlImage = '',
+      String text = '',
+      double radius = 20.0}) {
     // widgets
     late Widget avatar;
     late Widget iconDefault;
-    if(empty){
+    if (empty) {
       iconDefault = Container();
-    }else if(urlImage == '' && text == ''){
-      iconDefault = Icon(iconData??Icons.person_outline_rounded,color: Colors.white,size: radius*1.1 );
-    }else if(urlImage == '' && text != ''){
-      iconDefault = Text( text.substring( 0,1),style: const TextStyle(color: Colors.white));
-    }else{
+    } else if (urlImage == '' && text == '') {
+      iconDefault = Icon(iconData ?? Icons.person_outline_rounded,
+          color: Colors.white, size: radius * 1.1);
+    } else if (urlImage == '' && text != '') {
+      iconDefault = Text(text.substring(0, 1),
+          style: const TextStyle(color: Colors.white));
+    } else {
       iconDefault = Container();
-    } 
+    }
     // si el background es transparente
-    
+
     // crear avatar
     avatar = urlImage == ''
-      ? CircleAvatar(backgroundColor:background,radius:radius, child: Center(child: iconDefault))
+        ? CircleAvatar(
+            backgroundColor: background,
+            radius: radius,
+            child: Center(child: iconDefault))
         : CachedNetworkImage(
-          imageUrl: urlImage,
-          placeholder: (context, url) => CircleAvatar(backgroundColor:background,radius:radius, child:iconDefault),
-          imageBuilder: (context, image) => CircleAvatar(backgroundImage: image,radius:radius),
-          errorWidget: (context, url, error) {
-            // return : un circleView con la inicial de nombre como icon 
-            return CircleAvatar(
-              backgroundColor: background,
-              radius:radius,
-              child: Center(child: iconDefault),
+            imageUrl: urlImage,
+            placeholder: (context, url) => CircleAvatar(
+                backgroundColor: background,
+                radius: radius,
+                child: iconDefault),
+            imageBuilder: (context, image) =>
+                CircleAvatar(backgroundImage: image, radius: radius),
+            errorWidget: (context, url, error) {
+              // return : un circleView con la inicial de nombre como icon
+              return CircleAvatar(
+                backgroundColor: background,
+                radius: radius,
+                child: Center(child: iconDefault),
               );
-          },
-    );
+            },
+          );
 
     return avatar;
-  } 
+  }
+
   // button : Botón de búsqueda para AppBar, configurable con icono, colores y acción.
   Widget searchButtonAppBar({
     required BuildContext context,
@@ -76,7 +98,7 @@ class ComponentApp extends StatelessWidget {
     Widget icon = const Icon(Icons.search),
     Color? color,
     Color? textColor,
-    Color? iconColor, 
+    Color? iconColor,
     double? fontSize,
     double? iconSize,
     EdgeInsetsGeometry? padding,
@@ -84,7 +106,7 @@ class ComponentApp extends StatelessWidget {
     double? height,
   }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    
+
     // Calcular tamaños adaptativos basados en las dimensiones
     final double effectiveHeight = height ?? 40.0;
     final double adaptiveFontSize = fontSize ?? (effectiveHeight * 0.33);
@@ -92,20 +114,21 @@ class ComponentApp extends StatelessWidget {
     final double adaptivePaddingHorizontal = effectiveHeight * 0.33;
     final double adaptivePaddingVertical = effectiveHeight * 0.25;
     final double adaptiveSpacing = effectiveHeight * 0.15;
-    
+
     Widget button = ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.all((color ?? colorScheme.primaryContainer).withValues(alpha: 0.5)),
-        foregroundColor: WidgetStateProperty.all(textColor ?? colorScheme.onPrimaryContainer),
-        padding: WidgetStateProperty.all(
-          padding ?? EdgeInsets.symmetric(
-            horizontal: adaptivePaddingHorizontal, 
-            vertical: adaptivePaddingVertical
-          )
-        ),
+        backgroundColor: WidgetStateProperty.all(
+            (color ?? colorScheme.primaryContainer).withValues(alpha: 0.5)),
+        foregroundColor: WidgetStateProperty.all(
+            textColor ?? colorScheme.onPrimaryContainer),
+        padding: WidgetStateProperty.all(padding ??
+            EdgeInsets.symmetric(
+                horizontal: adaptivePaddingHorizontal,
+                vertical: adaptivePaddingVertical)),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(effectiveHeight * 0.25), // Radio proporcional
+            borderRadius: BorderRadius.circular(
+                effectiveHeight * 0.25), // Radio proporcional
           ),
         ),
         elevation: WidgetStateProperty.all(0),
@@ -149,14 +172,28 @@ class ComponentApp extends StatelessWidget {
         child: button,
       );
     }
-    
+
     return button;
   }
-  Widget buttonAppbar({ required BuildContext context,Function() ?onTap,required String text,Color ?colorBackground ,Color ?colorAccent,IconData ?iconLeading ,IconData ?iconTrailing,EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0),bool textOpacity = false}) { 
-    
+
+  Widget buttonAppbar(
+      {required BuildContext context,
+      Function()? onTap,
+      required String text,
+      Color? colorBackground,
+      Color? colorAccent,
+      IconData? iconLeading,
+      IconData? iconTrailing,
+      EdgeInsetsGeometry padding =
+          const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      bool textOpacity = false}) {
     // values default
-    colorBackground ??= Theme.of(context).brightness == Brightness.dark?Colors.white:Colors.black;
-    colorAccent ??= Theme.of(context).brightness == Brightness.dark?Colors.black:Colors.white;
+    colorBackground ??= Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    colorAccent ??= Theme.of(context).brightness == Brightness.dark
+        ? Colors.black
+        : Colors.white;
 
     return Padding(
       padding: padding,
@@ -166,11 +203,13 @@ class ComponentApp extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorBackground,
                 foregroundColor: colorAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25)),
                 elevation: 0,
-                padding: const EdgeInsets.only(left: 14, right: 20, top: 8, bottom: 8),
+                padding: const EdgeInsets.only(
+                    left: 14, right: 20, top: 8, bottom: 8),
               ),
-              icon: iconLeading != null 
+              icon: iconLeading != null
                   ? Icon(iconLeading, color: colorAccent, size: 24)
                   : const SizedBox.shrink(),
               label: Row(
@@ -181,7 +220,7 @@ class ComponentApp extends StatelessWidget {
                       opacity: textOpacity ? 0.5 : 1,
                       child: Text(
                         text,
-                        style: TextStyle(color: colorAccent ),
+                        style: TextStyle(color: colorAccent),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -198,23 +237,42 @@ class ComponentApp extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorBackground,
                 foregroundColor: colorAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25)),
                 elevation: 0,
-                padding: const EdgeInsets.only(left: 14, right: 20, top: 8, bottom: 8),
+                padding: const EdgeInsets.only(
+                    left: 14, right: 20, top: 8, bottom: 8),
               ),
               child: Opacity(
                 opacity: textOpacity ? 0.5 : 1,
                 child: Text(
                   text,
-                  style: TextStyle(color: colorAccent ),
+                  style: TextStyle(color: colorAccent),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
     );
-  } 
-  Widget button( {bool defaultStyle = false,double elevation=0,double fontSize = 14,double width = double.infinity,bool disable = false, Widget? icon, String text = '',required dynamic onPressed,EdgeInsets padding =const EdgeInsets.symmetric(horizontal: 12, vertical:20),Color? colorButton= Colors.blue,Color colorAccent = Colors.white , EdgeInsets margin =const EdgeInsets.symmetric(horizontal: 12, vertical: 12), required BuildContext context, double? iconSize, Size? minimumSize}) {
-     
+  }
+
+  Widget button(
+      {bool defaultStyle = false,
+      double elevation = 0,
+      double fontSize = 14,
+      double width = double.infinity,
+      bool disable = false,
+      Widget? icon,
+      String text = '',
+      required dynamic onPressed,
+      EdgeInsets padding =
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+      Color? colorButton = Colors.blue,
+      Color colorAccent = Colors.white,
+      EdgeInsets margin =
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      required BuildContext context,
+      double? iconSize,
+      Size? minimumSize}) {
     // button : personalizado
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -230,10 +288,12 @@ class ComponentApp extends StatelessWidget {
             onPressed: disable ? null : onPressed,
             style: ElevatedButton.styleFrom(
               elevation: defaultStyle ? 0 : elevation,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5)),
               padding: padding,
               backgroundColor: colorButton,
-              textStyle: TextStyle(color: colorAccent, fontWeight: FontWeight.w700),
+              textStyle:
+                  TextStyle(color: colorAccent, fontWeight: FontWeight.w700),
               minimumSize: minimumSize,
             ),
             icon: icon != null && iconSize != null
@@ -250,7 +310,10 @@ class ComponentApp extends StatelessWidget {
     );
   }
 
-  void showMessageAlertApp({required BuildContext context, required String title, required String message}) {
+  void showMessageAlertApp(
+      {required BuildContext context,
+      required String title,
+      required String message}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -271,7 +334,7 @@ class ComponentApp extends StatelessWidget {
         duration: const Duration(seconds: 3),
       ),
     );
-  } 
+  }
 
   /// FloatingActionButton personalizado para 3 variantes: icono, texto o ambos.
   /// Por defecto el color es azul (Material 3)
@@ -287,8 +350,10 @@ class ComponentApp extends StatelessWidget {
     final bool hasIcon = icon != null;
     final bool hasText = text != null && text.isNotEmpty;
     final double buttonSize = size ?? 56.0;
-    final Color effectiveButtonColor = buttonColor ?? Colors.blue; // Color por defecto azul
-    final Color effectiveTextColor = textColor ??  Colors.white; // Color de texto por defecto blanco
+    final Color effectiveButtonColor =
+        buttonColor ?? Colors.blue; // Color por defecto azul
+    final Color effectiveTextColor =
+        textColor ?? Colors.white; // Color de texto por defecto blanco
 
     if (hasText) {
       // FloatingActionButton.extended para texto o icono+texto
@@ -299,7 +364,8 @@ class ComponentApp extends StatelessWidget {
         icon: hasIcon ? Icon(icon, size: buttonSize * 0.45) : null,
         label: Text(
           text,
-          style: TextStyle(fontSize: buttonSize * 0.28, fontWeight: FontWeight.w600),
+          style: TextStyle(
+              fontSize: buttonSize * 0.28, fontWeight: FontWeight.w600),
         ),
       );
     } else if (hasIcon) {
@@ -307,7 +373,7 @@ class ComponentApp extends StatelessWidget {
       return FloatingActionButton(
         onPressed: onTap,
         backgroundColor: effectiveButtonColor,
-        foregroundColor: effectiveTextColor, 
+        foregroundColor: effectiveTextColor,
         child: Icon(icon, size: buttonSize * 0.5),
       );
     } else {
@@ -342,9 +408,9 @@ class ComponentApp extends StatelessWidget {
                 ),
                 placeholder: (context, url) => Center(
                   child: SizedBox(
-                  width: size != null ? size * 0.3 : 24,
-                  height: size != null ? size * 0.3 : 24,
-                  child: const CircularProgressIndicator(strokeWidth: 2),
+                    width: size != null ? size * 0.3 : 24,
+                    height: size != null ? size * 0.3 : 24,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
               )
@@ -358,4 +424,3 @@ class ComponentApp extends StatelessWidget {
     );
   }
 }
-

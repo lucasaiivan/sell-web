@@ -1,5 +1,3 @@
-
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CashRegister {
@@ -35,20 +33,23 @@ class CashRegister {
     required this.cashOutFlowList,
   });
 
-  // contructor 
-  
+  // contructor
 
   // difference : devuelve la diferencia entre el monto esperado y el monto de cierre
-  double get getDifference{
-    if(balance == 0){ return 0.0;}
-    return  balance - getExpectedBalance;
+  double get getDifference {
+    if (balance == 0) {
+      return 0.0;
+    }
+    return balance - getExpectedBalance;
   }
+
   // balance : devuelve el balance esperado de la caja
-  double get getExpectedBalance{
-    return (initialCash + cashInFlow+ billing) + cashOutFlow;
+  double get getExpectedBalance {
+    return (initialCash + cashInFlow + billing) + cashOutFlow;
   }
-  // default values  
-  factory CashRegister.initialData(){
+
+  // default values
+  factory CashRegister.initialData() {
     return CashRegister(
       id: '',
       description: '',
@@ -82,31 +83,51 @@ class CashRegister {
         "balance": balance,
         "cashInFlowList": cashInFlowList,
         "cashOutFlowList": cashOutFlowList,
-      }; 
+      };
 
-      
   // fromjson : convierte el json en un objeto
-  factory CashRegister.fromMap(Map  data) {
+  factory CashRegister.fromMap(Map data) {
     return CashRegister(
-      id: data['id'] ,
-      description: data.containsKey('description')? data['description'] : '',
-      initialCash: data.containsKey('initialCash')? double.parse(data['initialCash'].toString()) : 0.0,
-      opening: data.containsKey('opening')? data['opening'].toDate() : DateTime.now(),
-      closure: data.containsKey('closure')? data['closure'].toDate() : DateTime.now(),
-      sales:  data.containsKey('sales')? data['sales'] ?? 0 : 0,
-      billing: data.containsKey('billing')? double.parse(data['billing'].toString()) : 0.0,
-      discount: data.containsKey('discount')? double.parse(data['discount'].toString()) : 0.0,
-      cashInFlow: data.containsKey('cashInFlow')? double.parse(data['cashInFlow'].toString()) : 0.0,
-      cashOutFlow: data.containsKey('cashOutFlow')? double.parse(data['cashOutFlow'].toString()) : 0.0,
-      expectedBalance: data.containsKey('expectedBalance')? double.parse(data['expectedBalance'].toString()) : 0.0,
-      balance: data.containsKey('balance')? double.parse(data['balance'].toString()): 0.0,
-      cashInFlowList: data.containsKey('cashInFlowList')? data['cashInFlowList'] ?? [] : [],
-      cashOutFlowList: data.containsKey('cashOutFlowList')? data['cashOutFlowList'] ?? [] : [],
+      id: data['id'],
+      description: data.containsKey('description') ? data['description'] : '',
+      initialCash: data.containsKey('initialCash')
+          ? double.parse(data['initialCash'].toString())
+          : 0.0,
+      opening: data.containsKey('opening')
+          ? data['opening'].toDate()
+          : DateTime.now(),
+      closure: data.containsKey('closure')
+          ? data['closure'].toDate()
+          : DateTime.now(),
+      sales: data.containsKey('sales') ? data['sales'] ?? 0 : 0,
+      billing: data.containsKey('billing')
+          ? double.parse(data['billing'].toString())
+          : 0.0,
+      discount: data.containsKey('discount')
+          ? double.parse(data['discount'].toString())
+          : 0.0,
+      cashInFlow: data.containsKey('cashInFlow')
+          ? double.parse(data['cashInFlow'].toString())
+          : 0.0,
+      cashOutFlow: data.containsKey('cashOutFlow')
+          ? double.parse(data['cashOutFlow'].toString())
+          : 0.0,
+      expectedBalance: data.containsKey('expectedBalance')
+          ? double.parse(data['expectedBalance'].toString())
+          : 0.0,
+      balance: data.containsKey('balance')
+          ? double.parse(data['balance'].toString())
+          : 0.0,
+      cashInFlowList: data.containsKey('cashInFlowList')
+          ? data['cashInFlowList'] ?? []
+          : [],
+      cashOutFlowList: data.containsKey('cashOutFlowList')
+          ? data['cashOutFlowList'] ?? []
+          : [],
     );
   }
 
-
-  fromDocumentSnapshot( {required DocumentSnapshot documentSnapshot}) { 
+  fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
     id = documentSnapshot.id;
     description = documentSnapshot['description'];
     initialCash = documentSnapshot['initialCash'].toDouble();
@@ -122,7 +143,8 @@ class CashRegister {
     cashInFlowList = documentSnapshot['cashInFlowList'];
     cashOutFlowList = documentSnapshot['cashOutFlowList'];
   }
-  // update : actualiza los valores individualmente de la caja 
+
+  // update : actualiza los valores individualmente de la caja
   CashRegister update({
     String? id,
     String? description,
@@ -156,12 +178,10 @@ class CashRegister {
       cashOutFlowList: cashOutFlowList ?? this.cashOutFlowList,
     );
   }
-
- 
 }
 
 // flujo de caja
-class CashFlow{ 
+class CashFlow {
   String id = '';
   String userId = '';
   String description = '';
@@ -177,7 +197,7 @@ class CashFlow{
   });
 
   // default values
-  factory CashFlow.initialData(){
+  factory CashFlow.initialData() {
     return CashFlow(
       id: '',
       userId: '',
@@ -204,5 +224,4 @@ class CashFlow{
       date: data['date'].toDate(),
     );
   }
-  
 }

@@ -8,6 +8,7 @@ class GetCatalogueStreamUseCase {
   GetCatalogueStreamUseCase(this.repository);
   Stream<QuerySnapshot> call() => repository.getCatalogueStream();
 }
+
 // case use : Busca un producto por código de barra en una lista de productos
 class GetProductByCodeUseCase {
   // Recibe la lista de productos y el código a buscar
@@ -19,6 +20,7 @@ class GetProductByCodeUseCase {
     }
   }
 }
+
 // case use : Busca un producto público por código de barra
 class GetPublicProductByCodeUseCase {
   final CatalogueRepository repository;
@@ -26,6 +28,7 @@ class GetPublicProductByCodeUseCase {
   // Busca un producto público por código de barra
   Future<Product?> call(String code) => repository.getPublicProductByCode(code);
 }
+
 // case use : Verifica si un producto ya ha sido escaneado
 class IsProductScannedUseCase {
   final GetProductByCodeUseCase getProductByCodeUseCase;
@@ -36,12 +39,15 @@ class IsProductScannedUseCase {
     return product != null;
   }
 }
+
 // case use : Agrega un producto al catálogo de la cuenta del negocio seleccionada
 class AddProductToCatalogueUseCase {
   final CatalogueRepository repository;
   AddProductToCatalogueUseCase(this.repository);
-  Future<void> call(ProductCatalogue product, String accountId) => repository.addProductToCatalogue(product, accountId);
+  Future<void> call(ProductCatalogue product, String accountId) =>
+      repository.addProductToCatalogue(product, accountId);
 }
+
 // case use : Crea un nuevo producto en la base de datos pública
 class CreatePublicProductUseCase {
   final CatalogueRepository repository;

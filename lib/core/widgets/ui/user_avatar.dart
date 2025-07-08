@@ -26,10 +26,12 @@ class UserAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Colores efectivos
-    final Color effectiveBackground = backgroundColor ?? colorScheme.primaryContainer;
-    final Color effectiveForeground = foregroundColor ?? colorScheme.onPrimaryContainer;
+    final Color effectiveBackground =
+        backgroundColor ?? colorScheme.primaryContainer;
+    final Color effectiveForeground =
+        foregroundColor ?? colorScheme.onPrimaryContainer;
 
     if (isEmpty) {
       return Container(

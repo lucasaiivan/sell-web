@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/services/thermal_printer_service.dart';
+import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
 
 /// Diálogo para seleccionar opciones del ticket después de confirmar la venta
@@ -35,7 +35,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
   /// Verifica el estado de la impresora y establece valores por defecto
   Future<void> _checkPrinterAndSetDefaults() async {
-    final printerService = ThermalPrinterService();
+    final printerService = ThermalPrinterHttpService();
     await printerService.initialize();
 
     setState(() {
@@ -245,7 +245,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
   /// Verifica el estado de la impresora
   Future<bool> _checkPrinterStatus() async {
-    final printerService = ThermalPrinterService();
+    final printerService = ThermalPrinterHttpService();
     await printerService.initialize();
     return printerService.isConnected;
   }
@@ -255,7 +255,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     setState(() => _isProcessing = true);
 
     try {
-      final printerService = ThermalPrinterService();
+      final printerService = ThermalPrinterHttpService();
       await printerService.initialize();
 
       // Preparar datos del ticket

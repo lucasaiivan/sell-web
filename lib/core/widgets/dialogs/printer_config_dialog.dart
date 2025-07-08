@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sellweb/core/services/thermal_printer_service.dart';
+import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 
-/// Diálogo para configurar la impresora térmica
+/// Diálogo para configurar el servidor HTTP de impresora térmica
 class PrinterConfigDialog extends StatefulWidget {
   const PrinterConfigDialog({super.key});
 
@@ -11,9 +11,11 @@ class PrinterConfigDialog extends StatefulWidget {
 }
 
 class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
-  final _printerService = ThermalPrinterService();
-  final _vendorIdController = TextEditingController();
-  final _productIdController = TextEditingController();
+  final _printerService = ThermalPrinterHttpService();
+  final _printerNameController = TextEditingController();
+  final _serverHostController = TextEditingController();
+  final _serverPortController = TextEditingController();
+  final _devicePathController = TextEditingController();
 
   bool _isConnecting = false;
   String? _statusMessage;
@@ -23,31 +25,32 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   void initState() {
     super.initState();
     _loadCurrentStatus();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    // Inicializar con valores por defecto
+    _serverHostController.text = _printerService.serverHost;
+    _serverPortController.text = _printerService.serverPort.toString();
+
+    if (_printerService.configuredPrinterName != null) {
+      _printerNameController.text = _printerService.configuredPrinterName!;
+    }
   }
 
   void _loadCurrentStatus() {
     if (_printerService.isConnected) {
       final connectionDetails = _printerService.detailedConnectionInfo;
-      final printerName = connectionDetails['printerName'] ?? 'Impresora USB';
+      final printerName =
+          connectionDetails['printerName'] ?? 'Servidor HTTP Local';
+      final serverUrl = connectionDetails['serverUrl'] ?? 'No configurado';
       final connectionType =
           connectionDetails['connectionType'] ?? 'Desconocido';
-      final interface = connectionDetails['interface'];
-      final endpoint = connectionDetails['endpoint'];
-      final vendorId = connectionDetails['vendorId'];
-      final productId = connectionDetails['productId'];
 
-      String statusText = '✅ Impresora conectada: $printerName\n';
-      statusText += '📋 Tipo: $connectionType\n';
-
-      if (interface != null && endpoint != null) {
-        statusText += '🔌 Interface: $interface, Endpoint: $endpoint\n';
-      }
-
-      if (vendorId != null || productId != null) {
-        statusText += '🆔 IDs: ${vendorId ?? 'Auto'}/${productId ?? 'Auto'}\n';
-      }
-
-      statusText += '🟢 Estado: Operativa';
+      String statusText = '✅ Servidor conectado: $printerName\n';
+      statusText += '🌐 URL: $serverUrl\n';
+      statusText += '� Tipo: $connectionType\n';
+      statusText += '🟢 Estado: Operativo';
 
       _statusMessage = statusText;
       _isSuccess = true;
@@ -56,28 +59,39 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   @override
   void dispose() {
-    _vendorIdController.dispose();
-    _productIdController.dispose();
+    _printerNameController.dispose();
+    _serverHostController.dispose();
+    _serverPortController.dispose();
+    _devicePathController.dispose();
     super.dispose();
   }
 
   Future<void> _connectPrinter() async {
     setState(() {
       _isConnecting = true;
-      _statusMessage = 'Conectando con impresora...';
+      _statusMessage = 'Configurando conexión con servidor HTTP...';
       _isSuccess = false;
     });
 
     try {
-      // Parsear IDs si se proporcionaron
-      int? vendorId;
-      int? productId;
+      // Validar campos requeridos
+      if (_printerNameController.text.isEmpty) {
+        setState(() {
+          _statusMessage = '❌ El nombre de la impresora es requerido';
+          _isSuccess = false;
+          _isConnecting = false;
+        });
+        return;
+      }
 
-      if (_vendorIdController.text.isNotEmpty) {
-        vendorId = int.tryParse(_vendorIdController.text);
-        if (vendorId == null) {
+      // Parsear puerto si se especificó
+      int? serverPort;
+      if (_serverPortController.text.isNotEmpty) {
+        serverPort = int.tryParse(_serverPortController.text);
+        if (serverPort == null || serverPort < 1 || serverPort > 65535) {
           setState(() {
-            _statusMessage = 'Vendor ID debe ser un número válido';
+            _statusMessage =
+                '❌ Puerto debe ser un número válido entre 1 y 65535';
             _isSuccess = false;
             _isConnecting = false;
           });
@@ -85,60 +99,43 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
         }
       }
 
-      if (_productIdController.text.isNotEmpty) {
-        productId = int.tryParse(_productIdController.text);
-        if (productId == null) {
-          setState(() {
-            _statusMessage = 'Product ID debe ser un número válido';
-            _isSuccess = false;
-            _isConnecting = false;
-          });
-          return;
-        }
-      }
-
-      final success = await _printerService.connectPrinter(
-        vendorId: vendorId,
-        productId: productId,
+      final success = await _printerService.configurePrinter(
+        printerName: _printerNameController.text.trim(),
+        serverHost: _serverHostController.text.trim().isNotEmpty
+            ? _serverHostController.text.trim()
+            : null,
+        serverPort: serverPort,
+        devicePath: _devicePathController.text.trim().isNotEmpty
+            ? _devicePathController.text.trim()
+            : null,
       );
 
       setState(() {
         if (success) {
-          // Recargar el estado con información detallada
+          // Recargar el estado con información actualizada
           _loadCurrentStatus();
         } else {
           String errorDetails =
               _printerService.lastError ?? 'Error desconocido';
 
-          // Proporcionar mensajes más específicos basados en el error
-          if (errorDetails.contains('transferOut')) {
-            _statusMessage = '❌ Error de comunicación USB. Intente:\n'
-                '• Desconectar y reconectar la impresora\n'
-                '• Usar otro puerto USB\n'
-                '• Reiniciar el navegador\n'
-                '• Verificar que la impresora esté encendida';
-          } else if (errorDetails.contains('NotFoundError')) {
-            _statusMessage = '❌ Impresora no encontrada. Verifique:\n'
-                '• Que esté conectada por USB\n'
-                '• Que esté encendida\n'
-                '• Los permisos del navegador\n'
-                '• Compatibilidad con Chrome/Edge';
-          } else if (errorDetails.contains('SecurityError')) {
-            _statusMessage = '❌ Error de permisos. Intente:\n'
-                '• Actualizar la página\n'
-                '• Usar Chrome o Edge\n'
-                '• Permitir acceso USB cuando se solicite';
-          } else if (errorDetails
-              .contains('conexión con ninguna configuración')) {
-            _statusMessage = '❌ No se pudo configurar automáticamente.\n'
-                'Intente especificar Vendor ID y Product ID\n'
-                'en la configuración avanzada.';
+          // Proporcionar mensajes específicos según el error
+          if (errorDetails.contains('conexión')) {
+            _statusMessage = '❌ Error de conexión con el servidor. Verifique:\n'
+                '• Que el servidor esté ejecutándose en ${_printerService.serverUrl}\n'
+                '• Que el puerto esté disponible\n'
+                '• La configuración de red\n'
+                '• El firewall del sistema';
+          } else if (errorDetails.contains('timeout')) {
+            _statusMessage = '❌ Tiempo de espera agotado. Intente:\n'
+                '• Verificar que el servidor esté funcionando\n'
+                '• Comprobar la dirección IP/puerto\n'
+                '• Revisar la conectividad de red';
           } else {
             _statusMessage = '❌ Error: $errorDetails\n\n'
                 'Sugerencias:\n'
-                '• Verificar conexión USB\n'
-                '• Reiniciar impresora\n'
-                '• Probar otro puerto USB';
+                '• Verificar que el servidor Flutter Desktop esté ejecutándose\n'
+                '• Comprobar la configuración de red\n'
+                '• Intentar con localhost:8080';
           }
           _isSuccess = false;
         }
@@ -158,15 +155,15 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   Future<void> _disconnectPrinter() async {
     setState(() {
       _isConnecting = true;
-      _statusMessage = 'Desconectando impresora...';
+      _statusMessage = 'Desconectando del servidor...';
     });
 
     await _printerService.disconnectPrinter();
 
     setState(() {
       _isConnecting = false;
-      _statusMessage = '🔌 Impresora desconectada correctamente\n'
-          'Puede conectar una nueva impresora cuando guste';
+      _statusMessage = '🔌 Desconectado del servidor HTTP\n'
+          'Puede configurar una nueva conexión cuando guste';
       _isSuccess = false;
     });
   }
@@ -174,7 +171,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   Future<void> _testPrint() async {
     setState(() {
       _isConnecting = true;
-      _statusMessage = 'Imprimiendo ticket de prueba...';
+      _statusMessage = 'Enviando comando de prueba al servidor...';
     });
 
     final success = await _printerService.printTestTicket();
@@ -182,24 +179,20 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
     setState(() {
       _isConnecting = false;
       if (success) {
-        _statusMessage = '✅ Ticket de prueba impreso correctamente\n'
-            '🖨️ La impresora está funcionando bien';
+        _statusMessage = '✅ Comando de prueba enviado correctamente\n'
+            '🖨️ Verifique que la impresora haya impreso el ticket de prueba';
         _isSuccess = true;
       } else {
-        String errorDetails = _printerService.lastError ?? 'Error al imprimir';
+        String errorDetails =
+            _printerService.lastError ?? 'Error al enviar comando';
 
-        if (errorDetails.contains('Conexión USB perdida')) {
-          _statusMessage = '❌ Conexión perdida durante impresión\n'
-              '🔌 Reconecte la impresora e intente nuevamente';
-        } else if (errorDetails.contains('transferOut')) {
-          _statusMessage = '❌ Error de comunicación durante impresión\n'
-              '• Verificar que la impresora tenga papel\n'
-              '• Revisar conexión USB\n'
-              '• Reiniciar impresora';
+        if (errorDetails.contains('conexión')) {
+          _statusMessage = '❌ Conexión perdida con el servidor\n'
+              '🔌 Verifique que el servidor esté funcionando';
         } else {
           _statusMessage = '❌ Error en prueba: $errorDetails\n'
-              '• Verificar papel en impresora\n'
-              '• Comprobar conexión USB';
+              '• Verificar que el servidor esté funcionando\n'
+              '• Comprobar que la impresora esté configurada en el servidor';
         }
         _isSuccess = false;
       }
@@ -215,11 +208,11 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
       title: Row(
         children: [
           Icon(
-            Icons.print,
+            Icons.http,
             color: colorScheme.primary,
           ),
           const SizedBox(width: 8),
-          const Text('Configurar Impresora'),
+          const Text('Configurar Impresora HTTP'),
           const Spacer(),
           // Indicador de estado de conexión
           Container(
@@ -250,7 +243,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _printerService.isConnected ? 'Conectada' : 'Desconectada',
+                  _printerService.isConnected ? 'Conectado' : 'Desconectado',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: _printerService.isConnected
                         ? Colors.green.shade700
@@ -264,12 +257,12 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
         ],
       ),
       content: SizedBox(
-        width: 400,
+        width: 450,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Información sobre compatibilidad
+            // Información sobre el nuevo enfoque
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -291,7 +284,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Información Importante',
+                        'Servidor HTTP Local',
                         style: theme.textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.primary,
@@ -301,11 +294,11 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '• Compatible con Windows y macOS\n'
-                    '• Requiere impresora térmica USB\n'
-                    '• Solo funciona en Chrome/Edge\n'
-                    '• El navegador solicitará permisos USB\n'
-                    '• Si falla, intente reconectar la impresora',
+                    '• Conecta con aplicación Flutter Desktop (Windows/macOS/Linux)\n'
+                    '• El servidor maneja la impresión térmica localmente\n'
+                    '• Puerto por defecto: 8080\n'
+                    '• La WebApp envía datos via HTTP POST\n'
+                    '• Asegúrese que el servidor Desktop esté ejecutándose',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
@@ -356,8 +349,101 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
             const SizedBox(height: 16),
 
-            // Información técnica de conexión (solo si está conectada)
-            if (_printerService.isConnected)
+            // Configuración de la impresora
+            Text(
+              'Configuración de Impresora',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Nombre de la impresora
+            TextField(
+              controller: _printerNameController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre de la Impresora *',
+                hintText: 'Ej: Impresora Térmica Principal',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.print),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Configuración del servidor
+            Text(
+              'Configuración del Servidor HTTP',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _serverHostController,
+                    decoration: const InputDecoration(
+                      labelText: 'Host/IP',
+                      hintText: 'localhost',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.computer),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _serverPortController,
+                    decoration: const InputDecoration(
+                      labelText: 'Puerto',
+                      hintText: '8080',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.settings_ethernet),
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Configuración avanzada (opcional)
+            ExpansionTile(
+              title: const Text('Configuración Avanzada'),
+              subtitle: const Text(
+                  'Configuración específica del dispositivo (opcional)'),
+              children: [
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _devicePathController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ruta del Dispositivo (opcional)',
+                    hintText: 'Ej: /dev/ttyUSB0, COM3, etc.',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.device_hub),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'La ruta del dispositivo se usa en el servidor para identificar la impresora específica',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+
+            // Información técnica de conexión (solo si está conectado)
+            if (_printerService.isConnected) ...[
+              const SizedBox(height: 16),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -380,7 +466,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Información Técnica',
+                          'Información de Conexión',
                           style: theme.textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onSurface.withValues(alpha: 0.8),
@@ -397,40 +483,22 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildInfoRow(
-                              '🖨️ Nombre:',
+                              '🖨️ Impresora:',
                               connectionDetails['printerName'] ?? 'Sin nombre',
                               theme,
                             ),
                             _buildInfoRow(
-                              '🔧 Configuración:',
-                              connectionDetails['connectionType'] ??
-                                  'Automática',
+                              '🌐 URL Servidor:',
+                              connectionDetails['serverUrl'] ??
+                                  'No configurado',
                               theme,
                             ),
-                            if (connectionDetails['interface'] != null)
-                              _buildInfoRow(
-                                '🔌 Interface USB:',
-                                connectionDetails['interface'].toString(),
-                                theme,
-                              ),
-                            if (connectionDetails['endpoint'] != null)
-                              _buildInfoRow(
-                                '📡 Endpoint:',
-                                connectionDetails['endpoint'].toString(),
-                                theme,
-                              ),
-                            if (connectionDetails['vendorId'] != null)
-                              _buildInfoRow(
-                                '🆔 Vendor ID:',
-                                connectionDetails['vendorId'].toString(),
-                                theme,
-                              ),
-                            if (connectionDetails['productId'] != null)
-                              _buildInfoRow(
-                                '🏷️ Product ID:',
-                                connectionDetails['productId'].toString(),
-                                theme,
-                              ),
+                            _buildInfoRow(
+                              '📋 Tipo:',
+                              connectionDetails['connectionType'] ??
+                                  'Desconocido',
+                              theme,
+                            ),
                           ],
                         );
                       },
@@ -438,57 +506,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                   ],
                 ),
               ),
-
-            const SizedBox(height: 16),
-
-            // Configuración avanzada (opcional)
-            ExpansionTile(
-              title: const Text('Configuración Avanzada'),
-              subtitle: const Text('Especificar IDs de dispositivo (opcional)'),
-              children: [
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _vendorIdController,
-                        decoration: const InputDecoration(
-                          labelText: 'Vendor ID',
-                          hintText: 'Ej: 1234',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _productIdController,
-                        decoration: const InputDecoration(
-                          labelText: 'Product ID',
-                          hintText: 'Ej: 5678',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Deja en blanco para detectar automáticamente',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
+            ],
           ],
         ),
       ),
@@ -539,7 +557,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
+            width: 100,
             child: Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(

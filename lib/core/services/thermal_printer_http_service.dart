@@ -86,7 +86,7 @@ class ThermalPrinterHttpService {
 
   /// Configura la conexión con el servidor HTTP local
   Future<bool> configurePrinter({
-    required String printerName,
+    String? printerName,
     String? serverHost,
     int? serverPort,
     String? devicePath,
@@ -99,9 +99,11 @@ class ThermalPrinterHttpService {
       if (serverHost != null) _serverHost = serverHost;
       if (serverPort != null) _serverPort = serverPort;
 
-      _configuredPrinterName = printerName;
+      // El nombre de impresora es opcional, el servidor decide automáticamente
+      final finalPrinterName = printerName ?? 'Auto-Selected-Printer';
+      _configuredPrinterName = finalPrinterName;
       _printerConfig = {
-        'name': printerName,
+        'name': finalPrinterName,
         'devicePath': devicePath,
         'customConfig': customConfig ?? {},
         'configuredAt': DateTime.now().toIso8601String(),

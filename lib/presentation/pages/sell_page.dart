@@ -14,6 +14,7 @@ import 'package:sellweb/core/widgets/dialogs/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/product_edit_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/ticket_options_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/printer_config_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/last_ticket_dialog.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/component_app_legacy.dart';
 import '../providers/sell_provider.dart';
@@ -504,6 +505,37 @@ class _SellPageState extends State<SellPage> {
                       },
                     ),
                   ),
+                  // Botón de último ticket
+                  Consumer<SellProvider>(
+                    builder: (context, sellProvider, __) {
+                      final hasLastTicket = sellProvider.lastSoldTicket != null;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: hasLastTicket
+                                ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.1),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.receipt_long_rounded,
+                              color: hasLastTicket
+                                  ? Theme.of(buildContext).colorScheme.primary
+                                  : Colors.grey.shade400,
+                            ),
+                            tooltip: hasLastTicket
+                                ? 'Ver último ticket\nToca para ver detalles y reimprimir'
+                                : 'No hay tickets recientes',
+                            onPressed: hasLastTicket
+                                ? () => _showLastTicketDialog(buildContext, sellProvider)
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   // Botón de caja actual
                   if (!provider.ticketView)
                     ComponentApp().buttonAppbar(
@@ -809,6 +841,9 @@ class _SellPageState extends State<SellPage> {
                     }
                   }
 
+                  // Guardar el último ticket vendido antes de limpiar
+                  await provider.saveLastSoldTicket();
+                  
                   // Limpiar ticket después del proceso
                   Future.delayed(const Duration(milliseconds: 500)).then((_) {
                     if (mounted) {
@@ -819,7 +854,9 @@ class _SellPageState extends State<SellPage> {
                     }
                   });
                 } else {
-                  // Si el checkbox no está activo, solo esperar y limpiar ticket
+                  // Si el checkbox no está activo, guardar último ticket y limpiar
+                  await provider.saveLastSoldTicket();
+                  
                   Future.delayed(const Duration(seconds: 2)).then((_) {
                     if (mounted) {
                       setState(() {
@@ -2435,13 +2472,6 @@ class _TotalBounceState extends State<_TotalBounce>
   }
 }
 
-/// Verifica el estado de conexión de la impresora térmica
-Future<bool> _checkPrinterStatus() async {
-  final printerService = ThermalPrinterHttpService();
-  await printerService.initialize();
-  return printerService.isConnected;
-}
-
 /// Muestra el diálogo de configuración de impresora
 void _showPrinterConfigDialog(BuildContext context) {
   showDialog<void>(
@@ -2453,6 +2483,19 @@ void _showPrinterConfigDialog(BuildContext context) {
     // Actualizar el estado de la impresora cuando se cierra el diálogo
     Provider.of<PrinterProvider>(context, listen: false).refreshStatus();
   });
+}
+
+/// Muestra el diálogo del último ticket vendido
+void _showLastTicketDialog(BuildContext context, SellProvider provider) {
+  if (provider.lastSoldTicket == null) return;
+  
+  showLastTicketDialog(
+    context: context,
+    ticket: provider.lastSoldTicket!,
+    businessName: provider.profileAccountSelected.name.isNotEmpty
+        ? provider.profileAccountSelected.name
+        : 'PUNTO DE VENTA',
+  );
 }
 
 /// Obtiene el texto a mostrar para el método de pago

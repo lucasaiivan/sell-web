@@ -20,6 +20,7 @@ class SellProvider extends ChangeNotifier {
   // Indica si se debe imprimir el ticket al confirmar la venta
   bool _shouldPrintTicket = false;
   bool get shouldPrintTicket => _shouldPrintTicket;
+  
   // Cuenta seleccionada actualmente
   ProfileAccountModel profileAccountSelected = ProfileAccountModel();
 
@@ -31,13 +32,19 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Último ticket vendido (nuevo)
+  TicketModel? _lastSoldTicket;
+  TicketModel? get lastSoldTicket => _lastSoldTicket;
+
   // clean data : limpieza de datos cada vez que cambiar de cuenta o cierrar sesión
   void cleanData() {
     profileAccountSelected = ProfileAccountModel();
     ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
     _ticketView = false;
     _shouldPrintTicket = false;
+    _lastSoldTicket = null; // Limpiar el último ticket también
     _saveTicket();
+    _saveLastSoldTicket(); // Guardar el estado limpio
     _saveShouldPrintTicket(); // Limpiar el estado del checkbox también
   }
 
@@ -57,6 +64,7 @@ class SellProvider extends ChangeNotifier {
   SellProvider({required this.getUserAccountsUseCase}) {
     _loadSelectedAccount().whenComplete(() {
       _loadTicket();
+      _loadLastSoldTicket(); // Cargar el último ticket vendido
       _loadShouldPrintTicket();
     });
   }
@@ -223,5 +231,44 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveShouldPrintTicket() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(SharedPrefsKeys.shouldPrintTicket, _shouldPrintTicket);
+  }
+
+  /// Guarda el último ticket vendido y lo marca como completado.
+  Future<void> saveLastSoldTicket() async {
+    // Crear una copia del ticket actual y marcarlo como vendido
+    _lastSoldTicket = TicketModel(
+      listPoduct: List.from(ticket.listPoduct),
+      creation: ticket.creation,
+      payMode: ticket.payMode,
+      valueReceived: ticket.valueReceived,
+    );
+    await _saveLastSoldTicket();
+    notifyListeners();
+  }
+
+  /// Guarda el último ticket vendido en SharedPreferences.
+  Future<void> _saveLastSoldTicket() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_lastSoldTicket != null) {
+      await prefs.setString(
+          SharedPrefsKeys.lastSoldTicket, jsonEncode(_lastSoldTicket!.toJson()));
+    } else {
+      await prefs.remove(SharedPrefsKeys.lastSoldTicket);
+    }
+  }
+
+  /// Carga el último ticket vendido desde SharedPreferences.
+  Future<void> _loadLastSoldTicket() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastTicketJson = prefs.getString(SharedPrefsKeys.lastSoldTicket);
+    if (lastTicketJson != null) {
+      try {
+        _lastSoldTicket = TicketModel.sahredPreferencefromMap(_decodeJson(lastTicketJson));
+        notifyListeners();
+      } catch (_) {
+        // Si hay error al cargar, limpiar
+        _lastSoldTicket = null;
+      }
+    }
   }
 }

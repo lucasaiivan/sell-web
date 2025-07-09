@@ -76,18 +76,6 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           ),
           const SizedBox(height: 20),
 
-          // Opción: Descargar PDF
-          _buildOptionTile(
-            icon: Icons.download,
-            title: 'Descargar PDF',
-            subtitle: 'Guardar ticket en formato PDF',
-            value: _downloadPdf,
-            onChanged: (value) => setState(() => _downloadPdf = value ?? false),
-            iconColor: Colors.blue,
-          ),
-
-          const SizedBox(height: 12),
-
           // Opción: Imprimir directamente
           FutureBuilder<bool>(
             future: _checkPrinterStatus(),
@@ -109,6 +97,17 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
             },
           ),
 
+          const SizedBox(height: 12),
+
+          // Opción: Descargar PDF
+          _buildOptionTile(
+            icon: Icons.download,
+            title: 'Descargar PDF',
+            subtitle: 'Guardar ticket en formato PDF',
+            value: _downloadPdf,
+            onChanged: (value) => setState(() => _downloadPdf = value ?? false),
+            iconColor: Colors.blue,
+          ),
           const SizedBox(height: 12),
 
           // Opción: Compartir

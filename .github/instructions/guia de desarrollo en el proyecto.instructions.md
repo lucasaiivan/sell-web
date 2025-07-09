@@ -66,7 +66,7 @@ lib/
 - **Código descriptivo**: Escribir nombres de funciones y variables descriptivos para que la IA comprenda mejor el contexto
 - **Comentarios estratégicos**: Usar comentarios antes de funciones complejas para guiar la IA
 - **Patrones consistentes**: Mantener patrones de código consistentes para mejorar las sugerencias
-- **Contexto claro**: Crear o actualizar si es necesirio un README.md (para facilitar contexto a al agent IA) que va a contener un explicacion breve de cada archivo (contexto, propósito y uso) de cada archivo de dicha carpeta que pertenece 
+- **Contexto claro**: Crear o actualizar cada ves se agrege una novedad si es necesirio un README.md (para facilitar contexto a al agent IA) que va a contener un explicacion breve de cada archivo (contexto, propósito y uso) de cada archivo de dicha carpeta que pertenece 
 
 ### Optimización para Sugerencias IA
 ```dart

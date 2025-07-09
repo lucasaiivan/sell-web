@@ -8,7 +8,7 @@ applyTo: '**'
 - **Framework**: Flutter Web
 - **Arquitectura**: Clean Architecture (estrictamente)
 - **Gestión de Estado**: Provider
-- **Diseño**: Material 3
+- **Diseño**: Material Desing 3
 
 ## 🏗️ Arquitectura y Estructura
 
@@ -27,25 +27,31 @@ lib/
 └── presentation/   # UI, páginas y providers
 ```
 
-## 🎨 Diseño y UX
+## 🎨 Diseño y UX 
 
 ### Material 3
-- Implementar guías de diseño de Material 3
-- Soporte completo para tema claro/oscuro dinámico
-- Aplicar buenas prácticas de UX
+- Implementar guías de diseño de Material Desing 3 como base
+- Soporte completo para servicio de tema dinámico claro/oscuro
+- Aplicar buenas prácticas de UI y UX
 - Componentes consistentes y accesibles
 
+### Responsivo y Adaptativo
+- Usar `LayoutBuilder` y `MediaQuery` para diseños responsivos 
+- Asegurar que la UI se adapte a móviles, tablets y desktops 
+
 ### Componentes Reutilizables
-- **[core]**: Widgets básicos reutilizables
+- **[core]**: Widgets reutilizables
 - **[ComponentApp]**: Componentes específicos (buttons, textButtons, inputs, etc.)
 - Evitar duplicación de código
 - Mejorar mantenibilidad
 
 ## 📝 Convenciones de Código
+### Estilo de Código 
+- **Imports**: Agrupar imports por tipo (flutter, third-party, local)
 
 ### Nomenclatura
 - **Idioma**: Inglés para nombres de archivos, carpetas, clases,metodos, variables etc...
-- **Convención**: snake_case para archivos, PascalCase para clases, camelCase para variables
+- **Convención**: snake_case para archivos, PascalCase para clases, camelCase para variables y usar nombres descriptivos 
 - **Consistencia**: Mantener coherencia en todo el proyecto
 
 ### Documentación y Comentarios
@@ -60,7 +66,7 @@ lib/
 - **Código descriptivo**: Escribir nombres de funciones y variables descriptivos para que la IA comprenda mejor el contexto
 - **Comentarios estratégicos**: Usar comentarios antes de funciones complejas para guiar la IA
 - **Patrones consistentes**: Mantener patrones de código consistentes para mejorar las sugerencias
-- **Contexto claro**: Proporcionar suficiente contexto en archivos para que la IA genere código apropiado
+- **Contexto claro**: Crear o actualizar si es necesirio un README.md (para facilitar contexto a al agent IA) que va a contener un explicacion breve de cada archivo (contexto, propósito y uso) de cada archivo de dicha carpeta que pertenece 
 
 ### Optimización para Sugerencias IA
 ```dart
@@ -78,8 +84,8 @@ Future<List<dynamic>> getData() async {
 
 ### Prompts Efectivos para IA
 - Especificar el tipo de widget/componente Flutter deseado
-- Mencionar Material 3 y Clean Architecture en las solicitudes
-- Incluir contexto de la capa (presentation, domain, data)
+- Mencionar Material 3, Clean Architecture y provider en las solicitudes
+- Incluir contexto clave (contexto, propósito, uso, etc...) en (README.md) en cada capa (presentation, domain, data,etc...) de todo los archico que contengan para mejorar la comprensión de la IA
 - Solicitar implementaciones con Provider cuando sea necesario
 
 ## 🔧 Debugging y Herramientas
@@ -113,8 +119,6 @@ class RepositoryLogger {
 ### Herramientas de Calidad
 - **flutter analyze**: Ejecutar antes de cada commit
 - **dart format**: Formateo automático del código
-- **flutter test --coverage**: Mantener cobertura >80%
-- **very_good_analysis**: Lint rules estrictas
 
 ## ⚡ Performance y Optimización
 
@@ -150,7 +154,7 @@ class CatalogueProvider extends ChangeNotifier {
 - **Consumer granular**: Usar Consumer específicos en lugar de Consumer generales
 - **Selector widgets**: Implementar Selector para rebuilds optimizados
 - **Provider.of(listen: false)**: Para acciones que no requieren rebuild
-- **MultiProvider**: Organizar providers de manera jerárquica
+- **MultiProvider**: Organizar providers de manera jerárquica 
 
 ### Lazy Loading y Paginación
 ```dart
@@ -245,60 +249,7 @@ Widget buildResponsiveLayout(BuildContext context) {
 
 ## 🛠️ Herramientas y Configuración
 
-### Extensiones VS Code Recomendadas
-```json
-{
-  "recommendations": [
-    "dart-code.flutter",
-    "dart-code.dart-code",
-    "github.copilot",
-    "github.copilot-chat",
-    "ms-vscode.vscode-json",
-    "bradlc.vscode-tailwindcss",
-    "usernamehw.errorlens",
-    "aaron-bond.better-comments"
-  ]
-}
-```
 
-### Configuración launch.json
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Flutter Web Debug",
-      "type": "dart",
-      "request": "launch",
-      "program": "lib/main.dart",
-      "deviceId": "chrome",
-      "args": ["--web-port", "3000"]
-    },
-    {
-      "name": "Flutter Web Profile",
-      "type": "dart",
-      "request": "launch",
-      "program": "lib/main.dart",
-      "deviceId": "chrome",
-      "flutterMode": "profile"
-    }
-  ]
-}
-```
-
-### Scripts de Automatización
-```json
-// package.json scripts recomendados
-{
-  "scripts": {
-    "analyze": "flutter analyze",
-    "format": "dart format .",
-    "test": "flutter test --coverage",
-    "build": "flutter build web --release",
-    "serve": "flutter run -d chrome --web-port 3000"
-  }
-}
-```
 
 ### Configuración analysis_options.yaml
 ```yaml
@@ -327,7 +278,7 @@ linter:
 - [ ] Crear entidades y DTOs necesarios
 - [ ] Implementar casos de uso
 - [ ] Configurar providers necesarios
-- [ ] Diseñar UI siguiendo Material 3
+- [ ] Diseñar UI siguiendo Material Desing 3
 
 ### Antes de Commit
 - [ ] Ejecutar `flutter analyze` sin errores

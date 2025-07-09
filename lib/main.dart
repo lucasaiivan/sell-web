@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
+import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'firebase_options.dart';
 import 'data/auth_repository_impl.dart';
@@ -43,6 +44,7 @@ void main() async {
         ),
       ),
       ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
+      ChangeNotifierProvider(create: (_) => PrinterProvider()..initialize()),
     ],
     child: Consumer<ThemeDataAppProvider>(
       builder: (context, themeProvider, _) {

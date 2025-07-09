@@ -175,6 +175,13 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
         if (success) {
           // Recargar el estado con información actualizada
           _loadCurrentStatus();
+
+          // Cerrar el diálogo automáticamente cuando se conecte exitosamente
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          });
         } else {
           String errorDetails =
               _printerService.lastError ?? 'Error desconocido';
@@ -353,7 +360,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -376,7 +384,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                   ),
                   // Indicador de estado de conexión
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _printerService.isConnected
                           ? Colors.green.withValues(alpha: 0.2)
@@ -404,7 +413,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            _printerService.isConnected ? 'Conectado' : 'Desconectado',
+                            _printerService.isConnected
+                                ? 'Conectado'
+                                : 'Desconectado',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: _printerService.isConnected
                                   ? Colors.green.shade700
@@ -420,7 +431,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 ],
               ),
             ),
-            
+
             // Contenido scrolleable
             Flexible(
               child: SingleChildScrollView(
@@ -432,7 +443,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        color:
+                            colorScheme.primaryContainer.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: colorScheme.primary.withValues(alpha: 0.2),
@@ -469,7 +481,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                             '• No requiere configuración específica de impresoras\n'
                             '• Asegúrese que el servidor Desktop esté ejecutándose',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.8),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.8),
                             ),
                           ),
                         ],
@@ -634,7 +647,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
+                          color: colorScheme.surfaceContainer
+                              .withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: colorScheme.outline.withValues(alpha: 0.2),
@@ -648,15 +662,18 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                                 Icon(
                                   Icons.settings,
                                   size: 16,
-                                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.7),
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     'Información de Conexión',
-                                    style: theme.textTheme.labelMedium?.copyWith(
+                                    style:
+                                        theme.textTheme.labelMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: colorScheme.onSurface.withValues(alpha: 0.8),
+                                      color: colorScheme.onSurface
+                                          .withValues(alpha: 0.8),
                                     ),
                                   ),
                                 ),
@@ -672,7 +689,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                                   children: [
                                     _buildInfoRow(
                                       '🖨️ Impresora:',
-                                      connectionDetails['printerName'] ?? 'Sin nombre',
+                                      connectionDetails['printerName'] ??
+                                          'Sin nombre',
                                       theme,
                                     ),
                                     _buildInfoRow(
@@ -703,12 +721,13 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 ),
               ),
             ),
-            
+
             // Botones de acción fijos en la parte inferior
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withValues(alpha: 0.2),
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
@@ -718,7 +737,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 children: [
                   // Botón de cancelar
                   TextButton(
-                    onPressed: _isConnecting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isConnecting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancelar'),
                   ),
 
@@ -754,7 +775,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(_printerService.isConnected ? 'Reconectar' : 'Conectar'),
+                        : Text(_printerService.isConnected
+                            ? 'Reconectar'
+                            : 'Conectar'),
                   ),
                 ],
               ),

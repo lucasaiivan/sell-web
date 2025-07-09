@@ -180,17 +180,25 @@ class ThermalPrinterHttpService {
         'timestamp': DateTime.now().toIso8601String(),
       };
 
+      if (kDebugMode) {
+        print('=== THERMAL PRINTER SERVICE DEBUG ===');
+        print('Enviando ticket a: $serverUrl/print-ticket');
+        print('Datos del ticket: ${jsonEncode(ticketData)}');
+        print('=====================================');
+      }
+
       final success = await _sendPrintRequest('/print-ticket', ticketData);
 
       if (success) {
-        if (kDebugMode) print('Ticket enviado para impresión exitosamente');
+        if (kDebugMode) print('✅ Ticket enviado para impresión exitosamente');
         return true;
       } else {
+        if (kDebugMode) print('❌ Error al enviar ticket: $_lastError');
         return false;
       }
     } catch (e) {
       _lastError = 'Error al imprimir ticket: $e';
-      if (kDebugMode) print(_lastError);
+      if (kDebugMode) print('❌ Excepción en printTicket: $_lastError');
       return false;
     }
   }

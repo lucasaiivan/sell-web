@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/widgets/inputs/input_text_field.dart';
-import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/ui/image_widget.dart';
 import 'package:sellweb/core/widgets/ui/user_avatar.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';

@@ -1,5 +1,7 @@
+import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -12,12 +14,12 @@ import 'package:sellweb/core/widgets/dialogs/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/product_edit_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/ticket_options_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/printer_config_dialog.dart';
-import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/component_app_legacy.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/printer_provider.dart';
 import '../providers/theme_data_app_provider.dart';
 import 'welcome_page.dart';
 
@@ -48,6 +50,7 @@ class _SellPageState extends State<SellPage> {
     // sirve para que el teclado se enfoque automáticamente al iniciar la página
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
+      Provider.of<PrinterProvider>(context, listen: false).refreshStatus();
     });
   }
 
@@ -185,12 +188,15 @@ class _SellPageState extends State<SellPage> {
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
         final productCatalogue = publicProduct.convertProductCatalogue();
-        // ignore: use_build_context_synchronously
-        showAddProductDialog(context, product: productCatalogue);
+        if (mounted) {
+          showAddProductDialog(context, product: productCatalogue);
+        }
       } else {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
-        showAddProductDialog(context,
-            isNew: true, product: ProductCatalogue(id: code, code: code));
+        if (mounted) {
+          showAddProductDialog(context,
+              isNew: true, product: ProductCatalogue(id: code, code: code));
+        }
       }
     }
   }
@@ -443,79 +449,58 @@ class _SellPageState extends State<SellPage> {
                   // Ícono de estado de impresora mejorado
                   Padding(
                     padding: const EdgeInsets.only(right: 8.0),
-                    child: Consumer<SellProvider>(
-                      builder: (context, _, __) {
-                        return FutureBuilder<bool>(
-                          future: _checkPrinterStatus(),
-                          builder: (context, snapshot) {
-                            final isConnected = snapshot.data ?? false;
-                            final isLoading = snapshot.connectionState ==
-                                ConnectionState.waiting;
-
-                            return Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: isConnected
-                                    ? Colors.green.withOpacity(0.1)
-                                    : Colors.orange.withOpacity(0.1),
-                              ),
-                              child: IconButton(
-                                icon: isLoading
-                                    ? SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Theme.of(buildContext)
-                                              .colorScheme
-                                              .primary,
-                                        ),
-                                      )
-                                    : Icon(
-                                        isConnected
-                                            ? Icons.print_outlined
-                                            : Icons.print_disabled_outlined,
-                                        color: isConnected
-                                            ? Colors.green.shade700
-                                            : Colors.orange.shade700,
+                    child: Consumer<PrinterProvider>(
+                      builder: (context, printerProvider, __) {
+                        final isConnected = printerProvider.isConnected;
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: isConnected
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.orange.withValues(alpha: 0.1),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              isConnected
+                                  ? Icons.print_outlined
+                                  : Icons.print_disabled_outlined,
+                              color: isConnected
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
+                            ),
+                            tooltip: isConnected
+                                ? 'Impresora conectada y lista\nToca para configurar'
+                                : 'Impresora no disponible\nToca para configurar conexión',
+                            onPressed: () =>
+                                _showPrinterConfigDialog(buildContext),
+                          ),
+                        )
+                            .animate(
+                              // Añadir animación sutil cuando está conectada
+                              effects: isConnected
+                                  ? [
+                                      const ScaleEffect(
+                                        duration: Duration(milliseconds: 1500),
+                                        curve: Curves.easeInOut,
+                                        begin: Offset(1.0, 1.0),
+                                        end: Offset(1.05, 1.05),
                                       ),
-                                tooltip: isConnected
-                                    ? 'Impresora conectada y lista\nToca para configurar'
-                                    : 'Impresora no disponible\nToca para configurar conexión',
-                                onPressed: () =>
-                                    _showPrinterConfigDialog(buildContext),
-                              ),
+                                    ]
+                                  : [],
                             )
-                                .animate(
-                                  // Añadir animación sutil cuando está conectada
-                                  effects: isConnected
-                                      ? [
-                                          const ScaleEffect(
-                                            duration:
-                                                Duration(milliseconds: 1500),
-                                            curve: Curves.easeInOut,
-                                            begin: Offset(1.0, 1.0),
-                                            end: Offset(1.05, 1.05),
-                                          ),
-                                        ]
-                                      : [],
-                                )
-                                .animate(
-                                  delay: const Duration(milliseconds: 1500),
-                                  effects: isConnected
-                                      ? [
-                                          const ScaleEffect(
-                                            duration:
-                                                Duration(milliseconds: 1500),
-                                            curve: Curves.easeInOut,
-                                            begin: Offset(1.05, 1.05),
-                                            end: Offset(1.0, 1.0),
-                                          ),
-                                        ]
-                                      : [],
-                                );
-                          },
-                        );
+                            .animate(
+                              delay: const Duration(milliseconds: 1500),
+                              effects: isConnected
+                                  ? [
+                                      const ScaleEffect(
+                                        duration: Duration(milliseconds: 1500),
+                                        curve: Curves.easeInOut,
+                                        begin: Offset(1.05, 1.05),
+                                        end: Offset(1.0, 1.0),
+                                      ),
+                                    ]
+                                  : [],
+                            );
                       },
                     ),
                   ),
@@ -683,25 +668,148 @@ class _SellPageState extends State<SellPage> {
                   _showConfirmedPurchase = true;
                 });
 
-                // Solo mostrar diálogo de opciones si el checkbox está activo
+                // Si el checkbox está activo, procesar la impresión/generación de tickets
                 if (provider.shouldPrintTicket) {
-                  // Esperar un breve momento para que se vea la animación de venta exitosa
-                  await Future.delayed(const Duration(milliseconds: 800));
+                  // Verificar si hay impresora conectada
+                  final printerService = ThermalPrinterHttpService();
+                  await printerService.initialize();
 
-                  await showTicketOptionsDialog(
-                    context: context,
-                    ticket: provider.ticket,
-                    businessName:
-                        provider.profileAccountSelected.name.isNotEmpty
-                            ? provider.profileAccountSelected.name
-                            : 'PUNTO DE VENTA',
-                    onComplete: () {
-                      // Este callback se ejecuta solo cuando se completa exitosamente
-                    },
-                  );
+                  if (printerService.isConnected) {
+                    // Si hay impresora conectada, imprimir directamente el ticket real
+                    try {
+                      // Determinar método de pago primero
+                      String paymentMethod = 'Efectivo';
+                      switch (provider.ticket.payMode) {
+                        case 'mercadopago':
+                          paymentMethod = 'Mercado Pago';
+                          break;
+                        case 'card':
+                          paymentMethod = 'Tarjeta Déb/Créd';
+                          break;
+                        default:
+                          paymentMethod = 'Efectivo';
+                      }
 
-                  // Este código se ejecuta siempre, independientemente de si se cancela o completa el diálogo
-                  // Limpiar ticket después del diálogo (cancelado o completado)
+                      // Preparar datos del ticket
+                      final products = provider.ticket.listPoduct.map((item) {
+                        final product = item is Map ? item : item.toMap();
+                        return {
+                          'quantity': product['quantity'].toString(),
+                          'description': product['description'],
+                          'price': (product['salePrice'] * product['quantity'])
+                              .toDouble(),
+                        };
+                      }).toList();
+
+                      // Debug: mostrar datos que se van a enviar
+                      if (kDebugMode) {
+                        print('=== DEBUG PRINTER DATA ===');
+                        print(
+                            'Business Name: ${provider.profileAccountSelected.name}');
+                        print('Products: $products');
+                        print('Total: ${provider.ticket.getTotalPrice}');
+                        print('Payment Method: $paymentMethod');
+                        print('=========================');
+                      }
+
+                      // Imprimir el ticket
+                      final printSuccess = await printerService.printTicket(
+                        businessName:
+                            provider.profileAccountSelected.name.isNotEmpty
+                                ? provider.profileAccountSelected.name
+                                : 'PUNTO DE VENTA',
+                        products: products,
+                        total: provider.ticket.getTotalPrice,
+                        paymentMethod: paymentMethod,
+                        cashReceived: provider.ticket.valueReceived > 0
+                            ? provider.ticket.valueReceived
+                            : null,
+                        change: provider.ticket.valueReceived >
+                                provider.ticket.getTotalPrice
+                            ? provider.ticket.valueReceived -
+                                provider.ticket.getTotalPrice
+                            : null,
+                      );
+
+                      // Mostrar resultado
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(
+                                  printSuccess
+                                      ? Icons.check_circle
+                                      : Icons.error,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    printSuccess
+                                        ? 'Ticket impreso correctamente'
+                                        : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor:
+                                printSuccess ? Colors.green : Colors.red,
+                            duration: const Duration(seconds: 3),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.error, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Error al procesar impresión: $e',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 3),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  } else {
+                    // Si no hay impresora, mostrar diálogo de opciones
+                    await Future.delayed(const Duration(milliseconds: 800));
+
+                    if (mounted) {
+                      await showTicketOptionsDialog(
+                        context: context,
+                        ticket: provider.ticket,
+                        businessName:
+                            provider.profileAccountSelected.name.isNotEmpty
+                                ? provider.profileAccountSelected.name
+                                : 'PUNTO DE VENTA',
+                        onComplete: () {
+                          // Este callback se ejecuta solo cuando se completa exitosamente
+                        },
+                      );
+                    }
+                  }
+
+                  // Limpiar ticket después del proceso
                   Future.delayed(const Duration(milliseconds: 500)).then((_) {
                     if (mounted) {
                       setState(() {
@@ -2262,6 +2370,8 @@ class _TotalBounce extends StatefulWidget {
     required this.color,
   });
 
+
+
   @override
   State<_TotalBounce> createState() => _TotalBounceState();
 }
@@ -2336,10 +2446,13 @@ Future<bool> _checkPrinterStatus() async {
 void _showPrinterConfigDialog(BuildContext context) {
   showDialog<void>(
     context: context,
-    builder: (BuildContext context) {
+    builder: (BuildContext dialogContext) {
       return const PrinterConfigDialog();
     },
-  );
+  ).then((_) {
+    // Actualizar el estado de la impresora cuando se cierra el diálogo
+    Provider.of<PrinterProvider>(context, listen: false).refreshStatus();
+  });
 }
 
 /// Obtiene el texto a mostrar para el método de pago

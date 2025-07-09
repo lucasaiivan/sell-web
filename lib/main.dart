@@ -134,6 +134,13 @@ void main() async {
                                   return provider;
                                 },
                               ),
+                              // changeNotifierProvider : CashRegisterProvider
+                              ChangeNotifierProvider(
+                                create: (_) => SellProvider(
+                                  getUserAccountsUseCase:
+                                      GetUserAccountsUseCase(accountRepository),
+                                ),
+                              ),
                             ],
                             child: const SellPage(),
                           );

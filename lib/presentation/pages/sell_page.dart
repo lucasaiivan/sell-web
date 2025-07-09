@@ -20,8 +20,8 @@ import 'package:sellweb/core/widgets/component_app_legacy.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/printer_provider.dart';
-import '../providers/theme_data_app_provider.dart';
+import '../providers/printer_provider.dart'; 
+import '../providers/theme_data_app_provider.dart'; 
 import 'welcome_page.dart';
 
 class SellPage extends StatefulWidget {
@@ -536,17 +536,10 @@ class _SellPageState extends State<SellPage> {
                       );
                     },
                   ),
-                  // Botón de caja actual
-                  if (!provider.ticketView)
-                    ComponentApp().buttonAppbar(
-                      context: buildContext,
-                      text: 'Seleccionar caja',
-                      onTap: () {
-                        // ...
-                        // implementar lógica para seleccionar caja ...
-                        // ...
-                      },
-                    ),
+                  
+                  // Botton : estado de caja (abrir/cerrar caja)
+                  // ... implementar buton
+
                   // Botón de descartar ticket (existente)
                   ((isMobile(buildContext) && provider.ticketView) ||
                           (!isMobile(buildContext) &&

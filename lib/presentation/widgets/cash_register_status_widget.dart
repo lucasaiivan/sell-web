@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../presentation/providers/cash_register_provider.dart';
+import '../../presentation/providers/sell_provider.dart';
+import '../../presentation/providers/auth_provider.dart';
 import '../../core/utils/fuctions.dart';
+import '../../core/widgets/buttons/app_bar_button.dart';
 
 /// Widget que muestra el estado actual de la caja registradora
 /// 
@@ -10,14 +13,7 @@ import '../../core/utils/fuctions.dart';
 /// - Botones de apertura/cierre
 /// - Resumen de movimientos
 class CashRegisterStatusWidget extends StatefulWidget {
-  final String accountId;
-  final String userId;
-
-  const CashRegisterStatusWidget({
-    super.key,
-    required this.accountId,
-    required this.userId,
-  });
+  const CashRegisterStatusWidget({super.key});
 
   @override
   State<CashRegisterStatusWidget> createState() => _CashRegisterStatusWidgetState();
@@ -30,8 +26,13 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     // Cargar datos iniciales
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<CashRegisterProvider>();
-      provider.loadActiveCashRegisters(widget.accountId);
-      provider.loadFixedDescriptions(widget.accountId);
+      final sellProvider = context.read<SellProvider>();
+      final accountId = sellProvider.profileAccountSelected.id;
+      
+      if (accountId.isNotEmpty) {
+        provider.loadActiveCashRegisters(accountId);
+        provider.loadFixedDescriptions(accountId);
+      }
     });
   }
 
@@ -47,7 +48,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Título
+                // Título con botón de estado
                 Row(
                   children: [
                     const Icon(Icons.point_of_sale, size: 28),
@@ -56,6 +57,9 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                       'Estado de Caja',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
+                    const Spacer(),
+                    // Botón dinámico de estado de caja
+                    _buildCashRegisterButton(context, provider),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -352,9 +356,14 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             onPressed: provider.isProcessing
                 ? null
                 : () async {
+                    final sellProvider = context.read<SellProvider>();
+                    final authProvider = context.read<AuthProvider>();
+                    final accountId = sellProvider.profileAccountSelected.id;
+                    final userId = authProvider.user?.uid ?? '';
+                    
                     final success = await provider.openCashRegister(
-                      widget.accountId,
-                      widget.userId,
+                      accountId,
+                      userId,
                     );
                     if (success && context.mounted) {
                       Navigator.of(context).pop();
@@ -410,8 +419,11 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             onPressed: provider.isProcessing
                 ? null
                 : () async {
+                    final sellProvider = context.read<SellProvider>();
+                    final accountId = sellProvider.profileAccountSelected.id;
+                    
                     final success = await provider.closeCashRegister(
-                      widget.accountId,
+                      accountId,
                       cashRegister.id,
                     );
                     if (success && context.mounted) {
@@ -490,16 +502,21 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             onPressed: provider.isProcessing
                 ? null
                 : () async {
+                    final sellProvider = context.read<SellProvider>();
+                    final authProvider = context.read<AuthProvider>();
+                    final accountId = sellProvider.profileAccountSelected.id;
+                    final userId = authProvider.user?.uid ?? '';
+                    
                     final success = isInflow
                         ? await provider.addCashInflow(
-                            widget.accountId,
+                            accountId,
                             provider.currentActiveCashRegister!.id,
-                            widget.userId,
+                            userId,
                           )
                         : await provider.addCashOutflow(
-                            widget.accountId,
+                            accountId,
                             provider.currentActiveCashRegister!.id,
-                            widget.userId,
+                            userId,
                           );
                     if (success && context.mounted) {
                       Navigator.of(context).pop();
@@ -516,6 +533,111 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Text(isInflow ? 'Registrar Ingreso' : 'Registrar Egreso'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye el botón dinámico de estado de caja usando AppBarButton
+  Widget _buildCashRegisterButton(BuildContext context, CashRegisterProvider provider) {
+    final bool hasCashRegister = provider.hasActiveCashRegister;
+    final String buttonText = hasCashRegister 
+        ? provider.currentActiveCashRegister!.description
+        : 'Iniciar caja';
+    
+    final IconData buttonIcon = hasCashRegister 
+        ? Icons.check_circle 
+        : Icons.add_circle_outline;
+    
+    final Color? buttonColor = hasCashRegister 
+        ? Colors.green.shade600 
+        : null; // Usa el color por defecto del tema
+    
+    return AppBarButton(
+      text: buttonText,
+      iconLeading: buttonIcon,
+      colorBackground: buttonColor,
+      onTap: hasCashRegister 
+          ? () => _showCashRegisterDetailsDialog(context, provider)
+          : () => _showOpenCashRegisterDialog(context, provider),
+    );
+  }
+
+  /// Muestra un diálogo con los detalles de la caja activa
+  void _showCashRegisterDetailsDialog(BuildContext context, CashRegisterProvider provider) {
+    final cashRegister = provider.currentActiveCashRegister!;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue.shade600),
+            const SizedBox(width: 8),
+            const Text('Detalles de Caja'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              cashRegister.description,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            _buildDetailRow('Abierta:', _formatDateTime(cashRegister.opening)),
+            _buildDetailRow('Monto Inicial:', Publications.getFormatoPrecio(value: cashRegister.initialCash)),
+            _buildDetailRow('Ventas:', '${cashRegister.sales} items'),
+            _buildDetailRow('Facturación:', Publications.getFormatoPrecio(value: cashRegister.billing)),
+            _buildDetailRow('Balance Esperado:', Publications.getFormatoPrecio(value: cashRegister.getExpectedBalance)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showCloseCashRegisterDialog(context, provider);
+            },
+            icon: const Icon(Icons.lock),
+            label: const Text('Cerrar Caja'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Widget helper para mostrar filas de detalles
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

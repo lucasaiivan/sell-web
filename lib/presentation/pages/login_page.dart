@@ -555,52 +555,55 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
     return SafeArea(
         child: Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: <Widget>[
-          const Spacer(),
-          // view : si existe mostramos una imagen de asset
-          assetImage != null
-              ? Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: CachedNetworkImage(
-                    imageUrl: assetImage.assetName,
-                    width: screenSize.width / 2,
-                    height: screenSize.height / 2,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
-                  ),
-                )
-              : Container(),
-          // icon : un icono con animion
-          iconData != null
-              ? Container(
-                  padding: const EdgeInsets.all(20.0),
-                  margin: const EdgeInsets.all(20.0),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.2),
-                  ),
-                  child: Icon(iconData,
-                      size: screenSize.height * 0.07, color: colorIcon),
-                )
-                  .animate(key: Key(titulo))
-                  .fadeIn(duration: const Duration(milliseconds: 500))
-                  .slideY(
-                      begin: -0.2, duration: const Duration(milliseconds: 500))
-              : Container(),
-          Text(titulo, style: estiloTitulo, textAlign: TextAlign.center),
-          const SizedBox(height: 12.0),
-          // text : un texto con animacion
-          Text(subtitulo, style: estiloSubTitulo, textAlign: TextAlign.center)
-              .animate()
-              .fadeIn(duration: const Duration(milliseconds: 500))
-              .slideY(begin: 0.2, duration: const Duration(milliseconds: 500)),
-          const SizedBox(height: 12.0),
-          const Spacer(),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            const SizedBox(
+              height: 40,
+            ), // Espacio para centrar un poco el contenido
+            // view : si existe mostramos una imagen de asset
+            assetImage != null
+                ? Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: CachedNetworkImage(
+                      imageUrl: assetImage.assetName,
+                      width: screenSize.width / 2,
+                      height: screenSize.height / 2,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) =>
+                          const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    ),
+                  )
+                : Container(),
+            // icon : un icono con animion
+            iconData != null
+                ? Container(
+                    padding: const EdgeInsets.all(20.0),
+                    margin: const EdgeInsets.all(20.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(iconData,
+                        size: screenSize.height * 0.07, color: colorIcon),
+                  )
+                    .animate(key: Key(titulo))
+                    .fadeIn(duration: const Duration(milliseconds: 500))
+                    .slideY(
+                        begin: -0.2, duration: const Duration(milliseconds: 500))
+                : Container(),
+            Text(titulo, style: estiloTitulo, textAlign: TextAlign.center),
+            const SizedBox(height: 12.0),
+            // text : un texto con animacion
+            Text(subtitulo, style: estiloSubTitulo, textAlign: TextAlign.center)
+                .animate()
+                .fadeIn(duration: const Duration(milliseconds: 500))
+                .slideY(begin: 0.2, duration: const Duration(milliseconds: 500)),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     ));
   }

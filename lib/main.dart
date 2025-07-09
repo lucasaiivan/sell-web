@@ -11,10 +11,13 @@ import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'firebase_options.dart';
 import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
+import 'data/cash_register_repository_impl.dart';
 import 'domain/usecases/auth_usecases.dart';
 import 'domain/usecases/catalogue_usecases.dart';
+import 'domain/usecases/cash_register_usecases.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
+import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/sell_page.dart';
@@ -67,9 +70,7 @@ void main() async {
             builder: (context, authProvider, _) {
               if (authProvider.user != null) {
                 return ChangeNotifierProvider(
-                  create: (_) => SellProvider(
-                      getUserAccountsUseCase:
-                          GetUserAccountsUseCase(accountRepository)),
+                  create: (_) => SellProvider(getUserAccountsUseCase:GetUserAccountsUseCase(accountRepository)),
                   child: Consumer<SellProvider>(
                     builder: (context, sellProvider, _) {
                       // Si no hay cuenta seleccionada, mostrar WelcomePage para seleccionar una cuenta
@@ -104,6 +105,10 @@ void main() async {
                           final getUserAccountsUseCase =
                               GetUserAccountsUseCase(accountRepository);
 
+                          // Configurar dependencias para CashRegisterProvider
+                          final cashRegisterRepository = CashRegisterRepositoryImpl();
+                          final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
+
                           return MultiProvider(
                             // Usar key para forzar la recreación cuando cambia la cuenta
                             key: ValueKey('catalogue_$accountId'),
@@ -134,12 +139,15 @@ void main() async {
                                   return provider;
                                 },
                               ),
-                              // changeNotifierProvider : CashRegisterProvider
+                              // changeNotifierProvider : CashRegisterProvider 
                               ChangeNotifierProvider(
-                                create: (_) => SellProvider(
-                                  getUserAccountsUseCase:
-                                      GetUserAccountsUseCase(accountRepository),
+                                create: (_) => CashRegisterProvider(
+                                  cashRegisterUsecases,
                                 ),
+                              ),
+                              // changeNotifierProvider : SellProvider
+                              ChangeNotifierProvider(
+                                create: (_) => SellProvider(getUserAccountsUseCase:GetUserAccountsUseCase(accountRepository)),
                               ),
                             ],
                             child: const SellPage(),

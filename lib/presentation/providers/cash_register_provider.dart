@@ -202,12 +202,14 @@ class CashRegisterProvider extends ChangeNotifier {
         userId: userId,
       );
 
-      // Recargar cajas activas para reflejar cambios
-      await loadActiveCashRegisters(accountId);
+      // Recargar las cajas activas
+      _activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
       
       // Limpiar formulario
       _clearMovementForm();
       
+      // Notificar cambios explícitamente
+      notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -246,12 +248,14 @@ class CashRegisterProvider extends ChangeNotifier {
         userId: userId,
       );
 
-      // Recargar cajas activas para reflejar cambios
-      await loadActiveCashRegisters(accountId);
+      // Recargar las cajas activas
+      _activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
       
       // Limpiar formulario
       _clearMovementForm();
       
+      // Notificar cambios explícitamente
+      notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();

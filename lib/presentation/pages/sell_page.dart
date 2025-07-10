@@ -1,4 +1,3 @@
-
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:sellweb/core/widgets/buttons/app_bar_button.dart';
 import 'package:sellweb/presentation/widgets/cash_register_status_widget.dart';
@@ -25,6 +24,7 @@ import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart'; 
 import '../providers/theme_data_app_provider.dart'; 
+import '../providers/cash_register_provider.dart';
 import 'welcome_page.dart';
 
 class SellPage extends StatefulWidget {
@@ -672,29 +672,44 @@ class _SellPageState extends State<SellPage> {
                 // Mostrar confirmación de venta completada inmediatamente
                 setState(() {
                   _showConfirmedPurchase = true;
-                });
+                });                  // Obtener el provider de caja registradora
+                  final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+                  
+                  // Si hay una caja activa, registrar la venta
+                  if (cashRegisterProvider.hasActiveCashRegister) {
+                    final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+                    provider.ticket.cashRegisterName = activeCashRegister.description;
+                    provider.ticket.cashRegisterId = activeCashRegister.id;
+                    
+                    await cashRegisterProvider.registerSale(
+                      accountId: provider.profileAccountSelected.id,
+                      saleAmount: provider.ticket.getTotalPrice,
+                      discountAmount: provider.ticket.discount,
+                      itemCount: provider.ticket.getProductsQuantity(),
+                    );
+                  }
 
-                // Si el checkbox está activo, procesar la impresión/generación de tickets
-                if (provider.shouldPrintTicket) {
-                  // Verificar si hay impresora conectada
-                  final printerService = ThermalPrinterHttpService();
-                  await printerService.initialize();
+                  // Si el checkbox está activo, procesar la impresión/generación de tickets
+                  if (provider.shouldPrintTicket) {
+                    // Verificar si hay impresora conectada
+                    final printerService = ThermalPrinterHttpService();
+                    await printerService.initialize();
 
-                  if (printerService.isConnected) {
-                    // Si hay impresora conectada, imprimir directamente el ticket real
-                    try {
-                      // Determinar método de pago primero
-                      String paymentMethod = 'Efectivo';
-                      switch (provider.ticket.payMode) {
-                        case 'mercadopago':
-                          paymentMethod = 'Mercado Pago';
-                          break;
-                        case 'card':
-                          paymentMethod = 'Tarjeta Déb/Créd';
-                          break;
-                        default:
-                          paymentMethod = 'Efectivo';
-                      }
+                    if (printerService.isConnected) {
+                      // Si hay impresora conectada, imprimir directamente el ticket real
+                      try {
+                        // Determinar método de pago primero
+                        String paymentMethod = 'Efectivo';
+                        switch (provider.ticket.payMode) {
+                          case 'mercadopago':
+                            paymentMethod = 'Mercado Pago';
+                            break;
+                          case 'card':
+                            paymentMethod = 'Tarjeta Déb/Créd';
+                            break;
+                          default:
+                            paymentMethod = 'Efectivo';
+                        }
 
                       // Preparar datos del ticket
                       final products = provider.ticket.listPoduct.map((item) {
@@ -815,7 +830,21 @@ class _SellPageState extends State<SellPage> {
                     }
                   }
 
-                  // Guardar el último ticket vendido antes de limpiar
+                  // Guardar el último ticket vendido y registrar la venta en la caja activa
+                  final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+                  
+                  // Registrar la venta en la caja si existe una activa
+                  if (cashRegisterProvider.hasActiveCashRegister) {
+                    final accountId = provider.profileAccountSelected.id;
+                    await cashRegisterProvider.registerSale(
+                      accountId: accountId,
+                      saleAmount: provider.ticket.getTotalPrice,
+                      discountAmount: provider.ticket.discount,
+                      itemCount: provider.ticket.getProductsQuantity(),
+                    );
+                  }
+                  
+                  // Guardar el último ticket con la referencia a la caja
                   await provider.saveLastSoldTicket();
                   
                   // Limpiar ticket después del proceso
@@ -828,7 +857,24 @@ class _SellPageState extends State<SellPage> {
                     }
                   });
                 } else {
-                  // Si el checkbox no está activo, guardar último ticket y limpiar
+                  // Obtener el provider de caja registradora
+                  final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+                  
+                  // Si hay una caja activa, registrar la venta
+                  if (cashRegisterProvider.hasActiveCashRegister) {
+                    final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+                    provider.ticket.cashRegisterName = activeCashRegister.description;
+                    provider.ticket.cashRegisterId = activeCashRegister.id;
+                    
+                    await cashRegisterProvider.registerSale(
+                      accountId: provider.profileAccountSelected.id,
+                      saleAmount: provider.ticket.getTotalPrice,
+                      discountAmount: provider.ticket.discount,
+                      itemCount: provider.ticket.getProductsQuantity(),
+                    );
+                  }
+                  
+                  // Guardar último ticket
                   await provider.saveLastSoldTicket();
                   
                   Future.delayed(const Duration(seconds: 2)).then((_) {

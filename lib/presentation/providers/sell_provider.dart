@@ -8,6 +8,8 @@ import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
+import 'package:provider/provider.dart' as provider;
+import '../providers/cash_register_provider.dart';
 
 class SellProvider extends ChangeNotifier {
   // Caso de uso para obtener las cuentas del usuario
@@ -241,6 +243,8 @@ class SellProvider extends ChangeNotifier {
       creation: ticket.creation,
       payMode: ticket.payMode,
       valueReceived: ticket.valueReceived,
+      cashRegisterName: ticket.cashRegisterName,
+      cashRegisterId: ticket.cashRegisterId,
     );
     await _saveLastSoldTicket();
     notifyListeners();
@@ -269,6 +273,18 @@ class SellProvider extends ChangeNotifier {
         // Si hay error al cargar, limpiar
         _lastSoldTicket = null;
       }
+    }
+  }
+
+  /// Actualiza el ticket con la información de la caja registradora activa
+  void updateTicketWithCashRegister(BuildContext context) {
+    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
+    
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      ticket.cashRegisterName = activeCashRegister.description;
+      ticket.cashRegisterId = activeCashRegister.id;
+      notifyListeners();
     }
   }
 }

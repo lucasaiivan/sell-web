@@ -1,4 +1,7 @@
+
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
+import 'package:sellweb/core/widgets/buttons/app_bar_button.dart';
+import 'package:sellweb/presentation/widgets/cash_register_status_widget.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -447,98 +450,76 @@ class _SellPageState extends State<SellPage> {
               // Acciones del AppBar
               Row(
                 children: [
-                  // Ícono de estado de impresora mejorado
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Consumer<PrinterProvider>(
-                      builder: (context, printerProvider, __) {
-                        final isConnected = printerProvider.isConnected;
-                        return Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: isConnected
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.orange.withValues(alpha: 0.1),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              isConnected
-                                  ? Icons.print_outlined
-                                  : Icons.print_disabled_outlined,
-                              color: isConnected
-                                  ? Colors.green.shade700
-                                  : Colors.orange.shade700,
-                            ),
-                            tooltip: isConnected
-                                ? 'Impresora conectada y lista\nToca para configurar'
-                                : 'Impresora no disponible\nToca para configurar conexión',
-                            onPressed: () =>
-                                _showPrinterConfigDialog(buildContext),
-                          ),
-                        )
-                            .animate(
-                              // Añadir animación sutil cuando está conectada
-                              effects: isConnected
-                                  ? [
-                                      const ScaleEffect(
-                                        duration: Duration(milliseconds: 1500),
-                                        curve: Curves.easeInOut,
-                                        begin: Offset(1.0, 1.0),
-                                        end: Offset(1.05, 1.05),
-                                      ),
-                                    ]
-                                  : [],
-                            )
-                            .animate(
-                              delay: const Duration(milliseconds: 1500),
-                              effects: isConnected
-                                  ? [
-                                      const ScaleEffect(
-                                        duration: Duration(milliseconds: 1500),
-                                        curve: Curves.easeInOut,
-                                        begin: Offset(1.05, 1.05),
-                                        end: Offset(1.0, 1.0),
-                                      ),
-                                    ]
-                                  : [],
-                            );
-                      },
-                    ),
-                  ),
-                  // Botón de último ticket
-                  Consumer<SellProvider>(
-                    builder: (context, sellProvider, __) {
-                      final hasLastTicket = sellProvider.lastSoldTicket != null;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: hasLastTicket
-                                ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.1)
-                                : Colors.grey.withValues(alpha: 0.1),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.receipt_long_rounded,
-                              color: hasLastTicket
-                                  ? Theme.of(buildContext).colorScheme.primary
-                                  : Colors.grey.shade400,
-                            ),
-                            tooltip: hasLastTicket
-                                ? 'Ver último ticket\nToca para ver detalles y reimprimir'
-                                : 'No hay tickets recientes',
-                            onPressed: hasLastTicket
-                                ? () => _showLastTicketDialog(buildContext, sellProvider)
-                                : null,
-                          ),
-                        ),
-                      );
+                  // button : botón de estado de la impresora
+                  Consumer<PrinterProvider>(
+                    builder: (context, printerProvider, __) {
+                      final isConnected = printerProvider.isConnected;
+                      return AppBarButtonCircle(
+                        icon: isConnected
+                            ? Icons.print_outlined
+                            : Icons.print_disabled_outlined,
+                        tooltip: isConnected
+                            ? 'Impresora conectada y lista\nToca para configurar'
+                            : 'Impresora no disponible\nToca para configurar conexión',
+                        onPressed: () =>
+                            _showPrinterConfigDialog(buildContext),
+                        backgroundColor: isConnected
+                            ? Colors.green.withValues(alpha: 0.1)
+                            : Colors.orange.withValues(alpha:0.07),
+                        iconColor: isConnected
+                            ? Colors.green.shade700
+                            : Colors.orange.shade500,
+                      )
+                          .animate(
+                            // Añadir animación sutil cuando está conectada
+                            effects: isConnected
+                                ? [
+                                    const ScaleEffect(
+                                      duration: Duration(milliseconds: 1500),
+                                      curve: Curves.easeInOut,
+                                      begin: Offset(1.0, 1.0),
+                                      end: Offset(1.05, 1.05),
+                                    ),
+                                  ]
+                                : [],
+                          )
+                          .animate(
+                            delay: const Duration(milliseconds: 1500),
+                            effects: isConnected
+                                ? [
+                                    const ScaleEffect(
+                                      duration: Duration(milliseconds: 1500),
+                                      curve: Curves.easeInOut,
+                                      begin: Offset(1.05, 1.05),
+                                      end: Offset(1.0, 1.0),
+                                    ),
+                                  ]
+                                : [],
+                          );
                     },
                   ),
                   
-                  // Botton : estado de caja (abrir/cerrar caja)
-                  // ... implementar buton
+                  // button : último ticket vendido
+                  Consumer<SellProvider>(
+                    builder: (context, sellProvider, __) {
+                      final hasLastTicket = sellProvider.lastSoldTicket != null;
+                      return AppBarButtonCircle(
+                        icon: Icons.receipt_long_rounded,
+                        tooltip: hasLastTicket
+                            ? 'Ver último ticket\nToca para ver detalles y reimprimir'
+                            : 'No hay tickets recientes',
+                        onPressed: hasLastTicket
+                            ? () => _showLastTicketDialog(
+                                buildContext, sellProvider)
+                            : null,
+                        backgroundColor: hasLastTicket ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.4): Colors.grey.withValues(alpha:0.15),
+                        iconColor: hasLastTicket? Theme.of(buildContext).colorScheme.primary: Colors.grey.shade400,
+                      );
+                    },
+                  ),
+
+                  // button : administrar caja
+                  CashRegisterStatusWidget(),
 
                   // Botón de descartar ticket (existente)
                   ((isMobile(buildContext) && provider.ticketView) ||
@@ -961,7 +942,7 @@ class _SellPageState extends State<SellPage> {
               return itemDefault;
             }
           },
-        );
+      );
       },
     );
   }

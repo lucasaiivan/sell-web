@@ -97,3 +97,73 @@ class AppBarButton extends StatelessWidget {
     );
   }
 }
+
+/// Un botón circular para el AppBar, personalizable y reutilizable.
+/// Puede mostrar solo un icono o un icono con texto.
+class AppBarButtonCircle extends StatelessWidget {
+  const AppBarButtonCircle({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    this.backgroundColor,
+    this.iconColor,
+    this.text,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final String? text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final effectiveBackgroundColor = backgroundColor ??
+        theme.colorScheme.primaryContainer.withOpacity(0.1);
+    final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
+    final bool hasText = text != null && text!.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Tooltip(
+        message: tooltip,
+        child: TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            backgroundColor: effectiveBackgroundColor,
+            shape: hasText ? const StadiumBorder() : const CircleBorder(),
+            padding: hasText 
+              ? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0)
+              : const EdgeInsets.all(16.0),
+            minimumSize: hasText ? const Size(0, 0) : const Size(52, 52),
+            maximumSize: hasText ? Size.infinite : const Size(52, 52),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: effectiveIconColor,
+                size: 20,
+              ),
+              if (hasText) ...[
+                const SizedBox(width: 8.0),
+                Text(
+                  text!,
+                  style: TextStyle(
+                    color: effectiveIconColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

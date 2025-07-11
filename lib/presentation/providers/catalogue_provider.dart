@@ -65,6 +65,20 @@ class _CatalogueState {
 }
 
 class CatalogueProvider extends ChangeNotifier {
+  bool _shouldNotifyListeners = true;
+
+  /// Flag para controlar si se deben notificar los cambios
+  set shouldNotifyListeners(bool value) {
+    _shouldNotifyListeners = value;
+  }
+
+  @override
+  void notifyListeners() {
+    if (_shouldNotifyListeners) {
+      super.notifyListeners();
+    }
+  }
+
   // Dependencies
   GetCatalogueStreamUseCase getProductsStreamUseCase;
   final GetProductByCodeUseCase getProductByCodeUseCase;
@@ -109,11 +123,10 @@ class CatalogueProvider extends ChangeNotifier {
     _catalogueSubscription?.cancel();
 
     // Reinicializar el estado del catálogo
-    _state = _CatalogueState(
+    _updateState(_CatalogueState(
       products: [],
       isLoading: true,
-    );
-    notifyListeners();
+    ));
 
     // Crear nuevos casos de uso con el nuevo ID de cuenta
     final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
@@ -129,19 +142,27 @@ class CatalogueProvider extends ChangeNotifier {
             .map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
 
-        _state = _state.copyWith(
-          products: products,
-          isLoading: false,
-        );
-        notifyListeners();
+        _shouldNotifyListeners = false;
+        if (!_areProductListsEqual(_state.products, products)) {
+          _state = _state.copyWith(products: products);
+          _shouldNotifyListeners = true;
+          notifyListeners();
+        }
+        
+        if (_state.isLoading) {
+          _state = _state.copyWith(isLoading: false);
+          _shouldNotifyListeners = true;
+          notifyListeners();
+        }
+        
+        _shouldNotifyListeners = true;
       },
       onError: (error) {
         print('Error al cargar productos: $error');
-        _state = _state.copyWith(
+        _updateState(_state.copyWith(
           isLoading: false,
           scanError: error.toString(),
-        );
-        notifyListeners();
+        ));
       },
     );
   }
@@ -186,11 +207,13 @@ class CatalogueProvider extends ChangeNotifier {
   Future<void> saveProductToCatalogue(ProductCatalogue productToSave, String accountId) async {
     if (accountId.isEmpty) {
       throw Exception('El ID de la cuenta no está definido o es nulo.');
-    }
-    try {
+    }      try {
+      _shouldNotifyListeners = false;
       await addProductToCatalogueUseCase(productToSave, accountId);
+      _shouldNotifyListeners = true;
       notifyListeners();
     } catch (e) {
+      _shouldNotifyListeners = true;
       throw Exception('Error al guardar producto en catálogo: $e');
     }
   }
@@ -224,10 +247,12 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Carga productos de demostración (solo para modo demo).
   void loadDemoProducts(List<ProductCatalogue> demoProducts) {
+    _shouldNotifyListeners = false;
     _state = _state.copyWith(
       products: demoProducts,
       isLoading: false,
     );
+    _shouldNotifyListeners = true;
     notifyListeners();
   }
 
@@ -287,6 +312,22 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
+  /// Determina si dos listas de productos son iguales comparando solo los campos relevantes
+  bool _areProductListsEqual(List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
+    if (list1.length != list2.length) return false;
+    
+    for (var i = 0; i < list1.length; i++) {
+      if (list1[i].id != list2[i].id ||
+          list1[i].code != list2[i].code ||
+          list1[i].salePrice != list2[i].salePrice ||
+          list1[i].description != list2[i].description) {
+        return false;
+      }
+    }
+    return true;
+  }
+ 
+
   @override
   void dispose() {
     _catalogueSubscription?.cancel();
@@ -302,4 +343,22 @@ class CatalogueProvider extends ChangeNotifier {
 
   @override
   int get hashCode => _state.hashCode;
+
+  /// Notifica solo cuando cambian productos específicos
+  void _notifyProductChanges() {
+    // Evitar notificaciones si no hay cambios reales
+    if (!hasListeners) return;
+    notifyListeners();
+  }
+
+  /// Actualiza el estado de forma selectiva
+  void _updateState(_CatalogueState newState) {
+    final oldState = _state;
+    _state = newState;
+    
+    // Notificar solo si hay cambios relevantes
+    if (oldState != _state) {
+      _notifyProductChanges();
+    }
+  }
 }

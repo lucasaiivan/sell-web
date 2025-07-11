@@ -46,18 +46,17 @@
   <div id="flutter_app"></div>
   <script>
     window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
+      // Inicializar Flutter usando el nuevo método recomendado
+      _flutter.loader.load({
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
         },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine({
+        onEntrypointLoaded: async function() {
+          const appRunner = await _flutter.loader.initializeEngine({
             useColorEmoji: true,
             renderer: "html"
-          }).then(function(appRunner) {
-            appRunner.runApp();
           });
+          await appRunner.runApp();
         }
       });
     });

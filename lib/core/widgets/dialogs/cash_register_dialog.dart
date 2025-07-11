@@ -490,12 +490,13 @@ class CashRegisterManagementDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (provider.hasActiveCashRegister) 
+                        // Si hay una caja activa, mostrar sus detalles
                         _buildActiveCashRegister(context, provider)
                       else
+                        // Si no hay caja activa, mostrar mensaje y botón para abrir una nueva
                         _buildNoCashRegister(context),
-                      
                       DialogComponents.sectionSpacing,
-                      
+                      // Botones para registrar ingresos o egresos
                       _buildCashFlowButtons(context, provider),
                     ],
                   ),

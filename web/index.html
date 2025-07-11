@@ -40,57 +40,104 @@
     const serviceWorkerVersion = '{{flutter_service_worker_version}}';
   </script>
   <!-- This script adds the flutter initialization JS code -->
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      min-width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--background-color, #fafafa);
+      transition: background 0.3s;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+    }
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      background: linear-gradient(135deg, var(--background-color, #fafafa) 60%, #e3e6f3 100%);
+      position: static;
+      animation: fadeInBg 0.8s;
+    }
+    #loading img {
+      width: 104px;
+      height: 104px;
+      animation: pulse 1.5s ease-in-out infinite, fadeIn 1s;
+      opacity: 0.96;
+      filter: drop-shadow(0 4px 16px rgba(60,60,120,0.10));
+      border-radius: 24px;
+      background: rgba(255,255,255,0.7);
+      margin-bottom: 18px;
+      transition: opacity 0.4s, box-shadow 0.4s;
+    }
+    #loading .welcome {
+      font-family: 'Roboto', Arial, sans-serif;
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--text-color, #222);
+      letter-spacing: 0.04em;
+      text-align: center;
+      opacity: 0.93;
+      text-shadow: 0 2px 8px rgba(60,60,120,0.08);
+      background: rgba(255,255,255,0.35);
+      border-radius: 12px;
+      padding: 0.5em 1.2em;
+      box-shadow: 0 2px 12px rgba(60,60,120,0.06);
+      margin-top: 0;
+      animation: fadeIn 1.2s;
+    }
+    @media (max-width: 600px) {
+      #loading img { width: 64px; height: 64px; }
+      #loading .welcome { font-size: 1.1rem; padding: 0.4em 0.7em; }
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(60,60,120,0.10);}
+      70% { transform: scale(1); box-shadow: 0 0 0 16px rgba(60,60,120,0);}
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(60,60,120,0);}
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInBg {
+      from { background: #fff; }
+      to { background: linear-gradient(135deg, var(--background-color, #fafafa) 60%, #e3e6f3 100%); }
+    }
+  </style>
+  <script>
+    // Tema dinámico claro/oscuro según preferencia del usuario
+    (function() {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.style.setProperty('--background-color', prefersDark ? '#181a1b' : '#fafafa');
+      document.documentElement.style.setProperty('--text-color', prefersDark ? '#fafafa' : '#222');
+    })();
+  </script>
   <script src="flutter.js" defer></script>
 </head>
 <body>
   <div id="flutter_app"></div>
-  <div id="loading">
-    <style>
-      body {
-        inset: 0;
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        position: fixed;
-      }
-      #loading {
-        align-items: center;
-        display: flex;
-        height: 100%;
-        justify-content: center;
-        width: 100%;
-        /* Fondo simple, sin gradiente animado */
-      }
-      #loading img {
-        animation: pulse 1.5s ease-in-out infinite;
-        opacity: 0.8;
-        transition: all 0.4s ease;
-      }
-      #loading.main_done img {
-        opacity: 1;
-      }
-      @keyframes pulse {
-        0% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.3);
-        }
-        70% {
-          transform: scale(1);
-          box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-        }
-        100% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-        }
-      }
-    </style>
-    <img src="icons/Icon-192.png" alt="Loading indicator..." />
+  <div id="loading" role="status" aria-live="polite">
+    <img src="icons/Icon-192.png" alt="Cargando portal de ventas" />
+    <div class="welcome">
+      <b>Sell Web</b>
+    </div>
   </div>
   <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
       var loading = document.querySelector('#loading');
-      
       // Animación de pulso únicamente, sin fade ni scaleOut
       _flutter = {
         loader: {
@@ -104,12 +151,51 @@
           }
         }
       };
-      
       window.flutterWebRenderer = "html";
       var scriptLoading = document.createElement('script');
       scriptLoading.src = "main.dart.js";
       scriptLoading.type = 'application/javascript';
       document.body.append(scriptLoading);
+
+      // Ocultar loader cuando Flutter esté listo (evento oficial)
+      window.addEventListener('flutter-initialized', function() {
+        var loadingDiv = document.getElementById('loading');
+        if (loadingDiv) {
+          loadingDiv.parentNode.removeChild(loadingDiv);
+        }
+      });
+
+      // Fallback: ocultar loader cuando #flutter_app tenga contenido (útil en desarrollo)
+      function hideLoaderIfFlutterReady() {
+        var flutterApp = document.getElementById('flutter_app');
+        var loadingDiv = document.getElementById('loading');
+        // Busca si flutter_app tiene al menos un hijo visible (offsetParent no null)
+        if (flutterApp && loadingDiv) {
+          for (var i = 0; i < flutterApp.childNodes.length; i++) {
+            var node = flutterApp.childNodes[i];
+            if (node.nodeType === 1 && node.offsetParent !== null && node.offsetWidth > 0 && node.offsetHeight > 0) {
+              loadingDiv.parentNode.removeChild(loadingDiv);
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+      // Revisa cada 50ms hasta que Flutter pinte algo visible
+      var checkInterval = setInterval(function() {
+        if (hideLoaderIfFlutterReady()) {
+          clearInterval(checkInterval);
+        }
+      }, 50);
+
+      // Timeout de seguridad: oculta el loader después de 10 segundos sí o sí
+      setTimeout(function() {
+        var loadingDiv = document.getElementById('loading');
+        if (loadingDiv) {
+          loadingDiv.parentNode.removeChild(loadingDiv);
+        }
+        clearInterval(checkInterval);
+      }, 2000);
     });
   </script>
 </body>

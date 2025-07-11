@@ -60,7 +60,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           backgroundColor:
               isActive ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isActive ? 'Abierta' : 'Abrir Caja',
+          text: isActive ? 'Abierta' : 'Iniciar turno',
         );
       },
     );

@@ -34,10 +34,33 @@
   <title>sell</title>
   <link rel="manifest" href="manifest.json">
   <meta name="google-signin-client_id" content="232181553323-eilihkps148nu7dp45cole4mlr7pkf1d.apps.googleusercontent.com" /> 
-<body>
-  <script type="text/javascript">
-    window.flutterWebRenderer = "html";
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    var serviceWorkerVersion = null;
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
+</head>
+<body>
+  <div id="flutter_app"></div>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine({
+            useColorEmoji: true,
+            renderer: "html"
+          }).then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

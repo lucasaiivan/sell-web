@@ -1,0 +1,326 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../domain/entities/cash_register_model.dart';
+import '../base_dialog.dart';
+import '../dialog_components.dart';
+import '../../../../presentation/providers/auth_provider.dart';
+import '../../../../presentation/providers/cash_register_provider.dart';
+import '../../../../presentation/providers/sell_provider.dart';
+import 'cash_flow_dialog.dart';
+import 'cash_register_close_dialog.dart';
+import 'cash_register_open_dialog.dart';
+
+/// Diálogo principal para administrar cajas registradoras.
+class CashRegisterManagementDialog extends StatelessWidget {
+  const CashRegisterManagementDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseDialog(
+      title: 'Administración de Caja',
+      icon: Icons.point_of_sale_rounded,
+      width: 500,
+      content: Builder(
+        builder: (context) {
+          // Capturar los providers de manera segura
+          final provider = context.watch<CashRegisterProvider>();
+
+          if (provider.isLoadingActive) {
+            return const SizedBox(
+              height: 100,
+              width: double.infinity,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (provider.hasActiveCashRegister) 
+                // view : Mostrar caja activa
+                _buildActiveCashRegister(context, provider)
+              else
+                // view : Mostrar mensaje de no caja activa
+                _buildNoCashRegister(context),
+              const SizedBox(height: 24),
+              // view : Botones de flujo de caja
+              _buildCashFlowButtons(context, provider),
+              // view : Mensaje de error si existe
+              if (provider.errorMessage != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          provider.errorMessage!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActiveCashRegister(BuildContext context, CashRegisterProvider provider) {
+    final theme = Theme.of(context);
+    final cashRegister = provider.currentActiveCashRegister!;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DialogComponents.infoSection(
+          context: context,
+          title: 'Caja Activa',
+          icon: Icons.point_of_sale_rounded,
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                cashRegister.description,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DialogComponents.summaryContainer(
+                context: context,
+                label: 'Balance Actual',
+                value: '\$${cashRegister.getExpectedBalance.toStringAsFixed(2)}',
+                icon: Icons.monetization_on_rounded,
+              ),
+            ],
+          ),
+        ),
+
+        DialogComponents.sectionSpacing,
+
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatColumn(
+                        context: context,
+                        label: 'Ventas',
+                        value: cashRegister.sales.toString(),
+                        icon: Icons.shopping_cart_rounded,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildStatColumn(
+                        context: context,
+                        label: 'Facturación',
+                        value: '\$${cashRegister.billing.toStringAsFixed(2)}',
+                        icon: Icons.attach_money_rounded,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildStatColumn(
+                        context: context,
+                        label: 'Descuentos',
+                        value: '\$${cashRegister.discount.toStringAsFixed(2)}',
+                        icon: Icons.local_offer_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  icon: Icon(Icons.lock_outlined),
+                  label: const Text('Cerrar Caja'),
+                  onPressed: () => _showCloseDialog(context, cashRegister),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Theme.of(context).colorScheme.onError,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatColumn({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 24,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoCashRegister(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(50), 
+          child: Column(
+            children: [
+              Icon(Icons.point_of_sale_outlined,size: 48,color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(height: 16),
+              Opacity(opacity:0.7,child: Text('No hay caja activa')), 
+            ],
+          ),
+        ),
+        FilledButton(onPressed: () => _showOpenDialog(context),child: const Text('Abrir turno de caja')),
+      ],
+    );
+  }
+
+  Widget _buildCashFlowButtons(BuildContext context, CashRegisterProvider provider) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            label: const Text('Ingreso'),
+            onPressed: provider.hasActiveCashRegister
+                ? () => _showCashFlowDialog(context, true)
+                : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.remove_circle_outline_rounded),
+            label: const Text('Egreso'),
+            onPressed: provider.hasActiveCashRegister
+                ? () => _showCashFlowDialog(context, false)
+                : null,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showOpenDialog(BuildContext context) {
+    // Capturar los providers antes de mostrar el diálogo
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+        ],
+        child: const CashRegisterOpenDialog(),
+      ),
+    );
+  }
+
+  void _showCloseDialog(BuildContext context, CashRegister cashRegister) {
+    // Capturar los providers antes de mostrar el diálogo
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+        ],
+        child: CashRegisterCloseDialog(cashRegister: cashRegister),
+      ),
+    );
+  }
+
+  void _showCashFlowDialog(BuildContext context, bool isInflow) {
+    // Capturar todos los providers necesarios antes de mostrar el diálogo
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    
+    if (!cashRegisterProvider.hasActiveCashRegister) return;
+
+    final cashRegister = cashRegisterProvider.currentActiveCashRegister!;
+
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+        ],
+        child: CashFlowDialog(
+          isInflow: isInflow,
+          cashRegisterId: cashRegister.id,
+          accountId: sellProvider.profileAccountSelected.id,
+          userId: authProvider.user?.email ?? '',
+        ),
+      ),
+    );
+  }
+}

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/cash_register_provider.dart';
-import '../providers/sell_provider.dart';
-import '../../core/widgets/buttons/primary_button.dart';
+import '../../../../presentation/providers/cash_register_provider.dart';
+import '../../../../presentation/providers/sell_provider.dart';
+import '../../buttons/primary_button.dart';
 
 /// Diálogo para abrir una nueva caja registradora
 class CashRegisterOpenDialog extends StatelessWidget {

@@ -34,6 +34,7 @@ lib/
 - Soporte completo para servicio de tema dinámico claro/oscuro
 - Aplicar buenas prácticas de UI y UX
 - Componentes consistentes y accesibles
+- Aplicar todos los componentes de Material Desing 3 
 
 ### Responsivo y Adaptativo
 - Usar `LayoutBuilder` y `MediaQuery` para diseños responsivos 

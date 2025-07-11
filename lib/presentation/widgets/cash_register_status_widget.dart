@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
 import '../providers/sell_provider.dart';
-import '../dialogs/cash_register_management_dialog.dart';
+import '../../core/widgets/dialogs/cash_dialogs/cash_register_management_dialog.dart';
 import '../../core/widgets/buttons/app_bar_button.dart';
 
 /// Widget que muestra un botón para ver el estado de la caja registradora.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/cash_register_provider.dart';
-import '../../core/widgets/buttons/primary_button.dart';
+import '../../../../presentation/providers/cash_register_provider.dart';
+import '../../buttons/primary_button.dart';
 
 /// Diálogo para registrar ingresos o egresos de caja
 class CashFlowDialog extends StatelessWidget {

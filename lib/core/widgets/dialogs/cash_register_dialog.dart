@@ -20,56 +20,71 @@ class CashRegisterOpenDialog extends StatelessWidget {
       title: 'Apertura de Caja',
       icon: Icons.add_circle_outline_rounded,
       width: 400,
-      headerColor: theme.colorScheme.primaryContainer,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DialogComponents.textField(
-            context: context,
-            controller: cashRegisterProvider.openDescriptionController,
-            label: 'Descripción',
-            hint: 'Ej: Caja Principal',
-            prefixIcon: Icons.description_outlined,
+      content: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.2),
           ),
-          DialogComponents.sectionSpacing,
-          DialogComponents.textField(
-            context: context,
-            controller: cashRegisterProvider.initialCashController,
-            label: 'Monto Inicial',
-            hint: '0.00',
-            prefixIcon: Icons.attach_money_rounded,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          if (cashRegisterProvider.errorMessage != null) ...[
-            DialogComponents.sectionSpacing,
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 children: [
-                  Icon(
-                    Icons.error_outline_rounded,
-                    color: theme.colorScheme.onErrorContainer,
-                    size: 20,
+                  DialogComponents.textField(
+                    context: context,
+                    controller: cashRegisterProvider.openDescriptionController,
+                    label: 'Descripción',
+                    hint: 'Ej: Caja Principal',
+                    prefixIcon: Icons.description_outlined,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      cashRegisterProvider.errorMessage!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onErrorContainer,
-                      ),
-                    ),
+                  DialogComponents.sectionSpacing,
+                  DialogComponents.textField(
+                    context: context,
+                    controller: cashRegisterProvider.initialCashController,
+                    label: 'Monto Inicial',
+                    hint: '0.00',
+                    prefixIcon: Icons.attach_money_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                 ],
               ),
             ),
+            if (cashRegisterProvider.errorMessage != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      color: theme.colorScheme.onErrorContainer,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        cashRegisterProvider.errorMessage!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
-        ],
+        ),
       ),
       actions: [
         DialogComponents.secondaryActionButton(
@@ -134,19 +149,63 @@ class CashRegisterCloseDialog extends StatelessWidget {
       title: 'Cierre de Caja',
       icon: Icons.lock_outline_rounded,
       width: 400,
-      headerColor: theme.colorScheme.errorContainer,
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSummaryCard(context),
-            DialogComponents.sectionSpacing,
-            Text(
-              '¿Estás seguro de que deseas cerrar esta caja?',
-              style: theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-          ],
+      content: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildSummaryCard(context),
+                    DialogComponents.sectionSpacing,
+                    Text(
+                      '¿Estás seguro de que deseas cerrar esta caja?',
+                      style: theme.textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              if (cashRegisterProvider.errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: theme.colorScheme.onErrorContainer,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          cashRegisterProvider.errorMessage!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -278,9 +337,6 @@ class CashFlowDialog extends StatelessWidget {
     final provider = context.watch<CashRegisterProvider>();
 
     final title = isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
-    final headerColor = isInflow 
-        ? theme.colorScheme.primaryContainer 
-        : theme.colorScheme.errorContainer;
     final icon = isInflow 
         ? Icons.add_circle_outline_rounded 
         : Icons.remove_circle_outline_rounded;
@@ -289,57 +345,72 @@ class CashFlowDialog extends StatelessWidget {
       title: title,
       icon: icon,
       width: 400,
-      headerColor: headerColor,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DialogComponents.textField(
-            context: context,
-            controller: provider.movementAmountController,
-            label: 'Monto',
-            hint: '0.00',
-            prefixIcon: Icons.attach_money_rounded,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      content: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.2),
           ),
-          DialogComponents.sectionSpacing,
-          DialogComponents.textField(
-            context: context,
-            controller: provider.movementDescriptionController,
-            label: 'Descripción',
-            hint: 'Motivo del ${isInflow ? "ingreso" : "egreso"}',
-            prefixIcon: Icons.description_outlined,
-            maxLines: 2,
-          ),
-          if (provider.errorMessage != null) ...[
-            DialogComponents.sectionSpacing,
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 children: [
-                  Icon(
-                    Icons.error_outline_rounded,
-                    color: theme.colorScheme.onErrorContainer,
-                    size: 20,
+                  DialogComponents.textField(
+                    context: context,
+                    controller: provider.movementAmountController,
+                    label: 'Monto',
+                    hint: '0.00',
+                    prefixIcon: Icons.attach_money_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      provider.errorMessage!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onErrorContainer,
-                      ),
-                    ),
+                  DialogComponents.sectionSpacing,
+                  DialogComponents.textField(
+                    context: context,
+                    controller: provider.movementDescriptionController,
+                    label: 'Descripción',
+                    hint: 'Motivo del ${isInflow ? "ingreso" : "egreso"}',
+                    prefixIcon: Icons.description_outlined,
+                    maxLines: 2,
                   ),
                 ],
               ),
             ),
+            if (provider.errorMessage != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      color: theme.colorScheme.onErrorContainer,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        provider.errorMessage!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
-        ],
+        ),
       ),
       actions: [
         DialogComponents.secondaryActionButton(
@@ -388,58 +459,88 @@ class CashRegisterManagementDialog extends StatelessWidget {
       content: Consumer<CashRegisterProvider>(
         builder: (context, provider, __) {
           if (provider.isLoadingActive) {
-            return const SizedBox(
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
               height: 100,
-              child: Center(child: CircularProgressIndicator()),
+              child: const Center(child: CircularProgressIndicator()),
             );
           }
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (provider.hasActiveCashRegister) 
-                _buildActiveCashRegister(context, provider)
-              else
-                _buildNoCashRegister(context),
-              
-              DialogComponents.sectionSpacing,
-              
-              _buildCashFlowButtons(context, provider),
-              
-              if (provider.errorMessage != null) ...[
-                DialogComponents.sectionSpacing,
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
+          return Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: theme.colorScheme.onErrorContainer,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          provider.errorMessage!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onErrorContainer,
-                          ),
-                        ),
-                      ),
+                      if (provider.hasActiveCashRegister) 
+                        _buildActiveCashRegister(context, provider)
+                      else
+                        _buildNoCashRegister(context),
+                      
+                      DialogComponents.sectionSpacing,
+                      
+                      _buildCashFlowButtons(context, provider),
                     ],
                   ),
                 ),
+                if (provider.errorMessage != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: theme.colorScheme.onErrorContainer,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            provider.errorMessage!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
-            ],
+            ),
           );
         },
       ),
+      actions: [
+        DialogComponents.secondaryActionButton(
+          context: context,
+          text: 'Cerrar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 
@@ -514,7 +615,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   value: '\$${cashRegister.cashOutFlow.toStringAsFixed(2)}',
                   icon: Icons.remove_circle_outline_rounded,
                 ),
-              ),
+              )
             ],
           ),
         ],
@@ -524,23 +625,22 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _buildNoCashRegister(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: const EdgeInsets.all(24), 
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.point_of_sale_outlined,
             size: 48,
-            color: Colors.grey,
+            color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 16),
           Text(
             'No hay ninguna caja abierta',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           DialogComponents.primaryActionButton(
@@ -555,7 +655,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   Widget _buildCashFlowButtons(BuildContext context, CashRegisterProvider provider) {
-   
     return Wrap(
       spacing: 16,
       runSpacing: 16,
@@ -563,20 +662,21 @@ class CashRegisterManagementDialog extends StatelessWidget {
       children: [
         DialogComponents.primaryActionButton(
           context: context,
-          icon: Icons.add_circle_outline_rounded,
           text: 'Ingreso',
+          icon: Icons.add_circle_outline_rounded,
           onPressed: provider.hasActiveCashRegister
               ? () => _showCashFlowDialog(context, true)
-              : null, 
+              : null,
         ),
         DialogComponents.primaryActionButton(
           context: context,
+          text: 'Egreso',
           icon: Icons.remove_circle_outline_rounded,
-          text: 'Egresos',
+          isDestructive: true,
           onPressed: provider.hasActiveCashRegister
               ? () => _showCashFlowDialog(context, false)
-              : null, 
-        ),
+              : null,
+        )
       ],
     );
   }
@@ -631,9 +731,7 @@ Future<void> showCashRegisterCloseDialog(
         ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
         ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
       ],
-      child: CashRegisterCloseDialog(
-        cashRegister: cashRegister,
-      ),
+      child: CashRegisterCloseDialog(cashRegister: cashRegister),
     ),
   );
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../domain/entities/cash_register_model.dart';
-import '../providers/cash_register_provider.dart';
-import '../providers/sell_provider.dart';
-import '../../core/widgets/buttons/primary_button.dart';
+import '../../../../domain/entities/cash_register_model.dart';
+import '../../../../presentation/providers/cash_register_provider.dart';
+import '../../../../presentation/providers/sell_provider.dart';
+import '../../buttons/primary_button.dart';
 
 /// Diálogo para cerrar una caja registradora
 class CashRegisterCloseDialog extends StatelessWidget {

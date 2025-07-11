@@ -20,63 +20,68 @@ class CashRegisterManagementDialog extends StatelessWidget {
       title: 'Administración de Caja',
       icon: Icons.point_of_sale_rounded,
       width: 500,
+      headerColor: Colors.transparent,
       content: Builder(
         builder: (context) {
-          // Capturar los providers de manera segura
           final provider = context.watch<CashRegisterProvider>();
 
           if (provider.isLoadingActive) {
             return const SizedBox(
-              height: 100,
+              height: 120,
               width: double.infinity,
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (provider.hasActiveCashRegister) 
-                // view : Mostrar caja activa
-                _buildActiveCashRegister(context, provider)
-              else
-                // view : Mostrar mensaje de no caja activa
-                _buildNoCashRegister(context),
-              const SizedBox(height: 24),
-              // view : Botones de flujo de caja
-              _buildCashFlowButtons(context, provider),
-              // view : Mensaje de error si existe
-              if (provider.errorMessage != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          provider.errorMessage!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onErrorContainer,
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 8),
+                if (provider.hasActiveCashRegister) 
+                  // view : Mostrar caja activa
+                  _buildActiveCashRegister(context, provider)
+                else
+                  // view : Mostrar mensaje de no caja activa
+                  _buildNoCashRegister(context),
+                const SizedBox(height: 32),
+                // view : Botones de flujo de caja
+                _buildCashFlowButtons(context, provider),
+                // view : Mensaje de error si existe
+                if (provider.errorMessage != null) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            provider.errorMessage!,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
+                const SizedBox(height: 8),
               ],
-            ],
+            ),
           );
         },
       ),
@@ -103,7 +108,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               DialogComponents.summaryContainer(
                 context: context,
                 label: 'Balance Actual',
@@ -113,12 +118,17 @@ class CashRegisterManagementDialog extends StatelessWidget {
             ],
           ),
         ),
-
-        DialogComponents.sectionSpacing,
-
+        const SizedBox(height: 24),
         Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            ),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
                 Row(
@@ -149,14 +159,18 @@ class CashRegisterManagementDialog extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 FilledButton.icon(
-                  icon: Icon(Icons.lock_outlined),
+                  icon: const Icon(Icons.lock_outlined),
                   label: const Text('Cerrar Caja'),
                   onPressed: () => _showCloseDialog(context, cashRegister),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    foregroundColor: Theme.of(context).colorScheme.onError,
+                    backgroundColor: theme.colorScheme.error,
+                    foregroundColor: theme.colorScheme.onError,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ],
@@ -214,21 +228,34 @@ class CashRegisterManagementDialog extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(50), 
+          padding: const EdgeInsets.symmetric(vertical: 48), 
           child: Column(
             children: [
-              Icon(Icons.point_of_sale_outlined,size: 48,color: theme.colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.point_of_sale_outlined,
+                size: 48,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(height: 16),
-              Opacity(opacity:0.7,child: Text('No hay caja activa')), 
+              Text(
+                'No hay caja activa',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
+              ), 
             ],
           ),
         ),
-        FilledButton(onPressed: () => _showOpenDialog(context),child: const Text('Abrir turno de caja')),
+        FilledButton(
+          onPressed: () => _showOpenDialog(context), 
+          child: const Text('Abrir turno de caja'),
+        ),
       ],
     );
   }
 
-  Widget _buildCashFlowButtons(BuildContext context, CashRegisterProvider provider) {
+  Widget _buildCashFlowButtons(BuildContext context, CashRegisterProvider provider) { 
+    
     return Row(
       children: [
         Expanded(
@@ -238,9 +265,17 @@ class CashRegisterManagementDialog extends StatelessWidget {
             onPressed: provider.hasActiveCashRegister
                 ? () => _showCashFlowDialog(context, true)
                 : null,
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: provider.hasActiveCashRegister 
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : null,
+              foregroundColor: provider.hasActiveCashRegister 
+                  ? Colors.green
+                  : null,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
         ),
@@ -252,9 +287,17 @@ class CashRegisterManagementDialog extends StatelessWidget {
             onPressed: provider.hasActiveCashRegister
                 ? () => _showCashFlowDialog(context, false)
                 : null,
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: provider.hasActiveCashRegister 
+                  ? Colors.red.withOpacity(0.1)
+                  : null,
+              foregroundColor: provider.hasActiveCashRegister 
+                  ? Colors.red
+                  : null,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
         ),

@@ -44,21 +44,62 @@
 </head>
 <body>
   <div id="flutter_app"></div>
+  <div id="loading">
+    <style>
+      body {
+        inset: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        position: fixed;
+      }
+      #loading {
+        align-items: center;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        width: 100%;
+      }
+      #loading img {
+        animation: 1s ease-in-out 0s infinite alternate breathe;
+        opacity: .66;
+        transition: opacity .4s;
+      }
+      #loading.main_done img {
+        opacity: 1;
+      }
+      @keyframes breathe {
+        from {
+          transform: scale(1)
+        }
+        to {
+          transform: scale(0.95)
+        }
+      }
+    </style>
+    <img src="icons/Icon-192.png" alt="Loading indicator..." />
+  </div>
   <script>
     window.addEventListener('load', function(ev) {
-      // Inicializar Flutter usando el nuevo método recomendado
-      _flutter.loader.load({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: async function() {
-          const appRunner = await _flutter.loader.initializeEngine({
-            useColorEmoji: true,
-            renderer: "html"
-          });
-          await appRunner.runApp();
+      // Download main.dart.js
+      var loading = document.querySelector('#loading');
+      _flutter = {
+        loader: {
+          loadEntrypoint: async function() {
+            try {
+              await window.flutterWebRenderer;
+            } catch (e) {
+              console.error('Error loading Flutter Web renderer:', e);
+            }
+          }
         }
-      });
+      };
+      
+      window.flutterWebRenderer = "html";
+      var scriptLoading = document.createElement('script');
+      scriptLoading.src = "main.dart.js";
+      scriptLoading.type = 'application/javascript';
+      document.body.append(scriptLoading);
     });
   </script>
 </body>

@@ -11,67 +11,149 @@ import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:provider/provider.dart' as provider;
 import '../providers/cash_register_provider.dart';
 
+class _SellProviderState {
+  final bool ticketView;
+  final bool shouldPrintTicket;
+  final ProfileAccountModel profileAccountSelected;
+  final TicketModel ticket;
+  final TicketModel? lastSoldTicket;
+
+  const _SellProviderState({
+    required this.ticketView,
+    required this.shouldPrintTicket,
+    required this.profileAccountSelected,
+    required this.ticket,
+    required this.lastSoldTicket,
+  });
+
+  _SellProviderState copyWith({
+    bool? ticketView,
+    bool? shouldPrintTicket,
+    ProfileAccountModel? profileAccountSelected,
+    TicketModel? ticket,
+    Object? lastSoldTicket = const Object(),
+  }) {
+    return _SellProviderState(
+      ticketView: ticketView ?? this.ticketView,
+      shouldPrintTicket: shouldPrintTicket ?? this.shouldPrintTicket,
+      profileAccountSelected: profileAccountSelected ?? this.profileAccountSelected,
+      ticket: ticket ?? this.ticket,
+      lastSoldTicket: lastSoldTicket == const Object() ? this.lastSoldTicket : lastSoldTicket as TicketModel?,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _SellProviderState &&
+          runtimeType == other.runtimeType &&
+          ticketView == other.ticketView &&
+          shouldPrintTicket == other.shouldPrintTicket &&
+          profileAccountSelected == other.profileAccountSelected &&
+          ticket == other.ticket &&
+          lastSoldTicket == other.lastSoldTicket;
+
+  @override
+  int get hashCode =>
+      ticketView.hashCode ^
+      shouldPrintTicket.hashCode ^
+      profileAccountSelected.hashCode ^
+      ticket.hashCode ^
+      lastSoldTicket.hashCode;
+}
+
 class SellProvider extends ChangeNotifier {
-  // Caso de uso para obtener las cuentas del usuario
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
-  // Indica si se debe mostrar la vista del ticket
-  bool _ticketView = false; // Indica si se debe mostrar la vista del ticket
-  bool get ticketView => _ticketView;
+  // Estado encapsulado para optimizar notificaciones
+  var _state = _SellProviderState(
+    ticketView: false,
+    shouldPrintTicket: false,
+    profileAccountSelected: ProfileAccountModel(),
+    ticket: TicketModel(listPoduct: [], creation: Timestamp.now()),
+    lastSoldTicket: null,
+  );
 
-  // Indica si se debe imprimir el ticket al confirmar la venta
-  bool _shouldPrintTicket = false;
-  bool get shouldPrintTicket => _shouldPrintTicket;
-  
-  // Cuenta seleccionada actualmente
-  ProfileAccountModel profileAccountSelected = ProfileAccountModel();
+  // Getters que no causan rebuild
+  bool get ticketView => _state.ticketView;
+  bool get shouldPrintTicket => _state.shouldPrintTicket;
+  ProfileAccountModel get profileAccountSelected => _state.profileAccountSelected;
+  TicketModel get ticket => _state.ticket;
+  TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
-  // Ticket actual en memoria
-  TicketModel _ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
-  TicketModel get ticket => _ticket;
-  set ticket(TicketModel value) {
-    _ticket = value;
+  SellProvider({required this.getUserAccountsUseCase}) {
+    _loadInitialState();
+  }
+
+  Future<void> _loadInitialState() async {
+    await Future.wait([
+      _loadSelectedAccount(),
+      _loadTicket(),
+      _loadLastSoldTicket(),
+      _loadShouldPrintTicket(),
+    ]);
+  }
+
+  void cleanData() {
+    _state = _state.copyWith(
+      profileAccountSelected: ProfileAccountModel(),
+      ticket: TicketModel(listPoduct: [], creation: Timestamp.now()),
+      ticketView: false,
+      shouldPrintTicket: false,
+      lastSoldTicket: null,
+    );
+    _saveAllState();
     notifyListeners();
   }
 
-  // Último ticket vendido (nuevo)
-  TicketModel? _lastSoldTicket;
-  TicketModel? get lastSoldTicket => _lastSoldTicket;
-
-  // clean data : limpieza de datos cada vez que cambiar de cuenta o cierrar sesión
-  void cleanData() {
-    profileAccountSelected = ProfileAccountModel();
-    ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
-    _ticketView = false;
-    _shouldPrintTicket = false;
-    _lastSoldTicket = null; // Limpiar el último ticket también
-    _saveTicket();
-    _saveLastSoldTicket(); // Guardar el estado limpio
-    _saveShouldPrintTicket(); // Limpiar el estado del checkbox también
+  // Métodos optimizados para minimizar notificaciones
+  Future<void> initAccount({
+    required ProfileAccountModel account,
+    required BuildContext context,
+  }) async {
+    cleanData();
+    _state = _state.copyWith(profileAccountSelected: account.copyWith());
+    await _saveSelectedAccount(account.id);
+    notifyListeners();
   }
 
-  /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
-  Future<void> _loadSelectedAccount() async {
-    // shared preferences : Cargar la cuenta seleccionada desde SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString(SharedPrefsKeys.selectedAccountId);
-    // Si hay un ID de cuenta guardado, intenta cargar la cuenta
-    if (id != null && id.isNotEmpty) {
-      profileAccountSelected =
-          await fetchAccountById(id) ?? ProfileAccountModel();
+  void setTicketView(bool value) {
+    if (_state.ticketView != value) {
+      _state = _state.copyWith(ticketView: value);
       notifyListeners();
     }
   }
 
-  SellProvider({required this.getUserAccountsUseCase}) {
-    _loadSelectedAccount().whenComplete(() {
-      _loadTicket();
-      _loadLastSoldTicket(); // Cargar el último ticket vendido
-      _loadShouldPrintTicket();
-    });
+  void setShouldPrintTicket(bool value) {
+    if (_state.shouldPrintTicket != value) {
+      _state = _state.copyWith(shouldPrintTicket: value);
+      _saveShouldPrintTicket();
+      notifyListeners();
+    }
   }
 
-  /// Obtiene los datos completos de la cuenta por su [id].
+  // Métodos para guardar estado
+  Future<void> _saveAllState() async {
+    await Future.wait([
+      _saveTicket(),
+      _saveLastSoldTicket(),
+      _saveShouldPrintTicket(),
+    ]);
+  }
+
+  /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
+  Future<void> _loadSelectedAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString(SharedPrefsKeys.selectedAccountId);
+    if (id != null && id.isNotEmpty) {
+      final account = await fetchAccountById(id);
+      if (account != null) {
+        _state = _state.copyWith(profileAccountSelected: account);
+        notifyListeners();
+      }
+    }
+  }
+
   Future<ProfileAccountModel?> fetchAccountById(String id) async {
     try {
       return await getUserAccountsUseCase.getAccount(idAccount: id);
@@ -80,85 +162,101 @@ class SellProvider extends ChangeNotifier {
     }
   }
 
-  /// Guarda el ticket actual en SharedPreferences.
   Future<void> _saveTicket() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-        SharedPrefsKeys.currentTicket, jsonEncode(ticket.toJson()));
+        SharedPrefsKeys.currentTicket, jsonEncode(_state.ticket.toJson()));
   }
 
-  /// Carga el ticket guardado desde SharedPreferences.
   Future<void> _loadTicket() async {
     final prefs = await SharedPreferences.getInstance();
     final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
     if (ticketJson != null) {
       try {
-        ticket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        _state = _state.copyWith(ticket: newTicket);
         notifyListeners();
       } catch (_) {}
     }
   }
 
-  /// Utilidad para decodificar de JSON.
   Map<String, dynamic> _decodeJson(String source) =>
       const JsonDecoder().convert(source) as Map<String, dynamic>;
 
-  /// Agrega un producto al ticket actual.
-  void addProductsticket(ProductCatalogue product,
-      {bool replaceQuantity = false}) {
-    // Si el producto ya existe y replaceQuantity es true, actualiza la cantidad
+  void addProductsticket(ProductCatalogue product, {bool replaceQuantity = false}) {
+    final currentTicket = _state.ticket;
     bool exist = false;
-    for (var i = 0; i < ticket.listPoduct.length; i++) {
-      if (ticket.listPoduct[i]['id'] == product.id) {
+    final updatedProducts = List.from(currentTicket.listPoduct);
+    
+    for (var i = 0; i < updatedProducts.length; i++) {
+      if (updatedProducts[i]['id'] == product.id) {
         if (replaceQuantity) {
-          ticket.listPoduct[i]['quantity'] = product.quantity;
+          updatedProducts[i]['quantity'] = product.quantity;
         } else {
-          ticket.listPoduct[i]['quantity'] +=
-              (product.quantity > 0 ? product.quantity : 1);
+          updatedProducts[i]['quantity'] += (product.quantity > 0 ? product.quantity : 1);
         }
         exist = true;
         break;
       }
     }
+    
     if (!exist) {
-      ticket.listPoduct.add(product.toMap());
+      updatedProducts.add(product.toMap());
     }
+
+    final newTicket = TicketModel(
+      listPoduct: updatedProducts,
+      creation: currentTicket.creation,
+      payMode: currentTicket.payMode,
+      valueReceived: currentTicket.valueReceived,
+      cashRegisterName: currentTicket.cashRegisterName,
+      cashRegisterId: currentTicket.cashRegisterId,
+    );
+
+    _state = _state.copyWith(ticket: newTicket);
     _saveTicket();
     notifyListeners();
   }
 
   void removeProduct(ProductCatalogue product) {
-    ticket.listPoduct.removeWhere((item) => item['id'] == product.id);
-    if (ticket.listPoduct.isEmpty) {
-      _ticketView = false;
-    }
-    _saveTicket();
-    notifyListeners();
-  }
+    final currentTicket = _state.ticket;
+    final updatedProducts = currentTicket.listPoduct
+        .where((item) => item['id'] != product.id)
+        .toList();
 
-  void setTicketView(bool value) {
-    _ticketView = value;
+    final newTicket = TicketModel(
+      listPoduct: updatedProducts,
+      creation: currentTicket.creation,
+      payMode: currentTicket.payMode,
+      valueReceived: currentTicket.valueReceived,
+      cashRegisterName: currentTicket.cashRegisterName,
+      cashRegisterId: currentTicket.cashRegisterId,
+    );
+
+    _state = _state.copyWith(
+      ticket: newTicket,
+      ticketView: updatedProducts.isNotEmpty,
+    );
+    _saveTicket();
     notifyListeners();
   }
 
   void discartTicket() {
-    ticket = TicketModel(listPoduct: [], creation: Timestamp.now());
-    _ticketView = false;
-    // Mantener _shouldPrintTicket para preservar la preferencia del usuario
+    _state = _state.copyWith(
+      ticket: TicketModel(listPoduct: [], creation: Timestamp.now()),
+      ticketView: false,
+    );
     _saveTicket();
     notifyListeners();
   }
 
-  void addQuickProduct(
-      {required String description, required double salePrice}) {
-    var id = Publications.generateUid();
-    var product = ProductCatalogue(
-      id: id,
+  void addQuickProduct({required String description, required double salePrice}) {
+    final product = ProductCatalogue(
+      id: Publications.generateUid(),
       description: description,
       salePrice: salePrice,
     );
     addProductsticket(product, replaceQuantity: true);
-    notifyListeners();
   }
 
   Future<void> _saveSelectedAccount(String id) async {
@@ -166,125 +264,122 @@ class SellProvider extends ChangeNotifier {
     await prefs.setString(SharedPrefsKeys.selectedAccountId, id);
   }
 
-  /// Selecciona una cuenta (negocio) y actualiza el catálogo.
-  Future<void> initAccount(
-      {required ProfileAccountModel account,
-      required BuildContext context}) async {
-    cleanData(); // Limpiar datos del ticket y productos
-    profileAccountSelected =
-        account.copyWith(); // Asignamos los valores de la cuenta seleccionada
-
-    // Guarda la cuenta seleccionada y espera a que termine
-    await _saveSelectedAccount(profileAccountSelected.id);
-
-    // Notifica solo una vez al final
-    notifyListeners();
-  }
-
-  /// Quita la cuenta (negocio) seleccionada y notifica a los listeners.
-  Future<void> removeSelectedAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(SharedPrefsKeys.selectedAccountId);
-    cleanData();
-    notifyListeners();
-  }
-
-  /// Actualiza el método de pago del ticket y notifica a los listeners.
   void setPayMode({String payMode = 'effective'}) {
-    ticket.payMode = payMode;
-    // Si el método de pago NO es efectivo, restaurar el monto recibido a 0
-    if (payMode != 'effective') {
-      ticket.valueReceived = 0.0;
-    }
+    final currentTicket = _state.ticket;
+    final newTicket = TicketModel(
+      listPoduct: currentTicket.listPoduct,
+      creation: currentTicket.creation,
+      payMode: payMode,
+      valueReceived: payMode != 'effective' ? 0.0 : currentTicket.valueReceived,
+      cashRegisterName: currentTicket.cashRegisterName,
+      cashRegisterId: currentTicket.cashRegisterId,
+    );
+
+    _state = _state.copyWith(ticket: newTicket);
     _saveTicket();
     notifyListeners();
   }
 
-  /// Asigna el monto recibido en efectivo por el cliente para calcular el vuelto.
-  void addIncomeCash({double value = 0.0}) {
-    ticket.valueReceived = value;
-    _saveTicket();
-    notifyListeners();
-  }
-
-  /// Actualiza el valor recibido en efectivo para el ticket actual.
   void setReceivedCash(double value) {
-    ticket.valueReceived = value;
+    final currentTicket = _state.ticket;
+    final newTicket = TicketModel(
+      listPoduct: currentTicket.listPoduct,
+      creation: currentTicket.creation,
+      payMode: currentTicket.payMode,
+      valueReceived: value,
+      cashRegisterName: currentTicket.cashRegisterName,
+      cashRegisterId: currentTicket.cashRegisterId,
+    );
+
+    _state = _state.copyWith(ticket: newTicket);
     _saveTicket();
     notifyListeners();
   }
 
-  /// Establece si se debe imprimir el ticket al confirmar la venta y persiste el estado.
-  void setShouldPrintTicket(bool value) {
-    _shouldPrintTicket = value;
-    _saveShouldPrintTicket();
-    notifyListeners();
+  void addIncomeCash({double value = 0.0}) {
+    setReceivedCash(value);
   }
 
-  /// Carga el estado del checkbox de impresión desde SharedPreferences.
   Future<void> _loadShouldPrintTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    _shouldPrintTicket =
-        prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+    final shouldPrint = prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+    _state = _state.copyWith(shouldPrintTicket: shouldPrint);
     notifyListeners();
   }
 
-  /// Guarda el estado del checkbox de impresión en SharedPreferences.
   Future<void> _saveShouldPrintTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(SharedPrefsKeys.shouldPrintTicket, _shouldPrintTicket);
+    await prefs.setBool(SharedPrefsKeys.shouldPrintTicket, _state.shouldPrintTicket);
   }
 
-  /// Guarda el último ticket vendido y lo marca como completado.
   Future<void> saveLastSoldTicket() async {
-    // Crear una copia del ticket actual y marcarlo como vendido
-    _lastSoldTicket = TicketModel(
-      listPoduct: List.from(ticket.listPoduct),
-      creation: ticket.creation,
-      payMode: ticket.payMode,
-      valueReceived: ticket.valueReceived,
-      cashRegisterName: ticket.cashRegisterName,
-      cashRegisterId: ticket.cashRegisterId,
+    final currentTicket = _state.ticket;
+    final newLastSoldTicket = TicketModel(
+      listPoduct: List.from(currentTicket.listPoduct),
+      creation: currentTicket.creation,
+      payMode: currentTicket.payMode,
+      valueReceived: currentTicket.valueReceived,
+      cashRegisterName: currentTicket.cashRegisterName,
+      cashRegisterId: currentTicket.cashRegisterId,
     );
+
+    _state = _state.copyWith(lastSoldTicket: newLastSoldTicket);
     await _saveLastSoldTicket();
     notifyListeners();
   }
 
-  /// Guarda el último ticket vendido en SharedPreferences.
   Future<void> _saveLastSoldTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    if (_lastSoldTicket != null) {
+    final lastTicket = _state.lastSoldTicket;
+    if (lastTicket != null) {
       await prefs.setString(
-          SharedPrefsKeys.lastSoldTicket, jsonEncode(_lastSoldTicket!.toJson()));
+          SharedPrefsKeys.lastSoldTicket, jsonEncode(lastTicket.toJson()));
     } else {
       await prefs.remove(SharedPrefsKeys.lastSoldTicket);
     }
   }
 
-  /// Carga el último ticket vendido desde SharedPreferences.
   Future<void> _loadLastSoldTicket() async {
     final prefs = await SharedPreferences.getInstance();
     final lastTicketJson = prefs.getString(SharedPrefsKeys.lastSoldTicket);
     if (lastTicketJson != null) {
       try {
-        _lastSoldTicket = TicketModel.sahredPreferencefromMap(_decodeJson(lastTicketJson));
+        final lastTicket = TicketModel.sahredPreferencefromMap(_decodeJson(lastTicketJson));
+        _state = _state.copyWith(lastSoldTicket: lastTicket);
         notifyListeners();
       } catch (_) {
-        // Si hay error al cargar, limpiar
-        _lastSoldTicket = null;
+        _state = _state.copyWith(lastSoldTicket: null);
       }
     }
   }
 
-  /// Actualiza el ticket con la información de la caja registradora activa
   void updateTicketWithCashRegister(BuildContext context) {
     final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
     
     if (cashRegisterProvider.hasActiveCashRegister) {
       final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-      ticket.cashRegisterName = activeCashRegister.description;
-      ticket.cashRegisterId = activeCashRegister.id;
+      final currentTicket = _state.ticket;
+      final newTicket = TicketModel(
+        listPoduct: currentTicket.listPoduct,
+        creation: currentTicket.creation,
+        payMode: currentTicket.payMode,
+        valueReceived: currentTicket.valueReceived,
+        cashRegisterName: activeCashRegister.description,
+        cashRegisterId: activeCashRegister.id,
+      );
+
+      _state = _state.copyWith(ticket: newTicket);
       notifyListeners();
     }
+  }
+
+  /// Remueve la cuenta seleccionada, limpia todos los datos y notifica a los listeners
+  Future<void> removeSelectedAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Eliminar el ID de la cuenta seleccionada de SharedPreferences
+    await prefs.remove(SharedPrefsKeys.selectedAccountId);
+    // Limpiar todos los datos y estado
+    cleanData();
+    notifyListeners();
   }
 }

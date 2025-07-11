@@ -328,9 +328,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       // Procesar en segundo plano
       if (widget.isNew) {
-        await _createNewProduct(updatedProduct, catalogueProvider, authProvider);
+        await _createNewProduct(updatedProduct, catalogueProvider, authProvider, sellProvider);
       } else if (_checkAddCatalogue && updatedProduct.id.isNotEmpty) {
-        await _addExistingProduct(updatedProduct, catalogueProvider);
+        await _addExistingProduct(updatedProduct, catalogueProvider, sellProvider);
       }
       
     } catch (e) {
@@ -347,6 +347,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
     ProductCatalogue updatedProduct,
     CatalogueProvider catalogueProvider,
     AuthProvider authProvider,
+    SellProvider sellProvider,
+
   ) async {
     try {
       final publicProduct = Product(
@@ -373,7 +375,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (_checkAddCatalogue) {
         final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
-        await catalogueProvider.addProductToCatalogue(finalProduct);
+        await catalogueProvider.addProductToCatalogue(finalProduct,sellProvider.profileAccountSelected.id);
       }
     } catch (e) {
       // Mostrar error si falla la creación
@@ -391,9 +393,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
   Future<void> _addExistingProduct(
     ProductCatalogue updatedProduct,
     CatalogueProvider catalogueProvider,
+    SellProvider sellProvider,
   ) async {
     try {
-      await catalogueProvider.addProductToCatalogue(updatedProduct);
+      await catalogueProvider.addProductToCatalogue(updatedProduct,sellProvider.profileAccountSelected.id );
     } catch (e) {
       // Mostrar error si falla
       if (mounted) {

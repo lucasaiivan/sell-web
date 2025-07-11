@@ -30,140 +30,116 @@ void main() async {
   // Inicializar SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
-  // Inicializar repositorios para autenticación del usuario
-  final authRepository =
-      AuthRepositoryImpl(fb_auth.FirebaseAuth.instance, GoogleSignIn());
+  // Inicializar repositorios
+  final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance, GoogleSignIn());
   final accountRepository = AccountRepositoryImpl(prefs: prefs);
+  final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
-  runApp(MultiProvider(
+  runApp(
+    MultiProvider(
+      providers: [
+        // Providers globales que no dependen del estado de autenticación
+        ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
+        ChangeNotifierProvider(create: (_) => PrinterProvider()..initialize()),
+        
+        // AuthProvider - gestiona el estado de autenticación
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            signInWithGoogleUseCase: SignInWithGoogleUseCase(authRepository),
+            signInSilentlyUseCase: SignInSilentlyUseCase(authRepository),
+            signOutUseCase: SignOutUseCase(authRepository),
+            getUserStreamUseCase: GetUserStreamUseCase(authRepository),
+            getUserAccountsUseCase: getUserAccountsUseCase,
+          ),
+        ),
+
+        // SellProvider - creado una sola vez y reutilizado
+        ChangeNotifierProxyProvider<AuthProvider, SellProvider>(
+          create: (_) => SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+          update: (_, auth, previousSell) => previousSell ?? SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+        ),
+      ],
+      child: Consumer<ThemeDataAppProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Sell Web',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              useMaterial3: true,
+              brightness: Brightness.light,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                  seedColor: Colors.blue, brightness: Brightness.dark),
+              useMaterial3: true,
+              brightness: Brightness.dark,
+            ),
+            themeMode: themeProvider.themeMode,
+            home: Consumer<AuthProvider>(
+              builder: (context, authProvider, _) {
+                if (authProvider.user == null) {
+                  return LoginPage(authProvider: authProvider);
+                }
+
+                return Consumer<SellProvider>(
+                  builder: (context, sellProvider, _) {
+                    if (sellProvider.profileAccountSelected.id.isEmpty) {
+                      return WelcomePage(
+                        onSelectAccount: (account) => sellProvider.initAccount(
+                          account: account,
+                          context: context,
+                        ),
+                      );
+                    }
+
+                    // Providers específicos de la cuenta seleccionada
+                    return _buildAccountSpecificProviders(
+                      accountId: sellProvider.profileAccountSelected.id,
+                      sellProvider: sellProvider,
+                      accountRepository: accountRepository,
+                    );
+                  },
+                );
+              },
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
+
+Widget _buildAccountSpecificProviders({
+  required String accountId,
+  required SellProvider sellProvider,
+  required AccountRepositoryImpl accountRepository,
+}) {
+  // Crear repositorios específicos de la cuenta
+  final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+  final cashRegisterRepository = CashRegisterRepositoryImpl();
+  
+  return MultiProvider(
+    key: ValueKey('account_providers_$accountId'),
     providers: [
+      // Providers específicos de la cuenta actual
       ChangeNotifierProvider(
-        create: (_) => AuthProvider(
-          signInWithGoogleUseCase: SignInWithGoogleUseCase(authRepository),
-          signInSilentlyUseCase: SignInSilentlyUseCase(authRepository),
-          signOutUseCase: SignOutUseCase(authRepository),
-          getUserStreamUseCase: GetUserStreamUseCase(authRepository),
+        create: (_) => CatalogueProvider(
+          getProductsStreamUseCase: GetCatalogueStreamUseCase(catalogueRepository),
+          getProductByCodeUseCase: GetProductByCodeUseCase(),
+          isProductScannedUseCase: IsProductScannedUseCase(GetProductByCodeUseCase()),
+          getPublicProductByCodeUseCase: GetPublicProductByCodeUseCase(CatalogueRepositoryImpl()),
+          addProductToCatalogueUseCase: AddProductToCatalogueUseCase(catalogueRepository),
+          createPublicProductUseCase: CreatePublicProductUseCase(catalogueRepository),
           getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
+        )..initCatalogue(accountId),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => CashRegisterProvider(
+          CashRegisterUsecases(cashRegisterRepository),
         ),
       ),
-      ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
-      ChangeNotifierProvider(create: (_) => PrinterProvider()..initialize()),
     ],
-    child: Consumer<ThemeDataAppProvider>(
-      builder: (context, themeProvider, _) {
-        return MaterialApp(
-          title: 'Sell Web',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-            brightness: Brightness.light,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.blue, brightness: Brightness.dark),
-            useMaterial3: true,
-            brightness: Brightness.dark,
-          ),
-          themeMode: themeProvider.themeMode,
-          home: Consumer<AuthProvider>(
-            builder: (context, authProvider, _) {
-              if (authProvider.user != null) {
-                return ChangeNotifierProvider(
-                  create: (_) => SellProvider(getUserAccountsUseCase:GetUserAccountsUseCase(accountRepository)),
-                  child: Consumer<SellProvider>(
-                    builder: (context, sellProvider, _) {
-                      // Si no hay cuenta seleccionada, mostrar WelcomePage para seleccionar una cuenta
-                      if (sellProvider.profileAccountSelected.id == '') {
-                        return WelcomePage(
-                          onSelectAccount: (account) async {
-                            await sellProvider.initAccount(
-                                account: account, context: context);
-                          },
-                        );
-                      }
-                      // Si hay cuenta seleccionada, usar Consumer para reaccionar a cambios
-                      return Consumer<SellProvider>(
-                        builder: (context, sellProvider, _) {
-                          final accountId =
-                              sellProvider.profileAccountSelected.id;
-                          final catalogueRepository =
-                              CatalogueRepositoryImpl(id: accountId);
-                          final getProductsStreamUseCase =
-                              GetCatalogueStreamUseCase(catalogueRepository);
-                          final getProductByCodeUseCase =
-                              GetProductByCodeUseCase();
-                          final isProductScannedUseCase =
-                              IsProductScannedUseCase(getProductByCodeUseCase);
-                          final getPublicProductByCodeUseCase =
-                              GetPublicProductByCodeUseCase(
-                                  CatalogueRepositoryImpl());
-                          final addProductToCatalogueUseCase =
-                              AddProductToCatalogueUseCase(catalogueRepository);
-                          final createPublicProductUseCase =
-                              CreatePublicProductUseCase(catalogueRepository);
-                          final getUserAccountsUseCase =
-                              GetUserAccountsUseCase(accountRepository);
-
-                          // Configurar dependencias para CashRegisterProvider
-                          final cashRegisterRepository = CashRegisterRepositoryImpl();
-                          final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
-
-                          return MultiProvider(
-                            // Usar key para forzar la recreación cuando cambia la cuenta
-                            key: ValueKey('catalogue_$accountId'),
-                            providers: [
-                              // Reutilizar el SellProvider existente del contexto padre
-                              ChangeNotifierProvider.value(value: sellProvider),
-                              // Crear el CatalogueProvider con la cuenta actual
-                              ChangeNotifierProvider(
-                                create: (_) {
-                                  final provider = CatalogueProvider(
-                                    getProductsStreamUseCase:
-                                        getProductsStreamUseCase,
-                                    getProductByCodeUseCase:
-                                        getProductByCodeUseCase,
-                                    isProductScannedUseCase:
-                                        isProductScannedUseCase,
-                                    getPublicProductByCodeUseCase:
-                                        getPublicProductByCodeUseCase,
-                                    addProductToCatalogueUseCase:
-                                        addProductToCatalogueUseCase,
-                                    createPublicProductUseCase:
-                                        createPublicProductUseCase,
-                                    getUserAccountsUseCase:
-                                        getUserAccountsUseCase,
-                                  );
-                                  // Inicializar el catálogo con el ID de la cuenta seleccionada
-                                  provider.initCatalogue(accountId);
-                                  return provider;
-                                },
-                              ),
-                              // changeNotifierProvider : CashRegisterProvider 
-                              ChangeNotifierProvider(
-                                create: (_) => CashRegisterProvider(
-                                  cashRegisterUsecases,
-                                ),
-                              ),
-                              // changeNotifierProvider : SellProvider
-                              ChangeNotifierProvider(
-                                create: (_) => SellProvider(getUserAccountsUseCase:GetUserAccountsUseCase(accountRepository)),
-                              ),
-                            ],
-                            child: const SellPage(),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                );
-              } else {
-                return LoginPage(authProvider: authProvider);
-              }
-            },
-          ),
-        );
-      },
-    ),
-  ));
+    child: const SellPage(),
+  );
 }

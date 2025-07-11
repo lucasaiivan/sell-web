@@ -367,8 +367,9 @@ class _SellPageState extends State<SellPage> {
                     icon: const Icon(Icons.close),
                     label: const Text('Salir de la cuenta'),
                     onPressed: () async {
+                      // Remover la cuenta seleccionada y limpiar datos
                       await sellProvider.removeSelectedAccount();
-                      // ignore: use_build_context_synchronously
+                      // Cerrar el modal
                       Navigator.of(context).pop();
                     },
                   ),

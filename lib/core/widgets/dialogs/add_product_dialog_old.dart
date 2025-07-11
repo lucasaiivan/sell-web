@@ -310,6 +310,7 @@ Future<void> _processAddProduct(
         checkAddCatalogue,
         catalogueProvider,
         authProvider,
+        sellProvider,
       );
     } else if (checkAddCatalogue && updatedProduct.id.isNotEmpty) {
       await _addExistingProduct(
@@ -317,6 +318,7 @@ Future<void> _processAddProduct(
         product,
         updatedProduct,
         catalogueProvider,
+        sellProvider,
       );
     }
   } catch (e) {
@@ -333,6 +335,7 @@ Future<void> _createNewProduct(
   bool addToCatalogue,
   CatalogueProvider catalogueProvider,
   AuthProvider authProvider,
+  SellProvider sellProvider,
 ) async {
   try {
     final publicProduct = Product(
@@ -359,7 +362,7 @@ Future<void> _createNewProduct(
 
     if (addToCatalogue) {
       final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
-      await catalogueProvider.addProductToCatalogue(finalProduct);
+      await catalogueProvider.addProductToCatalogue(finalProduct,sellProvider.profileAccountSelected.id);
     }
   } catch (e) {
     // Reabrir diálogo con error si falla
@@ -379,9 +382,10 @@ Future<void> _addExistingProduct(
   ProductCatalogue originalProduct,
   ProductCatalogue updatedProduct,
   CatalogueProvider catalogueProvider,
+  SellProvider sellProvider,
 ) async {
   try {
-    await catalogueProvider.addProductToCatalogue(updatedProduct);
+    await catalogueProvider.addProductToCatalogue(updatedProduct,sellProvider.profileAccountSelected.id);
   } catch (e) {
     // Reabrir diálogo con error si falla
     if (context.mounted) {

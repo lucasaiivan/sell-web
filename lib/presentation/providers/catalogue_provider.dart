@@ -1,15 +1,71 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
 import '../../domain/usecases/account_usecase.dart';
 
+class _CatalogueState {
+  final List<ProductCatalogue> products;
+  final ProductCatalogue? lastScannedProduct;
+  final String? lastScannedCode;
+  final bool showSplash;
+  final String? scanError;
+  final bool isLoading;
+
+  const _CatalogueState({
+    required this.products,
+    this.lastScannedProduct,
+    this.lastScannedCode,
+    this.showSplash = false,
+    this.scanError,
+    this.isLoading = true,
+  });
+
+  _CatalogueState copyWith({
+    List<ProductCatalogue>? products,
+    Object? lastScannedProduct = const Object(),
+    Object? lastScannedCode = const Object(),
+    bool? showSplash,
+    Object? scanError = const Object(),
+    bool? isLoading,
+  }) {
+    return _CatalogueState(
+      products: products ?? this.products,
+      lastScannedProduct: lastScannedProduct == const Object() ? this.lastScannedProduct : lastScannedProduct as ProductCatalogue?,
+      lastScannedCode: lastScannedCode == const Object() ? this.lastScannedCode : lastScannedCode as String?,
+      showSplash: showSplash ?? this.showSplash,
+      scanError: scanError == const Object() ? this.scanError : scanError as String?,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _CatalogueState &&
+          runtimeType == other.runtimeType &&
+          listEquals(products, other.products) &&
+          lastScannedProduct == other.lastScannedProduct &&
+          lastScannedCode == other.lastScannedCode &&
+          showSplash == other.showSplash &&
+          scanError == other.scanError &&
+          isLoading == other.isLoading;
+
+  @override
+  int get hashCode =>
+      products.hashCode ^
+      lastScannedProduct.hashCode ^
+      lastScannedCode.hashCode ^
+      showSplash.hashCode ^
+      scanError.hashCode ^
+      isLoading.hashCode;
+}
+
 class CatalogueProvider extends ChangeNotifier {
-  // Casos de uso para interactuar con el catálogo
+  // Dependencies
   GetCatalogueStreamUseCase getProductsStreamUseCase;
   final GetProductByCodeUseCase getProductByCodeUseCase;
   final IsProductScannedUseCase isProductScannedUseCase;
@@ -17,6 +73,20 @@ class CatalogueProvider extends ChangeNotifier {
   AddProductToCatalogueUseCase addProductToCatalogueUseCase;
   CreatePublicProductUseCase createPublicProductUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
+
+  // Stream subscription
+  StreamSubscription<QuerySnapshot>? _catalogueSubscription;
+
+  // Immutable state
+  _CatalogueState _state = _CatalogueState(products: []);
+
+  // Public getters
+  List<ProductCatalogue> get products => _state.products;
+  ProductCatalogue? get lastScannedProduct => _state.lastScannedProduct;
+  String? get lastScannedCode => _state.lastScannedCode;
+  bool get showSplash => _state.showSplash;
+  String? get scanError => _state.scanError;
+  bool get isLoading => _state.isLoading;
 
   CatalogueProvider({
     required this.getProductsStreamUseCase,
@@ -27,17 +97,6 @@ class CatalogueProvider extends ChangeNotifier {
     required this.createPublicProductUseCase,
     required this.getUserAccountsUseCase,
   }); // Removido _initProducts() del constructor
-
-  List<ProductCatalogue> _products = [];
-  List<ProductCatalogue> get products => _products;
-
-  ProductCatalogue? _lastScannedProduct;
-  String? _lastScannedCode;
-  bool _showSplash = false;
-  String? _scanError;
-  StreamSubscription<QuerySnapshot>? _catalogueSubscription;
-  bool _isLoading = true;
-  bool get isLoading => _isLoading;
 
   /// Inicializa el catálogo para una cuenta específica
   void initCatalogue(String id) {
@@ -50,66 +109,50 @@ class CatalogueProvider extends ChangeNotifier {
     _catalogueSubscription?.cancel();
 
     // Reinicializar el estado del catálogo
-    _isLoading = true;
-    _products = [];
-    _lastScannedProduct = null;
-    _lastScannedCode = null;
-    _scanError = null;
-
-    // Notificar cambios inmediatamente para mostrar el estado de carga
+    _state = _CatalogueState(
+      products: [],
+      isLoading: true,
+    );
     notifyListeners();
 
     // Crear nuevos casos de uso con el nuevo ID de cuenta
     final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
-    getProductsStreamUseCase =
-        GetCatalogueStreamUseCase(newCatalogueRepository);
-    addProductToCatalogueUseCase =
-        AddProductToCatalogueUseCase(newCatalogueRepository);
-    createPublicProductUseCase =
-        CreatePublicProductUseCase(newCatalogueRepository);
+    getProductsStreamUseCase = GetCatalogueStreamUseCase(newCatalogueRepository);
+    addProductToCatalogueUseCase = AddProductToCatalogueUseCase(newCatalogueRepository);
+    createPublicProductUseCase = CreatePublicProductUseCase(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
     _catalogueSubscription = getProductsStreamUseCase().listen(
       (snapshot) {
         // Convertir los documentos del snapshot en objetos ProductCatalogue
-        _products = snapshot.docs
-            .map((doc) =>
-                ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
+        final products = snapshot.docs
+            .map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
-        _isLoading = false;
+
+        _state = _state.copyWith(
+          products: products,
+          isLoading: false,
+        );
         notifyListeners();
       },
       onError: (error) {
-        // Manejar errores del stream
-        print('Error al cargar productos del catálogo: $error');
-        _isLoading = false;
-        _products = [];
+        print('Error al cargar productos: $error');
+        _state = _state.copyWith(
+          isLoading: false,
+          scanError: error.toString(),
+        );
         notifyListeners();
       },
     );
   }
 
-  @override
-  void dispose() {
-    _catalogueSubscription?.cancel();
-    super.dispose();
-  }
-
-  bool get showSplash => _showSplash;
-  set showSplash(bool value) {
-    _showSplash = value;
-    notifyListeners();
-  }
-
-  ProductCatalogue? get lastScannedProduct =>
-      _lastScannedProduct; // Devuelve el último producto escaneado
-  String? get lastScannedCode =>
-      _lastScannedCode; // Devuelve el último código escaneado
-  String? get scanError => _scanError; // Devuelve el error de escaneo si existe
-
-  /// Busca un producto por su código en la lista del catálogo.
+  /// Busca un producto por código de barras en el catálogo local.
   ProductCatalogue? getProductByCode(String code) {
-    return getProductByCodeUseCase(_products, code);
+    final normalizedCode = code.trim().toUpperCase();
+    return _state.products.firstWhere(
+      (product) => product.code.trim().toUpperCase() == normalizedCode,
+      orElse: () => ProductCatalogue(),
+    );
   }
 
   /// Busca un producto público por código de barra en la base pública.
@@ -117,69 +160,44 @@ class CatalogueProvider extends ChangeNotifier {
     return await getPublicProductByCodeUseCase(code);
   }
 
-  /// Intenta escanear un producto: si no está en el catálogo, busca en la base pública y lo agrega a la lista seleccionada si el usuario acepta.
-  Future<void> scanProduct(String code,
-      {required Function(Product) onFoundInPublic}) async {
+  /// Intenta escanear un producto: si no está en el catálogo, busca en la base pública.
+  Future<void> scanProduct(String code, {required Function(Product) onFoundInPublic}) async {
     final localProduct = getProductByCode(code);
-    if (localProduct != null) {
-      _lastScannedProduct = localProduct;
-      _lastScannedCode = code;
+    if (localProduct != null && localProduct.id.isNotEmpty) {
+      _state = _state.copyWith(
+        lastScannedProduct: localProduct,
+        lastScannedCode: code,
+      );
       notifyListeners();
       return;
     }
+
     // Buscar en la base pública
     final publicProduct = await getPublicProductByCode(code);
     if (publicProduct != null) {
-      // Llamar callback para que la UI decida si agregarlo
       onFoundInPublic(publicProduct);
     } else {
-      _scanError = 'Producto no encontrado';
+      _state = _state.copyWith(scanError: 'Producto no encontrado');
       notifyListeners();
     }
   }
 
-  /// Devuelve el stream de productos para ser usado directamente en la UI si es necesario.
-  Stream<QuerySnapshot> get productsStream => getProductsStreamUseCase();
-
-  /// Carga productos demo si la cuenta seleccionada es demo.
-  void loadDemoProducts(List<ProductCatalogue> demoProducts) {
-    _isLoading = false;
-    _products = demoProducts;
-    notifyListeners();
-  }
-
-  /// Agrega un producto al catálogo de la cuenta actual usando el caso de uso
-  Future<void> addProductToCatalogue(ProductCatalogue product) async {
-    final accountId = await getUserAccountsUseCase.getSelectedAccountId();
-
-    // Si el id está vacío o nulo, asignar el código como id
-    final productToSave = product.copyWith(
-      creation: Utils().getTimestampNow(), // fecha de creación del producto
-      upgrade: Utils().getTimestampNow(), // fecha de actualización del producto
-    );
-
-    print(
-        '--------------------------- Guardando producto en catálogo: ${productToSave.toMap()}');
-    print('--------------------------- ID de cuenta actual: $accountId');
-
-    if (accountId == null || accountId.isEmpty) {
-      throw Exception(
-          '--------------------------- El ID de la cuenta no está definido o es nulo. Por favor, inicializa el catálogo con un ID de cuenta válido.');
+  /// Guarda un producto en el catálogo de la cuenta actual.
+  Future<void> saveProductToCatalogue(ProductCatalogue productToSave, String accountId) async {
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta no está definido o es nulo.');
     }
     try {
       await addProductToCatalogueUseCase(productToSave, accountId);
       notifyListeners();
     } catch (e) {
-      // Relanzar el error con más contexto
-      throw Exception(
-          '--------------------------- Error al guardar producto en catálogo: $e');
+      throw Exception('Error al guardar producto en catálogo: $e');
     }
   }
 
-  /// Crea un nuevo producto en la base de datos pública
+  /// Crea un nuevo producto en la base de datos pública.
   Future<void> createPublicProduct(Product product) async {
     try {
-      // Asignar timestamp si no tienen valores
       final productToSave = Product(
         id: product.id,
         idMark: product.idMark,
@@ -192,16 +210,96 @@ class CatalogueProvider extends ChangeNotifier {
         favorite: product.favorite,
         verified: product.verified,
         reviewed: product.reviewed,
-        creation: product.creation,
+        creation: Utils().getTimestampNow(),
         upgrade: Utils().getTimestampNow(),
         idUserCreation: product.idUserCreation,
         idUserUpgrade: product.idUserUpgrade,
       );
 
       await createPublicProductUseCase(productToSave);
-      print('Producto público creado exitosamente: ${productToSave.id}');
     } catch (e) {
       throw Exception('Error al crear producto público: $e');
     }
   }
+
+  /// Carga productos de demostración (solo para modo demo).
+  void loadDemoProducts(List<ProductCatalogue> demoProducts) {
+    _state = _state.copyWith(
+      products: demoProducts,
+      isLoading: false,
+    );
+    notifyListeners();
+  }
+
+  /// Agrega un nuevo producto al catálogo o actualiza uno existente.
+  /// 
+  /// [product] El producto a agregar o actualizar en el catálogo
+  /// [accountId] El ID de la cuenta donde se agregará el producto
+  /// Retorna un [Future<void>] que se completa cuando la operación termina
+  Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
+    // Validar parámetros requeridos
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta es requerido para agregar productos al catálogo');
+    }
+    if (product.code.isEmpty) {
+      throw Exception('El código del producto es requerido');
+    }
+
+    try {
+      _state = _state.copyWith(isLoading: true);
+      notifyListeners();
+
+      // Verificar si el producto ya existe
+      final existingProduct = getProductByCode(product.code);
+      
+      if (existingProduct != null && existingProduct.id.isNotEmpty) {
+        // Actualizar producto existente
+        final updatedProduct = product.copyWith(
+          upgrade: Utils().getTimestampNow(),
+          documentIdUpgrade: accountId,
+        );
+        await addProductToCatalogueUseCase(updatedProduct, accountId);
+      } else {
+        // Agregar nuevo producto
+        final newProduct = product.copyWith(
+          creation: Utils().getTimestampNow(),
+          upgrade: Utils().getTimestampNow(),
+          documentIdCreation: accountId,
+          documentIdUpgrade: accountId,
+        );
+        await addProductToCatalogueUseCase(newProduct, accountId);
+      }
+
+      _state = _state.copyWith(
+        isLoading: false,
+        lastScannedProduct: product,
+        lastScannedCode: product.code,
+        scanError: null,
+      );
+      notifyListeners();
+    } catch (e) {
+      _state = _state.copyWith(
+        isLoading: false,
+        scanError: 'Error al agregar producto al catálogo: ${e.toString()}',
+      );
+      notifyListeners();
+      throw Exception('Error al agregar producto al catálogo: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _catalogueSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CatalogueProvider &&
+          runtimeType == other.runtimeType &&
+          _state == other._state;
+
+  @override
+  int get hashCode => _state.hashCode;
 }

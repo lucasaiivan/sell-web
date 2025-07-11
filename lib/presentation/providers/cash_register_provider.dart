@@ -1,6 +1,80 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
+
+class _CashRegisterState {
+  final List<CashRegister> activeCashRegisters;
+  final bool isLoadingActive;
+  final List<CashRegister> cashRegisterHistory;
+  final bool isLoadingHistory;
+  final String historyFilter;
+  final String? errorMessage;
+  final bool isProcessing;
+  final List<String> fixedDescriptions;
+
+  const _CashRegisterState({
+    this.activeCashRegisters = const [],
+    this.isLoadingActive = false,
+    this.cashRegisterHistory = const [],
+    this.isLoadingHistory = false,
+    this.historyFilter = 'Última semana',
+    this.errorMessage,
+    this.isProcessing = false,
+    this.fixedDescriptions = const [],
+  });
+
+  bool get hasActiveCashRegister => activeCashRegisters.isNotEmpty;
+  CashRegister? get currentActiveCashRegister => 
+      activeCashRegisters.isNotEmpty ? activeCashRegisters.first : null;
+
+  _CashRegisterState copyWith({
+    List<CashRegister>? activeCashRegisters,
+    bool? isLoadingActive,
+    List<CashRegister>? cashRegisterHistory,
+    bool? isLoadingHistory,
+    String? historyFilter,
+    Object? errorMessage = const Object(),
+    bool? isProcessing,
+    List<String>? fixedDescriptions,
+  }) {
+    return _CashRegisterState(
+      activeCashRegisters: activeCashRegisters ?? this.activeCashRegisters,
+      isLoadingActive: isLoadingActive ?? this.isLoadingActive,
+      cashRegisterHistory: cashRegisterHistory ?? this.cashRegisterHistory,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
+      historyFilter: historyFilter ?? this.historyFilter,
+      errorMessage: errorMessage == const Object() ? this.errorMessage : errorMessage as String?,
+      isProcessing: isProcessing ?? this.isProcessing,
+      fixedDescriptions: fixedDescriptions ?? this.fixedDescriptions,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _CashRegisterState &&
+          runtimeType == other.runtimeType &&
+          listEquals(activeCashRegisters, other.activeCashRegisters) &&
+          isLoadingActive == other.isLoadingActive &&
+          listEquals(cashRegisterHistory, other.cashRegisterHistory) &&
+          isLoadingHistory == other.isLoadingHistory &&
+          historyFilter == other.historyFilter &&
+          errorMessage == other.errorMessage &&
+          isProcessing == other.isProcessing &&
+          listEquals(fixedDescriptions, other.fixedDescriptions);
+
+  @override
+  int get hashCode =>
+      activeCashRegisters.hashCode ^
+      isLoadingActive.hashCode ^
+      cashRegisterHistory.hashCode ^
+      isLoadingHistory.hashCode ^
+      historyFilter.hashCode ^
+      errorMessage.hashCode ^
+      isProcessing.hashCode ^
+      fixedDescriptions.hashCode;
+}
 
 /// Provider para el sistema de caja registradora
 /// 
@@ -12,63 +86,29 @@ import '../../domain/usecases/cash_register_usecases.dart';
 class CashRegisterProvider extends ChangeNotifier {
   final CashRegisterUsecases _cashRegisterUsecases;
 
-  CashRegisterProvider(this._cashRegisterUsecases);
-
-  // ==========================================
-  // ESTADO DE CAJAS ACTIVAS
-  // ==========================================
-
-  List<CashRegister> _activeCashRegisters = [];
-  List<CashRegister> get activeCashRegisters => _activeCashRegisters;
-
-  bool _isLoadingActive = false;
-  bool get isLoadingActive => _isLoadingActive;
-
-  CashRegister? get currentActiveCashRegister => 
-      _activeCashRegisters.isNotEmpty ? _activeCashRegisters.first : null;
-
-  bool get hasActiveCashRegister => _activeCashRegisters.isNotEmpty;
-
-  // ==========================================
-  // ESTADO DEL HISTORIAL
-  // ==========================================
-
-  List<CashRegister> _cashRegisterHistory = [];
-  List<CashRegister> get cashRegisterHistory => _cashRegisterHistory;
-
-  bool _isLoadingHistory = false;
-  bool get isLoadingHistory => _isLoadingHistory;
-
-  String _historyFilter = 'Última semana';
-  String get historyFilter => _historyFilter;
-
-  // ==========================================
-  // ESTADO DE FORMULARIOS
-  // ==========================================
-
-  // Formulario de apertura
+  // Form controllers
   final TextEditingController openDescriptionController = TextEditingController();
   final TextEditingController initialCashController = TextEditingController();
-
-  // Formulario de cierre
   final TextEditingController finalBalanceController = TextEditingController();
-
-  // Formulario de movimientos
   final TextEditingController movementDescriptionController = TextEditingController();
   final TextEditingController movementAmountController = TextEditingController();
 
-  bool _isProcessing = false;
-  bool get isProcessing => _isProcessing;
+  // Immutable state
+  _CashRegisterState _state = _CashRegisterState();
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
+  // Public getters
+  List<CashRegister> get activeCashRegisters => _state.activeCashRegisters;
+  bool get isLoadingActive => _state.isLoadingActive;
+  List<CashRegister> get cashRegisterHistory => _state.cashRegisterHistory;
+  bool get isLoadingHistory => _state.isLoadingHistory;
+  String get historyFilter => _state.historyFilter;
+  String? get errorMessage => _state.errorMessage;
+  bool get isProcessing => _state.isProcessing;
+  List<String> get fixedDescriptions => _state.fixedDescriptions;
+  bool get hasActiveCashRegister => _state.hasActiveCashRegister;
+  CashRegister? get currentActiveCashRegister => _state.currentActiveCashRegister;
 
-  // ==========================================
-  // DESCRIPCIONES FIJAS
-  // ==========================================
-
-  List<String> _fixedDescriptions = [];
-  List<String> get fixedDescriptions => _fixedDescriptions;
+  CashRegisterProvider(this._cashRegisterUsecases);
 
   // ==========================================
   // MÉTODOS PÚBLICOS - CAJAS ACTIVAS
@@ -76,16 +116,16 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Carga las cajas registradoras activas
   Future<void> loadActiveCashRegisters(String accountId) async {
-    _isLoadingActive = true;
-    _errorMessage = null;
+    _state = _state.copyWith(isLoadingActive: true, errorMessage: null);
     notifyListeners();
 
     try {
-      _activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
     } finally {
-      _isLoadingActive = false;
+      _state = _state.copyWith(isLoadingActive: false);
       notifyListeners();
     }
   }
@@ -93,20 +133,19 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Abre una nueva caja registradora
   Future<bool> openCashRegister(String accountId, String cashierId) async {
     if (openDescriptionController.text.trim().isEmpty) {
-      _errorMessage = 'La descripción es obligatoria';
+      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
       notifyListeners();
       return false;
     }
 
     final initialCash = double.tryParse(initialCashController.text) ?? 0.0;
     if (initialCash < 0) {
-      _errorMessage = 'El monto inicial no puede ser negativo';
+      _state = _state.copyWith(errorMessage: 'El monto inicial no puede ser negativo');
       notifyListeners();
       return false;
     }
 
-    _isProcessing = true;
-    _errorMessage = null;
+    _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
@@ -118,17 +157,17 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Actualizar lista local
-      _activeCashRegisters = [newCashRegister];
+      _state = _state.copyWith(activeCashRegisters: [newCashRegister]);
       
       // Limpiar formulario
       _clearOpenForm();
       
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       return false;
     } finally {
-      _isProcessing = false;
+      _state = _state.copyWith(isProcessing: false);
       notifyListeners();
     }
   }
@@ -137,13 +176,12 @@ class CashRegisterProvider extends ChangeNotifier {
   Future<bool> closeCashRegister(String accountId, String cashRegisterId) async {
     final finalBalance = double.tryParse(finalBalanceController.text) ?? 0.0;
     if (finalBalance < 0) {
-      _errorMessage = 'El balance final no puede ser negativo';
+      _state = _state.copyWith(errorMessage: 'El balance final no puede ser negativo');
       notifyListeners();
       return false;
     }
 
-    _isProcessing = true;
-    _errorMessage = null;
+    _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
@@ -154,18 +192,20 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Actualizar listas locales
-      _activeCashRegisters.removeWhere((cr) => cr.id == cashRegisterId);
-      _cashRegisterHistory.insert(0, closedCashRegister);
+      _state = _state.copyWith(
+        activeCashRegisters: _state.activeCashRegisters.where((cr) => cr.id != cashRegisterId).toList(),
+        cashRegisterHistory: [closedCashRegister, ..._state.cashRegisterHistory],
+      );
       
       // Limpiar formulario
       _clearCloseForm();
       
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       return false;
     } finally {
-      _isProcessing = false;
+      _state = _state.copyWith(isProcessing: false);
       notifyListeners();
     }
   }
@@ -177,20 +217,19 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Registra un ingreso de caja
   Future<bool> addCashInflow(String accountId, String cashRegisterId, String userId) async {
     if (movementDescriptionController.text.trim().isEmpty) {
-      _errorMessage = 'La descripción es obligatoria';
+      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
       notifyListeners();
       return false;
     }
 
     final amount = double.tryParse(movementAmountController.text) ?? 0.0;
     if (amount <= 0) {
-      _errorMessage = 'El monto debe ser mayor a cero';
+      _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
       notifyListeners();
       return false;
     }
 
-    _isProcessing = true;
-    _errorMessage = null;
+    _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
@@ -203,7 +242,8 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Recargar las cajas activas
-      _activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
       
       // Limpiar formulario
       _clearMovementForm();
@@ -212,10 +252,10 @@ class CashRegisterProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       return false;
     } finally {
-      _isProcessing = false;
+      _state = _state.copyWith(isProcessing: false);
       notifyListeners();
     }
   }
@@ -223,20 +263,19 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Registra un egreso de caja
   Future<bool> addCashOutflow(String accountId, String cashRegisterId, String userId) async {
     if (movementDescriptionController.text.trim().isEmpty) {
-      _errorMessage = 'La descripción es obligatoria';
+      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
       notifyListeners();
       return false;
     }
 
     final amount = double.tryParse(movementAmountController.text) ?? 0.0;
     if (amount <= 0) {
-      _errorMessage = 'El monto debe ser mayor a cero';
+      _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
       notifyListeners();
       return false;
     }
 
-    _isProcessing = true;
-    _errorMessage = null;
+    _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
@@ -249,7 +288,8 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Recargar las cajas activas
-      _activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
       
       // Limpiar formulario
       _clearMovementForm();
@@ -258,10 +298,10 @@ class CashRegisterProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       return false;
     } finally {
-      _isProcessing = false;
+      _state = _state.copyWith(isProcessing: false);
       notifyListeners();
     }
   }
@@ -274,7 +314,7 @@ class CashRegisterProvider extends ChangeNotifier {
     int itemCount = 1,
   }) async {
     if (!hasActiveCashRegister) {
-      _errorMessage = 'No hay una caja registradora activa';
+      _state = _state.copyWith(errorMessage: 'No hay una caja registradora activa');
       notifyListeners();
       return false;
     }
@@ -293,7 +333,7 @@ class CashRegisterProvider extends ChangeNotifier {
       
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return false;
     }
@@ -305,38 +345,39 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Carga el historial de arqueos según el filtro seleccionado
   Future<void> loadCashRegisterHistory(String accountId) async {
-    _isLoadingHistory = true;
-    _errorMessage = null;
+    _state = _state.copyWith(isLoadingHistory: true, errorMessage: null);
     notifyListeners();
 
     try {
-      switch (_historyFilter) {
+      List<CashRegister> history;
+      switch (_state.historyFilter) {
         case 'Última semana':
-          _cashRegisterHistory = await _cashRegisterUsecases.getLastWeekCashRegisters(accountId);
+          history = await _cashRegisterUsecases.getLastWeekCashRegisters(accountId);
           break;
         case 'Último mes':
-          _cashRegisterHistory = await _cashRegisterUsecases.getLastMonthCashRegisters(accountId);
+          history = await _cashRegisterUsecases.getLastMonthCashRegisters(accountId);
           break;
         case 'Mes anterior':
-          _cashRegisterHistory = await _cashRegisterUsecases.getPreviousMonthCashRegisters(accountId);
+          history = await _cashRegisterUsecases.getPreviousMonthCashRegisters(accountId);
           break;
         case 'Hoy':
-          _cashRegisterHistory = await _cashRegisterUsecases.getTodayCashRegisters(accountId);
+          history = await _cashRegisterUsecases.getTodayCashRegisters(accountId);
           break;
         default:
-          _cashRegisterHistory = await _cashRegisterUsecases.getCashRegisterHistory(accountId);
+          history = await _cashRegisterUsecases.getCashRegisterHistory(accountId);
       }
+      _state = _state.copyWith(cashRegisterHistory: history);
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
     } finally {
-      _isLoadingHistory = false;
+      _state = _state.copyWith(isLoadingHistory: false);
       notifyListeners();
     }
   }
 
   /// Cambia el filtro del historial
   void setHistoryFilter(String filter) {
-    _historyFilter = filter;
+    _state = _state.copyWith(historyFilter: filter);
     notifyListeners();
   }
 
@@ -347,7 +388,8 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Carga las descripciones fijas
   Future<void> loadFixedDescriptions(String accountId) async {
     try {
-      _fixedDescriptions = await _cashRegisterUsecases.getFixedDescriptions(accountId);
+      final descriptions = await _cashRegisterUsecases.getFixedDescriptions(accountId);
+      _state = _state.copyWith(fixedDescriptions: descriptions);
       notifyListeners();
     } catch (e) {
       // Silenciosamente fallar para no interrumpir la UI
@@ -367,7 +409,7 @@ class CashRegisterProvider extends ChangeNotifier {
       
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return false;
     }
@@ -382,7 +424,7 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       return await _cashRegisterUsecases.getDailySummary(accountId);
     } catch (e) {
-      _errorMessage = e.toString();
+      _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return null;
     }
@@ -390,7 +432,7 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Limpia todos los mensajes de error
   void clearError() {
-    _errorMessage = null;
+    _state = _state.copyWith(errorMessage: null);
     notifyListeners();
   }
 

@@ -382,11 +382,19 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
-  PreferredSizeWidget appbar(
-      {required BuildContext buildContext, required SellProvider provider}) {
+  PreferredSizeWidget appbar({required BuildContext buildContext, required SellProvider provider}) {
+
+    // provider
     final catalogueProvider = Provider.of<CatalogueProvider>(buildContext);
+    // values
     final bool isLoading = catalogueProvider.isLoading;
     final bool isEmpty = !isLoading && catalogueProvider.products.isEmpty;
+    String textHintSearchButton = isLoading
+        ? 'Cargando...'
+        : isEmpty
+            ? isMobile(buildContext)?'Sin Productos':'No hay productos disponibles'
+            : isMobile(buildContext)?'Buscar':'Buscar productos';
+    
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
     return AppBar(
       toolbarHeight: 70,
@@ -405,7 +413,7 @@ class _SellPageState extends State<SellPage> {
               right: 12), // Espacio adicional desde la barra de estado
           child: Row(
             children: [
-              // Avatar con padding personalizado
+              // avatar : avatar de usuario y botón de abrir drawer
               Builder(
                 builder: (context) => GestureDetector(
                   onTap: () => Scaffold.of(context).openDrawer(),
@@ -416,7 +424,7 @@ class _SellPageState extends State<SellPage> {
                   ),
                 ),
               ),
-              // Botón de búsqueda expandido
+              // button : busqueda de productos
               Padding(
                 padding: const EdgeInsets.only(left: 20.0, right: 8.0),
                 child: ComponentApp().searchButtonAppBar(
@@ -435,11 +443,7 @@ class _SellPageState extends State<SellPage> {
                                   .colorScheme
                                   .primaryContainer))
                       : Icon(Icons.search_rounded),
-                  label: isLoading
-                      ? 'Cargando...'
-                      : isEmpty
-                          ? 'No hay productos disponibles'
-                          : 'Buscar productos',
+                  label: textHintSearchButton,
                   color: Theme.of(buildContext).colorScheme.primaryContainer,
                   textColor:
                       Theme.of(buildContext).colorScheme.onPrimaryContainer,
@@ -448,7 +452,7 @@ class _SellPageState extends State<SellPage> {
                 ),
               ),
               const Spacer(),
-              // Acciones del AppBar
+              // view : botones de la barra de acciones
               Row(
                 children: [
                   // button : botón de estado de la impresora
@@ -470,33 +474,7 @@ class _SellPageState extends State<SellPage> {
                         iconColor: isConnected
                             ? Colors.green.shade700
                             : Colors.orange.shade500,
-                      )
-                          .animate(
-                            // Añadir animación sutil cuando está conectada
-                            effects: isConnected
-                                ? [
-                                    const ScaleEffect(
-                                      duration: Duration(milliseconds: 1500),
-                                      curve: Curves.easeInOut,
-                                      begin: Offset(1.0, 1.0),
-                                      end: Offset(1.05, 1.05),
-                                    ),
-                                  ]
-                                : [],
-                          )
-                          .animate(
-                            delay: const Duration(milliseconds: 1500),
-                            effects: isConnected
-                                ? [
-                                    const ScaleEffect(
-                                      duration: Duration(milliseconds: 1500),
-                                      curve: Curves.easeInOut,
-                                      begin: Offset(1.05, 1.05),
-                                      end: Offset(1.0, 1.0),
-                                    ),
-                                  ]
-                                : [],
-                          );
+                      );
                     },
                   ),
                   

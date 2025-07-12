@@ -127,7 +127,7 @@ class AppBarButtonCircle extends StatelessWidget {
     final bool hasText = text != null && text!.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
+      padding: const EdgeInsets.only(right: 4.0),
       child: Tooltip(
         message: tooltip,
         child: TextButton(
@@ -135,11 +135,9 @@ class AppBarButtonCircle extends StatelessWidget {
           style: TextButton.styleFrom(
             backgroundColor: effectiveBackgroundColor,
             shape: hasText ? const StadiumBorder() : const CircleBorder(),
-            padding: hasText 
-              ? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0)
-              : const EdgeInsets.all(16.0),
-            minimumSize: hasText ? const Size(0, 0) : const Size(52, 52),
-            maximumSize: hasText ? Size.infinite : const Size(52, 52),
+            padding: const EdgeInsets.all(12.0),
+            minimumSize: const Size(48, 48),
+            maximumSize: hasText ? Size.infinite : const Size(48, 48),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Row(
@@ -151,12 +149,16 @@ class AppBarButtonCircle extends StatelessWidget {
                 size: 20,
               ),
               if (hasText) ...[
-                const SizedBox(width: 8.0),
-                Text(
-                  text!,
-                  style: TextStyle(
-                    color: effectiveIconColor,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 6.0),
+                Flexible(
+                  child: Text(
+                    text!,
+                    style: TextStyle(
+                      color: effectiveIconColor,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

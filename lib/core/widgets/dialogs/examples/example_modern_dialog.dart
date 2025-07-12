@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'base_dialog.dart';
-import 'dialog_components.dart';
-import 'standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 
 /// Ejemplo de diálogo modernizado usando los nuevos componentes estándar
 /// 

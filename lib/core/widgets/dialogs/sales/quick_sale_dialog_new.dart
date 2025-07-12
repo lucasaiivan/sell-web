@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/widgets/dialogs/base_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/dialog_components.dart';
-import 'package:sellweb/core/widgets/dialogs/standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 
 /// Diálogo modernizado para venta rápida siguiendo Material Design 3

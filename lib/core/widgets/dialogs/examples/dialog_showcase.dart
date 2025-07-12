@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/core/widgets/dialogs/examples/example_modern_dialog.dart';
 
 /// Widget de demostración que muestra todos los componentes de diálogo
 /// implementados según Material Design 3

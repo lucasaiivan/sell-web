@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
-import 'package:sellweb/core/widgets/dialogs/base_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/dialog_components.dart';
-import 'package:sellweb/core/widgets/dialogs/standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
 
 /// Diálogo modernizado para opciones del ticket siguiendo Material Design 3

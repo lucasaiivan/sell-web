@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import '../../../../domain/entities/cash_register_model.dart';
-import '../base_dialog.dart';
-import '../dialog_components.dart';
 import '../../../../presentation/providers/auth_provider.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';

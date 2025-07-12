@@ -3,30 +3,73 @@
 ## 📋 Propósito
 Sistema completo de diálogos que implementa Material Design 3 con componentes reutilizables y consistencia visual en toda la aplicación. Sigue los principios de Clean Architecture y proporciona una experiencia de usuario cohesiva.
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ Estructura Organizada por Función
 
-### **Componentes Base**
-- `base_dialog.dart` - **NUEVO** - Diálogo base con estructura estándar MD3
-- `standard_dialogs.dart` - **NUEVO** - Diálogos predefinidos (confirmación, error, info, carga)
-- `dialog_components.dart` - **NUEVO** - Componentes UI reutilizables para diálogos complejos
-- `example_modern_dialog.dart` - **NUEVO** - Ejemplos de implementación y migración
+### **📁 base/**
+Componentes fundamentales del sistema de diálogos
+- `base_dialog.dart` - Diálogo base con estructura estándar MD3
+- `standard_dialogs.dart` - Diálogos predefinidos (confirmación, error, info, carga)
+
+### **📁 components/**
+Componentes UI reutilizables para construir diálogos complejos
+- `dialog_components.dart` - Biblioteca de componentes estandarizados
+
+### **📁 catalogue/**
+Diálogos relacionados con gestión del catálogo de productos
+- `add_product_dialog.dart` - Agregar productos al catálogo
+- `add_product_dialog_new.dart` - Versión modernizada
+- `product_edit_dialog.dart` - Editar productos existentes
+- `product_edit_dialog_new.dart` - Versión modernizada
+
+### **📁 sales/**
+Diálogos del proceso de ventas y caja registradora
+- `quick_sale_dialog.dart` - Venta rápida por monto fijo
+- `cash_register_dialog.dart` - Gestión de caja registradora
+
+### **📁 tickets/**
+Diálogos de gestión y visualización de tickets
+- `last_ticket_dialog.dart` - Visualización del último ticket
+- `ticket_options_dialog.dart` - Opciones de ticket (PDF, impresión, compartir)
+- `ticket_options_dialog_new.dart` - Versión modernizada
+
+### **📁 configuration/**
+Diálogos de configuración del sistema
+- `printer_config_dialog.dart` - Configuración de impresora térmica
+
+### **📁 examples/**
+Diálogos de ejemplo y demostración
+- `example_modern_dialog.dart` - Ejemplos de implementación y migración
+- `dialog_showcase.dart` - Showcase completo de componentes
 
 ### **Guías y Documentación**
-- `DIALOG_DESIGN_GUIDE.md` - **NUEVO** - Guía completa de diseño Material Design 3
+- `DIALOG_DESIGN_GUIDE.md` - Guía completa de diseño Material Design 3
+- `MIGRATION_COMPLETE.md` - ✅ Reporte de migración legacy completada
 - `README.md` - Este archivo - Documentación técnica completa
-
-### **Diálogos Específicos** (Legacy - En proceso de migración)
-- `add_product_dialog.dart` - Diálogo para agregar/crear productos al catálogo
-- `product_edit_dialog.dart` - Diálogo de edición de productos existentes
-- `quick_sale_dialog.dart` - Diálogo de venta rápida por monto fijo
-- `ticket_options_dialog.dart` - Opciones de ticket (PDF, impresión, compartir)
-- `printer_config_dialog.dart` - Configuración de impresora térmica
-- `last_ticket_dialog.dart` - Visualización y reimpresión del último ticket
-
-### **Archivo de Exports**
 - `dialogs.dart` - Centraliza todas las exportaciones y funciones helper
 
-## � Sistema de Diseño Material Design 3
+## 🎯 Uso Rápido
+
+### **Importación Simple**
+```dart
+// Importar todos los diálogos
+import 'package:sellweb/core/widgets/dialogs/dialogs.dart';
+
+// O importar específicos por carpeta
+import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
+```
+
+### **Estructura por Función - Navegación Rápida**
+```
+dialogs/
+├── base/              # 🔧 Componentes fundamentales
+├── components/        # 🎨 UI reutilizable  
+├── catalogue/         # 📦 Gestión de productos
+├── sales/            # 💰 Proceso de ventas
+├── tickets/          # 🧾 Gestión de tickets
+├── configuration/    # ⚙️ Configuración del sistema
+└── examples/         # 💡 Ejemplos y testing
+```
 
 ### **Nuevos Estándares Implementados**
 

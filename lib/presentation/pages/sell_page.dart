@@ -1,9 +1,8 @@
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
-import 'package:sellweb/core/widgets/buttons/app_bar_button.dart';
 import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog_new.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
 import 'package:sellweb/presentation/widgets/cash_register_status_widget.dart';
@@ -18,7 +17,8 @@ import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
-import 'package:sellweb/core/widgets/component_app_legacy.dart';
+import 'package:sellweb/core/widgets/buttons/buttons.dart';
+import 'package:sellweb/core/widgets/ui/ui.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
@@ -417,8 +417,8 @@ class _SellPageState extends State<SellPage> {
               Builder(
                 builder: (context) => GestureDetector(
                   onTap: () => Scaffold.of(context).openDrawer(),
-                  child: ComponentApp().userAvatarCircle(
-                    urlImage: provider.profileAccountSelected.image,
+                  child: UserAvatar(
+                    imageUrl: provider.profileAccountSelected.image,
                     text: provider.profileAccountSelected.name,
                     radius: 18,
                   ),
@@ -427,9 +427,8 @@ class _SellPageState extends State<SellPage> {
               // button : busqueda de productos
               Padding(
                 padding: const EdgeInsets.only(left: 20.0, right: 8.0),
-                child: ComponentApp().searchButtonAppBar(
+                child: SearchButton(
                   height: 40,
-                  context: buildContext,
                   onPressed: (isLoading || isEmpty)
                       ? () {}
                       : () => showModalBottomSheetSelectProducts(buildContext),
@@ -563,8 +562,8 @@ class _SellPageState extends State<SellPage> {
             ),
             // listitle : perfil de negocio, nombre de la cuenta seleccionada y avatar
             ListTile(
-              leading: ComponentApp().userAvatarCircle(
-                  urlImage: sellProvider.profileAccountSelected.image,
+              leading: UserAvatar(
+                  imageUrl: sellProvider.profileAccountSelected.image,
                   text: sellProvider.profileAccountSelected.name),
               title: Text(sellProvider.profileAccountSelected.name,
                   style: const TextStyle(fontSize: 18)),
@@ -633,20 +632,17 @@ class _SellPageState extends State<SellPage> {
     return Row(
       children: [
         if (showClose)
-          ComponentApp()
-              .floatingActionButtonApp(
+          AppFloatingActionButton(
                 onTap: () {
                   provider.setTicketView(false);
                 },
-                widthInfinity: true,
                 icon: Icons.close_rounded,
                 buttonColor: Colors.grey.withValues(alpha: 0.8),
               )
               .animate(delay: const Duration(milliseconds: 0))
               .fade(),
         if (showClose) const SizedBox(width: 8),
-        ComponentApp()
-            .floatingActionButtonApp(
+        AppFloatingActionButton(
               onTap: () async {
                 // Mostrar confirmación de venta completada inmediatamente
                 setState(() {
@@ -868,6 +864,7 @@ class _SellPageState extends State<SellPage> {
               },
               icon: Icons.check_circle_outline_rounded,
               text: confirmarText,
+              extended: true,
             )
             .animate(delay: const Duration(milliseconds: 0))
             .fade(),
@@ -879,8 +876,7 @@ class _SellPageState extends State<SellPage> {
   Widget floatingActionButtonBody({required SellProvider sellProvider}) {
     return Row(
       children: [
-        ComponentApp()
-            .floatingActionButtonApp(
+        AppFloatingActionButton(
               onTap: () => showQuickSaleDialog(context, provider: sellProvider),
               icon: Icons.flash_on_rounded,
               buttonColor: Colors.amber,
@@ -890,7 +886,7 @@ class _SellPageState extends State<SellPage> {
         const SizedBox(width: 8),
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
-            ? ComponentApp().floatingActionButtonApp(
+            ? AppFloatingActionButton(
                 onTap: () {
                   sellProvider.setTicketView(true);
                 },
@@ -898,6 +894,7 @@ class _SellPageState extends State<SellPage> {
                     'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.ticket.getTotalPrice)}',
                 buttonColor:
                     sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
+                extended: true,
               )
             : const SizedBox.shrink(),
       ],
@@ -1928,7 +1925,7 @@ class _SellPageState extends State<SellPage> {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         // imagen : imagen del producto cuadrada con un borde redondeado utilizando [cached_network_image]
-        leading: ComponentApp().imageProduct(
+        leading: ProductImage(
           imageUrl: product.image,
           size: 50,
         ),
@@ -1994,8 +1991,7 @@ class _SellPageState extends State<SellPage> {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         hoverColor: colorScheme.primaryContainer.withValues(alpha: 0.12),
-      ),
-    );
+      ));
   }
 }
 
@@ -2133,7 +2129,7 @@ class _ProductoItemState extends State<ProductoItem> {
             value: widget.producto.salePrice * widget.producto.quantity);
 
     return widget.producto.image != ""
-        ? ComponentApp().imageProduct(imageUrl: widget.producto.image)
+        ? ProductImage(imageUrl: widget.producto.image)
         : Container(
             color: Colors.grey[100],
             child: Center(

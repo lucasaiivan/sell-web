@@ -6,7 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/component_app_legacy.dart';
+import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
@@ -185,10 +185,9 @@ class _LoginFormState extends State<_LoginForm> {
                     ),
                   ),
                   // ElevatedButton : Iniciar sesión con Google
-                  ComponentApp().button(
+                  AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
-                    context: context,
                     text: "INICIAR SESIÓN CON GOOGLE",
                     onPressed: _acceptPolicy
                         ? () async {
@@ -197,11 +196,10 @@ class _LoginFormState extends State<_LoginForm> {
                         : null,
                   ),
                   // ElevatedButton : Iniciar como invitado
-                  ComponentApp().button(
+                  AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
-                    context: context,
-                    colorButton: Colors.blueGrey,
+                    backgroundColor: Colors.blueGrey,
                     text: "ENTRAR COMO INVITADO",
                     onPressed: () async {
                       await widget.authProvider.signInAsGuest();

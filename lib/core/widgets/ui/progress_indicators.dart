@@ -24,8 +24,10 @@ class AppLinearProgressBar extends StatelessWidget
     return LinearProgressIndicator(
       minHeight: minHeight,
       value: value,
-      backgroundColor:
-          backgroundColor ?? colorScheme.surface.withValues(alpha: 0.3),
+      backgroundColor: backgroundColor ?? 
+          (theme.brightness == Brightness.dark
+              ? Colors.white.withValues(alpha: 0.3)
+              : colorScheme.surface.withValues(alpha: 0.3)),
       valueColor: AlwaysStoppedAnimation<Color>(
         color ?? colorScheme.primary,
       ),
@@ -34,4 +36,13 @@ class AppLinearProgressBar extends StatelessWidget
 
   @override
   Size get preferredSize => Size.fromHeight(minHeight);
+
+  /// Factory method para crear una barra compatible con el legacy
+  /// Mantiene la misma API que el método original de ComponentApp
+  factory AppLinearProgressBar.legacy({Color color = Colors.blue}) {
+    return AppLinearProgressBar(
+      color: color,
+      minHeight: 6.0,
+    );
+  }
 }

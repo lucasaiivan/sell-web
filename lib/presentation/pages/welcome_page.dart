@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/component_app_legacy.dart';
+import 'package:sellweb/core/widgets/ui/ui.dart';
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
@@ -59,13 +59,13 @@ class WelcomePage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: ComponentApp().userAvatarCircle(
-                    urlImage: account.image,
+                  child: UserAvatar(
+                    imageUrl: account.image,
                     text: account.name.isNotEmpty
                         ? account.name[0].toUpperCase()
                         : '',
                     radius: 24,
-                    background: colorScheme.primaryContainer,
+                    backgroundColor: colorScheme.primaryContainer,
                   ),
                 ),
                 const SizedBox(width: 16),

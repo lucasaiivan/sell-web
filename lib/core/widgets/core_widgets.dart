@@ -18,7 +18,3 @@ export 'media/media_widgets.dart';
 
 // 📢 Feedback y notificaciones
 export 'feedback/feedback.dart';
-
-// Clase legacy para compatibilidad hacia atrás
-// Se mantendrá por compatibilidad pero se recomienda usar las nuevas exportaciones
-export 'component_app_legacy.dart';

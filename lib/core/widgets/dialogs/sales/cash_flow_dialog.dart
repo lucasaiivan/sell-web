@@ -57,7 +57,8 @@ class CashFlowDialog extends StatelessWidget {
                   color: buttonColor,
                 ),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 16),
             TextField(

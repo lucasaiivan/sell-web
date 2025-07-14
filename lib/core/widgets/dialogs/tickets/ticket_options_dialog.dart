@@ -42,7 +42,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
     setState(() {
       _printerConnected = printerService.isConnected;
-      
+
       // Establecer valores por defecto
       if (_printerConnected) {
         _printDirectly = true;
@@ -55,7 +55,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: 'Opciones del Ticket',
       icon: Icons.receipt_long_rounded,
@@ -100,43 +100,43 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
               _buildOptionTile(
                 icon: Icons.print_rounded,
                 title: 'Imprimir Directamente',
-                subtitle: _printerConnected 
+                subtitle: _printerConnected
                     ? 'Enviar a impresora térmica conectada'
                     : 'No hay impresora conectada',
                 value: _printDirectly && _printerConnected,
-                onChanged: _printerConnected 
+                onChanged: _printerConnected
                     ? (value) => setState(() => _printDirectly = value ?? false)
                     : null,
                 iconColor: _printerConnected ? Colors.green : Colors.grey,
                 enabled: _printerConnected,
               ),
-
               _buildOptionTile(
                 icon: Icons.download_rounded,
                 title: 'Descargar PDF',
                 subtitle: 'Guardar ticket en formato PDF',
                 value: _downloadPdf,
-                onChanged: (value) => setState(() => _downloadPdf = value ?? false),
+                onChanged: (value) =>
+                    setState(() => _downloadPdf = value ?? false),
                 iconColor: Colors.blue,
                 enabled: true,
               ),
-
               _buildOptionTile(
                 icon: Icons.print_outlined,
                 title: 'Imprimir en Navegador',
                 subtitle: 'Abrir administrador de impresión con PDF',
                 value: _printBrowser,
-                onChanged: (value) => setState(() => _printBrowser = value ?? false),
+                onChanged: (value) =>
+                    setState(() => _printBrowser = value ?? false),
                 iconColor: Colors.purple,
                 enabled: true,
               ),
-
               _buildOptionTile(
                 icon: Icons.share_rounded,
                 title: 'Compartir Ticket',
                 subtitle: 'Generar imagen para compartir (próximamente)',
                 value: _shareTicket,
-                onChanged: (value) => setState(() => _shareTicket = value ?? false),
+                onChanged: (value) =>
+                    setState(() => _shareTicket = value ?? false),
                 iconColor: Colors.orange,
                 enabled: false, // Temporalmente deshabilitado
               ),
@@ -196,12 +196,12 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
   Widget _buildPrinterStatus() {
     final theme = Theme.of(context);
-    
+
     return DialogComponents.infoSection(
       context: context,
       title: 'Estado de la Impresora',
       icon: Icons.print_rounded,
-      backgroundColor: _printerConnected 
+      backgroundColor: _printerConnected
           ? Colors.green.withValues(alpha: 0.1)
           : Colors.orange.withValues(alpha: 0.1),
       content: Row(
@@ -209,13 +209,15 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _printerConnected 
+              color: _printerConnected
                   ? Colors.green.withValues(alpha: 0.2)
                   : Colors.orange.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              _printerConnected ? Icons.check_circle_rounded : Icons.warning_rounded,
+              _printerConnected
+                  ? Icons.check_circle_rounded
+                  : Icons.warning_rounded,
               color: _printerConnected ? Colors.green[700] : Colors.orange[700],
               size: 20,
             ),
@@ -229,11 +231,13 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
                   _printerConnected ? 'Impresora Conectada' : 'Sin Impresora',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: _printerConnected ? Colors.green[700] : Colors.orange[700],
+                    color: _printerConnected
+                        ? Colors.green[700]
+                        : Colors.orange[700],
                   ),
                 ),
                 Text(
-                  _printerConnected 
+                  _printerConnected
                       ? 'Lista para imprimir tickets'
                       : 'Usa otras opciones para procesar el ticket',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -258,10 +262,10 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     required bool enabled,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
-        color: enabled && value 
+        color: enabled && value
             ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
             : null,
         borderRadius: BorderRadius.circular(8),
@@ -308,8 +312,8 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
   }
 
   bool _canProcess() {
-    return !_isProcessing && 
-           (_downloadPdf || _printDirectly || _shareTicket || _printBrowser);
+    return !_isProcessing &&
+        (_downloadPdf || _printDirectly || _shareTicket || _printBrowser);
   }
 
   Future<void> _processTicketOptions() async {
@@ -325,7 +329,8 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         return {
           'quantity': product['quantity'],
           'description': product['description'],
-          'price': '\$${(product['salePrice'] * product['quantity']).toStringAsFixed(2)}',
+          'price':
+              '\$${(product['salePrice'] * product['quantity']).toStringAsFixed(2)}',
         };
       }).toList();
 
@@ -352,7 +357,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           products: products,
           total: widget.ticket.getTotalPrice,
           paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0 ? widget.ticket.valueReceived : null,
+          cashReceived: widget.ticket.valueReceived > 0
+              ? widget.ticket.valueReceived
+              : null,
           change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
               ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
               : null,
@@ -371,7 +378,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           products: products,
           total: widget.ticket.getTotalPrice,
           paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0 ? widget.ticket.valueReceived : null,
+          cashReceived: widget.ticket.valueReceived > 0
+              ? widget.ticket.valueReceived
+              : null,
           change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
               ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
               : null,
@@ -391,7 +400,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
           products: products,
           total: widget.ticket.getTotalPrice,
           paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0 ? widget.ticket.valueReceived : null,
+          cashReceived: widget.ticket.valueReceived > 0
+              ? widget.ticket.valueReceived
+              : null,
           change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
               ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
               : null,
@@ -432,7 +443,6 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
         widget.onComplete();
       }
-      
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop();

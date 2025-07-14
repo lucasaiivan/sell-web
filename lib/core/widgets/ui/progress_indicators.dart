@@ -24,7 +24,7 @@ class AppLinearProgressBar extends StatelessWidget
     return LinearProgressIndicator(
       minHeight: minHeight,
       value: value,
-      backgroundColor: backgroundColor ?? 
+      backgroundColor: backgroundColor ??
           (theme.brightness == Brightness.dark
               ? Colors.white.withValues(alpha: 0.3)
               : colorScheme.surface.withValues(alpha: 0.3)),

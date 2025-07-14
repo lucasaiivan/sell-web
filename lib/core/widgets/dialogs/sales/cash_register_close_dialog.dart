@@ -47,14 +47,17 @@ class CashRegisterCloseDialog extends StatelessWidget {
                   hintText: '0.00',
                   prefixIcon: Icon(Icons.attach_money),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 16),
               if (cashRegister.getDifference != 0) ...[
                 Text(
                   'Diferencia: \$${cashRegister.getDifference.toStringAsFixed(2)}',
                   style: TextStyle(
-                    color: cashRegister.getDifference < 0 ? Colors.red : Colors.green,
+                    color: cashRegister.getDifference < 0
+                        ? Colors.red
+                        : Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -108,12 +111,17 @@ class CashRegisterCloseDialog extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            _buildSummaryRow('Monto Inicial:', '\$${cashRegister.initialCash.toStringAsFixed(2)}'),
+            _buildSummaryRow('Monto Inicial:',
+                '\$${cashRegister.initialCash.toStringAsFixed(2)}'),
             _buildSummaryRow('Ventas:', cashRegister.sales.toString()),
-            _buildSummaryRow('Facturación:', '\$${cashRegister.billing.toStringAsFixed(2)}'),
-            _buildSummaryRow('Descuentos:', '\$${cashRegister.discount.toStringAsFixed(2)}'),
-            _buildSummaryRow('Ingresos:', '\$${cashRegister.cashInFlow.toStringAsFixed(2)}'),
-            _buildSummaryRow('Egresos:', '\$${cashRegister.cashOutFlow.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+                'Facturación:', '\$${cashRegister.billing.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+                'Descuentos:', '\$${cashRegister.discount.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+                'Ingresos:', '\$${cashRegister.cashInFlow.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+                'Egresos:', '\$${cashRegister.cashOutFlow.toStringAsFixed(2)}'),
             const Divider(),
             _buildSummaryRow(
               'Balance Esperado:',

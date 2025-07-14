@@ -13,7 +13,7 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -61,7 +61,7 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -74,7 +74,7 @@ class DialogComponents {
         children: items.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
-          
+
           return Column(
             children: [
               Padding(
@@ -105,7 +105,7 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,9 +131,10 @@ class DialogComponents {
           flex: 3,
           child: Text(
             value,
-            style: valueStyle ?? theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: valueStyle ??
+                theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
             textAlign: TextAlign.end,
           ),
         ),
@@ -151,7 +152,7 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    
+
     return FilledButton.icon(
       onPressed: isLoading ? null : onPressed,
       icon: isLoading
@@ -166,11 +167,10 @@ class DialogComponents {
           : Icon(icon ?? Icons.check_rounded),
       label: Text(text),
       style: FilledButton.styleFrom(
-        backgroundColor: isDestructive 
-            ? theme.colorScheme.error 
-            : theme.colorScheme.primary,
-        foregroundColor: isDestructive 
-            ? theme.colorScheme.onError 
+        backgroundColor:
+            isDestructive ? theme.colorScheme.error : theme.colorScheme.primary,
+        foregroundColor: isDestructive
+            ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
         padding: const EdgeInsets.symmetric(
           horizontal: 24,
@@ -226,7 +226,7 @@ class DialogComponents {
         labelText: label,
         hintText: hint,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-        suffixIcon: suffixIcon != null 
+        suffixIcon: suffixIcon != null
             ? IconButton(
                 onPressed: onSuffixPressed,
                 icon: Icon(suffixIcon),
@@ -247,7 +247,7 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -310,7 +310,7 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 12,
@@ -345,10 +345,10 @@ class DialogComponents {
 
   /// Espaciado estándar entre secciones
   static const Widget sectionSpacing = SizedBox(height: 24);
-  
+
   /// Espaciado pequeño entre elementos
   static const Widget itemSpacing = SizedBox(height: 12);
-  
+
   /// Espaciado mínimo entre elementos relacionados
   static const Widget minSpacing = SizedBox(height: 8);
 }

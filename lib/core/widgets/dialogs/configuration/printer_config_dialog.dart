@@ -44,12 +44,13 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
     // Cargar configuración actual
     _serverHostController.text = _printerService.serverHost;
     _serverPortController.text = _printerService.serverPort.toString();
-    
+
     setState(() {
       _isConnected = _printerService.isConnected;
       if (_isConnected) {
         final details = _printerService.detailedConnectionInfo;
-        _connectionInfo = 'Conectado: ${details['printerName'] ?? 'Servidor HTTP Local'}';
+        _connectionInfo =
+            'Conectado: ${details['printerName'] ?? 'Servidor HTTP Local'}';
       }
     });
   }
@@ -91,7 +92,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           context: context,
           text: _isConnected ? 'Desconectar' : 'Cancelar',
           icon: _isConnected ? Icons.link_off_rounded : Icons.cancel_outlined,
-          onPressed: _isConnecting ? null : (_isConnected ? _disconnectPrinter : _cancel),
+          onPressed: _isConnecting
+              ? null
+              : (_isConnected ? _disconnectPrinter : _cancel),
         ),
         DialogComponents.primaryActionButton(
           context: context,
@@ -106,12 +109,12 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Widget _buildConnectionStatus() {
     final theme = Theme.of(context);
-    
+
     return DialogComponents.infoSection(
       context: context,
       title: 'Estado de la Impresora',
       icon: Icons.print_rounded,
-      backgroundColor: _isConnected 
+      backgroundColor: _isConnected
           ? Colors.green.withValues(alpha: 0.1)
           : Colors.orange.withValues(alpha: 0.1),
       content: Row(
@@ -119,7 +122,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _isConnected 
+              color: _isConnected
                   ? Colors.green.withValues(alpha: 0.2)
                   : Colors.orange.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
@@ -139,13 +142,15 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                   _isConnected ? 'Impresora Conectada' : 'Sin Conexión',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: _isConnected ? Colors.green[700] : Colors.orange[700],
+                    color:
+                        _isConnected ? Colors.green[700] : Colors.orange[700],
                   ),
                 ),
                 Text(
-                  _connectionInfo ?? (_isConnected 
-                      ? 'Impresora lista para usar'
-                      : 'Configure la conexión con el servidor'),
+                  _connectionInfo ??
+                      (_isConnected
+                          ? 'Impresora lista para usar'
+                          : 'Configure la conexión con el servidor'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -160,7 +165,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Widget _buildServerConfiguration() {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -171,7 +176,6 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           ),
         ),
         DialogComponents.itemSpacing,
-        
         Row(
           children: [
             Expanded(
@@ -220,7 +224,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Widget _buildWindowsConfiguration() {
     final theme = Theme.of(context);
-    
+
     return ExpansionTile(
       title: const Text('Configurar impresora en Windows'),
       subtitle: const Text('Descarga y configura el programa para Windows'),
@@ -231,7 +235,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
       ),
       children: [
         const SizedBox(height: 12),
-        
+
         // Información explicativa
         Container(
           padding: const EdgeInsets.all(16),
@@ -270,14 +274,16 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Lista de pasos
-              ...['1. Descarga el programa SellPOS Desktop para Windows',
-                  '2. Instala y ejecuta la aplicación',
-                  '3. Configura tu impresora térmica en el programa',
-                  '4. El servidor se iniciará automáticamente en puerto 8080',
-                  '5. Regresa aquí y conecta usando localhost:8080'].map((step) => 
-                Padding(
+              ...[
+                '1. Descarga el programa SellPOS Desktop para Windows',
+                '2. Instala y ejecuta la aplicación',
+                '3. Configura tu impresora térmica en el programa',
+                '4. El servidor se iniciará automáticamente en puerto 8080',
+                '5. Regresa aquí y conecta usando localhost:8080'
+              ].map(
+                (step) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,17 +306,18 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Botón de descarga
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     // TODO: Reemplazar con la URL real de descarga
-                    const downloadUrl = 'https://github.com/lucasaiivan/sellpos/releases/latest';
-                    
+                    const downloadUrl =
+                        'https://github.com/lucasaiivan/sellpos/releases/latest';
+
                     // Abrir URL en una nueva pestaña
                     if (kIsWeb) {
                       html.window.open(downloadUrl, '_blank');
@@ -329,16 +336,17 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Enlace alternativo
               Center(
                 child: TextButton.icon(
@@ -365,7 +373,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 8),
       ],
     );
@@ -373,7 +381,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Widget _buildErrorMessage() {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -418,7 +426,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Future<bool> _testServerConnection() async {
     try {
-      final testUrl = 'http://${_serverHostController.text.trim()}:${_serverPortController.text.trim()}/status';
+      final testUrl =
+          'http://${_serverHostController.text.trim()}:${_serverPortController.text.trim()}/status';
       final response = await http.get(
         Uri.parse(testUrl),
         headers: {'Accept': 'application/json'},
@@ -447,7 +456,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
       final serverAvailable = await _testServerConnection();
       if (!serverAvailable) {
         setState(() {
-          _errorMessage = 'No se pudo conectar con el servidor HTTP. Verifique que esté ejecutándose y que la dirección y puerto sean correctos.';
+          _errorMessage =
+              'No se pudo conectar con el servidor HTTP. Verifique que esté ejecutándose y que la dirección y puerto sean correctos.';
           _isConnecting = false;
         });
         return;
@@ -480,10 +490,10 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
         }
       } else {
         setState(() {
-          _errorMessage = _printerService.lastError ?? 'Error desconocido al configurar la impresora.';
+          _errorMessage = _printerService.lastError ??
+              'Error desconocido al configurar la impresora.';
         });
       }
-
     } catch (e) {
       setState(() {
         _errorMessage = 'Error inesperado: ${e.toString()}';

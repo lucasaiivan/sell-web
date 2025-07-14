@@ -22,8 +22,8 @@ import 'package:sellweb/core/widgets/ui/ui.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/printer_provider.dart'; 
-import '../providers/theme_data_app_provider.dart'; 
+import '../providers/printer_provider.dart';
+import '../providers/theme_data_app_provider.dart';
 import '../providers/cash_register_provider.dart';
 import 'welcome_page.dart';
 
@@ -382,8 +382,8 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
-  PreferredSizeWidget appbar({required BuildContext buildContext, required SellProvider provider}) {
-
+  PreferredSizeWidget appbar(
+      {required BuildContext buildContext, required SellProvider provider}) {
     // provider
     final catalogueProvider = Provider.of<CatalogueProvider>(buildContext);
     // values
@@ -392,9 +392,13 @@ class _SellPageState extends State<SellPage> {
     String textHintSearchButton = isLoading
         ? 'Cargando...'
         : isEmpty
-            ? isMobile(buildContext)?'Sin Productos':'No hay productos disponibles'
-            : isMobile(buildContext)?'Buscar':'Buscar productos';
-    
+            ? isMobile(buildContext)
+                ? 'Sin Productos'
+                : 'No hay productos disponibles'
+            : isMobile(buildContext)
+                ? 'Buscar'
+                : 'Buscar productos';
+
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
     return AppBar(
       toolbarHeight: 70,
@@ -465,18 +469,17 @@ class _SellPageState extends State<SellPage> {
                         tooltip: isConnected
                             ? 'Impresora conectada y lista\nToca para configurar'
                             : 'Impresora no disponible\nToca para configurar conexión',
-                        onPressed: () =>
-                            _showPrinterConfigDialog(buildContext),
+                        onPressed: () => _showPrinterConfigDialog(buildContext),
                         backgroundColor: isConnected
                             ? Colors.green.withValues(alpha: 0.1)
-                            : Colors.orange.withValues(alpha:0.07),
+                            : Colors.orange.withValues(alpha: 0.07),
                         iconColor: isConnected
                             ? Colors.green.shade700
                             : Colors.orange.shade500,
                       );
                     },
                   ),
-                  
+
                   // button : último ticket vendido
                   Consumer<SellProvider>(
                     builder: (context, sellProvider, __) {
@@ -490,8 +493,15 @@ class _SellPageState extends State<SellPage> {
                             ? () => _showLastTicketDialog(
                                 buildContext, sellProvider)
                             : null,
-                        backgroundColor: hasLastTicket ? Theme.of(buildContext).colorScheme.primaryContainer.withValues(alpha: 0.4): Colors.grey.withValues(alpha:0.15),
-                        iconColor: hasLastTicket? Theme.of(buildContext).colorScheme.primary: Colors.grey.shade400,
+                        backgroundColor: hasLastTicket
+                            ? Theme.of(buildContext)
+                                .colorScheme
+                                .primaryContainer
+                                .withValues(alpha: 0.4)
+                            : Colors.grey.withValues(alpha: 0.15),
+                        iconColor: hasLastTicket
+                            ? Theme.of(buildContext).colorScheme.primary
+                            : Colors.grey.shade400,
                       );
                     },
                   ),
@@ -633,241 +643,241 @@ class _SellPageState extends State<SellPage> {
       children: [
         if (showClose)
           AppFloatingActionButton(
-                onTap: () {
-                  provider.setTicketView(false);
-                },
-                icon: Icons.close_rounded,
-                buttonColor: Colors.grey.withValues(alpha: 0.8),
-              )
-              .animate(delay: const Duration(milliseconds: 0))
-              .fade(),
+            onTap: () {
+              provider.setTicketView(false);
+            },
+            icon: Icons.close_rounded,
+            buttonColor: Colors.grey.withValues(alpha: 0.8),
+          ).animate(delay: const Duration(milliseconds: 0)).fade(),
         if (showClose) const SizedBox(width: 8),
         AppFloatingActionButton(
-              onTap: () async {
-                // Mostrar confirmación de venta completada inmediatamente
-                setState(() {
-                  _showConfirmedPurchase = true;
-                });                  // Obtener el provider de caja registradora
-                  final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-                  
-                  // Si hay una caja activa, registrar la venta
-                  if (cashRegisterProvider.hasActiveCashRegister) {
-                    final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-                    provider.ticket.cashRegisterName = activeCashRegister.description;
-                    provider.ticket.cashRegisterId = activeCashRegister.id;
-                    
-                    await cashRegisterProvider.registerSale(
-                      accountId: provider.profileAccountSelected.id,
-                      saleAmount: provider.ticket.getTotalPrice,
-                      discountAmount: provider.ticket.discount,
-                      itemCount: provider.ticket.getProductsQuantity(),
+          onTap: () async {
+            // Mostrar confirmación de venta completada inmediatamente
+            setState(() {
+              _showConfirmedPurchase = true;
+            }); // Obtener el provider de caja registradora
+            final cashRegisterProvider =
+                Provider.of<CashRegisterProvider>(context, listen: false);
+
+            // Si hay una caja activa, registrar la venta
+            if (cashRegisterProvider.hasActiveCashRegister) {
+              final activeCashRegister =
+                  cashRegisterProvider.currentActiveCashRegister!;
+              provider.ticket.cashRegisterName = activeCashRegister.description;
+              provider.ticket.cashRegisterId = activeCashRegister.id;
+
+              await cashRegisterProvider.registerSale(
+                accountId: provider.profileAccountSelected.id,
+                saleAmount: provider.ticket.getTotalPrice,
+                discountAmount: provider.ticket.discount,
+                itemCount: provider.ticket.getProductsQuantity(),
+              );
+            }
+
+            // Si el checkbox está activo, procesar la impresión/generación de tickets
+            if (provider.shouldPrintTicket) {
+              // Verificar si hay impresora conectada
+              final printerService = ThermalPrinterHttpService();
+              await printerService.initialize();
+
+              if (printerService.isConnected) {
+                // Si hay impresora conectada, imprimir directamente el ticket real
+                try {
+                  // Determinar método de pago primero
+                  String paymentMethod = 'Efectivo';
+                  switch (provider.ticket.payMode) {
+                    case 'mercadopago':
+                      paymentMethod = 'Mercado Pago';
+                      break;
+                    case 'card':
+                      paymentMethod = 'Tarjeta Déb/Créd';
+                      break;
+                    default:
+                      paymentMethod = 'Efectivo';
+                  }
+
+                  // Preparar datos del ticket
+                  final products = provider.ticket.listPoduct.map((item) {
+                    final product = item is Map ? item : item.toMap();
+                    return {
+                      'quantity': product['quantity'].toString(),
+                      'description': product['description'],
+                      'price': (product['salePrice'] * product['quantity'])
+                          .toDouble(),
+                    };
+                  }).toList();
+
+                  // Debug: mostrar datos que se van a enviar
+                  if (kDebugMode) {
+                    print('=== DEBUG PRINTER DATA ===');
+                    print(
+                        'Business Name: ${provider.profileAccountSelected.name}');
+                    print('Products: $products');
+                    print('Total: ${provider.ticket.getTotalPrice}');
+                    print('Payment Method: $paymentMethod');
+                    print('=========================');
+                  }
+
+                  // Imprimir el ticket
+                  final printSuccess = await printerService.printTicket(
+                    businessName:
+                        provider.profileAccountSelected.name.isNotEmpty
+                            ? provider.profileAccountSelected.name
+                            : 'PUNTO DE VENTA',
+                    products: products,
+                    total: provider.ticket.getTotalPrice,
+                    paymentMethod: paymentMethod,
+                    cashReceived: provider.ticket.valueReceived > 0
+                        ? provider.ticket.valueReceived
+                        : null,
+                    change: provider.ticket.valueReceived >
+                            provider.ticket.getTotalPrice
+                        ? provider.ticket.valueReceived -
+                            provider.ticket.getTotalPrice
+                        : null,
+                  );
+
+                  // Mostrar resultado
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            Icon(
+                              printSuccess ? Icons.check_circle : Icons.error,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                printSuccess
+                                    ? 'Ticket impreso correctamente'
+                                    : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor:
+                            printSuccess ? Colors.green : Colors.red,
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     );
                   }
-
-                  // Si el checkbox está activo, procesar la impresión/generación de tickets
-                  if (provider.shouldPrintTicket) {
-                    // Verificar si hay impresora conectada
-                    final printerService = ThermalPrinterHttpService();
-                    await printerService.initialize();
-
-                    if (printerService.isConnected) {
-                      // Si hay impresora conectada, imprimir directamente el ticket real
-                      try {
-                        // Determinar método de pago primero
-                        String paymentMethod = 'Efectivo';
-                        switch (provider.ticket.payMode) {
-                          case 'mercadopago':
-                            paymentMethod = 'Mercado Pago';
-                            break;
-                          case 'card':
-                            paymentMethod = 'Tarjeta Déb/Créd';
-                            break;
-                          default:
-                            paymentMethod = 'Efectivo';
-                        }
-
-                      // Preparar datos del ticket
-                      final products = provider.ticket.listPoduct.map((item) {
-                        final product = item is Map ? item : item.toMap();
-                        return {
-                          'quantity': product['quantity'].toString(),
-                          'description': product['description'],
-                          'price': (product['salePrice'] * product['quantity'])
-                              .toDouble(),
-                        };
-                      }).toList();
-
-                      // Debug: mostrar datos que se van a enviar
-                      if (kDebugMode) {
-                        print('=== DEBUG PRINTER DATA ===');
-                        print(
-                            'Business Name: ${provider.profileAccountSelected.name}');
-                        print('Products: $products');
-                        print('Total: ${provider.ticket.getTotalPrice}');
-                        print('Payment Method: $paymentMethod');
-                        print('=========================');
-                      }
-
-                      // Imprimir el ticket
-                      final printSuccess = await printerService.printTicket(
-                        businessName:
-                            provider.profileAccountSelected.name.isNotEmpty
-                                ? provider.profileAccountSelected.name
-                                : 'PUNTO DE VENTA',
-                        products: products,
-                        total: provider.ticket.getTotalPrice,
-                        paymentMethod: paymentMethod,
-                        cashReceived: provider.ticket.valueReceived > 0
-                            ? provider.ticket.valueReceived
-                            : null,
-                        change: provider.ticket.valueReceived >
-                                provider.ticket.getTotalPrice
-                            ? provider.ticket.valueReceived -
-                                provider.ticket.getTotalPrice
-                            : null,
-                      );
-
-                      // Mostrar resultado
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(
-                                  printSuccess
-                                      ? Icons.check_circle
-                                      : Icons.error,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    printSuccess
-                                        ? 'Ticket impreso correctamente'
-                                        : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.error, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Error al procesar impresión: $e',
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             ),
-                            backgroundColor:
-                                printSuccess ? Colors.green : Colors.red,
-                            duration: const Duration(seconds: 3),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.error, color: Colors.white),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Error al procesar impresión: $e',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: Colors.red,
-                            duration: const Duration(seconds: 3),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  } else {
-                    // Si no hay impresora, mostrar diálogo de opciones
-                    await Future.delayed(const Duration(milliseconds: 800));
-
-                    if (mounted) {
-                      await showTicketOptionsDialog(
-                        context: context,
-                        ticket: provider.ticket,
-                        businessName:
-                            provider.profileAccountSelected.name.isNotEmpty
-                                ? provider.profileAccountSelected.name
-                                : 'PUNTO DE VENTA',
-                        onComplete: () {
-                          // Este callback se ejecuta solo cuando se completa exitosamente
-                        },
-                      );
-                    }
-                  }
-
-                  // Guardar el último ticket vendido y registrar la venta en la caja activa
-                  final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-                  
-                  // Registrar la venta en la caja si existe una activa
-                  if (cashRegisterProvider.hasActiveCashRegister) {
-                    final accountId = provider.profileAccountSelected.id;
-                    await cashRegisterProvider.registerSale(
-                      accountId: accountId,
-                      saleAmount: provider.ticket.getTotalPrice,
-                      discountAmount: provider.ticket.discount,
-                      itemCount: provider.ticket.getProductsQuantity(),
+                          ],
+                        ),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     );
                   }
-                  
-                  // Guardar el último ticket con la referencia a la caja
-                  await provider.saveLastSoldTicket();
-                  
-                  // Limpiar ticket después del proceso
-                  Future.delayed(const Duration(milliseconds: 500)).then((_) {
-                    if (mounted) {
-                      setState(() {
-                        _showConfirmedPurchase = false;
-                      });
-                      provider.discartTicket();
-                    }
-                  });
-                } else {
-                  // Obtener el provider de caja registradora
-                  final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-                  
-                  // Si hay una caja activa, registrar la venta
-                  if (cashRegisterProvider.hasActiveCashRegister) {
-                    final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-                    provider.ticket.cashRegisterName = activeCashRegister.description;
-                    provider.ticket.cashRegisterId = activeCashRegister.id;
-                    
-                    await cashRegisterProvider.registerSale(
-                      accountId: provider.profileAccountSelected.id,
-                      saleAmount: provider.ticket.getTotalPrice,
-                      discountAmount: provider.ticket.discount,
-                      itemCount: provider.ticket.getProductsQuantity(),
-                    );
-                  }
-                  
-                  // Guardar último ticket
-                  await provider.saveLastSoldTicket();
-                  
-                  Future.delayed(const Duration(seconds: 2)).then((_) {
-                    if (mounted) {
-                      setState(() {
-                        _showConfirmedPurchase = false;
-                      });
-                      provider.discartTicket();
-                    }
-                  });
                 }
-              },
-              icon: Icons.check_circle_outline_rounded,
-              text: confirmarText,
-              extended: true,
-            )
-            .animate(delay: const Duration(milliseconds: 0))
-            .fade(),
+              } else {
+                // Si no hay impresora, mostrar diálogo de opciones
+                await Future.delayed(const Duration(milliseconds: 800));
+
+                if (mounted) {
+                  await showTicketOptionsDialog(
+                    context: context,
+                    ticket: provider.ticket,
+                    businessName:
+                        provider.profileAccountSelected.name.isNotEmpty
+                            ? provider.profileAccountSelected.name
+                            : 'PUNTO DE VENTA',
+                    onComplete: () {
+                      // Este callback se ejecuta solo cuando se completa exitosamente
+                    },
+                  );
+                }
+              }
+
+              // Guardar el último ticket vendido y registrar la venta en la caja activa
+              final cashRegisterProvider =
+                  Provider.of<CashRegisterProvider>(context, listen: false);
+
+              // Registrar la venta en la caja si existe una activa
+              if (cashRegisterProvider.hasActiveCashRegister) {
+                final accountId = provider.profileAccountSelected.id;
+                await cashRegisterProvider.registerSale(
+                  accountId: accountId,
+                  saleAmount: provider.ticket.getTotalPrice,
+                  discountAmount: provider.ticket.discount,
+                  itemCount: provider.ticket.getProductsQuantity(),
+                );
+              }
+
+              // Guardar el último ticket con la referencia a la caja
+              await provider.saveLastSoldTicket();
+
+              // Limpiar ticket después del proceso
+              Future.delayed(const Duration(milliseconds: 500)).then((_) {
+                if (mounted) {
+                  setState(() {
+                    _showConfirmedPurchase = false;
+                  });
+                  provider.discartTicket();
+                }
+              });
+            } else {
+              // Obtener el provider de caja registradora
+              final cashRegisterProvider =
+                  Provider.of<CashRegisterProvider>(context, listen: false);
+
+              // Si hay una caja activa, registrar la venta
+              if (cashRegisterProvider.hasActiveCashRegister) {
+                final activeCashRegister =
+                    cashRegisterProvider.currentActiveCashRegister!;
+                provider.ticket.cashRegisterName =
+                    activeCashRegister.description;
+                provider.ticket.cashRegisterId = activeCashRegister.id;
+
+                await cashRegisterProvider.registerSale(
+                  accountId: provider.profileAccountSelected.id,
+                  saleAmount: provider.ticket.getTotalPrice,
+                  discountAmount: provider.ticket.discount,
+                  itemCount: provider.ticket.getProductsQuantity(),
+                );
+              }
+
+              // Guardar último ticket
+              await provider.saveLastSoldTicket();
+
+              Future.delayed(const Duration(seconds: 2)).then((_) {
+                if (mounted) {
+                  setState(() {
+                    _showConfirmedPurchase = false;
+                  });
+                  provider.discartTicket();
+                }
+              });
+            }
+          },
+          icon: Icons.check_circle_outline_rounded,
+          text: confirmarText,
+          extended: true,
+        ).animate(delay: const Duration(milliseconds: 0)).fade(),
       ],
     );
   }
@@ -877,12 +887,10 @@ class _SellPageState extends State<SellPage> {
     return Row(
       children: [
         AppFloatingActionButton(
-              onTap: () => showQuickSaleDialog(context, provider: sellProvider),
-              icon: Icons.flash_on_rounded,
-              buttonColor: Colors.amber,
-            )
-            .animate(delay: const Duration(milliseconds: 0))
-            .fade(),
+          onTap: () => showQuickSaleDialog(context, provider: sellProvider),
+          icon: Icons.flash_on_rounded,
+          buttonColor: Colors.amber,
+        ).animate(delay: const Duration(milliseconds: 0)).fade(),
         const SizedBox(width: 8),
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
@@ -964,7 +972,7 @@ class _SellPageState extends State<SellPage> {
               return itemDefault;
             }
           },
-      );
+        );
       },
     );
   }
@@ -1910,88 +1918,89 @@ class _SellPageState extends State<SellPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Card(
-      elevation: 0,
-      color: selectedProduct != null
-          ? colorScheme.primaryContainer.withValues(alpha: 0.18)
-          : colorScheme.surface.withValues(alpha: 0.95),
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: selectedProduct != null
-            ? BorderSide(color: colorScheme.primary, width: 1.2)
-            : BorderSide.none,
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        // imagen : imagen del producto cuadrada con un borde redondeado utilizando [cached_network_image]
-        leading: ProductImage(
-          imageUrl: product.image,
-          size: 50,
+        elevation: 0,
+        color: selectedProduct != null
+            ? colorScheme.primaryContainer.withValues(alpha: 0.18)
+            : colorScheme.surface.withValues(alpha: 0.95),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: selectedProduct != null
+              ? BorderSide(color: colorScheme.primary, width: 1.2)
+              : BorderSide.none,
         ),
-
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              product.description,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (product.nameMark.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  product.nameMark,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.primary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            product.code,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: colorScheme.secondary),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          // imagen : imagen del producto cuadrada con un borde redondeado utilizando [cached_network_image]
+          leading: ProductImage(
+            imageUrl: product.image,
+            size: 50,
           ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              Publications.getFormatoPrecio(value: product.salePrice),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
-                fontSize: 17,
+
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.description,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(width: 10),
-            if (selectedProduct != null)
-              Chip(
-                label: Text(
-                  selectedProduct.quantity.toString(),
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+              if (product.nameMark.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    product.nameMark,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.primary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                backgroundColor: colorScheme.primary,
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              product.code,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.secondary),
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                Publications.getFormatoPrecio(value: product.salePrice),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                  fontSize: 17,
+                ),
               ),
-          ],
-        ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        hoverColor: colorScheme.primaryContainer.withValues(alpha: 0.12),
-      ));
+              const SizedBox(width: 10),
+              if (selectedProduct != null)
+                Chip(
+                  label: Text(
+                    selectedProduct.quantity.toString(),
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: colorScheme.primary,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
+            ],
+          ),
+          onTap: onTap,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          hoverColor: colorScheme.primaryContainer.withValues(alpha: 0.12),
+        ));
   }
 }
 
@@ -2402,8 +2411,6 @@ class _TotalBounce extends StatefulWidget {
     required this.color,
   });
 
-
-
   @override
   State<_TotalBounce> createState() => _TotalBounceState();
 }
@@ -2483,7 +2490,7 @@ void _showPrinterConfigDialog(BuildContext context) {
 /// Muestra el diálogo del último ticket vendido
 void _showLastTicketDialog(BuildContext context, SellProvider provider) {
   if (provider.lastSoldTicket == null) return;
-  
+
   showLastTicketDialog(
     context: context,
     ticket: provider.lastSoldTicket!,

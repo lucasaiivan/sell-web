@@ -18,7 +18,8 @@ class PrinterProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> connectPrinter({String? serverHost, int? serverPort, String? devicePath}) async {
+  Future<bool> connectPrinter(
+      {String? serverHost, int? serverPort, String? devicePath}) async {
     final success = await _printerService.configurePrinter(
       serverHost: serverHost,
       serverPort: serverPort,

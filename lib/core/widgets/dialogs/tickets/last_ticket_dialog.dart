@@ -21,13 +21,12 @@ class LastTicketDialog extends StatefulWidget {
 }
 
 class _LastTicketDialogState extends State<LastTicketDialog> {
-  
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
-           '${date.month.toString().padLeft(2, '0')}/'
-           '${date.year} - '
-           '${date.hour.toString().padLeft(2, '0')}:'
-           '${date.minute.toString().padLeft(2, '0')}';
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year} - '
+        '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')}';
   }
 
   String _getPaymentMethodName(String payMode) {
@@ -74,7 +73,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                 DialogComponents.infoRow(
                   context: context,
                   label: 'ID Ticket',
-                  value: widget.ticket.id.length > 8 
+                  value: widget.ticket.id.length > 8
                       ? '...${widget.ticket.id.substring(widget.ticket.id.length - 8)}'
                       : widget.ticket.id,
                   icon: Icons.confirmation_number_rounded,
@@ -89,8 +88,8 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
           Text(
             'Productos Vendidos',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           DialogComponents.itemSpacing,
 
@@ -117,15 +116,17 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                       child: Text(
                         '$quantity',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 12),
-                  
+
                   // Descripción del producto
                   Expanded(
                     child: Column(
@@ -133,30 +134,34 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                       children: [
                         Text(
                           description,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '${Publications.getFormatoPrecio(value: unitPrice)} c/u',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
                   ),
-                  
+
                   // Precio total
                   Text(
                     Publications.getFormatoPrecio(value: totalPrice),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                   ),
                 ],
               );
@@ -178,23 +183,24 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                   value: _getPaymentMethodName(widget.ticket.payMode),
                   icon: Icons.credit_card_rounded,
                 ),
-                
                 if (widget.ticket.valueReceived > 0) ...[
                   DialogComponents.minSpacing,
                   DialogComponents.infoRow(
                     context: context,
                     label: 'Recibido',
-                    value: Publications.getFormatoPrecio(value: widget.ticket.valueReceived),
+                    value: Publications.getFormatoPrecio(
+                        value: widget.ticket.valueReceived),
                     icon: Icons.monetization_on_rounded,
                   ),
-                  
-                  if (widget.ticket.valueReceived > widget.ticket.getTotalPrice) ...[
+                  if (widget.ticket.valueReceived >
+                      widget.ticket.getTotalPrice) ...[
                     DialogComponents.minSpacing,
                     DialogComponents.infoRow(
                       context: context,
                       label: 'Cambio',
                       value: Publications.getFormatoPrecio(
-                        value: widget.ticket.valueReceived - widget.ticket.getTotalPrice,
+                        value: widget.ticket.valueReceived -
+                            widget.ticket.getTotalPrice,
                       ),
                       icon: Icons.change_circle_rounded,
                     ),
@@ -210,7 +216,8 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
           DialogComponents.summaryContainer(
             context: context,
             label: 'Total del Ticket',
-            value: Publications.getFormatoPrecio(value: widget.ticket.getTotalPrice),
+            value: Publications.getFormatoPrecio(
+                value: widget.ticket.getTotalPrice),
             icon: Icons.receipt_rounded,
           ),
         ],
@@ -233,7 +240,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
 
   void _showTicketOptions() {
     Navigator.of(context).pop(); // Cerrar diálogo actual
-    
+
     showTicketOptionsDialog(
       context: context,
       ticket: widget.ticket,

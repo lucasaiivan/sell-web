@@ -41,7 +41,12 @@ export 'examples/dialog_showcase.dart';
 
 // Re-exportar funciones helper principales
 export 'base/base_dialog.dart' show showBaseDialog;
-export 'base/standard_dialogs.dart' show showConfirmationDialog, showInfoDialog, showErrorDialog, showLoadingDialog;
+export 'base/standard_dialogs.dart'
+    show
+        showConfirmationDialog,
+        showInfoDialog,
+        showErrorDialog,
+        showLoadingDialog;
 export 'examples/example_modern_dialog.dart' show showExampleModernDialog;
 
 // Re-exportar funciones helper específicas

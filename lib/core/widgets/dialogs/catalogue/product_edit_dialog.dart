@@ -43,15 +43,13 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   }
 
   String get _productDescription {
-    return widget.product.description.isNotEmpty 
-        ? widget.product.description 
+    return widget.product.description.isNotEmpty
+        ? widget.product.description
         : 'Producto de venta rápida';
   }
 
   String get _productCode {
-    return widget.product.code.isNotEmpty 
-        ? widget.product.code 
-        : 'Sin código';
+    return widget.product.code.isNotEmpty ? widget.product.code : 'Sin código';
   }
 
   bool get _isQuickSaleProduct {
@@ -65,29 +63,26 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: _isQuickSaleProduct ? 'Venta Rápida' : 'Editar Producto',
-      icon: _isQuickSaleProduct 
-          ? Icons.flash_on_rounded 
-          : Icons.edit_rounded,
+      icon: _isQuickSaleProduct ? Icons.flash_on_rounded : Icons.edit_rounded,
       width: 450,
-      headerColor: _isQuickSaleProduct 
-          ? theme.colorScheme.tertiaryContainer 
-          : null,
+      headerColor:
+          _isQuickSaleProduct ? theme.colorScheme.tertiaryContainer : null,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Información principal del producto
           _buildProductInfo(),
-          
+
           DialogComponents.sectionSpacing,
-          
+
           // Controles de cantidad
           _buildQuantitySection(),
-          
+
           DialogComponents.sectionSpacing,
-          
+
           // Resumen del total
           DialogComponents.summaryContainer(
             context: context,
@@ -119,7 +114,9 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     return DialogComponents.infoSection(
       context: context,
       title: 'Información del Producto',
-      icon: _isQuickSaleProduct ? Icons.flash_on_rounded : Icons.inventory_2_rounded,
+      icon: _isQuickSaleProduct
+          ? Icons.flash_on_rounded
+          : Icons.inventory_2_rounded,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -147,9 +144,9 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     ),
                   ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Información del producto
           Expanded(
             child: Column(
@@ -159,26 +156,26 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                 Text(
                   _productName,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: 4),
-                
+
                 // Descripción
                 Text(
                   _productDescription,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Código y precio
                 Row(
                   children: [
@@ -193,23 +190,28 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     Expanded(
                       child: DialogComponents.infoBadge(
                         context: context,
-                        text: Publications.getFormatoPrecio(value: widget.product.salePrice),
+                        text: Publications.getFormatoPrecio(
+                            value: widget.product.salePrice),
                         icon: Icons.monetization_on_rounded,
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        textColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.primaryContainer,
+                        textColor:
+                            Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ],
                 ),
-                
+
                 if (_isQuickSaleProduct) ...[
                   const SizedBox(height: 8),
                   DialogComponents.infoBadge(
                     context: context,
                     text: 'Venta Rápida',
                     icon: Icons.flash_on_rounded,
-                    backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-                    textColor: Theme.of(context).colorScheme.onTertiaryContainer,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.tertiaryContainer,
+                    textColor:
+                        Theme.of(context).colorScheme.onTertiaryContainer,
                   ),
                 ],
               ],
@@ -222,7 +224,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
   Widget _buildQuantitySection() {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -232,9 +234,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        
         DialogComponents.itemSpacing,
-        
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -253,21 +253,23 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Botón decrementar
                   _buildQuantityButton(
                     icon: Icons.remove_rounded,
-                    onPressed: _quantity > 1 ? () => _updateQuantity(_quantity - 1) : null,
+                    onPressed: _quantity > 1
+                        ? () => _updateQuantity(_quantity - 1)
+                        : null,
                     isEnabled: _quantity > 1,
                   ),
-                  
+
                   // Cantidad actual
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
@@ -280,7 +282,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                       ),
                     ),
                   ),
-                  
+
                   // Botón incrementar
                   _buildQuantityButton(
                     icon: Icons.add_rounded,
@@ -302,7 +304,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     required bool isEnabled,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: 40,
       height: 40,
@@ -317,9 +319,8 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         icon: Icon(
           icon,
           size: 20,
-          color: isEnabled
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outline,
+          color:
+              isEnabled ? theme.colorScheme.primary : theme.colorScheme.outline,
         ),
         padding: EdgeInsets.zero,
       ),
@@ -333,7 +334,8 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     });
 
     // Actualizar en el provider
-    final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
+    final sellProvider =
+        provider_package.Provider.of<SellProvider>(context, listen: false);
     sellProvider.addProductsticket(
       widget.product.copyWith(quantity: newQuantity),
       replaceQuantity: true,
@@ -368,13 +370,14 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       });
 
       // Eliminar del provider
-      final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
+      final sellProvider =
+          provider_package.Provider.of<SellProvider>(context, listen: false);
       sellProvider.removeProduct(widget.product);
 
       if (mounted) {
         Navigator.of(context).pop();
         widget.onProductUpdated?.call();
-        
+
         // Mostrar confirmación
         showInfoDialog(
           context: context,

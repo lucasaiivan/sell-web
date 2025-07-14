@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Diálogo base que implementa Material Design 3 con apariencia consistente
-/// 
+///
 /// Proporciona una estructura estándar para todos los diálogos de la aplicación
 /// siguiendo las especificaciones de Material Design 3
 class BaseDialog extends StatelessWidget {
@@ -48,7 +48,7 @@ class BaseDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
@@ -79,7 +79,7 @@ class BaseDialog extends StatelessWidget {
           children: [
             // Header del diálogo
             _buildHeader(context, theme),
-            
+
             // Contenido principal
             Flexible(
               child: scrollable
@@ -92,7 +92,7 @@ class BaseDialog extends StatelessWidget {
                       child: content,
                     ),
             ),
-            
+
             // Acciones/botones
             if (actions != null && actions!.isNotEmpty)
               _buildActions(context, theme),
@@ -103,7 +103,8 @@ class BaseDialog extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme) {
-    final effectiveHeaderColor = headerColor ?? theme.colorScheme.primaryContainer;
+    final effectiveHeaderColor =
+        headerColor ?? theme.colorScheme.primaryContainer;
     final textColor = theme.colorScheme.onPrimaryContainer;
 
     return Container(

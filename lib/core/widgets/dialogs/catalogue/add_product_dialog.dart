@@ -39,7 +39,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
   void initState() {
     super.initState();
     _priceController = TextEditingController();
-    _descriptionController = TextEditingController(text: widget.product.description);
+    _descriptionController =
+        TextEditingController(text: widget.product.description);
     _errorText = widget.errorMessage;
   }
 
@@ -53,14 +54,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: widget.isNew ? 'Crear Producto' : 'Nuevo Producto',
       icon: widget.isNew ? Icons.add_box_rounded : Icons.inventory_2_rounded,
       width: 500,
-      headerColor: widget.isNew 
-          ? theme.colorScheme.tertiaryContainer 
-          : null,
+      headerColor: widget.isNew ? theme.colorScheme.tertiaryContainer : null,
       content: Form(
         key: _formKey,
         child: Column(
@@ -72,7 +71,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
               title: 'Código del Producto',
               icon: Icons.qr_code_rounded,
               content: Text(
-                widget.product.code.isNotEmpty ? widget.product.code : 'Sin código asignado',
+                widget.product.code.isNotEmpty
+                    ? widget.product.code
+                    : 'Sin código asignado',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
@@ -120,7 +121,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
               ),
             ),
             DialogComponents.itemSpacing,
-            
+
             DialogComponents.textField(
               context: context,
               controller: _priceController,
@@ -217,12 +218,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   Text(
                     widget.product.description,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                
                 if (widget.product.nameMark.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Row(
@@ -245,15 +245,15 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   Widget _buildCatalogueOption() {
     final theme = Theme.of(context);
-    
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: _checkAddCatalogue 
-              ? theme.colorScheme.primary 
+          color: _checkAddCatalogue
+              ? theme.colorScheme.primary
               : theme.colorScheme.outline.withValues(alpha: 0.5),
         ),
-        color: _checkAddCatalogue 
+        color: _checkAddCatalogue
             ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
             : null,
         borderRadius: BorderRadius.circular(12),
@@ -296,16 +296,20 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
     try {
       final price = double.parse(_priceController.text);
-      
+
       // Obtener providers
-      final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
-      final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
-      final authProvider = provider_package.Provider.of<AuthProvider>(context, listen: false);
+      final sellProvider =
+          provider_package.Provider.of<SellProvider>(context, listen: false);
+      final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(
+          context,
+          listen: false);
+      final authProvider =
+          provider_package.Provider.of<AuthProvider>(context, listen: false);
 
       // Crear producto actualizado
       final updatedProduct = widget.product.copyWith(
-        description: widget.isNew 
-            ? _descriptionController.text.trim() 
+        description: widget.isNew
+            ? _descriptionController.text.trim()
             : widget.product.description,
         code: widget.product.code,
         salePrice: price,
@@ -313,10 +317,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       // Agregar al ticket
       sellProvider.addProductsticket(updatedProduct);
-      
+
       if (mounted) {
         Navigator.of(context).pop();
-        
+
         // Mostrar confirmación
         showInfoDialog(
           context: context,
@@ -328,11 +332,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       // Procesar en segundo plano
       if (widget.isNew) {
-        await _createNewProduct(updatedProduct, catalogueProvider, authProvider, sellProvider);
+        await _createNewProduct(
+            updatedProduct, catalogueProvider, authProvider, sellProvider);
       } else if (_checkAddCatalogue && updatedProduct.id.isNotEmpty) {
-        await _addExistingProduct(updatedProduct, catalogueProvider, sellProvider);
+        await _addExistingProduct(
+            updatedProduct, catalogueProvider, sellProvider);
       }
-      
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -374,7 +379,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (_checkAddCatalogue) {
         final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
-        await catalogueProvider.addProductToCatalogue(finalProduct,sellProvider.profileAccountSelected.id);
+        await catalogueProvider.addProductToCatalogue(
+            finalProduct, sellProvider.profileAccountSelected.id);
       }
     } catch (e) {
       // Mostrar error si falla la creación
@@ -395,7 +401,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
     SellProvider sellProvider,
   ) async {
     try {
-      await catalogueProvider.addProductToCatalogue(updatedProduct,sellProvider.profileAccountSelected.id);
+      await catalogueProvider.addProductToCatalogue(
+          updatedProduct, sellProvider.profileAccountSelected.id);
     } catch (e) {
       // Mostrar error si falla
       if (mounted) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart'; 
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 
 /// Diálogo de confirmación para descartar un ticket
 class DiscardTicketDialog extends StatelessWidget {
@@ -14,7 +14,7 @@ class DiscardTicketDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: 'Descartar Ticket',
       icon: Icons.delete_outline_rounded,

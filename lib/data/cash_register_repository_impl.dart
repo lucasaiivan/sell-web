@@ -4,22 +4,22 @@ import '../../domain/entities/cash_register_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
 
 /// Implementación del repositorio de caja registradora usando Firebase
-/// 
+///
 /// Maneja todas las operaciones CRUD para:
 /// - Cajas registradoras activas
 /// - Historial de arqueos
 /// - Descripciones fijas
 /// - Flujos de caja
 class CashRegisterRepositoryImpl implements CashRegisterRepository {
-  
   // ==========================================
   // CAJAS REGISTRADORAS ACTIVAS
   // ==========================================
-  
+
   @override
   Future<List<CashRegister>> getActiveCashRegisters(String accountId) async {
     try {
-      final querySnapshot = await DatabaseCloudService.getActiveCashRegisters(accountId);
+      final querySnapshot =
+          await DatabaseCloudService.getActiveCashRegisters(accountId);
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -30,7 +30,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
   @override
   Stream<List<CashRegister>> getActiveCashRegistersStream(String accountId) {
-    return DatabaseCloudService.activeCashRegistersStream(accountId).map((querySnapshot) {
+    return DatabaseCloudService.activeCashRegistersStream(accountId)
+        .map((querySnapshot) {
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -38,7 +39,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> setCashRegister(String accountId, CashRegister cashRegister) async {
+  Future<void> setCashRegister(
+      String accountId, CashRegister cashRegister) async {
     try {
       await DatabaseCloudService.accountCashRegisters(accountId)
           .doc(cashRegister.id)
@@ -49,7 +51,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> deleteCashRegister(String accountId, String cashRegisterId) async {
+  Future<void> deleteCashRegister(
+      String accountId, String cashRegisterId) async {
     try {
       await DatabaseCloudService.accountCashRegisters(accountId)
           .doc(cashRegisterId)
@@ -62,11 +65,12 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   // ==========================================
   // HISTORIAL DE ARQUEOS
   // ==========================================
-  
+
   @override
   Future<List<CashRegister>> getCashRegisterHistory(String accountId) async {
     try {
-      final querySnapshot = await DatabaseCloudService.getCashRegisterHistory(accountId);
+      final querySnapshot =
+          await DatabaseCloudService.getCashRegisterHistory(accountId);
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -77,7 +81,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
   @override
   Stream<List<CashRegister>> getCashRegisterHistoryStream(String accountId) {
-    return DatabaseCloudService.cashRegisterHistoryStream(accountId).map((querySnapshot) {
+    return DatabaseCloudService.cashRegisterHistoryStream(accountId)
+        .map((querySnapshot) {
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -85,7 +90,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<List<CashRegister>> getCashRegisterByDays(String accountId, int days) async {
+  Future<List<CashRegister>> getCashRegisterByDays(
+      String accountId, int days) async {
     try {
       final querySnapshot = await DatabaseCloudService.getCashRegisterByDays(
         accountId: accountId,
@@ -106,7 +112,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required DateTime endDate,
   }) async {
     try {
-      final querySnapshot = await DatabaseCloudService.getCashRegisterByDateRange(
+      final querySnapshot =
+          await DatabaseCloudService.getCashRegisterByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
@@ -122,7 +129,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   @override
   Future<List<CashRegister>> getTodayCashRegisters(String accountId) async {
     try {
-      final querySnapshot = await DatabaseCloudService.getTodayCashRegisters(accountId);
+      final querySnapshot =
+          await DatabaseCloudService.getTodayCashRegisters(accountId);
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -132,7 +140,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> addCashRegisterToHistory(String accountId, CashRegister cashRegister) async {
+  Future<void> addCashRegisterToHistory(
+      String accountId, CashRegister cashRegister) async {
     try {
       await DatabaseCloudService.accountCashRegisterHistory(accountId)
           .add(cashRegister.toJson());
@@ -142,7 +151,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> deleteCashRegisterFromHistory(String accountId, CashRegister cashRegister) async {
+  Future<void> deleteCashRegisterFromHistory(
+      String accountId, CashRegister cashRegister) async {
     try {
       await DatabaseCloudService.accountCashRegisterHistory(accountId)
           .doc(cashRegister.id)
@@ -155,9 +165,10 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   // ==========================================
   // DESCRIPCIONES FIJAS
   // ==========================================
-  
+
   @override
-  Future<void> createFixedDescription(String accountId, String description) async {
+  Future<void> createFixedDescription(
+      String accountId, String description) async {
     try {
       await DatabaseCloudService.accountFixedDescriptions(accountId)
           .doc(description)
@@ -168,9 +179,11 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getFixedDescriptions(String accountId) async {
+  Future<List<Map<String, dynamic>>> getFixedDescriptions(
+      String accountId) async {
     try {
-      final querySnapshot = await DatabaseCloudService.accountFixedDescriptions(accountId).get();
+      final querySnapshot =
+          await DatabaseCloudService.accountFixedDescriptions(accountId).get();
       return querySnapshot.docs.map((doc) {
         return doc.data();
       }).toList();
@@ -180,7 +193,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> deleteFixedDescription(String accountId, String descriptionId) async {
+  Future<void> deleteFixedDescription(
+      String accountId, String descriptionId) async {
     try {
       await DatabaseCloudService.accountFixedDescriptions(accountId)
           .doc(descriptionId)
@@ -193,7 +207,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   // ==========================================
   // OPERACIONES DE CAJA
   // ==========================================
-  
+
   @override
   Future<CashRegister> openCashRegister({
     required String accountId,
@@ -204,7 +218,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     try {
       final cashRegisterId = Publications.generateUid();
       final now = DateTime.now();
-      
+
       final cashRegister = CashRegister(
         id: cashRegisterId,
         description: description,
@@ -251,7 +265,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
       // Mover al historial
       await addCashRegisterToHistory(accountId, updatedCashRegister);
-      
+
       // Eliminar de cajas activas
       await deleteCashRegister(accountId, cashRegisterId);
 
@@ -309,7 +323,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         ..add(cashFlow.toJson());
 
       final updatedCashRegister = cashRegister.update(
-        cashOutFlow: cashRegister.cashOutFlow - cashFlow.amount, // Se resta porque es egreso
+        cashOutFlow: cashRegister.cashOutFlow -
+            cashFlow.amount, // Se resta porque es egreso
         cashOutFlowList: updatedOutflows,
       );
 

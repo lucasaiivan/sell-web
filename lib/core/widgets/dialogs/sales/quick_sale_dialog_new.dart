@@ -33,7 +33,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: 'Venta Rápida',
       icon: Icons.flash_on_rounded,
@@ -68,7 +68,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               ),
             ),
             DialogComponents.itemSpacing,
-            
+
             DialogComponents.textField(
               context: context,
               controller: _priceController,
@@ -98,7 +98,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               ),
             ),
             DialogComponents.itemSpacing,
-            
+
             DialogComponents.textField(
               context: context,
               controller: _descriptionController,
@@ -157,7 +157,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
     try {
       final price = double.parse(_priceController.text);
-      final description = _descriptionController.text.trim().isEmpty 
+      final description = _descriptionController.text.trim().isEmpty
           ? 'Venta rápida'
           : _descriptionController.text.trim();
 
@@ -169,7 +169,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        
+
         // Mostrar confirmación
         showInfoDialog(
           context: context,
@@ -178,7 +178,6 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
           icon: Icons.check_circle_outline_rounded,
         );
       }
-      
     } catch (e) {
       if (mounted) {
         showErrorDialog(

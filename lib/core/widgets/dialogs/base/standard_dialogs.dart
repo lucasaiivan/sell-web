@@ -27,14 +27,12 @@ class ConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: title,
       icon: icon,
       width: 400,
-      headerColor: isDestructive 
-          ? theme.colorScheme.errorContainer 
-          : null,
+      headerColor: isDestructive ? theme.colorScheme.errorContainer : null,
       content: Text(
         message,
         style: theme.textTheme.bodyLarge?.copyWith(
@@ -166,7 +164,7 @@ class ErrorDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return BaseDialog(
       title: title,
       icon: Icons.error_outline_rounded,

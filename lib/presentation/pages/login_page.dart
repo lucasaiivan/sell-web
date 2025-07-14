@@ -590,7 +590,8 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
                     .animate(key: Key(titulo))
                     .fadeIn(duration: const Duration(milliseconds: 500))
                     .slideY(
-                        begin: -0.2, duration: const Duration(milliseconds: 500))
+                        begin: -0.2,
+                        duration: const Duration(milliseconds: 500))
                 : Container(),
             Text(titulo, style: estiloTitulo, textAlign: TextAlign.center),
             const SizedBox(height: 12.0),
@@ -598,7 +599,8 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
             Text(subtitulo, style: estiloSubTitulo, textAlign: TextAlign.center)
                 .animate()
                 .fadeIn(duration: const Duration(milliseconds: 500))
-                .slideY(begin: 0.2, duration: const Duration(milliseconds: 500)),
+                .slideY(
+                    begin: 0.2, duration: const Duration(milliseconds: 500)),
             const SizedBox(height: 40),
           ],
         ),

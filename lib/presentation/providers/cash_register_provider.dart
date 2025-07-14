@@ -25,7 +25,7 @@ class _CashRegisterState {
   });
 
   bool get hasActiveCashRegister => activeCashRegisters.isNotEmpty;
-  CashRegister? get currentActiveCashRegister => 
+  CashRegister? get currentActiveCashRegister =>
       activeCashRegisters.isNotEmpty ? activeCashRegisters.first : null;
 
   _CashRegisterState copyWith({
@@ -44,7 +44,9 @@ class _CashRegisterState {
       cashRegisterHistory: cashRegisterHistory ?? this.cashRegisterHistory,
       isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
       historyFilter: historyFilter ?? this.historyFilter,
-      errorMessage: errorMessage == const Object() ? this.errorMessage : errorMessage as String?,
+      errorMessage: errorMessage == const Object()
+          ? this.errorMessage
+          : errorMessage as String?,
       isProcessing: isProcessing ?? this.isProcessing,
       fixedDescriptions: fixedDescriptions ?? this.fixedDescriptions,
     );
@@ -77,7 +79,7 @@ class _CashRegisterState {
 }
 
 /// Provider para el sistema de caja registradora
-/// 
+///
 /// Maneja el estado de:
 /// - Cajas registradoras activas
 /// - Historial de arqueos
@@ -87,11 +89,14 @@ class CashRegisterProvider extends ChangeNotifier {
   final CashRegisterUsecases _cashRegisterUsecases;
 
   // Form controllers
-  final TextEditingController openDescriptionController = TextEditingController();
+  final TextEditingController openDescriptionController =
+      TextEditingController();
   final TextEditingController initialCashController = TextEditingController();
   final TextEditingController finalBalanceController = TextEditingController();
-  final TextEditingController movementDescriptionController = TextEditingController();
-  final TextEditingController movementAmountController = TextEditingController();
+  final TextEditingController movementDescriptionController =
+      TextEditingController();
+  final TextEditingController movementAmountController =
+      TextEditingController();
 
   // Immutable state
   _CashRegisterState _state = _CashRegisterState();
@@ -106,7 +111,8 @@ class CashRegisterProvider extends ChangeNotifier {
   bool get isProcessing => _state.isProcessing;
   List<String> get fixedDescriptions => _state.fixedDescriptions;
   bool get hasActiveCashRegister => _state.hasActiveCashRegister;
-  CashRegister? get currentActiveCashRegister => _state.currentActiveCashRegister;
+  CashRegister? get currentActiveCashRegister =>
+      _state.currentActiveCashRegister;
 
   CashRegisterProvider(this._cashRegisterUsecases);
 
@@ -120,7 +126,8 @@ class CashRegisterProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      final activeCashRegisters =
+          await _cashRegisterUsecases.getActiveCashRegisters(accountId);
       _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -140,7 +147,8 @@ class CashRegisterProvider extends ChangeNotifier {
 
     final initialCash = double.tryParse(initialCashController.text) ?? 0.0;
     if (initialCash < 0) {
-      _state = _state.copyWith(errorMessage: 'El monto inicial no puede ser negativo');
+      _state = _state.copyWith(
+          errorMessage: 'El monto inicial no puede ser negativo');
       notifyListeners();
       return false;
     }
@@ -158,10 +166,10 @@ class CashRegisterProvider extends ChangeNotifier {
 
       // Actualizar lista local
       _state = _state.copyWith(activeCashRegisters: [newCashRegister]);
-      
+
       // Limpiar formulario
       _clearOpenForm();
-      
+
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -173,10 +181,12 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Cierra una caja registradora
-  Future<bool> closeCashRegister(String accountId, String cashRegisterId) async {
+  Future<bool> closeCashRegister(
+      String accountId, String cashRegisterId) async {
     final finalBalance = double.tryParse(finalBalanceController.text) ?? 0.0;
     if (finalBalance < 0) {
-      _state = _state.copyWith(errorMessage: 'El balance final no puede ser negativo');
+      _state = _state.copyWith(
+          errorMessage: 'El balance final no puede ser negativo');
       notifyListeners();
       return false;
     }
@@ -193,13 +203,18 @@ class CashRegisterProvider extends ChangeNotifier {
 
       // Actualizar listas locales
       _state = _state.copyWith(
-        activeCashRegisters: _state.activeCashRegisters.where((cr) => cr.id != cashRegisterId).toList(),
-        cashRegisterHistory: [closedCashRegister, ..._state.cashRegisterHistory],
+        activeCashRegisters: _state.activeCashRegisters
+            .where((cr) => cr.id != cashRegisterId)
+            .toList(),
+        cashRegisterHistory: [
+          closedCashRegister,
+          ..._state.cashRegisterHistory
+        ],
       );
-      
+
       // Limpiar formulario
       _clearCloseForm();
-      
+
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -215,7 +230,8 @@ class CashRegisterProvider extends ChangeNotifier {
   // ==========================================
 
   /// Registra un ingreso de caja
-  Future<bool> addCashInflow(String accountId, String cashRegisterId, String userId) async {
+  Future<bool> addCashInflow(
+      String accountId, String cashRegisterId, String userId) async {
     if (movementDescriptionController.text.trim().isEmpty) {
       _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
       notifyListeners();
@@ -242,12 +258,13 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Recargar las cajas activas
-      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      final activeCashRegisters =
+          await _cashRegisterUsecases.getActiveCashRegisters(accountId);
       _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
-      
+
       // Limpiar formulario
       _clearMovementForm();
-      
+
       // Notificar cambios explícitamente
       notifyListeners();
       return true;
@@ -261,7 +278,8 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Registra un egreso de caja
-  Future<bool> addCashOutflow(String accountId, String cashRegisterId, String userId) async {
+  Future<bool> addCashOutflow(
+      String accountId, String cashRegisterId, String userId) async {
     if (movementDescriptionController.text.trim().isEmpty) {
       _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
       notifyListeners();
@@ -288,12 +306,13 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Recargar las cajas activas
-      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      final activeCashRegisters =
+          await _cashRegisterUsecases.getActiveCashRegisters(accountId);
       _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
-      
+
       // Limpiar formulario
       _clearMovementForm();
-      
+
       // Notificar cambios explícitamente
       notifyListeners();
       return true;
@@ -314,7 +333,8 @@ class CashRegisterProvider extends ChangeNotifier {
     int itemCount = 1,
   }) async {
     if (!hasActiveCashRegister) {
-      _state = _state.copyWith(errorMessage: 'No hay una caja registradora activa');
+      _state =
+          _state.copyWith(errorMessage: 'No hay una caja registradora activa');
       notifyListeners();
       return false;
     }
@@ -330,7 +350,7 @@ class CashRegisterProvider extends ChangeNotifier {
 
       // Recargar cajas activas para reflejar cambios
       await loadActiveCashRegisters(accountId);
-      
+
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -352,19 +372,24 @@ class CashRegisterProvider extends ChangeNotifier {
       List<CashRegister> history;
       switch (_state.historyFilter) {
         case 'Última semana':
-          history = await _cashRegisterUsecases.getLastWeekCashRegisters(accountId);
+          history =
+              await _cashRegisterUsecases.getLastWeekCashRegisters(accountId);
           break;
         case 'Último mes':
-          history = await _cashRegisterUsecases.getLastMonthCashRegisters(accountId);
+          history =
+              await _cashRegisterUsecases.getLastMonthCashRegisters(accountId);
           break;
         case 'Mes anterior':
-          history = await _cashRegisterUsecases.getPreviousMonthCashRegisters(accountId);
+          history = await _cashRegisterUsecases
+              .getPreviousMonthCashRegisters(accountId);
           break;
         case 'Hoy':
-          history = await _cashRegisterUsecases.getTodayCashRegisters(accountId);
+          history =
+              await _cashRegisterUsecases.getTodayCashRegisters(accountId);
           break;
         default:
-          history = await _cashRegisterUsecases.getCashRegisterHistory(accountId);
+          history =
+              await _cashRegisterUsecases.getCashRegisterHistory(accountId);
       }
       _state = _state.copyWith(cashRegisterHistory: history);
     } catch (e) {
@@ -388,7 +413,8 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Carga las descripciones fijas
   Future<void> loadFixedDescriptions(String accountId) async {
     try {
-      final descriptions = await _cashRegisterUsecases.getFixedDescriptions(accountId);
+      final descriptions =
+          await _cashRegisterUsecases.getFixedDescriptions(accountId);
       _state = _state.copyWith(fixedDescriptions: descriptions);
       notifyListeners();
     } catch (e) {
@@ -397,16 +423,17 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Crea una nueva descripción fija
-  Future<bool> createFixedDescription(String accountId, String description) async {
+  Future<bool> createFixedDescription(
+      String accountId, String description) async {
     try {
       await _cashRegisterUsecases.createFixedDescription(
         accountId: accountId,
         description: description,
       );
-      
+
       // Recargar descripciones
       await loadFixedDescriptions(accountId);
-      
+
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());

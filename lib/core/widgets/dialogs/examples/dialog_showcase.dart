@@ -6,7 +6,7 @@ import 'package:sellweb/core/widgets/dialogs/examples/example_modern_dialog.dart
 
 /// Widget de demostración que muestra todos los componentes de diálogo
 /// implementados según Material Design 3
-/// 
+///
 /// Útil para testing, desarrollo y como referencia visual
 class DialogShowcase extends StatelessWidget {
   const DialogShowcase({super.key});
@@ -36,7 +36,8 @@ class DialogShowcase extends StatelessWidget {
                     () => showConfirmationDialog(
                       context: context,
                       title: 'Confirmar Acción',
-                      message: '¿Estás seguro de que deseas continuar con esta acción?',
+                      message:
+                          '¿Estás seguro de que deseas continuar con esta acción?',
                       confirmText: 'Sí, continuar',
                       cancelText: 'Cancelar',
                     ),
@@ -61,7 +62,8 @@ class DialogShowcase extends StatelessWidget {
                     () => showInfoDialog(
                       context: context,
                       title: 'Operación Exitosa',
-                      message: 'Los cambios se han guardado correctamente en el sistema.',
+                      message:
+                          'Los cambios se han guardado correctamente en el sistema.',
                       buttonText: 'Entendido',
                     ),
                   ),
@@ -72,8 +74,10 @@ class DialogShowcase extends StatelessWidget {
                     () => showErrorDialog(
                       context: context,
                       title: 'Error de Conexión',
-                      message: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
-                      details: 'HTTP 500 - Internal Server Error\nEndpoint: /api/products\nTimestamp: ${DateTime.now()}',
+                      message:
+                          'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
+                      details:
+                          'HTTP 500 - Internal Server Error\nEndpoint: /api/products\nTimestamp: ${DateTime.now()}',
                     ),
                   ),
                   _buildDialogButton(
@@ -84,9 +88,7 @@ class DialogShowcase extends StatelessWidget {
                   ),
                 ],
               ),
-              
               const SizedBox(height: 32),
-              
               _buildSection(
                 context,
                 'Diálogos Complejos',
@@ -116,9 +118,7 @@ class DialogShowcase extends StatelessWidget {
                   ),
                 ],
               ),
-              
               const SizedBox(height: 32),
-              
               _buildSection(
                 context,
                 'Componentes Individuales',
@@ -146,7 +146,7 @@ class DialogShowcase extends StatelessWidget {
     List<Widget> buttons,
   ) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,7 +201,7 @@ class DialogShowcase extends StatelessWidget {
 
     // Simular progreso
     await Future.delayed(const Duration(seconds: 3));
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Cerrar loading
       showInfoDialog(
@@ -246,9 +246,7 @@ class DialogShowcase extends StatelessWidget {
               ],
             ),
           ),
-          
           DialogComponents.sectionSpacing,
-          
           DialogComponents.itemList(
             context: context,
             items: [
@@ -272,9 +270,7 @@ class DialogShowcase extends StatelessWidget {
               ),
             ],
           ),
-          
           DialogComponents.sectionSpacing,
-          
           Row(
             children: [
               Expanded(
@@ -296,9 +292,7 @@ class DialogShowcase extends StatelessWidget {
               ),
             ],
           ),
-          
           DialogComponents.sectionSpacing,
-          
           DialogComponents.summaryContainer(
             context: context,
             label: 'Total Final',
@@ -332,8 +326,9 @@ class DialogShowcase extends StatelessWidget {
 
   Future<void> _showConfigDialog(BuildContext context) {
     final nameController = TextEditingController(text: 'Mi Negocio');
-    final addressController = TextEditingController(text: 'Calle Principal 123');
-    
+    final addressController =
+        TextEditingController(text: 'Calle Principal 123');
+
     return showBaseDialog(
       context: context,
       title: 'Configuración del Negocio',
@@ -347,9 +342,7 @@ class DialogShowcase extends StatelessWidget {
             label: 'Nombre del Negocio',
             prefixIcon: Icons.business_outlined,
           ),
-          
           DialogComponents.itemSpacing,
-          
           DialogComponents.textField(
             context: context,
             controller: addressController,
@@ -357,9 +350,7 @@ class DialogShowcase extends StatelessWidget {
             prefixIcon: Icons.location_on_outlined,
             maxLines: 2,
           ),
-          
           DialogComponents.sectionSpacing,
-          
           DialogComponents.infoSection(
             context: context,
             title: 'Configuración de Impresión',
@@ -427,11 +418,10 @@ class DialogShowcase extends StatelessWidget {
           Text(
             'Secciones de Información',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           DialogComponents.itemSpacing,
-          
           DialogComponents.infoSection(
             context: context,
             title: 'Sección Ejemplo',
@@ -440,17 +430,14 @@ class DialogShowcase extends StatelessWidget {
               'Esta es una sección de información estilizada con Material Design 3.',
             ),
           ),
-          
           DialogComponents.sectionSpacing,
-          
           Text(
             'Listas de Elementos',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           DialogComponents.itemSpacing,
-          
           DialogComponents.itemList(
             context: context,
             items: [
@@ -468,17 +455,14 @@ class DialogShowcase extends StatelessWidget {
               ),
             ],
           ),
-          
           DialogComponents.sectionSpacing,
-          
           Text(
             'Badges y Contenedores',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           DialogComponents.itemSpacing,
-          
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -506,9 +490,7 @@ class DialogShowcase extends StatelessWidget {
               ),
             ],
           ),
-          
           DialogComponents.sectionSpacing,
-          
           DialogComponents.summaryContainer(
             context: context,
             label: 'Contenedor de Resumen',

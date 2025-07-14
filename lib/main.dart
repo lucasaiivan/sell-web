@@ -31,7 +31,8 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   // Inicializar repositorios
-  final authRepository = AuthRepositoryImpl(fb_auth.FirebaseAuth.instance, GoogleSignIn());
+  final authRepository =
+      AuthRepositoryImpl(fb_auth.FirebaseAuth.instance, GoogleSignIn());
   final accountRepository = AccountRepositoryImpl(prefs: prefs);
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
@@ -41,7 +42,7 @@ void main() async {
         // Providers globales que no dependen del estado de autenticación
         ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
         ChangeNotifierProvider(create: (_) => PrinterProvider()..initialize()),
-        
+
         // AuthProvider - gestiona el estado de autenticación
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
@@ -55,8 +56,11 @@ void main() async {
 
         // SellProvider - creado una sola vez y reutilizado
         ChangeNotifierProxyProvider<AuthProvider, SellProvider>(
-          create: (_) => SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
-          update: (_, auth, previousSell) => previousSell ?? SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+          create: (_) =>
+              SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+          update: (_, auth, previousSell) =>
+              previousSell ??
+              SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
         ),
       ],
       child: Consumer<ThemeDataAppProvider>(
@@ -118,19 +122,24 @@ Widget _buildAccountSpecificProviders({
   // Crear repositorios específicos de la cuenta
   final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
   final cashRegisterRepository = CashRegisterRepositoryImpl();
-  
+
   return MultiProvider(
     key: ValueKey('account_providers_$accountId'),
     providers: [
       // Providers específicos de la cuenta actual
       ChangeNotifierProvider(
         create: (_) => CatalogueProvider(
-          getProductsStreamUseCase: GetCatalogueStreamUseCase(catalogueRepository),
+          getProductsStreamUseCase:
+              GetCatalogueStreamUseCase(catalogueRepository),
           getProductByCodeUseCase: GetProductByCodeUseCase(),
-          isProductScannedUseCase: IsProductScannedUseCase(GetProductByCodeUseCase()),
-          getPublicProductByCodeUseCase: GetPublicProductByCodeUseCase(CatalogueRepositoryImpl()),
-          addProductToCatalogueUseCase: AddProductToCatalogueUseCase(catalogueRepository),
-          createPublicProductUseCase: CreatePublicProductUseCase(catalogueRepository),
+          isProductScannedUseCase:
+              IsProductScannedUseCase(GetProductByCodeUseCase()),
+          getPublicProductByCodeUseCase:
+              GetPublicProductByCodeUseCase(CatalogueRepositoryImpl()),
+          addProductToCatalogueUseCase:
+              AddProductToCatalogueUseCase(catalogueRepository),
+          createPublicProductUseCase:
+              CreatePublicProductUseCase(catalogueRepository),
           getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
         )..initCatalogue(accountId),
       ),

@@ -12,7 +12,8 @@ class CashRegisterStatusWidget extends StatefulWidget {
   const CashRegisterStatusWidget({super.key});
 
   @override
-  State<CashRegisterStatusWidget> createState() => _CashRegisterStatusWidgetState();
+  State<CashRegisterStatusWidget> createState() =>
+      _CashRegisterStatusWidgetState();
 }
 
 class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
@@ -31,7 +32,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   void _showStatusDialog(BuildContext context) {
     // Capturar todos los providers necesarios antes de mostrar el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -39,7 +41,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
@@ -57,8 +60,9 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           icon: Icons.point_of_sale_outlined,
           tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
           onPressed: () => _showStatusDialog(context),
-          backgroundColor:
-              isActive ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+          backgroundColor: isActive
+              ? Colors.green.withOpacity(0.1)
+              : Colors.grey.withOpacity(0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
           text: isActive ? 'Abierta' : 'Iniciar turno',
         );

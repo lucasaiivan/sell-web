@@ -4,7 +4,7 @@ import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 
 /// Ejemplo de diálogo modernizado usando los nuevos componentes estándar
-/// 
+///
 /// Este ejemplo muestra cómo crear un diálogo complejo siguiendo
 /// la guía de Material Design 3 implementada
 class ExampleModernDialog extends StatefulWidget {
@@ -82,8 +82,8 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
             Text(
               'Nuevos Datos',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             DialogComponents.itemSpacing,
 
@@ -147,7 +147,7 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
 
   bool _hasChanges() {
     return _nameController.text != widget.productName ||
-           _getNewPrice() != widget.currentPrice;
+        _getNewPrice() != widget.currentPrice;
   }
 
   double? _getNewPrice() {
@@ -167,7 +167,7 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
         confirmText: 'Sí, continuar',
         isDestructive: false,
       );
-      
+
       if (confirmed != true) return;
     }
 
@@ -176,13 +176,13 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
     try {
       // Simular guardado
       await Future.delayed(const Duration(seconds: 2));
-      
+
       if (mounted) {
         Navigator.of(context).pop({
           'name': _nameController.text,
           'price': _getNewPrice(),
         });
-        
+
         // Mostrar confirmación
         showInfoDialog(
           context: context,
@@ -225,7 +225,6 @@ Future<Map<String, dynamic>?> showExampleModernDialog({
 
 /// Ejemplo de migración: Diálogo simple antes vs después
 class MigrationExample {
-  
   /// ❌ ANTES - Diálogo sin estándares
   static Widget oldDialog(BuildContext context) {
     return AlertDialog(
@@ -285,9 +284,7 @@ class MigrationExample {
               ],
             ),
           ),
-          
           DialogComponents.sectionSpacing,
-          
           DialogComponents.itemList(
             context: context,
             items: [
@@ -303,9 +300,7 @@ class MigrationExample {
               ),
             ],
           ),
-          
           DialogComponents.sectionSpacing,
-          
           DialogComponents.summaryContainer(
             context: context,
             label: 'Total',

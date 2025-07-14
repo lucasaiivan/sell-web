@@ -34,10 +34,15 @@ class _CatalogueState {
   }) {
     return _CatalogueState(
       products: products ?? this.products,
-      lastScannedProduct: lastScannedProduct == const Object() ? this.lastScannedProduct : lastScannedProduct as ProductCatalogue?,
-      lastScannedCode: lastScannedCode == const Object() ? this.lastScannedCode : lastScannedCode as String?,
+      lastScannedProduct: lastScannedProduct == const Object()
+          ? this.lastScannedProduct
+          : lastScannedProduct as ProductCatalogue?,
+      lastScannedCode: lastScannedCode == const Object()
+          ? this.lastScannedCode
+          : lastScannedCode as String?,
       showSplash: showSplash ?? this.showSplash,
-      scanError: scanError == const Object() ? this.scanError : scanError as String?,
+      scanError:
+          scanError == const Object() ? this.scanError : scanError as String?,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -130,16 +135,20 @@ class CatalogueProvider extends ChangeNotifier {
 
     // Crear nuevos casos de uso con el nuevo ID de cuenta
     final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
-    getProductsStreamUseCase = GetCatalogueStreamUseCase(newCatalogueRepository);
-    addProductToCatalogueUseCase = AddProductToCatalogueUseCase(newCatalogueRepository);
-    createPublicProductUseCase = CreatePublicProductUseCase(newCatalogueRepository);
+    getProductsStreamUseCase =
+        GetCatalogueStreamUseCase(newCatalogueRepository);
+    addProductToCatalogueUseCase =
+        AddProductToCatalogueUseCase(newCatalogueRepository);
+    createPublicProductUseCase =
+        CreatePublicProductUseCase(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
     _catalogueSubscription = getProductsStreamUseCase().listen(
       (snapshot) {
         // Convertir los documentos del snapshot en objetos ProductCatalogue
         final products = snapshot.docs
-            .map((doc) => ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
+            .map((doc) =>
+                ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
 
         _shouldNotifyListeners = false;
@@ -148,13 +157,13 @@ class CatalogueProvider extends ChangeNotifier {
           _shouldNotifyListeners = true;
           notifyListeners();
         }
-        
+
         if (_state.isLoading) {
           _state = _state.copyWith(isLoading: false);
           _shouldNotifyListeners = true;
           notifyListeners();
         }
-        
+
         _shouldNotifyListeners = true;
       },
       onError: (error) {
@@ -182,7 +191,8 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   /// Intenta escanear un producto: si no está en el catálogo, busca en la base pública.
-  Future<void> scanProduct(String code, {required Function(Product) onFoundInPublic}) async {
+  Future<void> scanProduct(String code,
+      {required Function(Product) onFoundInPublic}) async {
     final localProduct = getProductByCode(code);
     if (localProduct != null && localProduct.id.isNotEmpty) {
       _state = _state.copyWith(
@@ -204,10 +214,12 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   /// Guarda un producto en el catálogo de la cuenta actual.
-  Future<void> saveProductToCatalogue(ProductCatalogue productToSave, String accountId) async {
+  Future<void> saveProductToCatalogue(
+      ProductCatalogue productToSave, String accountId) async {
     if (accountId.isEmpty) {
       throw Exception('El ID de la cuenta no está definido o es nulo.');
-    }      try {
+    }
+    try {
       _shouldNotifyListeners = false;
       await addProductToCatalogueUseCase(productToSave, accountId);
       _shouldNotifyListeners = true;
@@ -257,14 +269,16 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   /// Agrega un nuevo producto al catálogo o actualiza uno existente.
-  /// 
+  ///
   /// [product] El producto a agregar o actualizar en el catálogo
   /// [accountId] El ID de la cuenta donde se agregará el producto
   /// Retorna un [Future<void>] que se completa cuando la operación termina
-  Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) async {
+  Future<void> addProductToCatalogue(
+      ProductCatalogue product, String accountId) async {
     // Validar parámetros requeridos
     if (accountId.isEmpty) {
-      throw Exception('El ID de la cuenta es requerido para agregar productos al catálogo');
+      throw Exception(
+          'El ID de la cuenta es requerido para agregar productos al catálogo');
     }
     if (product.code.isEmpty) {
       throw Exception('El código del producto es requerido');
@@ -276,7 +290,7 @@ class CatalogueProvider extends ChangeNotifier {
 
       // Verificar si el producto ya existe
       final existingProduct = getProductByCode(product.code);
-      
+
       if (existingProduct != null && existingProduct.id.isNotEmpty) {
         // Actualizar producto existente
         final updatedProduct = product.copyWith(
@@ -313,9 +327,10 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   /// Determina si dos listas de productos son iguales comparando solo los campos relevantes
-  bool _areProductListsEqual(List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
+  bool _areProductListsEqual(
+      List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
     if (list1.length != list2.length) return false;
-    
+
     for (var i = 0; i < list1.length; i++) {
       if (list1[i].id != list2[i].id ||
           list1[i].code != list2[i].code ||
@@ -326,7 +341,6 @@ class CatalogueProvider extends ChangeNotifier {
     }
     return true;
   }
- 
 
   @override
   void dispose() {
@@ -355,7 +369,7 @@ class CatalogueProvider extends ChangeNotifier {
   void _updateState(_CatalogueState newState) {
     final oldState = _state;
     _state = newState;
-    
+
     // Notificar solo si hay cambios relevantes
     if (oldState != _state) {
       _notifyProductChanges();

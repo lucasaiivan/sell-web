@@ -36,9 +36,12 @@ class _SellProviderState {
     return _SellProviderState(
       ticketView: ticketView ?? this.ticketView,
       shouldPrintTicket: shouldPrintTicket ?? this.shouldPrintTicket,
-      profileAccountSelected: profileAccountSelected ?? this.profileAccountSelected,
+      profileAccountSelected:
+          profileAccountSelected ?? this.profileAccountSelected,
       ticket: ticket ?? this.ticket,
-      lastSoldTicket: lastSoldTicket == const Object() ? this.lastSoldTicket : lastSoldTicket as TicketModel?,
+      lastSoldTicket: lastSoldTicket == const Object()
+          ? this.lastSoldTicket
+          : lastSoldTicket as TicketModel?,
     );
   }
 
@@ -77,7 +80,8 @@ class SellProvider extends ChangeNotifier {
   // Getters que no causan rebuild
   bool get ticketView => _state.ticketView;
   bool get shouldPrintTicket => _state.shouldPrintTicket;
-  ProfileAccountModel get profileAccountSelected => _state.profileAccountSelected;
+  ProfileAccountModel get profileAccountSelected =>
+      _state.profileAccountSelected;
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
@@ -173,7 +177,8 @@ class SellProvider extends ChangeNotifier {
     final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
     if (ticketJson != null) {
       try {
-        final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        final newTicket =
+            TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         _state = _state.copyWith(ticket: newTicket);
         notifyListeners();
       } catch (_) {}
@@ -183,23 +188,25 @@ class SellProvider extends ChangeNotifier {
   Map<String, dynamic> _decodeJson(String source) =>
       const JsonDecoder().convert(source) as Map<String, dynamic>;
 
-  void addProductsticket(ProductCatalogue product, {bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,
+      {bool replaceQuantity = false}) {
     final currentTicket = _state.ticket;
     bool exist = false;
     final updatedProducts = List.from(currentTicket.listPoduct);
-    
+
     for (var i = 0; i < updatedProducts.length; i++) {
       if (updatedProducts[i]['id'] == product.id) {
         if (replaceQuantity) {
           updatedProducts[i]['quantity'] = product.quantity;
         } else {
-          updatedProducts[i]['quantity'] += (product.quantity > 0 ? product.quantity : 1);
+          updatedProducts[i]['quantity'] +=
+              (product.quantity > 0 ? product.quantity : 1);
         }
         exist = true;
         break;
       }
     }
-    
+
     if (!exist) {
       updatedProducts.add(product.toMap());
     }
@@ -250,7 +257,8 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addQuickProduct({required String description, required double salePrice}) {
+  void addQuickProduct(
+      {required String description, required double salePrice}) {
     final product = ProductCatalogue(
       id: Publications.generateUid(),
       description: description,
@@ -302,14 +310,16 @@ class SellProvider extends ChangeNotifier {
 
   Future<void> _loadShouldPrintTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    final shouldPrint = prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+    final shouldPrint =
+        prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
     _state = _state.copyWith(shouldPrintTicket: shouldPrint);
     notifyListeners();
   }
 
   Future<void> _saveShouldPrintTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(SharedPrefsKeys.shouldPrintTicket, _state.shouldPrintTicket);
+    await prefs.setBool(
+        SharedPrefsKeys.shouldPrintTicket, _state.shouldPrintTicket);
   }
 
   Future<void> saveLastSoldTicket() async {
@@ -344,7 +354,8 @@ class SellProvider extends ChangeNotifier {
     final lastTicketJson = prefs.getString(SharedPrefsKeys.lastSoldTicket);
     if (lastTicketJson != null) {
       try {
-        final lastTicket = TicketModel.sahredPreferencefromMap(_decodeJson(lastTicketJson));
+        final lastTicket =
+            TicketModel.sahredPreferencefromMap(_decodeJson(lastTicketJson));
         _state = _state.copyWith(lastSoldTicket: lastTicket);
         notifyListeners();
       } catch (_) {
@@ -354,10 +365,12 @@ class SellProvider extends ChangeNotifier {
   }
 
   void updateTicketWithCashRegister(BuildContext context) {
-    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
-    
+    final cashRegisterProvider =
+        provider.Provider.of<CashRegisterProvider>(context, listen: false);
+
     if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      final activeCashRegister =
+          cashRegisterProvider.currentActiveCashRegister!;
       final currentTicket = _state.ticket;
       final newTicket = TicketModel(
         listPoduct: currentTicket.listPoduct,

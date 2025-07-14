@@ -2,7 +2,7 @@ import '../../domain/entities/cash_register_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
 
 /// Casos de uso para el sistema de caja registradora
-/// 
+///
 /// Implementa la lógica de negocio para:
 /// - Apertura y cierre de caja
 /// - Gestión de flujos de caja
@@ -18,7 +18,7 @@ class CashRegisterUsecases {
   // ==========================================
 
   /// Abre una nueva caja registradora
-  /// 
+  ///
   /// Valida que no exista otra caja abierta con el mismo cajero
   /// y crea una nueva caja con el monto inicial especificado
   Future<CashRegister> openCashRegister({
@@ -33,21 +33,25 @@ class CashRegisterUsecases {
     }
 
     // Verificar si ya existe una caja abierta
-    final activeCashRegisters = await _repository.getActiveCashRegisters(accountId);
+    final activeCashRegisters =
+        await _repository.getActiveCashRegisters(accountId);
     if (activeCashRegisters.isNotEmpty) {
-      throw Exception('Ya existe una caja registradora abierta. Debe cerrarla antes de abrir una nueva.');
+      throw Exception(
+          'Ya existe una caja registradora abierta. Debe cerrarla antes de abrir una nueva.');
     }
 
     return await _repository.openCashRegister(
       accountId: accountId,
-      description: description.isEmpty ? 'Caja ${DateTime.now().day}/${DateTime.now().month}' : description,
+      description: description.isEmpty
+          ? 'Caja ${DateTime.now().day}/${DateTime.now().month}'
+          : description,
       initialCash: initialCash,
       cashierId: cashierId,
     );
   }
 
   /// Cierra una caja registradora específica
-  /// 
+  ///
   /// Calcula automáticamente la diferencia y mueve la caja al historial
   Future<CashRegister> closeCashRegister({
     required String accountId,
@@ -81,7 +85,7 @@ class CashRegisterUsecases {
   // ==========================================
 
   /// Registra un ingreso de caja
-  /// 
+  ///
   /// Valida que el monto sea positivo y actualiza los totales
   Future<void> addCashInflow({
     required String accountId,
@@ -114,7 +118,7 @@ class CashRegisterUsecases {
   }
 
   /// Registra un egreso de caja
-  /// 
+  ///
   /// Valida que el monto sea positivo y actualiza los totales
   Future<void> addCashOutflow({
     required String accountId,
@@ -147,7 +151,7 @@ class CashRegisterUsecases {
   }
 
   /// Registra una venta en la caja registradora
-  /// 
+  ///
   /// Actualiza los totales de ventas, facturación y descuentos
   Future<void> registerSale({
     required String accountId,
@@ -202,10 +206,13 @@ class CashRegisterUsecases {
   }
 
   /// Obtiene los arqueos del mes pasado
-  Future<List<CashRegister>> getPreviousMonthCashRegisters(String accountId) async {
+  Future<List<CashRegister>> getPreviousMonthCashRegisters(
+      String accountId) async {
     final now = DateTime.now();
-    final endDate = DateTime(now.year, now.month, 1); // Primer día del mes actual
-    final startDate = DateTime(now.year, now.month - 1, 1); // Primer día del mes pasado
+    final endDate =
+        DateTime(now.year, now.month, 1); // Primer día del mes actual
+    final startDate =
+        DateTime(now.year, now.month - 1, 1); // Primer día del mes pasado
 
     return await _repository.getCashRegisterByDateRange(
       accountId: accountId,
@@ -226,7 +233,8 @@ class CashRegisterUsecases {
     required DateTime endDate,
   }) async {
     if (startDate.isAfter(endDate)) {
-      throw Exception('La fecha de inicio no puede ser posterior a la fecha de fin');
+      throw Exception(
+          'La fecha de inicio no puede ser posterior a la fecha de fin');
     }
 
     return await _repository.getCashRegisterByDateRange(

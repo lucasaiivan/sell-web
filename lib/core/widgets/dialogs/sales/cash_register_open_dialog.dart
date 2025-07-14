@@ -47,7 +47,8 @@ class CashRegisterOpenDialog extends StatelessWidget {
                 hintText: '0.00',
                 prefixIcon: Icon(Icons.attach_money),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
             ),
             if (cashRegisterProvider.errorMessage != null) ...[
               const SizedBox(height: 16),

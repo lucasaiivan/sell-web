@@ -40,7 +40,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 8),
-                if (provider.hasActiveCashRegister) 
+                if (provider.hasActiveCashRegister)
                   // view : Mostrar caja activa
                   _buildActiveCashRegister(context, provider)
                 else
@@ -70,9 +70,12 @@ class CashRegisterManagementDialog extends StatelessWidget {
                         Expanded(
                           child: Text(
                             provider.errorMessage!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onErrorContainer,
-                            ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer,
+                                    ),
                           ),
                         ),
                       ],
@@ -88,10 +91,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveCashRegister(BuildContext context, CashRegisterProvider provider) {
+  Widget _buildActiveCashRegister(
+      BuildContext context, CashRegisterProvider provider) {
     final theme = Theme.of(context);
     final cashRegister = provider.currentActiveCashRegister!;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -112,7 +116,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
               DialogComponents.summaryContainer(
                 context: context,
                 label: 'Balance Actual',
-                value: '\$${cashRegister.getExpectedBalance.toStringAsFixed(2)}',
+                value:
+                    '\$${cashRegister.getExpectedBalance.toStringAsFixed(2)}',
                 icon: Icons.monetization_on_rounded,
               ),
             ],
@@ -223,12 +228,12 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _buildNoCashRegister(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 48), 
+          padding: const EdgeInsets.symmetric(vertical: 48),
           child: Column(
             children: [
               Icon(
@@ -240,22 +245,23 @@ class CashRegisterManagementDialog extends StatelessWidget {
               Text(
                 'No hay caja activa',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color:
+                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                 ),
-              ), 
+              ),
             ],
           ),
         ),
         FilledButton(
-          onPressed: () => _showOpenDialog(context), 
+          onPressed: () => _showOpenDialog(context),
           child: const Text('Abrir turno de caja'),
         ),
       ],
     );
   }
 
-  Widget _buildCashFlowButtons(BuildContext context, CashRegisterProvider provider) { 
-    
+  Widget _buildCashFlowButtons(
+      BuildContext context, CashRegisterProvider provider) {
     return Row(
       children: [
         Expanded(
@@ -266,12 +272,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 ? () => _showCashFlowDialog(context, true)
                 : null,
             style: OutlinedButton.styleFrom(
-              backgroundColor: provider.hasActiveCashRegister 
+              backgroundColor: provider.hasActiveCashRegister
                   ? Colors.green.withValues(alpha: 0.1)
                   : null,
-              foregroundColor: provider.hasActiveCashRegister 
-                  ? Colors.green
-                  : null,
+              foregroundColor:
+                  provider.hasActiveCashRegister ? Colors.green : null,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 12,
@@ -288,12 +293,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 ? () => _showCashFlowDialog(context, false)
                 : null,
             style: OutlinedButton.styleFrom(
-              backgroundColor: provider.hasActiveCashRegister 
+              backgroundColor: provider.hasActiveCashRegister
                   ? Colors.red.withOpacity(0.1)
                   : null,
-              foregroundColor: provider.hasActiveCashRegister 
-                  ? Colors.red
-                  : null,
+              foregroundColor:
+                  provider.hasActiveCashRegister ? Colors.red : null,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 12,
@@ -307,14 +311,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   void _showOpenDialog(BuildContext context) {
     // Capturar los providers antes de mostrar el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],
         child: const CashRegisterOpenDialog(),
@@ -324,14 +330,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   void _showCloseDialog(BuildContext context, CashRegister cashRegister) {
     // Capturar los providers antes de mostrar el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],
         child: CashRegisterCloseDialog(cashRegister: cashRegister),
@@ -341,10 +349,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   void _showCashFlowDialog(BuildContext context, bool isInflow) {
     // Capturar todos los providers necesarios antes de mostrar el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
-    
+
     if (!cashRegisterProvider.hasActiveCashRegister) return;
 
     final cashRegister = cashRegisterProvider.currentActiveCashRegister!;
@@ -353,7 +362,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
@@ -64,7 +65,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               ? Colors.green.withOpacity(0.1)
               : Colors.grey.withOpacity(0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isActive ? 'Abierta' : 'Iniciar turno',
+          text: isMobile(context)?null: isActive ? 'Abierta' : 'Iniciar turno',
         );
       },
     );

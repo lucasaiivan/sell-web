@@ -515,10 +515,10 @@ class _SellPageState extends State<SellPage> {
                               provider.ticket.getProductsQuantity() > 0))
                       ? Padding(
                           padding:
-                              const EdgeInsets.only(right: 8.0, left: 12.0),
+                              const EdgeInsets.only(right: 8.0, left: 8.0),
                           child: TextButton.icon(
                             icon: const Icon(Icons.close),
-                            label: const Text('Descartar ticket'),
+                            label: Text(isMobile(buildContext)?'Ticket':'Descartar ticket'),
                             onPressed: discartTicketAlertDialg,
                           ),
                         )

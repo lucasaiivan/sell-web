@@ -6,6 +6,7 @@ import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
 import 'package:sellweb/presentation/widgets/cash_register_status_widget.dart';
+import 'package:sellweb/presentation/widgets/ticket/ticket_drawer_widget.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -136,10 +137,13 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // drawerTicket view : visualización del ticket con los datos de la compra
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
-                      (isMobile(context) && sellProvider.ticketView))
-                    drawerTicket(context),
+                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
+                    TicketDrawerWidget(
+                      showConfirmedPurchase: _showConfirmedPurchase,
+                      onEditCashAmount: () => dialogSelectedIncomeCash(),
+                      onConfirmSale: () => _confirmSale(sellProvider),
+                      onCloseTicket: () => sellProvider.setTicketView(false),
+                    ),
                 ],
               );
             },
@@ -634,238 +638,204 @@ class _SellPageState extends State<SellPage> {
     );
   }
 
-  /// Botones para la vista del ticket. showClose controla si se muestra el botón de cerrar (solo en móvil).
-  Widget floatingActionButtonTicket({required SellProvider provider, bool showClose = true}) {
-    final String confirmarText = 'Confirmar venta';
-    if (_showConfirmedPurchase) return const SizedBox.shrink();
-    return Row(
-      children: [
-        if (showClose)
-          AppFloatingActionButton(
-            onTap: () {
-              provider.setTicketView(false);
-            },
-            icon: Icons.close_rounded,
-            buttonColor: Colors.grey.withValues(alpha: 0.8),
-          ).animate(delay: const Duration(milliseconds: 0)).fade(),
-        if (showClose) const SizedBox(width: 8),
-        AppFloatingActionButton(
-          onTap: () async {
-            // Mostrar confirmación de venta completada inmediatamente
-            setState(() {
-              _showConfirmedPurchase = true;
-            }); // Obtener el provider de caja registradora
-            final cashRegisterProvider =
-                Provider.of<CashRegisterProvider>(context, listen: false);
+  /// Lógica para confirmar la venta y procesar el ticket
+  Future<void> _confirmSale(SellProvider provider) async {
+    // Mostrar confirmación de venta completada inmediatamente
+    setState(() {
+      _showConfirmedPurchase = true;
+    });
+    
+    // Obtener el provider de caja registradora
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
 
-            // Si hay una caja activa, registrar la venta
-            if (cashRegisterProvider.hasActiveCashRegister) {
-              final activeCashRegister =
-                  cashRegisterProvider.currentActiveCashRegister!;
-              provider.ticket.cashRegisterName = activeCashRegister.description;
-              provider.ticket.cashRegisterId = activeCashRegister.id;
+    // Si hay una caja activa, registrar la venta
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      final activeCashRegister =
+          cashRegisterProvider.currentActiveCashRegister!;
+      provider.ticket.cashRegisterName = activeCashRegister.description;
+      provider.ticket.cashRegisterId = activeCashRegister.id;
 
-              await cashRegisterProvider.registerSale(
-                accountId: provider.profileAccountSelected.id,
-                saleAmount: provider.ticket.getTotalPrice,
-                discountAmount: provider.ticket.discount,
-                itemCount: provider.ticket.getProductsQuantity(),
-              );
-            }
+      await cashRegisterProvider.registerSale(
+        accountId: provider.profileAccountSelected.id,
+        saleAmount: provider.ticket.getTotalPrice,
+        discountAmount: provider.ticket.discount,
+        itemCount: provider.ticket.getProductsQuantity(),
+      );
+    }
 
-            // Si el checkbox está activo, procesar la impresión/generación de tickets
-            if (provider.shouldPrintTicket) {
-              // Verificar si hay impresora conectada
-              final printerService = ThermalPrinterHttpService();
-              await printerService.initialize();
+    // Si el checkbox está activo, procesar la impresión/generación de tickets
+    if (provider.shouldPrintTicket) {
+      await _processPrintTicket(provider);
+    } else {
+      await _processSimpleSale(provider);
+    }
+  }
 
-              if (printerService.isConnected) {
-                // Si hay impresora conectada, imprimir directamente el ticket real
-                try {
-                  // Determinar método de pago primero
-                  String paymentMethod = 'Efectivo';
-                  switch (provider.ticket.payMode) {
-                    case 'mercadopago':
-                      paymentMethod = 'Mercado Pago';
-                      break;
-                    case 'card':
-                      paymentMethod = 'Tarjeta Déb/Créd';
-                      break;
-                    default:
-                      paymentMethod = 'Efectivo';
-                  }
+  /// Procesa la venta con impresión de ticket
+  Future<void> _processPrintTicket(SellProvider provider) async {
+    // Verificar si hay impresora conectada
+    final printerService = ThermalPrinterHttpService();
+    await printerService.initialize();
 
-                  // Preparar datos del ticket
-                  final products = provider.ticket.listPoduct.map((item) {
-                    final product = item is Map ? item : item.toMap();
-                    return {
-                      'quantity': product['quantity'].toString(),
-                      'description': product['description'],
-                      'price': (product['salePrice'] * product['quantity'])
-                          .toDouble(),
-                    };
-                  }).toList();
- 
+    if (printerService.isConnected) {
+      // Si hay impresora conectada, imprimir directamente el ticket real
+      try {
+        // Determinar método de pago primero
+        String paymentMethod = 'Efectivo';
+        switch (provider.ticket.payMode) {
+          case 'mercadopago':
+            paymentMethod = 'Mercado Pago';
+            break;
+          case 'card':
+            paymentMethod = 'Tarjeta Déb/Créd';
+            break;
+          default:
+            paymentMethod = 'Efectivo';
+        }
 
-                  // Imprimir el ticket
-                  final printSuccess = await printerService.printTicket(
-                    businessName:
-                        provider.profileAccountSelected.name.isNotEmpty
-                            ? provider.profileAccountSelected.name
-                            : 'PUNTO DE VENTA',
-                    products: products,
-                    total: provider.ticket.getTotalPrice,
-                    paymentMethod: paymentMethod,
-                    cashReceived: provider.ticket.valueReceived > 0
-                        ? provider.ticket.valueReceived
-                        : null,
-                    change: provider.ticket.valueReceived >
-                            provider.ticket.getTotalPrice
-                        ? provider.ticket.valueReceived -
-                            provider.ticket.getTotalPrice
-                        : null,
-                  );
+        // Preparar datos del ticket
+        final products = provider.ticket.listPoduct.map((item) {
+          final product = item is Map ? item : item.toMap();
+          return {
+            'quantity': product['quantity'].toString(),
+            'description': product['description'],
+            'price': (product['salePrice'] * product['quantity']).toDouble(),
+          };
+        }).toList();
 
-                  // Mostrar resultado
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(
-                              printSuccess ? Icons.check_circle : Icons.error,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                printSuccess
-                                    ? 'Ticket impreso correctamente'
-                                    : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: printSuccess ? Colors.green : Colors.red,
-                        duration: const Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.error, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Error al procesar impresión: $e',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    );
-                  }
-                }
-              } else {
-                // Si no hay impresora, mostrar diálogo de opciones
-                await Future.delayed(const Duration(milliseconds: 800));
+        // Imprimir el ticket
+        final printSuccess = await printerService.printTicket(
+          businessName: provider.profileAccountSelected.name.isNotEmpty
+              ? provider.profileAccountSelected.name
+              : 'PUNTO DE VENTA',
+          products: products,
+          total: provider.ticket.getTotalPrice,
+          paymentMethod: paymentMethod,
+          cashReceived: provider.ticket.valueReceived > 0
+              ? provider.ticket.valueReceived
+              : null,
+          change: provider.ticket.valueReceived >
+                  provider.ticket.getTotalPrice
+              ? provider.ticket.valueReceived - provider.ticket.getTotalPrice
+              : null,
+        );
 
-                if (mounted) {
-                  await showTicketOptionsDialog(
-                    context: context,
-                    ticket: provider.ticket,
-                    businessName:
-                        provider.profileAccountSelected.name.isNotEmpty
-                            ? provider.profileAccountSelected.name
-                            : 'PUNTO DE VENTA',
-                    onComplete: () {
-                      // Este callback se ejecuta solo cuando se completa exitosamente
-                    },
-                  );
-                }
-              }
+        // Mostrar resultado
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(
+                    printSuccess ? Icons.check_circle : Icons.error,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      printSuccess
+                          ? 'Ticket impreso correctamente'
+                          : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: printSuccess ? Colors.green : Colors.red,
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Error al procesar impresión: $e',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } else {
+      // Si no hay impresora, mostrar diálogo de opciones
+      await Future.delayed(const Duration(milliseconds: 800));
 
-              // Guardar el último ticket vendido y registrar la venta en la caja activa
-              final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-
-              // Registrar la venta en la caja si existe una activa
-              if (cashRegisterProvider.hasActiveCashRegister) {
-                final accountId = provider.profileAccountSelected.id;
-                await cashRegisterProvider.registerSale(
-                  accountId: accountId,
-                  saleAmount: provider.ticket.getTotalPrice,
-                  discountAmount: provider.ticket.discount,
-                  itemCount: provider.ticket.getProductsQuantity(),
-                );
-              }
-
-              // Guardar el último ticket con la referencia a la caja
-              await provider.saveLastSoldTicket();
-
-              // Limpiar ticket después del proceso
-              Future.delayed(const Duration(milliseconds: 500)).then((_) {
-                if (mounted) {
-                  setState(() {
-                    _showConfirmedPurchase = false;
-                  });
-                  provider.discartTicket();
-                }
-              });
-            } else {
-              // Obtener el provider de caja registradora
-              final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-
-              // Si hay una caja activa, registrar la venta
-              if (cashRegisterProvider.hasActiveCashRegister) {
-                final activeCashRegister =
-                    cashRegisterProvider.currentActiveCashRegister!;
-                provider.ticket.cashRegisterName =
-                    activeCashRegister.description;
-                provider.ticket.cashRegisterId = activeCashRegister.id;
-
-                await cashRegisterProvider.registerSale(
-                  accountId: provider.profileAccountSelected.id,
-                  saleAmount: provider.ticket.getTotalPrice,
-                  discountAmount: provider.ticket.discount,
-                  itemCount: provider.ticket.getProductsQuantity(),
-                );
-              }
-
-              // Guardar último ticket
-              await provider.saveLastSoldTicket();
-
-              Future.delayed(const Duration(seconds:1)).then((_) {
-                if (mounted) {
-                  setState(() {
-                    _showConfirmedPurchase = false;
-                  });
-                  provider.discartTicket();
-                }
-              });
-            }
+      if (mounted) {
+        await showTicketOptionsDialog(
+          context: context,
+          ticket: provider.ticket,
+          businessName: provider.profileAccountSelected.name.isNotEmpty
+              ? provider.profileAccountSelected.name
+              : 'PUNTO DE VENTA',
+          onComplete: () {
+            // Este callback se ejecuta solo cuando se completa exitosamente
           },
-          icon: Icons.check_circle_outline_rounded,
-          text: confirmarText,
-          extended: true,
-        ).animate(delay: const Duration(milliseconds: 0)).fade(),
-      ],
-    );
+        );
+      }
+    }
+
+    await _finalizeSale(provider);
+  }
+
+  /// Procesa la venta sin impresión de ticket
+  Future<void> _processSimpleSale(SellProvider provider) async {
+    // Obtener el provider de caja registradora
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
+
+    // Si hay una caja activa, registrar la venta
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      final activeCashRegister =
+          cashRegisterProvider.currentActiveCashRegister!;
+      provider.ticket.cashRegisterName = activeCashRegister.description;
+      provider.ticket.cashRegisterId = activeCashRegister.id;
+
+      await cashRegisterProvider.registerSale(
+        accountId: provider.profileAccountSelected.id,
+        saleAmount: provider.ticket.getTotalPrice,
+        discountAmount: provider.ticket.discount,
+        itemCount: provider.ticket.getProductsQuantity(),
+      );
+    }
+
+    await _finalizeSale(provider);
+  }
+
+  /// Finaliza la venta guardando el último ticket y limpiando
+  Future<void> _finalizeSale(SellProvider provider) async {
+    // Guardar el último ticket vendido
+    await provider.saveLastSoldTicket();
+
+    // Limpiar ticket después del proceso
+    Future.delayed(const Duration(milliseconds: 500)).then((_) {
+      if (mounted) {
+        setState(() {
+          _showConfirmedPurchase = false;
+        });
+        provider.discartTicket();
+      }
+    });
   }
 
   /// Botones para la vista principal. Solo visible en móvil y cuando el ticket no está visible.
@@ -966,295 +936,6 @@ class _SellPageState extends State<SellPage> {
     );
   }
 
-  Widget drawerTicket(BuildContext context) {
-    // values
-    final provider = Provider.of<SellProvider>(context);
-    final ticket = provider.ticket;
-
-    // style adaptado a tema
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    Color borderColor = colorScheme.onSurface;
-    // Usar un color suave que resalte más el ticket
-    Color backgroundColor = colorScheme.primary.withValues(alpha: 0.1);
-    final TextStyle textValuesStyle = TextStyle(
-        fontFamily: 'RobotoMono',
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
-        color: colorScheme.onSurface);
-    final TextStyle textDescrpitionStyle = TextStyle(
-        fontFamily: 'RobotoMono', fontSize: 18, color: colorScheme.onSurface);
-    final TextStyle textSmallStyle = TextStyle(
-        fontFamily: 'RobotoMono',
-        fontSize: 13,
-        color: colorScheme.onSurface.withValues(alpha: 0.87));
-    final TextStyle textTotalStyle = TextStyle(
-        fontFamily: 'RobotoMono',
-        fontWeight: FontWeight.bold,
-        fontSize: 24,
-        color: colorScheme.onPrimary);
-
-    Widget dividerLinesWidget = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
-      child: Row(children: [
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return CustomPaint(
-                size: Size(constraints.maxWidth, 1),
-                painter: _DashedLinePainter(
-                    color: colorScheme.onSurface.withValues(alpha: 0.2)),
-              );
-            },
-          ),
-        ),
-      ]),
-    );
-    return _showConfirmedPurchase
-        ? widgetConfirmedPurchase(
-                context: context,
-                width:
-                    isMobile(context) ? MediaQuery.of(context).size.width : 400)
-            .animate()
-            .scale(
-                duration: 600.ms,
-                curve: Curves.elasticOut,
-                begin: const Offset(0.8, 0.8),
-                end: const Offset(1, 1))
-        : AnimatedContainer(
-            width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
-            curve: Curves.fastOutSlowIn,
-            duration: const Duration(milliseconds: 300),
-            child: Card(
-              clipBehavior: Clip.antiAlias,
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              elevation: 0,
-              color: backgroundColor,
-              shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                      color: borderColor.withValues(alpha: 0.2), width: 0.5),
-                  borderRadius: BorderRadius.circular(8.0)),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    // view : encabezado del ticket
-                    Column(
-                      children: [
-                        Text(
-                            provider.profileAccountSelected.name.isNotEmpty
-                                ? provider.profileAccountSelected.name
-                                    .toUpperCase()
-                                : 'TICKET',
-                            style: textDescrpitionStyle.copyWith(
-                                fontSize: 22, letterSpacing: 2)),
-                        const SizedBox(height: 1),
-                        Text('compra', style: textSmallStyle),
-                        const SizedBox(height: 1),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 0),
-                          child: Row(
-                            children: [
-                              Text('fecha:', style: textSmallStyle),
-                              const Spacer(),
-                              Text(DateTime.now().toString().substring(0, 11)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    // view : listado de productos del ticket
-                    dividerLinesWidget,
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 0),
-                      child: Row(
-                        children: [
-                          Expanded(child: Text('Cant.', style: textSmallStyle)),
-                          Expanded(
-                              flex: 3,
-                              child: Text('Producto', style: textSmallStyle)),
-                          Expanded(
-                              child: Text('Precio',
-                                  style: textSmallStyle,
-                                  textAlign: TextAlign.right)),
-                        ],
-                      ),
-                    ),
-                    dividerLinesWidget,
-                    Flexible(
-                      child: _TicketProductListWithIndicator(
-                          ticket: ticket, textValuesStyle: textValuesStyle),
-                    ),
-                    dividerLinesWidget,
-                    // view : cantidad total de artículos
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 0),
-                      child: Row(
-                        children: [
-                          Text('Artículos:', style: textSmallStyle),
-                          const Spacer(),
-                          Text('${ticket.getProductsQuantity()}',
-                              style: textDescrpitionStyle),
-                        ],
-                      ),
-                    ),
-                    dividerLinesWidget,
-                    const SizedBox(height: 5),
-                    // view : vuelto (solo si corresponde)
-                    if (ticket.valueReceived > 0 &&
-                        ticket.valueReceived >= ticket.getTotalPrice)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: 12, right: 12, bottom: 5, top: 5),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Spacer(),
-                            // button : editar monto recibido y mostrar vuelto
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => dialogSelectedIncomeCash(
-                                    initialAmount: ticket.valueReceived),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.blue.withValues(alpha: 0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
-                                        style: textDescrpitionStyle.copyWith(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Icon(
-                                        Icons.edit_outlined,
-                                        size: 16,
-                                        color: colorScheme.onSurface,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    // view : total del monto del ticket
-                    Padding(
-                      padding: const EdgeInsets.only(
-                          left: 12, right: 12, top: 5, bottom: 4),
-                      child: _TotalBounce(
-                        total: ticket.getTotalPrice,
-                        textStyle: textTotalStyle,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-
-                    // view: Métodos de pago (ChipCheck)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                          left: 12, right: 12, top: 6, bottom: 0),
-                      child: Column(
-                        children: [
-                          // Texto de métodos de pago
-                          Text('Métodos de pago:', style: textSmallStyle),
-                          const SizedBox(height: 6),
-                          // Chips de métodos de pago
-                          paymentMethodChips(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // CheckboxListTile para imprimir ticket con contenedor discreto
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Consumer<SellProvider>(
-                        builder: (context, sellProvider, __) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: sellProvider.shouldPrintTicket
-                                    ? colorScheme.primary.withValues(alpha: 0.3)
-                                    : colorScheme.outline
-                                        .withValues(alpha: 0.2),
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                              color: !sellProvider.shouldPrintTicket
-                                  ? colorScheme.primaryContainer
-                                      .withValues(alpha: 0.1)
-                                  : colorScheme.primaryContainer
-                                      .withValues(alpha: 0.7),
-                            ),
-                            child: CheckboxListTile(
-                              dense: true,
-                              value: sellProvider.shouldPrintTicket,
-                              onChanged: (bool? value) {
-                                sellProvider
-                                    .setShouldPrintTicket(value ?? false);
-                              },
-                              title: Text(
-                                'Ticket',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: sellProvider.shouldPrintTicket
-                                          ? colorScheme.primary
-                                          : colorScheme.onSurface,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                              secondary: Icon(
-                                sellProvider.shouldPrintTicket
-                                    ? Icons.receipt_long
-                                    : Icons.receipt_long_outlined,
-                                color: sellProvider.shouldPrintTicket
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        const Spacer(),
-                        floatingActionButtonTicket(
-                            provider: provider, showClose: isMobile(context)),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
-          );
-  }
-
   Widget paymentMethodChips() {
     final provider = Provider.of<SellProvider>(context, listen: false);
     return Wrap(
@@ -1290,261 +971,6 @@ class _SellPageState extends State<SellPage> {
           },
         ),
       ],
-    );
-  }
-
-  Widget widgetConfirmedPurchase(
-      {required BuildContext context, double width = 400}) {
-    final provider = Provider.of<SellProvider>(context, listen: false);
-    final theme = Theme.of(context);
-    final ticket = provider.ticket;
-
-    // Obtener información del método de pago
-    String paymentMethodText = _getPaymentMethodDisplayText(ticket.payMode);
-    IconData paymentIcon = _getPaymentMethodIcon(ticket.payMode);
-
-    return Container(
-      width: width,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.green.shade400,
-            Colors.green.shade600,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icono principal con efecto circular
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
-                size: 60,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Título principal
-            Text(
-              '¡Venta exitosa!',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 8),
-
-            // Subtítulo
-            Text(
-              'Transacción completada correctamente',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.9),
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 32),
-
-            // Card con detalles de la venta
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Total de la venta
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Total vendido:',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        Publications.getFormatoPrecio(
-                            value: ticket.getTotalPrice),
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'RobotoMono',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Divider
-                  Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Información adicional
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Cantidad de artículos
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Artículos',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${ticket.getProductsQuantity()}',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Método de pago
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Método de pago',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                paymentIcon,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                paymentMethodText,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  // Mostrar vuelto si aplica
-                  if (ticket.valueReceived > 0 &&
-                      ticket.valueReceived > ticket.getTotalPrice) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Vuelto a entregar',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            Publications.getFormatoPrecio(
-                              value:
-                                  ticket.valueReceived - ticket.getTotalPrice,
-                            ),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'RobotoMono',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Información de fecha y hora
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.access_time_rounded,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _getFormattedDateTime(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontFamily: 'RobotoMono',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1993,28 +1419,6 @@ class _SellPageState extends State<SellPage> {
   }
 }
 
-/// Dibuja una línea punteada horizontal para simular el corte de un ticket impreso.
-class _DashedLinePainter extends CustomPainter {
-  final Color color;
-  _DashedLinePainter({this.color = Colors.black38});
-  @override
-  void paint(Canvas canvas, Size size) {
-    const dashWidth = 5.0;
-    const dashSpace = 4.0;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    double startX = 0;
-    while (startX < size.width) {
-      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class ProductoItem extends StatefulWidget {
   final ProductCatalogue producto;
 
@@ -2255,214 +1659,6 @@ Widget accoutsAssociatedsButton(
   );
 }
 
-/// Widget personalizado que muestra la lista de productos en el ticket con un indicador de "items ocultos" si es necesario.
-class _TicketProductListWithIndicator extends StatefulWidget {
-  final dynamic ticket;
-  final TextStyle textValuesStyle;
-  const _TicketProductListWithIndicator(
-      {required this.ticket, required this.textValuesStyle});
-
-  @override
-  State<_TicketProductListWithIndicator> createState() =>
-      _TicketProductListWithIndicatorState();
-}
-
-class _TicketProductListWithIndicatorState
-    extends State<_TicketProductListWithIndicator> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showIndicator = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_updateIndicator);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateIndicator());
-  }
-
-  void _updateIndicator() {
-    if (!_scrollController.hasClients) return;
-    final max = _scrollController.position.maxScrollExtent;
-    final offset = _scrollController.offset;
-    final show = max > 0 && offset < max - 8;
-    if (_showIndicator != show) {
-      setState(() => _showIndicator = show);
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_updateIndicator);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Widget> items = widget.ticket.listPoduct.map<Widget>((item) {
-      final product =
-          item is ProductCatalogue ? item : ProductCatalogue.fromMap(item);
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        child: Row(
-          children: [
-            Expanded(
-                child:
-                    Text('${product.quantity}', style: widget.textValuesStyle)),
-            Expanded(
-                flex: 3,
-                child: Text(product.description,
-                    style: widget.textValuesStyle,
-                    overflow: TextOverflow.ellipsis)),
-            Expanded(
-                child: Text(
-                    Publications.getFormatoPrecio(
-                        value: product.salePrice * product.quantity),
-                    style: widget.textValuesStyle,
-                    textAlign: TextAlign.right)),
-          ],
-        ),
-      );
-    }).toList(growable: false);
-
-    return Stack(
-      children: [
-        ListView(
-          key: const Key('ticket'),
-          controller: _scrollController,
-          shrinkWrap: false,
-          children: items,
-        ),
-        if (_showIndicator)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surface
-                      .withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.18),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.keyboard_arrow_down_rounded,
-                        size: 22, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Hay más ítems',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// Widget animado que muestra el total con un leve rebote al cambiar el valor.
-/// El rebote es visible desde el inicio y cada vez que cambia el total.
-class _TotalBounce extends StatefulWidget {
-  final double total;
-  final TextStyle textStyle;
-  final Color color;
-  const _TotalBounce({
-    required this.total,
-    required this.textStyle,
-    required this.color,
-  });
-
-  @override
-  State<_TotalBounce> createState() => _TotalBounceState();
-}
-
-class _TotalBounceState extends State<_TotalBounce>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scale;
-  double? _oldTotal;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 260),
-      vsync: this,
-    );
-    _scale = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
-    _oldTotal = widget.total;
-    // Inicia la animación al mostrar el widget por primera vez
-    _controller.forward(from: 0);
-  }
-
-  @override
-  void didUpdateWidget(covariant _TotalBounce oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.total != _oldTotal) {
-      _controller.forward(from: 0);
-      _oldTotal = widget.total;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scale,
-      child: Container(
-        decoration: BoxDecoration(
-          color: widget.color,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Text('TOTAL', style: widget.textStyle),
-            const Spacer(),
-            Text(
-              Publications.getFormatoPrecio(value: widget.total),
-              style: widget.textStyle,
-              textAlign: TextAlign.right,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Muestra el diálogo de configuración de impresora
 void _showPrinterConfigDialog(BuildContext context) {
   showDialog<void>(
@@ -2487,38 +1683,4 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
         ? provider.profileAccountSelected.name
         : 'PUNTO DE VENTA',
   );
-}
-
-/// Obtiene el texto a mostrar para el método de pago
-String _getPaymentMethodDisplayText(String payMode) {
-  switch (payMode) {
-    case 'effective':
-      return 'Efectivo';
-    case 'mercadopago':
-      return 'Mercado Pago';
-    case 'card':
-      return 'Tarjeta';
-    default:
-      return 'Sin especificar';
-  }
-}
-
-/// Obtiene el icono correspondiente al método de pago
-IconData _getPaymentMethodIcon(String payMode) {
-  switch (payMode) {
-    case 'effective':
-      return Icons.payments_rounded;
-    case 'mercadopago':
-      return Icons.account_balance_wallet_rounded;
-    case 'card':
-      return Icons.credit_card_rounded;
-    default:
-      return Icons.help_outline_rounded;
-  }
-}
-
-/// Obtiene la fecha y hora formateada para mostrar en la confirmación
-String _getFormattedDateTime() {
-  final now = DateTime.now();
-  return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 }

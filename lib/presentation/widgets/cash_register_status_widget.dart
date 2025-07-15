@@ -33,8 +33,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   void _showStatusDialog(BuildContext context) {
     // Capturar todos los providers necesarios antes de mostrar el diálogo
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 

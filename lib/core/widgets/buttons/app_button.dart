@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Botón principal de la aplicación con diseño Material 3
-/// Soporta iconos, textos y configuraciones personalizadas
+/// Botón principal unificado de la aplicación con diseño Material 3
+/// Soporta iconos, textos, estado de carga y configuraciones personalizadas
+/// 
+/// Combina las funcionalidades de AppButton y PrimaryButton en un solo widget
+/// optimizado para uso en toda la aplicación
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -17,6 +20,9 @@ class AppButton extends StatelessWidget {
   final bool disable;
   final bool defaultStyle;
   final Size? minimumSize;
+  final bool isLoading;
+  final Color? loadingColor;
+  final double loadingSize;
 
   const AppButton({
     super.key,
@@ -34,7 +40,30 @@ class AppButton extends StatelessWidget {
     this.disable = false,
     this.defaultStyle = false,
     this.minimumSize,
+    this.isLoading = false,
+    this.loadingColor,
+    this.loadingSize = 20,
   });
+
+  /// Constructor factory para botón primario (compatibilidad con PrimaryButton)
+  factory AppButton.primary({
+    Key? key,
+    required String text,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+    Color? backgroundColor,
+    Color? textColor,
+  }) {
+    return AppButton(
+      key: key,
+      text: text,
+      onPressed: onPressed,
+      isLoading: isLoading,
+      backgroundColor: backgroundColor,
+      foregroundColor: textColor,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,43 +76,79 @@ class AppButton extends StatelessWidget {
         return FadeTransition(opacity: animation, child: child);
       },
       child: Padding(
-        key: ValueKey(disable),
+        key: ValueKey('$disable-$isLoading'),
         padding: margin!,
         child: SizedBox(
           width: width,
-          child: icon != null
-              ? ElevatedButton.icon(
-                  onPressed: disable ? null : onPressed,
-                  style: _buildButtonStyle(colorScheme),
-                  icon: iconSize != null
-                      ? IconTheme(
-                          data: IconThemeData(size: iconSize),
-                          child: icon!,
-                        )
-                      : icon!,
-                  label: Text(
-                    text,
-                    style: TextStyle(
-                      color: foregroundColor ?? Colors.white,
-                      fontSize: fontSize,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : ElevatedButton(
-                  onPressed: disable ? null : onPressed,
-                  style: _buildButtonStyle(colorScheme),
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      color: foregroundColor ?? Colors.white,
-                      fontSize: fontSize,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+          child: _buildButton(colorScheme),
         ),
       ),
+    );
+  }
+
+  Widget _buildButton(ColorScheme colorScheme) {
+    // Determinar si el botón debe estar deshabilitado
+    final bool isDisabled = disable || isLoading;
+
+    if (icon != null) {
+      return ElevatedButton.icon(
+        onPressed: isDisabled ? null : onPressed,
+        style: _buildButtonStyle(colorScheme),
+        icon: _buildButtonIcon(),
+        label: _buildButtonContent(),
+      );
+    } else {
+      return ElevatedButton(
+        onPressed: isDisabled ? null : onPressed,
+        style: _buildButtonStyle(colorScheme),
+        child: _buildButtonContent(),
+      );
+    }
+  }
+
+  Widget _buildButtonIcon() {
+    if (isLoading) {
+      return SizedBox(
+        width: loadingSize,
+        height: loadingSize,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            loadingColor ?? foregroundColor ?? Colors.white,
+          ),
+        ),
+      );
+    }
+
+    return iconSize != null
+        ? IconTheme(
+            data: IconThemeData(size: iconSize),
+            child: icon!,
+          )
+        : icon!;
+  }
+
+  Widget _buildButtonContent() {
+    if (isLoading && icon == null) {
+      return SizedBox(
+        width: loadingSize,
+        height: loadingSize,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            loadingColor ?? foregroundColor ?? Colors.white,
+          ),
+        ),
+      );
+    }
+
+    return Text(
+      text,
+      style: TextStyle(
+        color: foregroundColor ?? Colors.white,
+        fontSize: fontSize,
+      ),
+      textAlign: TextAlign.center,
     );
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/widgets/inputs/inputs.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
-import '../../buttons/primary_button.dart';
+import '../../buttons/app_button.dart';
 
 /// Diálogo para registrar ingresos o egresos de caja
 class CashFlowDialog extends StatelessWidget {
@@ -76,7 +76,7 @@ class CashFlowDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        PrimaryButton(
+        AppButton.primary(
           onPressed: cashRegisterProvider.isProcessing
               ? null
               : () => _handleCashFlow(context, cashRegisterProvider),

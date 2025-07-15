@@ -91,13 +91,30 @@ import 'package:sellweb/core/widgets/core_widgets.dart';
 
 ### Ejemplos de Uso
 
-#### Botón Principal
+#### Botón Principal (Unificado)
 ```dart
+// Botón básico
 AppButton(
   text: 'Guardar',
   onPressed: () => _save(),
   backgroundColor: Colors.blue,
   icon: Icon(Icons.save),
+)
+
+// Botón con estado de carga
+AppButton(
+  text: 'Procesar',
+  onPressed: () => _process(),
+  isLoading: isProcessing,
+  backgroundColor: Colors.green,
+)
+
+// Botón primario (factory constructor)
+AppButton.primary(
+  text: 'Confirmar',
+  onPressed: () => _confirm(),
+  isLoading: isConfirming,
+  backgroundColor: Colors.blue,
 )
 ```
 
@@ -201,3 +218,48 @@ class AppWidget extends StatelessWidget {
 - Preferir `withValues(alpha:)` sobre `withOpacity()`
 - Implementar estados interactivos con `WidgetStateProperty`
 - Seguir guías de espaciado y tipografía de Material 3
+
+## 🔄 **BOTÓN UNIFICADO** - Nueva Funcionalidad
+
+### ✅ Unificación de AppButton y PrimaryButton
+
+Se ha realizado una unificación completa de los componentes de botón para simplificar el uso y mantener consistencia:
+
+#### 📋 **Antes** (Múltiples componentes)
+```dart
+// Tres componentes separados
+AppButton(text: 'Botón básico', onPressed: () {});
+PrimaryButton(text: 'Botón primario', onPressed: () {}, isLoading: true);
+```
+
+#### ✅ **Ahora** (Componente unificado)
+```dart
+// Un solo componente con todas las funcionalidades
+AppButton(
+  text: 'Botón completo',
+  onPressed: () {},
+  isLoading: true,
+  icon: Icon(Icons.save),
+  backgroundColor: Colors.blue,
+);
+
+// Constructor factory para compatibilidad
+AppButton.primary(
+  text: 'Botón primario',
+  onPressed: () {},
+  isLoading: true,
+);
+```
+
+#### 🎯 **Características del Botón Unificado**
+- ✅ **Estado de carga** con indicador visual
+- ✅ **Soporte para iconos** con tamaño personalizable
+- ✅ **Material Design 3** completo
+- ✅ **Animaciones suaves** entre estados
+- ✅ **Compatibilidad total** con el código existente
+- ✅ **Factory constructor** para migración sin breaking changes
+
+#### 🔧 **Migración Automática**
+- El código existente funciona sin cambios
+- `PrimaryButton` está marcado como `@Deprecated`
+- Se recomienda migrar a `AppButton.primary()` gradualmente

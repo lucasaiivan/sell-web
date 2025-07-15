@@ -221,7 +221,9 @@ class DialogComponents {
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
-      maxLines: maxLines,
+      minLines: 1,
+      maxLines: maxLines > 1 ? maxLines : null,
+      expands: maxLines > 1,
       readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
@@ -234,10 +236,9 @@ class DialogComponents {
               )
             : null,
         border: const OutlineInputBorder(),
-        filled: true,
       ),
     );
-  }
+  } 
 
   /// Campo de dinero estilizado para diálogos
   static Widget moneyField({

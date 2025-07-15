@@ -44,21 +44,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Información explicativa
-            DialogComponents.infoSection(
-              context: context,
-              title: 'Venta Rápida',
-              icon: Icons.info_outline_rounded,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              content: Text(
-                'Agrega un producto por monto específico sin necesidad de tenerlo en el catálogo.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-
+          children: [ 
             DialogComponents.sectionSpacing,
 
             // Campo de precio
@@ -74,14 +60,14 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               context: context,
               controller: _priceController,
               label: 'Precio de Venta',
-              hint: '\$0.00',
+              hint: '\$0.0',
             ),
 
             DialogComponents.sectionSpacing,
 
             // Campo de descripción
             Text(
-              'Descripción (Opcional)',
+              'Descripción',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -91,10 +77,8 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
             DialogComponents.textField(
               context: context,
               controller: _descriptionController,
-              label: 'Descripción del Producto',
-              hint: 'Ej: Producto especial, servicio, etc.',
-              prefixIcon: Icons.label_outline_rounded,
-              maxLines: 2,
+              label: 'Descripción (Opcional)',
+              hint: 'Ej: bebida, snack, etc.', 
             ),
 
             DialogComponents.sectionSpacing,
@@ -120,8 +104,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         ),
         DialogComponents.primaryActionButton(
           context: context,
-          text: 'Agregar Producto',
-          icon: Icons.add_shopping_cart_rounded,
+          text: 'Agregar Producto', 
           onPressed: _processQuickSale,
           isLoading: _isProcessing,
         ),

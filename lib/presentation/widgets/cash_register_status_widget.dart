@@ -62,10 +62,10 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
           onPressed: () => _showStatusDialog(context),
           backgroundColor: isActive
-              ? Colors.green.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.1),
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha:0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)?null: isActive ? 'Abierta' : 'Iniciar turno',
+          text: isMobile(context)?null: isActive ? '${provider.currentActiveCashRegister?.description}' : 'Iniciar turno',
         );
       },
     );

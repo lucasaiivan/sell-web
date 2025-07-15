@@ -518,7 +518,7 @@ class _SellPageState extends State<SellPage> {
                               const EdgeInsets.only(right: 8.0, left: 8.0),
                           child: TextButton.icon(
                             icon: const Icon(Icons.close),
-                            label: Text(isMobile(buildContext)?'Ticket':'Descartar ticket'),
+                            label: Text(isMobile(buildContext)?'Descartar':'Descartar ticket'),
                             onPressed: discartTicketAlertDialg,
                           ),
                         )
@@ -635,8 +635,7 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Botones para la vista del ticket. showClose controla si se muestra el botón de cerrar (solo en móvil).
-  Widget floatingActionButtonTicket(
-      {required SellProvider provider, bool showClose = true}) {
+  Widget floatingActionButtonTicket({required SellProvider provider, bool showClose = true}) {
     final String confirmarText = 'Confirmar venta';
     if (_showConfirmedPurchase) return const SizedBox.shrink();
     return Row(
@@ -706,17 +705,7 @@ class _SellPageState extends State<SellPage> {
                           .toDouble(),
                     };
                   }).toList();
-
-                  // Debug: mostrar datos que se van a enviar
-                  if (kDebugMode) {
-                    print('=== DEBUG PRINTER DATA ===');
-                    print(
-                        'Business Name: ${provider.profileAccountSelected.name}');
-                    print('Products: $products');
-                    print('Total: ${provider.ticket.getTotalPrice}');
-                    print('Payment Method: $paymentMethod');
-                    print('=========================');
-                  }
+ 
 
                   // Imprimir el ticket
                   final printSuccess = await printerService.printTicket(
@@ -758,8 +747,7 @@ class _SellPageState extends State<SellPage> {
                             ),
                           ],
                         ),
-                        backgroundColor:
-                            printSuccess ? Colors.green : Colors.red,
+                        backgroundColor: printSuccess ? Colors.green : Colors.red,
                         duration: const Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
@@ -814,8 +802,7 @@ class _SellPageState extends State<SellPage> {
               }
 
               // Guardar el último ticket vendido y registrar la venta en la caja activa
-              final cashRegisterProvider =
-                  Provider.of<CashRegisterProvider>(context, listen: false);
+              final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
 
               // Registrar la venta en la caja si existe una activa
               if (cashRegisterProvider.hasActiveCashRegister) {
@@ -842,8 +829,7 @@ class _SellPageState extends State<SellPage> {
               });
             } else {
               // Obtener el provider de caja registradora
-              final cashRegisterProvider =
-                  Provider.of<CashRegisterProvider>(context, listen: false);
+              final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
 
               // Si hay una caja activa, registrar la venta
               if (cashRegisterProvider.hasActiveCashRegister) {
@@ -864,7 +850,7 @@ class _SellPageState extends State<SellPage> {
               // Guardar último ticket
               await provider.saveLastSoldTicket();
 
-              Future.delayed(const Duration(seconds: 2)).then((_) {
+              Future.delayed(const Duration(seconds:1)).then((_) {
                 if (mounted) {
                   setState(() {
                     _showConfirmedPurchase = false;
@@ -896,6 +882,9 @@ class _SellPageState extends State<SellPage> {
         isMobile(context)
             ? AppFloatingActionButton(
                 onTap: () {
+                  if(sellProvider.ticket.getTotalPrice == 0) { 
+                    return;
+                  }
                   sellProvider.setTicketView(true);
                 },
                 text:

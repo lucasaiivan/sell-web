@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/cash_register_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
 import '../providers/sell_provider.dart';
@@ -20,12 +20,12 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
   @override
   void initState() {
     super.initState();
-    // Cargar datos iniciales sin esperar al build
+    // Cargar datos iniciales con persistencia sin esperar al build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final sellProvider = context.read<SellProvider>();
       final accountId = sellProvider.profileAccountSelected.id;
       if (accountId.isNotEmpty) {
-        context.read<CashRegisterProvider>().loadActiveCashRegisters(accountId);
+        context.read<CashRegisterProvider>().initializeFromPersistence(accountId);
       }
     });
   }
@@ -52,7 +52,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;

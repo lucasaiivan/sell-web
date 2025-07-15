@@ -29,7 +29,7 @@ class AddProductDialog extends StatefulWidget {
 
 class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _priceController;
+  late final AppMoneyTextEditingController _priceController;
   late final TextEditingController _descriptionController;
   bool _checkAddCatalogue = true;
   bool _isLoading = false;
@@ -38,7 +38,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   @override
   void initState() {
     super.initState();
-    _priceController = TextEditingController();
+    _priceController = AppMoneyTextEditingController();
     _descriptionController =
         TextEditingController(text: widget.product.description);
     _errorText = widget.errorMessage;
@@ -122,23 +122,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
             ),
             DialogComponents.itemSpacing,
 
-            DialogComponents.textField(
+            DialogComponents.moneyField(
               context: context,
               controller: _priceController,
               label: 'Precio',
               hint: '\$0.00',
-              prefixIcon: Icons.monetization_on_rounded,
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value?.trim().isEmpty == true) {
-                  return 'El precio es requerido';
-                }
-                final price = double.tryParse(value!);
-                if (price == null || price <= 0) {
-                  return 'Ingrese un precio válido';
-                }
-                return null;
-              },
             ),
 
             DialogComponents.sectionSpacing,
@@ -295,7 +283,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
     });
 
     try {
-      final price = double.parse(_priceController.text);
+      final price = _priceController.doubleValue;
 
       // Obtener providers
       final sellProvider =

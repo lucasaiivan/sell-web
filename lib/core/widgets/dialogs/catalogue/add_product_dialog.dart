@@ -29,7 +29,7 @@ class AddProductDialog extends StatefulWidget {
 
 class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _priceController;
+  late final AppMoneyTextEditingController _priceController;
   late final TextEditingController _descriptionController;
   bool _checkAddCatalogue = true;
   bool _isLoading = false;
@@ -38,7 +38,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   @override
   void initState() {
     super.initState();
-    _priceController = TextEditingController();
+    _priceController = AppMoneyTextEditingController();
     _descriptionController =
         TextEditingController(text: widget.product.description);
     _errorText = widget.errorMessage;

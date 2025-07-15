@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/widgets/inputs/inputs.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
@@ -40,15 +41,9 @@ class CashRegisterCloseDialog extends StatelessWidget {
             children: [
               _buildSummaryCard(context),
               const SizedBox(height: 16),
-              TextField(
+              MoneyInputTextField(
                 controller: cashRegisterProvider.finalBalanceController,
-                decoration: const InputDecoration(
-                  labelText: 'Balance Final',
-                  hintText: '0.00',
-                  prefixIcon: Icon(Icons.attach_money),
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                labelText: 'Balance Final',
               ),
               const SizedBox(height: 16),
               if (cashRegister.getDifference != 0) ...[

@@ -31,14 +31,7 @@ class CashRegisterUsecases {
     if (initialCash < 0) {
       throw Exception('El monto inicial no puede ser negativo');
     }
-
-    // Verificar si ya existe una caja abierta
-    final activeCashRegisters =
-        await _repository.getActiveCashRegisters(accountId);
-    if (activeCashRegisters.isNotEmpty) {
-      throw Exception(
-          'Ya existe una caja registradora abierta. Debe cerrarla antes de abrir una nueva.');
-    }
+ 
 
     return await _repository.openCashRegister(
       accountId: accountId,

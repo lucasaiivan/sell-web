@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../widgets/inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3
 class DialogComponents {
@@ -164,7 +165,7 @@ class DialogComponents {
                 color: theme.colorScheme.onPrimary,
               ),
             )
-          : Icon(icon ?? Icons.check_rounded),
+          : icon==null?null: Icon(icon),
       label: Text(text),
       style: FilledButton.styleFrom(
         backgroundColor:
@@ -189,7 +190,7 @@ class DialogComponents {
   }) {
     return OutlinedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon ?? Icons.cancel_outlined),
+      icon: icon==null?null : Icon(icon),
       label: Text(text),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(
@@ -235,6 +236,28 @@ class DialogComponents {
         border: const OutlineInputBorder(),
         filled: true,
       ),
+    );
+  }
+
+  /// Campo de dinero estilizado para diálogos
+  static Widget moneyField({
+    required dynamic controller, // AppMoneyTextEditingController
+    required String label,
+    String? hint,
+    Color? fillColor,
+    void Function(double value)? onChanged,
+    void Function(double value)? onSubmitted,
+    bool autofocus = false,
+    required BuildContext context,
+  }) {
+    // Import necesario para MoneyInputTextField
+    return MoneyInputTextField(
+      controller: controller,
+      labelText: label,
+      fillColor: fillColor,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      autofocus: autofocus,
     );
   }
 

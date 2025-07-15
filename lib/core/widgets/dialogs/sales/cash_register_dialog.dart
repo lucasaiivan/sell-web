@@ -43,14 +43,11 @@ class CashRegisterOpenDialog extends StatelessWidget {
                     prefixIcon: Icons.description_outlined,
                   ),
                   DialogComponents.sectionSpacing,
-                  DialogComponents.textField(
+                  DialogComponents.moneyField(
                     context: context,
                     controller: cashRegisterProvider.initialCashController,
                     label: 'Monto Inicial',
                     hint: '0.00',
-                    prefixIcon: Icons.attach_money_rounded,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
                   ),
                 ],
               ),
@@ -362,14 +359,14 @@ class CashFlowDialog extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  DialogComponents.textField(
+                  DialogComponents.moneyField(
                     context: context,
                     controller: provider.movementAmountController,
                     label: 'Monto',
                     hint: '0.00',
-                    prefixIcon: Icons.attach_money_rounded,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    fillColor: isInflow 
+                      ? Colors.green.withValues(alpha: 0.1) 
+                      : Colors.red.withValues(alpha: 0.1),
                   ),
                   DialogComponents.sectionSpacing,
                   DialogComponents.textField(
@@ -478,11 +475,13 @@ class CashRegisterManagementDialog extends StatelessWidget {
           }
 
           return Container(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.2),
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: Column(
@@ -654,8 +653,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
           const SizedBox(height: 16),
           DialogComponents.primaryActionButton(
             context: context,
-            text: 'Abrir Nueva Caja',
-            icon: Icons.add_rounded,
+            text: 'Apertura de Caja',
             onPressed: () => showCashRegisterOpenDialog(context),
           ),
         ],
@@ -673,7 +671,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         DialogComponents.primaryActionButton(
           context: context,
           text: 'Ingreso',
-          icon: Icons.add_circle_outline_rounded,
+          icon: Icons.add_circle_outline_rounded, 
           onPressed: provider.hasActiveCashRegister
               ? () => _showCashFlowDialog(context, true)
               : null,

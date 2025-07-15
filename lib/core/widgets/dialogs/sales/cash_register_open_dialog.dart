@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/widgets/inputs/inputs.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
 import '../../buttons/primary_button.dart';
@@ -15,8 +16,6 @@ class CashRegisterOpenDialog extends StatelessWidget {
     return AlertDialog(
       title: Row(
         children: [
-          const Icon(Icons.add_circle_outline),
-          const SizedBox(width: 8),
           const Text('Apertura de Caja'),
           const Spacer(),
           IconButton(
@@ -31,25 +30,18 @@ class CashRegisterOpenDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            InputTextField(
               controller: cashRegisterProvider.openDescriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Ej: Caja Principal',
-                prefixIcon: Icon(Icons.description),
-              ),
-            ),
+              labelText: 'Descripción',
+              hintText: 'Ej: Caja Principal',
+            ), 
             const SizedBox(height: 16),
-            TextField(
+            // input : Campo para monto inicial
+            MoneyInputTextField(
               controller: cashRegisterProvider.initialCashController,
-              decoration: const InputDecoration(
-                labelText: 'Monto Inicial',
-                hintText: '0.00',
-                prefixIcon: Icon(Icons.attach_money),
-              ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            ),
+              labelText: 'Monto Inicial', 
+              
+            ), 
             if (cashRegisterProvider.errorMessage != null) ...[
               const SizedBox(height: 16),
               Text(

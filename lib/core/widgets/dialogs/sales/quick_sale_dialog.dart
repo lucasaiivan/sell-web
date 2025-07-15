@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
@@ -19,7 +20,7 @@ class QuickSaleDialog extends StatefulWidget {
 
 class _QuickSaleDialogState extends State<QuickSaleDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _priceController = TextEditingController();
+  final _priceController = AppMoneyTextEditingController();
   final _descriptionController = TextEditingController();
   bool _isProcessing = false;
 
@@ -69,23 +70,11 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
             ),
             DialogComponents.itemSpacing,
 
-            DialogComponents.textField(
+            DialogComponents.moneyField(
               context: context,
               controller: _priceController,
               label: 'Precio de Venta',
               hint: '\$0.00',
-              prefixIcon: Icons.monetization_on_rounded,
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value?.trim().isEmpty == true) {
-                  return 'El precio es requerido';
-                }
-                final price = double.tryParse(value!);
-                if (price == null || price <= 0) {
-                  return 'Ingrese un precio válido mayor a cero';
-                }
-                return null;
-              },
             ),
 
             DialogComponents.sectionSpacing,
@@ -141,11 +130,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   }
 
   String _getFormattedPrice() {
-    final price = double.tryParse(_priceController.text);
-    if (price != null) {
-      return price.toStringAsFixed(2);
-    }
-    return '0.00';
+    return _priceController.doubleValue.toStringAsFixed(2);
   }
 
   Future<void> _processQuickSale() async {
@@ -156,7 +141,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
     });
 
     try {
-      final price = double.parse(_priceController.text);
+      final price = _priceController.doubleValue;
       final description = _descriptionController.text.trim().isEmpty
           ? 'Venta rápida'
           : _descriptionController.text.trim();

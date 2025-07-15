@@ -19,8 +19,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
     return BaseDialog(
       title: 'Administración de Caja',
       icon: Icons.point_of_sale_rounded,
-      width: 500,
-      headerColor: Colors.transparent,
+      width: 500, 
       content: Builder(
         builder: (context) {
           final provider = context.watch<CashRegisterProvider>();
@@ -165,18 +164,38 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                FilledButton.icon(
-                  icon: const Icon(Icons.lock_outlined),
-                  label: const Text('Cerrar Caja'),
-                  onPressed: () => _showCloseDialog(context, cashRegister),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.error,
-                    foregroundColor: theme.colorScheme.onError,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.clear_rounded),
+                        label: const Text('Deseleccionar'),
+                        onPressed: () => provider.clearSelectedCashRegister(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: FilledButton.icon(
+                        icon: const Icon(Icons.lock_outlined),
+                        label: const Text('Cerrar Caja'),
+                        onPressed: () => _showCloseDialog(context, cashRegister),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: theme.colorScheme.onError,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -228,35 +247,119 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _buildNoCashRegister(BuildContext context) {
     final theme = Theme.of(context);
+    final provider = context.watch<CashRegisterProvider>();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 48),
-          child: Column(
-            children: [
-              Icon(
-                Icons.point_of_sale_outlined,
-                size: 48,
-                color: theme.colorScheme.onSurfaceVariant,
+        if (provider.hasAvailableCashRegisters) ...[
+          // view : Mostrar lista de cajas disponibles
+          Text('Cajas disponibles'),
+          const SizedBox(height: 16),
+          // Mostrar lista de cajas disponibles
+          ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: provider.activeCashRegisters.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final cashRegister = provider.activeCashRegisters[index];
+                  return _buildCashRegisterTile(context, cashRegister, provider);
+                },
               ),
-              const SizedBox(height: 16),
-              Text(
-                'No hay caja activa',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          const SizedBox(height: 24), 
+        ] else ...[
+          // Mostrar mensaje de no cajas disponibles
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 48),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.point_of_sale_outlined,
+                  size: 48,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  'No hay cajas disponibles',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Crea una nueva caja para comenzar',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        FilledButton(
+          onPressed: () => _showOpenDialog(context),
+          child: const Text('Apertura de nueva caja'),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildCashRegisterTile(
+    BuildContext context, 
+    CashRegister cashRegister, 
+    CashRegisterProvider provider
+  ) {
+    final theme = Theme.of(context);
+
+    // view : Tarjeta de caja registradora
+    
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => provider.selectCashRegister(cashRegister),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [ 
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.point_of_sale_rounded,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                cashRegister.description,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
           ),
         ),
-        FilledButton(
-          onPressed: () => _showOpenDialog(context),
-          child: const Text('Abrir turno de caja'),
-        ),
-      ],
+      ),
     );
   }
 
@@ -319,8 +422,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],
         child: const CashRegisterOpenDialog(),

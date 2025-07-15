@@ -1,10 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/utils/fuctions.dart';
+import '../../core/services/cash_register_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
 
+/// Extension helper para firstOrNull si no está disponible
+extension ListExtensions<T> on List<T> {
+  T? get firstOrNull => isEmpty ? null : first;
+}
+
 class _CashRegisterState {
   final List<CashRegister> activeCashRegisters;
+  final CashRegister? selectedCashRegister;
   final bool isLoadingActive;
   final List<CashRegister> cashRegisterHistory;
   final bool isLoadingHistory;
@@ -15,6 +23,7 @@ class _CashRegisterState {
 
   const _CashRegisterState({
     this.activeCashRegisters = const [],
+    this.selectedCashRegister,
     this.isLoadingActive = false,
     this.cashRegisterHistory = const [],
     this.isLoadingHistory = false,
@@ -24,12 +33,14 @@ class _CashRegisterState {
     this.fixedDescriptions = const [],
   });
 
-  bool get hasActiveCashRegister => activeCashRegisters.isNotEmpty;
-  CashRegister? get currentActiveCashRegister =>
-      activeCashRegisters.isNotEmpty ? activeCashRegisters.first : null;
+  bool get hasActiveCashRegister => selectedCashRegister != null;
+  CashRegister? get currentActiveCashRegister => selectedCashRegister;
+  bool get hasAvailableCashRegisters => activeCashRegisters.isNotEmpty;
 
   _CashRegisterState copyWith({
     List<CashRegister>? activeCashRegisters,
+    CashRegister? selectedCashRegister,
+    bool clearSelectedCashRegister = false,
     bool? isLoadingActive,
     List<CashRegister>? cashRegisterHistory,
     bool? isLoadingHistory,
@@ -40,6 +51,9 @@ class _CashRegisterState {
   }) {
     return _CashRegisterState(
       activeCashRegisters: activeCashRegisters ?? this.activeCashRegisters,
+      selectedCashRegister: clearSelectedCashRegister 
+          ? null 
+          : selectedCashRegister ?? this.selectedCashRegister,
       isLoadingActive: isLoadingActive ?? this.isLoadingActive,
       cashRegisterHistory: cashRegisterHistory ?? this.cashRegisterHistory,
       isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
@@ -58,6 +72,7 @@ class _CashRegisterState {
       other is _CashRegisterState &&
           runtimeType == other.runtimeType &&
           listEquals(activeCashRegisters, other.activeCashRegisters) &&
+          selectedCashRegister == other.selectedCashRegister &&
           isLoadingActive == other.isLoadingActive &&
           listEquals(cashRegisterHistory, other.cashRegisterHistory) &&
           isLoadingHistory == other.isLoadingHistory &&
@@ -69,6 +84,7 @@ class _CashRegisterState {
   @override
   int get hashCode =>
       activeCashRegisters.hashCode ^
+      selectedCashRegister.hashCode ^
       isLoadingActive.hashCode ^
       cashRegisterHistory.hashCode ^
       isLoadingHistory.hashCode ^
@@ -91,18 +107,19 @@ class CashRegisterProvider extends ChangeNotifier {
   // Form controllers
   final TextEditingController openDescriptionController =
       TextEditingController();
-  final TextEditingController initialCashController = TextEditingController();
-  final TextEditingController finalBalanceController = TextEditingController();
+  final AppMoneyTextEditingController initialCashController = AppMoneyTextEditingController();
+  final AppMoneyTextEditingController finalBalanceController = AppMoneyTextEditingController();
   final TextEditingController movementDescriptionController =
       TextEditingController();
-  final TextEditingController movementAmountController =
-      TextEditingController();
+  final AppMoneyTextEditingController movementAmountController =
+      AppMoneyTextEditingController();
 
   // Immutable state
   _CashRegisterState _state = _CashRegisterState();
 
   // Public getters
   List<CashRegister> get activeCashRegisters => _state.activeCashRegisters;
+  CashRegister? get selectedCashRegister => _state.selectedCashRegister;
   bool get isLoadingActive => _state.isLoadingActive;
   List<CashRegister> get cashRegisterHistory => _state.cashRegisterHistory;
   bool get isLoadingHistory => _state.isLoadingHistory;
@@ -111,10 +128,57 @@ class CashRegisterProvider extends ChangeNotifier {
   bool get isProcessing => _state.isProcessing;
   List<String> get fixedDescriptions => _state.fixedDescriptions;
   bool get hasActiveCashRegister => _state.hasActiveCashRegister;
+  bool get hasAvailableCashRegisters => _state.hasAvailableCashRegisters;
   CashRegister? get currentActiveCashRegister =>
       _state.currentActiveCashRegister;
 
   CashRegisterProvider(this._cashRegisterUsecases);
+
+  // ==========================================
+  // MÉTODOS DE PERSISTENCIA
+  // ==========================================
+
+  /// Inicializa el provider cargando la caja seleccionada desde persistencia
+  Future<void> initializeFromPersistence(String accountId) async {
+    final persistenceService = CashRegisterPersistenceService.instance;
+    
+    // Cargar cajas activas
+    await loadActiveCashRegisters(accountId);
+    
+    // Intentar cargar la caja seleccionada desde persistencia
+    final savedCashRegisterId = await persistenceService.getSelectedCashRegisterId();
+    if (savedCashRegisterId != null) {
+      final savedCashRegister = _state.activeCashRegisters
+          .where((cr) => cr.id == savedCashRegisterId)
+          .firstOrNull;
+      
+      if (savedCashRegister != null) {
+        _state = _state.copyWith(selectedCashRegister: savedCashRegister);
+        notifyListeners();
+      } else {
+        // Si la caja guardada ya no existe, limpiar persistencia
+        await persistenceService.clearSelectedCashRegisterId();
+      }
+    }
+  }
+
+  /// Selecciona una caja registradora y la guarda en persistencia
+  Future<void> selectCashRegister(CashRegister cashRegister) async {
+    final persistenceService = CashRegisterPersistenceService.instance;
+    
+    _state = _state.copyWith(selectedCashRegister: cashRegister);
+    await persistenceService.saveSelectedCashRegisterId(cashRegister.id);
+    notifyListeners();
+  }
+
+  /// Deselecciona la caja registradora actual y limpia persistencia
+  Future<void> clearSelectedCashRegister() async {
+    final persistenceService = CashRegisterPersistenceService.instance;
+    
+    _state = _state.copyWith(clearSelectedCashRegister: true);
+    await persistenceService.clearSelectedCashRegisterId();
+    notifyListeners();
+  }
 
   // ==========================================
   // MÉTODOS PÚBLICOS - CAJAS ACTIVAS
@@ -122,12 +186,13 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Carga las cajas registradoras activas
   Future<void> loadActiveCashRegisters(String accountId) async {
+    // Mostrar indicador de carga
     _state = _state.copyWith(isLoadingActive: true, errorMessage: null);
     notifyListeners();
 
     try {
-      final activeCashRegisters =
-          await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+      // Limpiar estado previo
+      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
       _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -145,7 +210,7 @@ class CashRegisterProvider extends ChangeNotifier {
       return false;
     }
 
-    final initialCash = double.tryParse(initialCashController.text) ?? 0.0;
+    final initialCash = initialCashController.doubleValue;
     if (initialCash < 0) {
       _state = _state.copyWith(
           errorMessage: 'El monto inicial no puede ser negativo');
@@ -164,8 +229,12 @@ class CashRegisterProvider extends ChangeNotifier {
         cashierId: cashierId,
       );
 
-      // Actualizar lista local
-      _state = _state.copyWith(activeCashRegisters: [newCashRegister]);
+      // Actualizar lista local y seleccionar automáticamente la nueva caja
+      final updatedActiveCashRegisters = [..._state.activeCashRegisters, newCashRegister];
+      _state = _state.copyWith(activeCashRegisters: updatedActiveCashRegisters);
+      
+      // Seleccionar automáticamente la nueva caja
+      await selectCashRegister(newCashRegister);
 
       // Limpiar formulario
       _clearOpenForm();
@@ -181,9 +250,8 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Cierra una caja registradora
-  Future<bool> closeCashRegister(
-      String accountId, String cashRegisterId) async {
-    final finalBalance = double.tryParse(finalBalanceController.text) ?? 0.0;
+  Future<bool> closeCashRegister(String accountId, String cashRegisterId) async {
+    final finalBalance = finalBalanceController.doubleValue;
     if (finalBalance < 0) {
       _state = _state.copyWith(
           errorMessage: 'El balance final no puede ser negativo');
@@ -202,15 +270,22 @@ class CashRegisterProvider extends ChangeNotifier {
       );
 
       // Actualizar listas locales
+      final updatedActiveCashRegisters = _state.activeCashRegisters
+          .where((cr) => cr.id != cashRegisterId)
+          .toList();
+      
       _state = _state.copyWith(
-        activeCashRegisters: _state.activeCashRegisters
-            .where((cr) => cr.id != cashRegisterId)
-            .toList(),
+        activeCashRegisters: updatedActiveCashRegisters,
         cashRegisterHistory: [
           closedCashRegister,
           ..._state.cashRegisterHistory
         ],
       );
+
+      // Si se cierra la caja seleccionada, limpiar selección
+      if (_state.selectedCashRegister?.id == cashRegisterId) {
+        await clearSelectedCashRegister();
+      }
 
       // Limpiar formulario
       _clearCloseForm();
@@ -238,7 +313,7 @@ class CashRegisterProvider extends ChangeNotifier {
       return false;
     }
 
-    final amount = double.tryParse(movementAmountController.text) ?? 0.0;
+    final amount = movementAmountController.doubleValue;
     if (amount <= 0) {
       _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
       notifyListeners();
@@ -286,7 +361,7 @@ class CashRegisterProvider extends ChangeNotifier {
       return false;
     }
 
-    final amount = double.tryParse(movementAmountController.text) ?? 0.0;
+    final amount = movementAmountController.doubleValue;
     if (amount <= 0) {
       _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
       notifyListeners();

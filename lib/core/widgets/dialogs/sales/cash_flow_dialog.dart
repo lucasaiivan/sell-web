@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/widgets/inputs/inputs.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../buttons/primary_button.dart';
 
@@ -27,12 +28,7 @@ class CashFlowDialog extends StatelessWidget {
 
     return AlertDialog(
       title: Row(
-        children: [
-          Icon(
-            isInflow ? Icons.add_circle_outline : Icons.remove_circle_outline,
-            color: buttonColor,
-          ),
-          const SizedBox(width: 8),
+        children: [ 
           Text(title),
           const Spacer(),
           IconButton(
@@ -47,32 +43,23 @@ class CashFlowDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            // input : Monto
+            MoneyInputTextField(
               controller: cashRegisterProvider.movementAmountController,
-              decoration: InputDecoration(
-                labelText: 'Monto',
-                hintText: '0.00',
-                prefixIcon: Icon(
-                  Icons.attach_money,
-                  color: buttonColor,
-                ),
-              ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              labelText: 'Monto', 
             ),
             const SizedBox(height: 16),
-            TextField(
+            // input : Descripción de ingreso/egreso en la caja
+            InputTextField(
               controller: cashRegisterProvider.movementDescriptionController,
-              decoration: InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Motivo del ${isInflow ? "ingreso" : "egreso"}',
-                prefixIcon: Icon(
-                  Icons.description,
-                  color: buttonColor,
-                ),
+              labelText: 'Descripción',
+              hintText: 'Motivo del ${isInflow ? "ingreso" : "egreso"}',
+              prefixIcon: Icon(
+                Icons.description,
+                color: buttonColor,
               ),
               maxLines: 2,
-            ),
+            ), 
             if (cashRegisterProvider.errorMessage != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -94,8 +81,7 @@ class CashFlowDialog extends StatelessWidget {
               ? null
               : () => _handleCashFlow(context, cashRegisterProvider),
           isLoading: cashRegisterProvider.isProcessing,
-          text: buttonText,
-          backgroundColor: buttonColor,
+          text: buttonText, 
         ),
       ],
     );

@@ -2,14 +2,13 @@ import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
-import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
-import 'package:sellweb/presentation/widgets/cash_register_status_widget.dart';
-import 'package:sellweb/presentation/widgets/ticket/ticket_drawer_widget.dart';
+import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart'; 
+import 'package:sellweb/core/widgets/drawer/ticket/ticket_drawer_widget.dart';
 import 'package:web/web.dart' as html;
-import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart'; 
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -1683,4 +1682,69 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
         ? provider.profileAccountSelected.name
         : 'PUNTO DE VENTA',
   );
+}
+
+
+/// Widget que muestra un botón para ver el estado de la caja registradora.
+/// Al tocarlo, abre un diálogo con los detalles.
+class CashRegisterStatusWidget extends StatefulWidget {
+  const CashRegisterStatusWidget({super.key});
+
+  @override
+  State<CashRegisterStatusWidget> createState() =>
+      _CashRegisterStatusWidgetState();
+}
+
+class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar datos iniciales con persistencia sin esperar al build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final sellProvider = context.read<SellProvider>();
+      final accountId = sellProvider.profileAccountSelected.id;
+      if (accountId.isNotEmpty) {
+        context.read<CashRegisterProvider>().initializeFromPersistence(accountId);
+      }
+    });
+  }
+
+  void _showStatusDialog(BuildContext context) {
+    // Capturar todos los providers necesarios antes de mostrar el diálogo
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+        ],
+        child: const CashRegisterManagementDialog(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) { 
+    return Consumer<CashRegisterProvider>(
+      builder: (context, provider, child) {
+        final bool isActive = provider.hasActiveCashRegister;
+        return AppBarButtonCircle(
+          icon: Icons.point_of_sale_outlined,
+          tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
+          onPressed: () => _showStatusDialog(context),
+          backgroundColor: isActive
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha:0.1),
+          iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
+          text: isMobile(context)?null: isActive ? '${provider.currentActiveCashRegister?.description}' : 'Iniciar turno',
+        );
+      },
+    );
+  }
 }

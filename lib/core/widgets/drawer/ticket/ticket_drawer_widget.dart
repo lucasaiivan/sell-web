@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/presentation/widgets/ticket/ticket_confirmed_purchase_widget.dart';
-import 'package:sellweb/presentation/widgets/ticket/ticket_content_widget.dart';
+import 'package:sellweb/core/widgets/drawer/ticket/ticket_confirmed_purchase_widget.dart';
+import 'package:sellweb/core/widgets/drawer/ticket/ticket_content_widget.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 class TicketDrawerWidget extends StatelessWidget {

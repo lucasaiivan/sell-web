@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_header_widget.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_product_list_widget.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_total_widget.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_payment_methods_widget.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_print_checkbox_widget.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_action_buttons_widget.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_dashed_line_painter.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_header_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_product_list_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_total_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_payment_methods_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_print_checkbox_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_action_buttons_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_dashed_line_painter.dart';
 
 /// Widget que contiene todo el contenido principal del ticket
 class TicketContentWidget extends StatelessWidget {

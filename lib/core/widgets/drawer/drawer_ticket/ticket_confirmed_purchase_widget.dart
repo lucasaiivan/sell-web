@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_utils.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_utils.dart';
 
 /// Widget que muestra la confirmación de venta exitosa con animaciones
 class TicketConfirmedPurchaseWidget extends StatelessWidget {

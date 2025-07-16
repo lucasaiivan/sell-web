@@ -6,7 +6,7 @@ import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dial
 import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart'; 
-import 'package:sellweb/core/widgets/drawer/ticket/ticket_drawer_widget.dart';
+import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_drawer_widget.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart'; 
 import 'package:flutter/services.dart';

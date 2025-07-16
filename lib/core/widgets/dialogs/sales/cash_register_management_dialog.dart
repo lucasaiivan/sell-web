@@ -176,8 +176,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   Widget _buildActiveCashRegister( BuildContext context, CashRegisterProvider provider, bool isMobile) {
-   
-    final theme = Theme.of(context);
+    
     final cashRegister = provider.currentActiveCashRegister!;
 
     return Column(
@@ -200,10 +199,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 icon: Icons.monetization_on_rounded,
               ),
               SizedBox(height: isMobile ? 16 : 24),
-              // view : Estadísticas de caja
-              isMobile 
-                ? _buildMobileStats(context, cashRegister)
-                : _buildDesktopStats(context, cashRegister),
+              // view : Información de flujo de caja
+              _cashFlowInformation(context, cashRegister),
               SizedBox(height: isMobile ? 16 : 24),
               // buttons : Acciones de caja
               AnimatedContainer(
@@ -225,213 +222,97 @@ class CashRegisterManagementDialog extends StatelessWidget {
     bool isMobile
   ) { 
     final cashRegister = provider.currentActiveCashRegister!;
-    
-    return isMobile
-      ? _buildMobileActionButtons(context, provider, cashRegister)
-      : _buildDesktopActionButtons(context, provider, cashRegister);
-  }
-
-  Widget _buildMobileStats(BuildContext context, CashRegister cashRegister) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatColumn(
-                context: context,
-                label: 'Ventas',
-                value: cashRegister.sales.toString(),
-                icon: Icons.shopping_cart_rounded,
-                compact: true,
-              ),
-            ),
-            Expanded(
-              child: _buildStatColumn(
-                context: context,
-                label: 'Facturación',
-                value: '\$${cashRegister.billing.toStringAsFixed(2)}',
-                icon: Icons.attach_money_rounded,
-                compact: true,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildStatColumn(
-          context: context,
-          label: 'Descuentos',
-          value: '\$${cashRegister.discount.toStringAsFixed(2)}',
-          icon: Icons.local_offer_rounded,
-          compact: false,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopStats(BuildContext context, CashRegister cashRegister) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatColumn(
-            context: context,
-            label: 'Ventas',
-            value: cashRegister.sales.toString(),
-            icon: Icons.shopping_cart_rounded,
-            compact: false,
-          ),
-        ),
-        Expanded(
-          child: _buildStatColumn(
-            context: context,
-            label: 'Facturación',
-            value: '\$${cashRegister.billing.toStringAsFixed(2)}',
-            icon: Icons.attach_money_rounded,
-            compact: false,
-          ),
-        ),
-        Expanded(
-          child: _buildStatColumn(
-            context: context,
-            label: 'Descuentos',
-            value: '\$${cashRegister.discount.toStringAsFixed(2)}',
-            icon: Icons.local_offer_rounded,
-            compact: false,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileActionButtons(
-    BuildContext context, 
-    CashRegisterProvider provider, 
-    CashRegister cashRegister
-  ) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.clear_rounded),
-            label: const Text('Deseleccionar'),
-            onPressed: () => provider.clearSelectedCashRegister(),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            icon: const Icon(Icons.lock_outlined),
-            label: const Text('Cerrar Caja'),
-            onPressed: () => _showCloseDialog(context, cashRegister),
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopActionButtons(
-    BuildContext context, 
-    CashRegisterProvider provider, 
-    CashRegister cashRegister
-  ) {
     final theme = Theme.of(context);
     
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton.icon(
+          child: AppOutlinedButton(
             icon: const Icon(Icons.clear_rounded),
-            label: const Text('Deseleccionar'),
+            text: 'Deseleccionar',
             onPressed: () => provider.clearSelectedCashRegister(),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
+            margin: EdgeInsets.zero,
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: FilledButton.icon(
+          child: AppFilledButton(
             icon: const Icon(Icons.lock_outlined),
-            label: const Text('Cerrar Caja'),
+            text: 'Cerrar Caja',
             onPressed: () => _showCloseDialog(context, cashRegister),
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
             ),
+            margin: EdgeInsets.zero,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatColumn({
-    required BuildContext context,
-    required String label,
-    required String value,
-    required IconData icon,
-    bool compact = false,
-  }) {
+  Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister) {
     final theme = Theme.of(context);
+    
+    final items = [
+      {
+        'label': 'Ventas',
+        'value': cashRegister.sales.toString(),
+        'icon': Icons.shopping_cart_rounded,
+      },
+      {
+        'label': 'Facturación',
+        'value': '\$${cashRegister.billing.toStringAsFixed(2)}',
+        'icon': Icons.attach_money_rounded,
+      },
+      {
+        'label': 'Descuentos',
+        'value': '\$${cashRegister.discount.toStringAsFixed(2)}',
+        'icon': Icons.local_offer_rounded,
+      },
+    ];
+
     return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.all(compact ? 6 : 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(compact ? 6 : 8),
-          ),
-          child: Icon(
-            icon,
-            size: compact ? 20 : 24,
-            color: theme.colorScheme.primary,
-          ),
+      children: items.map((item) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                item['icon'] as IconData,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                item['label'] as String,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Text(
+              item['value'] as String,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: compact ? 6 : 8),
-        Text(
-          label,
-          style: (compact 
-            ? theme.textTheme.labelSmall 
-            : theme.textTheme.labelMedium)?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: compact ? 2 : 4),
-        Text(
-          value,
-          style: (compact 
-            ? theme.textTheme.titleSmall 
-            : theme.textTheme.titleMedium)?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+      )).toList(),
     );
   }
 
@@ -621,128 +502,56 @@ class CashRegisterManagementDialog extends StatelessWidget {
   Widget _buildCashFlowButtons(
       BuildContext context, CashRegisterProvider provider, bool isMobile) { 
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        isMobile 
-          ? _buildMobileCashFlowButtons(context, provider)
-          : _buildDesktopCashFlowButtons(context, provider),
-      ],
-    );
-  }
-
-  Widget _buildMobileCashFlowButtons(
-      BuildContext context, CashRegisterProvider provider) {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: _buildCashFlowButton(
-            context: context,
-            icon: Icons.add_circle_outline_rounded,
-            label: 'Ingreso de Dinero',
-            isEnabled: provider.hasActiveCashRegister,
-            isInflow: true,
-            onPressed: provider.hasActiveCashRegister
-                ? () => _showCashFlowDialog(context, true)
-                : null,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: _buildCashFlowButton(
-            context: context,
-            icon: Icons.remove_circle_outline_rounded,
-            label: 'Egreso de Dinero',
-            isEnabled: provider.hasActiveCashRegister,
-            isInflow: false,
-            onPressed: provider.hasActiveCashRegister
-                ? () => _showCashFlowDialog(context, false)
-                : null,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopCashFlowButtons(
-      BuildContext context, CashRegisterProvider provider) {
     return Row(
       children: [
         Expanded(
-          child: _buildCashFlowButton(
-            context: context,
-            icon: Icons.add_circle_outline_rounded,
-            label: 'Ingreso',
-            isEnabled: provider.hasActiveCashRegister,
-            isInflow: true,
+          child: AppOutlinedButton(
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            text: 'Ingreso',
             onPressed: provider.hasActiveCashRegister
                 ? () => _showCashFlowDialog(context, true)
                 : null,
+            backgroundColor: provider.hasActiveCashRegister
+                ? Colors.green.withValues(alpha: 0.1)
+                : null,
+            foregroundColor: provider.hasActiveCashRegister 
+                ? Colors.green 
+                : null,
+            borderColor: provider.hasActiveCashRegister 
+                ? Colors.green.withValues(alpha: 0.3)
+                : null,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            margin: EdgeInsets.zero,
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildCashFlowButton(
-            context: context,
-            icon: Icons.remove_circle_outline_rounded,
-            label: 'Egreso',
-            isEnabled: provider.hasActiveCashRegister,
-            isInflow: false,
+          child: AppOutlinedButton(
+            icon: const Icon(Icons.remove_circle_outline_rounded),
+            text: 'Egreso',
             onPressed: provider.hasActiveCashRegister
                 ? () => _showCashFlowDialog(context, false)
                 : null,
+            backgroundColor: provider.hasActiveCashRegister
+                ? Colors.red.withValues(alpha: 0.1)
+                : null,
+            foregroundColor: provider.hasActiveCashRegister 
+                ? Colors.red 
+                : null,
+            borderColor: provider.hasActiveCashRegister 
+                ? Colors.red.withValues(alpha: 0.3)
+                : null,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            margin: EdgeInsets.zero,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCashFlowButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required bool isEnabled,
-    required bool isInflow,
-    required VoidCallback? onPressed,
-  }) {
-    final theme = Theme.of(context);
-    final color = isInflow ? Colors.green : Colors.red;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      child: OutlinedButton.icon(
-        icon: AnimatedRotation(
-          duration: const Duration(milliseconds: 300),
-          turns: isEnabled ? 0 : 0.0,
-          child: Icon(icon),
-        ),
-        label: Text(label),
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: isEnabled
-              ? color.withValues(alpha: 0.1)
-              : null,
-          foregroundColor: isEnabled ? color : null,
-          side: BorderSide(
-            color: isEnabled 
-              ? color.withValues(alpha: 0.3)
-              : theme.colorScheme.outline.withValues(alpha: 0.3),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ).copyWith(
-          overlayColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.hovered)) {
-              return color.withValues(alpha: 0.05);
-            }
-            return null;
-          }),
-        ),
-      ),
     );
   }
 

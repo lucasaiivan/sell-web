@@ -11,10 +11,10 @@ export 'inputs/inputs.dart';
 export 'dialogs/dialogs.dart';
 
 // 🎨 Componentes de interfaz básicos
-export 'ui/ui.dart';
+export 'component/ui.dart';
 
 // 🖼️ Componentes multimedia
 export 'media/media_widgets.dart';
 
 // 📢 Feedback y notificaciones
-export 'feedback/feedback.dart';
+export 'dialogs/feedback/feedback.dart';

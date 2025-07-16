@@ -11,6 +11,145 @@ Este es un **portal de ventas web** construido con **Flutter Web** que implement
 - **Autenticación**: Firebase Auth + Google Sign-In
 - **Tema**: Material Design 3 con soporte claro/oscuro
 
+#### UI y UX  (Diseño de Sistema)
+- **Material Design 3**: Implementación completa con ColorScheme.fromSeed()
+- **Paleta de colores**: Basada en el color semilla
+- **Tema adaptativo**: Soporte dinamico para modo claro/oscuro
+- **Persistencia**: Estado del tema guardado en SharedPreferences
+
+#### Responsive Design
+```dart
+// Breakpoints siguiendo Material Design 3
+class ResponsiveBreakpoints {
+  static const double mobile = 600;      // < 600px
+  static const double tablet = 840;      // 600px - 840px  
+  static const double desktop = 1200;    // 840px - 1200px
+  static const double largeDesktop = 1600; // > 1200px
+}
+
+// Detección inteligente de dispositivos móviles
+bool isMobile(BuildContext context) {
+  // Considera ancho, relación de aspecto, orientación y densidad
+}
+```
+### Responsive Design
+- **Responsive Layout**: Adaptación automática mobile/tablet/desktop siempre y cuando sea necerio
+Usar `ResponsiveBreakpoints.dart`. (lib/core/utils) 
+```dart 
+// Layout adaptativo
+Widget buildResponsiveLayout(BuildContext context) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < Breakpoints.mobile) {
+        return const MobileLayout();
+      } else if (constraints.maxWidth < Breakpoints.tablet) {
+        return const TabletLayout();
+      } else {
+        return const DesktopLayout();
+      }
+    },
+  );
+}
+```
+
+## 🏗️ **Entidades del Dominio**
+
+### Modelos de Negocio
+- **User**: Modelo de usuario con soporte para autenticación Firebase y Google Sign-In
+- **AccountModel**: Modelo de cuenta de negocio con configuraciones y metadatos
+- **ProductCatalogue**: Modelo de producto del catálogo con precios, categorías, imágenes, etc.
+- **CashRegisterModel**: Modelo de caja registradora con configuraciones y estado
+- **TicketModel**: Modelo de ticket de venta con productos, totales, métodos de pago, etc.
+- **CategoryCatalogue**: Modelo de categoría para organización del catálogo
+- **TransactionModel**: Modelo de transacción financiera para registro de ventas
+
+### Providers (Gestión de Estado)
+- **AuthProvider**: Provider de autenticación con Firebase Auth y Google Sign-In
+- **ThemeDataAppProvider**: Provider de tema con soporte claro/oscuro y persistencia
+- **CatalogueProvider**: Provider de catálogo con gestión de productos y categorías
+- **CashRegisterProvider**: Provider de cajas registradoras con selección,historial y configuración
+- **SellProvider**: Provider de ventas con gestión de tickets y transacciones
+- **PrinterProvider**: Provider de impresión térmica con configuración HTTP
+
+### Repositorios (Contratos)
+- **AuthRepository**: Contrato para operaciones de autenticación y gestión de usuarios
+- **AccountRepository**: Contrato para gestión de cuentas de negocio
+- **CatalogueRepository**: Contrato para operaciones CRUD del catálogo de productos
+- **CashRegisterRepository**: Contrato para gestión de cajas registradoras
+
+### Casos de Uso (Use Cases)
+- **AuthUseCases**: Casos de uso para login, logout y gestión de sesiones
+- **AccountUseCase**: Casos de uso para operaciones de cuentas de negocio
+- **CatalogueUseCases**: Casos de uso para gestión del catálogo y productos
+- **CashRegisterUseCases**: Casos de uso para operaciones de cajas registradoras
+- **SellUseCases**: Casos de uso para procesamiento de ventas y tickets
+
+### Componentes UI Principales
+- **AppButton**: Botón primario unificado con soporte para iconos, loading y estados
+- **AppOutlinedButton**: Botón secundario outlined con soporte para iconos y estados
+- **AppFilledButton**: Botón secundario filled con soporte para iconos, loading y estados
+- **AppFloatingActionButton**: FAB personalizado con animaciones y estados
+- **AppBarButton**: Botón especializado para barras de aplicación con estilos consistentes
+- **SearchButton**: Botón de búsqueda especializado para filtros
+- **MoneyInputTextField**: Campo especializado para entrada de moneda y montos
+- **InputTextField**: Campo de texto base con validaciones y estilos unificados
+- **ImageWidget**: Componente optimizado para imágenes con fallbacks y loading
+- **UserAvatar**: Avatar de usuario con soporte para Google Sign-In y placeholders
+- **AppFeedback**: Sistema de feedback con loading, errores y confirmaciones
+- **/component**: Indicadores,divisore,imagen,avatar entre otros componentes de progreso personalizados para la aplicación 
+
+### Diálogos Especializados
+- **BaseDialog**: Componentes base reutilizables para construcción de diálogos para mantener el patron de diseño establecido
+- **CashRegisterManagementDialog**: Diálogo para gestión y configuración de cajas
+- **ProductDialogs**: Suite de diálogos para gestión de productos del catálogo
+- **SalesDialogs**: Diálogos especializados para procesamiento de ventas
+- **TicketDialogs**: Diálogos para visualización y gestión de tickets
+- **ConfigurationDialogs**: Diálogos para configuraciones de la aplicación
+
+### Servicios (Core Services)
+- **DatabaseCloud**: Servicio de base de datos Firebase Firestore
+- **ThemeService**: Servicio de gestión de temas con persistencia
+- **ThermalPrinterHttpService**: Servicio HTTP para impresión térmica
+- **CashRegisterPersistenceService**: Servicio de persistencia para cajas registradoras
+
+### Páginas de la Aplicación
+- **LoginPage**: Página de inicio de sesión con Firebase Auth y Google Sign-In
+- **SellPage**: Página principal de ventas con catálogo y caja registradora
+- **WelcomePage**: Página de bienvenida y selección de cuenta
+
+### Utilidades y Helpers
+- **ResponsiveBreakpoints**: Clase utilitaria para breakpoints responsivos
+- **SharedPrefsKeys**: Constantes para claves de SharedPreferences
+- **Functions**: Utilidades y funciones helper generales para la aplicación
+- **CoreWidgets**: Exportaciones centralizadas de widgets reutilizables
+
+
+#### Arquitectura de Widgets
+```dart
+lib/core/widgets/
+├── buttons/           # Botones especializados (AppButton, FAB, etc.)
+├── dialogs/           # Sistema modular de diálogos por dominio
+├── inputs/            # Campos de entrada optimizados
+├── ui/                # Componentes básicos reutilizables
+├── feedback/          # Estados de carga, errores y confirmaciones
+├── responsive/        # Helpers para diseño adaptativo
+└── media/             # Manejo de imágenes y media
+```
+
+#### UX Considerations
+- **Progressive Enhancement**: Funcionalidad base primero, mejoras después
+- **Touch-First**: Diseño optimizado para interacción táctil
+- **Keyboard Navigation**: Soporte completo para navegación por teclado
+- **Loading States**: Feedback visual para todas las operaciones asíncronas
+- **Error Handling**: Mensajes de error claros y acciones de recuperación
+- **Offline Support**: Modo demo para usuarios anónimos
+
+#### Animaciones y Transiciones
+- **flutter_animate**: Animaciones fluidas y performantes
+- **Material Transitions**: Transiciones nativas de Material 3
+- **Micro-interactions**: Feedback visual para acciones del usuario
+- **Staggered Animations**: Para listas y grids de productos
+
 ## 📱 Patrones de Provider
 
 ### Provider Hierarchy en main.dart
@@ -167,25 +306,6 @@ void initCatalogue(String accountId) {
 }
 ```
 
-### Responsive Design
-Usar `ResponsiveBreakpoints.dart`. (lib/core/utils) 
-```dart 
-// Layout adaptativo
-Widget buildResponsiveLayout(BuildContext context) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      if (constraints.maxWidth < Breakpoints.mobile) {
-        return const MobileLayout();
-      } else if (constraints.maxWidth < Breakpoints.tablet) {
-        return const TabletLayout();
-      } else {
-        return const DesktopLayout();
-      }
-    },
-  );
-}
-```
-
 ## ⚡ Performance y Optimización
 
 ### Optimización de Widgets
@@ -336,7 +456,7 @@ linter:
 
 1. **Caja Registradora**: Es requerida (opcional) para completar ventas - manejar casos donde no existe
 2. **Persistencia**: Cuenta seleccionada,ticket,caja y configuraciones de la app se persiste 
-5. **Material 3**: Usar siempre `colorScheme` y `textTheme` del contexto actual
+
 
 ## ✅ Buenas Prácticas Generales
 - **Inmutabilidad**: Usar objetos inmutables con freezed cuando sea posible

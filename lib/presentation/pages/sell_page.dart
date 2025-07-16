@@ -18,7 +18,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/ui/ui.dart';
+import 'package:sellweb/core/widgets/component/ui.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';

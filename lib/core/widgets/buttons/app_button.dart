@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 /// 
 /// Combina las funcionalidades de AppButton y PrimaryButton en un solo widget
 /// optimizado para uso en toda la aplicación
+// button primario
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -170,6 +171,7 @@ class AppButton extends StatelessWidget {
 
 /// Botón outlined unificado de la aplicación con diseño Material 3
 /// Mismas funcionalidades que AppButton pero con estilo outlined
+/// button secundario
 class AppOutlinedButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -309,6 +311,7 @@ class AppOutlinedButton extends StatelessWidget {
 
 /// Botón filled unificado de la aplicación con diseño Material 3
 /// Mismas funcionalidades que AppButton pero con estilo filled
+// button secundario
 class AppFilledButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;

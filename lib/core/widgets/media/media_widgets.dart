@@ -1,3 +1,3 @@
 // Re-exporta los widgets de media para fácil acceso
-export '../ui/image_widget.dart';
-export '../ui/user_avatar.dart';
+export '../component/image_widget.dart';
+export '../component/user_avatar.dart';

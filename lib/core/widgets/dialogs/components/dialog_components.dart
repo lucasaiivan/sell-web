@@ -17,7 +17,7 @@ class DialogComponents {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: backgroundColor ?? theme.colorScheme.surfaceContainer,

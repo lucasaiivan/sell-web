@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sellweb/core/services/theme_service.dart';
 import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
@@ -68,17 +69,8 @@ void main() async {
           return MaterialApp(
             title: 'Sell Web',
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-              useMaterial3: true,
-              brightness: Brightness.light,
-            ),
-            darkTheme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                  seedColor: Colors.blue, brightness: Brightness.dark),
-              useMaterial3: true,
-              brightness: Brightness.dark,
-            ),
+            theme: ThemeService.lightTheme,
+            darkTheme: ThemeService.darkTheme,
             themeMode: themeProvider.themeMode,
             home: Consumer<AuthProvider>(
               builder: (context, authProvider, _) {

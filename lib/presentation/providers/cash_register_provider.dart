@@ -418,8 +418,7 @@ class CashRegisterProvider extends ChangeNotifier {
         accountId: accountId,
         cashRegisterId: currentActiveCashRegister!.id,
         saleAmount: saleAmount,
-        discountAmount: discountAmount,
-        itemCount: itemCount,
+        discountAmount: discountAmount, 
       );
 
       // Recargar cajas activas para reflejar cambios

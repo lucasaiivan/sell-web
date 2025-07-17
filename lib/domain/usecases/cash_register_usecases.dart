@@ -150,8 +150,7 @@ class CashRegisterUsecases {
     required String accountId,
     required String cashRegisterId,
     required double saleAmount,
-    required double discountAmount,
-    int itemCount = 1,
+    required double discountAmount, 
   }) async {
     if (saleAmount < 0) {
       throw Exception('El monto de la venta no puede ser negativo');
@@ -161,14 +160,9 @@ class CashRegisterUsecases {
       throw Exception('El monto del descuento no puede ser negativo');
     }
 
-    if (itemCount <= 0) {
-      throw Exception('La cantidad de artículos debe ser mayor a cero');
-    }
-
     await _repository.updateSalesAndBilling(
       accountId: accountId,
-      cashRegisterId: cashRegisterId,
-      salesIncrement: itemCount,
+      cashRegisterId: cashRegisterId, 
       billingIncrement: saleAmount,
       discountIncrement: discountAmount,
     );

@@ -104,8 +104,7 @@ abstract class CashRegisterRepository {
   /// Actualiza los totales de ventas y facturación
   Future<void> updateSalesAndBilling({
     required String accountId,
-    required String cashRegisterId,
-    required int salesIncrement,
+    required String cashRegisterId, 
     required double billingIncrement,
     required double discountIncrement,
   });

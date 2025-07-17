@@ -345,8 +345,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   @override
   Future<void> updateSalesAndBilling({
     required String accountId,  // obtiene el id de la cuenta
-    required String cashRegisterId, // obtiene el id de la caja registradora
-    required int salesIncrement, // incrementa las ventas de la caja
+    required String cashRegisterId, // obtiene el id de la caja registradora 
     required double billingIncrement, // incrementa la facturación
     required double discountIncrement, // incrementa el descuento
   }) async {

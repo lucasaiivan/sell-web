@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
@@ -104,6 +105,10 @@ class _CashRegisterState {
 class CashRegisterProvider extends ChangeNotifier {
   final CashRegisterUsecases _cashRegisterUsecases;
 
+  // Stream subscriptions para actualizaciones automáticas
+  StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
+  String? _currentAccountId;
+
   // Form controllers
   final TextEditingController openDescriptionController =
       TextEditingController();
@@ -132,6 +137,21 @@ class CashRegisterProvider extends ChangeNotifier {
   CashRegister? get currentActiveCashRegister =>  _state.currentActiveCashRegister;
 
   CashRegisterProvider(this._cashRegisterUsecases);
+
+  @override
+  void dispose() {
+    // Cancelar subscripciones de streams
+    _activeCashRegistersSubscription?.cancel();
+    
+    // Limpiar controllers
+    openDescriptionController.dispose();
+    initialCashController.dispose();
+    finalBalanceController.dispose();
+    movementDescriptionController.dispose();
+    movementAmountController.dispose();
+    
+    super.dispose();
+  }
 
   // ==========================================
   // MÉTODOS DE PERSISTENCIA
@@ -183,20 +203,66 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS PÚBLICOS - CAJAS ACTIVAS
   // ==========================================
 
-  /// Carga las cajas registradoras activas
+  /// Carga las cajas registradoras activas usando streams para actualizaciones automáticas
   Future<void> loadActiveCashRegisters(String accountId) async {
+    // Si ya estamos escuchando la misma cuenta, no hacer nada
+    if (_currentAccountId == accountId && _activeCashRegistersSubscription != null) {
+      return;
+    }
+
+    // Cancelar suscripción anterior si existe
+    await _activeCashRegistersSubscription?.cancel();
+    _currentAccountId = accountId;
+
     // Mostrar indicador de carga
     _state = _state.copyWith(isLoadingActive: true, errorMessage: null);
     notifyListeners();
 
     try {
-      // Limpiar estado previo
-      final activeCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
-      _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
+      // Configurar stream para actualizaciones automáticas
+      _activeCashRegistersSubscription = _cashRegisterUsecases
+          .getActiveCashRegistersStream(accountId)
+          .listen(
+            (activeCashRegisters) {
+              // Actualizar la lista de cajas activas
+              _state = _state.copyWith(
+                activeCashRegisters: activeCashRegisters,
+                isLoadingActive: false,
+                errorMessage: null,
+              );
+
+              // Si hay una caja seleccionada, verificar si aún existe y actualizarla
+              if (_state.selectedCashRegister != null) {
+                final updatedSelectedCashRegister = activeCashRegisters
+                    .where((cr) => cr.id == _state.selectedCashRegister!.id)
+                    .firstOrNull;
+
+                if (updatedSelectedCashRegister != null) {
+                  // Actualizar la caja seleccionada con los datos más recientes
+                  _state = _state.copyWith(
+                    selectedCashRegister: updatedSelectedCashRegister,
+                  );
+                } else {
+                  // La caja seleccionada ya no existe, limpiar selección
+                  clearSelectedCashRegister();
+                }
+              }
+
+              notifyListeners();
+            },
+            onError: (error) {
+              _state = _state.copyWith(
+                errorMessage: error.toString(),
+                isLoadingActive: false,
+              );
+              notifyListeners();
+            },
+          );
     } catch (e) {
-      _state = _state.copyWith(errorMessage: e.toString());
-    } finally {
-      _state = _state.copyWith(isLoadingActive: false);
+      _state = _state.copyWith(
+        errorMessage: e.toString(),
+        isLoadingActive: false,
+      );
       notifyListeners();
     }
   }
@@ -228,11 +294,7 @@ class CashRegisterProvider extends ChangeNotifier {
         cashierId: cashierId,
       );
 
-      // Actualizar lista local y seleccionar automáticamente la nueva caja
-      final updatedActiveCashRegisters = [..._state.activeCashRegisters, newCashRegister];
-      _state = _state.copyWith(activeCashRegisters: updatedActiveCashRegisters);
-      
-      // Seleccionar automáticamente la nueva caja
+      // Seleccionar automáticamente la nueva caja (el stream se actualizará automáticamente)
       await selectCashRegister(newCashRegister);
 
       // Limpiar formulario
@@ -262,23 +324,10 @@ class CashRegisterProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final closedCashRegister = await _cashRegisterUsecases.closeCashRegister(
+      await _cashRegisterUsecases.closeCashRegister(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
         finalBalance: finalBalance,
-      );
-
-      // Actualizar listas locales
-      final updatedActiveCashRegisters = _state.activeCashRegisters
-          .where((cr) => cr.id != cashRegisterId)
-          .toList();
-      
-      _state = _state.copyWith(
-        activeCashRegisters: updatedActiveCashRegisters,
-        cashRegisterHistory: [
-          closedCashRegister,
-          ..._state.cashRegisterHistory
-        ],
       );
 
       // Si se cierra la caja seleccionada, limpiar selección
@@ -331,11 +380,6 @@ class CashRegisterProvider extends ChangeNotifier {
         userId: userId,
       );
 
-      // Recargar las cajas activas
-      final activeCashRegisters =
-          await _cashRegisterUsecases.getActiveCashRegisters(accountId);
-      _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
-
       // Limpiar formulario
       _clearMovementForm();
 
@@ -379,11 +423,6 @@ class CashRegisterProvider extends ChangeNotifier {
         userId: userId,
       );
 
-      // Recargar las cajas activas
-      final activeCashRegisters =
-          await _cashRegisterUsecases.getActiveCashRegisters(accountId);
-      _state = _state.copyWith(activeCashRegisters: activeCashRegisters);
-
       // Limpiar formulario
       _clearMovementForm();
 
@@ -420,9 +459,6 @@ class CashRegisterProvider extends ChangeNotifier {
         saleAmount: saleAmount,
         discountAmount: discountAmount, 
       );
-
-      // Recargar cajas activas para reflejar cambios
-      await loadActiveCashRegisters(accountId);
 
       return true;
     } catch (e) {
@@ -578,15 +614,5 @@ class CashRegisterProvider extends ChangeNotifier {
   void _clearMovementForm() {
     movementDescriptionController.clear();
     movementAmountController.clear();
-  }
-
-  @override
-  void dispose() {
-    openDescriptionController.dispose();
-    initialCashController.dispose();
-    finalBalanceController.dispose();
-    movementDescriptionController.dispose();
-    movementAmountController.dispose();
-    super.dispose();
   }
 }

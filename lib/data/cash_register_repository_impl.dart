@@ -360,7 +360,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
       // Actualizar totales de ventas
       final updatedCashRegister = cashRegister.update(
-        sales: cashRegister.sales ++, // Incrementa las ventas de la caja 
+        sales: cashRegister.sales + 1, // Incrementa las ventas de la caja 
         billing: cashRegister.billing + billingIncrement, // Incrementa la facturación 
         discount: cashRegister.discount + discountIncrement, // Incrementa el descuento 
       );

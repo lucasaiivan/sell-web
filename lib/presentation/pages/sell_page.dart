@@ -644,25 +644,6 @@ class _SellPageState extends State<SellPage> {
       _showConfirmedPurchase = true; // para mostrar el mensaje de compra confirmada
     });
     
-    // Obtener el provider de caja registradora
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-
-    // Si hay una caja activa, registrar la venta
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      // existe una caja activa y procede a registrarlo y actualiza la caja
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-      // asignar los datos de la caja al ticket para registrar por que caja se realizó la venta
-      provider.ticket.cashRegisterName = activeCashRegister.description; 
-      provider.ticket.cashRegisterId = activeCashRegister.id;
-      // - Registrar la venta en la caja registradora 
-      await cashRegisterProvider.registerSale(
-        accountId: provider.profileAccountSelected.id, // obtiene el id de la cuenta seleccionada
-        saleAmount: provider.ticket.getTotalPrice, // obtiene el total de la venta
-        discountAmount: provider.ticket.discount, // incrementa el descuento si lo hay
-        itemCount: provider.ticket.getProductsQuantity(), // obtiene la cantidad de productos en el ticket
-      );
-    }
-
     // Si el checkbox está activo, procesar la impresión/generación de tickets
     if (provider.shouldPrintTicket) {
       await _processPrintTicket(provider);
@@ -673,6 +654,23 @@ class _SellPageState extends State<SellPage> {
 
   /// Procesa la venta con impresión de ticket
   Future<void> _processPrintTicket(SellProvider provider) async {
+    // Obtener el provider de caja registradora
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+
+    // Si hay una caja activa, registrar la venta
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      provider.ticket.cashRegisterName = activeCashRegister.description;
+      provider.ticket.cashRegisterId = activeCashRegister.id;
+
+      await cashRegisterProvider.registerSale(
+        accountId: provider.profileAccountSelected.id,
+        saleAmount: provider.ticket.getTotalPrice,
+        discountAmount: provider.ticket.discount,
+        itemCount: provider.ticket.getProductsQuantity(),
+      );
+    }
+
     // Verificar si hay impresora conectada
     final printerService = ThermalPrinterHttpService();
     await printerService.initialize();

@@ -281,6 +281,13 @@ class CashRegisterUsecases {
       endDate: endOfDay,
     );
   }
+  // ==========================================
+  // TRANSACCIONES HISTÓRICAS
+  // ==========================================
+
+  // ...
+  // implementar ...
+  // ...
 
   // ==========================================
   // DESCRIPCIONES FIJAS  PARA NOMBRES DE CAJA

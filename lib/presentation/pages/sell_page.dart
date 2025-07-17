@@ -646,14 +646,14 @@ class _SellPageState extends State<SellPage> {
     
     // Si el checkbox está activo, procesar la impresión/generación de tickets
     if (provider.shouldPrintTicket) {
-      await _processPrintTicket(provider);
+      await _processSaveAndPrintTicket(provider);
     } else {
-      await _processSimpleSale(provider);
+      await _processSimpleSaveSale(provider);
     }
   }
 
   /// Procesa la venta con impresión de ticket
-  Future<void> _processPrintTicket(SellProvider provider) async {
+  Future<void> _processSaveAndPrintTicket(SellProvider provider) async {
     // Obtener el provider de caja registradora
     final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
 
@@ -796,18 +796,17 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Procesa la venta sin impresión de ticket
-  Future<void> _processSimpleSale(SellProvider provider) async {
+  Future<void> _processSimpleSaveSale(SellProvider provider) async {
     // Obtener el provider de caja registradora
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
 
     // Si hay una caja activa, registrar la venta
     if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
+      // Obtener la caja activa y asignar los datos al ticket
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
       provider.ticket.cashRegisterName = activeCashRegister.description;
       provider.ticket.cashRegisterId = activeCashRegister.id;
-
+      // Registrar la venta en la caja 
       await cashRegisterProvider.registerSale(
         accountId: provider.profileAccountSelected.id,
         saleAmount: provider.ticket.getTotalPrice,
@@ -816,8 +815,9 @@ class _SellPageState extends State<SellPage> {
       );
     }
 
+    //await provider.saveTransactionHistory();
     await _finalizeSale(provider);
-  }
+  } 
 
   /// Finaliza la venta guardando el último ticket y limpiando
   Future<void> _finalizeSale(SellProvider provider) async {
@@ -999,9 +999,7 @@ class _SellPageState extends State<SellPage> {
 
             // Función para confirmar la operación - reutilizable para botón y Enter
             void confirmOperation() {
-              if (errorText == null &&
-                  vuelto >= 0 &&
-                  controller.doubleValue > 0) {
+              if (errorText == null && vuelto >= 0 &&controller.doubleValue > 0) {
                 provider.setReceivedCash(controller.doubleValue);
                 Navigator.of(dialogContext).pop();
               }

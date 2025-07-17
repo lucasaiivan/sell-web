@@ -168,8 +168,7 @@ class SellProvider extends ChangeNotifier {
 
   Future<void> _saveTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        SharedPrefsKeys.currentTicket, jsonEncode(_state.ticket.toJson()));
+    await prefs.setString( SharedPrefsKeys.currentTicket, jsonEncode(_state.ticket.toJson()));
   }
 
   Future<void> _loadTicket() async {
@@ -289,6 +288,7 @@ class SellProvider extends ChangeNotifier {
   }
 
   void setReceivedCash(double value) {
+    // Actualiza el valor recibido en el ticket
     final currentTicket = _state.ticket;
     final newTicket = TicketModel(
       listPoduct: currentTicket.listPoduct,
@@ -309,6 +309,7 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _loadShouldPrintTicket() async {
+    // Carga el estado de impresión del ticket desde SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final shouldPrint =
         prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
@@ -317,12 +318,14 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveShouldPrintTicket() async {
+    // Guarda el estado de impresión del ticket en SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(
         SharedPrefsKeys.shouldPrintTicket, _state.shouldPrintTicket);
   }
 
   Future<void> saveLastSoldTicket() async {
+    // Guarda el último ticket vendido en SharedPreferences
     final currentTicket = _state.ticket;
     final newLastSoldTicket = TicketModel(
       listPoduct: List.from(currentTicket.listPoduct),
@@ -365,8 +368,8 @@ class SellProvider extends ChangeNotifier {
   }
 
   void updateTicketWithCashRegister(BuildContext context) {
-    final cashRegisterProvider =
-        provider.Provider.of<CashRegisterProvider>(context, listen: false);
+    // Actualiza el ticket con la caja activa si existe
+    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
 
     if (cashRegisterProvider.hasActiveCashRegister) {
       final activeCashRegister =

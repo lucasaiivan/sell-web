@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/widgets/inputs/inputs.dart';
+import '../../../../core/utils/fuctions.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
@@ -48,7 +49,7 @@ class CashRegisterCloseDialog extends StatelessWidget {
               const SizedBox(height: 16),
               if (cashRegister.getDifference != 0) ...[
                 Text(
-                  'Diferencia: \$${cashRegister.getDifference.toStringAsFixed(2)}',
+                  'Diferencia: ${Publications.getFormatoPrecio(value: cashRegister.getDifference)}',
                   style: TextStyle(
                     color: cashRegister.getDifference < 0
                         ? Colors.red
@@ -107,20 +108,20 @@ class CashRegisterCloseDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildSummaryRow('Monto Inicial:',
-                '\$${cashRegister.initialCash.toStringAsFixed(2)}'),
+                Publications.getFormatoPrecio(value: cashRegister.initialCash)),
             _buildSummaryRow('Ventas:', cashRegister.sales.toString()),
             _buildSummaryRow(
-                'Facturación:', '\$${cashRegister.billing.toStringAsFixed(2)}'),
+                'Facturación:', Publications.getFormatoPrecio(value: cashRegister.billing)),
             _buildSummaryRow(
-                'Descuentos:', '\$${cashRegister.discount.toStringAsFixed(2)}'),
+                'Descuentos:', Publications.getFormatoPrecio(value: cashRegister.discount)),
             _buildSummaryRow(
-                'Ingresos:', '\$${cashRegister.cashInFlow.toStringAsFixed(2)}'),
+                'Ingresos:', Publications.getFormatoPrecio(value: cashRegister.cashInFlow)),
             _buildSummaryRow(
-                'Egresos:', '\$${cashRegister.cashOutFlow.toStringAsFixed(2)}'),
+                'Egresos:', Publications.getFormatoPrecio(value: cashRegister.cashOutFlow)),
             const Divider(),
             _buildSummaryRow(
               'Balance Esperado:',
-              '\$${cashRegister.getExpectedBalance.toStringAsFixed(2)}',
+              Publications.getFormatoPrecio(value: cashRegister.getExpectedBalance),
               true,
             ),
           ],

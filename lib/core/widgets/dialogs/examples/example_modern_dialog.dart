@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
+import '../../../utils/fuctions.dart';
 
 /// Ejemplo de diálogo modernizado usando los nuevos componentes estándar
 ///
@@ -69,7 +70,7 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
                   DialogComponents.infoRow(
                     context: context,
                     label: 'Precio Actual',
-                    value: '\$${widget.currentPrice.toStringAsFixed(2)}',
+                    value: Publications.getFormatoPrecio(value: widget.currentPrice),
                     icon: Icons.monetization_on_outlined,
                   ),
                 ],
@@ -121,7 +122,7 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
               DialogComponents.summaryContainer(
                 context: context,
                 label: 'Nuevo Precio',
-                value: '\$${_getNewPrice()?.toStringAsFixed(2) ?? '0.00'}',
+                value: Publications.getFormatoPrecio(value: _getNewPrice() ?? 0.0),
                 icon: Icons.trending_up_rounded,
               ),
           ],

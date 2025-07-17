@@ -256,12 +256,13 @@ class DialogComponents {
     );
   }
 
-  /// Contenedor de total/resumen destacado
+  /// Contenedor de total/resumen destacado y botones de acción 'ingreso/egreso'
   static Widget summaryContainer({
-    required String label,
+    String? label,
     required String value,
     IconData? icon,
     Color? backgroundColor,
+    Widget? child  ,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
@@ -276,44 +277,52 @@ class DialogComponents {
           color: theme.colorScheme.primary.withValues(alpha: 0.3),
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          if (icon != null) ...[
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
+          Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: theme.colorScheme.primary,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                const SizedBox(width: 16),
               ],
-            ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:icon == null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+                  children: [
+                    label == null ? const SizedBox.shrink()
+                      :Text(
+                      label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          // Botones de acción
+          child==null ? const SizedBox.shrink() : SizedBox(height: 16),
+          child ?? const SizedBox.shrink(),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
+import '../../../../core/utils/fuctions.dart';
 
 /// Diálogo modernizado para opciones del ticket siguiendo Material Design 3
 class TicketOptionsDialog extends StatefulWidget {
@@ -329,8 +330,8 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         return {
           'quantity': product['quantity'],
           'description': product['description'],
-          'price':
-              '\$${(product['salePrice'] * product['quantity']).toStringAsFixed(2)}',
+          'price': Publications.getFormatoPrecio(
+              value: (product['salePrice'] * product['quantity']).toDouble()),
         };
       }).toList();
 

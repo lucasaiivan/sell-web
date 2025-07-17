@@ -64,6 +64,9 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
               hintText: 'Ej: Caja Principal',
             ), 
             const SizedBox(height: 16),
+            // view : items fixers con nombres frecuentes de caja 
+            _buildFrequentNamesSection(context, cashRegisterProvider),
+            const SizedBox(height: 16),
             // input : Campo para monto inicial
             MoneyInputTextField(
               controller: cashRegisterProvider.initialCashController,
@@ -71,10 +74,6 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
               
             ), 
             
-            // view : items fixers con nombres frecuentes de caja
-            const SizedBox(height: 16),
-            _buildFrequentNamesSection(context, cashRegisterProvider),
-
             if (cashRegisterProvider.errorMessage != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -111,43 +110,18 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   }
 
   /// Construye la sección de nombres frecuentes de caja registradora
-  Widget _buildFrequentNamesSection(
-    BuildContext context,
-    CashRegisterProvider cashRegisterProvider,
-  ) {
-    // Usar la lista local en lugar de la del provider para mejor UX
-    if (_localFixedDescriptions.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  Widget _buildFrequentNamesSection(BuildContext context,CashRegisterProvider cashRegisterProvider ) {
+ 
 
     final theme = Theme.of(context);
     
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'Nombres frecuentes:',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              onPressed: () => _showAddDescriptionDialog(context, cashRegisterProvider),
-              icon: Icon(
-                Icons.add_circle_outline,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
-              tooltip: 'Agregar nombre frecuente',
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
+        // view : Lista de nombres frecuentes
+        _localFixedDescriptions.isEmpty
+            ? Opacity(opacity:0.5,child: const Text('Aun no ahi nombres frecuentes guardados'))
+            :Wrap(
           spacing: 8,
           runSpacing: 8,
           children: _localFixedDescriptions.map((description) {
@@ -189,6 +163,18 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
               ],
             );
           }).toList(),
+        ),
+        const Spacer(),
+        // button : Botón para agregar nuevo nombre frecuente
+        IconButton(
+          onPressed: () => _showAddDescriptionDialog(context, cashRegisterProvider),
+          icon: Icon(
+            Icons.add_circle_outline,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
+          tooltip: 'Agregar nombre frecuente',
+          visualDensity: VisualDensity.compact,
         ),
       ],
     );

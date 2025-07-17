@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/core/widgets/responsive/responsive_helper.dart';
+import 'package:sellweb/core/widgets/component/dividers.dart';
+import '../../../../core/utils/fuctions.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
@@ -62,7 +64,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   child: const Center(child: CircularProgressIndicator()),
                 );
               }
-              // view : Construir contenido responsivo
+              // view : Construir contenido responsivo de la  información de caja
               return _buildResponsiveContent(context, cashRegisterProvider, isMobile);
             },
           ),
@@ -176,6 +178,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [ 
+        // view : Detalles de la caja
+        DialogComponents.summaryContainer(
+          context: context,
+          label: 'Balance total',
+          value: Publications.getFormatoPrecio(value: cashRegister.getExpectedBalance),
+          icon: Icons.monetization_on_rounded,
+          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          child: _buildCashFlowButtons(context, provider, isMobile),
+        ),
+        DialogComponents.sectionSpacing,
         // view : Información de caja activa
         DialogComponents.infoSection(
           context: context,
@@ -183,25 +195,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
           icon: Icons.point_of_sale_rounded,
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [ 
-              SizedBox(height: isMobile ? 8 : 12),
-              // view : Detalles de la caja
-              DialogComponents.summaryContainer(
-                context: context,
-                label: 'Balance Actual',
-                value: '\$${cashRegister.getExpectedBalance.toStringAsFixed(2)}',
-                icon: Icons.monetization_on_rounded,
-              ),
+            children: [  
               SizedBox(height: isMobile ? 16 : 24),
               // view : Información de flujo de caja
               _cashFlowInformation(context, cashRegister),
-              SizedBox(height: isMobile ? 16 : 24),
-              // buttons : Acciones de caja
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: _buildCashFlowButtons(context, provider, isMobile),
-                ),
+              SizedBox(height: isMobile ? 16 : 24), 
             ],
           ),
         ), 
@@ -235,7 +233,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(
           child: AppFilledButton(
-            icon: const Icon(Icons.lock_outlined),
+            icon: const Icon(Icons.output_rounded),
             text: 'Cerrar Caja',
             onPressed: () => _showCloseDialog(context, cashRegister),
             backgroundColor: theme.colorScheme.error,
@@ -258,55 +256,44 @@ class CashRegisterManagementDialog extends StatelessWidget {
       {
         'label': 'Ventas',
         'value': cashRegister.sales.toString(),
-        'icon': Icons.shopping_cart_rounded,
       },
       {
         'label': 'Facturación',
-        'value': '\$${cashRegister.billing.toStringAsFixed(2)}',
-        'icon': Icons.attach_money_rounded,
+        'value': Publications.getFormatoPrecio(value: cashRegister.billing),
       },
       {
         'label': 'Descuentos',
-        'value': '\$${cashRegister.discount.toStringAsFixed(2)}',
-        'icon': Icons.local_offer_rounded,
+        'value': Publications.getFormatoPrecio(value: cashRegister.discount),
       },
     ];
 
     return Column(
-      children: items.map((item) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                item['icon'] as IconData,
-                size: 20,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                item['label'] as String,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+      children: [
+        for (int i = 0; i < items.length; i++) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  items[i]['label'] as String,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
+                Text(
+                  items[i]['value'] as String,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              item['value'] as String,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      )).toList(),
+          ),
+          if (i < items.length - 1) const AppDivider(),
+        ],
+      ],
     );
   }
 
@@ -489,7 +476,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       children: [
         Expanded(
           child: AppOutlinedButton(
-            icon: const Icon(Icons.add_circle_outline_rounded),
+            icon: const Icon(Icons.arrow_downward_rounded),
             text: 'Ingreso',
             onPressed: provider.hasActiveCashRegister
                 ? () => _showCashFlowDialog(context, true)
@@ -513,7 +500,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(
           child: AppOutlinedButton(
-            icon: const Icon(Icons.remove_circle_outline_rounded),
+            icon: const Icon(Icons.arrow_outward_rounded),
             text: 'Egreso',
             onPressed: provider.hasActiveCashRegister
                 ? () => _showCashFlowDialog(context, false)

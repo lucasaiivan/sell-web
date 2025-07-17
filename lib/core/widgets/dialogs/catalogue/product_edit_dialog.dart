@@ -86,9 +86,8 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
           // Resumen del total
           DialogComponents.summaryContainer(
             context: context,
-            label: 'Total del Producto',
-            value: Publications.getFormatoPrecio(value: _totalPrice),
-            icon: Icons.calculate_rounded,
+            value: Publications.getFormatoPrecio(value: _totalPrice), 
+            backgroundColor: Colors.transparent,
           ),
         ],
       ),
@@ -179,25 +178,20 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                 // Código y precio
                 Row(
                   children: [
-                    Expanded(
-                      child: DialogComponents.infoBadge(
-                        context: context,
-                        text: _productCode,
-                        icon: Icons.qr_code_rounded,
-                      ),
+                    DialogComponents.infoBadge(
+                      context: context,
+                      text: _productCode,
+                      icon: Icons.qr_code_rounded,
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: DialogComponents.infoBadge(
-                        context: context,
-                        text: Publications.getFormatoPrecio(
-                            value: widget.product.salePrice),
-                        icon: Icons.monetization_on_rounded,
-                        backgroundColor:
-                            Theme.of(context).colorScheme.primaryContainer,
-                        textColor:
-                            Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
+                    DialogComponents.infoBadge(
+                      context: context,
+                      text: Publications.getFormatoPrecio(
+                          value: widget.product.salePrice),
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      textColor:
+                          Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ],
                 ),
@@ -227,16 +221,10 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Cantidad',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        DialogComponents.itemSpacing,
+      children: [  
+        // view : selección de cantidad de unidades del producto
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(12),

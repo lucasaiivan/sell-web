@@ -1742,7 +1742,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               ? Colors.green.withValues(alpha: 0.1)
               : Colors.grey.withValues(alpha:0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)?null: isActive ? '${provider.currentActiveCashRegister?.description}' : 'Iniciar turno',
+          text: isMobile(context)?null: isActive ? '${provider.currentActiveCashRegister?.description}' : 'Iniciar caja',
         );
       },
     );

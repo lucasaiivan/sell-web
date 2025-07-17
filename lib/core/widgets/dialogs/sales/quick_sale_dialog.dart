@@ -113,7 +113,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   }
 
   String _getFormattedPrice() {
-    return _priceController.doubleValue.toStringAsFixed(2);
+    return Publications.getFormatoPrecio(value: _priceController.doubleValue, moneda: '');
   }
 
   Future<void> _processQuickSale() async {

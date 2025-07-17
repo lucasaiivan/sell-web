@@ -485,11 +485,11 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS PÚBLICOS - DESCRIPCIONES FIJAS
   // ==========================================
 
-  /// Carga las descripciones fijas
-  Future<void> loadFixedDescriptions(String accountId) async {
+  /// Carga las descripciones fijas para nombres de caja registradora
+  Future<void> loadCashRegisterFixedDescriptions(String accountId) async {
     try {
       final descriptions =
-          await _cashRegisterUsecases.getFixedDescriptions(accountId);
+          await _cashRegisterUsecases.getCashRegisterFixedDescriptions(accountId);
       _state = _state.copyWith(fixedDescriptions: descriptions);
       notifyListeners();
     } catch (e) {
@@ -497,17 +497,37 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// Crea una nueva descripción fija
-  Future<bool> createFixedDescription(
+  /// Crea una nueva descripción fija para nombres de caja registradora
+  Future<bool> createCashRegisterFixedDescription(
       String accountId, String description) async {
     try {
-      await _cashRegisterUsecases.createFixedDescription(
+      await _cashRegisterUsecases.createCashRegisterFixedDescription(
         accountId: accountId,
         description: description,
       );
 
       // Recargar descripciones
-      await loadFixedDescriptions(accountId);
+      await loadCashRegisterFixedDescriptions(accountId);
+
+      return true;
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Elimina una descripción fija para nombres de caja registradora
+  Future<bool> deleteCashRegisterFixedDescription(
+      String accountId, String description) async {
+    try {
+      await _cashRegisterUsecases.deleteCashRegisterFixedDescription(
+        accountId: accountId,
+        description: description,
+      );
+
+      // Recargar descripciones para actualizar la vista
+      await loadCashRegisterFixedDescriptions(accountId);
 
       return true;
     } catch (e) {

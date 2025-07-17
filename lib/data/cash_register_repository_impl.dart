@@ -163,11 +163,11 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   // ==========================================
-  // DESCRIPCIONES FIJAS
+  // DESCRIPCIONES FIJAS PARA NOMBRES DE CAJA
   // ==========================================
 
   @override
-  Future<void> createFixedDescription(
+  Future<void> createCashRegisterFixedDescription(
       String accountId, String description) async {
     try {
       await DatabaseCloudService.accountFixedDescriptions(accountId)
@@ -179,7 +179,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getFixedDescriptions(
+  Future<List<Map<String, dynamic>>> getCashRegisterFixedDescriptions(
       String accountId) async {
     try {
       final querySnapshot =
@@ -193,12 +193,19 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> deleteFixedDescription(
+  Future<void> deleteCashRegisterFixedDescription(
       String accountId, String descriptionId) async {
     try {
-      await DatabaseCloudService.accountFixedDescriptions(accountId)
-          .doc(descriptionId)
-          .delete();
+      final docRef = DatabaseCloudService.accountFixedDescriptions(accountId)
+          .doc(descriptionId);
+      
+      // Verificar si el documento existe antes de eliminar
+      final docSnapshot = await docRef.get();
+      if (!docSnapshot.exists) {
+        throw Exception('La descripción "$descriptionId" no existe');
+      }
+      
+      await docRef.delete();
     } catch (e) {
       throw Exception('Error al eliminar descripción fija: $e');
     }

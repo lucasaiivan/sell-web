@@ -56,17 +56,17 @@ abstract class CashRegisterRepository {
       String accountId, CashRegister cashRegister);
 
   // ==========================================
-  // DESCRIPCIONES FIJAS
+  // DESCRIPCIONES FIJAS PARA NOMBRES DE CAJA
   // ==========================================
 
-  /// Crea una descripción fija para movimientos de caja
-  Future<void> createFixedDescription(String accountId, String description);
+  /// Crea una descripción fija para nombres de caja registradora
+  Future<void> createCashRegisterFixedDescription(String accountId, String description);
 
-  /// Obtiene las descripciones fijas de una cuenta
-  Future<List<Map<String, dynamic>>> getFixedDescriptions(String accountId);
+  /// Obtiene las descripciones fijas para nombres de caja registradora de una cuenta
+  Future<List<Map<String, dynamic>>> getCashRegisterFixedDescriptions(String accountId);
 
-  /// Elimina una descripción fija
-  Future<void> deleteFixedDescription(String accountId, String descriptionId);
+  /// Elimina una descripción fija para nombres de caja registradora
+  Future<void> deleteCashRegisterFixedDescription(String accountId, String descriptionId);
 
   // ==========================================
   // OPERACIONES DE CAJA

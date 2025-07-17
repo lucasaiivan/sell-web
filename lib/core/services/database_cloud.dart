@@ -95,7 +95,7 @@ class DatabaseCloudService {
           String accountId) =>
       _firestore.collection('/ACCOUNTS/$accountId/RECORDS/');
 
-  /// Descripciones fijas para movimientos de caja
+  /// Descripciones fijas para nombres de caja
   static CollectionReference<Map<String, dynamic>> accountFixedDescriptions(
           String accountId) =>
       _firestore.collection('/ACCOUNTS/$accountId/FIXERDESCRIPTIONS/');

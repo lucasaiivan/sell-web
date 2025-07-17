@@ -57,15 +57,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
               // Si está cargando, mostrar indicador de progreso
               if (cashRegisterProvider.isLoadingActive) {
                 return SizedBox(
-                  height: ResponsiveHelper.responsive(
-                    context: context,
-                    mobile: 100,
-                    desktop: 120,
-                  ),
+                  height: ResponsiveHelper.responsive(context: context,mobile: 100,desktop: 120),
                   width: double.infinity,
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: const Center(child: CircularProgressIndicator()),
                 );
               }
               // view : Construir contenido responsivo
@@ -321,43 +315,44 @@ class CashRegisterManagementDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final provider = context.watch<CashRegisterProvider>();
 
+    // widgets
+    Widget infoCashRegister = DialogComponents.infoBadge(
+      context: context,
+      margin: EdgeInsets.only(bottom: isMobile ? 16 : 24),
+      borderRadius: 5,
+      text: 'Las cajas te permiten diferenciar tus transacciones y llevar un control de tu flujo de caja de cada turno',
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Verificar si hay cajas disponibles
         if (provider.hasAvailableCashRegisters) ...[
-          // view : Mostrar lista de cajas disponibles
-          Padding(
-            padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
-            child: Text(
-              'Cajas activas',
-              style: (isMobile 
-                ? theme.textTheme.titleSmall 
-                : theme.textTheme.titleMedium)?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          // view info : Información sobre las cajas
+          infoCashRegister,
+            // text : titulo de cajas disponibles
+          Text(
+            'Activas',
+            style: (isMobile 
+              ? theme.textTheme.bodyMedium 
+              : theme.textTheme.bodyLarge)?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
+            textAlign: TextAlign.center,
           ),
-          // Mostrar lista de cajas disponibles
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: isMobile ? 200 : 300,
-            ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(),
-              itemCount: provider.activeCashRegisters.length,
-              separatorBuilder: (context, index) => SizedBox(height: isMobile ? 6 : 8),
-              itemBuilder: (context, index) {
-                final cashRegister = provider.activeCashRegisters[index];
-                return _buildCashRegisterTile(context, cashRegister, provider, isMobile);
-              },
-            ),
+          SizedBox(height: isMobile ? 8 : 12),
+          // Mostrar lista de cajas disponibles dentro de un contenedor estilizado
+          DialogComponents.itemList(
+            context: context,
+            showDividers: true,
+            items: provider.activeCashRegisters.map((cashRegister) {
+              return _buildCashRegisterTile(context, cashRegister, provider, isMobile);
+            }).toList(),
           ),
           SizedBox(height: isMobile ? 16 : 24), 
         ] else ...[
-          // Mostrar mensaje de no cajas disponibles
+          // view : Mostrar mensaje de no cajas disponibles
           Container(
             padding: EdgeInsets.symmetric(
               vertical: isMobile ? 32 : 48,
@@ -365,10 +360,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
             ),
             child: Column(
               children: [
+                // icon and text : Icono y texto representativo para vista sin cajas
                 Container(
                   padding: EdgeInsets.all(isMobile ? 12 : 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainer,
+                    color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
                   ),
                   child: Icon(
@@ -389,20 +385,14 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: isMobile ? 4 : 8),
-                Text(
-                  'Crea una nueva caja para comenzar',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                infoCashRegister,
               ],
             ),
           ),
         ], 
         AppButton(
-          icon: const Icon(Icons.add_rounded),
-          text: 'Apertura de nueva caja',
+          icon: const Icon(Icons.add_circle_rounded),
+          text: 'Nueva caja',
           onPressed: () => _showOpenDialog(context),
           isLoading: provider.isLoadingActive, 
           backgroundColor: theme.colorScheme.primary,
@@ -429,66 +419,59 @@ class CashRegisterManagementDialog extends StatelessWidget {
       tween: Tween(begin: 0.0, end: 1.0),
       builder: (context, value, child) {
         return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
+          offset: Offset(0, 10 * (1 - value)),
           child: Opacity(
             opacity: value,
-            child: Card(
-              elevation: 0,
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                side: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                  onTap: () => provider.selectCashRegister(cashRegister),
-                  hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.all(isMobile ? 12 : 16),
-                    child: Row(
-                      children: [ 
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: EdgeInsets.all(isMobile ? 6 : 8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(isMobile ? 4 : 6),
-                          ),
-                          child: Icon(
-                            Icons.point_of_sale_rounded,
-                            size: isMobile ? 14 : 16,
-                            color: theme.colorScheme.primary,
-                          ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => provider.selectCashRegister(cashRegister),
+                hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                    vertical: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    children: [ 
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: EdgeInsets.all(isMobile ? 6 : 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(isMobile ? 4 : 6),
                         ),
-                        SizedBox(width: isMobile ? 10 : 12),
-                        Expanded(
-                          child: Text(
-                            cashRegister.description,
-                            style: (isMobile 
-                              ? theme.textTheme.bodySmall 
-                              : theme.textTheme.bodyMedium)?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        child: Icon(
+                          Icons.point_of_sale_rounded,
+                          size: isMobile ? 14 : 16,
+                          color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(width: 8),
-                        AnimatedRotation(
-                          duration: const Duration(milliseconds: 200),
-                          turns: 0,
-                          child: Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: isMobile ? 12 : 16,
-                            color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      SizedBox(width: isMobile ? 10 : 12),
+                      Expanded(
+                        child: Text(
+                          cashRegister.description,
+                          style: (isMobile 
+                            ? theme.textTheme.bodySmall 
+                            : theme.textTheme.bodyMedium)?.copyWith(
+                            fontWeight: FontWeight.w500,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      AnimatedRotation(
+                        duration: const Duration(milliseconds: 200),
+                        turns: 0,
+                        child: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: isMobile ? 12 : 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -557,8 +540,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   void _showOpenDialog(BuildContext context) {
     // Capturar los providers antes de mostrar el diálogo
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
     showDialog(

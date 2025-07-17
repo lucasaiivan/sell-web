@@ -289,11 +289,11 @@ class CashRegisterUsecases {
   }
 
   // ==========================================
-  // DESCRIPCIONES FIJAS
+  // DESCRIPCIONES FIJAS  PARA NOMBRES DE CAJA
   // ==========================================
 
-  /// Crea una descripción fija para movimientos frecuentes
-  Future<void> createFixedDescription({
+  /// Crea una descripción fija para nombres frecuentes de caja registradora
+  Future<void> createCashRegisterFixedDescription({
     required String accountId,
     required String description,
   }) async {
@@ -301,24 +301,24 @@ class CashRegisterUsecases {
       throw Exception('La descripción no puede estar vacía');
     }
 
-    await _repository.createFixedDescription(accountId, description.trim());
+    await _repository.createCashRegisterFixedDescription(accountId, description.trim());
   }
 
-  /// Obtiene las descripciones fijas disponibles
-  Future<List<String>> getFixedDescriptions(String accountId) async {
-    final descriptions = await _repository.getFixedDescriptions(accountId);
+  /// Obtiene las descripciones fijas disponibles para nombres de caja registradora
+  Future<List<String>> getCashRegisterFixedDescriptions(String accountId) async {
+    final descriptions = await _repository.getCashRegisterFixedDescriptions(accountId);
     return descriptions
         .map((desc) => desc['description'] as String? ?? '')
         .where((desc) => desc.isNotEmpty)
         .toList();
   }
 
-  /// Elimina una descripción fija
-  Future<void> deleteFixedDescription({
+  /// Elimina una descripción fija para nombres de caja registradora
+  Future<void> deleteCashRegisterFixedDescription({
     required String accountId,
     required String description,
   }) async {
-    await _repository.deleteFixedDescription(accountId, description);
+    await _repository.deleteCashRegisterFixedDescription(accountId, description);
   }
 
   // ==========================================

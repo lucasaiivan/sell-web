@@ -78,13 +78,7 @@ class DialogComponents {
 
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: item,
-              ),
+              item,
               if (showDividers && index < items.length - 1)
                 Divider(
                   height: 1,
@@ -325,45 +319,78 @@ class DialogComponents {
     );
   }
 
-  /// Badge/chip informativo
+  /// Badge/chip informativo con responsividad mejorada
   static Widget infoBadge({
     required String text,
     IconData? icon,
     Color? backgroundColor,
     Color? textColor,
+    double? borderRadius,
+    EdgeInsetsGeometry? margin,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Responsividad basada en el ancho de pantalla
+    final bool isMobile = screenWidth < 600;
+    final bool isTablet = screenWidth >= 600 && screenWidth < 840;
+    
+    // Ajustes responsivos para padding
+    final EdgeInsets padding = EdgeInsets.symmetric(
+      horizontal: isMobile ? 8 : (isTablet ? 10 : 12),
+      vertical: isMobile ? 4 : 6,
+    );
+    
+    // Ajustes responsivos para el tamaño del icono
+    final double iconSize = isMobile ? 14 : 16;
+    
+    // Ajustes responsivos para el espaciado entre icono y texto
+    final double iconSpacing = isMobile ? 4 : 6;
+    
+    // Radio de esquinas personalizable con fallback responsivo
+    final double effectiveBorderRadius = borderRadius ?? 
+        (isMobile ? 16 : (isTablet ? 18 : 20));
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: textColor ?? theme.colorScheme.onSecondaryContainer,
-            ),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            text,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: textColor ?? theme.colorScheme.onSecondaryContainer,
-              fontWeight: FontWeight.w500,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          margin: margin,
+          constraints: BoxConstraints(
+            maxWidth: constraints.maxWidth > 0 ? constraints.maxWidth * 0.8 : double.infinity,
           ),
-        ],
-      ),
+          padding: padding, 
+          decoration: BoxDecoration(
+            color: backgroundColor ?? theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(effectiveBorderRadius),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: iconSize,
+                  color: textColor ?? theme.colorScheme.onSecondaryContainer,
+                ),
+                SizedBox(width: iconSpacing),
+              ],
+              Flexible(
+                child: Text(
+                  text,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: textColor ?? theme.colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w500,
+                    fontSize: isMobile ? 11 : (isTablet ? 12 : null),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines:3,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

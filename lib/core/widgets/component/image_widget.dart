@@ -16,7 +16,7 @@ class ProductImage extends StatelessWidget {
     this.size,
     this.backgroundColor,
     this.fit = BoxFit.cover,
-    this.borderRadius = 8.0,
+    this.borderRadius = 4.0,
     this.defaultAsset = 'assets/product_default.png',
   });
 

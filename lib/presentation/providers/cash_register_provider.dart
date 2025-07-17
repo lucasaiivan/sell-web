@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import '../../core/services/cash_register_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
+import '../../domain/entities/ticket_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
 
 /// Extension helper para firstOrNull si no está disponible
@@ -579,6 +580,147 @@ class CashRegisterProvider extends ChangeNotifier {
   Future<Map<String, dynamic>?> getDailySummary(String accountId) async {
     try {
       return await _cashRegisterUsecases.getDailySummary(accountId);
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Guarda un ticket de venta confirmada en el historial de transacciones
+  Future<bool> saveTicketToTransactionHistory({
+    required String accountId,
+    required TicketModel ticket,
+  }) async {
+    if (!hasActiveCashRegister) {
+      _state = _state.copyWith(
+          errorMessage: 'No hay una caja registradora activa para guardar la transacción');
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      // Validar que el ticket tenga la información de caja registradora
+      final updatedTicket = TicketModel(
+        id: ticket.id,
+        payMode: ticket.payMode,
+        currencySymbol: ticket.currencySymbol,
+        sellerName: ticket.sellerName,
+        sellerId: ticket.sellerId,
+        cashRegisterName: currentActiveCashRegister!.description,
+        cashRegisterId: currentActiveCashRegister!.id,
+        priceTotal: ticket.priceTotal,
+        valueReceived: ticket.valueReceived,
+        discount: ticket.discount,
+        listPoduct: ticket.listPoduct,
+        creation: ticket.creation,
+      );
+
+      await _cashRegisterUsecases.saveTicketToTransactionHistory(
+        accountId: accountId,
+        ticket: updatedTicket,
+      );
+
+      return true;
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Obtiene los tickets del día actual como objetos TicketModel 
+  /// Nota: Por ahora devuelve Map hasta implementar conversión completa
+  Future<List<Map<String, dynamic>>?> getTodayTickets(String accountId) async {
+    try {
+      return await _cashRegisterUsecases.getTodayTransactions(accountId);
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Obtiene los tickets por rango de fechas como objetos TicketModel
+  /// Nota: Por ahora devuelve Map hasta implementar conversión completa
+  Future<List<Map<String, dynamic>>?> getTicketsByDateRange({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      return await _cashRegisterUsecases.getTransactionsByDateRange(
+        accountId: accountId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Obtiene las transacciones del día actual
+  Future<List<Map<String, dynamic>>?> getTodayTransactions(String accountId) async {
+    try {
+      return await _cashRegisterUsecases.getTodayTransactions(accountId);
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Obtiene las transacciones por rango de fechas
+  Future<List<Map<String, dynamic>>?> getTransactionsByDateRange({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      return await _cashRegisterUsecases.getTransactionsByDateRange(
+        accountId: accountId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Obtiene análisis de transacciones para reportes
+  /// TODO: Implementar método getTransactionAnalytics en use case
+  Future<Map<String, dynamic>?> getTransactionAnalytics({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      // Por ahora devolver análisis básico usando los datos disponibles
+      final transactions = await _cashRegisterUsecases.getTransactionsByDateRange(
+        accountId: accountId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      
+      double totalRevenue = 0;
+      double totalDiscounts = 0;
+      int totalTransactions = transactions.length;
+      
+      for (final transaction in transactions) {
+        totalRevenue += (transaction['priceTotal'] ?? 0).toDouble();
+        totalDiscounts += (transaction['discount'] ?? 0).toDouble();
+      }
+      
+      return {
+        'totalRevenue': totalRevenue,
+        'totalDiscounts': totalDiscounts,
+        'netRevenue': totalRevenue - totalDiscounts,
+        'totalTransactions': totalTransactions,
+      };
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();

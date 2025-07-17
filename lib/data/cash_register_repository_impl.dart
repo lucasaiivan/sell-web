@@ -370,4 +370,95 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       throw Exception('Error al actualizar ventas y facturación: $e');
     }
   }
+
+  // ==========================================
+  // TRANSACCIONES HISTÓRICAS
+  // ==========================================
+
+  @override
+  Future<void> saveTicketTransaction({
+    required String accountId,
+    required String ticketId,
+    required Map<String, dynamic> transactionData,
+  }) async {
+    try {
+      await DatabaseCloudService.accountTransactions(accountId)
+          .doc(ticketId)
+          .set(transactionData);
+    } catch (e) {
+      throw Exception('Error al guardar transacción: $e');
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final startTimestamp = Timestamp.fromDate(startDate);
+      final endTimestamp = Timestamp.fromDate(endDate);
+      
+      final querySnapshot = await DatabaseCloudService.getTransactionsByDateRange(
+        accountId: accountId,
+        startDate: startTimestamp,
+        endDate: endTimestamp,
+      );
+      
+      return querySnapshot.docs.map((doc) => {
+        'id': doc.id,
+        ...doc.data(),
+      }).toList();
+    } catch (e) {
+      throw Exception('Error al obtener transacciones por rango de fechas: $e');
+    }
+  }
+
+  @override
+  Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
+    return DatabaseCloudService.accountTransactionsStream(accountId)
+        .map((querySnapshot) {
+      return querySnapshot.docs.map((doc) => {
+        'id': doc.id,
+        ...doc.data(),
+      }).toList();
+    });
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getTransactionDetail({
+    required String accountId,
+    required String transactionId,
+  }) async {
+    try {
+      final docSnapshot = await DatabaseCloudService.accountTransactions(accountId)
+          .doc(transactionId)
+          .get();
+      
+      if (docSnapshot.exists) {
+        return {
+          'id': docSnapshot.id,
+          ...docSnapshot.data()!,
+        };
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Error al obtener detalle de transacción: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteTransaction({
+    required String accountId,
+    required String transactionId,
+  }) async {
+    try {
+      await DatabaseCloudService.accountTransactions(accountId)
+          .doc(transactionId)
+          .delete();
+    } catch (e) {
+      throw Exception('Error al eliminar transacción: $e');
+    }
+  }
 }

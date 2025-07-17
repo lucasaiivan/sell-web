@@ -14,6 +14,14 @@ class TicketModel {
   double valueReceived = 0.0; // valor recibido por la venta
   double discount = 0.0; // descuento aplicado a la venta
   String currencySymbol = '\$';
+  /// Tipo de transacción que representa este ticket
+  /// 
+  /// Valores posibles:
+  /// - 'sale': Venta normal (por defecto)
+  /// - 'refund': Devolución
+  /// - 'exchange': Cambio de producto
+  /// - 'adjustment': Ajuste de inventario
+  String transactionType = 'sale';
   List<dynamic> listPoduct = [];
   late Timestamp
       creation; // Marca de tiempo ( hora en que se reporto el producto )
@@ -29,6 +37,7 @@ class TicketModel {
     this.priceTotal = 0.0,
     this.valueReceived = 0.0,
     this.discount = 0.0,
+    this.transactionType = "sale",
     required this.listPoduct,
     required this.creation,
   });
@@ -67,6 +76,7 @@ class TicketModel {
         "priceTotal": priceTotal,
         "valueReceived": valueReceived,
         "discount": discount,
+        "transactionType": transactionType,
         // refactorizamos los valores [Timestamp]  a un [String]
         "listPoduct":
             listPoduct.map((e) => ProductCatalogue.fromMap(e).toMap()).toList(),
@@ -85,6 +95,7 @@ class TicketModel {
         "priceTotal": priceTotal,
         "valueReceived": valueReceived,
         "discount": discount,
+        "transactionType": transactionType,
         // Serializamos las marcas de tiempo de los productos a milisegundos
         "listPoduct": listPoduct.map((e) {
           final ProductCatalogue product = ProductCatalogue.fromMap(e);
@@ -148,6 +159,9 @@ class TicketModel {
       discount: data.containsKey('discount')
           ? (data['discount'] ?? 0.0).toDouble()
           : 0.0,
+      transactionType: data.containsKey('transactionType') 
+          ? data['transactionType'] as String 
+          : 'sale',
       listPoduct: data.containsKey('listPoduct') ? data['listPoduct'] : [],
       creation: creationTimestamp,
     );
@@ -166,6 +180,7 @@ class TicketModel {
     priceTotal = data['priceTotal'];
     valueReceived = data['valueReceived'];
     discount = data['discount'] ?? 0.0;
+    transactionType = data['transactionType'] ?? 'sale';
     listPoduct = data['listPoduct'] ?? [];
     creation = data['creation'];
   }

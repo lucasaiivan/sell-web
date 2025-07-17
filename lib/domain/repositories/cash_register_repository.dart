@@ -108,4 +108,37 @@ abstract class CashRegisterRepository {
     required double billingIncrement,
     required double discountIncrement,
   });
+
+  // ==========================================
+  // TRANSACCIONES HISTÓRICAS
+  // ==========================================
+
+  /// Guarda un ticket de venta en el historial de transacciones
+  Future<void> saveTicketTransaction({
+    required String accountId,
+    required String ticketId,
+    required Map<String, dynamic> transactionData,
+  });
+
+  /// Obtiene las transacciones de ventas filtradas por rango de fechas
+  Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  });
+
+  /// Stream de transacciones de ventas con actualizaciones en tiempo real
+  Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId);
+
+  /// Obtiene el detalle de una transacción específica
+  Future<Map<String, dynamic>?> getTransactionDetail({
+    required String accountId,
+    required String transactionId,
+  });
+
+  /// Elimina una transacción del historial
+  Future<void> deleteTransaction({
+    required String accountId,
+    required String transactionId,
+  });
 }

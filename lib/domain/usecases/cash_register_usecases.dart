@@ -1,4 +1,5 @@
 import '../../domain/entities/cash_register_model.dart';
+import '../../domain/entities/ticket_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
 
 /// Casos de uso para el sistema de caja registradora
@@ -285,9 +286,105 @@ class CashRegisterUsecases {
   // TRANSACCIONES HISTÓRICAS
   // ==========================================
 
-  // ...
-  // implementar ...
-  // ...
+  /// Guarda un ticket de venta en el historial de transacciones
+  Future<void> saveTicketToTransactionHistory({
+    required String accountId,
+    required TicketModel ticket,
+  }) async {
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta no puede estar vacío');
+    }
+
+    if (ticket.id.isEmpty) {
+      throw Exception('El ID del ticket no puede estar vacío');
+    }
+
+    if (ticket.cashRegisterId.isEmpty) {
+      throw Exception('El ID de la caja registradora no puede estar vacío');
+    }
+
+    if (ticket.sellerId.isEmpty) {
+      throw Exception('El ID del vendedor no puede estar vacío');
+    }
+
+    // Validar que el ticket tenga productos
+    if (ticket.listPoduct.isEmpty) {
+      throw Exception('El ticket debe contener al menos un producto');
+    }
+
+    // Validar que el monto total sea positivo
+    if (ticket.priceTotal <= 0) {
+      throw Exception('El monto total de la venta debe ser mayor a cero');
+    }
+
+    // Usar directamente el toMap() del ticket que ya incluye todos los campos necesarios
+    // incluyendo transactionType y el timestamp de creación
+    final transactionData = ticket.toMap();
+
+    await _repository.saveTicketTransaction(
+      accountId: accountId,
+      ticketId: ticket.id,
+      transactionData: transactionData,
+    );
+  }
+
+  /// Obtiene las transacciones de ventas de un periodo específico
+  Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    if (startDate.isAfter(endDate)) {
+      throw Exception(
+          'La fecha de inicio no puede ser posterior a la fecha de fin');
+    }
+
+    return await _repository.getTransactionsByDateRange(
+      accountId: accountId,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  /// Obtiene las transacciones del día actual
+  Future<List<Map<String, dynamic>>> getTodayTransactions(String accountId) async {
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return await getTransactionsByDateRange(
+      accountId: accountId,
+      startDate: startOfDay,
+      endDate: endOfDay,
+    );
+  }
+
+  /// Stream de transacciones de ventas con actualizaciones en tiempo real
+  Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
+    return _repository.getTransactionsStream(accountId);
+  }
+
+  /// Obtiene el detalle de una transacción específica
+  Future<Map<String, dynamic>?> getTransactionDetail({
+    required String accountId,
+    required String transactionId,
+  }) async {
+    return await _repository.getTransactionDetail(
+      accountId: accountId,
+      transactionId: transactionId,
+    );
+  }
+
+  /// Elimina una transacción del historial (solo para casos excepcionales)
+  Future<void> deleteTransaction({
+    required String accountId,
+    required String transactionId,
+  }) async {
+    await _repository.deleteTransaction(
+      accountId: accountId,
+      transactionId: transactionId,
+    );
+  }
 
   // ==========================================
   // DESCRIPCIONES FIJAS  PARA NOMBRES DE CAJA

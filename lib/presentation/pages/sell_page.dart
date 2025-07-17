@@ -138,10 +138,10 @@ class _SellPageState extends State<SellPage> {
                   // drawerTicket view : visualización del ticket con los datos de la compra
                   if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
                     TicketDrawerWidget(
-                      showConfirmedPurchase: _showConfirmedPurchase,
-                      onEditCashAmount: () => dialogSelectedIncomeCash(),
-                      onConfirmSale: () => _confirmSale(sellProvider),
-                      onCloseTicket: () => sellProvider.setTicketView(false),
+                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      onEditCashAmount: () => dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                      onConfirmSale: () => _confirmSale(sellProvider), // para confirmar la venta
+                      onCloseTicket: () => sellProvider.setTicketView(false), // para cerrar el ticket
                     ),
                 ],
               );
@@ -638,28 +638,28 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Lógica para confirmar la venta y procesar el ticket
-  Future<void> _confirmSale(SellProvider provider) async {
-    // Mostrar confirmación de venta completada inmediatamente
+  Future<void> _confirmSale(SellProvider provider) async { 
+
     setState(() {
-      _showConfirmedPurchase = true;
+      _showConfirmedPurchase = true; // para mostrar el mensaje de compra confirmada
     });
     
     // Obtener el provider de caja registradora
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
 
     // Si hay una caja activa, registrar la venta
     if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
-      provider.ticket.cashRegisterName = activeCashRegister.description;
+      // existe una caja activa y procede a registrarlo y actualiza la caja
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      // asignar los datos de la caja al ticket para registrar por que caja se realizó la venta
+      provider.ticket.cashRegisterName = activeCashRegister.description; 
       provider.ticket.cashRegisterId = activeCashRegister.id;
-
+      // - Registrar la venta en la caja registradora 
       await cashRegisterProvider.registerSale(
-        accountId: provider.profileAccountSelected.id,
-        saleAmount: provider.ticket.getTotalPrice,
-        discountAmount: provider.ticket.discount,
-        itemCount: provider.ticket.getProductsQuantity(),
+        accountId: provider.profileAccountSelected.id, // obtiene el id de la cuenta seleccionada
+        saleAmount: provider.ticket.getTotalPrice, // obtiene el total de la venta
+        discountAmount: provider.ticket.discount, // incrementa el descuento si lo hay
+        itemCount: provider.ticket.getProductsQuantity(), // obtiene la cantidad de productos en el ticket
       );
     }
 

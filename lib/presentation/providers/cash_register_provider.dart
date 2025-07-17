@@ -129,8 +129,7 @@ class CashRegisterProvider extends ChangeNotifier {
   List<String> get fixedDescriptions => _state.fixedDescriptions;
   bool get hasActiveCashRegister => _state.hasActiveCashRegister;
   bool get hasAvailableCashRegisters => _state.hasAvailableCashRegisters;
-  CashRegister? get currentActiveCashRegister =>
-      _state.currentActiveCashRegister;
+  CashRegister? get currentActiveCashRegister =>  _state.currentActiveCashRegister;
 
   CashRegisterProvider(this._cashRegisterUsecases);
 

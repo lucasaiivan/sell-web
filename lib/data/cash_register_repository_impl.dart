@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../core/services/database_cloud.dart';
 import '../../core/utils/fuctions.dart';
 import '../../domain/entities/cash_register_model.dart';
@@ -39,12 +41,10 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> setCashRegister(
-      String accountId, CashRegister cashRegister) async {
+  Future<void> setCashRegister( String accountId, CashRegister cashRegister) async {
+    // procede a guardar o actualizar la caja registradora
     try {
-      await DatabaseCloudService.accountCashRegisters(accountId)
-          .doc(cashRegister.id)
-          .set(cashRegister.toJson());
+      await DatabaseCloudService.accountCashRegisters(accountId).doc(cashRegister.id) .set(cashRegister.toJson(),SetOptions(merge: true)); // merge para actualizar campos específicos
     } catch (e) {
       throw Exception('Error al guardar caja registradora: $e');
     }
@@ -242,8 +242,9 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         cashInFlowList: [],
         cashOutFlowList: [],
       );
-
+      // cres la caja registradora en la base de datos
       await setCashRegister(accountId, cashRegister);
+
       return cashRegister;
     } catch (e) {
       throw Exception('Error al abrir caja registradora: $e');
@@ -343,12 +344,13 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
   @override
   Future<void> updateSalesAndBilling({
-    required String accountId,
-    required String cashRegisterId,
-    required int salesIncrement,
-    required double billingIncrement,
-    required double discountIncrement,
+    required String accountId,  // obtiene el id de la cuenta
+    required String cashRegisterId, // obtiene el id de la caja registradora
+    required int salesIncrement, // incrementa las ventas de la caja
+    required double billingIncrement, // incrementa la facturación
+    required double discountIncrement, // incrementa el descuento
   }) async {
+    // updateSalesAndBilling : actualiza los totales de ventas y facturación de una caja registradora
     try {
       // Obtener la caja registradora actual
       final activeCashRegisters = await getActiveCashRegisters(accountId);
@@ -359,9 +361,9 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
       // Actualizar totales de ventas
       final updatedCashRegister = cashRegister.update(
-        sales: cashRegister.sales + salesIncrement,
-        billing: cashRegister.billing + billingIncrement,
-        discount: cashRegister.discount + discountIncrement,
+        sales: cashRegister.sales ++, // Incrementa las ventas de la caja 
+        billing: cashRegister.billing + billingIncrement, // Incrementa la facturación 
+        discount: cashRegister.discount + discountIncrement, // Incrementa el descuento 
       );
 
       await setCashRegister(accountId, updatedCashRegister);

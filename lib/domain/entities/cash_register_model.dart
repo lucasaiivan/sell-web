@@ -180,13 +180,13 @@ class CashRegister {
   }
 }
 
-// flujo de caja
+// CashFlow : Representa el flujo de caja de 'ingresos' y 'egresos' 
 class CashFlow {
-  String id = '';
-  String userId = '';
-  String description = '';
-  double amount = 0.0;
-  DateTime date = DateTime.now();
+  String id = ''; // id del flujo de caja
+  String userId = ''; // id del usuario que realiza el flujo de caja
+  String description = ''; 
+  double amount = 0.0; // monto del flujo de caja
+  DateTime date = DateTime.now(); // marca de tiempo  
 
   CashFlow({
     required this.id,

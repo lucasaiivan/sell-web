@@ -168,11 +168,7 @@ class _TicketContent extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Botones de acción
-            _buildActionButtons(
-              onConfirmSale,
-              onCloseTicket,
-              isMobile(context),
-            ),
+            _buildActionButtons(onConfirmSale,onCloseTicket,isMobile(context)),
           ],
         ),
       ),

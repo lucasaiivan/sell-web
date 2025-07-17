@@ -178,7 +178,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [ 
-        // view : Detalles de la caja
+        // view : balance total y botones de flujo de caja
         DialogComponents.summaryContainer(
           context: context,
           label: 'Balance total',
@@ -188,7 +188,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
           child: _buildCashFlowButtons(context, provider, isMobile),
         ),
         DialogComponents.sectionSpacing,
-        // view : Información de caja activa
+        // view : Información detallada de caja
         DialogComponents.infoSection(
           context: context,
           title: cashRegister.description,
@@ -196,8 +196,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [  
-              SizedBox(height: isMobile ? 16 : 24),
-              // view : Información de flujo de caja
+              SizedBox(height: isMobile ? 16 : 24), 
               _cashFlowInformation(context, cashRegister),
               SizedBox(height: isMobile ? 16 : 24), 
             ],

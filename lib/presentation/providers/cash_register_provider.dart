@@ -591,6 +591,8 @@ class CashRegisterProvider extends ChangeNotifier {
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket,
+    String? sellerName,
+    String? sellerId,
   }) async {
     if (!hasActiveCashRegister) {
       _state = _state.copyWith(
@@ -600,29 +602,56 @@ class CashRegisterProvider extends ChangeNotifier {
     }
 
     try {
+      // ===== TESTING - INFORMACIÓN DEL PROVIDER =====
+      print('🏪 ===== INICIANDO GUARDADO DE TICKET DESDE PROVIDER =====');
+      print('✅ Caja Registradora Activa: ${currentActiveCashRegister!.description}');
+      print('🆔 ID Caja: ${currentActiveCashRegister!.id}');
+      print('👤 Vendedor Original: ${ticket.sellerName}');
+      print('💰 Monto Original: ${ticket.priceTotal}');
+      
       // Validar que el ticket tenga la información de caja registradora
       final updatedTicket = TicketModel(
-        id: ticket.id,
+        id: ticket.id.isEmpty ? Publications.generateUid() : ticket.id, // Generar ID si está vacío
         payMode: ticket.payMode,
         currencySymbol: ticket.currencySymbol,
-        sellerName: ticket.sellerName,
-        sellerId: ticket.sellerId,
+        sellerName: ticket.sellerName.isEmpty ? (sellerName ?? 'Vendedor') : ticket.sellerName, // Usar vendedor proporcionado o por defecto
+        sellerId: ticket.sellerId.isEmpty ? (sellerId ?? 'default_seller') : ticket.sellerId, // Usar ID proporcionado o por defecto
         cashRegisterName: currentActiveCashRegister!.description,
         cashRegisterId: currentActiveCashRegister!.id,
-        priceTotal: ticket.priceTotal,
+        priceTotal: ticket.priceTotal > 0 ? ticket.priceTotal : _calculateTotalPriceOptimized(ticket), // Usar método optimizado
         valueReceived: ticket.valueReceived,
         discount: ticket.discount,
-        listPoduct: ticket.listPoduct,
+        transactionType: ticket.transactionType,
+        listPoduct: ticket.getProductsAsCatalogue(),
         creation: ticket.creation,
       );
+      updatedTicket.products = ticket.products;
+
+      print('🔄 Ticket actualizado con datos de caja registradora');
+      print('✅ ID generado: ${updatedTicket.id}');
+      print('✅ Precio total calculado: ${updatedTicket.priceTotal}');
+      print('✅ Vendedor asignado: ${updatedTicket.sellerName} (${updatedTicket.sellerId})');
+      print('🚀 Enviando al caso de uso...\n');
 
       await _cashRegisterUsecases.saveTicketToTransactionHistory(
         accountId: accountId,
         ticket: updatedTicket,
       );
 
+      print('✅ PROCESO COMPLETADO SIN ERRORES');
       return true;
     } catch (e) {
+      // ===== TESTING - MOSTRAR ERROR DETALLADO =====
+      print('❌ ===== ERROR EN GUARDADO DE TICKET =====');
+      print('🚨 Error: $e');
+      print('📋 Detalles del ticket que falló:');
+      print('  - ID: ${ticket.id}');
+      print('  - Vendedor: "${ticket.sellerName}" (ID: "${ticket.sellerId}")');
+      print('  - Precio Total: ${ticket.priceTotal}');
+      print('  - Caja: "${ticket.cashRegisterName}" (ID: "${ticket.cashRegisterId}")');
+      print('  - Productos: ${ticket.products.length}');
+      print('===============================================\n');
+      
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return false;
@@ -743,6 +772,11 @@ class CashRegisterProvider extends ChangeNotifier {
   // ==========================================
   // MÉTODOS PRIVADOS
   // ==========================================
+
+  /// Calcula el precio total usando ProductTicketModel (método optimizado)
+  double _calculateTotalPriceOptimized(TicketModel ticket) {
+    return ticket.calculatedTotal;
+  }
 
   void _clearOpenForm() {
     openDescriptionController.clear();

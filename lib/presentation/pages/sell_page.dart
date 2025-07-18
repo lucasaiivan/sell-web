@@ -692,12 +692,11 @@ class _SellPageState extends State<SellPage> {
         }
 
         // Preparar datos del ticket
-        final products = provider.ticket.listPoduct.map((item) {
-          final product = item is Map ? item : item.toMap();
+        final products = provider.ticket.products.map((item) { 
           return {
-            'quantity': product['quantity'].toString(),
-            'description': product['description'],
-            'price': (product['salePrice'] * product['quantity']).toDouble(),
+            'quantity': item.quantity.toString(),
+            'description': item.description ,
+            'price': item.salePrice,
           };
         }).toList();
 
@@ -792,6 +791,27 @@ class _SellPageState extends State<SellPage> {
       }
     }
 
+    // ===== TESTING - GUARDAR EN HISTORIAL DE TRANSACCIONES =====
+    print('\n🎯 ===== INICIANDO PRUEBA DE GUARDADO EN HISTORIAL (CON IMPRESIÓN) =====');
+    
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      // Obtener información del usuario para asignar como vendedor
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userEmail = authProvider.user?.email ?? 'unknown@example.com';
+      final userName = authProvider.user?.displayName ?? 'Vendedor';
+      
+      final success = await cashRegisterProvider.saveTicketToTransactionHistory(
+        accountId: provider.profileAccountSelected.id,
+        ticket: provider.ticket,
+        sellerName: userName,
+        sellerId: userEmail,
+      );
+      print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
+    } else {
+      print('⚠️ No hay caja registradora activa - no se puede guardar en historial');
+    }
+    print('🏁 ===== FIN DE PRUEBA DE GUARDADO =====\n');
+
     await _finalizeSale(provider);
   }
 
@@ -815,7 +835,27 @@ class _SellPageState extends State<SellPage> {
       );
     }
 
-    //await provider.saveTransactionHistory();
+    // ===== TESTING - GUARDAR EN HISTORIAL DE TRANSACCIONES =====
+    print('\n🎯 ===== INICIANDO PRUEBA DE GUARDADO EN HISTORIAL =====');
+    
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      // Obtener información del usuario para asignar como vendedor
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userEmail = authProvider.user?.email ?? 'unknown@example.com';
+      final userName = authProvider.user?.displayName ?? 'Vendedor';
+      
+      final success = await cashRegisterProvider.saveTicketToTransactionHistory(
+        accountId: provider.profileAccountSelected.id,
+        ticket: provider.ticket,
+        sellerName: userName,
+        sellerId: userEmail,
+      );
+      print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
+    } else {
+      print('⚠️ No hay caja registradora activa - no se puede guardar en historial');
+    }
+    print('🏁 ===== FIN DE PRUEBA DE GUARDADO =====\n');
+
     await _finalizeSale(provider);
   } 
 
@@ -887,10 +927,10 @@ class _SellPageState extends State<SellPage> {
           crossAxisCount = 6; // Ancho para pantallas grandes
         }
         // Usar los productos seleccionados del ticket
-        final List<ProductCatalogue> list = provider.ticket.listPoduct
+        final List<ProductCatalogue> list = provider.ticket.products
             .map((item) => item is ProductCatalogue
                 ? item
-                : ProductCatalogue.fromMap(item))
+                : ProductCatalogue.fromMap(item as Map<String, dynamic>))
             .toList()
             .reversed
             .toList();
@@ -1314,10 +1354,8 @@ class _SellPageState extends State<SellPage> {
       required SellProvider sellProvider,
       required void Function() onTap,
       required StateSetter setState}) {
-    final ticketProducts = sellProvider.ticket.listPoduct
-        .map((item) =>
-            item is ProductCatalogue ? item : ProductCatalogue.fromMap(item))
-        .toList();
+    // 
+    final ticketProducts = sellProvider.ticket.products;
     ProductCatalogue? selectedProduct;
     try {
       selectedProduct = ticketProducts

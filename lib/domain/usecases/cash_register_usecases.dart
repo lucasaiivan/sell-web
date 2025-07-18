@@ -291,6 +291,7 @@ class CashRegisterUsecases {
     required String accountId,
     required TicketModel ticket,
   }) async {
+    // VALIDACIONES
     if (accountId.isEmpty) {
       throw Exception('El ID de la cuenta no puede estar vacío');
     }
@@ -308,7 +309,7 @@ class CashRegisterUsecases {
     }
 
     // Validar que el ticket tenga productos
-    if (ticket.listPoduct.isEmpty) {
+    if (ticket.products.isEmpty) {
       throw Exception('El ticket debe contener al menos un producto');
     }
 
@@ -321,6 +322,7 @@ class CashRegisterUsecases {
     // incluyendo transactionType y el timestamp de creación
     final transactionData = ticket.toMap();
 
+    // Guardar en Firestore
     await _repository.saveTicketTransaction(
       accountId: accountId,
       ticketId: ticket.id,

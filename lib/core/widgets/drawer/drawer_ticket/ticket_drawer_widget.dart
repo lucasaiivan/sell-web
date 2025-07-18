@@ -545,10 +545,8 @@ class _TicketProductListState extends State<_TicketProductList> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> items = widget.ticket.listPoduct.map<Widget>((item) {
-      final product = item is ProductCatalogue
-          ? item
-          : ProductCatalogue.fromMap(item);
+    final List<Widget> items = widget.ticket.products.map<Widget>((item) {
+      final product = item as ProductCatalogue ;
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),

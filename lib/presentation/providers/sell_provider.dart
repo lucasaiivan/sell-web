@@ -73,9 +73,47 @@ class SellProvider extends ChangeNotifier {
     ticketView: false,
     shouldPrintTicket: false,
     profileAccountSelected: ProfileAccountModel(),
-    ticket: TicketModel(listPoduct: [], creation: Timestamp.now()),
+    ticket: _createEmptyTicketStatic(),
     lastSoldTicket: null,
   );
+  
+  /// Crea un ticket vacío usando la API encapsulada (método estático)
+  static TicketModel _createEmptyTicketStatic() {
+    return TicketModel(
+      listPoduct: [],
+      creation: Timestamp.now(),
+    );
+  }
+  
+  /// Crea un nuevo ticket preservando valores específicos pero con productos vacíos
+  TicketModel _createTicketWithValues({
+    required Timestamp creation,
+    String payMode = '',
+    double valueReceived = 0.0,
+    String cashRegisterName = '',
+    String cashRegisterId = '',
+    String sellerName = '',
+    String sellerId = '',
+    double priceTotal = 0.0,
+    double discount = 0.0,
+    String transactionType = 'sale',
+    String currencySymbol = '\$',
+  }) {
+    return TicketModel(
+      listPoduct: [],
+      creation: creation,
+      payMode: payMode,
+      valueReceived: valueReceived,
+      cashRegisterName: cashRegisterName,
+      cashRegisterId: cashRegisterId,
+      sellerName: sellerName,
+      sellerId: sellerId,
+      priceTotal: priceTotal,
+      discount: discount,
+      transactionType: transactionType,
+      currencySymbol: currencySymbol,
+    );
+  }
 
   // Getters que no causan rebuild
   bool get ticketView => _state.ticketView;
@@ -101,7 +139,7 @@ class SellProvider extends ChangeNotifier {
   void cleanData() {
     _state = _state.copyWith(
       profileAccountSelected: ProfileAccountModel(),
-      ticket: TicketModel(listPoduct: [], creation: Timestamp.now()),
+      ticket: _createEmptyTicketStatic(),
       ticketView: false,
       shouldPrintTicket: false,
       lastSoldTicket: null,
@@ -184,21 +222,22 @@ class SellProvider extends ChangeNotifier {
     }
   }
 
-  Map<String, dynamic> _decodeJson(String source) =>
-      const JsonDecoder().convert(source) as Map<String, dynamic>;
+  Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
 
-  void addProductsticket(ProductCatalogue product,
-      {bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,{bool replaceQuantity = false}) {
+    // Agrega un producto al ticket actual, reemplazando la cantidad si es necesario
+
+    // var
     final currentTicket = _state.ticket;
     bool exist = false;
-    final updatedProducts = List.from(currentTicket.listPoduct);
+    final List<ProductCatalogue> updatedProducts = List.from(currentTicket.products);
 
     for (var i = 0; i < updatedProducts.length; i++) {
-      if (updatedProducts[i]['id'] == product.id) {
+      if (updatedProducts[i].id == product.id) {
         if (replaceQuantity) {
-          updatedProducts[i]['quantity'] = product.quantity;
+          updatedProducts[i].quantity = product.quantity;
         } else {
-          updatedProducts[i]['quantity'] +=
+          updatedProducts[i].quantity +=
               (product.quantity > 0 ? product.quantity : 1);
         }
         exist = true;
@@ -207,37 +246,56 @@ class SellProvider extends ChangeNotifier {
     }
 
     if (!exist) {
-      updatedProducts.add(product.toMap());
+      // Si el producto no existe, lo agrega con la cantidad especificada
+      updatedProducts.add(product.copyWith(quantity: product.quantity > 0 ? product.quantity : 1));
     }
 
-    final newTicket = TicketModel(
-      listPoduct: updatedProducts,
+    // Crea un nuevo ticket con los productos actualizados
+    final newTicket = _createTicketWithValues(
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: currentTicket.valueReceived,
       cashRegisterName: currentTicket.cashRegisterName,
       cashRegisterId: currentTicket.cashRegisterId,
+      sellerName: currentTicket.sellerName,
+      sellerId: currentTicket.sellerId,
+      priceTotal: currentTicket.priceTotal,
+      discount: currentTicket.discount,
+      transactionType: currentTicket.transactionType,
+      currencySymbol: currentTicket.currencySymbol,
     );
-
+    
+    // Establecer los productos usando el setter que maneja la conversión
+    newTicket.products = updatedProducts;
+    // Actualiza el estado del provider con el nuevo ticket
     _state = _state.copyWith(ticket: newTicket);
     _saveTicket();
     notifyListeners();
   }
 
   void removeProduct(ProductCatalogue product) {
-    final currentTicket = _state.ticket;
-    final updatedProducts = currentTicket.listPoduct
-        .where((item) => item['id'] != product.id)
-        .toList();
+    // Elimina un producto del ticket actual
 
-    final newTicket = TicketModel(
-      listPoduct: updatedProducts,
+    // var 
+    final currentTicket = _state.ticket;
+    final updatedProducts = currentTicket.products.where((item) => item.id != product.id).toList();
+
+    final newTicket = _createTicketWithValues(
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: currentTicket.valueReceived,
       cashRegisterName: currentTicket.cashRegisterName,
       cashRegisterId: currentTicket.cashRegisterId,
+      sellerName: currentTicket.sellerName,
+      sellerId: currentTicket.sellerId,
+      priceTotal: currentTicket.priceTotal,
+      discount: currentTicket.discount,
+      transactionType: currentTicket.transactionType,
+      currencySymbol: currentTicket.currencySymbol,
     );
+    
+    // Establecer los productos usando el setter que maneja la conversión
+    newTicket.products = updatedProducts;
 
     _state = _state.copyWith(
       ticket: newTicket,
@@ -249,7 +307,7 @@ class SellProvider extends ChangeNotifier {
 
   void discartTicket() {
     _state = _state.copyWith(
-      ticket: TicketModel(listPoduct: [], creation: Timestamp.now()),
+      ticket: _createEmptyTicketStatic(),
       ticketView: false,
     );
     _saveTicket();
@@ -273,14 +331,22 @@ class SellProvider extends ChangeNotifier {
 
   void setPayMode({String payMode = 'effective'}) {
     final currentTicket = _state.ticket;
-    final newTicket = TicketModel(
-      listPoduct: currentTicket.listPoduct,
+    final newTicket = _createTicketWithValues(
       creation: currentTicket.creation,
       payMode: payMode,
       valueReceived: payMode != 'effective' ? 0.0 : currentTicket.valueReceived,
       cashRegisterName: currentTicket.cashRegisterName,
       cashRegisterId: currentTicket.cashRegisterId,
+      sellerName: currentTicket.sellerName,
+      sellerId: currentTicket.sellerId,
+      priceTotal: currentTicket.priceTotal,
+      discount: currentTicket.discount,
+      transactionType: currentTicket.transactionType,
+      currencySymbol: currentTicket.currencySymbol,
     );
+    
+    // Establecer los productos usando el setter
+    newTicket.products = currentTicket.products;
 
     _state = _state.copyWith(ticket: newTicket);
     _saveTicket();
@@ -290,14 +356,22 @@ class SellProvider extends ChangeNotifier {
   void setReceivedCash(double value) {
     // Actualiza el valor recibido en el ticket
     final currentTicket = _state.ticket;
-    final newTicket = TicketModel(
-      listPoduct: currentTicket.listPoduct,
+    final newTicket = _createTicketWithValues(
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: value,
       cashRegisterName: currentTicket.cashRegisterName,
       cashRegisterId: currentTicket.cashRegisterId,
+      sellerName: currentTicket.sellerName,
+      sellerId: currentTicket.sellerId,
+      priceTotal: currentTicket.priceTotal,
+      discount: currentTicket.discount,
+      transactionType: currentTicket.transactionType,
+      currencySymbol: currentTicket.currencySymbol,
     );
+    
+    // Establecer los productos usando el setter
+    newTicket.products = currentTicket.products;
 
     _state = _state.copyWith(ticket: newTicket);
     _saveTicket();
@@ -327,14 +401,22 @@ class SellProvider extends ChangeNotifier {
   Future<void> saveLastSoldTicket() async {
     // Guarda el último ticket vendido en SharedPreferences
     final currentTicket = _state.ticket;
-    final newLastSoldTicket = TicketModel(
-      listPoduct: List.from(currentTicket.listPoduct),
+    final newLastSoldTicket = _createTicketWithValues(
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: currentTicket.valueReceived,
       cashRegisterName: currentTicket.cashRegisterName,
       cashRegisterId: currentTicket.cashRegisterId,
+      sellerName: currentTicket.sellerName,
+      sellerId: currentTicket.sellerId,
+      priceTotal: currentTicket.priceTotal,
+      discount: currentTicket.discount,
+      transactionType: currentTicket.transactionType,
+      currencySymbol: currentTicket.currencySymbol,
     );
+    
+    // Establecer los productos usando el setter
+    newLastSoldTicket.products = List.from(currentTicket.products);
 
     _state = _state.copyWith(lastSoldTicket: newLastSoldTicket);
     await _saveLastSoldTicket();
@@ -345,8 +427,7 @@ class SellProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final lastTicket = _state.lastSoldTicket;
     if (lastTicket != null) {
-      await prefs.setString(
-          SharedPrefsKeys.lastSoldTicket, jsonEncode(lastTicket.toJson()));
+      await prefs.setString( SharedPrefsKeys.lastSoldTicket, jsonEncode(lastTicket.toJson()));
     } else {
       await prefs.remove(SharedPrefsKeys.lastSoldTicket);
     }
@@ -375,14 +456,22 @@ class SellProvider extends ChangeNotifier {
       final activeCashRegister =
           cashRegisterProvider.currentActiveCashRegister!;
       final currentTicket = _state.ticket;
-      final newTicket = TicketModel(
-        listPoduct: currentTicket.listPoduct,
+      final newTicket = _createTicketWithValues(
         creation: currentTicket.creation,
         payMode: currentTicket.payMode,
         valueReceived: currentTicket.valueReceived,
         cashRegisterName: activeCashRegister.description,
         cashRegisterId: activeCashRegister.id,
+        sellerName: currentTicket.sellerName,
+        sellerId: currentTicket.sellerId,
+        priceTotal: currentTicket.priceTotal,
+        discount: currentTicket.discount,
+        transactionType: currentTicket.transactionType,
+        currencySymbol: currentTicket.currencySymbol,
       );
+      
+      // Establecer los productos usando el setter
+      newTicket.products = currentTicket.products;
 
       _state = _state.copyWith(ticket: newTicket);
       notifyListeners();

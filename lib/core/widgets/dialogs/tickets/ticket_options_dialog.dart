@@ -325,13 +325,11 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
       await printerService.initialize();
 
       // Preparar datos del ticket
-      final products = widget.ticket.listPoduct.map((item) {
-        final product = item is Map ? item : item.toMap();
+      final products = widget.ticket.products.map((item) { 
         return {
-          'quantity': product['quantity'],
-          'description': product['description'],
-          'price': Publications.getFormatoPrecio(
-              value: (product['salePrice'] * product['quantity']).toDouble()),
+          'quantity': item.quantity,
+          'description': item.description,
+          'price': Publications.getFormatoPrecio( value: item.salePrice),
         };
       }).toList();
 

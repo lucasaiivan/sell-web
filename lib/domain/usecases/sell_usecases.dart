@@ -37,9 +37,14 @@ class SellUseCases {
 
   /// - [getTicket]: Genera un ticket a partir de la lista de productos seleccionados.
   TicketModel getTicket(List<ProductCatalogue> selectedProducts) {
-    return TicketModel(
-      listPoduct: selectedProducts.map((e) => e.toMap()).toList(),
+    final ticket = TicketModel(
+      listPoduct: [],
       creation: Timestamp.now(),
     );
+    
+    // Usar el setter para establecer los productos de manera encapsulada
+    ticket.products = selectedProducts;
+    
+    return ticket;
   }
 }

@@ -30,11 +30,6 @@ Diálogos relacionados con la gestión del catálogo de productos.
 - **Propósito**: Informa al usuario que el producto buscado no existe
 - **Uso**: Se muestra al buscar productos inexistentes en el catálogo
 
-### `create_product_dialog.dart`
-- **Contexto**: Diálogo para crear productos nuevos desde código de barras
-- **Propósito**: Permite crear productos rápidamente con precio y descripción obligatorios
-- **Uso**: Se abre desde el diálogo de "producto no encontrado" para crear productos nuevos
-
 ## 🔧 Uso
 ```dart
 // Agregar producto
@@ -53,14 +48,5 @@ showDialog(
 showDialog(
   context: context,
   builder: (context) => ProductNotFoundDialog(searchTerm: searchText),
-);
-
-// Crear producto nuevo
-showCreateProductDialog(
-  context,
-  code: scannedCode,
-  onCreateProduct: (description, price) async {
-    // Lógica para crear el producto
-  },
 );
 ```

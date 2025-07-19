@@ -1,9 +1,7 @@
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
-import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog_new.dart';
-import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart'; 
-import 'package:sellweb/core/widgets/dialogs/catalogue/product_not_found_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/catalogue/create_product_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
@@ -195,7 +193,7 @@ class _SellPageState extends State<SellPage> {
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
-    if (product != null && product.id.isNotEmpty) {
+    if (product != null) {
       // - Si se encuentra el producto en el catálogo, agregarlo al ticket -
       homeProvider.addProductsticket(product.copyWith());
     } else {
@@ -213,142 +211,99 @@ class _SellPageState extends State<SellPage> {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
           // ignore: use_build_context_synchronously
-          showDialogProductoNoEncontrado(context, code: code);
+          showAddProductDialog(context,isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }
     }
   }
 
-  /// Muestra un diálogo cuando un producto no es encontrado usando el sistema de diálogos base.
-  /// Implementa Material Design 3 y ofrece opción para crear producto nuevo.
+  /// Muestra un AlertDialog temporal con mensaje de error y opciones para crear o agregar producto.
+  /// Se cierra automáticamente después de [duracion] milisegundos si no se elige una acción.
   Future<void> showDialogProductoNoEncontrado(BuildContext context,
       {required String code}) async {
-    await showProductNotFoundDialog(
-      context,
-      code: code,
-      onCreateNew: () async {
-        await _showCreateProductDialog(context, code);
-      },
-    );
-  }
-
-  /// Muestra el diálogo para crear un nuevo producto con precio y descripción
-  Future<void> _showCreateProductDialog(BuildContext context, String code) async {
-    await showCreateProductDialog(
-      context,
-      code: code,
-      onCreateProduct: (description, price) async {
-        await _createProductFromCode(context, code, description, price);
-      },
-    );
-  }
-
-  /// Crea un nuevo producto público con el código escaneado y lo agrega al ticket
-  Future<void> _createProductFromCode(
-    BuildContext context, 
-    String code, 
-    String description, 
-    double price,
-  ) async {
-    try {
-      // Obtener providers necesarios
-      final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
-      final sellProvider = Provider.of<SellProvider>(context, listen: false);
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      // Crear el producto público con datos básicos
-      final newProduct = Product(
-        id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
-        code: code,
-        description: description, // Usar la descripción del diálogo
-        image: '', // Sin imagen por defecto
-        idMark: '',
-        nameMark: '',
-        imageMark: '',
-        creation: Utils().getTimestampNow(),
-        upgrade: Utils().getTimestampNow(),
-        idUserCreation: authProvider.user?.email ?? '',
-        idUserUpgrade: authProvider.user?.email ?? '',
-        verified: false,
-        reviewed: false,
-        favorite: false,
-        followers: 0,
-      );
-
-      // Crear el producto en la base de datos pública
-      await catalogueProvider.createPublicProduct(newProduct);
-
-      // Convertir a ProductCatalogue para agregarlo al catálogo y ticket
-      final productCatalogue = newProduct.convertProductCatalogue();
-      
-      // Establecer precio de venta y propiedades del diálogo
-      productCatalogue.salePrice = price; // Usar el precio del diálogo
-      productCatalogue.quantity = 1;
-      productCatalogue.stock = true;
-      productCatalogue.quantityStock = 1;
-
-      // Agregar el producto al catálogo del usuario
-      await catalogueProvider.addProductToCatalogue(
-        productCatalogue, 
-        sellProvider.profileAccountSelected.id,
-      );
-
-      // Agregar el producto al ticket
-      sellProvider.addProductsticket(productCatalogue);
-
-      // Mostrar mensaje de éxito
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
+    bool accionRealizada = false;
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        // title : titulo del dialog y button cerrar
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(code,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                accionRealizada = true;
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Mensaje mejorado: No se encontró el producto
+            const SizedBox(height: 16),
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.orange.withValues(alpha: 0.15),
+              child: const Icon(Icons.search_off_rounded,
+                  color: Colors.orange, size: 36),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Producto no encontrado',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Producto "$description" creado y agregado al ticket',
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                const Spacer(),
+                // button : cancelar
+                TextButton(
+                  child: const Text('Cancelar'),
+                  onPressed: () {
+                    accionRealizada = true;
+                    Navigator.of(context).pop();
+                  },
+                ),
+                // button : Agregar producto
+                ElevatedButton(
+                  child: const Text('Crear producto'),
+                  onPressed: () {
+                    accionRealizada = true;
+                    Navigator.of(context).pop();
+                    // TODO: Implementa la lógica para crear producto
+                    // showDialogCrearProducto(context);
+                  },
                 ),
               ],
             ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+          ],
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+    // Si el usuario no presionó ninguna acción, cerrar automáticamente después de la duración
+    if (!accionRealizada) {
+      await Future.delayed(Duration(milliseconds: 3000));
+      // ignore: use_build_context_synchronously
+      if (Navigator.of(context).canPop()) {
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).pop();
       }
-
-    } catch (e) {
-      // Mostrar mensaje de error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Error al crear producto: $e',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-      debugPrint('Error al crear producto con código $code: $e');
     }
   }
 

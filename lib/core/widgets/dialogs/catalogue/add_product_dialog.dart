@@ -10,7 +10,7 @@ import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/auth_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
-/// Diálogo para agregar un producto  
+/// Diálogo modernizado para agregar productos siguiendo Material Design 3
 class AddProductDialog extends StatefulWidget {
   const AddProductDialog({
     super.key,

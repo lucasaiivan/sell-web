@@ -12,6 +12,7 @@ export 'components/dialog_components.dart';
 export 'catalogue/add_product_dialog.dart';
 export 'catalogue/product_edit_dialog.dart';
 export 'catalogue/product_not_found_dialog.dart';
+export 'catalogue/create_product_dialog.dart';
 // export 'catalogue/add_product_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario
 // export 'catalogue/product_edit_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario
 

@@ -179,10 +179,16 @@ class CatalogueProvider extends ChangeNotifier {
   /// Busca un producto por código de barras en el catálogo local.
   ProductCatalogue? getProductByCode(String code) {
     final normalizedCode = code.trim().toUpperCase();
-    return _state.products.firstWhere(
-      (product) => product.code.trim().toUpperCase() == normalizedCode,
-      orElse: () => ProductCatalogue(),
-    );
+    try {
+      final product = _state.products.firstWhere(
+        (product) => product.code.trim().toUpperCase() == normalizedCode,
+      );
+      // Verificar que el producto encontrado tenga un ID válido
+      return product.id.isNotEmpty ? product : null;
+    } catch (e) {
+      // Si no se encuentra ningún producto, devolver null
+      return null;
+    }
   }
 
   /// Busca un producto público por código de barra en la base pública.

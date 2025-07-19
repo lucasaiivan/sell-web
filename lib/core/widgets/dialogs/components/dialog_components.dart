@@ -217,8 +217,8 @@ class DialogComponents {
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
-      minLines: 1,
-      maxLines: maxLines > 1 ? maxLines : null,
+      minLines: maxLines > 1 ? null : 1,
+      maxLines: maxLines > 1 ? null : maxLines,
       expands: maxLines > 1,
       readOnly: readOnly,
       decoration: InputDecoration(

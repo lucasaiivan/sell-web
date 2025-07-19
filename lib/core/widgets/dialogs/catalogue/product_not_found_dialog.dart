@@ -23,15 +23,13 @@ class ProductNotFoundDialog extends StatelessWidget {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DialogComponents.infoSection(
+          DialogComponents.infoSection( 
             context: context,
-            title: 'Producto No Encontrado',
             icon: Icons.inventory_2_outlined,
-            backgroundColor: Theme.of(context).colorScheme.errorContainer,
+            title: 'No encontrado',
             content: Text(
-              'No se encontró ningún producto con el código especificado.',
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
+              'No se encontró un producto en la base de datos publica ¿Deseas crear un nuevo producto?',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
         ],
@@ -65,9 +63,6 @@ Future<void> showProductNotFoundDialog(
   return showDialog(
     context: context,
     barrierDismissible: true,
-    builder: (context) => ProductNotFoundDialog(
-      code: code,
-      onCreateNew: onCreateNew,
-    ),
+    builder: (context) => ProductNotFoundDialog(code: code,onCreateNew: onCreateNew ),
   );
 }

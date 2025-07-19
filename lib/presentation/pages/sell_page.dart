@@ -185,30 +185,33 @@ class _SellPageState extends State<SellPage> {
   }
 
   void scanCodeProduct({required String code}) async {
+    
     final context = _focusNode.context;
-    if (context == null) return;
-    final catalogueProvider =
-        Provider.of<CatalogueProvider>(context, listen: false);
+    if (context == null) return; 
+
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
+
     if (product != null) {
-      // Si se encuentra el producto en el catálogo, agregarlo al ticket
+      // - Si se encuentra el producto en el catálogo, agregarlo al ticket -
       homeProvider.addProductsticket(product.copyWith());
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
-      final publicProduct =
-          await catalogueProvider.getPublicProductByCode(code);
+      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
+
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
         final productCatalogue = publicProduct.convertProductCatalogue();
         if (mounted) {
+          // ignore: use_build_context_synchronously
           showAddProductDialog(context, product: productCatalogue);
         }
       } else {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
-          showAddProductDialog(context,
-              isNew: true, product: ProductCatalogue(id: code, code: code));
+          // ignore: use_build_context_synchronously
+          showAddProductDialog(context,isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }
     }
@@ -799,28 +802,29 @@ class _SellPageState extends State<SellPage> {
       }
     }
 
-    // ===== TESTING - GUARDAR EN HISTORIAL DE TRANSACCIONES =====
-    print(
-        '\n🎯 ===== INICIANDO PRUEBA DE GUARDADO EN HISTORIAL (CON IMPRESIÓN) =====');
+    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
+    print('\n🎯 ===== INICIANDO GUARDADO EN HISTORIAL (CON IMPRESIÓN) =====');
 
+    // Obtener información del usuario para asignar como vendedor
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userEmail = authProvider.user?.email ?? 'unknown@example.com';
+    final userName = authProvider.user?.displayName ?? 'Vendedor';
+
+    // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
+    final success = await cashRegisterProvider.saveTicketToTransactionHistory(
+      accountId: provider.profileAccountSelected.id,
+      ticket: provider.ticket,
+      sellerName: userName,
+      sellerId: userEmail,
+    );
+    print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
+    
     if (cashRegisterProvider.hasActiveCashRegister) {
-      // Obtener información del usuario para asignar como vendedor
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userEmail = authProvider.user?.email ?? 'unknown@example.com';
-      final userName = authProvider.user?.displayName ?? 'Vendedor';
-
-      final success = await cashRegisterProvider.saveTicketToTransactionHistory(
-        accountId: provider.profileAccountSelected.id,
-        ticket: provider.ticket,
-        sellerName: userName,
-        sellerId: userEmail,
-      );
-      print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
+      print('ℹ️ Se guardó con información de caja activa');
     } else {
-      print(
-          '⚠️ No hay caja registradora activa - no se puede guardar en historial');
+      print('ℹ️ Se guardó SIN caja activa (información por defecto)');
     }
-    print('🏁 ===== FIN DE PRUEBA DE GUARDADO =====\n');
+    print('🏁 ===== FIN DE GUARDADO EN HISTORIAL =====\n');
 
     await _finalizeSale(provider);
   }
@@ -831,7 +835,7 @@ class _SellPageState extends State<SellPage> {
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
 
-    // Si hay una caja activa, registrar la venta
+    // Si hay una caja activa, registrar la venta en la caja
     if (cashRegisterProvider.hasActiveCashRegister) {
       // Obtener la caja activa y asignar los datos al ticket
       final activeCashRegister =
@@ -845,25 +849,31 @@ class _SellPageState extends State<SellPage> {
         discountAmount: provider.ticket.discount,
         itemCount: provider.ticket.getProductsQuantity(),
       );
-    } 
-
-    // --- Si no hay impresora, mostrar diálogo de opciones
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      // Obtener información del usuario para asignar como vendedor
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userEmail = authProvider.user?.email ?? 'unknown@example.com';
-      final userName = authProvider.user?.displayName ?? 'Vendedor';
-
-      final success = await cashRegisterProvider.saveTicketToTransactionHistory(
-        accountId: provider.profileAccountSelected.id,
-        ticket: provider.ticket,
-        sellerName: userName,
-        sellerId: userEmail,
-      );
-      print('💾 Resultado del guardado de la venta al historial de transacciones: ${success ? "ÉXITO" : "ERROR"}');
-    } else {
-      print( '⚠️ No hay caja registradora activa - no se puede guardar en historial');
     }
+
+    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
+    print('\n🎯 ===== INICIANDO GUARDADO EN HISTORIAL (SIN IMPRESIÓN) =====');
+
+    // Obtener información del usuario para asignar como vendedor
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userEmail = authProvider.user?.email ?? 'unknown@example.com';
+    final userName = authProvider.user?.displayName ?? 'Vendedor';
+
+    // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
+    final success = await cashRegisterProvider.saveTicketToTransactionHistory(
+      accountId: provider.profileAccountSelected.id,
+      ticket: provider.ticket,
+      sellerName: userName,
+      sellerId: userEmail,
+    );
+    print('💾 Resultado del guardado de la venta al historial: ${success ? "ÉXITO" : "ERROR"}');
+    
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      print('ℹ️ Se guardó con información de caja activa');
+    } else {
+      print('ℹ️ Se guardó SIN caja activa (información por defecto)');
+    }
+    print('🏁 ===== FIN DE GUARDADO EN HISTORIAL =====\n');
 
     await _finalizeSale(provider);
   }
@@ -937,9 +947,6 @@ class _SellPageState extends State<SellPage> {
         }
         // Usar los productos seleccionados del ticket
         final List<ProductCatalogue> list = provider.ticket.products
-            .map((item) => item is ProductCatalogue
-                ? item
-                : ProductCatalogue.fromMap(item as Map<String, dynamic>))
             .toList()
             .reversed
             .toList();

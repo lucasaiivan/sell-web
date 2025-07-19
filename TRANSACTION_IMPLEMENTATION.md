@@ -4,9 +4,11 @@
 
 Se ha refactorizado exitosamente la funcionalidad para usar directamente la entidad `TicketModel` en lugar de `Map<String, dynamic>` para guardar tickets de venta confirmada en el historial de transacciones.
 
+**CAMBIO IMPORTANTE**: Las transacciones ahora se registran en el historial **SIEMPRE**, independientemente de si existe una caja registradora seleccionada o no.
+
 ### Casos de Uso Implementados (`cash_register_usecases.dart`)
 
-1. **`saveTicketToTransactionHistory`** - Guarda un `TicketModel` directamente en el historial
+1. **`saveTicketToTransactionHistory`** - Guarda un `TicketModel` directamente en el historial (SIEMPRE)
 2. **`getTransactionsByDateRange`** - Obtiene transacciones por rango de fechas
 3. **`getTodayTransactions`** - Obtiene transacciones del día actual
 4. **`getTransactionsStream`** - Stream de transacciones en tiempo real
@@ -15,7 +17,7 @@ Se ha refactorizado exitosamente la funcionalidad para usar directamente la enti
 
 ### Métodos en Provider (`cash_register_provider.dart`)
 
-- **`saveTicketToTransactionHistory`** - Acepta un `TicketModel` directamente
+- **`saveTicketToTransactionHistory`** - Acepta un `TicketModel` directamente (funciona con o sin caja)
 - **`getTodayTransactions`** - Obtiene transacciones del día
 - **`getTransactionsByDateRange`** - Obtiene transacciones por período
 - **`getTransactionAnalytics`** - Obtiene análisis básico de ventas
@@ -29,21 +31,21 @@ Future<void> confirmSale({
   required TicketModel ticket,
 }) async {
   try {
-    // 1. Asegurar que el ticket tiene la información de caja registradora
-    // El provider automáticamente asigna la caja activa al ticket
-    
-    // 2. Registrar la venta en la caja registradora
-    final success = await cashRegisterProvider.registerSale(
-      accountId: accountId,
-      saleAmount: ticket.priceTotal,
-      discountAmount: ticket.discount,
-    );
+    // 1. Si hay caja activa, registrar la venta en la caja registradora
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      final success = await cashRegisterProvider.registerSale(
+        accountId: accountId,
+        saleAmount: ticket.priceTotal,
+        discountAmount: ticket.discount,
+      );
 
-    if (!success) {
-      throw Exception('Error al registrar la venta en caja');
+      if (!success) {
+        throw Exception('Error al registrar la venta en caja');
+      }
     }
 
-    // 3. Guardar el ticket en el historial de transacciones
+    // 2. GUARDAR EL TICKET EN EL HISTORIAL DE TRANSACCIONES (SIEMPRE)
+    // Esto ocurre independientemente de si hay una caja registradora activa
     final ticketSaved = await cashRegisterProvider.saveTicketToTransactionHistory(
       accountId: accountId,
       ticket: ticket, // Ahora pasamos el TicketModel directamente
@@ -53,10 +55,10 @@ Future<void> confirmSale({
       throw Exception('Error al guardar ticket en historial');
     }
 
-    // 4. Actualizar stock de productos
+    // 3. Actualizar stock de productos
     await _updateProductStock(accountId, ticket);
 
-    // 5. Limpiar ticket actual
+    // 4. Limpiar ticket actual
     clearTicket();
 
     _showSuccessMessage('Venta confirmada exitosamente');
@@ -87,12 +89,19 @@ final ticketSaved = await cashRegisterProvider.saveTicketToTransactionHistory(
 ### 2. **Validaciones Automáticas**
 El use case ahora valida automáticamente:
 - ID del ticket no vacío
-- ID de caja registradora no vacío
 - ID del vendedor no vacío
 - Lista de productos no vacía
 - Monto total positivo
+- **ELIMINADO**: ~~ID de caja registradora no vacío~~ (ya no es requerido)
 
-### 3. **Metadatos Enriquecidos**
+### 3. **Guardado Universal**
+Las transacciones se guardan **SIEMPRE** en el historial:
+- ✅ Con caja registradora activa
+- ✅ Sin caja registradora activa
+- ✅ Con información completa de caja
+- ✅ Con información por defecto cuando no hay caja
+
+### 4. **Metadatos Enriquecidos**
 Se agregan automáticamente al historial:
 ```dart
 {
@@ -106,13 +115,21 @@ Se agregan automáticamente al historial:
 }
 ```
 
-### 4. **Asignación Automática de Caja**
-El provider asigna automáticamente la caja registradora activa:
+### 5. **Asignación Inteligente de Caja**
+El provider asigna automáticamente:
 ```dart
+// CON caja activa
 final updatedTicket = TicketModel(
-  // ... otros campos del ticket original
   cashRegisterName: currentActiveCashRegister!.description,
   cashRegisterId: currentActiveCashRegister!.id,
+  // ... otros campos
+);
+
+// SIN caja activa
+final updatedTicket = TicketModel(
+  cashRegisterName: 'Sin caja asignada',
+  cashRegisterId: 'no_cash_register',
+  // ... otros campos
 );
 ```
 
@@ -181,10 +198,12 @@ print('Número de transacciones: ${analytics?['totalTransactions']}');
 
 ✅ **Completado:**
 - Refactorización de `saveTicketToTransactionHistory` para usar `TicketModel`
+- **NUEVO**: Guardado de transacciones siempre, independiente de caja registradora
 - Implementación de métodos de consulta básicos
-- Validaciones automáticas en use case
-- Asignación automática de caja registradora en provider
+- Validaciones automáticas en use case (sin requerir caja)
+- Asignación inteligente de caja registradora en provider
 - Análisis básico de transacciones
+- Manejo de casos sin caja registradora activa
 
 🔄 **En Desarrollo:**
 - Métodos avanzados de análisis de transacciones
@@ -194,7 +213,8 @@ print('Número de transacciones: ${analytics?['totalTransactions']}');
 ## Próximos Pasos Recomendados
 
 1. ✅ Integrar el método refactorizado en el flujo de confirmación de ventas
-2. Crear widgets para visualizar el historial de transacciones
-3. Implementar filtros avanzados para consultas de transacciones
-4. Agregar exportación de reportes de ventas
-5. Implementar conversión completa de Map a TicketModel en consultas
+2. ✅ **NUEVO**: Asegurar que todas las ventas se registren en historial
+3. Crear widgets para visualizar el historial de transacciones
+4. Implementar filtros avanzados para consultas de transacciones
+5. Agregar exportación de reportes de ventas
+6. Implementar conversión completa de Map a TicketModel en consultas

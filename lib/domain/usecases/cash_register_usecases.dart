@@ -286,21 +286,18 @@ class CashRegisterUsecases {
   // ==========================================
 
   /// Guarda un ticket de venta en el historial de transacciones
+  /// La transacción se registra SIEMPRE, independientemente de si existe una caja registradora
   Future<void> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket,
   }) async {
-    // VALIDACIONES
+    // VALIDACIONES BÁSICAS
     if (accountId.isEmpty) {
       throw Exception('El ID de la cuenta no puede estar vacío');
     }
 
     if (ticket.id.isEmpty) {
       throw Exception('El ID del ticket no puede estar vacío');
-    }
-
-    if (ticket.cashRegisterId.isEmpty) {
-      throw Exception('El ID de la caja registradora no puede estar vacío');
     }
 
     if (ticket.sellerId.isEmpty) {
@@ -316,6 +313,9 @@ class CashRegisterUsecases {
     if (ticket.priceTotal <= 0) {
       throw Exception('El monto total de la venta debe ser mayor a cero');
     }
+
+    // NOTA: No validamos cashRegisterId porque las transacciones deben registrarse 
+    // siempre, incluso sin caja registradora activa
 
     // Usar directamente el toMap() del ticket que ya incluye todos los campos necesarios
     // incluyendo transactionType y el timestamp de creación

@@ -593,34 +593,47 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Guarda un ticket de venta confirmada en el historial de transacciones
+  /// La transacción se registra SIEMPRE, independientemente de si existe una caja registradora activa
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket,
     String? sellerName,
     String? sellerId,
   }) async {
-    if (!hasActiveCashRegister) {
-      _state = _state.copyWith(errorMessage:'No hay una caja registradora activa para guardar la transacción');
-      notifyListeners();
-      return false;
-    }
-
     try {
-      // Validar que el ticket tenga la información de caja registradora
+      // Asegurar que el ticket tenga un ID único
+      final ticketId = ticket.id.isEmpty ? Publications.generateUid() : ticket.id;
+      
+      // Asegurar que tenga información del vendedor
+      final finalSellerName = ticket.sellerName.isEmpty
+          ? (sellerName ?? 'Vendedor')
+          : ticket.sellerName;
+      final finalSellerId = ticket.sellerId.isEmpty
+          ? (sellerId ?? 'default_seller')
+          : ticket.sellerId;
+
+      // Si hay una caja activa, asignar su información; si no, usar valores por defecto
+      String finalCashRegisterName = ticket.cashRegisterName;
+      String finalCashRegisterId = ticket.cashRegisterId;
+      
+      if (hasActiveCashRegister) {
+        finalCashRegisterName = currentActiveCashRegister!.description;
+        finalCashRegisterId = currentActiveCashRegister!.id;
+      } else {
+        // Si no hay caja activa, usar información por defecto
+        finalCashRegisterName = finalCashRegisterName.isEmpty ? 'Sin caja asignada' : finalCashRegisterName;
+        finalCashRegisterId = finalCashRegisterId.isEmpty ? 'no_cash_register' : finalCashRegisterId;
+      }
+
+      // Crear ticket actualizado con toda la información necesaria
       final updatedTicket = TicketModel(
-        id: ticket.id.isEmpty
-            ? Publications.generateUid()
-            : ticket.id, // Generar ID si está vacío
+        id: ticketId,
         payMode: ticket.payMode,
         currencySymbol: ticket.currencySymbol,
-        sellerName: ticket.sellerName.isEmpty
-            ? (sellerName ?? 'Vendedor')
-            : ticket.sellerName, // Usar vendedor proporcionado o por defecto
-        sellerId: ticket.sellerId.isEmpty
-            ? (sellerId ?? 'default_seller')
-            : ticket.sellerId, // Usar ID proporcionado o por defecto
-        cashRegisterName: currentActiveCashRegister!.description,
-        cashRegisterId: currentActiveCashRegister!.id,
+        sellerName: finalSellerName,
+        sellerId: finalSellerId,
+        cashRegisterName: finalCashRegisterName,
+        cashRegisterId: finalCashRegisterId,
         priceTotal: ticket.priceTotal > 0
             ? ticket.priceTotal
             : _calculateTotalPriceOptimized(ticket), // Usar método optimizado
@@ -637,7 +650,6 @@ class CashRegisterProvider extends ChangeNotifier {
         ticket: updatedTicket,
       );
 
-      print('✅ PROCESO COMPLETADO SIN ERRORES');
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());

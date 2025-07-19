@@ -100,6 +100,7 @@ class AppBarButton extends StatelessWidget {
 
 /// Un botón circular para el AppBar, personalizable y reutilizable.
 /// Puede mostrar solo un icono o un icono con texto.
+/// Incluye soporte para estado de carga con CircularProgressIndicator.
 class AppBarButtonCircle extends StatelessWidget {
   const AppBarButtonCircle({
     super.key,
@@ -109,6 +110,7 @@ class AppBarButtonCircle extends StatelessWidget {
     this.backgroundColor,
     this.iconColor,
     this.text,
+    this.isLoading = false,
   });
 
   final IconData icon;
@@ -117,12 +119,13 @@ class AppBarButtonCircle extends StatelessWidget {
   final Color? backgroundColor;
   final Color? iconColor;
   final String? text;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final effectiveBackgroundColor =
-        backgroundColor ?? theme.colorScheme.primaryContainer.withOpacity(0.1);
+        backgroundColor ?? theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
     final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
     final bool hasText = text != null && text!.isNotEmpty;
 
@@ -131,7 +134,7 @@ class AppBarButtonCircle extends StatelessWidget {
       child: Tooltip(
         message: tooltip,
         child: TextButton(
-          onPressed: onPressed,
+          onPressed: isLoading ? null : onPressed, // Deshabilitar durante loading
           style: TextButton.styleFrom(
             backgroundColor: effectiveBackgroundColor,
             shape: hasText ? const StadiumBorder() : const CircleBorder(),
@@ -143,11 +146,23 @@ class AppBarButtonCircle extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: effectiveIconColor,
-                size: 20,
-              ),
+              // Mostrar CircularProgressIndicator si está cargando, sino el icono
+              isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          effectiveIconColor,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      color: effectiveIconColor,
+                      size: 20,
+                    ),
               if (hasText) ...[
                 const SizedBox(width: 6.0),
                 Flexible(

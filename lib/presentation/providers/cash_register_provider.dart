@@ -43,12 +43,12 @@ class _CashRegisterState {
     List<CashRegister>? activeCashRegisters,
     CashRegister? selectedCashRegister,
     bool clearSelectedCashRegister = false,
-    bool? isLoadingActive,
+    bool? isLoadingActive, // estado de carga de cajas activas
     List<CashRegister>? cashRegisterHistory,
     bool? isLoadingHistory,
     String? historyFilter,
     Object? errorMessage = const Object(),
-    bool? isProcessing,
+    bool? isProcessing, // estado de procesamiento de acciones
     List<String>? fixedDescriptions,
   }) {
     return _CashRegisterState(
@@ -163,26 +163,144 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Inicializa el provider cargando la caja seleccionada desde persistencia
   Future<void> initializeFromPersistence(String accountId) async {
+    if (accountId.isEmpty) {
+      return;
+    }
+    
     final persistenceService = CashRegisterPersistenceService.instance;
 
-    // Cargar cajas activas
-    await loadActiveCashRegisters(accountId);
-
-    // Intentar cargar la caja seleccionada desde persistencia
-    final savedCashRegisterId =
-        await persistenceService.getSelectedCashRegisterId();
-    if (savedCashRegisterId != null) {
-      final savedCashRegister = _state.activeCashRegisters
-          .where((cr) => cr.id == savedCashRegisterId)
-          .firstOrNull;
-
-      if (savedCashRegister != null) {
-        _state = _state.copyWith(selectedCashRegister: savedCashRegister);
-        notifyListeners();
-      } else {
-        // Si la caja guardada ya no existe, limpiar persistencia
-        await persistenceService.clearSelectedCashRegisterId();
+    try {
+      // Cargar cajas activas con espera explícita
+      await _loadActiveCashRegistersAndWait(accountId);
+      
+      if (_state.activeCashRegisters.isEmpty) {
+        // Intentar cargar directamente una vez más
+        try {
+          final directCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+          
+          if (directCashRegisters.isNotEmpty) {
+            _state = _state.copyWith(
+              activeCashRegisters: directCashRegisters,
+              isLoadingActive: false,
+            );
+            notifyListeners();
+          }
+        } catch (e) {
+          // Error silencioso para no interrumpir la UI
+        }
       }
+
+      // Intentar cargar la caja seleccionada desde persistencia
+      final savedCashRegisterId = await persistenceService.getSelectedCashRegisterId();
+      
+      if (savedCashRegisterId != null && savedCashRegisterId.isNotEmpty) {
+        final savedCashRegister = _state.activeCashRegisters
+            .where((cr) => cr.id == savedCashRegisterId)
+            .firstOrNull;
+
+        if (savedCashRegister != null) {
+          _state = _state.copyWith(selectedCashRegister: savedCashRegister);
+          notifyListeners();
+        } else {
+          // Si la caja guardada ya no existe, limpiar persistencia
+          await persistenceService.clearSelectedCashRegisterId();
+        }
+      }
+      
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+    }
+  }
+
+  /// Método auxiliar que espera a que se carguen las cajas activas
+  Future<void> _loadActiveCashRegistersAndWait(String accountId) async {
+    // Si ya estamos escuchando la misma cuenta, esperar a los datos existentes
+    if (_currentAccountId == accountId && _activeCashRegistersSubscription != null) {
+      // Esperar un momento para que el stream emita datos si los tiene
+      await Future.delayed(const Duration(milliseconds: 500));
+      return;
+    }
+
+    // Cancelar suscripción anterior si existe
+    await _activeCashRegistersSubscription?.cancel();
+    _currentAccountId = accountId;
+
+    // Mostrar indicador de carga
+    _state = _state.copyWith(isLoadingActive: true, errorMessage: null);
+    notifyListeners();
+
+    // Crear un Completer para esperar el primer resultado del stream
+    final completer = Completer<void>();
+    bool firstDataReceived = false;
+
+    try {
+      // Configurar stream para actualizaciones automáticas
+      _activeCashRegistersSubscription = _cashRegisterUsecases
+          .getActiveCashRegistersStream(accountId)
+          .listen(
+        (activeCashRegisters) {
+          // Actualizar la lista de cajas activas
+          _state = _state.copyWith(
+            activeCashRegisters: activeCashRegisters,
+            isLoadingActive: false,
+            errorMessage: null,
+          );
+
+          // Si hay una caja seleccionada, verificar si aún existe y actualizarla
+          if (_state.selectedCashRegister != null) {
+            final updatedSelectedCashRegister = activeCashRegisters
+                .where((cr) => cr.id == _state.selectedCashRegister!.id)
+                .firstOrNull;
+
+            if (updatedSelectedCashRegister != null) {
+              // Actualizar la caja seleccionada con los datos más recientes
+              _state = _state.copyWith(
+                selectedCashRegister: updatedSelectedCashRegister,
+              );
+            } else {
+              // La caja seleccionada ya no existe, limpiar selección
+              clearSelectedCashRegister();
+            }
+          }
+
+          notifyListeners();
+          
+          // Completar solo en la primera emisión
+          if (!firstDataReceived) {
+            firstDataReceived = true;
+            completer.complete();
+          }
+        },
+        onError: (error) {
+          _state = _state.copyWith(
+            errorMessage: error.toString(),
+            isLoadingActive: false,
+          );
+          notifyListeners();
+          
+          if (!firstDataReceived) {
+            firstDataReceived = true;
+            completer.completeError(error);
+          }
+        },
+      );
+
+      // Esperar a que el stream emita el primer resultado (máximo 10 segundos)
+      await completer.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Timeout esperando datos de cajas activas');
+        },
+      );
+      
+    } catch (e) {
+      _state = _state.copyWith(
+        errorMessage: e.toString(),
+        isLoadingActive: false,
+      );
+      notifyListeners();
+      rethrow;
     }
   }
 
@@ -190,18 +308,38 @@ class CashRegisterProvider extends ChangeNotifier {
   Future<void> selectCashRegister(CashRegister cashRegister) async {
     final persistenceService = CashRegisterPersistenceService.instance;
 
-    _state = _state.copyWith(selectedCashRegister: cashRegister);
-    await persistenceService.saveSelectedCashRegisterId(cashRegister.id);
-    notifyListeners();
+    try {
+      // Actualizar estado
+      _state = _state.copyWith(selectedCashRegister: cashRegister);
+      notifyListeners();
+      
+      // Guardar en persistencia
+      await persistenceService.saveSelectedCashRegisterId(cashRegister.id);
+      
+    } catch (e) {
+      // Revertir cambio de estado si falló la persistencia
+      _state = _state.copyWith(clearSelectedCashRegister: true);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   /// Deselecciona la caja registradora actual y limpia persistencia
   Future<void> clearSelectedCashRegister() async {
     final persistenceService = CashRegisterPersistenceService.instance;
 
-    _state = _state.copyWith(clearSelectedCashRegister: true);
-    await persistenceService.clearSelectedCashRegisterId();
-    notifyListeners();
+    try {
+      // Limpiar estado
+      _state = _state.copyWith(clearSelectedCashRegister: true);
+      notifyListeners();
+      
+      // Limpiar persistencia
+      await persistenceService.clearSelectedCashRegisterId();
+      
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: 'Error al limpiar selección: $e');
+      notifyListeners();
+    }
   }
 
   // ==========================================

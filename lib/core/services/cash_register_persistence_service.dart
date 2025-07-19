@@ -17,21 +17,33 @@ class CashRegisterPersistenceService {
 
   /// Guarda el ID de la caja registradora seleccionada
   Future<void> saveSelectedCashRegisterId(String cashRegisterId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// Obtiene el ID de la caja registradora seleccionada
   Future<String?> getSelectedCashRegisterId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(SharedPrefsKeys.selectedCashRegisterId);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(SharedPrefsKeys.selectedCashRegisterId);
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Elimina el ID de la caja registradora seleccionada
   Future<void> clearSelectedCashRegisterId() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(SharedPrefsKeys.selectedCashRegisterId);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(SharedPrefsKeys.selectedCashRegisterId);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// Verifica si hay una caja registradora guardada

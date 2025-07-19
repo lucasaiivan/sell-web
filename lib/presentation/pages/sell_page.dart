@@ -68,13 +68,12 @@ class _SellPageState extends State<SellPage> {
   Widget build(BuildContext context) {
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
-        // Si no hay cuenta seleccionada, mostrar la página de bienvenida
+
+        // --- Si no hay cuenta seleccionada, mostrar la página de bienvenida ---
         if (sellProvider.profileAccountSelected.id == '') {
           // provider : authProvider y catalogueProvider
-          final authProvider =
-              Provider.of<AuthProvider>(context, listen: false);
-          final catalogueProvider =
-              Provider.of<CatalogueProvider>(context, listen: false);
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
 
           return WelcomePage(
             onSelectAccount: (account) async {
@@ -94,7 +93,7 @@ class _SellPageState extends State<SellPage> {
             },
           );
         }
-        // account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo
+        // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         if (sellProvider.profileAccountSelected.id == 'demo' &&
             authProvider.user?.isAnonymous == true &&
@@ -105,6 +104,10 @@ class _SellPageState extends State<SellPage> {
             catalogueProvider.loadDemoProducts(demoProducts);
           });
         }
+
+        // inicialiar [initializeFromPersistence]
+
+        // --- si ahi cuenta seleccionada, mostrar la página de venta ---
         return Scaffold(
           appBar: appbar(
             buildContext: context,
@@ -1736,45 +1739,57 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
   );
 }
 
-/// Widget que muestra un botón para ver el estado de la caja registradora.
+/// --- Widget --- que muestra un botón para ver el estado de la caja registradora.
 /// Al tocarlo, abre un diálogo con los detalles.
 class CashRegisterStatusWidget extends StatefulWidget {
   const CashRegisterStatusWidget({super.key});
 
   @override
-  State<CashRegisterStatusWidget> createState() =>
-      _CashRegisterStatusWidgetState();
+  State<CashRegisterStatusWidget> createState() => _CashRegisterStatusWidgetState();
 }
 
 class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
+  bool _isInitializing = true;
+
   @override
   void initState() {
     super.initState();
     // Cargar datos iniciales con persistencia sin esperar al build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final sellProvider = context.read<SellProvider>();
-      final accountId = sellProvider.profileAccountSelected.id;
-      if (accountId.isNotEmpty) {
-        context
-            .read<CashRegisterProvider>()
-            .initializeFromPersistence(accountId);
-      }
+      _initializeCashRegister();
     });
   }
 
+  // - Inicializa la caja registradora desde la persistencia -
+  Future<void> _initializeCashRegister() async {
+    // Obtener el proveedor de caja registradora y la cuenta seleccionada
+    final sellProvider = context.read<SellProvider>();
+    final accountId = sellProvider.profileAccountSelected.id;
+    
+    if (accountId.isNotEmpty) {
+      // Inicializar la caja registradora desde la persistencia
+      await context.read<CashRegisterProvider>().initializeFromPersistence(accountId);
+    }
+    
+    // Marcar como completada la inicialización
+    if (mounted) {
+      setState(() {
+        _isInitializing = false;
+      });
+    }
+  }
+  // - Muestra el diálogo de estado de la caja registradora -
   void _showStatusDialog(BuildContext context) {
-    // Capturar todos los providers necesarios antes de mostrar el diálogo
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    // - obtenemos los proveedores necesarios para el diálogo
+    final cashRegisterProvider =Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
+    // dialog : muestra el diálogo de gestión de caja registradora 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
@@ -1785,24 +1800,23 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // consumer : obtiene el estado de la caja registradora
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;
+         
+         // button : boton con el estado de la caja registradora
         return AppBarButtonCircle(
+          isLoading: _isInitializing,
           icon: Icons.point_of_sale_outlined,
           tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
           onPressed: () => _showStatusDialog(context),
-          backgroundColor: isActive
-              ? Colors.green.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.1),
+          backgroundColor: isActive? Colors.green.withValues(alpha: 0.1): Colors.grey.withValues(alpha: 0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)
-              ? null
-              : isActive
-                  ? '${provider.currentActiveCashRegister?.description}'
-                  : 'Iniciar caja',
+          text: isMobile(context)? null: isActive? '${provider.currentActiveCashRegister?.description}': 'Iniciar caja',
         );
       },
     );
   }
+ 
 }

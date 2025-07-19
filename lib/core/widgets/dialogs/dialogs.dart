@@ -16,7 +16,7 @@ export 'catalogue/product_not_found_dialog.dart';
 // export 'catalogue/product_edit_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario
 
 // Sales Dialogs
-export 'sales/quick_sale_dialog.dart'; 
+export 'sales/quick_sale_dialog.dart';
 // export 'sales/cash_register_management_dialog.dart'; // Conflicto de nombres - contenido en cash_register_dialog
 // export 'sales/cash_register_open_dialog.dart'; // Conflicto de nombres - contenido en cash_register_dialog
 // export 'sales/cash_register_close_dialog.dart'; // Conflicto de nombres - contenido en cash_register_dialog

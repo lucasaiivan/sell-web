@@ -159,7 +159,9 @@ class DialogComponents {
                 color: theme.colorScheme.onPrimary,
               ),
             )
-          : icon==null?null: Icon(icon),
+          : icon == null
+              ? null
+              : Icon(icon),
       label: Text(text),
       style: FilledButton.styleFrom(
         backgroundColor:
@@ -184,7 +186,7 @@ class DialogComponents {
   }) {
     return OutlinedButton.icon(
       onPressed: onPressed,
-      icon: icon==null?null : Icon(icon),
+      icon: icon == null ? null : Icon(icon),
       label: Text(text),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(
@@ -232,7 +234,7 @@ class DialogComponents {
         border: const OutlineInputBorder(),
       ),
     );
-  } 
+  }
 
   /// Campo de dinero estilizado para diálogos
   static Widget moneyField({
@@ -262,7 +264,7 @@ class DialogComponents {
     required String value,
     IconData? icon,
     Color? backgroundColor,
-    Widget? child  ,
+    Widget? child,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
@@ -298,15 +300,18 @@ class DialogComponents {
               ],
               Expanded(
                 child: Column(
-                  crossAxisAlignment:icon == null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+                  crossAxisAlignment: icon == null
+                      ? CrossAxisAlignment.center
+                      : CrossAxisAlignment.start,
                   children: [
-                    label == null ? const SizedBox.shrink()
-                      :Text(
-                      label,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                    label == null
+                        ? const SizedBox.shrink()
+                        : Text(
+                            label,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
                     const SizedBox(height: 4),
                     Text(
                       value,
@@ -321,7 +326,7 @@ class DialogComponents {
             ],
           ),
           // Botones de acción
-          child==null ? const SizedBox.shrink() : SizedBox(height: 16),
+          child == null ? const SizedBox.shrink() : SizedBox(height: 16),
           child ?? const SizedBox.shrink(),
         ],
       ),
@@ -340,35 +345,37 @@ class DialogComponents {
   }) {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     // Responsividad basada en el ancho de pantalla
     final bool isMobile = screenWidth < 600;
     final bool isTablet = screenWidth >= 600 && screenWidth < 840;
-    
+
     // Ajustes responsivos para padding
     final EdgeInsets padding = EdgeInsets.symmetric(
       horizontal: isMobile ? 8 : (isTablet ? 10 : 12),
       vertical: isMobile ? 4 : 6,
     );
-    
+
     // Ajustes responsivos para el tamaño del icono
     final double iconSize = isMobile ? 14 : 16;
-    
+
     // Ajustes responsivos para el espaciado entre icono y texto
     final double iconSpacing = isMobile ? 4 : 6;
-    
+
     // Radio de esquinas personalizable con fallback responsivo
-    final double effectiveBorderRadius = borderRadius ?? 
-        (isMobile ? 16 : (isTablet ? 18 : 20));
+    final double effectiveBorderRadius =
+        borderRadius ?? (isMobile ? 16 : (isTablet ? 18 : 20));
 
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
           margin: margin,
           constraints: BoxConstraints(
-            maxWidth: constraints.maxWidth > 0 ? constraints.maxWidth * 0.8 : double.infinity,
+            maxWidth: constraints.maxWidth > 0
+                ? constraints.maxWidth * 0.8
+                : double.infinity,
           ),
-          padding: padding, 
+          padding: padding,
           decoration: BoxDecoration(
             color: backgroundColor ?? theme.colorScheme.secondaryContainer,
             borderRadius: BorderRadius.circular(effectiveBorderRadius),
@@ -393,7 +400,7 @@ class DialogComponents {
                     fontSize: isMobile ? 11 : (isTablet ? 12 : null),
                   ),
                   overflow: TextOverflow.ellipsis,
-                  maxLines:3,
+                  maxLines: 3,
                 ),
               ),
             ],

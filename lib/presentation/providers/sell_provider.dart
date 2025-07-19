@@ -76,7 +76,7 @@ class SellProvider extends ChangeNotifier {
     ticket: _createEmptyTicketStatic(),
     lastSoldTicket: null,
   );
-  
+
   /// Crea un ticket vacío usando la API encapsulada (método estático)
   static TicketModel _createEmptyTicketStatic() {
     return TicketModel(
@@ -84,7 +84,7 @@ class SellProvider extends ChangeNotifier {
       creation: Timestamp.now(),
     );
   }
-  
+
   /// Crea un nuevo ticket preservando valores específicos pero con productos vacíos
   TicketModel _createTicketWithValues({
     required Timestamp creation,
@@ -206,7 +206,8 @@ class SellProvider extends ChangeNotifier {
 
   Future<void> _saveTicket() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString( SharedPrefsKeys.currentTicket, jsonEncode(_state.ticket.toJson()));
+    await prefs.setString(
+        SharedPrefsKeys.currentTicket, jsonEncode(_state.ticket.toJson()));
   }
 
   Future<void> _loadTicket() async {
@@ -214,8 +215,7 @@ class SellProvider extends ChangeNotifier {
     final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
     if (ticketJson != null) {
       try {
-        final newTicket =
-            TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         _state = _state.copyWith(ticket: newTicket);
         notifyListeners();
       } catch (_) {}
@@ -224,13 +224,15 @@ class SellProvider extends ChangeNotifier {
 
   Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
 
-  void addProductsticket(ProductCatalogue product,{bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,
+      {bool replaceQuantity = false}) {
     // Agrega un producto al ticket actual, reemplazando la cantidad si es necesario
 
     // var
     final currentTicket = _state.ticket;
     bool exist = false;
-    final List<ProductCatalogue> updatedProducts = List.from(currentTicket.products);
+    final List<ProductCatalogue> updatedProducts =
+        List.from(currentTicket.products);
 
     for (var i = 0; i < updatedProducts.length; i++) {
       if (updatedProducts[i].id == product.id) {
@@ -247,7 +249,8 @@ class SellProvider extends ChangeNotifier {
 
     if (!exist) {
       // Si el producto no existe, lo agrega con la cantidad especificada
-      updatedProducts.add(product.copyWith(quantity: product.quantity > 0 ? product.quantity : 1));
+      updatedProducts.add(product.copyWith(
+          quantity: product.quantity > 0 ? product.quantity : 1));
     }
 
     // Crea un nuevo ticket con los productos actualizados
@@ -264,7 +267,7 @@ class SellProvider extends ChangeNotifier {
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
-    
+
     // Establecer los productos usando el setter que maneja la conversión
     newTicket.products = updatedProducts;
     // Actualiza el estado del provider con el nuevo ticket
@@ -276,9 +279,10 @@ class SellProvider extends ChangeNotifier {
   void removeProduct(ProductCatalogue product) {
     // Elimina un producto del ticket actual
 
-    // var 
+    // var
     final currentTicket = _state.ticket;
-    final updatedProducts = currentTicket.products.where((item) => item.id != product.id).toList();
+    final updatedProducts =
+        currentTicket.products.where((item) => item.id != product.id).toList();
 
     final newTicket = _createTicketWithValues(
       creation: currentTicket.creation,
@@ -293,7 +297,7 @@ class SellProvider extends ChangeNotifier {
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
-    
+
     // Establecer los productos usando el setter que maneja la conversión
     newTicket.products = updatedProducts;
 
@@ -344,7 +348,7 @@ class SellProvider extends ChangeNotifier {
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
-    
+
     // Establecer los productos usando el setter
     newTicket.products = currentTicket.products;
 
@@ -369,7 +373,7 @@ class SellProvider extends ChangeNotifier {
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
-    
+
     // Establecer los productos usando el setter
     newTicket.products = currentTicket.products;
 
@@ -414,7 +418,7 @@ class SellProvider extends ChangeNotifier {
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
-    
+
     // Establecer los productos usando el setter
     newLastSoldTicket.products = List.from(currentTicket.products);
 
@@ -427,7 +431,8 @@ class SellProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final lastTicket = _state.lastSoldTicket;
     if (lastTicket != null) {
-      await prefs.setString( SharedPrefsKeys.lastSoldTicket, jsonEncode(lastTicket.toJson()));
+      await prefs.setString(
+          SharedPrefsKeys.lastSoldTicket, jsonEncode(lastTicket.toJson()));
     } else {
       await prefs.remove(SharedPrefsKeys.lastSoldTicket);
     }
@@ -450,7 +455,8 @@ class SellProvider extends ChangeNotifier {
 
   void updateTicketWithCashRegister(BuildContext context) {
     // Actualiza el ticket con la caja activa si existe
-    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        provider.Provider.of<CashRegisterProvider>(context, listen: false);
 
     if (cashRegisterProvider.hasActiveCashRegister) {
       final activeCashRegister =
@@ -469,7 +475,7 @@ class SellProvider extends ChangeNotifier {
         transactionType: currentTicket.transactionType,
         currencySymbol: currentTicket.currencySymbol,
       );
-      
+
       // Establecer los productos usando el setter
       newTicket.products = currentTicket.products;
 

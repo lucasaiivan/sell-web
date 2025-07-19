@@ -5,10 +5,10 @@ import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart'
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
-import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart'; 
+import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
 import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_drawer_widget.dart';
 import 'package:web/web.dart' as html;
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -136,12 +136,18 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // drawerTicket view : visualización del ticket con los datos de la compra
-                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) &&
+                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                      (isMobile(context) && sellProvider.ticketView))
                     TicketDrawerWidget(
-                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                      onEditCashAmount: () => dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                      onConfirmSale: () => _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider.setTicketView(false), // para cerrar el ticket
+                      showConfirmedPurchase:
+                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      onEditCashAmount: () =>
+                          dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                      onConfirmSale: () =>
+                          _confirmSale(sellProvider), // para confirmar la venta
+                      onCloseTicket: () => sellProvider
+                          .setTicketView(false), // para cerrar el ticket
                     ),
                 ],
               );
@@ -517,11 +523,12 @@ class _SellPageState extends State<SellPage> {
                           (!isMobile(buildContext) &&
                               provider.ticket.getProductsQuantity() > 0))
                       ? Padding(
-                          padding:
-                              const EdgeInsets.only(right: 8.0, left: 8.0),
+                          padding: const EdgeInsets.only(right: 8.0, left: 8.0),
                           child: TextButton.icon(
                             icon: const Icon(Icons.close),
-                            label: Text(isMobile(buildContext)?'Descartar':'Descartar ticket'),
+                            label: Text(isMobile(buildContext)
+                                ? 'Descartar'
+                                : 'Descartar ticket'),
                             onPressed: discartTicketAlertDialg,
                           ),
                         )
@@ -638,12 +645,12 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Lógica para confirmar la venta y procesar el ticket
-  Future<void> _confirmSale(SellProvider provider) async { 
-
+  Future<void> _confirmSale(SellProvider provider) async {
     setState(() {
-      _showConfirmedPurchase = true; // para mostrar el mensaje de compra confirmada
+      _showConfirmedPurchase =
+          true; // para mostrar el mensaje de compra confirmada
     });
-    
+
     // Si el checkbox está activo, procesar la impresión/generación de tickets
     if (provider.shouldPrintTicket) {
       await _processSaveAndPrintTicket(provider);
@@ -655,11 +662,13 @@ class _SellPageState extends State<SellPage> {
   /// Procesa la venta con impresión de ticket
   Future<void> _processSaveAndPrintTicket(SellProvider provider) async {
     // Obtener el provider de caja registradora
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
 
     // Si hay una caja activa, registrar la venta
     if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      final activeCashRegister =
+          cashRegisterProvider.currentActiveCashRegister!;
       provider.ticket.cashRegisterName = activeCashRegister.description;
       provider.ticket.cashRegisterId = activeCashRegister.id;
 
@@ -692,10 +701,10 @@ class _SellPageState extends State<SellPage> {
         }
 
         // Preparar datos del ticket
-        final products = provider.ticket.products.map((item) { 
+        final products = provider.ticket.products.map((item) {
           return {
             'quantity': item.quantity.toString(),
-            'description': item.description ,
+            'description': item.description,
             'price': item.salePrice,
           };
         }).toList();
@@ -711,8 +720,7 @@ class _SellPageState extends State<SellPage> {
           cashReceived: provider.ticket.valueReceived > 0
               ? provider.ticket.valueReceived
               : null,
-          change: provider.ticket.valueReceived >
-                  provider.ticket.getTotalPrice
+          change: provider.ticket.valueReceived > provider.ticket.getTotalPrice
               ? provider.ticket.valueReceived - provider.ticket.getTotalPrice
               : null,
         );
@@ -792,14 +800,15 @@ class _SellPageState extends State<SellPage> {
     }
 
     // ===== TESTING - GUARDAR EN HISTORIAL DE TRANSACCIONES =====
-    print('\n🎯 ===== INICIANDO PRUEBA DE GUARDADO EN HISTORIAL (CON IMPRESIÓN) =====');
-    
+    print(
+        '\n🎯 ===== INICIANDO PRUEBA DE GUARDADO EN HISTORIAL (CON IMPRESIÓN) =====');
+
     if (cashRegisterProvider.hasActiveCashRegister) {
       // Obtener información del usuario para asignar como vendedor
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userEmail = authProvider.user?.email ?? 'unknown@example.com';
       final userName = authProvider.user?.displayName ?? 'Vendedor';
-      
+
       final success = await cashRegisterProvider.saveTicketToTransactionHistory(
         accountId: provider.profileAccountSelected.id,
         ticket: provider.ticket,
@@ -808,7 +817,8 @@ class _SellPageState extends State<SellPage> {
       );
       print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
     } else {
-      print('⚠️ No hay caja registradora activa - no se puede guardar en historial');
+      print(
+          '⚠️ No hay caja registradora activa - no se puede guardar en historial');
     }
     print('🏁 ===== FIN DE PRUEBA DE GUARDADO =====\n');
 
@@ -818,46 +828,45 @@ class _SellPageState extends State<SellPage> {
   /// Procesa la venta sin impresión de ticket
   Future<void> _processSimpleSaveSale(SellProvider provider) async {
     // Obtener el provider de caja registradora
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
 
     // Si hay una caja activa, registrar la venta
     if (cashRegisterProvider.hasActiveCashRegister) {
       // Obtener la caja activa y asignar los datos al ticket
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      final activeCashRegister =
+          cashRegisterProvider.currentActiveCashRegister!;
       provider.ticket.cashRegisterName = activeCashRegister.description;
       provider.ticket.cashRegisterId = activeCashRegister.id;
-      // Registrar la venta en la caja 
+      // Registrar la venta en la caja
       await cashRegisterProvider.registerSale(
         accountId: provider.profileAccountSelected.id,
         saleAmount: provider.ticket.getTotalPrice,
         discountAmount: provider.ticket.discount,
         itemCount: provider.ticket.getProductsQuantity(),
       );
-    }
+    } 
 
-    // ===== TESTING - GUARDAR EN HISTORIAL DE TRANSACCIONES =====
-    print('\n🎯 ===== INICIANDO PRUEBA DE GUARDADO EN HISTORIAL =====');
-    
+    // --- Si no hay impresora, mostrar diálogo de opciones
     if (cashRegisterProvider.hasActiveCashRegister) {
       // Obtener información del usuario para asignar como vendedor
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userEmail = authProvider.user?.email ?? 'unknown@example.com';
       final userName = authProvider.user?.displayName ?? 'Vendedor';
-      
+
       final success = await cashRegisterProvider.saveTicketToTransactionHistory(
         accountId: provider.profileAccountSelected.id,
         ticket: provider.ticket,
         sellerName: userName,
         sellerId: userEmail,
       );
-      print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
+      print('💾 Resultado del guardado de la venta al historial de transacciones: ${success ? "ÉXITO" : "ERROR"}');
     } else {
-      print('⚠️ No hay caja registradora activa - no se puede guardar en historial');
+      print( '⚠️ No hay caja registradora activa - no se puede guardar en historial');
     }
-    print('🏁 ===== FIN DE PRUEBA DE GUARDADO =====\n');
 
     await _finalizeSale(provider);
-  } 
+  }
 
   /// Finaliza la venta guardando el último ticket y limpiando
   Future<void> _finalizeSale(SellProvider provider) async {
@@ -889,7 +898,7 @@ class _SellPageState extends State<SellPage> {
         isMobile(context)
             ? AppFloatingActionButton(
                 onTap: () {
-                  if(sellProvider.ticket.getTotalPrice == 0) { 
+                  if (sellProvider.ticket.getTotalPrice == 0) {
                     return;
                   }
                   sellProvider.setTicketView(true);
@@ -1039,7 +1048,9 @@ class _SellPageState extends State<SellPage> {
 
             // Función para confirmar la operación - reutilizable para botón y Enter
             void confirmOperation() {
-              if (errorText == null && vuelto >= 0 &&controller.doubleValue > 0) {
+              if (errorText == null &&
+                  vuelto >= 0 &&
+                  controller.doubleValue > 0) {
                 provider.setReceivedCash(controller.doubleValue);
                 Navigator.of(dialogContext).pop();
               }
@@ -1354,7 +1365,7 @@ class _SellPageState extends State<SellPage> {
       required SellProvider sellProvider,
       required void Function() onTap,
       required StateSetter setState}) {
-    // 
+    //
     final ticketProducts = sellProvider.ticket.products;
     ProductCatalogue? selectedProduct;
     try {
@@ -1718,7 +1729,6 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
   );
 }
 
-
 /// Widget que muestra un botón para ver el estado de la caja registradora.
 /// Al tocarlo, abre un diálogo con los detalles.
 class CashRegisterStatusWidget extends StatefulWidget {
@@ -1738,14 +1748,17 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       final sellProvider = context.read<SellProvider>();
       final accountId = sellProvider.profileAccountSelected.id;
       if (accountId.isNotEmpty) {
-        context.read<CashRegisterProvider>().initializeFromPersistence(accountId);
+        context
+            .read<CashRegisterProvider>()
+            .initializeFromPersistence(accountId);
       }
     });
   }
 
   void _showStatusDialog(BuildContext context) {
     // Capturar todos los providers necesarios antes de mostrar el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -1764,7 +1777,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
   }
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;
@@ -1774,9 +1787,13 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           onPressed: () => _showStatusDialog(context),
           backgroundColor: isActive
               ? Colors.green.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha:0.1),
+              : Colors.grey.withValues(alpha: 0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)?null: isActive ? '${provider.currentActiveCashRegister?.description}' : 'Iniciar caja',
+          text: isMobile(context)
+              ? null
+              : isActive
+                  ? '${provider.currentActiveCashRegister?.description}'
+                  : 'Iniciar caja',
         );
       },
     );

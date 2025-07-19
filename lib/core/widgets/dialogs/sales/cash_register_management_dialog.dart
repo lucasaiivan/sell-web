@@ -21,7 +21,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     // var
     String sTitle = 'Administración de Caja';
 
@@ -39,7 +38,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         final isMobile = ResponsiveHelper.isMobile(context);
         // dialog : base dialog
         return BaseDialog(
-          title:sTitle,
+          title: sTitle,
           icon: Icons.point_of_sale_rounded,
           width: ResponsiveHelper.responsive(
             context: context,
@@ -54,18 +53,19 @@ class CashRegisterManagementDialog extends StatelessWidget {
             desktop: 800,
           ),
           content: Builder(
-            builder: (context) { 
-
+            builder: (context) {
               // Si está cargando, mostrar indicador de progreso
               if (cashRegisterProvider.isLoadingActive) {
                 return SizedBox(
-                  height: ResponsiveHelper.responsive(context: context,mobile: 100,desktop: 120),
+                  height: ResponsiveHelper.responsive(
+                      context: context, mobile: 100, desktop: 120),
                   width: double.infinity,
                   child: const Center(child: CircularProgressIndicator()),
                 );
               }
               // view : Construir contenido responsivo de la  información de caja
-              return _buildResponsiveContent(context, cashRegisterProvider, isMobile);
+              return _buildResponsiveContent(
+                  context, cashRegisterProvider, isMobile);
             },
           ),
         );
@@ -73,21 +73,22 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildResponsiveContent(BuildContext context,CashRegisterProvider provider, bool isMobile) {
+  Widget _buildResponsiveContent(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     return Padding(
-      padding: const EdgeInsets.all( 12),
+      padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(height: ResponsiveHelper.getSpacing(context, scale: 0.5)),
-           
+
           if (provider.hasActiveCashRegister)
             // view : Mostrar información de caja activa
             _buildActiveCashRegister(context, provider, isMobile)
           else
             // view : Mostrar mensaje de no caja activa
-            _buildNoCashRegister(context, isMobile), 
+            _buildNoCashRegister(context, isMobile),
 
           // Botones de acción de caja (Deseleccionar/Cerrar) - Solo si hay caja activa
           if (provider.hasActiveCashRegister) ...[
@@ -95,10 +96,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              child: _buildCashRegisterActionButtons(context, provider, isMobile),
+              child:
+                  _buildCashRegisterActionButtons(context, provider, isMobile),
             ),
           ],
-          
+
           // Mensaje de error con animación
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
@@ -111,7 +113,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   )
                 : const SizedBox.shrink(),
           ),
-           
         ],
       ),
     );
@@ -119,7 +120,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _buildErrorMessage(BuildContext context, String message) {
     final theme = Theme.of(context);
-    
+
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 400),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -171,20 +172,22 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveCashRegister( BuildContext context, CashRegisterProvider provider, bool isMobile) {
-    
+  Widget _buildActiveCashRegister(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [ 
+      children: [
         // view : balance total y botones de flujo de caja
         DialogComponents.summaryContainer(
           context: context,
           label: 'Balance total',
-          value: Publications.getFormatoPrecio(value: cashRegister.getExpectedBalance),
+          value: Publications.getFormatoPrecio(
+              value: cashRegister.getExpectedBalance),
           icon: Icons.monetization_on_rounded,
-          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          backgroundColor:
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           child: _buildCashFlowButtons(context, provider, isMobile),
         ),
         DialogComponents.sectionSpacing,
@@ -195,26 +198,22 @@ class CashRegisterManagementDialog extends StatelessWidget {
           icon: Icons.point_of_sale_rounded,
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [  
-              SizedBox(height: isMobile ? 16 : 24), 
+            children: [
+              SizedBox(height: isMobile ? 16 : 24),
               _cashFlowInformation(context, cashRegister),
-              SizedBox(height: isMobile ? 16 : 24), 
+              SizedBox(height: isMobile ? 16 : 24),
             ],
           ),
-        ), 
-        
+        ),
       ],
     );
   }
 
   Widget _buildCashRegisterActionButtons(
-    BuildContext context, 
-    CashRegisterProvider provider, 
-    bool isMobile
-  ) { 
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
     final theme = Theme.of(context);
-    
+
     return Row(
       children: [
         Expanded(
@@ -250,7 +249,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister) {
     final theme = Theme.of(context);
-    
+
     final items = [
       {
         'label': 'Ventas',
@@ -297,7 +296,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   Widget _buildNoCashRegister(BuildContext context, bool isMobile) {
-
     final theme = Theme.of(context);
     final provider = context.watch<CashRegisterProvider>();
 
@@ -306,7 +304,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
       context: context,
       margin: EdgeInsets.only(bottom: isMobile ? 16 : 24),
       borderRadius: 5,
-      text: 'Las cajas te permiten diferenciar tus transacciones y llevar un control de tu flujo de caja de cada turno',
+      text:
+          'Las cajas te permiten diferenciar tus transacciones y llevar un control de tu flujo de caja de cada turno',
     );
 
     return Column(
@@ -316,12 +315,13 @@ class CashRegisterManagementDialog extends StatelessWidget {
         if (provider.hasAvailableCashRegisters) ...[
           // view info : Información sobre las cajas
           infoCashRegister,
-            // text : titulo de cajas disponibles
+          // text : titulo de cajas disponibles
           Text(
             'Activas',
-            style: (isMobile 
-              ? theme.textTheme.bodyMedium 
-              : theme.textTheme.bodyLarge)?.copyWith(
+            style: (isMobile
+                    ? theme.textTheme.bodyMedium
+                    : theme.textTheme.bodyLarge)
+                ?.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -333,10 +333,11 @@ class CashRegisterManagementDialog extends StatelessWidget {
             context: context,
             showDividers: true,
             items: provider.activeCashRegisters.map((cashRegister) {
-              return _buildCashRegisterTile(context, cashRegister, provider, isMobile);
+              return _buildCashRegisterTile(
+                  context, cashRegister, provider, isMobile);
             }).toList(),
           ),
-          SizedBox(height: isMobile ? 16 : 24), 
+          SizedBox(height: isMobile ? 16 : 24),
         ] else ...[
           // view : Mostrar mensaje de no cajas disponibles
           Container(
@@ -350,7 +351,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(isMobile ? 12 : 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+                    color: theme.colorScheme.surfaceContainer
+                        .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
                   ),
                   child: Icon(
@@ -362,10 +364,12 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 SizedBox(height: isMobile ? 12 : 16),
                 Text(
                   'No hay cajas disponibles',
-                  style: (isMobile 
-                    ? theme.textTheme.bodyMedium 
-                    : theme.textTheme.bodyLarge)?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  style: (isMobile
+                          ? theme.textTheme.bodyMedium
+                          : theme.textTheme.bodyLarge)
+                      ?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -375,29 +379,25 @@ class CashRegisterManagementDialog extends StatelessWidget {
               ],
             ),
           ),
-        ], 
+        ],
         AppButton(
           icon: const Icon(Icons.add_circle_rounded),
           text: 'Nueva caja',
           onPressed: () => _showOpenDialog(context),
-          isLoading: provider.isLoadingActive, 
+          isLoading: provider.isLoadingActive,
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: theme.colorScheme.onPrimary,
           padding: EdgeInsets.symmetric(
             horizontal: isMobile ? 16 : 20,
             vertical: isMobile ? 12 : 16,
           ),
-        ),  
+        ),
       ],
     );
   }
 
-  Widget _buildCashRegisterTile(
-    BuildContext context, 
-    CashRegister cashRegister, 
-    CashRegisterProvider provider,
-    bool isMobile
-  ) {
+  Widget _buildCashRegisterTile(BuildContext context, CashRegister cashRegister,
+      CashRegisterProvider provider, bool isMobile) {
     final theme = Theme.of(context);
 
     return TweenAnimationBuilder<double>(
@@ -421,12 +421,13 @@ class CashRegisterManagementDialog extends StatelessWidget {
                     vertical: isMobile ? 8 : 12,
                   ),
                   child: Row(
-                    children: [ 
+                    children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: EdgeInsets.all(isMobile ? 6 : 8),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(isMobile ? 4 : 6),
                         ),
                         child: Icon(
@@ -439,9 +440,10 @@ class CashRegisterManagementDialog extends StatelessWidget {
                       Expanded(
                         child: Text(
                           cashRegister.description,
-                          style: (isMobile 
-                            ? theme.textTheme.bodySmall 
-                            : theme.textTheme.bodyMedium)?.copyWith(
+                          style: (isMobile
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -469,8 +471,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   Widget _buildCashFlowButtons(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) { 
-    
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     return Row(
       children: [
         Expanded(
@@ -483,10 +484,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
             backgroundColor: provider.hasActiveCashRegister
                 ? Colors.green.withValues(alpha: 0.1)
                 : null,
-            foregroundColor: provider.hasActiveCashRegister 
-                ? Colors.green 
-                : null,
-            borderColor: provider.hasActiveCashRegister 
+            foregroundColor:
+                provider.hasActiveCashRegister ? Colors.green : null,
+            borderColor: provider.hasActiveCashRegister
                 ? Colors.green.withValues(alpha: 0.3)
                 : null,
             padding: const EdgeInsets.symmetric(
@@ -507,10 +507,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
             backgroundColor: provider.hasActiveCashRegister
                 ? Colors.red.withValues(alpha: 0.1)
                 : null,
-            foregroundColor: provider.hasActiveCashRegister 
-                ? Colors.red 
-                : null,
-            borderColor: provider.hasActiveCashRegister 
+            foregroundColor: provider.hasActiveCashRegister ? Colors.red : null,
+            borderColor: provider.hasActiveCashRegister
                 ? Colors.red.withValues(alpha: 0.3)
                 : null,
             padding: const EdgeInsets.symmetric(
@@ -526,14 +524,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   void _showOpenDialog(BuildContext context) {
     // Capturar los providers antes de mostrar el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],
         child: const CashRegisterOpenDialog(),

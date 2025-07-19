@@ -41,10 +41,16 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Future<void> setCashRegister( String accountId, CashRegister cashRegister) async {
+  Future<void> setCashRegister(
+      String accountId, CashRegister cashRegister) async {
     // procede a guardar o actualizar la caja registradora
     try {
-      await DatabaseCloudService.accountCashRegisters(accountId).doc(cashRegister.id) .set(cashRegister.toJson(),SetOptions(merge: true)); // merge para actualizar campos específicos
+      await DatabaseCloudService.accountCashRegisters(accountId)
+          .doc(cashRegister.id)
+          .set(
+              cashRegister.toJson(),
+              SetOptions(
+                  merge: true)); // merge para actualizar campos específicos
     } catch (e) {
       throw Exception('Error al guardar caja registradora: $e');
     }
@@ -198,13 +204,13 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     try {
       final docRef = DatabaseCloudService.accountFixedDescriptions(accountId)
           .doc(descriptionId);
-      
+
       // Verificar si el documento existe antes de eliminar
       final docSnapshot = await docRef.get();
       if (!docSnapshot.exists) {
         throw Exception('La descripción "$descriptionId" no existe');
       }
-      
+
       await docRef.delete();
     } catch (e) {
       throw Exception('Error al eliminar descripción fija: $e');
@@ -344,8 +350,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
   @override
   Future<void> updateSalesAndBilling({
-    required String accountId,  // obtiene el id de la cuenta
-    required String cashRegisterId, // obtiene el id de la caja registradora 
+    required String accountId, // obtiene el id de la cuenta
+    required String cashRegisterId, // obtiene el id de la caja registradora
     required double billingIncrement, // incrementa la facturación
     required double discountIncrement, // incrementa el descuento
   }) async {
@@ -360,9 +366,11 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
       // Actualizar totales de ventas
       final updatedCashRegister = cashRegister.update(
-        sales: cashRegister.sales + 1, // Incrementa las ventas de la caja 
-        billing: cashRegister.billing + billingIncrement, // Incrementa la facturación 
-        discount: cashRegister.discount + discountIncrement, // Incrementa el descuento 
+        sales: cashRegister.sales + 1, // Incrementa las ventas de la caja
+        billing: cashRegister.billing +
+            billingIncrement, // Incrementa la facturación
+        discount: cashRegister.discount +
+            discountIncrement, // Incrementa el descuento
       );
 
       await setCashRegister(accountId, updatedCashRegister);
@@ -399,17 +407,20 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     try {
       final startTimestamp = Timestamp.fromDate(startDate);
       final endTimestamp = Timestamp.fromDate(endDate);
-      
-      final querySnapshot = await DatabaseCloudService.getTransactionsByDateRange(
+
+      final querySnapshot =
+          await DatabaseCloudService.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startTimestamp,
         endDate: endTimestamp,
       );
-      
-      return querySnapshot.docs.map((doc) => {
-        'id': doc.id,
-        ...doc.data(),
-      }).toList();
+
+      return querySnapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
     } catch (e) {
       throw Exception('Error al obtener transacciones por rango de fechas: $e');
     }
@@ -419,10 +430,12 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
     return DatabaseCloudService.accountTransactionsStream(accountId)
         .map((querySnapshot) {
-      return querySnapshot.docs.map((doc) => {
-        'id': doc.id,
-        ...doc.data(),
-      }).toList();
+      return querySnapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
     });
   }
 
@@ -432,10 +445,11 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String transactionId,
   }) async {
     try {
-      final docSnapshot = await DatabaseCloudService.accountTransactions(accountId)
-          .doc(transactionId)
-          .get();
-      
+      final docSnapshot =
+          await DatabaseCloudService.accountTransactions(accountId)
+              .doc(transactionId)
+              .get();
+
       if (docSnapshot.exists) {
         return {
           'id': docSnapshot.id,

@@ -14,7 +14,7 @@ extension ListExtensions<T> on List<T> {
 
 class _CashRegisterState {
   final List<CashRegister> activeCashRegisters;
-  final CashRegister? selectedCashRegister;
+  final CashRegister? selectedCashRegister; // Puede ser null si no hay caja seleccionada
   final bool isLoadingActive;
   final List<CashRegister> cashRegisterHistory;
   final bool isLoadingHistory;
@@ -53,8 +53,8 @@ class _CashRegisterState {
   }) {
     return _CashRegisterState(
       activeCashRegisters: activeCashRegisters ?? this.activeCashRegisters,
-      selectedCashRegister: clearSelectedCashRegister 
-          ? null 
+      selectedCashRegister: clearSelectedCashRegister
+          ? null
           : selectedCashRegister ?? this.selectedCashRegister,
       isLoadingActive: isLoadingActive ?? this.isLoadingActive,
       cashRegisterHistory: cashRegisterHistory ?? this.cashRegisterHistory,
@@ -113,8 +113,10 @@ class CashRegisterProvider extends ChangeNotifier {
   // Form controllers
   final TextEditingController openDescriptionController =
       TextEditingController();
-  final AppMoneyTextEditingController initialCashController = AppMoneyTextEditingController();
-  final AppMoneyTextEditingController finalBalanceController = AppMoneyTextEditingController();
+  final AppMoneyTextEditingController initialCashController =
+      AppMoneyTextEditingController();
+  final AppMoneyTextEditingController finalBalanceController =
+      AppMoneyTextEditingController();
   final TextEditingController movementDescriptionController =
       TextEditingController();
   final AppMoneyTextEditingController movementAmountController =
@@ -135,7 +137,8 @@ class CashRegisterProvider extends ChangeNotifier {
   List<String> get fixedDescriptions => _state.fixedDescriptions;
   bool get hasActiveCashRegister => _state.hasActiveCashRegister;
   bool get hasAvailableCashRegisters => _state.hasAvailableCashRegisters;
-  CashRegister? get currentActiveCashRegister =>  _state.currentActiveCashRegister;
+  CashRegister? get currentActiveCashRegister =>
+      _state.currentActiveCashRegister;
 
   CashRegisterProvider(this._cashRegisterUsecases);
 
@@ -143,14 +146,14 @@ class CashRegisterProvider extends ChangeNotifier {
   void dispose() {
     // Cancelar subscripciones de streams
     _activeCashRegistersSubscription?.cancel();
-    
+
     // Limpiar controllers
     openDescriptionController.dispose();
     initialCashController.dispose();
     finalBalanceController.dispose();
     movementDescriptionController.dispose();
     movementAmountController.dispose();
-    
+
     super.dispose();
   }
 
@@ -161,17 +164,18 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Inicializa el provider cargando la caja seleccionada desde persistencia
   Future<void> initializeFromPersistence(String accountId) async {
     final persistenceService = CashRegisterPersistenceService.instance;
-    
+
     // Cargar cajas activas
     await loadActiveCashRegisters(accountId);
-    
+
     // Intentar cargar la caja seleccionada desde persistencia
-    final savedCashRegisterId = await persistenceService.getSelectedCashRegisterId();
+    final savedCashRegisterId =
+        await persistenceService.getSelectedCashRegisterId();
     if (savedCashRegisterId != null) {
       final savedCashRegister = _state.activeCashRegisters
           .where((cr) => cr.id == savedCashRegisterId)
           .firstOrNull;
-      
+
       if (savedCashRegister != null) {
         _state = _state.copyWith(selectedCashRegister: savedCashRegister);
         notifyListeners();
@@ -185,7 +189,7 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Selecciona una caja registradora y la guarda en persistencia
   Future<void> selectCashRegister(CashRegister cashRegister) async {
     final persistenceService = CashRegisterPersistenceService.instance;
-    
+
     _state = _state.copyWith(selectedCashRegister: cashRegister);
     await persistenceService.saveSelectedCashRegisterId(cashRegister.id);
     notifyListeners();
@@ -194,7 +198,7 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Deselecciona la caja registradora actual y limpia persistencia
   Future<void> clearSelectedCashRegister() async {
     final persistenceService = CashRegisterPersistenceService.instance;
-    
+
     _state = _state.copyWith(clearSelectedCashRegister: true);
     await persistenceService.clearSelectedCashRegisterId();
     notifyListeners();
@@ -207,7 +211,8 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Carga las cajas registradoras activas usando streams para actualizaciones automáticas
   Future<void> loadActiveCashRegisters(String accountId) async {
     // Si ya estamos escuchando la misma cuenta, no hacer nada
-    if (_currentAccountId == accountId && _activeCashRegistersSubscription != null) {
+    if (_currentAccountId == accountId &&
+        _activeCashRegistersSubscription != null) {
       return;
     }
 
@@ -221,44 +226,43 @@ class CashRegisterProvider extends ChangeNotifier {
 
     try {
       // Configurar stream para actualizaciones automáticas
-      _activeCashRegistersSubscription = _cashRegisterUsecases
-          .getActiveCashRegistersStream(accountId)
-          .listen(
-            (activeCashRegisters) {
-              // Actualizar la lista de cajas activas
-              _state = _state.copyWith(
-                activeCashRegisters: activeCashRegisters,
-                isLoadingActive: false,
-                errorMessage: null,
-              );
-
-              // Si hay una caja seleccionada, verificar si aún existe y actualizarla
-              if (_state.selectedCashRegister != null) {
-                final updatedSelectedCashRegister = activeCashRegisters
-                    .where((cr) => cr.id == _state.selectedCashRegister!.id)
-                    .firstOrNull;
-
-                if (updatedSelectedCashRegister != null) {
-                  // Actualizar la caja seleccionada con los datos más recientes
-                  _state = _state.copyWith(
-                    selectedCashRegister: updatedSelectedCashRegister,
-                  );
-                } else {
-                  // La caja seleccionada ya no existe, limpiar selección
-                  clearSelectedCashRegister();
-                }
-              }
-
-              notifyListeners();
-            },
-            onError: (error) {
-              _state = _state.copyWith(
-                errorMessage: error.toString(),
-                isLoadingActive: false,
-              );
-              notifyListeners();
-            },
+      _activeCashRegistersSubscription =
+          _cashRegisterUsecases.getActiveCashRegistersStream(accountId).listen(
+        (activeCashRegisters) {
+          // Actualizar la lista de cajas activas
+          _state = _state.copyWith(
+            activeCashRegisters: activeCashRegisters,
+            isLoadingActive: false,
+            errorMessage: null,
           );
+
+          // Si hay una caja seleccionada, verificar si aún existe y actualizarla
+          if (_state.selectedCashRegister != null) {
+            final updatedSelectedCashRegister = activeCashRegisters
+                .where((cr) => cr.id == _state.selectedCashRegister!.id)
+                .firstOrNull;
+
+            if (updatedSelectedCashRegister != null) {
+              // Actualizar la caja seleccionada con los datos más recientes
+              _state = _state.copyWith(
+                selectedCashRegister: updatedSelectedCashRegister,
+              );
+            } else {
+              // La caja seleccionada ya no existe, limpiar selección
+              clearSelectedCashRegister();
+            }
+          }
+
+          notifyListeners();
+        },
+        onError: (error) {
+          _state = _state.copyWith(
+            errorMessage: error.toString(),
+            isLoadingActive: false,
+          );
+          notifyListeners();
+        },
+      );
     } catch (e) {
       _state = _state.copyWith(
         errorMessage: e.toString(),
@@ -312,7 +316,8 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Cierra una caja registradora
-  Future<bool> closeCashRegister(String accountId, String cashRegisterId) async {
+  Future<bool> closeCashRegister(
+      String accountId, String cashRegisterId) async {
     final finalBalance = finalBalanceController.doubleValue;
     if (finalBalance < 0) {
       _state = _state.copyWith(
@@ -458,7 +463,7 @@ class CashRegisterProvider extends ChangeNotifier {
         accountId: accountId,
         cashRegisterId: currentActiveCashRegister!.id,
         saleAmount: saleAmount,
-        discountAmount: discountAmount, 
+        discountAmount: discountAmount,
       );
 
       return true;
@@ -523,8 +528,8 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Carga las descripciones fijas para nombres de caja registradora
   Future<void> loadCashRegisterFixedDescriptions(String accountId) async {
     try {
-      final descriptions =
-          await _cashRegisterUsecases.getCashRegisterFixedDescriptions(accountId);
+      final descriptions = await _cashRegisterUsecases
+          .getCashRegisterFixedDescriptions(accountId);
       _state = _state.copyWith(fixedDescriptions: descriptions);
       notifyListeners();
     } catch (e) {
@@ -595,30 +600,30 @@ class CashRegisterProvider extends ChangeNotifier {
     String? sellerId,
   }) async {
     if (!hasActiveCashRegister) {
-      _state = _state.copyWith(
-          errorMessage: 'No hay una caja registradora activa para guardar la transacción');
+      _state = _state.copyWith(errorMessage:'No hay una caja registradora activa para guardar la transacción');
       notifyListeners();
       return false;
     }
 
     try {
-      // ===== TESTING - INFORMACIÓN DEL PROVIDER =====
-      print('🏪 ===== INICIANDO GUARDADO DE TICKET DESDE PROVIDER =====');
-      print('✅ Caja Registradora Activa: ${currentActiveCashRegister!.description}');
-      print('🆔 ID Caja: ${currentActiveCashRegister!.id}');
-      print('👤 Vendedor Original: ${ticket.sellerName}');
-      print('💰 Monto Original: ${ticket.priceTotal}');
-      
       // Validar que el ticket tenga la información de caja registradora
       final updatedTicket = TicketModel(
-        id: ticket.id.isEmpty ? Publications.generateUid() : ticket.id, // Generar ID si está vacío
+        id: ticket.id.isEmpty
+            ? Publications.generateUid()
+            : ticket.id, // Generar ID si está vacío
         payMode: ticket.payMode,
         currencySymbol: ticket.currencySymbol,
-        sellerName: ticket.sellerName.isEmpty ? (sellerName ?? 'Vendedor') : ticket.sellerName, // Usar vendedor proporcionado o por defecto
-        sellerId: ticket.sellerId.isEmpty ? (sellerId ?? 'default_seller') : ticket.sellerId, // Usar ID proporcionado o por defecto
+        sellerName: ticket.sellerName.isEmpty
+            ? (sellerName ?? 'Vendedor')
+            : ticket.sellerName, // Usar vendedor proporcionado o por defecto
+        sellerId: ticket.sellerId.isEmpty
+            ? (sellerId ?? 'default_seller')
+            : ticket.sellerId, // Usar ID proporcionado o por defecto
         cashRegisterName: currentActiveCashRegister!.description,
         cashRegisterId: currentActiveCashRegister!.id,
-        priceTotal: ticket.priceTotal > 0 ? ticket.priceTotal : _calculateTotalPriceOptimized(ticket), // Usar método optimizado
+        priceTotal: ticket.priceTotal > 0
+            ? ticket.priceTotal
+            : _calculateTotalPriceOptimized(ticket), // Usar método optimizado
         valueReceived: ticket.valueReceived,
         discount: ticket.discount,
         transactionType: ticket.transactionType,
@@ -626,12 +631,6 @@ class CashRegisterProvider extends ChangeNotifier {
         creation: ticket.creation,
       );
       updatedTicket.products = ticket.products;
-
-      print('🔄 Ticket actualizado con datos de caja registradora');
-      print('✅ ID generado: ${updatedTicket.id}');
-      print('✅ Precio total calculado: ${updatedTicket.priceTotal}');
-      print('✅ Vendedor asignado: ${updatedTicket.sellerName} (${updatedTicket.sellerId})');
-      print('🚀 Enviando al caso de uso...\n');
 
       await _cashRegisterUsecases.saveTicketToTransactionHistory(
         accountId: accountId,
@@ -641,24 +640,13 @@ class CashRegisterProvider extends ChangeNotifier {
       print('✅ PROCESO COMPLETADO SIN ERRORES');
       return true;
     } catch (e) {
-      // ===== TESTING - MOSTRAR ERROR DETALLADO =====
-      print('❌ ===== ERROR EN GUARDADO DE TICKET =====');
-      print('🚨 Error: $e');
-      print('📋 Detalles del ticket que falló:');
-      print('  - ID: ${ticket.id}');
-      print('  - Vendedor: "${ticket.sellerName}" (ID: "${ticket.sellerId}")');
-      print('  - Precio Total: ${ticket.priceTotal}');
-      print('  - Caja: "${ticket.cashRegisterName}" (ID: "${ticket.cashRegisterId}")');
-      print('  - Productos: ${ticket.products.length}');
-      print('===============================================\n');
-      
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return false;
     }
   }
 
-  /// Obtiene los tickets del día actual como objetos TicketModel 
+  /// Obtiene los tickets del día actual como objetos TicketModel
   /// Nota: Por ahora devuelve Map hasta implementar conversión completa
   Future<List<Map<String, dynamic>>?> getTodayTickets(String accountId) async {
     try {
@@ -691,7 +679,8 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Obtiene las transacciones del día actual
-  Future<List<Map<String, dynamic>>?> getTodayTransactions(String accountId) async {
+  Future<List<Map<String, dynamic>>?> getTodayTransactions(
+      String accountId) async {
     try {
       return await _cashRegisterUsecases.getTodayTransactions(accountId);
     } catch (e) {
@@ -729,21 +718,22 @@ class CashRegisterProvider extends ChangeNotifier {
   }) async {
     try {
       // Por ahora devolver análisis básico usando los datos disponibles
-      final transactions = await _cashRegisterUsecases.getTransactionsByDateRange(
+      final transactions =
+          await _cashRegisterUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
       );
-      
+
       double totalRevenue = 0;
       double totalDiscounts = 0;
       int totalTransactions = transactions.length;
-      
+
       for (final transaction in transactions) {
         totalRevenue += (transaction['priceTotal'] ?? 0).toDouble();
         totalDiscounts += (transaction['discount'] ?? 0).toDouble();
       }
-      
+
       return {
         'totalRevenue': totalRevenue,
         'totalDiscounts': totalDiscounts,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Botón principal unificado de la aplicación con diseño Material 3
 /// Soporta iconos, textos, estado de carga y configuraciones personalizadas
-/// 
+///
 /// Combina las funcionalidades de AppButton y PrimaryButton en un solo widget
 /// optimizado para uso en toda la aplicación
 // button primario

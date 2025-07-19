@@ -86,7 +86,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
           // Resumen del total
           DialogComponents.summaryContainer(
             context: context,
-            value: Publications.getFormatoPrecio(value: _totalPrice), 
+            value: Publications.getFormatoPrecio(value: _totalPrice),
             backgroundColor: Colors.transparent,
           ),
         ],
@@ -221,7 +221,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [  
+      children: [
         // view : selección de cantidad de unidades del producto
         Container(
           padding: const EdgeInsets.all(12),

@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/shared_prefs_keys.dart';
 
 /// Servicio para gestionar la persistencia local de cajas registradoras
-/// 
+///
 /// Maneja:
 /// - Persistencia del ID de caja registradora seleccionada
 /// - Limpieza de preferencias cuando se cierra una caja
@@ -18,7 +18,8 @@ class CashRegisterPersistenceService {
   /// Guarda el ID de la caja registradora seleccionada
   Future<void> saveSelectedCashRegisterId(String cashRegisterId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
+    await prefs.setString(
+        SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
   }
 
   /// Obtiene el ID de la caja registradora seleccionada

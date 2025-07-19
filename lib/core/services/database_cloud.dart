@@ -277,7 +277,10 @@ class DatabaseCloudService {
 
   /// Stream de transacciones de una cuenta
   static Stream<QuerySnapshot<Map<String, dynamic>>> accountTransactionsStream(
-          String accountId) => accountTransactions(accountId).orderBy("creation", descending: true).snapshots();
+          String accountId) =>
+      accountTransactions(accountId)
+          .orderBy("creation", descending: true)
+          .snapshots();
 
   /// Stream de usuarios administradores de una cuenta
   static Stream<QuerySnapshot<Map<String, dynamic>>> accountUsersStream(

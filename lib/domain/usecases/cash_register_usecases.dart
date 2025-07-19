@@ -32,7 +32,6 @@ class CashRegisterUsecases {
     if (initialCash < 0) {
       throw Exception('El monto inicial no puede ser negativo');
     }
- 
 
     return await _repository.openCashRegister(
       accountId: accountId,
@@ -151,7 +150,7 @@ class CashRegisterUsecases {
     required String accountId,
     required String cashRegisterId,
     required double saleAmount,
-    required double discountAmount, 
+    required double discountAmount,
   }) async {
     if (saleAmount < 0) {
       throw Exception('El monto de la venta no puede ser negativo');
@@ -163,7 +162,7 @@ class CashRegisterUsecases {
 
     await _repository.updateSalesAndBilling(
       accountId: accountId,
-      cashRegisterId: cashRegisterId, 
+      cashRegisterId: cashRegisterId,
       billingIncrement: saleAmount,
       discountIncrement: discountAmount,
     );
@@ -349,7 +348,8 @@ class CashRegisterUsecases {
   }
 
   /// Obtiene las transacciones del día actual
-  Future<List<Map<String, dynamic>>> getTodayTransactions(String accountId) async {
+  Future<List<Map<String, dynamic>>> getTodayTransactions(
+      String accountId) async {
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
@@ -401,12 +401,15 @@ class CashRegisterUsecases {
       throw Exception('La descripción no puede estar vacía');
     }
 
-    await _repository.createCashRegisterFixedDescription(accountId, description.trim());
+    await _repository.createCashRegisterFixedDescription(
+        accountId, description.trim());
   }
 
   /// Obtiene las descripciones fijas disponibles para nombres de caja registradora
-  Future<List<String>> getCashRegisterFixedDescriptions(String accountId) async {
-    final descriptions = await _repository.getCashRegisterFixedDescriptions(accountId);
+  Future<List<String>> getCashRegisterFixedDescriptions(
+      String accountId) async {
+    final descriptions =
+        await _repository.getCashRegisterFixedDescriptions(accountId);
     return descriptions
         .map((desc) => desc['description'] as String? ?? '')
         .where((desc) => desc.isNotEmpty)
@@ -418,7 +421,8 @@ class CashRegisterUsecases {
     required String accountId,
     required String description,
   }) async {
-    await _repository.deleteCashRegisterFixedDescription(accountId, description);
+    await _repository.deleteCashRegisterFixedDescription(
+        accountId, description);
   }
 
   // ==========================================

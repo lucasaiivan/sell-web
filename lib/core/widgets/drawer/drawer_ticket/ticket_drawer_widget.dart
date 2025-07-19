@@ -29,11 +29,11 @@ class TicketDrawerWidget extends StatelessWidget {
         ? _TicketConfirmedPurchase(
             width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
           ).animate().scale(
-            duration: 600.ms,
-            curve: Curves.elasticOut,
-            begin: const Offset(0.8, 0.8),
-            end: const Offset(1, 1),
-          )
+              duration: 600.ms,
+              curve: Curves.elasticOut,
+              begin: const Offset(0.8, 0.8),
+              end: const Offset(1, 1),
+            )
         : AnimatedContainer(
             width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
             curve: Curves.fastOutSlowIn,
@@ -155,7 +155,8 @@ class _TicketContent extends StatelessWidget {
               ),
 
             // Total del ticket
-            _buildTotal(ticket.getTotalPrice, colorScheme.primary, textTotalStyle),
+            _buildTotal(
+                ticket.getTotalPrice, colorScheme.primary, textTotalStyle),
 
             // Métodos de pago
             _buildPaymentMethods(onEditCashAmount),
@@ -168,7 +169,8 @@ class _TicketContent extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Botones de acción
-            _buildActionButtons(onConfirmSale,onCloseTicket,isMobile(context)),
+            _buildActionButtons(
+                onConfirmSale, onCloseTicket, isMobile(context)),
           ],
         ),
       ),
@@ -293,7 +295,8 @@ class _TicketContent extends StatelessWidget {
               onTap: onEditCashAmount,
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.blue.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
@@ -385,7 +388,8 @@ class _TicketContent extends StatelessWidget {
                         if (selected && onCashPaymentSelected != null) {
                           onCashPaymentSelected();
                         }
-                        provider.setPayMode(payMode: selected ? 'effective' : '');
+                        provider.setPayMode(
+                            payMode: selected ? 'effective' : '');
                       },
                     ),
                     ChoiceChip(
@@ -546,7 +550,7 @@ class _TicketProductListState extends State<_TicketProductList> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> items = widget.ticket.products.map<Widget>((item) {
-      final product = item as ProductCatalogue ;
+      final product = item as ProductCatalogue;
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
@@ -757,7 +761,8 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                        Publications.getFormatoPrecio(
+                            value: ticket.getTotalPrice),
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -857,7 +862,8 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             Publications.getFormatoPrecio(
-                              value: ticket.valueReceived - ticket.getTotalPrice,
+                              value:
+                                  ticket.valueReceived - ticket.getTotalPrice,
                             ),
                             style: theme.textTheme.titleLarge?.copyWith(
                               color: Colors.white,

@@ -41,10 +41,10 @@ class SellUseCases {
       listPoduct: [],
       creation: Timestamp.now(),
     );
-    
+
     // Usar el setter para establecer los productos de manera encapsulada
     ticket.products = selectedProducts;
-    
+
     return ticket;
   }
 }

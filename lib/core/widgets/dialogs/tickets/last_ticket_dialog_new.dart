@@ -95,10 +95,10 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
 
           DialogComponents.itemList(
             context: context,
-            items: widget.ticket.products.map((item) { 
+            items: widget.ticket.products.map((item) {
               final quantity = item.quantity;
-              final description =  item.description;
-              final unitPrice =  item.salePrice;
+              final description = item.description;
+              final unitPrice = item.salePrice;
               final totalPrice = unitPrice * quantity;
 
               return Row(

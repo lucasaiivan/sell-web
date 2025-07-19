@@ -60,13 +60,16 @@ abstract class CashRegisterRepository {
   // ==========================================
 
   /// Crea una descripción fija para nombres de caja registradora
-  Future<void> createCashRegisterFixedDescription(String accountId, String description);
+  Future<void> createCashRegisterFixedDescription(
+      String accountId, String description);
 
   /// Obtiene las descripciones fijas para nombres de caja registradora de una cuenta
-  Future<List<Map<String, dynamic>>> getCashRegisterFixedDescriptions(String accountId);
+  Future<List<Map<String, dynamic>>> getCashRegisterFixedDescriptions(
+      String accountId);
 
   /// Elimina una descripción fija para nombres de caja registradora
-  Future<void> deleteCashRegisterFixedDescription(String accountId, String descriptionId);
+  Future<void> deleteCashRegisterFixedDescription(
+      String accountId, String descriptionId);
 
   // ==========================================
   // OPERACIONES DE CAJA
@@ -104,7 +107,7 @@ abstract class CashRegisterRepository {
   /// Actualiza los totales de ventas y facturación
   Future<void> updateSalesAndBilling({
     required String accountId,
-    required String cashRegisterId, 
+    required String cashRegisterId,
     required double billingIncrement,
     required double discountIncrement,
   });

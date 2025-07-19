@@ -28,7 +28,7 @@ class CashFlowDialog extends StatelessWidget {
 
     return AlertDialog(
       title: Row(
-        children: [ 
+        children: [
           Text(title),
           const Spacer(),
           IconButton(
@@ -46,7 +46,7 @@ class CashFlowDialog extends StatelessWidget {
             // input : Monto
             MoneyInputTextField(
               controller: cashRegisterProvider.movementAmountController,
-              labelText: 'Monto', 
+              labelText: 'Monto',
             ),
             const SizedBox(height: 16),
             // input : Descripción de ingreso/egreso en la caja
@@ -59,7 +59,7 @@ class CashFlowDialog extends StatelessWidget {
                 color: buttonColor,
               ),
               maxLines: 2,
-            ), 
+            ),
             if (cashRegisterProvider.errorMessage != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -81,7 +81,7 @@ class CashFlowDialog extends StatelessWidget {
               ? null
               : () => _handleCashFlow(context, cashRegisterProvider),
           isLoading: cashRegisterProvider.isProcessing,
-          text: buttonText, 
+          text: buttonText,
         ),
       ],
     );

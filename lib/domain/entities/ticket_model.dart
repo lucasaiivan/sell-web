@@ -2,29 +2,35 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 
 class TicketModel {
-  String id = '';
+
+  String id = ''; // id unic
   String sellerName = ''; // nombre del vendedor
   String sellerId = ''; // id del vendedor
-  String cashRegisterName = '1'; // nombre o numero de caja que se efectuo la venta
+  String cashRegisterName =
+      '1'; // nombre o numero de caja que se efectuo la venta
   String cashRegisterId = ''; // id de la caja que se efectuo la venta
-  String payMode = ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
+  String payMode =
+      ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
   double priceTotal = 0.0; // precio total de la venta
   double valueReceived = 0.0; // valor recibido por la venta
   double discount = 0.0; // descuento aplicado a la venta
-  String currencySymbol = '\$'; 
+  String currencySymbol = '\$';
+
   /// Tipo de transacción que representa este ticket
-  /// 
+  ///
   /// Valores posibles:
   /// - 'sale': Venta normal (por defecto)
   /// - 'refund': Devolución
   /// - 'exchange': Cambio de producto
   /// - 'adjustment': Ajuste de inventario
   String transactionType = 'sale';
+
   /// Lista de productos en el ticket almacenados como mapas
   /// Se convierte desde/hacia ProductTicketModel para mayor eficiencia
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
-  List<dynamic> _listPoduct = []; 
-  late Timestamp creation; // Marca de tiempo ( hora en que se reporto el producto )
+  List<dynamic> _listPoduct = [];
+  late Timestamp
+      creation; // Marca de tiempo ( hora en que se reporto el producto )
 
   TicketModel({
     this.id = "",
@@ -51,7 +57,8 @@ class TicketModel {
   List<ProductCatalogue> get products {
     return _listPoduct.map((productMap) {
       // Convertir desde ProductTicketModel a ProductCatalogue
-      final ticketProduct = ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
+      final ticketProduct =
+          ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
       return ProductCatalogue(
         id: ticketProduct.id,
         code: ticketProduct.code,
@@ -76,7 +83,7 @@ class TicketModel {
       final ticketProduct = ProductTicketModel.fromProduct(product);
       return ticketProduct.toMap();
     }).toList();
-    
+
     // Asegurar consistencia después de modificar
     _ensureProductListConsistency();
   }
@@ -95,12 +102,13 @@ class TicketModel {
     for (var i = 0; i < _listPoduct.length; i++) {
       if (_listPoduct[i]['id'] == product.id) {
         // Incrementar cantidad
-        _listPoduct[i]['quantity'] = (_listPoduct[i]['quantity'] ?? 0) + product.quantity;
+        _listPoduct[i]['quantity'] =
+            (_listPoduct[i]['quantity'] ?? 0) + product.quantity;
         exist = true;
         break;
       }
     }
-    
+
     // Si no existe, agregarlo
     if (!exist) {
       _listPoduct.add(product.toMap());
@@ -111,7 +119,8 @@ class TicketModel {
   ProductCatalogue? getProductById(String productId) {
     for (var productMap in _listPoduct) {
       if (productMap['id'] == productId) {
-        final ticketProduct = ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
+        final ticketProduct =
+            ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
         return ProductCatalogue(
           id: ticketProduct.id,
           code: ticketProduct.code,
@@ -155,7 +164,8 @@ class TicketModel {
 
   /// Calcula el total usando ProductCatalogue
   double get calculatedTotal {
-    return products.fold(0.0, (total, product) => total + (product.salePrice * product.quantity));
+    return products.fold(0.0,
+        (total, product) => total + (product.salePrice * product.quantity));
   }
 
   /// Getter de solo lectura para acceso controlado a la lista interna
@@ -166,12 +176,18 @@ class TicketModel {
   bool _validateInternalProductStructure() {
     for (var product in _listPoduct) {
       if (product is! Map<String, dynamic>) return false;
-      
-      final requiredFields = ['id', 'code', 'description', 'quantity', 'salePrice'];
+
+      final requiredFields = [
+        'id',
+        'code',
+        'description',
+        'quantity',
+        'salePrice'
+      ];
       for (var field in requiredFields) {
         if (!product.containsKey(field)) return false;
       }
-      
+
       // Validar tipos de datos
       if (product['id'] is! String) return false;
       if (product['code'] is! String) return false;
@@ -193,7 +209,8 @@ class TicketModel {
         // Si falla, crear desde ProductCatalogue
         try {
           final catalogueProduct = ProductCatalogue.fromMap(productData);
-          final ticketProduct = ProductTicketModel.fromProduct(catalogueProduct);
+          final ticketProduct =
+              ProductTicketModel.fromProduct(catalogueProduct);
           return ticketProduct.toMap();
         } catch (e) {
           // Como último recurso, crear un producto vacío
@@ -201,13 +218,16 @@ class TicketModel {
             id: productData['id']?.toString() ?? '',
             code: productData['code']?.toString() ?? '',
             description: productData['description']?.toString() ?? '',
-            quantity: productData['quantity'] is int ? productData['quantity'] : 1,
-            salePrice: productData['salePrice'] is num ? productData['salePrice'].toDouble() : 0.0,
+            quantity:
+                productData['quantity'] is int ? productData['quantity'] : 1,
+            salePrice: productData['salePrice'] is num
+                ? productData['salePrice'].toDouble()
+                : 0.0,
           ).toMap();
         }
       }
     }
-    
+
     // Si no es un mapa, crear producto vacío
     return ProductTicketModel(
       id: '',
@@ -220,7 +240,9 @@ class TicketModel {
 
   /// Método privado para asegurar que _listPoduct mantenga consistencia
   void _ensureProductListConsistency() {
-    _listPoduct = _listPoduct.map((product) => _normalizeProductToTicketModel(product)).toList();
+    _listPoduct = _listPoduct
+        .map((product) => _normalizeProductToTicketModel(product))
+        .toList();
   }
 
   // ==========================================
@@ -374,8 +396,8 @@ class TicketModel {
       discount: data.containsKey('discount')
           ? (data['discount'] ?? 0.0).toDouble()
           : 0.0,
-      transactionType: data.containsKey('transactionType') 
-          ? data['transactionType'] as String 
+      transactionType: data.containsKey('transactionType')
+          ? data['transactionType'] as String
           : 'sale',
       listPoduct: data.containsKey('listPoduct') ? data['listPoduct'] : [],
       creation: creationTimestamp,
@@ -413,15 +435,15 @@ class TicketModel {
       listPoduct: [],
       creation: creation ?? Timestamp.now(),
     );
-    
+
     // Establecer productos usando el setter
     ticket.products = products;
-    
+
     // Calcular precio total si no se proporcionó
     if (priceTotal == 0.0) {
       ticket.priceTotal = ticket.calculatedTotal;
     }
-    
+
     return ticket;
   }
   TicketModel.fromDocumentSnapshot(
@@ -441,7 +463,7 @@ class TicketModel {
     transactionType = data['transactionType'] ?? 'sale';
     _listPoduct = data['listPoduct'] ?? [];
     creation = data['creation'];
-    
+
     // Asegurar que los datos tienen el formato correcto
     _ensureProductListConsistency();
   }
@@ -451,7 +473,7 @@ class TicketModel {
     // se obtiene el total de la venta de los productos sin descuento
     double total = 0.0;
     double totalWithoutDiscount = getTotalPrice;
-    
+
     // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
     for (var product in products) {
       // condition : si el producto tiene un valor de compra y venta se calcula la ganancia
@@ -483,7 +505,7 @@ class TicketModel {
   double get getProfit {
     // se obtiene el total de la venta de los productos sin descuento
     double total = 0.0;
-    
+
     // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
     for (var product in products) {
       // condition : si el producto tiene un valor de compra y venta se calcula la ganancia
@@ -507,7 +529,7 @@ class TicketModel {
   double get getTotalPriceWithoutDiscount {
     // se obtiene el total de la venta de los productos sin descuento
     double total = 0.0;
-    
+
     // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
     for (var product in products) {
       total += product.salePrice * product.quantity;
@@ -519,7 +541,7 @@ class TicketModel {
   double get getTotalPrice {
     // se obtiene el total de la venta de los productos con todos los descuentos aplicados al ticket
     double total = 0.0;
-    
+
     // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
     for (var product in products) {
       int quantity = product.quantity;
@@ -599,7 +621,8 @@ class TicketModel {
   ProductCatalogue? findProductByCode(String code) {
     for (var productMap in _listPoduct) {
       if (productMap['code'] == code) {
-        final ticketProduct = ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
+        final ticketProduct =
+            ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
         return ProductCatalogue(
           id: ticketProduct.id,
           code: ticketProduct.code,
@@ -641,31 +664,33 @@ class TicketModel {
   String getProductsSummary() {
     final productModels = products;
     if (productModels.isEmpty) return 'Sin productos';
-    
-    return productModels.map((product) => 
-        '${product.description} (${product.quantity})').join(', ');
+
+    return productModels
+        .map((product) => '${product.description} (${product.quantity})')
+        .join(', ');
   }
 
   /// Valida la consistencia de los datos del ticket
   Map<String, dynamic> validateTicket() {
     final issues = <String>[];
     final calculatedPrice = calculatedTotal;
-    
+
     // Validar estructura interna de productos
     if (!_validateInternalProductStructure()) {
       issues.add('Estructura interna de productos inconsistente');
     }
-    
+
     // Validar que el precio total coincida con el calculado
     if ((priceTotal - calculatedPrice).abs() > 0.01) {
-      issues.add('Precio total inconsistente: $priceTotal vs calculado: $calculatedPrice');
+      issues.add(
+          'Precio total inconsistente: $priceTotal vs calculado: $calculatedPrice');
     }
-    
+
     // Validar que hay productos
     if (_listPoduct.isEmpty) {
       issues.add('El ticket no tiene productos');
     }
-    
+
     // Validar productos individuales
     for (var i = 0; i < _listPoduct.length; i++) {
       final product = _listPoduct[i];
@@ -676,7 +701,7 @@ class TicketModel {
         issues.add('Producto en posición $i tiene precio inválido');
       }
     }
-    
+
     return {
       'isValid': issues.isEmpty,
       'issues': issues,
@@ -694,7 +719,7 @@ class TicketModel {
 }
 
 /// Modelo simplificado de producto para tickets
-/// 
+///
 /// Representa únicamente los datos esenciales de un producto
 /// dentro de un ticket de venta para optimizar el almacenamiento
 /// y mejorar la performance.
@@ -704,7 +729,7 @@ class ProductTicketModel {
   final String description;
   final int quantity;
   final double salePrice;
-  
+
   const ProductTicketModel({
     required this.id,
     required this.code,
@@ -726,12 +751,12 @@ class ProductTicketModel {
 
   /// Serializa el modelo a un mapa
   Map<String, dynamic> toMap() => {
-    'id': id,
-    'code': code,
-    'description': description,
-    'quantity': quantity,
-    'salePrice': salePrice,
-  };
+        'id': id,
+        'code': code,
+        'description': description,
+        'quantity': quantity,
+        'salePrice': salePrice,
+      };
 
   /// Deserializa desde un mapa
   factory ProductTicketModel.fromMap(Map<String, dynamic> map) {

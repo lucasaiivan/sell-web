@@ -38,7 +38,7 @@ class ThemeService {
   static ThemeData get darkTheme {
     return ThemeData(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: seedColor, 
+        seedColor: seedColor,
         brightness: Brightness.dark,
       ),
       useMaterial3: true,
@@ -184,10 +184,10 @@ class ThemeService {
   }
 
   static AppBarTheme get _lightAppBarTheme {
-    return AppBarTheme( 
+    return AppBarTheme(
       elevation: 1,
       centerTitle: true,
-      titleTextStyle: TextStyle( 
+      titleTextStyle: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
       ),
@@ -198,7 +198,7 @@ class ThemeService {
   }
 
   static AppBarTheme get _darkAppBarTheme {
-    return AppBarTheme( 
+    return AppBarTheme(
       foregroundColor: Colors.grey.shade100,
       elevation: 1,
       centerTitle: true,

@@ -70,7 +70,8 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
                   DialogComponents.infoRow(
                     context: context,
                     label: 'Precio Actual',
-                    value: Publications.getFormatoPrecio(value: widget.currentPrice),
+                    value: Publications.getFormatoPrecio(
+                        value: widget.currentPrice),
                     icon: Icons.monetization_on_outlined,
                   ),
                 ],
@@ -122,7 +123,8 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
               DialogComponents.summaryContainer(
                 context: context,
                 label: 'Nuevo Precio',
-                value: Publications.getFormatoPrecio(value: _getNewPrice() ?? 0.0),
+                value:
+                    Publications.getFormatoPrecio(value: _getNewPrice() ?? 0.0),
                 icon: Icons.trending_up_rounded,
               ),
           ],

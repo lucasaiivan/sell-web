@@ -110,18 +110,19 @@ class CashRegisterCloseDialog extends StatelessWidget {
             _buildSummaryRow('Monto Inicial:',
                 Publications.getFormatoPrecio(value: cashRegister.initialCash)),
             _buildSummaryRow('Ventas:', cashRegister.sales.toString()),
-            _buildSummaryRow(
-                'Facturación:', Publications.getFormatoPrecio(value: cashRegister.billing)),
-            _buildSummaryRow(
-                'Descuentos:', Publications.getFormatoPrecio(value: cashRegister.discount)),
-            _buildSummaryRow(
-                'Ingresos:', Publications.getFormatoPrecio(value: cashRegister.cashInFlow)),
-            _buildSummaryRow(
-                'Egresos:', Publications.getFormatoPrecio(value: cashRegister.cashOutFlow)),
+            _buildSummaryRow('Facturación:',
+                Publications.getFormatoPrecio(value: cashRegister.billing)),
+            _buildSummaryRow('Descuentos:',
+                Publications.getFormatoPrecio(value: cashRegister.discount)),
+            _buildSummaryRow('Ingresos:',
+                Publications.getFormatoPrecio(value: cashRegister.cashInFlow)),
+            _buildSummaryRow('Egresos:',
+                Publications.getFormatoPrecio(value: cashRegister.cashOutFlow)),
             const Divider(),
             _buildSummaryRow(
               'Balance Esperado:',
-              Publications.getFormatoPrecio(value: cashRegister.getExpectedBalance),
+              Publications.getFormatoPrecio(
+                  value: cashRegister.getExpectedBalance),
               true,
             ),
           ],

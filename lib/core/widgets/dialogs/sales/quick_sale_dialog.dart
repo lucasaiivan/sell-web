@@ -44,7 +44,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [ 
+          children: [
             DialogComponents.sectionSpacing,
 
             // Campo de precio
@@ -78,7 +78,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               context: context,
               controller: _descriptionController,
               label: 'Descripción (Opcional)',
-              hint: 'Ej: bebida, snack, etc.', 
+              hint: 'Ej: bebida, snack, etc.',
             ),
 
             DialogComponents.sectionSpacing,
@@ -104,7 +104,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         ),
         DialogComponents.primaryActionButton(
           context: context,
-          text: 'Agregar Producto', 
+          text: 'Agregar Producto',
           onPressed: _processQuickSale,
           isLoading: _isProcessing,
         ),
@@ -113,7 +113,8 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   }
 
   String _getFormattedPrice() {
-    return Publications.getFormatoPrecio(value: _priceController.doubleValue, moneda: '');
+    return Publications.getFormatoPrecio(
+        value: _priceController.doubleValue, moneda: '');
   }
 
   Future<void> _processQuickSale() async {

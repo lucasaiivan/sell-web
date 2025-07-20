@@ -80,17 +80,9 @@ class BaseDialog extends StatelessWidget {
             // Header del diálogo
             _buildHeader(context, theme),
 
-            // Contenido principal
+            // Contenido principal con gradiente difuminado
             Flexible(
-              child: scrollable
-                  ? SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      child: content,
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      child: content,
-                    ),
+              child: _buildContentWithGradient(context, theme),
             ),
 
             // Acciones/botones
@@ -153,22 +145,75 @@ class BaseDialog extends StatelessWidget {
     );
   }
 
+  /// Construye el contenido con efecto de gradiente difuminado al final
+  Widget _buildContentWithGradient(BuildContext context, ThemeData theme) {
+    final hasActions = actions != null && actions!.isNotEmpty;
+    
+    if (!scrollable) {
+      // Si no es scrollable, solo agregar padding normal
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        child: content,
+      );
+    }
+
+    return Stack(
+      children: [
+        // Contenido scrollable
+        SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            24, 
+            16, 
+            24, 
+            hasActions ? 48 : 16, // Más padding inferior si hay acciones para el gradiente
+          ),
+          child: content,
+        ),
+        
+        // Gradiente difuminado al final (solo si hay acciones)
+        if (hasActions)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: 56, // Altura del gradiente más amplia para efecto suave
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.colorScheme.surface.withValues(alpha: 0.0),   // Completamente transparente arriba
+                      theme.colorScheme.surface.withValues(alpha: 0.3),   // Ligeramente visible
+                      theme.colorScheme.surface.withValues(alpha: 0.7),   // Más visible
+                      theme.colorScheme.surface.withValues(alpha: 0.9),   // Casi opaco
+                      theme.colorScheme.surface,                          // Completamente opaco abajo
+                    ],
+                    stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildActions(BuildContext context, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      width: double.infinity,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          ...actions!.map((action) {
-            // Agregar espaciado entre botones
-            final index = actions!.indexOf(action);
-            return Padding(
-              padding: EdgeInsets.only(
-                left: index > 0 ? 12 : 0,
-              ),
-              child: action,
-            );
-          }),
+          for (int i = 0; i < actions!.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Flexible(
+              child: actions![i],
+            ),
+          ],
         ],
       ),
     );

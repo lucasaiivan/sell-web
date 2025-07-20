@@ -41,7 +41,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         return BaseDialog(
           title: sTitle,
           icon: Icons.point_of_sale_rounded,
-          headerColor: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
+            headerColor: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.85),
           width: ResponsiveHelper.responsive(
             context: context,
             mobile: null,
@@ -70,11 +70,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
                   context, cashRegisterProvider, isMobile);
             },
           ),
-          actions: [ 
+          actions: [
             // Botones de acción de caja (Deseleccionar/Cerrar) - Solo si hay caja activa
-            //if (provider.hasActiveCashRegister) ...[ 
-            //  _buildCashRegisterActionButtons(context, provider, isMobile),
-            //],
+            if (cashRegisterProvider.hasActiveCashRegister) ..._buildCashRegisterActionButtons(context, cashRegisterProvider, isMobile),
           ],
         );
       },
@@ -188,42 +186,35 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildCashRegisterActionButtons(
+  List<Widget> _buildCashRegisterActionButtons(
       BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
     final theme = Theme.of(context);
 
-    return Row(
-      children: [
-        Expanded(
-          child: AppOutlinedButton(
-            icon: const Icon(Icons.clear_rounded),
-            text: 'Deseleccionar',
-            onPressed: () => provider.clearSelectedCashRegister(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            margin: EdgeInsets.zero,
-          ),
+    return [
+      AppOutlinedButton(
+        icon: const Icon(Icons.clear_rounded),
+        text: 'Deseleccionar',
+        onPressed: () => provider.clearSelectedCashRegister(),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: AppFilledButton(
-            icon: const Icon(Icons.output_rounded),
-            text: 'Cerrar Caja',
-            onPressed: () => _showCloseDialog(context, cashRegister),
-            backgroundColor: theme.colorScheme.error,
-            foregroundColor: theme.colorScheme.onError,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            margin: EdgeInsets.zero,
-          ),
+        margin: EdgeInsets.zero,
+      ),
+      AppFilledButton(
+        icon: const Icon(Icons.output_rounded),
+        text: 'Cerrar Caja',
+        onPressed: () => _showCloseDialog(context, cashRegister),
+        backgroundColor: theme.colorScheme.error,
+        foregroundColor: theme.colorScheme.onError,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
         ),
-      ],
-    );
+        margin: EdgeInsets.zero,
+      ),
+    ];
   }
 
   Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister) {

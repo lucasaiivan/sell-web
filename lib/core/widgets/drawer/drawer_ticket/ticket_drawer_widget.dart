@@ -109,8 +109,52 @@ class _TicketContent extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          // Contenido scrollable con gradiente
+          Expanded(
+            child: _buildScrollableContentWithGradient(
+              context: context,
+              ticket: ticket,
+              textValuesStyle: textValuesStyle,
+              textDescriptionStyle: textDescriptionStyle,
+              textSmallStyle: textSmallStyle,
+              textTotalStyle: textTotalStyle,
+              colorScheme: colorScheme,
+              backgroundColor: backgroundColor,
+            ),
+          ),
+          
+          // Botones de acción fijos en la parte inferior
+          _buildFixedActionSection(
+            context: context,
+            ticket: ticket,
+            colorScheme: colorScheme,
+            backgroundColor: backgroundColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye el contenido scrollable con efecto de gradiente difuminado
+  Widget _buildScrollableContentWithGradient({
+    required BuildContext context,
+    required dynamic ticket,
+    required TextStyle textValuesStyle,
+    required TextStyle textDescriptionStyle,
+    required TextStyle textSmallStyle,
+    required TextStyle textTotalStyle,
+    required ColorScheme colorScheme,
+    required Color backgroundColor,
+  }) {
+    final provider = Provider.of<SellProvider>(context, listen: false);
+    
+    return _ScrollableContentWithIndicator(
+      backgroundColor: backgroundColor,
+      colorScheme: colorScheme,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 75), // Ajustado para coincidir con gradiente
         child: Column(
           children: [
             // Encabezado del ticket
@@ -129,12 +173,10 @@ class _TicketContent extends StatelessWidget {
 
             _buildDividerLine(colorScheme),
 
-            // Lista de productos
-            Flexible(
-              child: _TicketProductList(
-                ticket: ticket,
-                textValuesStyle: textValuesStyle,
-              ),
+            // Lista de productos que se contrae al contenido
+            _TicketProductList(
+              ticket: ticket,
+              textValuesStyle: textValuesStyle,
             ),
 
             _buildDividerLine(colorScheme),
@@ -168,14 +210,34 @@ class _TicketContent extends StatelessWidget {
 
             // Checkbox para imprimir ticket
             _buildPrintCheckbox(),
-
-            const SizedBox(height: 12),
-
-            // Botones de acción
-            _buildActionButtons(
-                onConfirmSale, onCloseTicket, isMobile(context)),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Construye la sección fija de acciones en la parte inferior
+  Widget _buildFixedActionSection({
+    required BuildContext context,
+    required dynamic ticket,
+    required ColorScheme colorScheme,
+    required Color backgroundColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: _buildActionButtons(
+        onConfirmSale, 
+        onCloseTicket, 
+        isMobile(context)
       ),
     );
   }
@@ -691,36 +753,15 @@ class _TicketProductList extends StatefulWidget {
 }
 
 class _TicketProductListState extends State<_TicketProductList> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showIndicator = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_updateIndicator);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateIndicator());
-  }
-
-  void _updateIndicator() {
-    if (!_scrollController.hasClients) return;
-    final max = _scrollController.position.maxScrollExtent;
-    final offset = _scrollController.offset;
-    final show = max > 0 && offset < max - 8;
-    if (_showIndicator != show) {
-      setState(() => _showIndicator = show);
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_updateIndicator);
-    _scrollController.dispose();
-    super.dispose();
-  }
+  bool _isExpanded = false;
+  static const int _maxItemsToShow = 4;
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> items = widget.ticket.products.map<Widget>((item) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    final List<Widget> allItems = widget.ticket.products.map<Widget>((item) {
       final product = item as ProductCatalogue;
 
       return Padding(
@@ -755,64 +796,54 @@ class _TicketProductListState extends State<_TicketProductList> {
       );
     }).toList(growable: false);
 
-    return Stack(
+    final totalItems = allItems.length;
+    final shouldShowExpander = totalItems > _maxItemsToShow;
+    final itemsToShow = _isExpanded ? allItems : allItems.take(_maxItemsToShow).toList();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        ListView(
-          key: const Key('ticket'),
-          controller: _scrollController,
-          shrinkWrap: false,
-          children: items,
-        ),
-        if (_showIndicator)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surface
-                      .withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.18),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 22,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Hay más ítems',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
+        // Lista de productos (limitada o completa según el estado)
+        ...itemsToShow,
+        
+        // Indicador para expandir/contraer si hay más de 7 items
+        if (shouldShowExpander)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), 
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _isExpanded 
+                          ? Icons.keyboard_arrow_up_rounded 
+                          : Icons.keyboard_arrow_down_rounded,
+                        color: colorScheme.primary,
+                        size: 20,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Text(
+                        _isExpanded 
+                          ? 'Ver menos' 
+                          : 'Ver ${totalItems - _maxItemsToShow} más productos',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1196,4 +1227,101 @@ class _TicketDashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Widget que envuelve contenido scrollable con gradiente e indicador
+class _ScrollableContentWithIndicator extends StatefulWidget {
+  final Widget child;
+  final Color backgroundColor;
+  final ColorScheme colorScheme;
+
+  const _ScrollableContentWithIndicator({
+    required this.child,
+    required this.backgroundColor,
+    required this.colorScheme,
+  });
+
+  @override
+  State<_ScrollableContentWithIndicator> createState() => _ScrollableContentWithIndicatorState();
+}
+
+class _ScrollableContentWithIndicatorState extends State<_ScrollableContentWithIndicator> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollIndicator = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkScrollable();
+    });
+  }
+
+  void _checkScrollable() {
+    if (_scrollController.hasClients) {
+      setState(() {
+        _showScrollIndicator = _scrollController.position.maxScrollExtent > 0;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Contenido scrollable
+        widget.child,
+         
+        
+        // Indicador de scroll si hay más contenido
+        if (_showScrollIndicator)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 65,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: widget.colorScheme.surface.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 16,
+                      color: widget.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Desliza para ver más',
+                      style: TextStyle(
+                        color: widget.colorScheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 }

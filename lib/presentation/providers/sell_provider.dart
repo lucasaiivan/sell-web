@@ -353,6 +353,32 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setDiscount({required double discount}) {
+    if (discount < 0) return; // No permitir descuentos negativos
+    
+    final currentTicket = _state.ticket;
+    final newTicket = _createTicketWithValues(
+      creation: currentTicket.creation,
+      payMode: currentTicket.payMode,
+      valueReceived: currentTicket.valueReceived,
+      cashRegisterName: currentTicket.cashRegisterName,
+      cashRegisterId: currentTicket.cashRegisterId,
+      sellerName: currentTicket.sellerName,
+      sellerId: currentTicket.sellerId,
+      priceTotal: currentTicket.priceTotal,
+      discount: discount,
+      transactionType: currentTicket.transactionType,
+      currencySymbol: currentTicket.currencySymbol,
+    );
+
+    // Establecer los productos usando el setter
+    newTicket.products = currentTicket.products;
+
+    _state = _state.copyWith(ticket: newTicket);
+    _saveTicket();
+    notifyListeners();
+  }
+
   void setReceivedCash(double value) {
     // Actualiza el valor recibido en el ticket
     final currentTicket = _state.ticket;

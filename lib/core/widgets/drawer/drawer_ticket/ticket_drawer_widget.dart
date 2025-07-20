@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 
@@ -155,8 +156,10 @@ class _TicketContent extends StatelessWidget {
               ),
 
             // Total del ticket
-            _buildTotal(
-                ticket.getTotalPrice, colorScheme.primary, textTotalStyle),
+            _buildTotalSection(ticket, colorScheme.primary, textTotalStyle, textDescriptionStyle),
+
+            // Sección de descuento
+            _buildDiscountSection(),
 
             // Métodos de pago
             _buildPaymentMethods(onEditCashAmount),
@@ -331,7 +334,15 @@ class _TicketContent extends StatelessWidget {
   }
 
   /// Construye el widget del total con animación
-  Widget _buildTotal(double total, Color color, TextStyle textTotalStyle) {
+  /// Construye la sección de total (con o sin descuento)
+  Widget _buildTotalSection(
+    dynamic ticket, 
+    Color color, 
+    TextStyle textTotalStyle, 
+    TextStyle textDescriptionStyle,
+  ) {
+    final hasDiscount = ticket.discount > 0;
+    
     return Padding(
       padding: const EdgeInsets.only(left: 12, right: 12, top: 5, bottom: 4),
       child: Container(
@@ -340,18 +351,178 @@ class _TicketContent extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Text('TOTAL', style: textTotalStyle),
-            const Spacer(),
-            Text(
-              Publications.getFormatoPrecio(value: total),
-              style: textTotalStyle,
-              textAlign: TextAlign.right,
+        child: hasDiscount 
+          ? Column(
+              children: [
+                // Subtotal
+                Row(
+                  children: [
+                    Text(
+                      'SUBTOTAL', 
+                      style: textDescriptionStyle.copyWith(
+                        fontSize: 16,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      Publications.getFormatoPrecio(value: ticket.getTotalPriceWithoutDiscount),
+                      style: textDescriptionStyle.copyWith(
+                        fontSize: 16,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 4),
+                
+                // Descuento
+                Row(
+                  children: [
+                    Text(
+                      'DESCUENTO', 
+                      style: textDescriptionStyle.copyWith(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '- ${Publications.getFormatoPrecio(value: ticket.discount)}',
+                      style: textDescriptionStyle.copyWith(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 8),
+                
+                Container(
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                // Total final
+                Row(
+                  children: [
+                    Text('TOTAL', style: textTotalStyle),
+                    const Spacer(),
+                    Text(
+                      Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                      style: textTotalStyle,
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Text('TOTAL', style: textTotalStyle),
+                const Spacer(),
+                Text(
+                  Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                  style: textTotalStyle,
+                  textAlign: TextAlign.right,
+                ),
+              ],
             ),
-          ],
-        ),
       ),
+    );
+  }
+
+  /// Construye la sección de descuento
+  Widget _buildDiscountSection() {
+    return Consumer<SellProvider>(
+      builder: (context, provider, _) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final hasDiscount = provider.ticket.discount > 0;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            children: [
+              // Mostrar descuento aplicado si existe
+              if (hasDiscount) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.errorContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colorScheme.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.discount_rounded,
+                        color: colorScheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Descuento aplicado',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.error,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '- ${Publications.getFormatoPrecio(value: provider.ticket.discount)}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: colorScheme.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AppTextButton(
+                        text: 'Quitar',
+                        onPressed: () => provider.setDiscount(discount: 0.0),
+                        foregroundColor: colorScheme.error,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8, 
+                          vertical: 4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              
+              // Botón para agregar descuento
+              AppTextButton.icon(
+                text: hasDiscount ? 'Editar descuento' : 'Agregar descuento',
+                icon: Icon(
+                  hasDiscount ? Icons.edit_rounded : Icons.percent_rounded,
+                  size: 18,
+                ),
+                onPressed: () => showDiscountDialog(context),
+                foregroundColor: colorScheme.primary,
+                backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -749,6 +920,61 @@ class _TicketConfirmedPurchase extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  // Información del total con descuento si aplica
+                  if (ticket.discount > 0) ...[
+                    // Subtotal
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Subtotal:',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        Text(
+                          Publications.getFormatoPrecio(
+                              value: ticket.getTotalPriceWithoutDiscount),
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontFamily: 'RobotoMono',
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Descuento
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Descuento:',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        Text(
+                          '- ${Publications.getFormatoPrecio(value: ticket.discount)}',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontFamily: 'RobotoMono',
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    Container(
+                      height: 1,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                  ],
+                  
                   // Total de la venta
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

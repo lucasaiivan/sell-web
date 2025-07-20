@@ -271,14 +271,7 @@ class DialogComponents {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.3),
-        ),
-      ),
+      padding: const EdgeInsets.all(12), 
       child: Column(
         children: [
           Row(

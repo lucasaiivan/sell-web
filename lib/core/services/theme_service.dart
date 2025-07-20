@@ -174,7 +174,7 @@ class ThemeService {
 
   static FloatingActionButtonThemeData get _darkFloatingActionButtonTheme {
     return FloatingActionButtonThemeData(
-      backgroundColor: seedColor.shade300,
+      backgroundColor: seedColor.shade800,
       foregroundColor: Colors.black,
       elevation: 4,
       shape: RoundedRectangleBorder(

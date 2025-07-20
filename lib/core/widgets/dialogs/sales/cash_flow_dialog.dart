@@ -23,8 +23,7 @@ class CashFlowDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
     final title = isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
-    final buttonText = isInflow ? 'Registrar Ingreso' : 'Registrar Egreso';
-    final buttonColor = isInflow ? Colors.green : Colors.red;
+    final buttonText = isInflow ? 'Registrar Ingreso' : 'Registrar Egreso'; 
 
     return AlertDialog(
       title: Row(
@@ -53,11 +52,7 @@ class CashFlowDialog extends StatelessWidget {
             InputTextField(
               controller: cashRegisterProvider.movementDescriptionController,
               labelText: 'Descripción',
-              hintText: 'Motivo del ${isInflow ? "ingreso" : "egreso"}',
-              prefixIcon: Icon(
-                Icons.description,
-                color: buttonColor,
-              ),
+              hintText: 'Motivo del ${isInflow ? "ingreso" : "egreso"}', 
               maxLines: 2,
             ),
             if (cashRegisterProvider.errorMessage != null) ...[

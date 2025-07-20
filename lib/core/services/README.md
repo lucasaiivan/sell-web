@@ -36,10 +36,43 @@ ThemeService.seedColor = Colors.green; // Requiere restart
 
 **Uso**: Manejo de operaciones CRUD con la base de datos en la nube.
 
-### `cash_register_persistence_service.dart`
-**Propósito**: Servicio de persistencia local para cajas registradoras.
+### `app_data_persistence_service.dart`
+**Propósito**: Servicio centralizado para gestionar la persistencia local de todos los datos de configuración de la aplicación.
 
-**Uso**: Almacenamiento y recuperación de configuraciones de cajas registradoras usando SharedPreferences.
+**Características**:
+- **Gestión de cuentas**: Persistencia de cuenta seleccionada
+- **Gestión de cajas registradoras**: Persistencia de caja registradora seleccionada
+- **Gestión de tema**: Persistencia del modo de tema (claro/oscuro)
+- **Gestión de tickets**: Persistencia de ticket actual y último vendido
+- **Configuraciones de impresión**: Persistencia de configuraciones de impresora
+- **Operaciones generales**: Limpieza de datos, verificación de claves, etc.
+
+**Uso**:
+```dart
+final persistenceService = AppDataPersistenceService.instance;
+
+// Gestión de cuentas
+await persistenceService.saveSelectedAccountId('account123');
+String? accountId = await persistenceService.getSelectedAccountId();
+
+// Gestión de tema
+await persistenceService.saveThemeMode('dark');
+String? theme = await persistenceService.getThemeMode();
+
+// Gestión de tickets
+await persistenceService.saveCurrentTicket(ticketJson);
+String? ticket = await persistenceService.getCurrentTicket();
+
+// Limpieza de datos
+await persistenceService.clearSessionData(); // Solo datos de sesión
+await persistenceService.clearAllData(); // Todos los datos
+```
+
+**Beneficios**:
+- Centralización de toda la persistencia local
+- API consistente para todos los tipos de datos
+- Gestión de errores unificada
+- Facilita el mantenimiento y testing
 
 ### `thermal_printer_http_service.dart`
 **Propósito**: Servicio HTTP para comunicación con impresoras térmicas.

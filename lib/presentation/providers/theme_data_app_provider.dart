@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../../core/services/app_data_persistence_service.dart';
 import '../../core/services/theme_service.dart';
 
 /// Proveedor para manejar el tema (brillo) de la app usando ThemeService
 class ThemeDataAppProvider extends ChangeNotifier {
   final ThemeService _themeService = ThemeService();
-  static const _key = 'theme_mode';
+  final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
 
   ThemeDataAppProvider() {
     _loadTheme();
@@ -28,8 +27,7 @@ class ThemeDataAppProvider extends ChangeNotifier {
 
   /// Carga el tema guardado
   Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final mode = prefs.getString(_key);
+    final mode = await _persistenceService.getThemeMode();
     if (mode == 'dark') {
       _themeService.setThemeMode(ThemeMode.dark);
     } else {
@@ -39,8 +37,7 @@ class ThemeDataAppProvider extends ChangeNotifier {
 
   /// Guarda el tema seleccionado
   Future<void> _saveTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        _key, _themeService.themeMode == ThemeMode.dark ? 'dark' : 'light');
+    final themeValue = _themeService.themeMode == ThemeMode.dark ? 'dark' : 'light';
+    await _persistenceService.saveThemeMode(themeValue);
   }
 }

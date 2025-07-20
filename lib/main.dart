@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sellweb/core/services/theme_service.dart';
 import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
@@ -28,13 +27,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Inicializar SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
-
   // Inicializar repositorios
   final authRepository =
       AuthRepositoryImpl(fb_auth.FirebaseAuth.instance, GoogleSignIn());
-  final accountRepository = AccountRepositoryImpl(prefs: prefs);
+  final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
   runApp(

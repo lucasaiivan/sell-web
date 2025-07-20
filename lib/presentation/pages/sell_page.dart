@@ -66,6 +66,8 @@ class _SellPageState extends State<SellPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    // consumer : escucha los cambios en ventas (SellProvider) y el catalogo (CatalogueProvider)
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
 
@@ -95,11 +97,9 @@ class _SellPageState extends State<SellPage> {
         }
         // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (sellProvider.profileAccountSelected.id == 'demo' &&
-            authProvider.user?.isAnonymous == true &&
-            catalogueProvider.products.isEmpty) {
-          final demoProducts =
-              authProvider.getUserAccountsUseCase.getDemoProducts();
+        // Si es cuenta demo y usuario anónimo, cargar productos demo
+        if (sellProvider.profileAccountSelected.id == 'demo' &&authProvider.user?.isAnonymous == true &&catalogueProvider.products.isEmpty) {
+          final demoProducts =authProvider.getUserAccountsUseCase.getDemoProducts();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             catalogueProvider.loadDemoProducts(demoProducts);
           });
@@ -109,48 +109,44 @@ class _SellPageState extends State<SellPage> {
 
         // --- si ahi cuenta seleccionada, mostrar la página de venta ---
         return Scaffold(
-          appBar: appbar(
-            buildContext: context,
-            provider: sellProvider,
-          ),
+          appBar: appbar(buildContext: context,provider: sellProvider),
           drawer: drawer,
           body: LayoutBuilder(
             builder: (context, constraints) {
               return Row(
                 children: [
+                  // view : 
                   Flexible(
                     child: Stack(
                       children: [
-                        /// [KeyboardListener] se utiliza para detectar y responder a eventos del Escaner de codigo de barra
+                        // -----------------------------
+                        /// scan bar (KeyboardListener) se utiliza para detectar y responder a eventos del Escaner de codigo de barra
+                        // -----------------------------
+                        /// body : cuerpo de la página de venta
+                        /// ----------------------------
                         KeyboardListener(
                           focusNode: _focusNode,
                           autofocus: true,
                           onKeyEvent: _onKey,
                           child: body(provider: sellProvider),
                         ),
-                        // floatingActionButtonBody
+                        // floatingActionButtonBody : boton flotante para agregar productos al ticket
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: floatingActionButtonBody(
-                              sellProvider: sellProvider),
+                          child: floatingActionButtonBody(sellProvider: sellProvider),
                         ),
                       ],
                     ),
                   ),
-                  // drawerTicket view : visualización del ticket con los datos de la compra
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
-                      (isMobile(context) && sellProvider.ticketView))
+                  // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto 
+                  if (!isMobile(context) &&sellProvider.ticket.getProductsQuantity() != 0 ||(isMobile(context) && sellProvider.ticketView))
+                    // drawerTicket : información del ticket 
                     TicketDrawerWidget(
-                      showConfirmedPurchase:
-                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                      onEditCashAmount: () =>
-                          dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                      onConfirmSale: () =>
-                          _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider
-                          .setTicketView(false), // para cerrar el ticket
+                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      onEditCashAmount: () => dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                      onConfirmSale: () => _confirmSale(sellProvider), // para confirmar la venta
+                      onCloseTicket: () => sellProvider .setTicketView(false), // para cerrar el ticket
                     ),
                 ],
               );
@@ -930,8 +926,7 @@ class _SellPageState extends State<SellPage> {
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
   Widget body({required SellProvider provider}) {
     // widgetss
-    Widget itemDefault =
-        Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
+    Widget itemDefault = Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -949,18 +944,13 @@ class _SellPageState extends State<SellPage> {
           crossAxisCount = 6; // Ancho para pantallas grandes
         }
         // Usar los productos seleccionados del ticket
-        final List<ProductCatalogue> list = provider.ticket.products
-            .toList()
-            .reversed
-            .toList();
+        final List<ProductCatalogue> list = provider.ticket.products.toList().reversed.toList();
         // Calcular cuántas filas caben en la vista
-        final double itemHeight = (constraints.maxWidth / crossAxisCount) *
-            1.1; // Ajusta el factor según el aspecto de los ítems
+        final double itemHeight = (constraints.maxWidth / crossAxisCount) * 1.1; // Ajusta el factor según el aspecto de los ítems
         int rowCount = 1;
         int minItemCount = crossAxisCount;
-        if (constraints.maxHeight.isFinite &&
-            constraints.maxHeight > 0 &&
-            itemHeight > 0) {
+        // Si la altura del contenedor es finita y mayor a 0, calcular el número de filas
+        if (constraints.maxHeight.isFinite &&constraints.maxHeight > 0 &&itemHeight > 0) {
           rowCount = (constraints.maxHeight / itemHeight).ceil();
           minItemCount = rowCount * crossAxisCount;
         }
@@ -1493,6 +1483,7 @@ class _ProductoItemState extends State<ProductoItem> {
                 : ''
             : 'Sin stock')
         : '';
+ 
 
     // aparición animada
     return Card(
@@ -1520,15 +1511,27 @@ class _ProductoItemState extends State<ProductoItem> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold)),
                       ))),
-              // Cambiar Flexible por Expanded para evitar error de argumentos
-              Expanded(
+              // image : imagen del producto que ocupa parte de la tarjeta
+                Expanded(
                 flex: 2,
-                child: Center(child: contentImage()),
+                child: Center(
+                  child: widget.producto.image.isNotEmpty
+                    ? ProductImage(
+                      imageUrl: widget.producto.image,
+                      size: 70,
+                    )
+                    : Icon(
+                      Icons.image_not_supported_outlined,
+                      size: 48,
+                      color: Colors.grey.shade300,
+                    ),
+                ),
               ),
+              // view : información del producto
               contentInfo(),
             ],
           ),
-          // view : selected
+          // view : selección del producto
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
@@ -1574,29 +1577,7 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 
   // WIDGETS COMPONETS
-
-  Widget contentImage() {
-    // var
-    String description = widget.producto.description != ''
-        ? widget.producto.description.length >= 3
-            ? widget.producto.description.substring(0, 3)
-            : widget.producto.description.substring(0, 1)
-        : Publications.getFormatoPrecio(
-            value: widget.producto.salePrice * widget.producto.quantity);
-
-    return widget.producto.image != ""
-        ? ProductImage(imageUrl: widget.producto.image)
-        : Container(
-            color: Colors.grey[100],
-            child: Center(
-              child: Text(description,
-                  style: const TextStyle(
-                      fontSize: 24.0,
-                      color: Colors.grey,
-                      overflow: TextOverflow.clip)),
-            ),
-          );
-  }
+ 
 
   Widget contentInfo() {
     return widget.producto.description == ''
@@ -1733,9 +1714,7 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
   showLastTicketDialog(
     context: context,
     ticket: provider.lastSoldTicket!,
-    businessName: provider.profileAccountSelected.name.isNotEmpty
-        ? provider.profileAccountSelected.name
-        : 'PUNTO DE VENTA',
+    businessName: provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name : 'PUNTO DE VENTA',
   );
 }
 

@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/utils/shared_prefs_keys.dart';
+import 'package:sellweb/core/services/app_data_persistence_service.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:provider/provider.dart' as provider;
@@ -66,7 +65,9 @@ class _SellProviderState {
 }
 
 class SellProvider extends ChangeNotifier {
+  
   final GetUserAccountsUseCase getUserAccountsUseCase;
+  final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
 
   // Estado encapsulado para optimizar notificaciones
   var _state = _SellProviderState(
@@ -185,8 +186,7 @@ class SellProvider extends ChangeNotifier {
 
   /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
   Future<void> _loadSelectedAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString(SharedPrefsKeys.selectedAccountId);
+    final id = await _persistenceService.getSelectedAccountId();
     if (id != null && id.isNotEmpty) {
       final account = await fetchAccountById(id);
       if (account != null) {
@@ -205,14 +205,11 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveTicket() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        SharedPrefsKeys.currentTicket, jsonEncode(_state.ticket.toJson()));
+    await _persistenceService.saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
   }
 
   Future<void> _loadTicket() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ticketJson = prefs.getString(SharedPrefsKeys.currentTicket);
+    final ticketJson = await _persistenceService.getCurrentTicket();
     if (ticketJson != null) {
       try {
         final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
@@ -329,8 +326,7 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveSelectedAccount(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(SharedPrefsKeys.selectedAccountId, id);
+    await _persistenceService.saveSelectedAccountId(id);
   }
 
   void setPayMode({String payMode = 'effective'}) {
@@ -387,19 +383,15 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _loadShouldPrintTicket() async {
-    // Carga el estado de impresión del ticket desde SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final shouldPrint =
-        prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+    // Carga el estado de impresión del ticket desde AppDataPersistenceService
+    final shouldPrint = await _persistenceService.getShouldPrintTicket();
     _state = _state.copyWith(shouldPrintTicket: shouldPrint);
     notifyListeners();
   }
 
   Future<void> _saveShouldPrintTicket() async {
-    // Guarda el estado de impresión del ticket en SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(
-        SharedPrefsKeys.shouldPrintTicket, _state.shouldPrintTicket);
+    // Guarda el estado de impresión del ticket en AppDataPersistenceService
+    await _persistenceService.saveShouldPrintTicket(_state.shouldPrintTicket);
   }
 
   Future<void> saveLastSoldTicket() async {
@@ -428,19 +420,16 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveLastSoldTicket() async {
-    final prefs = await SharedPreferences.getInstance();
     final lastTicket = _state.lastSoldTicket;
     if (lastTicket != null) {
-      await prefs.setString(
-          SharedPrefsKeys.lastSoldTicket, jsonEncode(lastTicket.toJson()));
+      await _persistenceService.saveLastSoldTicket(jsonEncode(lastTicket.toJson()));
     } else {
-      await prefs.remove(SharedPrefsKeys.lastSoldTicket);
+      await _persistenceService.clearLastSoldTicket();
     }
   }
 
   Future<void> _loadLastSoldTicket() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastTicketJson = prefs.getString(SharedPrefsKeys.lastSoldTicket);
+    final lastTicketJson = await _persistenceService.getLastSoldTicket();
     if (lastTicketJson != null) {
       try {
         final lastTicket =
@@ -486,9 +475,8 @@ class SellProvider extends ChangeNotifier {
 
   /// Remueve la cuenta seleccionada, limpia todos los datos y notifica a los listeners
   Future<void> removeSelectedAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Eliminar el ID de la cuenta seleccionada de SharedPreferences
-    await prefs.remove(SharedPrefsKeys.selectedAccountId);
+    // Eliminar el ID de la cuenta seleccionada de AppDataPersistenceService
+    await _persistenceService.clearSelectedAccountId();
     // Limpiar todos los datos y estado
     cleanData();
     notifyListeners();

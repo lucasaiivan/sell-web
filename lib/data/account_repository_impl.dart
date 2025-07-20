@@ -1,13 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/entities/user.dart';
 import '../domain/repositories/account_repository.dart';
-import '../core/utils/shared_prefs_keys.dart';
+import '../core/services/app_data_persistence_service.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
-  final SharedPreferences _prefs;
-
-  AccountRepositoryImpl({required SharedPreferences prefs}) : _prefs = prefs;
+  final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
 
   @override
   Future<List<AdminModel>> getUserAccounts(String email) async {
@@ -31,16 +28,16 @@ class AccountRepositoryImpl implements AccountRepository {
 
   @override
   Future<void> saveSelectedAccountId(String accountId) async {
-    await _prefs.setString(SharedPrefsKeys.selectedAccountId, accountId);
+    await _persistenceService.saveSelectedAccountId(accountId);
   }
 
   @override
   Future<String?> getSelectedAccountId() async {
-    return _prefs.getString(SharedPrefsKeys.selectedAccountId);
+    return await _persistenceService.getSelectedAccountId();
   }
 
   @override
   Future<void> removeSelectedAccountId() async {
-    await _prefs.remove(SharedPrefsKeys.selectedAccountId);
+    await _persistenceService.clearSelectedAccountId();
   }
 }

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import '../../core/services/cash_register_persistence_service.dart';
+import '../../core/services/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
@@ -161,18 +161,18 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS DE PERSISTENCIA
   // ==========================================
 
-  /// Inicializa el provider cargando la caja seleccionada desde persistencia
+  /// Inicializa 
   Future<void> initializeFromPersistence(String accountId) async {
-    if (accountId.isEmpty) {
-      return;
-    }
-    
-    final persistenceService = CashRegisterPersistenceService.instance;
+    if (accountId.isEmpty) {return;} // No hacer nada si no hay cuenta
+
+    // Obtener instancia de AppDataPersistenceService
+    final persistenceService = AppDataPersistenceService.instance;
 
     try {
       // Cargar cajas activas con espera explícita
       await _loadActiveCashRegistersAndWait(accountId);
       
+      // continuar solo si hay cajas activas
       if (_state.activeCashRegisters.isEmpty) {
         // Intentar cargar directamente una vez más
         try {
@@ -189,16 +189,15 @@ class CashRegisterProvider extends ChangeNotifier {
           // Error silencioso para no interrumpir la UI
         }
       }
-
       // Intentar cargar la caja seleccionada desde persistencia
       final savedCashRegisterId = await persistenceService.getSelectedCashRegisterId();
       
+      // Si hay una caja guardada, verificar si existe en las activas
       if (savedCashRegisterId != null && savedCashRegisterId.isNotEmpty) {
-        final savedCashRegister = _state.activeCashRegisters
-            .where((cr) => cr.id == savedCashRegisterId)
-            .firstOrNull;
-
+        // Verificar si la caja guardada existe en las activas
+        final savedCashRegister = _state.activeCashRegisters.where((cr) => cr.id == savedCashRegisterId).firstOrNull; //  usa firstOrNull para evitar excepciones
         if (savedCashRegister != null) {
+          // si existe una caja seleccionada, actualizar el estado
           _state = _state.copyWith(selectedCashRegister: savedCashRegister);
           notifyListeners();
         } else {
@@ -306,7 +305,7 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Selecciona una caja registradora y la guarda en persistencia
   Future<void> selectCashRegister(CashRegister cashRegister) async {
-    final persistenceService = CashRegisterPersistenceService.instance;
+    final persistenceService = AppDataPersistenceService.instance;
 
     try {
       // Actualizar estado
@@ -326,7 +325,7 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Deselecciona la caja registradora actual y limpia persistencia
   Future<void> clearSelectedCashRegister() async {
-    final persistenceService = CashRegisterPersistenceService.instance;
+    final persistenceService = AppDataPersistenceService.instance;
 
     try {
       // Limpiar estado

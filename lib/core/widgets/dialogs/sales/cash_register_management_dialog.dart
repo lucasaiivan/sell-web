@@ -304,17 +304,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
       context: context,
       margin: EdgeInsets.only(bottom: isMobile ? 16 : 24),
       borderRadius: 5,
-      text:
-          'Las cajas te permiten diferenciar tus transacciones y llevar un control de tu flujo de caja de cada turno',
+      text: 'Las cajas te permiten diferenciar tus transacciones y llevar un control de tu flujo de caja de cada turno',
     );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // view info : Información sobre las cajas
+        provider.hasAvailableCashRegisters?Container():infoCashRegister,
         // Verificar si hay cajas disponibles
         if (provider.hasAvailableCashRegisters) ...[
-          // view info : Información sobre las cajas
-          infoCashRegister,
           // text : titulo de cajas disponibles
           Text(
             'Activas',

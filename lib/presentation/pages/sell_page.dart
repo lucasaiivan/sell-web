@@ -520,21 +520,18 @@ class _SellPageState extends State<SellPage> {
                   // button : administrar caja
                   CashRegisterStatusWidget(),
 
-                  // Botón de descartar ticket (existente)
-                  ((isMobile(buildContext) && provider.ticketView) ||
-                          (!isMobile(buildContext) &&
-                              provider.ticket.getProductsQuantity() > 0))
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.close),
-                            label: Text(isMobile(buildContext)
-                                ? 'Descartar'
-                                : 'Descartar ticket'),
-                            onPressed: discartTicketAlertDialg,
-                          ),
+                  // Botón de descartar ticket (existente) usando [AppBarButtonCircle]
+                  ( provider.ticket.getProductsQuantity() > 0)
+                      ? AppBarButtonCircle(
+                          icon: Icons.close,
+                          text: isMobile(buildContext)? 'Descartar': 'Descartar ticket',
+                          tooltip: 'Descartar ticket',
+                          onPressed: discartTicketAlertDialg,
+                          backgroundColor: Colors.red.withValues(alpha: 0.1),
+                          iconColor: Colors.red.shade700,
                         )
                       : Container(),
+                   
                 ],
               )
             ],
@@ -801,8 +798,7 @@ class _SellPageState extends State<SellPage> {
       }
     }
 
-    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
-    print('\n🎯 ===== INICIANDO GUARDADO EN HISTORIAL (CON IMPRESIÓN) =====');
+    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) ===== 
 
     // Obtener información del usuario para asignar como vendedor
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -810,25 +806,16 @@ class _SellPageState extends State<SellPage> {
     final userName = authProvider.user?.displayName ?? 'Vendedor';
 
     // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
-    final success = await cashRegisterProvider.saveTicketToTransactionHistory(
+    await cashRegisterProvider.saveTicketToTransactionHistory(
       accountId: provider.profileAccountSelected.id,
       ticket: provider.ticket,
       sellerName: userName,
       sellerId: userEmail,
-    );
-    print('💾 Resultado del guardado: ${success ? "ÉXITO" : "ERROR"}');
-    
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      print('ℹ️ Se guardó con información de caja activa');
-    } else {
-      print('ℹ️ Se guardó SIN caja activa (información por defecto)');
-    }
-    print('🏁 ===== FIN DE GUARDADO EN HISTORIAL =====\n');
-
+    ); 
     await _finalizeSale(provider);
   }
 
-  /// Procesa la venta sin impresión de ticket
+  /// === Procesa la venta simple sin impresión de ticket ===
   Future<void> _processSimpleSaveSale(SellProvider provider) async {
     // Obtener el provider de caja registradora
     final cashRegisterProvider =
@@ -851,7 +838,6 @@ class _SellPageState extends State<SellPage> {
     }
 
     // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
-    print('\n🎯 ===== INICIANDO GUARDADO EN HISTORIAL (SIN IMPRESIÓN) =====');
 
     // Obtener información del usuario para asignar como vendedor
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -859,21 +845,13 @@ class _SellPageState extends State<SellPage> {
     final userName = authProvider.user?.displayName ?? 'Vendedor';
 
     // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
-    final success = await cashRegisterProvider.saveTicketToTransactionHistory(
+    await cashRegisterProvider.saveTicketToTransactionHistory(
       accountId: provider.profileAccountSelected.id,
       ticket: provider.ticket,
       sellerName: userName,
       sellerId: userEmail,
     );
-    print('💾 Resultado del guardado de la venta al historial: ${success ? "ÉXITO" : "ERROR"}');
-    
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      print('ℹ️ Se guardó con información de caja activa');
-    } else {
-      print('ℹ️ Se guardó SIN caja activa (información por defecto)');
-    }
-    print('🏁 ===== FIN DE GUARDADO EN HISTORIAL =====\n');
-
+    // Imprimir resultado del guardado
     await _finalizeSale(provider);
   }
 

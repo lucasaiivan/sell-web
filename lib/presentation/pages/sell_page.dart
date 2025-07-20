@@ -1515,15 +1515,8 @@ class _ProductoItemState extends State<ProductoItem> {
                 Expanded(
                 flex: 2,
                 child: Center(
-                  child: widget.producto.image.isNotEmpty
-                    ? ProductImage(
-                      imageUrl: widget.producto.image,
-                      size: 70,
-                    )
-                    : Icon(
-                      Icons.image_not_supported_outlined,
-                      size: 48,
-                      color: Colors.grey.shade300,
+                  child: ProductImage(
+                      imageUrl: widget.producto.image, 
                     ),
                 ),
               ),

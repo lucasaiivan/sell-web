@@ -3,7 +3,7 @@ import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/core/widgets/component/image_widget.dart';
+import 'package:sellweb/core/widgets/component/image.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:provider/provider.dart' as provider_package;

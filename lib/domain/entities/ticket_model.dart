@@ -63,6 +63,8 @@ class TicketModel {
         id: ticketProduct.id,
         code: ticketProduct.code,
         description: ticketProduct.description,
+        image: ticketProduct.image,
+        nameMark: ticketProduct.nameMark,
         quantity: ticketProduct.quantity,
         salePrice: ticketProduct.salePrice,
         // Valores por defecto para campos no esenciales en el ticket
@@ -125,6 +127,8 @@ class TicketModel {
           id: ticketProduct.id,
           code: ticketProduct.code,
           description: ticketProduct.description,
+          image: ticketProduct.image,
+          nameMark: ticketProduct.nameMark,
           quantity: ticketProduct.quantity,
           salePrice: ticketProduct.salePrice,
           purchasePrice: 0.0,
@@ -213,11 +217,13 @@ class TicketModel {
               ProductTicketModel.fromProduct(catalogueProduct);
           return ticketProduct.toMap();
         } catch (e) {
-          // Como último recurso, crear un producto vacío
+          // Como último recurso, crear un producto con los datos disponibles
           return ProductTicketModel(
             id: productData['id']?.toString() ?? '',
             code: productData['code']?.toString() ?? '',
             description: productData['description']?.toString() ?? '',
+            image: productData['image']?.toString() ?? '',
+            nameMark: productData['nameMark']?.toString() ?? '',
             quantity:
                 productData['quantity'] is int ? productData['quantity'] : 1,
             salePrice: productData['salePrice'] is num
@@ -340,15 +346,17 @@ class TicketModel {
         "valueReceived": valueReceived,
         "discount": discount,
         "transactionType": transactionType,
-        // Usar directamente ProductTicketModel optimizado (solo datos esenciales)
+        // Usar directamente ProductTicketModel optimizado (incluyendo todos los campos esenciales)
         "listPoduct": _listPoduct.map((productData) {
           // Verificar el tipo de datos antes de procesar
           if (productData is Map<String, dynamic>) {
-            // Asegurar que solo se guarden los campos de ProductTicketModel
+            // Asegurar que se guarden todos los campos de ProductTicketModel incluyendo image y nameMark
             return {
               'id': productData['id'] ?? '',
               'code': productData['code'] ?? '',
               'description': productData['description'] ?? '',
+              'image': productData['image'] ?? '',
+              'nameMark': productData['nameMark'] ?? '',
               'quantity': productData['quantity'] ?? 1,
               'salePrice': productData['salePrice'] ?? 0.0,
             };
@@ -627,6 +635,8 @@ class TicketModel {
           id: ticketProduct.id,
           code: ticketProduct.code,
           description: ticketProduct.description,
+          image: ticketProduct.image,
+          nameMark: ticketProduct.nameMark,
           quantity: ticketProduct.quantity,
           salePrice: ticketProduct.salePrice,
           purchasePrice: 0.0,
@@ -727,6 +737,8 @@ class ProductTicketModel {
   final String id;
   final String code;
   final String description;
+  final String image;
+  final String nameMark;
   final int quantity;
   final double salePrice;
 
@@ -734,6 +746,8 @@ class ProductTicketModel {
     required this.id,
     required this.code,
     required this.description,
+    this.image = "",
+    this.nameMark = "",
     required this.quantity,
     required this.salePrice,
   });
@@ -744,6 +758,8 @@ class ProductTicketModel {
       id: product.id,
       code: product.code,
       description: product.description,
+      image: product.image,
+      nameMark: product.nameMark,
       quantity: product.quantity,
       salePrice: product.salePrice,
     );
@@ -754,6 +770,8 @@ class ProductTicketModel {
         'id': id,
         'code': code,
         'description': description,
+        'image': image,
+        'nameMark': nameMark,
         'quantity': quantity,
         'salePrice': salePrice,
       };
@@ -764,6 +782,8 @@ class ProductTicketModel {
       id: map['id'] ?? '',
       code: map['code'] ?? '',
       description: map['description'] ?? '',
+      image: map['image'] ?? '',
+      nameMark: map['nameMark'] ?? '',
       quantity: map['quantity'] ?? 1,
       salePrice: (map['salePrice'] ?? 0.0).toDouble(),
     );
@@ -774,6 +794,8 @@ class ProductTicketModel {
     String? id,
     String? code,
     String? description,
+    String? image,
+    String? nameMark,
     int? quantity,
     double? salePrice,
   }) {
@@ -781,6 +803,8 @@ class ProductTicketModel {
       id: id ?? this.id,
       code: code ?? this.code,
       description: description ?? this.description,
+      image: image ?? this.image,
+      nameMark: nameMark ?? this.nameMark,
       quantity: quantity ?? this.quantity,
       salePrice: salePrice ?? this.salePrice,
     );

@@ -19,8 +19,18 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   @override
   void initState() {
     super.initState();
+    // Limpiar errores previos al inicializar el diálogo
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadFixedDescriptions();
+      if (mounted) {
+        final provider = context.read<CashRegisterProvider>();
+        provider.clearError();
+        
+        // Limpiar los campos de texto para empezar con valores vacíos
+        provider.openDescriptionController.clear();
+        provider.initialCashController.clear();
+        
+        _loadFixedDescriptions();
+      }
     });
   }
 

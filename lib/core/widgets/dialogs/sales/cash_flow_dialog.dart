@@ -5,7 +5,7 @@ import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../buttons/app_button.dart';
 
 /// Diálogo para registrar ingresos o egresos de caja
-class CashFlowDialog extends StatelessWidget {
+class CashFlowDialog extends StatefulWidget {
   final bool isInflow;
   final String cashRegisterId;
   final String accountId;
@@ -20,14 +20,47 @@ class CashFlowDialog extends StatelessWidget {
   });
 
   @override
+  State<CashFlowDialog> createState() => _CashFlowDialogState();
+}
+
+class _CashFlowDialogState extends State<CashFlowDialog> {
+  String? _amountError;
+  String? _descriptionError;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Limpiar errores previos al inicializar el diálogo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final provider = context.read<CashRegisterProvider>();
+        provider.clearError();
+        
+        // Limpiar los campos de texto para empezar con valores vacíos
+        provider.movementAmountController.clear();
+        provider.movementDescriptionController.clear();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
-    final title = isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
-    final buttonText = isInflow ? 'Registrar Ingreso' : 'Registrar Egreso'; 
+    
+    
+    final title = widget.isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
+    final buttonText = widget.isInflow ? 'Registrar Ingreso' : 'Registrar Egreso'; 
+    final Widget iconTitle = widget.isInflow
+        ? const Icon(Icons.arrow_downward, color: Colors.green)
+        : const Icon(Icons.arrow_outward_rounded, color: Colors.red);
 
     return AlertDialog(
       title: Row(
         children: [
+          iconTitle,
+          const SizedBox(width: 8),
           Text(title),
           const Spacer(),
           IconButton(
@@ -46,23 +79,31 @@ class CashFlowDialog extends StatelessWidget {
             MoneyInputTextField(
               controller: cashRegisterProvider.movementAmountController,
               labelText: 'Monto',
+              errorText: _amountError,
+              onTextChanged: (value) {
+                if (_amountError != null) {
+                  setState(() {
+                    _amountError = null;
+                  });
+                }
+              },
             ),
             const SizedBox(height: 16),
             // input : Descripción de ingreso/egreso en la caja
-            InputTextField(
+            InputTextField( 
               controller: cashRegisterProvider.movementDescriptionController,
               labelText: 'Descripción',
-              hintText: 'Motivo del ${isInflow ? "ingreso" : "egreso"}', 
+              hintText: 'Motivo del ${widget.isInflow ? "ingreso" : "egreso"}',
+              errorText: _descriptionError,
               maxLines: 2,
+              onChanged: (value) {
+                if (_descriptionError != null) {
+                  setState(() {
+                    _descriptionError = null;
+                  });
+                }
+              },
             ),
-            if (cashRegisterProvider.errorMessage != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                cashRegisterProvider.errorMessage!,
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ],
         ),
       ),
@@ -82,16 +123,51 @@ class CashFlowDialog extends StatelessWidget {
     );
   }
 
+  bool _validateForm(CashRegisterProvider provider) {
+    bool isValid = true;
+    
+    // Validar monto
+    final amount = provider.movementAmountController.doubleValue;
+    if (amount <= 0) {
+      setState(() {
+        _amountError = 'El monto debe ser mayor a cero';
+      });
+      isValid = false;
+    }
+    
+    // Validar descripción
+    if (provider.movementDescriptionController.text.trim().isEmpty) {
+      setState(() {
+        _descriptionError = 'La descripción es obligatoria';
+      });
+      isValid = false;
+    }
+    
+    return isValid;
+  }
+
   Future<void> _handleCashFlow(
     BuildContext context,
     CashRegisterProvider provider,
   ) async {
-    final success = isInflow
-        ? await provider.addCashInflow(accountId, cashRegisterId, userId)
-        : await provider.addCashOutflow(accountId, cashRegisterId, userId);
+    // Validar formulario antes de proceder
+    if (!_validateForm(provider)) {
+      return;
+    }
+    
+    final success = widget.isInflow
+        ? await provider.addCashInflow(widget.accountId, widget.cashRegisterId, widget.userId)
+        : await provider.addCashOutflow(widget.accountId, widget.cashRegisterId, widget.userId);
 
     if (success && context.mounted) {
       Navigator.of(context).pop();
+    } else {
+      // Si hay error del provider, mostrarlo en descripción como fallback
+      if (provider.errorMessage != null) {
+        setState(() {
+          _descriptionError = provider.errorMessage;
+        });
+      }
     }
   }
 }

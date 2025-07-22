@@ -7,6 +7,7 @@ import 'package:sellweb/core/utils/fuctions.dart';
 class MoneyInputTextField extends StatelessWidget {
   final AppMoneyTextEditingController controller;
   final void Function(double value)? onChanged;
+  final void Function(String value)? onTextChanged;
   final void Function(double value)? onSubmitted;
   final String labelText;
   final String? errorText;
@@ -19,6 +20,7 @@ class MoneyInputTextField extends StatelessWidget {
     super.key,
     required this.controller,
     this.onChanged,
+    this.onTextChanged,
     this.onSubmitted,
     this.labelText = 'Monto',
     this.errorText,
@@ -53,6 +55,9 @@ class MoneyInputTextField extends StatelessWidget {
         if (onChanged != null) {
           // Usar el getter doubleValue del controlador, que siempre está formateado correctamente
           onChanged!(controller.doubleValue);
+        }
+        if (onTextChanged != null) {
+          onTextChanged!(value);
         }
       },
       onSubmitted: (value) {

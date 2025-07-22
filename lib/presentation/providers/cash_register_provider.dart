@@ -897,6 +897,9 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Limpia todos los mensajes de error
+  /// 
+  /// Este método debe ser llamado al inicializar diálogos para resetear 
+  /// el estado de error y evitar que se muestren errores de operaciones previas
   void clearError() {
     _state = _state.copyWith(errorMessage: null);
     notifyListeners();

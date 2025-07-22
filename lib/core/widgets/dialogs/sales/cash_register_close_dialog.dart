@@ -8,13 +8,33 @@ import '../../../../presentation/providers/sell_provider.dart';
 import '../../buttons/app_button.dart';
 
 /// Diálogo para cerrar una caja registradora
-class CashRegisterCloseDialog extends StatelessWidget {
+class CashRegisterCloseDialog extends StatefulWidget {
   final CashRegister cashRegister;
 
   const CashRegisterCloseDialog({
     super.key,
     required this.cashRegister,
   });
+
+  @override
+  State<CashRegisterCloseDialog> createState() => _CashRegisterCloseDialogState();
+}
+
+class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
+  @override
+  void initState() {
+    super.initState();
+    // Limpiar errores previos al inicializar el diálogo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final provider = context.read<CashRegisterProvider>();
+        provider.clearError();
+        
+        // Limpiar el campo de balance final para empezar con valor vacío
+        provider.finalBalanceController.clear();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +67,11 @@ class CashRegisterCloseDialog extends StatelessWidget {
                 labelText: 'Balance Final',
               ),
               const SizedBox(height: 16),
-              if (cashRegister.getDifference != 0) ...[
+              if (widget.cashRegister.getDifference != 0) ...[
                 Text(
-                  'Diferencia: ${Publications.getFormatoPrecio(value: cashRegister.getDifference)}',
+                  'Diferencia: ${Publications.getFormatoPrecio(value: widget.cashRegister.getDifference)}',
                   style: TextStyle(
-                    color: cashRegister.getDifference < 0
+                    color: widget.cashRegister.getDifference < 0
                         ? Colors.red
                         : Colors.green,
                     fontWeight: FontWeight.bold,
@@ -60,6 +80,7 @@ class CashRegisterCloseDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
               ],
+              // text : Mensaje de error si existe
               if (cashRegisterProvider.errorMessage != null)
                 Text(
                   cashRegisterProvider.errorMessage!,
@@ -108,21 +129,21 @@ class CashRegisterCloseDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildSummaryRow('Monto Inicial:',
-                Publications.getFormatoPrecio(value: cashRegister.initialCash)),
-            _buildSummaryRow('Ventas:', cashRegister.sales.toString()),
+                Publications.getFormatoPrecio(value: widget.cashRegister.initialCash)),
+            _buildSummaryRow('Ventas:', widget.cashRegister.sales.toString()),
             _buildSummaryRow('Facturación:',
-                Publications.getFormatoPrecio(value: cashRegister.billing)),
+                Publications.getFormatoPrecio(value: widget.cashRegister.billing)),
             _buildSummaryRow('Descuentos:',
-                Publications.getFormatoPrecio(value: cashRegister.discount)),
+                Publications.getFormatoPrecio(value: widget.cashRegister.discount)),
             _buildSummaryRow('Ingresos:',
-                Publications.getFormatoPrecio(value: cashRegister.cashInFlow)),
+                Publications.getFormatoPrecio(value: widget.cashRegister.cashInFlow)),
             _buildSummaryRow('Egresos:',
-                Publications.getFormatoPrecio(value: cashRegister.cashOutFlow)),
+                Publications.getFormatoPrecio(value: widget.cashRegister.cashOutFlow)),
             const Divider(),
             _buildSummaryRow(
               'Balance Esperado:',
               Publications.getFormatoPrecio(
-                  value: cashRegister.getExpectedBalance),
+                  value: widget.cashRegister.getExpectedBalance),
               true,
             ),
           ],
@@ -161,7 +182,7 @@ class CashRegisterCloseDialog extends StatelessWidget {
   ) async {
     final success = await cashRegisterProvider.closeCashRegister(
       sellProvider.profileAccountSelected.id,
-      cashRegister.id,
+      widget.cashRegister.id,
     );
 
     if (success && context.mounted) {

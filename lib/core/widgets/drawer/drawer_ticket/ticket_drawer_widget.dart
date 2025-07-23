@@ -37,6 +37,7 @@ class TicketDrawerWidget extends StatelessWidget {
             )
         : AnimatedContainer(
             width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
+            height: double.infinity,
             curve: Curves.fastOutSlowIn,
             duration: const Duration(milliseconds: 300),
             child: _TicketContent(
@@ -103,36 +104,21 @@ class _TicketContent extends StatelessWidget {
       elevation: 0,
       color: backgroundColor,
       shape: RoundedRectangleBorder(
-        side: BorderSide(
-          color: borderColor.withValues(alpha: 0.2),
-          width: 0.5,
-        ),
+        side: BorderSide(color: borderColor.withValues(alpha: 0.2),width: 0.5,),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Column(
-        children: [
-          // Contenido scrollable con gradiente
-          Expanded(
-            child: _buildScrollableContentWithGradient(
-              context: context,
-              ticket: ticket,
-              textValuesStyle: textValuesStyle,
-              textDescriptionStyle: textDescriptionStyle,
-              textSmallStyle: textSmallStyle,
-              textTotalStyle: textTotalStyle,
-              colorScheme: colorScheme,
-              backgroundColor: backgroundColor,
-            ),
-          ),
-
-          // Botones de acción fijos en la parte inferior
-          _buildFixedActionSection(
-            context: context,
-            ticket: ticket,
-            colorScheme: colorScheme,
-            backgroundColor: backgroundColor,
-          ),
-        ],
+      child: Flexible( 
+        fit: FlexFit.tight,
+        child: _buildScrollableContentWithGradient(
+          context: context,
+          ticket: ticket,
+          textValuesStyle: textValuesStyle,
+          textDescriptionStyle: textDescriptionStyle,
+          textSmallStyle: textSmallStyle,
+          textTotalStyle: textTotalStyle,
+          colorScheme: colorScheme,
+          backgroundColor: backgroundColor,
+        ),
       ),
     );
   }
@@ -150,90 +136,86 @@ class _TicketContent extends StatelessWidget {
   }) {
     final provider = Provider.of<SellProvider>(context, listen: false);
 
-    return _ScrollableContentWithIndicator(
-      backgroundColor: backgroundColor,
-      colorScheme: colorScheme,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-            12, 12, 12, 75), // Ajustado para coincidir con gradiente
-        child: Column(
-          children: [
-            // Encabezado del ticket
-            _buildTicketHeader(
-              provider.profileAccountSelected.name.isNotEmpty
-                  ? provider.profileAccountSelected.name
-                  : 'TICKET',
-              textDescriptionStyle,
-              textSmallStyle,
-            ),
-
-            _buildDividerLine(colorScheme),
-
-            // Encabezados de columnas
-            _buildColumnHeaders(textSmallStyle),
-
-            _buildDividerLine(colorScheme),
-
-            // Lista de productos que se contrae al contenido
-            _TicketProductList(
-              ticket: ticket,
-              textValuesStyle: textValuesStyle,
-            ),
-
-            _buildDividerLine(colorScheme),
-
-            // Cantidad total de artículos
-            _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
-
-            _buildDividerLine(colorScheme),
-            const SizedBox(height: 5),
-
-            // Vuelto (solo si corresponde)
-            if (ticket.valueReceived > 0 &&
-                ticket.valueReceived >= ticket.getTotalPrice)
-              _buildChangeAmount(
-                ticket,
-                onEditCashAmount,
-                textDescriptionStyle,
-                colorScheme,
-              ),
-
-            // Total del ticket
-            _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
-                textDescriptionStyle),
-
-            // Sección de descuento
-            _buildDiscountSection(),
-
-            // Métodos de pago
-            _buildPaymentMethods(onEditCashAmount),
-
-            const SizedBox(height: 12),
-
-            // Checkbox para imprimir ticket
-            _buildPrintCheckbox(),
-          ],
+    return Stack(
+      children: [ 
+        // view : contenido principal del ticket
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 75), // Ajustado para coincidir con gradiente
+          child: Column(
+            children: [
+              // Encabezado del ticket
+              _buildTicketHeader(provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name: 'TICKET',textDescriptionStyle,textSmallStyle),
+              _buildDividerLine(colorScheme),
+              // Encabezados de columnas
+              _buildColumnHeaders(textSmallStyle),
+              _buildDividerLine(colorScheme),
+              // Lista de productos que se contrae al contenido
+              _TicketProductList(ticket: ticket,textValuesStyle: textValuesStyle,),
+              _buildDividerLine(colorScheme),
+              // Cantidad total de artículos
+              _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
+              _buildDividerLine(colorScheme),
+              const SizedBox(height: 5),
+              // Total del ticket
+              _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
+              // Vuelto (solo si corresponde)
+              if (ticket.valueReceived > 0 &&
+                  ticket.valueReceived >= ticket.getTotalPrice)
+                _buildChangeAmount(
+                  ticket,
+                  onEditCashAmount,
+                  textDescriptionStyle,
+                  colorScheme,
+                ),
+              // Sección de descuento
+              _buildDiscountSection(), 
+              // Métodos de pago
+              _buildPaymentMethods(onEditCashAmount),
+        
+              const SizedBox(height: 12),
+        
+              // Checkbox para imprimir ticket
+              _buildPrintCheckbox(), 
+            ],
+          ),
         ),
-      ),
+        // buttons : botones posicionados en la parte inferior
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _buildFixedActionSection(context: context,ticket: ticket,backgroundColor: backgroundColor),
+        ),
+      ],
     );
   }
 
   /// Construye la sección fija de acciones en la parte inferior
   Widget _buildFixedActionSection({
     required BuildContext context,
-    required dynamic ticket,
-    required ColorScheme colorScheme,
+    required dynamic ticket, 
     required Color backgroundColor,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Usar el color de superficie base del card sin tinte de color primario
+    final baseCardColor = colorScheme.surface;
+    
     return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border(
-          top: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
+      decoration: BoxDecoration( 
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent, // Completamente transparente arriba
+            baseCardColor.withValues(alpha: 0.1), // Muy sutil
+            baseCardColor.withValues(alpha: 0.5), // Opacidad media
+            baseCardColor.withValues(alpha: 0.9), // Casi opaco
+            baseCardColor, // Color completo en la parte inferior
+          ],
+          stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+        ), 
       ),
       padding: const EdgeInsets.all(12),
       child:
@@ -257,7 +239,7 @@ class _TicketContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 1),
-        Text('compra', style: textSmallStyle),
+        Text('ticker de compra', style: textSmallStyle),
         const SizedBox(height: 1),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
@@ -1233,102 +1215,4 @@ class _TicketDashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-/// Widget que envuelve contenido scrollable con gradiente e indicador
-class _ScrollableContentWithIndicator extends StatefulWidget {
-  final Widget child;
-  final Color backgroundColor;
-  final ColorScheme colorScheme;
-
-  const _ScrollableContentWithIndicator({
-    required this.child,
-    required this.backgroundColor,
-    required this.colorScheme,
-  });
-
-  @override
-  State<_ScrollableContentWithIndicator> createState() =>
-      _ScrollableContentWithIndicatorState();
-}
-
-class _ScrollableContentWithIndicatorState
-    extends State<_ScrollableContentWithIndicator> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showScrollIndicator = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkScrollable();
-    });
-  }
-
-  void _checkScrollable() {
-    if (_scrollController.hasClients) {
-      setState(() {
-        _showScrollIndicator = _scrollController.position.maxScrollExtent > 0;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Contenido scrollable
-        widget.child,
-
-        // Indicador de scroll si hay más contenido
-        if (_showScrollIndicator)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 65,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: widget.colorScheme.surface.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 16,
-                      color: widget.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Desliza para ver más',
-                      style: TextStyle(
-                        color: widget.colorScheme.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-}
+ 

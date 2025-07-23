@@ -84,7 +84,8 @@ class Publications {
   }
 
   // Recibe la fecha y la decha actual para devolver hace cuanto tiempo se publico
-  static String getFechaPublicacionFormating({required DateTime dateTime}) => DateFormat('dd/MM/yyyy HH:mm' ).format(dateTime).toString();
+  static String getFechaPublicacionFormating({required DateTime dateTime}) =>
+      DateFormat('dd/MM/yyyy HH:mm').format(dateTime).toString();
   static String getFechaPublicacionSimple(
       DateTime postDate, DateTime currentDate) {
     /** 
@@ -134,10 +135,10 @@ class Publications {
           fechaPublicacion.month == fechaActual.month &&
           fechaPublicacion.day == fechaActual.day - 1) {
         // Si la publicación es del día anterior, muestra "Ayer"
-        return 'Ayer ${DateFormat('HH:mm' ).format(fechaPublicacion)}';
+        return 'Ayer ${DateFormat('HH:mm').format(fechaPublicacion)}';
       } else {
         // Si la publicación no es del día anterior, muestra la fecha sin el año
-        return DateFormat('dd MMM.' ).format(fechaPublicacion);
+        return DateFormat('dd MMM.').format(fechaPublicacion);
       }
     } else {
       // Si la publicación es del mismo día de hoy
@@ -162,7 +163,8 @@ class Publications {
   /// @param fechaInicio La fecha desde la cual se quiere calcular el tiempo transcurrido
   /// @param showMinutes Si se deben mostrar los minutos por defecto (true por defecto)
   /// @return String con el tiempo transcurrido en formato específico (ej: "2d 3h", "5h 30m", "1d 12h 45m")
-  static String getTiempoTranscurrido({required DateTime fechaInicio, bool showMinutes = true}) {
+  static String getTiempoTranscurrido(
+      {required DateTime fechaInicio, bool showMinutes = true}) {
     final ahora = DateTime.now();
     final diferencia = ahora.difference(fechaInicio);
 

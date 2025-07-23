@@ -4,6 +4,8 @@ import '../../domain/usecases/account_usecase.dart';
 import 'package:flutter/material.dart';
 
 class AuthProvider extends ChangeNotifier {
+  /// Retorna true si el usuario está autenticado como invitado (anónimo)
+  bool get isGuest => _user?.isAnonymous == true;
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
   final SignInSilentlyUseCase signInSilentlyUseCase;
   final SignOutUseCase signOutUseCase;
@@ -80,9 +82,7 @@ class AuthProvider extends ChangeNotifier {
 
   /// Inicia sesión como invitado usando Firebase Auth anónimo
   Future<void> signInAsGuest() async {
-    final user =
-        await SignInAnonymouslyUseCase(signInWithGoogleUseCase.repository)
-            .call();
+    final user = await SignInAnonymouslyUseCase(signInWithGoogleUseCase.repository).call();
     _user = user;
     _accountsAssociateds = [];
     notifyListeners();

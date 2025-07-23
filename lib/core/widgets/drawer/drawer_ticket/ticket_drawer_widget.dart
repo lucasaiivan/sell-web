@@ -104,10 +104,13 @@ class _TicketContent extends StatelessWidget {
       elevation: 0,
       color: backgroundColor,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: borderColor.withValues(alpha: 0.2),width: 0.5,),
+        side: BorderSide(
+          color: borderColor.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Flexible( 
+      child: Flexible(
         fit: FlexFit.tight,
         child: _buildScrollableContentWithGradient(
           context: context,
@@ -137,27 +140,37 @@ class _TicketContent extends StatelessWidget {
     final provider = Provider.of<SellProvider>(context, listen: false);
 
     return Stack(
-      children: [ 
+      children: [
         // view : contenido principal del ticket
         SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 75), // Ajustado para coincidir con gradiente
+          padding: const EdgeInsets.fromLTRB(
+              12, 12, 12, 75), // Ajustado para coincidir con gradiente
           child: Column(
             children: [
               // Encabezado del ticket
-              _buildTicketHeader(provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name: 'TICKET',textDescriptionStyle,textSmallStyle),
+              _buildTicketHeader(
+                  provider.profileAccountSelected.name.isNotEmpty
+                      ? provider.profileAccountSelected.name
+                      : 'TICKET',
+                  textDescriptionStyle,
+                  textSmallStyle),
               _buildDividerLine(colorScheme),
               // Encabezados de columnas
               _buildColumnHeaders(textSmallStyle),
               _buildDividerLine(colorScheme),
               // Lista de productos que se contrae al contenido
-              _TicketProductList(ticket: ticket,textValuesStyle: textValuesStyle,),
+              _TicketProductList(
+                ticket: ticket,
+                textValuesStyle: textValuesStyle,
+              ),
               _buildDividerLine(colorScheme),
               // Cantidad total de artículos
               _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
               _buildDividerLine(colorScheme),
               const SizedBox(height: 5),
               // Total del ticket
-              _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
+              _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
+                  textDescriptionStyle),
               // Vuelto (solo si corresponde)
               if (ticket.valueReceived > 0 &&
                   ticket.valueReceived >= ticket.getTotalPrice)
@@ -168,14 +181,14 @@ class _TicketContent extends StatelessWidget {
                   colorScheme,
                 ),
               // Sección de descuento
-              _buildDiscountSection(), 
+              _buildDiscountSection(),
               // Métodos de pago
               _buildPaymentMethods(onEditCashAmount),
-        
+
               const SizedBox(height: 12),
-        
+
               // Checkbox para imprimir ticket
-              _buildPrintCheckbox(), 
+              _buildPrintCheckbox(),
             ],
           ),
         ),
@@ -184,7 +197,10 @@ class _TicketContent extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: 0,
-          child: _buildFixedActionSection(context: context,ticket: ticket,backgroundColor: backgroundColor),
+          child: _buildFixedActionSection(
+              context: context,
+              ticket: ticket,
+              backgroundColor: backgroundColor),
         ),
       ],
     );
@@ -193,17 +209,17 @@ class _TicketContent extends StatelessWidget {
   /// Construye la sección fija de acciones en la parte inferior
   Widget _buildFixedActionSection({
     required BuildContext context,
-    required dynamic ticket, 
+    required dynamic ticket,
     required Color backgroundColor,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Usar el color de superficie base del card sin tinte de color primario
     final baseCardColor = colorScheme.surface;
-    
+
     return Container(
-      decoration: BoxDecoration( 
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -215,7 +231,7 @@ class _TicketContent extends StatelessWidget {
             baseCardColor, // Color completo en la parte inferior
           ],
           stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
-        ), 
+        ),
       ),
       padding: const EdgeInsets.all(12),
       child:
@@ -1215,4 +1231,3 @@ class _TicketDashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
- 

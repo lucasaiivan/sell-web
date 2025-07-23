@@ -94,8 +94,7 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
               controller: cashRegisterProvider.movementDescriptionController,
               labelText: 'Descripción',
               hintText: 'Motivo del ${widget.isInflow ? "ingreso" : "egreso"}',
-              errorText: _descriptionError,
-              maxLines: 2,
+              errorText: _descriptionError, 
               onChanged: (value) {
                 if (_descriptionError != null) {
                   setState(() {

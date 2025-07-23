@@ -2,6 +2,8 @@ import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/cash_flow_dialog.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/cash_register_close_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
@@ -524,7 +526,7 @@ class _SellPageState extends State<SellPage> {
                   ( provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text: isMobile(buildContext)? 'Descartar': 'Descartar ticket',
+                          text: isMobile(buildContext)? '': 'Descartar ticket',
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
                           backgroundColor: Colors.red.withValues(alpha: 0.1),
@@ -1728,13 +1730,188 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       });
     }
   }
-  // - Muestra el diálogo de estado de la caja registradora -
+  // - Muestra el popup menu con opciones de caja registradora -
   void _showStatusDialog(BuildContext context) {
     // - obtenemos los proveedores necesarios para el diálogo
-    final cashRegisterProvider =Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    // dialog : muestra el diálogo de gestión de caja registradora 
+    
+    // Obtener el balance esperado de la caja activa
+    final balance = cashRegisterProvider.hasActiveCashRegister 
+        ? cashRegisterProvider.currentActiveCashRegister?.getExpectedBalance ?? 0.0
+        : 0.0;
+    
+    // Mostrar popup menu
+    showMenu<String>(
+      context: context,menuPadding: const EdgeInsets.all(0),
+      position: RelativeRect.fromLTRB(
+        MediaQuery.of(context).size.width - 200, // Posición desde la derecha
+        kToolbarHeight + 20, // Debajo del AppBar
+        20,
+        0,
+      ),
+      items: [
+        // item : Titular con balance total (cliqueable para ir al administrador)
+        PopupMenuItem<String>(
+          value: 'manage',
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Balance Total',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                Publications.getFormatoPrecio(value: balance),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const Divider(height: 16),
+            ],
+          ),
+        ),
+        // Opción de ingreso (solo si hay caja activa)
+        if (cashRegisterProvider.hasActiveCashRegister)
+          PopupMenuItem<String>(
+            value: 'income',
+            child: Row(
+              children: [
+                Icon(Icons.arrow_downward_sharp, size: 20, color: Colors.green.shade600),
+                const SizedBox(width: 12),
+                const Text('Ingreso'),
+              ],
+            ),
+          ),
+        // Opción de egreso (solo si hay caja activa)
+        if (cashRegisterProvider.hasActiveCashRegister)
+          PopupMenuItem<String>(
+            value: 'expense',
+            child: Row(
+              children: [
+                Icon(Icons.arrow_outward_rounded, size: 20, color: Colors.red.shade600),
+                const SizedBox(width: 12),
+                const Text('Egreso'),
+              ],
+            ),
+          ),
+        // Opción para cerrar caja (solo si hay caja activa)
+        if (cashRegisterProvider.hasActiveCashRegister)
+          PopupMenuItem<String>(
+            value: 'close',
+            child: Row(
+              children: [
+                Icon(Icons.exit_to_app, size: 20),
+                const SizedBox(width: 12),
+                const Text('Cerrar caja'),
+              ],
+            ),
+          ),
+      ],
+    ).then((value) {
+      if (value != null) {
+        switch (value) {
+          case 'manage':
+            // Mostrar el diálogo completo de administración
+            showDialog(
+              context: context,
+              builder: (_) => MultiProvider(
+                providers: [
+                  ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+                  ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+                  ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+                ],
+                child: const CashRegisterManagementDialog(),
+              ),
+            );
+            break;
+          case 'income':
+            // Reutilizar CashFlowDialog para ingresos
+            _showCashFlowDialog(context, true, cashRegisterProvider, sellProvider, authProvider);
+            break;
+          case 'expense':
+            // Reutilizar CashFlowDialog para egresos
+            _showCashFlowDialog(context, false, cashRegisterProvider, sellProvider, authProvider);
+            break;
+          case 'close':
+            // Mostrar confirmación de cierre
+            _showCloseCashRegisterDialog(context, cashRegisterProvider, sellProvider);
+            break;
+        }
+      }
+    });
+  }
+
+  // - Reutiliza CashFlowDialog para mostrar diálogo de ingresos/egresos -
+  void _showCashFlowDialog(
+    BuildContext context, 
+    bool isInflow, 
+    CashRegisterProvider cashRegisterProvider, 
+    SellProvider sellProvider, 
+    AuthProvider authProvider
+  ) {
+    if (!cashRegisterProvider.hasActiveCashRegister) return;
+
+    final cashRegister = cashRegisterProvider.currentActiveCashRegister!;
+
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+        ],
+        child: CashFlowDialog(
+          isInflow: isInflow,
+          cashRegisterId: cashRegister.id,
+          accountId: sellProvider.profileAccountSelected.id,
+          userId: authProvider.user?.email ?? '',
+        ),
+      ),
+    );
+  }
+
+  // - Reutiliza CashRegisterCloseDialog para mostrar diálogo de cierre -
+  void _showCloseCashRegisterDialog(BuildContext context, CashRegisterProvider cashRegisterProvider, SellProvider sellProvider) {
+    final currentCashRegister = cashRegisterProvider.currentActiveCashRegister;
+    if (currentCashRegister == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+        ],
+        child: CashRegisterCloseDialog(cashRegister: currentCashRegister),
+      ),
+    );
+  }
+
+  // - Muestra el diálogo completo de administración de caja registradora -
+  void _showCashRegisterManagementDialog(BuildContext context) {
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
@@ -1746,7 +1923,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
         child: const CashRegisterManagementDialog(),
       ),
     );
-  }
+  } 
 
   @override
   Widget build(BuildContext context) {
@@ -1760,7 +1937,15 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           isLoading: _isInitializing,
           icon: Icons.point_of_sale_outlined,
           tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
-          onPressed: () => _showStatusDialog(context),
+          onPressed: () {
+            // Si no hay caja activa, abrir directamente el administrador de caja
+            if (!isActive) {
+              _showCashRegisterManagementDialog(context);
+            } else {
+              // Si hay caja activa, mostrar el popup menu
+              _showStatusDialog(context);
+            }
+          },
           backgroundColor: isActive? Colors.green.withValues(alpha: 0.1): Colors.grey.withValues(alpha: 0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
           text: isMobile(context)? null: isActive? '${provider.currentActiveCashRegister?.description}': 'Iniciar caja',

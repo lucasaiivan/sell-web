@@ -30,6 +30,7 @@ class InputTextField extends StatelessWidget {
   final double borderRadius;
   final TextStyle? style;
   final EdgeInsetsGeometry? contentPadding;
+  final bool expandHeight;
 
   const InputTextField({
     super.key,
@@ -44,8 +45,8 @@ class InputTextField extends StatelessWidget {
     this.enabled = true,
     this.readOnly = false,
     this.autofocus = false,
-    this.maxLines = 1,
-    this.minLines,
+    this.maxLines =1,
+    this.minLines=1,
     this.maxLength,
     this.keyboardType,
     this.textInputAction,
@@ -59,6 +60,7 @@ class InputTextField extends StatelessWidget {
     this.borderRadius = 12.0,
     this.style,
     this.contentPadding,
+    this.expandHeight = false,
   });
 
   @override
@@ -182,6 +184,7 @@ class FormInputTextField extends StatelessWidget {
   final double borderRadius;
   final TextStyle? style;
   final EdgeInsetsGeometry? contentPadding;
+  final bool expandHeight;
 
   const FormInputTextField({
     super.key,
@@ -210,6 +213,7 @@ class FormInputTextField extends StatelessWidget {
     this.borderRadius = 12.0,
     this.style,
     this.contentPadding,
+    this.expandHeight = false,
   });
 
   @override
@@ -220,8 +224,8 @@ class FormInputTextField extends StatelessWidget {
       enabled: enabled,
       readOnly: readOnly,
       autofocus: autofocus,
-      maxLines: maxLines,
-      minLines: minLines,
+      maxLines: expandHeight ? null : maxLines,
+      minLines: expandHeight ? 1 : minLines,
       maxLength: maxLength,
       keyboardType: keyboardType,
       textInputAction: textInputAction,

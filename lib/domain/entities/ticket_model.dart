@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 
 class TicketModel {
-
   String id = ''; // id unic
   String sellerName = ''; // nombre del vendedor
   String sellerId = ''; // id del vendedor

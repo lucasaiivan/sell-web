@@ -61,7 +61,7 @@ class Publications {
   }
 
   static String getFormatAmount({required int value}) {
-    final formatCurrency = NumberFormat('#,##0', 'es_ES');
+    final formatCurrency = NumberFormat('#,##0');
 
     /// Formatea un número entero a una cadena de texto con abreviaturas 'K' y 'M'.
     ///
@@ -84,8 +84,7 @@ class Publications {
   }
 
   // Recibe la fecha y la decha actual para devolver hace cuanto tiempo se publico
-  static String getFechaPublicacionFormating({required DateTime dateTime}) =>
-      DateFormat('dd/MM/yyyy HH:mm', 'es').format(dateTime).toString();
+  static String getFechaPublicacionFormating({required DateTime dateTime}) => DateFormat('dd/MM/yyyy HH:mm' ).format(dateTime).toString();
   static String getFechaPublicacionSimple(
       DateTime postDate, DateTime currentDate) {
     /** 
@@ -96,7 +95,7 @@ class Publications {
   */
     if (postDate.year != currentDate.year) {
       // Si la publicación es de un año diferente, muestra la fecha completa
-      return DateFormat('dd MMM. yyyy', 'es').format(postDate);
+      return DateFormat('dd MMM. yyyy').format(postDate);
     } else if (postDate.month != currentDate.month ||
         postDate.day != currentDate.day) {
       // Si la publicación no es del mismo día de hoy
@@ -107,7 +106,7 @@ class Publications {
         return 'Ayer';
       } else {
         // Si la publicación no es del día anterior, muestra la fecha sin el año
-        return DateFormat('dd MMM.', 'es').format(postDate);
+        return DateFormat('dd MMM.').format(postDate);
       }
     } else {
       // Si la publicación es del mismo día de hoy, muestra "Hoy"
@@ -127,7 +126,7 @@ class Publications {
     // condition : si el año de la publicacion es diferente al año actual
     if (fechaPublicacion.year != fechaActual.year) {
       // Si la publicación es de un año diferente, muestra la fecha completa
-      return DateFormat('dd MMM. yyyy', 'es').format(fechaPublicacion);
+      return DateFormat('dd MMM. yyyy').format(fechaPublicacion);
     } else if (fechaPublicacion.month != fechaActual.month ||
         fechaPublicacion.day != fechaActual.day) {
       // Si la publicación no es del mismo día de hoy
@@ -135,10 +134,10 @@ class Publications {
           fechaPublicacion.month == fechaActual.month &&
           fechaPublicacion.day == fechaActual.day - 1) {
         // Si la publicación es del día anterior, muestra "Ayer"
-        return 'Ayer ${DateFormat('HH:mm', 'es').format(fechaPublicacion)}';
+        return 'Ayer ${DateFormat('HH:mm' ).format(fechaPublicacion)}';
       } else {
         // Si la publicación no es del día anterior, muestra la fecha sin el año
-        return DateFormat('dd MMM.', 'es').format(fechaPublicacion);
+        return DateFormat('dd MMM.' ).format(fechaPublicacion);
       }
     } else {
       // Si la publicación es del mismo día de hoy
@@ -157,6 +156,49 @@ class Publications {
         return 'Hoy';
       }
     }
+  }
+
+  /// Calcula el tiempo transcurrido desde una fecha dada hasta ahora con mayor precisión
+  /// @param fechaInicio La fecha desde la cual se quiere calcular el tiempo transcurrido
+  /// @param showMinutes Si se deben mostrar los minutos por defecto (true por defecto)
+  /// @return String con el tiempo transcurrido en formato específico (ej: "2d 3h", "5h 30m", "1d 12h 45m")
+  static String getTiempoTranscurrido({required DateTime fechaInicio, bool showMinutes = true}) {
+    final ahora = DateTime.now();
+    final diferencia = ahora.difference(fechaInicio);
+
+    final dias = diferencia.inDays;
+    final horas = diferencia.inHours % 24;
+    final minutos = diferencia.inMinutes % 60;
+    final segundos = diferencia.inSeconds % 60;
+
+    List<String> partes = [];
+
+    if (dias > 0) {
+      partes.add('${dias}d');
+      if (horas > 0) {
+        partes.add('${horas}h');
+      } else if (showMinutes && minutos > 0) {
+        // Si no hay horas pero hay minutos y se deben mostrar
+        partes.add('${minutos}m');
+      }
+    } else if (horas > 0) {
+      partes.add('${horas}h');
+      if (showMinutes) {
+        // Siempre mostrar minutos cuando hay horas y está habilitado
+        partes.add('${minutos}m');
+      }
+    } else if (minutos > 0) {
+      partes.add('${minutos}m');
+      if (minutos < 10 && segundos > 0) {
+        partes.add('${segundos}s');
+      }
+    } else if (segundos > 0) {
+      partes.add('${segundos}s');
+    } else {
+      return 'Ahora mismo';
+    }
+
+    return partes.take(2).join(' ');
   }
 }
 

@@ -4,7 +4,8 @@ import '../domain/repositories/account_repository.dart';
 import '../core/services/app_data_persistence_service.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
-  final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
+  final AppDataPersistenceService _persistenceService =
+      AppDataPersistenceService.instance;
 
   @override
   Future<List<AdminModel>> getUserAccounts(String email) async {

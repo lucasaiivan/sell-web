@@ -73,7 +73,8 @@ class AppTextButton extends StatelessWidget {
     final buttonStyle = TextButton.styleFrom(
       foregroundColor: effectiveForegroundColor,
       backgroundColor: effectiveBackgroundColor,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: borderRadius ?? BorderRadius.circular(8),
       ),

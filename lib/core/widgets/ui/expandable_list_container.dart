@@ -3,9 +3,9 @@ import '../buttons/buttons.dart';
 import '../component/dividers.dart';
 
 /// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.
-/// 
+///
 /// Incluye ejemplos de uso con diferentes tipos de datos.
-/// 
+///
 /// Características del widget principal:
 /// - Contenedor con bordes redondeados y estilo Material Design 3
 /// - Lista de elementos con separadores opcionales
@@ -22,37 +22,38 @@ import '../component/dividers.dart';
 class ExpandableListContainer<T> extends StatefulWidget {
   /// Lista de elementos a mostrar
   final List<T> items;
-  
+
   /// Función para construir cada elemento de la lista
-  final Widget Function(BuildContext context, T item, int index, bool isLast) itemBuilder;
-  
+  final Widget Function(BuildContext context, T item, int index, bool isLast)
+      itemBuilder;
+
   /// Título de la sección (opcional)
   final String? title;
-  
+
   /// Número máximo de elementos visibles inicialmente
   final int maxVisibleItems;
-  
+
   /// Si es una vista móvil
   final bool isMobile;
-  
+
   /// Tema de la aplicación
   final ThemeData theme;
-  
+
   /// Texto para el botón "Ver más"
   final String? expandText;
-  
+
   /// Texto para el botón "Ver menos"
   final String? collapseText;
-  
+
   /// Si mostrar separadores entre elementos
   final bool showDividers;
-  
+
   /// Color de fondo del contenedor (opcional, usa el por defecto si es null)
   final Color? backgroundColor;
-  
+
   /// Color del borde (opcional, usa el por defecto si es null)
   final Color? borderColor;
-  
+
   /// Radio de los bordes del contenedor
   final double borderRadius;
 
@@ -73,17 +74,19 @@ class ExpandableListContainer<T> extends StatefulWidget {
   });
 
   @override
-  State<ExpandableListContainer<T>> createState() => _ExpandableListContainerState<T>();
+  State<ExpandableListContainer<T>> createState() =>
+      _ExpandableListContainerState<T>();
 }
 
-class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>> {
+class _ExpandableListContainerState<T>
+    extends State<ExpandableListContainer<T>> {
   bool showAllItems = false;
 
   @override
   Widget build(BuildContext context) {
     final hasMoreItems = widget.items.length > widget.maxVisibleItems;
-    final itemsToShow = showAllItems 
-        ? widget.items 
+    final itemsToShow = showAllItems
+        ? widget.items
         : widget.items.take(widget.maxVisibleItems).toList();
 
     return Column(
@@ -93,25 +96,27 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
         if (widget.title != null) ...[
           Text(
             widget.title!,
-            style: (widget.isMobile 
-                ? widget.theme.textTheme.bodyMedium 
-                : widget.theme.textTheme.bodyLarge)?.copyWith(
+            style: (widget.isMobile
+                    ? widget.theme.textTheme.bodyMedium
+                    : widget.theme.textTheme.bodyLarge)
+                ?.copyWith(
               fontWeight: FontWeight.w600,
               color: widget.theme.colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(height: widget.isMobile ? 8 : 12),
         ],
-        
+
         // Contenedor estilizado con la lista
         Container(
           decoration: BoxDecoration(
-            color: widget.backgroundColor ?? 
-                   widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
+            color: widget.backgroundColor ??
+                widget.theme.colorScheme.surfaceContainer
+                    .withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: Border.all(
-              color: widget.borderColor ?? 
-                     widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+              color: widget.borderColor ??
+                  widget.theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -121,10 +126,10 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
                 final index = entry.key;
                 final item = entry.value;
                 final isLast = index == itemsToShow.length - 1;
-                
+
                 return widget.itemBuilder(context, item, index, isLast);
               }),
-              
+
               // Botón "Ver más" si hay más elementos
               if (hasMoreItems && !showAllItems) ...[
                 if (widget.showDividers) const AppDivider(),
@@ -137,8 +142,8 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
                     width: double.infinity,
                     child: AppOutlinedButton(
                       icon: const Icon(Icons.expand_more_rounded),
-                      text: widget.expandText ?? 
-                             'Ver más (${widget.items.length - widget.maxVisibleItems})',
+                      text: widget.expandText ??
+                          'Ver más (${widget.items.length - widget.maxVisibleItems})',
                       onPressed: () => setState(() => showAllItems = true),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -149,7 +154,7 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
                   ),
                 ),
               ],
-              
+
               // Botón "Ver menos" si se están mostrando todos
               if (showAllItems && hasMoreItems) ...[
                 if (widget.showDividers) const AppDivider(),
@@ -187,7 +192,6 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
 
 /// Ejemplos de uso del widget ExpandableListContainer
 class ExpandableListExamples {
-  
   /// Ejemplo 1: Lista de transacciones
   static Widget buildTransactionsList({
     required List<Map<String, dynamic>> transactions,
@@ -204,12 +208,7 @@ class ExpandableListExamples {
       collapseText: 'Mostrar menos',
       itemBuilder: (context, transaction, index, isLast) {
         return _buildTransactionTile(
-          context, 
-          transaction, 
-          theme, 
-          isMobile, 
-          isLast
-        );
+            context, transaction, theme, isMobile, isLast);
       },
     );
   }
@@ -226,18 +225,13 @@ class ExpandableListExamples {
       theme: theme,
       title: 'Productos populares',
       maxVisibleItems: 3,
-      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+      backgroundColor:
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
       borderColor: theme.colorScheme.primary.withValues(alpha: 0.3),
       borderRadius: 16,
       showDividers: false,
       itemBuilder: (context, product, index, isLast) {
-        return _buildProductTile(
-          context, 
-          product, 
-          theme, 
-          isMobile, 
-          isLast
-        );
+        return _buildProductTile(context, product, theme, isMobile, isLast);
       },
     );
   }
@@ -257,12 +251,7 @@ class ExpandableListExamples {
       expandText: 'Ver todas las notificaciones',
       itemBuilder: (context, notification, index, isLast) {
         return _buildNotificationTile(
-          context, 
-          notification, 
-          theme, 
-          isMobile, 
-          isLast
-        );
+            context, notification, theme, isMobile, isLast);
       },
     );
   }
@@ -279,16 +268,11 @@ class ExpandableListExamples {
       theme: theme,
       title: 'Reportes recientes',
       maxVisibleItems: 6,
-      backgroundColor: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.2),
+      backgroundColor:
+          theme.colorScheme.tertiaryContainer.withValues(alpha: 0.2),
       borderColor: theme.colorScheme.tertiary.withValues(alpha: 0.4),
       itemBuilder: (context, report, index, isLast) {
-        return _buildReportTile(
-          context, 
-          report, 
-          theme, 
-          isMobile, 
-          isLast
-        );
+        return _buildReportTile(context, report, theme, isMobile, isLast);
       },
     );
   }

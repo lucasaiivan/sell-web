@@ -158,10 +158,10 @@ class AppButton extends StatelessWidget {
       elevation: defaultStyle ? 0 : elevation,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       padding: padding,
-      backgroundColor: backgroundColor ,
-      foregroundColor: foregroundColor ,
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor,
       textStyle: TextStyle(
-        color: foregroundColor  ,
+        color: foregroundColor,
         fontWeight: FontWeight.w700,
       ),
       minimumSize: minimumSize,
@@ -257,7 +257,9 @@ class AppOutlinedButton extends StatelessWidget {
         height: loadingSize,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>( loadingColor ?? foregroundColor ?? Colors.blue, ),
+          valueColor: AlwaysStoppedAnimation<Color>(
+            loadingColor ?? foregroundColor ?? Colors.blue,
+          ),
         ),
       );
     }
@@ -435,8 +437,8 @@ class AppFilledButton extends StatelessWidget {
     return FilledButton.styleFrom(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       padding: padding,
-      backgroundColor: backgroundColor  ,
-      foregroundColor: foregroundColor ,
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor,
       minimumSize: minimumSize,
     );
   }

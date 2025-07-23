@@ -5,7 +5,7 @@ import '../utils/shared_prefs_keys.dart';
 ///
 /// Este servicio maneja todo el almacenamiento local usando SharedPreferences para:
 /// - Persistencia de cuenta seleccionada
-/// - Persistencia de caja registradora seleccionada  
+/// - Persistencia de caja registradora seleccionada
 /// - Persistencia del estado del tema de la aplicación
 /// - Persistencia de tickets (actual y último vendido)
 /// - Persistencia de configuraciones de impresión
@@ -67,7 +67,8 @@ class AppDataPersistenceService {
   Future<void> saveSelectedCashRegisterId(String cashRegisterId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
+      await prefs.setString(
+          SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
     } catch (e) {
       rethrow;
     }

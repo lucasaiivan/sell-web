@@ -65,9 +65,9 @@ class _SellProviderState {
 }
 
 class SellProvider extends ChangeNotifier {
-  
   final GetUserAccountsUseCase getUserAccountsUseCase;
-  final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
+  final AppDataPersistenceService _persistenceService =
+      AppDataPersistenceService.instance;
 
   // Estado encapsulado para optimizar notificaciones
   var _state = _SellProviderState(
@@ -205,21 +205,24 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveTicket() async {
-    await _persistenceService.saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
+    await _persistenceService
+        .saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
   }
 
   Future<void> _loadTicket() async {
     final ticketJson = await _persistenceService.getCurrentTicket();
     if (ticketJson != null) {
       try {
-        final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        final newTicket =
+            TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         _state = _state.copyWith(ticket: newTicket);
         notifyListeners();
       } catch (_) {}
     }
   }
 
-  Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
+  Map<String, dynamic> _decodeJson(String source) =>
+      const JsonDecoder().convert(source) as Map<String, dynamic>;
 
   void addProductsticket(ProductCatalogue product,
       {bool replaceQuantity = false}) {
@@ -355,7 +358,7 @@ class SellProvider extends ChangeNotifier {
 
   void setDiscount({required double discount}) {
     if (discount < 0) return; // No permitir descuentos negativos
-    
+
     final currentTicket = _state.ticket;
     final newTicket = _createTicketWithValues(
       creation: currentTicket.creation,
@@ -448,7 +451,8 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveLastSoldTicket() async {
     final lastTicket = _state.lastSoldTicket;
     if (lastTicket != null) {
-      await _persistenceService.saveLastSoldTicket(jsonEncode(lastTicket.toJson()));
+      await _persistenceService
+          .saveLastSoldTicket(jsonEncode(lastTicket.toJson()));
     } else {
       await _persistenceService.clearLastSoldTicket();
     }

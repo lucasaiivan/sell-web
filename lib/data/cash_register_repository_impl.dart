@@ -22,7 +22,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     try {
       final querySnapshot =
           await DatabaseCloudService.getActiveCashRegisters(accountId);
-      
+
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();

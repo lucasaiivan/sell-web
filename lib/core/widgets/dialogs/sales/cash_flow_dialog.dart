@@ -30,13 +30,13 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
   @override
   void initState() {
     super.initState();
-    
+
     // Limpiar errores previos al inicializar el diálogo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final provider = context.read<CashRegisterProvider>();
         provider.clearError();
-        
+
         // Limpiar los campos de texto para empezar con valores vacíos
         provider.movementAmountController.clear();
         provider.movementDescriptionController.clear();
@@ -46,12 +46,12 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
 
   @override
   Widget build(BuildContext context) {
-
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
-    
-    
-    final title = widget.isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
-    final buttonText = widget.isInflow ? 'Registrar Ingreso' : 'Registrar Egreso'; 
+
+    final title =
+        widget.isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
+    final buttonText =
+        widget.isInflow ? 'Registrar Ingreso' : 'Registrar Egreso';
     final Widget iconTitle = widget.isInflow
         ? const Icon(Icons.arrow_downward, color: Colors.green)
         : const Icon(Icons.arrow_outward_rounded, color: Colors.red);
@@ -90,11 +90,11 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
             ),
             const SizedBox(height: 16),
             // input : Descripción de ingreso/egreso en la caja
-            InputTextField( 
+            InputTextField(
               controller: cashRegisterProvider.movementDescriptionController,
               labelText: 'Descripción',
               hintText: 'Motivo del ${widget.isInflow ? "ingreso" : "egreso"}',
-              errorText: _descriptionError, 
+              errorText: _descriptionError,
               onChanged: (value) {
                 if (_descriptionError != null) {
                   setState(() {
@@ -124,7 +124,7 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
 
   bool _validateForm(CashRegisterProvider provider) {
     bool isValid = true;
-    
+
     // Validar monto
     final amount = provider.movementAmountController.doubleValue;
     if (amount <= 0) {
@@ -133,7 +133,7 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
       });
       isValid = false;
     }
-    
+
     // Validar descripción
     if (provider.movementDescriptionController.text.trim().isEmpty) {
       setState(() {
@@ -141,7 +141,7 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
       });
       isValid = false;
     }
-    
+
     return isValid;
   }
 
@@ -153,10 +153,12 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
     if (!_validateForm(provider)) {
       return;
     }
-    
+
     final success = widget.isInflow
-        ? await provider.addCashInflow(widget.accountId, widget.cashRegisterId, widget.userId)
-        : await provider.addCashOutflow(widget.accountId, widget.cashRegisterId, widget.userId);
+        ? await provider.addCashInflow(
+            widget.accountId, widget.cashRegisterId, widget.userId)
+        : await provider.addCashOutflow(
+            widget.accountId, widget.cashRegisterId, widget.userId);
 
     if (success && context.mounted) {
       Navigator.of(context).pop();

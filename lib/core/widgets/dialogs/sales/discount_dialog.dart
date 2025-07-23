@@ -43,7 +43,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
         final totalTicket = sellProvider.ticket.getTotalPriceWithoutDiscount;
-        
+
         return BaseDialog(
           title: 'Agregar descuento',
           icon: Icons.percent_rounded,
@@ -58,7 +58,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: colorScheme.outline.withValues(alpha: 0.2),
@@ -84,7 +85,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
 
                 // Tipo de descuento (porcentaje o monto fijo)
@@ -94,14 +95,14 @@ class _DiscountDialogState extends State<DiscountDialog> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
 
                 Row(
                   children: [
                     Expanded(
                       child: _buildDiscountTypeOption(
-                        title: 'Monto fijo', 
+                        title: 'Monto fijo',
                         icon: Icons.attach_money_rounded,
                         isSelected: !_isPercentage,
                         onTap: () => setState(() => _isPercentage = false),
@@ -110,7 +111,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildDiscountTypeOption(
-                        title: 'Porcentaje',  
+                        title: 'Porcentaje',
                         icon: Icons.percent_rounded,
                         isSelected: _isPercentage,
                         onTap: () => setState(() => _isPercentage = true),
@@ -123,24 +124,25 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
                 // Campo de entrada
                 Text(
-                  _isPercentage 
-                    ? 'Porcentaje de descuento (0-100%)'
-                    : 'Monto del descuento',
+                  _isPercentage
+                      ? 'Porcentaje de descuento (0-100%)'
+                      : 'Monto del descuento',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
 
                 InputTextField(
                   controller: _discountController,
                   labelText: _isPercentage ? 'Porcentaje (%)' : 'Monto (\$)',
                   hintText: _isPercentage ? 'Ej: 10' : 'Ej: 50.00',
-                  prefixIcon: Icon(_isPercentage 
-                    ? Icons.percent_rounded 
-                    : Icons.attach_money_rounded),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  prefixIcon: Icon(_isPercentage
+                      ? Icons.percent_rounded
+                      : Icons.attach_money_rounded),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                   ],
@@ -148,20 +150,20 @@ class _DiscountDialogState extends State<DiscountDialog> {
                     if (value == null || value.isEmpty) {
                       return 'Por favor ingrese un valor';
                     }
-                    
+
                     final numValue = double.tryParse(value);
                     if (numValue == null || numValue < 0) {
                       return 'Ingrese un valor válido mayor a 0';
                     }
-                    
+
                     if (_isPercentage && numValue > 100) {
                       return 'El porcentaje no puede ser mayor a 100%';
                     }
-                    
+
                     if (!_isPercentage && numValue > totalTicket) {
                       return 'El descuento no puede ser mayor al total';
                     }
-                    
+
                     return null;
                   },
                   onChanged: (value) {
@@ -182,7 +184,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
               text: 'Cancelar',
               onPressed: () => Navigator.of(context).pop(),
             ),
-            
+
             // Botón para limpiar descuento si ya existe uno
             if (sellProvider.ticket.discount > 0)
               AppTextButton(
@@ -193,10 +195,11 @@ class _DiscountDialogState extends State<DiscountDialog> {
                 },
                 foregroundColor: colorScheme.error,
               ),
-            
+
             AppButton(
               text: 'Aplicar descuento',
-              onPressed: () => _applyDiscount(context, sellProvider, totalTicket),
+              onPressed: () =>
+                  _applyDiscount(context, sellProvider, totalTicket),
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
               margin: EdgeInsets.zero,
@@ -210,28 +213,28 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
   Widget _buildDiscountTypeOption({
     required String title,
-    String subtitle ='',
+    String subtitle = '',
     required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected 
-            ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-            : colorScheme.surface,
+          color: isSelected
+              ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected 
-              ? colorScheme.primary.withValues(alpha: 0.5)
-              : colorScheme.outline.withValues(alpha: 0.2),
+            color: isSelected
+                ? colorScheme.primary.withValues(alpha: 0.5)
+                : colorScheme.outline.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -243,11 +246,11 @@ class _DiscountDialogState extends State<DiscountDialog> {
             children: [
               Icon(
                 icon,
-                color: isSelected 
-                  ? colorScheme.primary 
-                  : colorScheme.onSurface.withValues(alpha: 0.6),
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withValues(alpha: 0.6),
                 size: 28,
-              ), 
+              ),
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -255,19 +258,19 @@ class _DiscountDialogState extends State<DiscountDialog> {
                     title,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: isSelected 
-                        ? colorScheme.primary 
-                        : colorScheme.onSurface,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                     ),
                   ),
-                  if (subtitle.isNotEmpty)  const SizedBox(width: 4),
-                  if (subtitle.isNotEmpty) 
+                  if (subtitle.isNotEmpty) const SizedBox(width: 4),
+                  if (subtitle.isNotEmpty)
                     Text(
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isSelected 
-                          ? colorScheme.primary.withValues(alpha: 0.8)
-                          : colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: isSelected
+                            ? colorScheme.primary.withValues(alpha: 0.8)
+                            : colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                 ],
@@ -279,14 +282,14 @@ class _DiscountDialogState extends State<DiscountDialog> {
     );
   }
 
-  Widget _buildDiscountPreview(double totalTicket, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildDiscountPreview(
+      double totalTicket, ThemeData theme, ColorScheme colorScheme) {
     final discountValue = double.tryParse(_discountController.text) ?? 0;
     if (discountValue <= 0) return const SizedBox.shrink();
 
-    final discountAmount = _isPercentage 
-      ? (totalTicket * discountValue / 100)
-      : discountValue;
-    
+    final discountAmount =
+        _isPercentage ? (totalTicket * discountValue / 100) : discountValue;
+
     final finalTotal = totalTicket - discountAmount;
 
     return Container(
@@ -319,9 +322,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
               ),
             ],
           ),
-          
           const SizedBox(height: 12),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -337,9 +338,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
               ),
             ],
           ),
-          
           const SizedBox(height: 6),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -358,9 +357,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
               ),
             ],
           ),
-          
           const Divider(height: 16),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -384,15 +381,15 @@ class _DiscountDialogState extends State<DiscountDialog> {
     );
   }
 
-  void _applyDiscount(BuildContext context, SellProvider sellProvider, double totalTicket) {
+  void _applyDiscount(
+      BuildContext context, SellProvider sellProvider, double totalTicket) {
     if (!_formKey.currentState!.validate()) return;
 
     final discountValue = double.tryParse(_discountController.text) ?? 0;
     if (discountValue <= 0) return;
 
-    final discountAmount = _isPercentage 
-      ? (totalTicket * discountValue / 100)
-      : discountValue;
+    final discountAmount =
+        _isPercentage ? (totalTicket * discountValue / 100) : discountValue;
 
     // Aplicar el descuento
     sellProvider.setDiscount(discount: discountAmount);

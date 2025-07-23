@@ -314,7 +314,7 @@ class CashRegisterUsecases {
       throw Exception('El monto total de la venta debe ser mayor a cero');
     }
 
-    // NOTA: No validamos cashRegisterId porque las transacciones deben registrarse 
+    // NOTA: No validamos cashRegisterId porque las transacciones deben registrarse
     // siempre, incluso sin caja registradora activa
 
     // Usar directamente el toMap() del ticket que ya incluye todos los campos necesarios

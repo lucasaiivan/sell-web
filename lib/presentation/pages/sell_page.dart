@@ -68,16 +68,16 @@ class _SellPageState extends State<SellPage> {
 
   @override
   Widget build(BuildContext context) {
-
     // consumer : escucha los cambios en ventas (SellProvider) y el catalogo (CatalogueProvider)
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
-
         // --- Si no hay cuenta seleccionada, mostrar la página de bienvenida ---
         if (sellProvider.profileAccountSelected.id == '') {
           // provider : authProvider y catalogueProvider
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+          final authProvider =
+              Provider.of<AuthProvider>(context, listen: false);
+          final catalogueProvider =
+              Provider.of<CatalogueProvider>(context, listen: false);
 
           return WelcomePage(
             onSelectAccount: (account) async {
@@ -100,8 +100,11 @@ class _SellPageState extends State<SellPage> {
         // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         // Si es cuenta demo y usuario anónimo, cargar productos demo
-        if (sellProvider.profileAccountSelected.id == 'demo' &&authProvider.user?.isAnonymous == true &&catalogueProvider.products.isEmpty) {
-          final demoProducts =authProvider.getUserAccountsUseCase.getDemoProducts();
+        if (sellProvider.profileAccountSelected.id == 'demo' &&
+            authProvider.user?.isAnonymous == true &&
+            catalogueProvider.products.isEmpty) {
+          final demoProducts =
+              authProvider.getUserAccountsUseCase.getDemoProducts();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             catalogueProvider.loadDemoProducts(demoProducts);
           });
@@ -111,13 +114,13 @@ class _SellPageState extends State<SellPage> {
 
         // --- si ahi cuenta seleccionada, mostrar la página de venta ---
         return Scaffold(
-          appBar: appbar(buildContext: context,provider: sellProvider),
+          appBar: appbar(buildContext: context, provider: sellProvider),
           drawer: drawer,
           body: LayoutBuilder(
             builder: (context, constraints) {
               return Row(
                 children: [
-                  // view : 
+                  // view :
                   Flexible(
                     child: Stack(
                       children: [
@@ -136,19 +139,26 @@ class _SellPageState extends State<SellPage> {
                         Positioned(
                           bottom: 16,
                           right: 16,
-                          child: floatingActionButtonBody(sellProvider: sellProvider),
+                          child: floatingActionButtonBody(
+                              sellProvider: sellProvider),
                         ),
                       ],
                     ),
                   ),
-                  // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto 
-                  if (!isMobile(context) &&sellProvider.ticket.getProductsQuantity() != 0 ||(isMobile(context) && sellProvider.ticketView))
-                    // drawerTicket : información del ticket 
+                  // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
+                  if (!isMobile(context) &&
+                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                      (isMobile(context) && sellProvider.ticketView))
+                    // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                      onEditCashAmount: () => dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                      onConfirmSale: () => _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider .setTicketView(false), // para cerrar el ticket
+                      showConfirmedPurchase:
+                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      onEditCashAmount: () =>
+                          dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                      onConfirmSale: () =>
+                          _confirmSale(sellProvider), // para confirmar la venta
+                      onCloseTicket: () => sellProvider
+                          .setTicketView(false), // para cerrar el ticket
                     ),
                 ],
               );
@@ -186,11 +196,11 @@ class _SellPageState extends State<SellPage> {
   }
 
   void scanCodeProduct({required String code}) async {
-    
     final context = _focusNode.context;
-    if (context == null) return; 
+    if (context == null) return;
 
-    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+    final catalogueProvider =
+        Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
@@ -199,7 +209,8 @@ class _SellPageState extends State<SellPage> {
       homeProvider.addProductsticket(product.copyWith());
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
-      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
+      final publicProduct =
+          await catalogueProvider.getPublicProductByCode(code);
 
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
@@ -212,7 +223,8 @@ class _SellPageState extends State<SellPage> {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
           // ignore: use_build_context_synchronously
-          showAddProductDialog(context,isNew: true, product: ProductCatalogue(id: code, code: code));
+          showAddProductDialog(context,
+              isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }
     }
@@ -523,17 +535,17 @@ class _SellPageState extends State<SellPage> {
                   CashRegisterStatusWidget(),
 
                   // Botón de descartar ticket (existente) usando [AppBarButtonCircle]
-                  ( provider.ticket.getProductsQuantity() > 0)
+                  (provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text: isMobile(buildContext)? '': 'Descartar ticket',
+                          text:
+                              isMobile(buildContext) ? '' : 'Descartar ticket',
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
                           backgroundColor: Colors.red.withValues(alpha: 0.1),
                           iconColor: Colors.red.shade700,
                         )
                       : Container(),
-                   
                 ],
               )
             ],
@@ -800,7 +812,7 @@ class _SellPageState extends State<SellPage> {
       }
     }
 
-    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) ===== 
+    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
 
     // Obtener información del usuario para asignar como vendedor
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -813,7 +825,7 @@ class _SellPageState extends State<SellPage> {
       ticket: provider.ticket,
       sellerName: userName,
       sellerId: userEmail,
-    ); 
+    );
     await _finalizeSale(provider);
   }
 
@@ -906,7 +918,8 @@ class _SellPageState extends State<SellPage> {
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
   Widget body({required SellProvider provider}) {
     // widgetss
-    Widget itemDefault = Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
+    Widget itemDefault =
+        Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -924,13 +937,17 @@ class _SellPageState extends State<SellPage> {
           crossAxisCount = 6; // Ancho para pantallas grandes
         }
         // Usar los productos seleccionados del ticket
-        final List<ProductCatalogue> list = provider.ticket.products.toList().reversed.toList();
+        final List<ProductCatalogue> list =
+            provider.ticket.products.toList().reversed.toList();
         // Calcular cuántas filas caben en la vista
-        final double itemHeight = (constraints.maxWidth / crossAxisCount) * 1.1; // Ajusta el factor según el aspecto de los ítems
+        final double itemHeight = (constraints.maxWidth / crossAxisCount) *
+            1.1; // Ajusta el factor según el aspecto de los ítems
         int rowCount = 1;
         int minItemCount = crossAxisCount;
         // Si la altura del contenedor es finita y mayor a 0, calcular el número de filas
-        if (constraints.maxHeight.isFinite &&constraints.maxHeight > 0 &&itemHeight > 0) {
+        if (constraints.maxHeight.isFinite &&
+            constraints.maxHeight > 0 &&
+            itemHeight > 0) {
           rowCount = (constraints.maxHeight / itemHeight).ceil();
           minItemCount = rowCount * crossAxisCount;
         }
@@ -1463,7 +1480,6 @@ class _ProductoItemState extends State<ProductoItem> {
                 : ''
             : 'Sin stock')
         : '';
- 
 
     // aparición animada
     return Card(
@@ -1492,12 +1508,12 @@ class _ProductoItemState extends State<ProductoItem> {
                                 fontWeight: FontWeight.bold)),
                       ))),
               // image : imagen del producto que ocupa parte de la tarjeta
-                Expanded(
+              Expanded(
                 flex: 2,
                 child: Center(
                   child: ProductImage(
-                      imageUrl: widget.producto.image, 
-                    ),
+                    imageUrl: widget.producto.image,
+                  ),
                 ),
               ),
               // view : información del producto
@@ -1550,7 +1566,6 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 
   // WIDGETS COMPONETS
- 
 
   Widget contentInfo() {
     return widget.producto.description == ''
@@ -1687,7 +1702,9 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
   showLastTicketDialog(
     context: context,
     ticket: provider.lastSoldTicket!,
-    businessName: provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name : 'PUNTO DE VENTA',
+    businessName: provider.profileAccountSelected.name.isNotEmpty
+        ? provider.profileAccountSelected.name
+        : 'PUNTO DE VENTA',
   );
 }
 
@@ -1697,7 +1714,8 @@ class CashRegisterStatusWidget extends StatefulWidget {
   const CashRegisterStatusWidget({super.key});
 
   @override
-  State<CashRegisterStatusWidget> createState() => _CashRegisterStatusWidgetState();
+  State<CashRegisterStatusWidget> createState() =>
+      _CashRegisterStatusWidgetState();
 }
 
 class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
@@ -1717,12 +1735,14 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     // Obtener el proveedor de caja registradora y la cuenta seleccionada
     final sellProvider = context.read<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
-    
+
     if (accountId.isNotEmpty) {
       // Inicializar la caja registradora desde la persistencia
-      await context.read<CashRegisterProvider>().initializeFromPersistence(accountId);
+      await context
+          .read<CashRegisterProvider>()
+          .initializeFromPersistence(accountId);
     }
-    
+
     // Marcar como completada la inicialización
     if (mounted) {
       setState(() {
@@ -1730,21 +1750,25 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       });
     }
   }
+
   // - Muestra el popup menu con opciones de caja registradora -
   void _showStatusDialog(BuildContext context) {
     // - obtenemos los proveedores necesarios para el diálogo
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     // Obtener el balance esperado de la caja activa
-    final balance = cashRegisterProvider.hasActiveCashRegister 
-        ? cashRegisterProvider.currentActiveCashRegister?.getExpectedBalance ?? 0.0
+    final balance = cashRegisterProvider.hasActiveCashRegister
+        ? cashRegisterProvider.currentActiveCashRegister?.getExpectedBalance ??
+            0.0
         : 0.0;
-    
+
     // Mostrar popup menu
     showMenu<String>(
-      context: context,menuPadding: const EdgeInsets.all(0),
+      context: context,
+      menuPadding: const EdgeInsets.all(0),
       position: RelativeRect.fromLTRB(
         MediaQuery.of(context).size.width - 200, // Posición desde la derecha
         kToolbarHeight + 20, // Debajo del AppBar
@@ -1764,9 +1788,9 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                   Text(
                     'Balance Total',
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                   const Spacer(),
                   Icon(
@@ -1780,9 +1804,9 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               Text(
                 Publications.getFormatoPrecio(value: balance),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
               ),
               const Divider(height: 16),
             ],
@@ -1794,7 +1818,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             value: 'income',
             child: Row(
               children: [
-                Icon(Icons.arrow_downward_sharp, size: 20, color: Colors.green.shade600),
+                Icon(Icons.arrow_downward_sharp,
+                    size: 20, color: Colors.green.shade600),
                 const SizedBox(width: 12),
                 const Text('Ingreso'),
               ],
@@ -1806,7 +1831,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             value: 'expense',
             child: Row(
               children: [
-                Icon(Icons.arrow_outward_rounded, size: 20, color: Colors.red.shade600),
+                Icon(Icons.arrow_outward_rounded,
+                    size: 20, color: Colors.red.shade600),
                 const SizedBox(width: 12),
                 const Text('Egreso'),
               ],
@@ -1834,9 +1860,12 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               context: context,
               builder: (_) => MultiProvider(
                 providers: [
-                  ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
-                  ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
-                  ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+                  ChangeNotifierProvider<CashRegisterProvider>.value(
+                      value: cashRegisterProvider),
+                  ChangeNotifierProvider<SellProvider>.value(
+                      value: sellProvider),
+                  ChangeNotifierProvider<AuthProvider>.value(
+                      value: authProvider),
                 ],
                 child: const CashRegisterManagementDialog(),
               ),
@@ -1844,15 +1873,18 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             break;
           case 'income':
             // Reutilizar CashFlowDialog para ingresos
-            _showCashFlowDialog(context, true, cashRegisterProvider, sellProvider, authProvider);
+            _showCashFlowDialog(context, true, cashRegisterProvider,
+                sellProvider, authProvider);
             break;
           case 'expense':
             // Reutilizar CashFlowDialog para egresos
-            _showCashFlowDialog(context, false, cashRegisterProvider, sellProvider, authProvider);
+            _showCashFlowDialog(context, false, cashRegisterProvider,
+                sellProvider, authProvider);
             break;
           case 'close':
             // Mostrar confirmación de cierre
-            _showCloseCashRegisterDialog(context, cashRegisterProvider, sellProvider);
+            _showCloseCashRegisterDialog(
+                context, cashRegisterProvider, sellProvider);
             break;
         }
       }
@@ -1861,12 +1893,11 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   // - Reutiliza CashFlowDialog para mostrar diálogo de ingresos/egresos -
   void _showCashFlowDialog(
-    BuildContext context, 
-    bool isInflow, 
-    CashRegisterProvider cashRegisterProvider, 
-    SellProvider sellProvider, 
-    AuthProvider authProvider
-  ) {
+      BuildContext context,
+      bool isInflow,
+      CashRegisterProvider cashRegisterProvider,
+      SellProvider sellProvider,
+      AuthProvider authProvider) {
     if (!cashRegisterProvider.hasActiveCashRegister) return;
 
     final cashRegister = cashRegisterProvider.currentActiveCashRegister!;
@@ -1875,7 +1906,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
@@ -1890,15 +1922,17 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
   }
 
   // - Reutiliza CashRegisterCloseDialog para mostrar diálogo de cierre -
-  void _showCloseCashRegisterDialog(BuildContext context, CashRegisterProvider cashRegisterProvider, SellProvider sellProvider) {
+  void _showCloseCashRegisterDialog(BuildContext context,
+      CashRegisterProvider cashRegisterProvider, SellProvider sellProvider) {
     final currentCashRegister = cashRegisterProvider.currentActiveCashRegister;
     if (currentCashRegister == null) return;
-    
+
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],
         child: CashRegisterCloseDialog(cashRegister: currentCashRegister),
@@ -1908,22 +1942,24 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   // - Muestra el diálogo completo de administración de caja registradora -
   void _showCashRegisterManagementDialog(BuildContext context) {
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
         child: const CashRegisterManagementDialog(),
       ),
     );
-  } 
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1931,8 +1967,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;
-         
-         // button : boton con el estado de la caja registradora
+
+        // button : boton con el estado de la caja registradora
         return AppBarButtonCircle(
           isLoading: _isInitializing,
           icon: Icons.point_of_sale_outlined,
@@ -1946,12 +1982,17 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               _showStatusDialog(context);
             }
           },
-          backgroundColor: isActive? Colors.green.withValues(alpha: 0.1): Colors.grey.withValues(alpha: 0.1),
+          backgroundColor: isActive
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha: 0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)? null: isActive? '${provider.currentActiveCashRegister?.description}': 'Iniciar caja',
+          text: isMobile(context)
+              ? null
+              : isActive
+                  ? '${provider.currentActiveCashRegister?.description}'
+                  : 'Iniciar caja',
         );
       },
     );
   }
- 
 }

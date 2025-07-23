@@ -14,7 +14,8 @@ extension ListExtensions<T> on List<T> {
 
 class _CashRegisterState {
   final List<CashRegister> activeCashRegisters;
-  final CashRegister? selectedCashRegister; // Puede ser null si no hay caja seleccionada
+  final CashRegister?
+      selectedCashRegister; // Puede ser null si no hay caja seleccionada
   final bool isLoadingActive;
   final List<CashRegister> cashRegisterHistory;
   final bool isLoadingHistory;
@@ -161,9 +162,11 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS DE PERSISTENCIA
   // ==========================================
 
-  /// Inicializa 
+  /// Inicializa
   Future<void> initializeFromPersistence(String accountId) async {
-    if (accountId.isEmpty) {return;} // No hacer nada si no hay cuenta
+    if (accountId.isEmpty) {
+      return;
+    } // No hacer nada si no hay cuenta
 
     // Obtener instancia de AppDataPersistenceService
     final persistenceService = AppDataPersistenceService.instance;
@@ -171,13 +174,14 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // Cargar cajas activas con espera explícita
       await _loadActiveCashRegistersAndWait(accountId);
-      
+
       // continuar solo si hay cajas activas
       if (_state.activeCashRegisters.isEmpty) {
         // Intentar cargar directamente una vez más
         try {
-          final directCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
-          
+          final directCashRegisters =
+              await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+
           if (directCashRegisters.isNotEmpty) {
             _state = _state.copyWith(
               activeCashRegisters: directCashRegisters,
@@ -190,12 +194,15 @@ class CashRegisterProvider extends ChangeNotifier {
         }
       }
       // Intentar cargar la caja seleccionada desde persistencia
-      final savedCashRegisterId = await persistenceService.getSelectedCashRegisterId();
-      
+      final savedCashRegisterId =
+          await persistenceService.getSelectedCashRegisterId();
+
       // Si hay una caja guardada, verificar si existe en las activas
       if (savedCashRegisterId != null && savedCashRegisterId.isNotEmpty) {
         // Verificar si la caja guardada existe en las activas
-        final savedCashRegister = _state.activeCashRegisters.where((cr) => cr.id == savedCashRegisterId).firstOrNull; //  usa firstOrNull para evitar excepciones
+        final savedCashRegister = _state.activeCashRegisters
+            .where((cr) => cr.id == savedCashRegisterId)
+            .firstOrNull; //  usa firstOrNull para evitar excepciones
         if (savedCashRegister != null) {
           // si existe una caja seleccionada, actualizar el estado
           _state = _state.copyWith(selectedCashRegister: savedCashRegister);
@@ -205,7 +212,6 @@ class CashRegisterProvider extends ChangeNotifier {
           await persistenceService.clearSelectedCashRegisterId();
         }
       }
-      
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
@@ -215,7 +221,8 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Método auxiliar que espera a que se carguen las cajas activas
   Future<void> _loadActiveCashRegistersAndWait(String accountId) async {
     // Si ya estamos escuchando la misma cuenta, esperar a los datos existentes
-    if (_currentAccountId == accountId && _activeCashRegistersSubscription != null) {
+    if (_currentAccountId == accountId &&
+        _activeCashRegistersSubscription != null) {
       // Esperar un momento para que el stream emita datos si los tiene
       await Future.delayed(const Duration(milliseconds: 500));
       return;
@@ -235,9 +242,8 @@ class CashRegisterProvider extends ChangeNotifier {
 
     try {
       // Configurar stream para actualizaciones automáticas
-      _activeCashRegistersSubscription = _cashRegisterUsecases
-          .getActiveCashRegistersStream(accountId)
-          .listen(
+      _activeCashRegistersSubscription =
+          _cashRegisterUsecases.getActiveCashRegistersStream(accountId).listen(
         (activeCashRegisters) {
           // Actualizar la lista de cajas activas
           _state = _state.copyWith(
@@ -264,7 +270,7 @@ class CashRegisterProvider extends ChangeNotifier {
           }
 
           notifyListeners();
-          
+
           // Completar solo en la primera emisión
           if (!firstDataReceived) {
             firstDataReceived = true;
@@ -277,7 +283,7 @@ class CashRegisterProvider extends ChangeNotifier {
             isLoadingActive: false,
           );
           notifyListeners();
-          
+
           if (!firstDataReceived) {
             firstDataReceived = true;
             completer.completeError(error);
@@ -292,7 +298,6 @@ class CashRegisterProvider extends ChangeNotifier {
           throw Exception('Timeout esperando datos de cajas activas');
         },
       );
-      
     } catch (e) {
       _state = _state.copyWith(
         errorMessage: e.toString(),
@@ -311,10 +316,9 @@ class CashRegisterProvider extends ChangeNotifier {
       // Actualizar estado
       _state = _state.copyWith(selectedCashRegister: cashRegister);
       notifyListeners();
-      
+
       // Guardar en persistencia
       await persistenceService.saveSelectedCashRegisterId(cashRegister.id);
-      
     } catch (e) {
       // Revertir cambio de estado si falló la persistencia
       _state = _state.copyWith(clearSelectedCashRegister: true);
@@ -331,10 +335,9 @@ class CashRegisterProvider extends ChangeNotifier {
       // Limpiar estado
       _state = _state.copyWith(clearSelectedCashRegister: true);
       notifyListeners();
-      
+
       // Limpiar persistencia
       await persistenceService.clearSelectedCashRegisterId();
-      
     } catch (e) {
       _state = _state.copyWith(errorMessage: 'Error al limpiar selección: $e');
       notifyListeners();
@@ -739,8 +742,9 @@ class CashRegisterProvider extends ChangeNotifier {
   }) async {
     try {
       // Asegurar que el ticket tenga un ID único
-      final ticketId = ticket.id.isEmpty ? Publications.generateUid() : ticket.id;
-      
+      final ticketId =
+          ticket.id.isEmpty ? Publications.generateUid() : ticket.id;
+
       // Asegurar que tenga información del vendedor
       final finalSellerName = ticket.sellerName.isEmpty
           ? (sellerName ?? 'Vendedor')
@@ -752,14 +756,18 @@ class CashRegisterProvider extends ChangeNotifier {
       // Si hay una caja activa, asignar su información; si no, usar valores por defecto
       String finalCashRegisterName = ticket.cashRegisterName;
       String finalCashRegisterId = ticket.cashRegisterId;
-      
+
       if (hasActiveCashRegister) {
         finalCashRegisterName = currentActiveCashRegister!.description;
         finalCashRegisterId = currentActiveCashRegister!.id;
       } else {
         // Si no hay caja activa, usar información por defecto
-        finalCashRegisterName = finalCashRegisterName.isEmpty ? 'Sin caja asignada' : finalCashRegisterName;
-        finalCashRegisterId = finalCashRegisterId.isEmpty ? 'no_cash_register' : finalCashRegisterId;
+        finalCashRegisterName = finalCashRegisterName.isEmpty
+            ? 'Sin caja asignada'
+            : finalCashRegisterName;
+        finalCashRegisterId = finalCashRegisterId.isEmpty
+            ? 'no_cash_register'
+            : finalCashRegisterId;
       }
 
       // Crear ticket actualizado con toda la información necesaria
@@ -897,8 +905,8 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Limpia todos los mensajes de error
-  /// 
-  /// Este método debe ser llamado al inicializar diálogos para resetear 
+  ///
+  /// Este método debe ser llamado al inicializar diálogos para resetear
   /// el estado de error y evitar que se muestren errores de operaciones previas
   void clearError() {
     _state = _state.copyWith(errorMessage: null);

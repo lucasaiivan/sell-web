@@ -24,11 +24,11 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
       if (mounted) {
         final provider = context.read<CashRegisterProvider>();
         provider.clearError();
-        
+
         // Limpiar los campos de texto para empezar con valores vacíos
         provider.openDescriptionController.clear();
         provider.initialCashController.clear();
-        
+
         _loadFixedDescriptions();
       }
     });

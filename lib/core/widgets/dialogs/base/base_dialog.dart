@@ -148,7 +148,7 @@ class BaseDialog extends StatelessWidget {
   /// Construye el contenido con efecto de gradiente difuminado al final
   Widget _buildContentWithGradient(BuildContext context, ThemeData theme) {
     final hasActions = actions != null && actions!.isNotEmpty;
-    
+
     if (!scrollable) {
       // Si no es scrollable, solo agregar padding normal
       return Padding(
@@ -162,14 +162,16 @@ class BaseDialog extends StatelessWidget {
         // Contenido scrollable
         SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            24, 
-            16, 
-            24, 
-            hasActions ? 48 : 16, // Más padding inferior si hay acciones para el gradiente
+            24,
+            16,
+            24,
+            hasActions
+                ? 48
+                : 16, // Más padding inferior si hay acciones para el gradiente
           ),
           child: content,
         ),
-        
+
         // Gradiente difuminado al final (solo si hay acciones)
         if (hasActions)
           Positioned(
@@ -184,11 +186,15 @@ class BaseDialog extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      theme.colorScheme.surface.withValues(alpha: 0.0),   // Completamente transparente arriba
-                      theme.colorScheme.surface.withValues(alpha: 0.3),   // Ligeramente visible
-                      theme.colorScheme.surface.withValues(alpha: 0.7),   // Más visible
-                      theme.colorScheme.surface.withValues(alpha: 0.9),   // Casi opaco
-                      theme.colorScheme.surface,                          // Completamente opaco abajo
+                      theme.colorScheme.surface.withValues(
+                          alpha: 0.0), // Completamente transparente arriba
+                      theme.colorScheme.surface
+                          .withValues(alpha: 0.3), // Ligeramente visible
+                      theme.colorScheme.surface
+                          .withValues(alpha: 0.7), // Más visible
+                      theme.colorScheme.surface
+                          .withValues(alpha: 0.9), // Casi opaco
+                      theme.colorScheme.surface, // Completamente opaco abajo
                     ],
                     stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
                   ),

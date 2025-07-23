@@ -29,10 +29,10 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color effectiveBackground =
+        backgroundColor ?? Theme.of(context).colorScheme.surfaceContainer;
 
-    final Color effectiveBackground = backgroundColor ?? Theme.of(context).colorScheme.surfaceContainer; 
-
-    return Container( 
+    return Container(
       color: effectiveBackground.withValues(alpha: 0.2),
       width: size,
       height: size,
@@ -41,7 +41,6 @@ class ProductImage extends StatelessWidget {
   }
 
   Widget _buildImageContent() {
-
     // Si la URL de la imagen es válida, carga la imagen desde la red
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       // Utiliza CachedNetworkImage para optimizar la carga y caché
@@ -60,8 +59,10 @@ class ProductImage extends StatelessWidget {
           maxWidthDiskCache: size != null ? (size! * 3).round() : null,
           maxHeightDiskCache: size != null ? (size! * 3).round() : null,
           // Manejo de errores y placeholder optimizado
-          errorWidget: (context, url, error) => _buildDefaultImageWithAnimation(context),
-          placeholder: (context, url) => _buildDefaultImageWithAnimation(context),
+          errorWidget: (context, url, error) =>
+              _buildDefaultImageWithAnimation(context),
+          placeholder: (context, url) =>
+              _buildDefaultImageWithAnimation(context),
           // Configuración adicional para mejor UX
           useOldImageOnUrlChange: true,
           filterQuality: FilterQuality.medium,
@@ -79,16 +80,16 @@ class ProductImage extends StatelessWidget {
   Widget _buildDefaultImageWithAnimation(BuildContext context) {
     // Determinar si el tema es claro u oscuro
     final bool isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Colores discretos basados en el brillo del tema
-    final Color iconColor = isDarkTheme 
+    final Color iconColor = isDarkTheme
         ? Colors.grey.shade400 // Gris claro discreto para tema oscuro
         : Colors.grey.shade200; // Gris medio discreto para tema claro
-    
+
     final Color backgroundOverlay = isDarkTheme
-        ? Colors.grey.shade500  // Overlay sutil para tema oscuro
+        ? Colors.grey.shade500 // Overlay sutil para tema oscuro
         : Colors.grey.shade100; // Overlay sutil para tema claro
-    
+
     return Container(
       decoration: BoxDecoration(
         color: backgroundOverlay,
@@ -97,7 +98,9 @@ class ProductImage extends StatelessWidget {
         child: Image.asset(
           defaultAsset,
           fit: fit,
-          width: size != null ? size! * 0.6 : null, // Reducir tamaño del icono para mejor proporción
+          width: size != null
+              ? size! * 0.6
+              : null, // Reducir tamaño del icono para mejor proporción
           height: size != null ? size! * 0.6 : null,
           filterQuality: FilterQuality.medium,
           color: iconColor,
@@ -105,5 +108,4 @@ class ProductImage extends StatelessWidget {
       ),
     );
   }
-
 }

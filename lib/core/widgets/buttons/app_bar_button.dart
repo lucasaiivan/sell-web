@@ -124,8 +124,8 @@ class AppBarButtonCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveBackgroundColor =
-        backgroundColor ?? theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
+    final effectiveBackgroundColor = backgroundColor ??
+        theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
     final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
     final bool hasText = text != null && text!.isNotEmpty;
 
@@ -134,7 +134,8 @@ class AppBarButtonCircle extends StatelessWidget {
       child: Tooltip(
         message: tooltip,
         child: TextButton(
-          onPressed: isLoading ? null : onPressed, // Deshabilitar durante loading
+          onPressed:
+              isLoading ? null : onPressed, // Deshabilitar durante loading
           style: TextButton.styleFrom(
             backgroundColor: effectiveBackgroundColor,
             shape: hasText ? const StadiumBorder() : const CircleBorder(),

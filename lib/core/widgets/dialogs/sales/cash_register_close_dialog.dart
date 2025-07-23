@@ -17,7 +17,8 @@ class CashRegisterCloseDialog extends StatefulWidget {
   });
 
   @override
-  State<CashRegisterCloseDialog> createState() => _CashRegisterCloseDialogState();
+  State<CashRegisterCloseDialog> createState() =>
+      _CashRegisterCloseDialogState();
 }
 
 class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
@@ -29,7 +30,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
       if (mounted) {
         final provider = context.read<CashRegisterProvider>();
         provider.clearError();
-        
+
         // Limpiar el campo de balance final para empezar con valor vacío
         provider.finalBalanceController.clear();
       }
@@ -128,17 +129,27 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
-            _buildSummaryRow('Monto Inicial:',
-                Publications.getFormatoPrecio(value: widget.cashRegister.initialCash)),
+            _buildSummaryRow(
+                'Monto Inicial:',
+                Publications.getFormatoPrecio(
+                    value: widget.cashRegister.initialCash)),
             _buildSummaryRow('Ventas:', widget.cashRegister.sales.toString()),
-            _buildSummaryRow('Facturación:',
-                Publications.getFormatoPrecio(value: widget.cashRegister.billing)),
-            _buildSummaryRow('Descuentos:',
-                Publications.getFormatoPrecio(value: widget.cashRegister.discount)),
-            _buildSummaryRow('Ingresos:',
-                Publications.getFormatoPrecio(value: widget.cashRegister.cashInFlow)),
-            _buildSummaryRow('Egresos:',
-                Publications.getFormatoPrecio(value: widget.cashRegister.cashOutFlow)),
+            _buildSummaryRow(
+                'Facturación:',
+                Publications.getFormatoPrecio(
+                    value: widget.cashRegister.billing)),
+            _buildSummaryRow(
+                'Descuentos:',
+                Publications.getFormatoPrecio(
+                    value: widget.cashRegister.discount)),
+            _buildSummaryRow(
+                'Ingresos:',
+                Publications.getFormatoPrecio(
+                    value: widget.cashRegister.cashInFlow)),
+            _buildSummaryRow(
+                'Egresos:',
+                Publications.getFormatoPrecio(
+                    value: widget.cashRegister.cashOutFlow)),
             const Divider(),
             _buildSummaryRow(
               'Balance Esperado:',

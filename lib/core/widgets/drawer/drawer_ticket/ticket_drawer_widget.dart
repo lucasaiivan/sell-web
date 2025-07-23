@@ -124,7 +124,7 @@ class _TicketContent extends StatelessWidget {
               backgroundColor: backgroundColor,
             ),
           ),
-          
+
           // Botones de acción fijos en la parte inferior
           _buildFixedActionSection(
             context: context,
@@ -149,12 +149,13 @@ class _TicketContent extends StatelessWidget {
     required Color backgroundColor,
   }) {
     final provider = Provider.of<SellProvider>(context, listen: false);
-    
+
     return _ScrollableContentWithIndicator(
       backgroundColor: backgroundColor,
       colorScheme: colorScheme,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 75), // Ajustado para coincidir con gradiente
+        padding: const EdgeInsets.fromLTRB(
+            12, 12, 12, 75), // Ajustado para coincidir con gradiente
         child: Column(
           children: [
             // Encabezado del ticket
@@ -198,7 +199,8 @@ class _TicketContent extends StatelessWidget {
               ),
 
             // Total del ticket
-            _buildTotalSection(ticket, colorScheme.primary, textTotalStyle, textDescriptionStyle),
+            _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
+                textDescriptionStyle),
 
             // Sección de descuento
             _buildDiscountSection(),
@@ -234,11 +236,8 @@ class _TicketContent extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.all(12),
-      child: _buildActionButtons(
-        onConfirmSale, 
-        onCloseTicket, 
-        isMobile(context)
-      ),
+      child:
+          _buildActionButtons(onConfirmSale, onCloseTicket, isMobile(context)),
     );
   }
 
@@ -398,13 +397,13 @@ class _TicketContent extends StatelessWidget {
   /// Construye el widget del total con animación
   /// Construye la sección de total (con o sin descuento)
   Widget _buildTotalSection(
-    dynamic ticket, 
-    Color color, 
-    TextStyle textTotalStyle, 
+    dynamic ticket,
+    Color color,
+    TextStyle textTotalStyle,
     TextStyle textDescriptionStyle,
   ) {
     final hasDiscount = ticket.discount > 0;
-    
+
     return Padding(
       padding: const EdgeInsets.only(left: 12, right: 12, top: 5, bottom: 4),
       child: Container(
@@ -413,89 +412,91 @@ class _TicketContent extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: hasDiscount 
-          ? Column(
-              children: [
-                // Subtotal
-                Row(
-                  children: [
-                    Text(
-                      'SUBTOTAL', 
-                      style: textDescriptionStyle.copyWith(
-                        fontSize: 16,
-                        color: Colors.white.withValues(alpha: 0.9),
+        child: hasDiscount
+            ? Column(
+                children: [
+                  // Subtotal
+                  Row(
+                    children: [
+                      Text(
+                        'SUBTOTAL',
+                        style: textDescriptionStyle.copyWith(
+                          fontSize: 16,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      Publications.getFormatoPrecio(value: ticket.getTotalPriceWithoutDiscount),
-                      style: textDescriptionStyle.copyWith(
-                        fontSize: 16,
-                        color: Colors.white.withValues(alpha: 0.9),
+                      const Spacer(),
+                      Text(
+                        Publications.getFormatoPrecio(
+                            value: ticket.getTotalPriceWithoutDiscount),
+                        style: textDescriptionStyle.copyWith(
+                          fontSize: 16,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        textAlign: TextAlign.right,
                       ),
-                      textAlign: TextAlign.right,
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 4),
-                
-                // Descuento
-                Row(
-                  children: [
-                    Text(
-                      'DESCUENTO', 
-                      style: textDescriptionStyle.copyWith(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.8),
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // Descuento
+                  Row(
+                    children: [
+                      Text(
+                        'DESCUENTO',
+                        style: textDescriptionStyle.copyWith(
+                          fontSize: 14,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '- ${Publications.getFormatoPrecio(value: ticket.discount)}',
-                      style: textDescriptionStyle.copyWith(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.8),
+                      const Spacer(),
+                      Text(
+                        '- ${Publications.getFormatoPrecio(value: ticket.discount)}',
+                        style: textDescriptionStyle.copyWith(
+                          fontSize: 14,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                        textAlign: TextAlign.right,
                       ),
-                      textAlign: TextAlign.right,
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 8),
-                
-                Container(
-                  height: 1,
-                  color: Colors.white.withValues(alpha: 0.3),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Total final
-                Row(
-                  children: [
-                    Text('TOTAL', style: textTotalStyle),
-                    const Spacer(),
-                    Text(
-                      Publications.getFormatoPrecio(value: ticket.getTotalPrice),
-                      style: textTotalStyle,
-                      textAlign: TextAlign.right,
-                    ),
-                  ],
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                Text('TOTAL', style: textTotalStyle),
-                const Spacer(),
-                Text(
-                  Publications.getFormatoPrecio(value: ticket.getTotalPrice),
-                  style: textTotalStyle,
-                  textAlign: TextAlign.right,
-                ),
-              ],
-            ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Container(
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Total final
+                  Row(
+                    children: [
+                      Text('TOTAL', style: textTotalStyle),
+                      const Spacer(),
+                      Text(
+                        Publications.getFormatoPrecio(
+                            value: ticket.getTotalPrice),
+                        style: textTotalStyle,
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Text('TOTAL', style: textTotalStyle),
+                  const Spacer(),
+                  Text(
+                    Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                    style: textTotalStyle,
+                    textAlign: TextAlign.right,
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -559,7 +560,7 @@ class _TicketContent extends StatelessWidget {
                         onPressed: () => provider.setDiscount(discount: 0.0),
                         foregroundColor: colorScheme.error,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8, 
+                          horizontal: 8,
                           vertical: 4,
                         ),
                       ),
@@ -567,7 +568,7 @@ class _TicketContent extends StatelessWidget {
                   ),
                 ),
               ],
-              
+
               // Botón para agregar descuento
               AppTextButton.icon(
                 text: hasDiscount ? 'Editar descuento' : 'Agregar descuento',
@@ -577,8 +578,10 @@ class _TicketContent extends StatelessWidget {
                 ),
                 onPressed: () => showDiscountDialog(context),
                 foregroundColor: colorScheme.primary,
-                backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                backgroundColor:
+                    colorScheme.primaryContainer.withValues(alpha: 0.3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 borderRadius: BorderRadius.circular(8),
               ),
             ],
@@ -760,7 +763,7 @@ class _TicketProductListState extends State<_TicketProductList> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     final List<Widget> allItems = widget.ticket.products.map<Widget>((item) {
       final product = item as ProductCatalogue;
 
@@ -798,14 +801,15 @@ class _TicketProductListState extends State<_TicketProductList> {
 
     final totalItems = allItems.length;
     final shouldShowExpander = totalItems > _maxItemsToShow;
-    final itemsToShow = _isExpanded ? allItems : allItems.take(_maxItemsToShow).toList();
+    final itemsToShow =
+        _isExpanded ? allItems : allItems.take(_maxItemsToShow).toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Lista de productos (limitada o completa según el estado)
         ...itemsToShow,
-        
+
         // Indicador para expandir/contraer si hay más de 7 items
         if (shouldShowExpander)
           Padding(
@@ -821,22 +825,23 @@ class _TicketProductListState extends State<_TicketProductList> {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), 
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _isExpanded 
-                          ? Icons.keyboard_arrow_up_rounded 
-                          : Icons.keyboard_arrow_down_rounded,
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
                         color: colorScheme.primary,
                         size: 20,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _isExpanded 
-                          ? 'Ver menos' 
-                          : 'Ver ${totalItems - _maxItemsToShow} más productos',
+                        _isExpanded
+                            ? 'Ver menos'
+                            : 'Ver ${totalItems - _maxItemsToShow} más productos',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -973,9 +978,9 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Descuento
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -995,17 +1000,17 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     Container(
                       height: 1,
                       color: Colors.white.withValues(alpha: 0.2),
                     ),
-                    
+
                     const SizedBox(height: 12),
                   ],
-                  
+
                   // Total de la venta
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1242,10 +1247,12 @@ class _ScrollableContentWithIndicator extends StatefulWidget {
   });
 
   @override
-  State<_ScrollableContentWithIndicator> createState() => _ScrollableContentWithIndicatorState();
+  State<_ScrollableContentWithIndicator> createState() =>
+      _ScrollableContentWithIndicatorState();
 }
 
-class _ScrollableContentWithIndicatorState extends State<_ScrollableContentWithIndicator> {
+class _ScrollableContentWithIndicatorState
+    extends State<_ScrollableContentWithIndicator> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollIndicator = false;
 
@@ -1271,8 +1278,7 @@ class _ScrollableContentWithIndicatorState extends State<_ScrollableContentWithI
       children: [
         // Contenido scrollable
         widget.child,
-         
-        
+
         // Indicador de scroll si hay más contenido
         if (_showScrollIndicator)
           Positioned(
@@ -1281,7 +1287,8 @@ class _ScrollableContentWithIndicatorState extends State<_ScrollableContentWithI
             bottom: 65,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: widget.colorScheme.surface.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(16),

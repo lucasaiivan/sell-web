@@ -271,7 +271,7 @@ class DialogComponents {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12), 
+      padding: const EdgeInsets.all(12),
       child: Column(
         children: [
           Row(

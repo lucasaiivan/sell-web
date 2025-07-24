@@ -69,15 +69,13 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 );
               }
               // view : Construir contenido responsivo de la  información de caja
-              return _buildResponsiveContent(
-                  context, cashRegisterProvider, isMobile);
+              return _buildResponsiveContent(context, cashRegisterProvider, isMobile);
             },
           ),
           actions: [
             // Botones de acción de caja (Deseleccionar/Cerrar) - Solo si hay caja activa
             if (cashRegisterProvider.hasActiveCashRegister)
-              ..._buildCashRegisterActionButtons(
-                  context, cashRegisterProvider, isMobile),
+              ..._buildCashRegisterActionButtons(context, cashRegisterProvider, isMobile),
           ],
         );
       },
@@ -126,33 +124,21 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildCashRegisterActionButtons(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
-    final cashRegister = provider.currentActiveCashRegister!;
-    final theme = Theme.of(context);
+  List<Widget> _buildCashRegisterActionButtons(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+    final cashRegister = provider.currentActiveCashRegister!; 
 
     return [
-      AppOutlinedButton(
-        icon: const Icon(Icons.clear_rounded),
+      DialogComponents.secondaryActionButton(
+        context: context,
         text: 'Deseleccionar',
+        icon: Icons.clear_rounded,
         onPressed: () => provider.clearSelectedCashRegister(),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        margin: EdgeInsets.zero,
       ),
-      AppFilledButton(
-        icon: const Icon(Icons.output_rounded),
+      DialogComponents.primaryActionButton(
+        context: context,
         text: 'Cerrar Caja',
+        icon: Icons.output_rounded,
         onPressed: () => _showCloseDialog(context, cashRegister),
-        backgroundColor: theme.colorScheme.error,
-        foregroundColor: theme.colorScheme.onError,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        margin: EdgeInsets.zero,
       ),
     ];
   }
@@ -296,14 +282,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
             ),
           ),
         ],
-        AppButton( 
-          text: 'Nueva caja',
-          onPressed: authProvider.isGuest? null: () => _showOpenDialog(context),
-          isLoading: provider.isLoadingActive, 
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 16 : 20,
-            vertical: isMobile ? 12 : 16,
-          ),
+        Row(
+          children: [
+            const Spacer(),
+            DialogComponents.primaryActionButton(
+              context: context,
+              text: 'Nueva caja',
+              onPressed: authProvider.isGuest ? null : () => _showOpenDialog(context),
+              isLoading: provider.isLoadingActive,
+            ),
+          ],
         ),
       ],
     );

@@ -6,6 +6,7 @@ import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
 import '../../buttons/app_button.dart';
+import '../components/dialog_components.dart';
 
 /// Diálogo para cerrar una caja registradora
 class CashRegisterCloseDialog extends StatefulWidget {
@@ -93,25 +94,34 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        Consumer<SellProvider>(
-          builder: (context, sellProvider, child) {
-            return AppButton.primary(
-              onPressed: cashRegisterProvider.isProcessing
-                  ? null
-                  : () => _handleCloseCashRegister(
-                        context,
-                        cashRegisterProvider,
-                        sellProvider,
-                      ),
-              isLoading: cashRegisterProvider.isProcessing,
-              text: 'Cerrar Caja',
-              backgroundColor: Colors.red,
-            );
-          },
+        Row(
+          children: [
+             const Spacer(),
+            // button : Cerrar caja 
+            Consumer<SellProvider>(
+              builder: (context, sellProvider, child) {
+                return DialogComponents.primaryActionButton(
+                  context: context,
+                  text: 'Cerrar Caja',
+                  isLoading: cashRegisterProvider.isProcessing,
+                  icon: Icons.exit_to_app_rounded,  
+                  onPressed: () { 
+                    if (cashRegisterProvider.isProcessing) return;
+                    _handleCloseCashRegister(
+                      context,
+                      cashRegisterProvider,
+                      sellProvider,
+                    );
+                  }
+                );
+              },
+            ),
+            // button : Cancelar cierre de caja
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+          ],
         ),
       ],
     );

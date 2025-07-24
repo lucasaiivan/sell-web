@@ -7,16 +7,15 @@ import '../../../../presentation/providers/theme_data_app_provider.dart';
 class ThemeColorSelectorDialog extends StatelessWidget {
   const ThemeColorSelectorDialog({super.key});
 
-  /// Lista de colores semilla disponibles para tema claro
-  static const List<Color> lightColors = [
-    Colors.blue,
-    Colors.teal,
-  ];
-
-  /// Lista de colores semilla disponibles para tema oscuro
-  static const List<Color> darkColors = [
-    Colors.deepPurple,
-    Colors.indigo,
+  /// Lista unificada de colores semilla disponibles para cualquier tema
+  /// Seleccionados siguiendo las mejores prácticas de Material Design
+  static const List<Color> availableColors = [
+    Colors.black,        // Negro: elegante y premium
+    Colors.indigo,       // Índigo: profesional y confiable  
+    Colors.deepPurple,   // Púrpura profundo: moderno y creativo
+    Colors.orange,       // Naranja: energético y llamativo
+    Colors.teal,         // Verde azulado: fresco y equilibrado
+    Colors.blue,         // Azul: clásico y confiable
   ];
 
   /// Muestra el diálogo de selección de color
@@ -55,19 +54,19 @@ class ThemeColorSelectorDialog extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Título de colores claros
+        // Título principal
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 16),
           child: Row(
             children: [
               Icon(
-                Icons.light_mode,
+                Icons.color_lens,
                 size: 20,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
               Text(
-                'Colores para tema claro',
+                'Selecciona tu color favorito',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
@@ -77,49 +76,15 @@ class ThemeColorSelectorDialog extends StatelessWidget {
           ),
         ),
         
-        // Colores para tema claro
-        _buildColorRow(
+        // Grid de colores unificado
+        _buildColorGrid(
           context,
-          lightColors,
+          availableColors,
           currentColor,
           themeProvider,
-          isForDarkTheme: false,
         ),
 
-        const SizedBox(height: 24),
-
-        // Título de colores oscuros
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              Icon(
-                Icons.dark_mode,
-                size: 20,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Colores para tema oscuro',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Colores para tema oscuro
-        _buildColorRow(
-          context,
-          darkColors,
-          currentColor,
-          themeProvider,
-          isForDarkTheme: true,
-        ),
-
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Vista previa del color actual
         _buildPreview(context, themeProvider),
@@ -127,30 +92,33 @@ class ThemeColorSelectorDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildColorRow(
+  Widget _buildColorGrid(
     BuildContext context,
     List<Color> colors,
     Color currentColor,
     ThemeDataAppProvider themeProvider,
-    {required bool isForDarkTheme}
   ) {
-    return Row(
-      children: colors.map((color) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: colors.length,
+      itemBuilder: (context, index) {
+        final color = colors[index];
         final isSelected = color == currentColor;
         
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _buildColorOption(
-              context,
-              color,
-              isSelected,
-              () => themeProvider.changeSeedColor(color),
-              isForDarkTheme: isForDarkTheme,
-            ),
-          ),
+        return _buildColorOption(
+          context,
+          color,
+          isSelected,
+          () => themeProvider.changeSeedColor(color),
         );
-      }).toList(),
+      },
     );
   }
 
@@ -159,50 +127,48 @@ class ThemeColorSelectorDialog extends StatelessWidget {
     Color color,
     bool isSelected,
     VoidCallback onTap,
-    {required bool isForDarkTheme}
   ) {
     final theme = Theme.of(context);
-    final brightness = isForDarkTheme ? Brightness.dark : Brightness.light;
+    final currentBrightness = theme.brightness;
     final colorScheme = ColorScheme.fromSeed(
       seedColor: color,
-      brightness: brightness,
+      brightness: currentBrightness,
     );
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          height: 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected 
                 ? theme.colorScheme.primary
                 : theme.colorScheme.outline.withValues(alpha: 0.3),
-              width: isSelected ? 2 : 1,
+              width: isSelected ? 3 : 1,
             ),
           ),
           child: Column(
             children: [
-              // Área del color principal
+              // Área del color principal (más grande)
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: colorScheme.primary,
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(11),
-                      topRight: Radius.circular(11),
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
                     ),
                   ),
                   child: isSelected
                     ? Icon(
-                        Icons.check,
+                        Icons.check_circle,
                         color: colorScheme.onPrimary,
-                        size: 24,
+                        size: 28,
                       )
                     : null,
                 ),
@@ -210,13 +176,14 @@ class ThemeColorSelectorDialog extends StatelessWidget {
               
               // Área del color secundario
               Expanded(
+                flex: 1,
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: colorScheme.secondary,
                     borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(11),
-                      bottomRight: Radius.circular(11),
+                      bottomLeft: Radius.circular(15),
+                      bottomRight: Radius.circular(15),
                     ),
                   ),
                 ),
@@ -277,10 +244,12 @@ class ThemeColorSelectorDialog extends StatelessWidget {
   }
 
   String _getColorName(Color color) {
-    if (color == Colors.blue) return 'Azul';
-    if (color == Colors.teal) return 'Verde azulado';
-    if (color == Colors.deepPurple) return 'Púrpura profundo';
+    if (color == Colors.black) return 'Negro';
     if (color == Colors.indigo) return 'Índigo';
+    if (color == Colors.deepPurple) return 'Púrpura profundo';
+    if (color == Colors.orange) return 'Naranja';
+    if (color == Colors.teal) return 'Verde azulado';
+    if (color == Colors.blue) return 'Azul';
     return 'Color personalizado';
   }
 }

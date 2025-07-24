@@ -201,11 +201,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                   DialogComponents.infoBadge(
                     context: context,
                     text: 'Venta Rápida',
-                    icon: Icons.flash_on_rounded,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.tertiaryContainer,
-                    textColor:
-                        Theme.of(context).colorScheme.onTertiaryContainer,
+                    icon: Icons.flash_on_rounded, 
                   ),
                 ],
               ],

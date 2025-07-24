@@ -9,12 +9,16 @@ class MoneyInputTextField extends StatelessWidget {
   final void Function(double value)? onChanged;
   final void Function(String value)? onTextChanged;
   final void Function(double value)? onSubmitted;
+  final VoidCallback? onEditingComplete;
+  final FocusNode? focusNode;
+  final FocusNode? nextFocusNode;
   final String labelText;
   final String? errorText;
   final Color? fillColor;
   final List<TextInputFormatter>? inputFormatters;
   final bool autofocus;
   final TextStyle? style;
+  final TextInputAction? textInputAction;
 
   const MoneyInputTextField({
     super.key,
@@ -22,12 +26,16 @@ class MoneyInputTextField extends StatelessWidget {
     this.onChanged,
     this.onTextChanged,
     this.onSubmitted,
+    this.onEditingComplete,
+    this.focusNode,
+    this.nextFocusNode,
     this.labelText = 'Monto',
     this.errorText,
     this.fillColor,
     this.inputFormatters,
     this.autofocus = false,
     this.style,
+    this.textInputAction,
   });
 
   @override
@@ -35,11 +43,12 @@ class MoneyInputTextField extends StatelessWidget {
     final theme = Theme.of(context);
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: inputFormatters ?? [AppMoneyInputFormatter()],
       autofocus: autofocus,
       style: style ?? theme.textTheme.titleLarge,
-      textInputAction: TextInputAction.done,
+      textInputAction: textInputAction ?? TextInputAction.done,
       decoration: InputDecoration(
         labelText: labelText,
         errorText: errorText,
@@ -63,6 +72,20 @@ class MoneyInputTextField extends StatelessWidget {
       onSubmitted: (value) {
         if (onSubmitted != null) {
           onSubmitted!(controller.doubleValue);
+        }
+      },
+      onEditingComplete: () {
+        // Si se especifica un callback personalizado, ejecutarlo
+        if (onEditingComplete != null) {
+          onEditingComplete!();
+        } 
+        // Si se especifica un nodo de enfoque siguiente, mover el foco
+        else if (nextFocusNode != null) {
+          nextFocusNode!.requestFocus();
+        }
+        // Si no hay callback ni nodo siguiente, dejar el comportamiento por defecto
+        else {
+          FocusScope.of(context).nextFocus();
         }
       },
     );

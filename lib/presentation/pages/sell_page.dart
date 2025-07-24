@@ -282,24 +282,26 @@ class _SellPageState extends State<SellPage> {
             const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+                children: [
                 const Spacer(),
                 // button : cancelar
-                TextButton(
-                  child: const Text('Cancelar'),
+                AppOutlinedButton(
+                  text: 'Cancelar',
                   onPressed: () {
-                    accionRealizada = true;
-                    Navigator.of(context).pop();
+                  accionRealizada = true;
+                  Navigator.of(context).pop();
                   },
                 ),
+                const SizedBox(width: 12),
                 // button : Agregar producto
-                ElevatedButton(
-                  child: const Text('Crear producto'),
+                AppButton(
+                  text: 'Crear producto',
                   onPressed: () {
-                    accionRealizada = true;
-                    Navigator.of(context).pop();
-                    // TODO: Implementa la lógica para crear producto
-                    // showDialogCrearProducto(context);
+                  accionRealizada = true;
+                  Navigator.of(context).pop();
+                  showAddProductDialog(context, 
+                    isNew: true, 
+                    product: ProductCatalogue(id: code, code: code));
                   },
                 ),
               ],

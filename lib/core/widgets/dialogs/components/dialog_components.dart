@@ -205,7 +205,11 @@ class DialogComponents {
     IconData? prefixIcon,
     IconData? suffixIcon,
     VoidCallback? onSuffixPressed,
+    VoidCallback? onEditingComplete,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
     TextInputType keyboardType = TextInputType.text,
+    TextInputAction? textInputAction,
     bool obscureText = false,
     String? Function(String?)? validator,
     int maxLines = 1,
@@ -214,7 +218,9 @@ class DialogComponents {
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
+      textInputAction: textInputAction ?? TextInputAction.next,
       obscureText: obscureText,
       validator: validator,
       minLines: 1,
@@ -233,6 +239,20 @@ class DialogComponents {
             : null,
         border: const OutlineInputBorder(),
       ),
+      onEditingComplete: () {
+        // Si se especifica un callback personalizado, ejecutarlo
+        if (onEditingComplete != null) {
+          onEditingComplete();
+        } 
+        // Si se especifica un nodo de enfoque siguiente, mover el foco
+        else if (nextFocusNode != null) {
+          nextFocusNode.requestFocus();
+        }
+        // Si no hay callback ni nodo siguiente, dejar el comportamiento por defecto
+        else {
+          FocusScope.of(context).nextFocus();
+        }
+      },
     );
   }
 
@@ -241,20 +261,31 @@ class DialogComponents {
     required dynamic controller, // AppMoneyTextEditingController
     required String label,
     String? hint,
+    String? errorText,
     Color? fillColor,
     void Function(double value)? onChanged,
     void Function(double value)? onSubmitted,
+    VoidCallback? onEditingComplete,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
     bool autofocus = false,
+    String? Function(String?)? validator,
+    TextInputAction? textInputAction,
     required BuildContext context,
   }) {
     // Import necesario para MoneyInputTextField
     return MoneyInputTextField(
       controller: controller,
       labelText: label,
+      errorText: errorText,
       fillColor: fillColor,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
+      onEditingComplete: onEditingComplete,
+      focusNode: focusNode,
+      nextFocusNode: nextFocusNode,
       autofocus: autofocus,
+      textInputAction: textInputAction,
     );
   }
 

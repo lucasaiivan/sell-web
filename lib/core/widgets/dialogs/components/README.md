@@ -48,6 +48,109 @@ DialogComponents.infoRow(
 ```
 
 ### 🎨 **Campos de Entrada**
+
+#### Campo de Texto Estilizado
+```dart
+DialogComponents.textField(
+  controller: _controller,
+  label: 'Nombre del Producto',
+  hint: 'Ingrese el nombre...',
+  prefixIcon: Icons.shopping_bag_rounded, // Opcional
+  suffixIcon: Icons.clear_rounded, // Opcional
+  onSuffixPressed: () => _controller.clear(), // Opcional
+  focusNode: _focusNode, // Opcional
+  nextFocusNode: _nextFocusNode, // Opcional - Campo siguiente
+  textInputAction: TextInputAction.next, // Opcional
+  onEditingComplete: () => _customAction(), // Opcional - Acción personalizada
+  keyboardType: TextInputType.text,
+  obscureText: false,
+  validator: (value) => value?.isEmpty == true ? 'Campo requerido' : null,
+  maxLines: 1,
+  readOnly: false,
+  context: context,
+)
+```
+
+#### Campo de Dinero Especializado
+```dart
+DialogComponents.moneyField(
+  controller: _moneyController, // AppMoneyTextEditingController
+  label: 'Precio de Venta',
+  hint: '\$0.0',
+  errorText: _hasError ? 'Precio inválido' : null,
+  fillColor: Colors.green.shade50, // Opcional
+  focusNode: _priceFocusNode, // Opcional
+  nextFocusNode: _descriptionFocusNode, // Opcional - Campo siguiente
+  textInputAction: TextInputAction.next, // Opcional
+  onEditingComplete: () => _processPrice(), // Opcional - Acción personalizada
+  onChanged: (value) => print('Nuevo precio: \$value'),
+  onSubmitted: (value) => _savePrice(value),
+  autofocus: true,
+  context: context,
+)
+```
+
+### 🎯 **Navegación por Teclado (NUEVO)**
+
+Los campos de entrada ahora soportan navegación avanzada por teclado:
+
+#### Parámetros de Navegación:
+- **`focusNode`**: FocusNode del campo actual
+- **`nextFocusNode`**: FocusNode del campo siguiente al presionar Enter
+- **`onEditingComplete`**: Callback personalizado al presionar Enter
+- **`textInputAction`**: Tipo de acción del teclado (next, done, search, etc.)
+
+#### Comportamiento de Navegación:
+1. **Si se especifica `onEditingComplete`**: Se ejecuta el callback personalizado
+2. **Si se especifica `nextFocusNode`**: Se mueve el foco al campo siguiente  
+3. **Si no hay ninguno**: Se usa el comportamiento por defecto
+
+#### Ejemplo Completo de Navegación:
+```dart
+class _DialogState extends State<MyDialog> {
+  final _priceController = AppMoneyTextEditingController();
+  final _descriptionController = TextEditingController();
+  
+  // FocusNodes para navegación
+  final _priceFocusNode = FocusNode();
+  final _descriptionFocusNode = FocusNode();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Campo de precio - navega automáticamente al campo de descripción
+        DialogComponents.moneyField(
+          autofocus: true,
+          controller: _priceController,
+          focusNode: _priceFocusNode,
+          nextFocusNode: _descriptionFocusNode,
+          textInputAction: TextInputAction.next,
+          label: 'Precio de Venta',
+          context: context,
+        ),
+        
+        // Campo de descripción - procesa la venta al presionar Enter
+        DialogComponents.textField(
+          controller: _descriptionController,
+          focusNode: _descriptionFocusNode,
+          textInputAction: TextInputAction.done,
+          label: 'Descripción',
+          onEditingComplete: () => _processSale(), // Acción personalizada
+          context: context,
+        ),
+      ],
+    );
+  }
+  
+  @override
+  void dispose() {
+    _priceFocusNode.dispose();
+    _descriptionFocusNode.dispose();
+    super.dispose();
+  }
+}
+```
 ```dart
 // Campo de texto estilizado para formularios
 DialogComponents.textField(

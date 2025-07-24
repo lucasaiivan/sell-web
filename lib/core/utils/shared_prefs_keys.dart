@@ -15,6 +15,7 @@ class SharedPrefsKeys {
   // GESTIÓN DE TEMA
   // ==========================================
   static const String themeMode = 'theme_mode';
+  static const String seedColor = 'seed_color';
 
   // ==========================================
   // GESTIÓN DE TICKETS

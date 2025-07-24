@@ -32,6 +32,7 @@ export 'tickets/discard_ticket_dialog.dart';
 
 // Configuration Dialogs
 export 'configuration/printer_config_dialog.dart';
+export 'configuration/theme_color_selector_dialog.dart';
 // export 'configuration/printer_config_dialog_new.dart'; // Conflicto de nombres
 
 // Examples (for development/testing)
@@ -54,5 +55,6 @@ export 'catalogue/add_product_dialog.dart' show showAddProductDialog;
 export 'sales/quick_sale_dialog.dart' show showQuickSaleDialog;
 export 'tickets/ticket_options_dialog.dart' show showTicketOptionsDialog;
 export 'tickets/last_ticket_dialog.dart' show showLastTicketDialog;
+export 'configuration/theme_color_selector_dialog.dart' show ThemeColorSelectorDialog;
 
 // Nota: Archivos legacy eliminados - migración completada el 2025-07-12

@@ -134,6 +134,36 @@ class AppDataPersistenceService {
     }
   }
 
+  /// Guarda el color semilla del tema
+  Future<void> saveSeedColor(int colorValue) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(SharedPrefsKeys.seedColor, colorValue);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene el color semilla del tema
+  Future<int?> getSeedColor() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(SharedPrefsKeys.seedColor);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Elimina la configuración del color semilla
+  Future<void> clearSeedColor() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(SharedPrefsKeys.seedColor);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // ==========================================
   // GESTIÓN DE TICKETS
   // ==========================================

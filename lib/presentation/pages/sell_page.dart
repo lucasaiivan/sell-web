@@ -25,7 +25,6 @@ import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart';
-import '../providers/theme_data_app_provider.dart';
 import '../providers/cash_register_provider.dart';
 import 'welcome_page.dart';
 
@@ -562,8 +561,6 @@ class _SellPageState extends State<SellPage> {
   Widget get drawer {
     // provider
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
-    // theme
-    final theme = Theme.of(context);
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -581,16 +578,10 @@ class _SellPageState extends State<SellPage> {
                     onTap: showModalBottomSheetSelectAccount,
                   ),
                   const Spacer(),
-                  // button : cambiar brillo del temae
-                  IconButton(
-                    icon: theme.brightness == Brightness.light
-                        ? const Icon(Icons.dark_mode_rounded)
-                        : const Icon(Icons.light_mode_rounded),
-                    tooltip: 'Cambiar brillo',
-                    onPressed: () {
-                      Provider.of<ThemeDataAppProvider>(context, listen: false)
-                          .toggleTheme();
-                    },
+                  // Controles de tema reutilizables
+                  ThemeControlButtons(
+                    spacing: 4,
+                    iconSize: 20,
                   ),
                 ],
               ),

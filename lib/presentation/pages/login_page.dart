@@ -5,11 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:provider/provider.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_data_app_provider.dart';
 
 class LoginPage extends StatelessWidget {
   final AuthProvider authProvider;
@@ -80,24 +78,13 @@ class LoginPage extends StatelessWidget {
       body: Stack(
         children: [
           content,
-          // button : cambiar el brillo del tema
+          // Botones de configuración del tema
           Positioned(
             top: 20,
             right: 20,
-            child: Consumer<ThemeDataAppProvider>(
-              builder: (context, themeProvider, _) => Material(
-                color: Colors.transparent,
-                child: IconButton(
-                  icon: Icon(
-                    themeProvider.themeMode == ThemeMode.dark
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  tooltip: 'Cambiar brillo',
-                  onPressed: () => themeProvider.toggleTheme(),
-                ),
-              ),
+            child: ThemeControlButtons(
+              spacing: 8,
+              iconSize: 24,
             ),
           ),
         ],

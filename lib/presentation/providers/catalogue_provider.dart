@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
+import 'package:sellweb/core/utils/product_search_algorithm.dart';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
@@ -14,6 +15,8 @@ class _CatalogueState {
   final bool showSplash;
   final String? scanError;
   final bool isLoading;
+  final List<ProductCatalogue> filteredProducts;
+  final String currentSearchQuery;
 
   const _CatalogueState({
     required this.products,
@@ -22,6 +25,8 @@ class _CatalogueState {
     this.showSplash = false,
     this.scanError,
     this.isLoading = true,
+    this.filteredProducts = const [],
+    this.currentSearchQuery = '',
   });
 
   _CatalogueState copyWith({
@@ -31,6 +36,8 @@ class _CatalogueState {
     bool? showSplash,
     Object? scanError = const Object(),
     bool? isLoading,
+    List<ProductCatalogue>? filteredProducts,
+    String? currentSearchQuery,
   }) {
     return _CatalogueState(
       products: products ?? this.products,
@@ -44,6 +51,8 @@ class _CatalogueState {
       scanError:
           scanError == const Object() ? this.scanError : scanError as String?,
       isLoading: isLoading ?? this.isLoading,
+      filteredProducts: filteredProducts ?? this.filteredProducts,
+      currentSearchQuery: currentSearchQuery ?? this.currentSearchQuery,
     );
   }
 
@@ -93,14 +102,17 @@ class CatalogueProvider extends ChangeNotifier {
   CreatePublicProductUseCase createPublicProductUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
-  // Stream subscription
+  // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
+  Timer? _searchDebounceTimer;
 
   // Immutable state
   _CatalogueState _state = _CatalogueState(products: []);
 
   // Public getters
   List<ProductCatalogue> get products => _state.products;
+  List<ProductCatalogue> get filteredProducts => _state.filteredProducts;
+  String get currentSearchQuery => _state.currentSearchQuery;
   ProductCatalogue? get lastScannedProduct => _state.lastScannedProduct;
   String? get lastScannedCode => _state.lastScannedCode;
   bool get showSplash => _state.showSplash;
@@ -188,6 +200,93 @@ class CatalogueProvider extends ChangeNotifier {
   /// Busca un producto público por código de barra en la base pública.
   Future<Product?> getPublicProductByCode(String code) async {
     return await getPublicProductByCodeUseCase(code);
+  }
+
+  /// Busca productos usando el algoritmo avanzado de búsqueda
+  /// Permite buscar sin importar el orden de las palabras
+  List<ProductCatalogue> searchProducts({
+    required String query,
+    int? maxResults,
+  }) {
+    print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
+    print('📦 Productos disponibles en state: ${_state.products.length}');
+    
+    final results = ProductSearchAlgorithm.searchProducts(
+      products: _state.products,
+      query: query,
+      maxResults: maxResults,
+    );
+    
+    print('✅ Resultados de búsqueda: ${results.length}');
+    return results;
+  }
+
+  /// Busca productos con debouncing para mejorar el rendimiento
+  void searchProductsWithDebounce({
+    required String query,
+    int? maxResults,
+    Duration delay = const Duration(milliseconds: 300),
+  }) {
+    // Cancelar timer anterior si existe
+    _searchDebounceTimer?.cancel();
+    
+    // Crear nuevo timer
+    _searchDebounceTimer = Timer(delay, () {
+      final results = searchProducts(query: query, maxResults: maxResults);
+      _state = _state.copyWith(
+        filteredProducts: results,
+        currentSearchQuery: query,
+      );
+      notifyListeners();
+    });
+  }
+
+  /// Limpia los resultados de búsqueda
+  void clearSearchResults() {
+    _searchDebounceTimer?.cancel();
+    _state = _state.copyWith(
+      filteredProducts: [],
+      currentSearchQuery: '',
+    );
+    notifyListeners();
+  }
+
+  /// Busca productos por código exacto
+  List<ProductCatalogue> searchByExactCode(String code) {
+    return ProductSearchAlgorithm.searchByExactCode(
+      products: _state.products,
+      code: code,
+    );
+  }
+
+  /// Busca productos por categoría
+  List<ProductCatalogue> searchByCategory(String category) {
+    return ProductSearchAlgorithm.searchByCategory(
+      products: _state.products,
+      category: category,
+    );
+  }
+
+  /// Busca productos por marca
+  List<ProductCatalogue> searchByBrand(String brand) {
+    return ProductSearchAlgorithm.searchByBrand(
+      products: _state.products,
+      brand: brand,
+    );
+  }
+
+  /// Obtiene sugerencias de búsqueda
+  List<String> getSearchSuggestions({
+    required String query,
+    int maxSuggestions = 5,
+  }) {
+    final suggestions = ProductSearchAlgorithm.getSearchSuggestions(
+      products: _state.products,
+      query: query,
+      maxSuggestions: maxSuggestions,
+    );
+    
+    return suggestions;
   }
 
   /// Intenta escanear un producto: si no está en el catálogo, busca en la base pública.
@@ -345,6 +444,7 @@ class CatalogueProvider extends ChangeNotifier {
   @override
   void dispose() {
     _catalogueSubscription?.cancel();
+    _searchDebounceTimer?.cancel();
     super.dispose();
   }
 

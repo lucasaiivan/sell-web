@@ -59,17 +59,7 @@ class ThemeControlButtons extends StatelessWidget {
         if (showColorButton && showBrightnessButton) {
           buttons.add(SizedBox(width: spacing));
         }
-
-        // Botón de brillo del tema
-        if (showBrightnessButton) {
-          buttons.add(
-            ThemeBrightnessButton(
-              themeProvider: themeProvider,
-              iconColor: iconColor,
-              iconSize: iconSize,
-            ),
-          );
-        }
+ 
 
         return Row(
           mainAxisSize: mainAxisSize,

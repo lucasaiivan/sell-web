@@ -216,6 +216,49 @@ class ThemeService {
     }
   }
 
+  /// Obtiene el color de fondo optimizado para ElevatedButton
+  Color _getElevatedButtonBackgroundColor(ColorScheme colorScheme, bool isDark) {
+    // Para el tema negro, usar un color que contraste bien
+    if (_seedColor.value == Colors.black) {
+      return isDark 
+        ? const Color(0xFF2A2A2A)  // Gris muy oscuro en tema oscuro
+        : colorScheme.primary;     // Negro en tema claro
+    }
+    
+    // Para otros colores, usar el primaryContainer con mejor saturación
+    return isDark 
+      ? colorScheme.primaryContainer.withOpacity(0.9)
+      : colorScheme.primary;
+  }
+
+  /// Obtiene el color de texto optimizado para ElevatedButton
+  Color _getElevatedButtonForegroundColor(ColorScheme colorScheme, bool isDark) {
+    // Para el tema negro, asegurar contraste máximo
+    if (_seedColor.value == Colors.black) {
+      return isDark 
+        ? Colors.white              // Blanco en tema oscuro
+        : colorScheme.onPrimary;    // Blanco en tema claro
+    }
+    
+    // Para otros colores, usar los colores apropiados del esquema
+    return isDark 
+      ? colorScheme.onPrimaryContainer
+      : colorScheme.onPrimary;
+  }
+
+  /// Obtiene el tinte de superficie para ElevatedButton
+  Color _getElevatedButtonSurfaceTint(ColorScheme colorScheme, bool isDark) {
+    // Para el tema negro, usar un tinte sutil
+    if (_seedColor.value == Colors.black) {
+      return isDark 
+        ? Colors.white.withOpacity(0.1)
+        : Colors.black.withOpacity(0.1);
+    }
+    
+    // Para otros colores, usar el primary con opacidad reducida
+    return colorScheme.primary.withOpacity(isDark ? 0.2 : 0.3);
+  }
+
   /// Construye el tema con configuraciones personalizadas de diálogos y drawers
   ThemeData _buildTheme(ColorScheme colorScheme, bool isDark) {
     return ThemeData(
@@ -267,6 +310,45 @@ class ThemeService {
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(16),
           ),
+        ),
+      ),
+      
+      // Configuración mejorada para ElevatedButton
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          // Color de fondo mejorado con mejor contraste
+          backgroundColor: _getElevatedButtonBackgroundColor(colorScheme, isDark),
+          foregroundColor: _getElevatedButtonForegroundColor(colorScheme, isDark),
+          
+          // Mejora de la elevación y sombras
+          elevation: isDark ? 2 : 1,
+          shadowColor: colorScheme.shadow.withOpacity(isDark ? 0.3 : 0.2),
+          
+          // Configuración de superficie para Material 3
+          surfaceTintColor: _getElevatedButtonSurfaceTint(colorScheme, isDark),
+          
+          // Forma consistente con el diseño general
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          
+          // Padding optimizado para mejor UX
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          
+          // Configuración de estados (hover, pressed, disabled)
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return colorScheme.primary.withOpacity(0.12);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return colorScheme.primary.withOpacity(0.08);
+            }
+            if (states.contains(WidgetState.focused)) {
+              return colorScheme.primary.withOpacity(0.10);
+            }
+            return null;
+          }),
         ),
       ),
     );

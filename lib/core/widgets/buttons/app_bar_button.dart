@@ -128,6 +128,10 @@ class AppBarButtonCircle extends StatelessWidget {
         theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
     final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
     final bool hasText = text != null && text!.isNotEmpty;
+    
+    // Calcular tamaño del icono basado en el tamaño del botón (40% del área)
+    const double buttonSize = 48.0;
+    const double iconSize = buttonSize * 0.4; // 19.2 ≈ 20
 
     return Padding(
       padding: const EdgeInsets.only(right: 4.0),
@@ -139,47 +143,69 @@ class AppBarButtonCircle extends StatelessWidget {
           style: TextButton.styleFrom(
             backgroundColor: effectiveBackgroundColor,
             shape: hasText ? const StadiumBorder() : const CircleBorder(),
-            padding: const EdgeInsets.all(12.0),
-            minimumSize: const Size(48, 48),
-            maximumSize: hasText ? Size.infinite : const Size(48, 48),
+            padding: hasText 
+                ? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0)
+                : EdgeInsets.zero, // Sin padding para botón circular - centrado perfecto
+            minimumSize: const Size(buttonSize, buttonSize),
+            maximumSize: hasText ? Size.infinite : const Size(buttonSize, buttonSize),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Mostrar CircularProgressIndicator si está cargando, sino el icono
-              isLoading
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          effectiveIconColor,
+          child: hasText
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Contenido con texto
+                    isLoading
+                        ? SizedBox(
+                            width: iconSize,
+                            height: iconSize,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                effectiveIconColor,
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            icon,
+                            color: effectiveIconColor,
+                            size: iconSize,
+                          ),
+                    const SizedBox(width: 6.0),
+                    Flexible(
+                      child: Text(
+                        text!,
+                        style: TextStyle(
+                          color: effectiveIconColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    )
-                  : Icon(
-                      icon,
-                      color: effectiveIconColor,
-                      size: 20,
                     ),
-              if (hasText) ...[
-                const SizedBox(width: 6.0),
-                Flexible(
-                  child: Text(
-                    text!,
-                    style: TextStyle(
-                      color: effectiveIconColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
+                )
+              : Center(
+                  // Centrado perfecto para botón solo con icono
+                  child: isLoading
+                      ? SizedBox(
+                          width: iconSize,
+                          height: iconSize,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              effectiveIconColor,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          icon,
+                          color: effectiveIconColor,
+                          size: iconSize,
+                        ),
                 ),
-              ],
-            ],
-          ),
         ),
       ),
     );

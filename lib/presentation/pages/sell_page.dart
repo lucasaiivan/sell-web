@@ -16,9 +16,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/responsive.dart';
+import 'package:sellweb/core/utils/product_search_algorithm.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
+import 'package:sellweb/core/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import 'package:sellweb/core/widgets/component/ui.dart';
 import '../providers/sell_provider.dart';
@@ -566,6 +568,7 @@ class _SellPageState extends State<SellPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // view : logo y título de encabezado
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -615,31 +618,18 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SizedBox(
+                    SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.link_rounded,
-                          size: 22, color: Colors.white),
-                      label: const Text('Ver en Play Store'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        textStyle: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        elevation: 0,
-                        alignment: Alignment.centerLeft,
-                      ),
+                    child: AppButton(
+                      text: 'Descargar App',
                       onPressed: () {
+                        // Abre la URL de descarga de la app
                         html.window.open(
-                          'https://play.google.com/store/apps/details?id=tu.paquete.app', // Reemplaza con tu URL real
+                          'https://play.google.com/store/apps/details?id=com.sellweb.app',
                           '_blank',
                         );
-                      },
-                    ),
+                      }, 
+                    )
                   ),
                 ],
               ),
@@ -910,9 +900,16 @@ class _SellPageState extends State<SellPage> {
 
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
   Widget body({required SellProvider provider}) {
-    // widgetss
-    Widget itemDefault =
-        Card(elevation: 0, color: Colors.grey.withValues(alpha: 0.05));
+    // widgets
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Color adaptativo para items default que se ve bien en tema claro y oscuro
+    // Usa surface con una opacidad muy baja para crear un contraste sutil
+    Widget itemDefault = Card(
+      elevation: 0, 
+      color: colorScheme.outline.withValues(alpha: 0.08),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1249,102 +1246,33 @@ class _SellPageState extends State<SellPage> {
     );
   }
 
-  /// Muestra un modal con el listado de productos para agregar a seleccionados, con buscador.
+  /// Muestra una vista de pantalla completa con el listado de productos para agregar a seleccionados, con buscador dinámico.
   void showModalBottomSheetSelectProducts(BuildContext context) {
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final products = catalogueProvider.products;
-    final TextEditingController searchController = TextEditingController();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => _ProductCatalogueFullScreenView(
+          products: products,sellProvider: sellProvider),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          const curve = Curves.ease;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
-      builder: (contextBottomSheet) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: StatefulBuilder(
-              builder: (context, setState) {
-                String search = searchController.text.trim().toLowerCase();
-                final filteredProducts = search.isEmpty
-                    ? products
-                    : products
-                        .where((product) =>
-                            product.description
-                                .toLowerCase()
-                                .contains(search) ||
-                            product.nameMark.toLowerCase().contains(search) ||
-                            product.code.toLowerCase().contains(search))
-                        .toList();
-                return Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Row(
-                      children: [
-                        Text('Catálogo',
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () => Navigator.of(context).pop(),
-                          splashRadius: 20,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        hintText:
-                            'Buscar entre ${Publications.getFormatAmount(value: products.length)} productos, marca, código',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    const SizedBox(height: 16),
-                    if (filteredProducts.isEmpty && search.isEmpty)
-                      const Text('No hay productos disponibles'),
-                    if (filteredProducts.isEmpty && search.isNotEmpty)
-                      const Text('Sin resultados',
-                          style: TextStyle(color: Colors.grey)),
-                    if (filteredProducts.isNotEmpty)
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = filteredProducts[index];
-                            return buildProductListItem(
-                              product: product,
-                              sellProvider: sellProvider,
-                              onTap: () {
-                                sellProvider
-                                    .addProductsticket(product.copyWith());
-                                setState(
-                                    () {}); // Actualiza la vista del modal al seleccionar
-                              },
-                              setState: setState,
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1986,6 +1914,393 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                   : 'Iniciar caja',
         );
       },
+    );
+  }
+}
+
+/// Vista de pantalla completa para mostrar el catálogo de productos con buscador dinámico
+class _ProductCatalogueFullScreenView extends StatefulWidget {
+  final List<ProductCatalogue> products;
+  final SellProvider sellProvider;
+
+  const _ProductCatalogueFullScreenView({
+    required this.products,
+    required this.sellProvider,
+  });
+
+  @override
+  State<_ProductCatalogueFullScreenView> createState() =>
+      _ProductCatalogueFullScreenViewState();
+}
+
+class _ProductCatalogueFullScreenViewState
+    extends State<_ProductCatalogueFullScreenView> {
+  late TextEditingController _searchController;
+  late FocusNode _searchFocusNode;
+  
+  bool _isSearching = false;
+  List<ProductCatalogue> _filteredProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
+    _filteredProducts = widget.products;
+
+    // Listener para cambios en el texto de búsqueda
+    _searchController.addListener(_onSearchChanged);
+    _searchFocusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchFocusNode.removeListener(_onFocusChanged);
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  // Método que se llama cuando cambia el texto de búsqueda
+  // Utiliza el algoritmo avanzado de búsqueda para filtrar productos
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+    
+    setState(() {
+      if (query.isEmpty) {
+        _isSearching = false;
+        _filteredProducts = widget.products;
+      } else {
+        _isSearching = true;
+        try {
+          // Usar el algoritmo avanzado de búsqueda
+          final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+          
+          // Usar productos directos si el provider no tiene productos
+          final productsToSearch = catalogueProvider.products.isNotEmpty 
+              ? catalogueProvider.products 
+              : widget.products;
+          
+          _filteredProducts = catalogueProvider.searchProducts(
+            query: query,
+            maxResults: 50, // Limitar a 50 resultados para mejor rendimiento
+          );
+          
+          // Si el provider no tiene productos, usar búsqueda directa con el algoritmo
+          if (_filteredProducts.isEmpty && catalogueProvider.products.isEmpty && widget.products.isNotEmpty) {
+            _filteredProducts = ProductSearchAlgorithm.searchProducts(
+              products: widget.products,
+              query: query,
+              maxResults: 50,
+            );
+          }
+          
+          // Si no hay resultados con el algoritmo avanzado, usar búsqueda simple como fallback
+          if (_filteredProducts.isEmpty) {
+            _filteredProducts = widget.products.where((product) {
+              final queryLower = query.toLowerCase();
+              return product.description.toLowerCase().contains(queryLower) ||
+                     product.nameMark.toLowerCase().contains(queryLower) ||
+                     product.code.toLowerCase().contains(queryLower);
+            }).toList();
+          }
+        } catch (e) {
+          // Fallback a búsqueda simple
+          _filteredProducts = widget.products.where((product) {
+            final queryLower = query.toLowerCase();
+            return product.description.toLowerCase().contains(queryLower) ||
+                   product.nameMark.toLowerCase().contains(queryLower) ||
+                   product.code.toLowerCase().contains(queryLower);
+          }).toList();
+        }
+      }
+    });
+  }
+
+  void _onFocusChanged() {
+    // Solo cambiar a modo búsqueda si hay texto escrito
+    // El foco por sí solo no debe cambiar la vista
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _isSearching = false;
+      _filteredProducts = widget.products;
+    });
+    // Mantener el foco en el campo de búsqueda
+    _searchFocusNode.requestFocus();
+  }
+
+  Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_rounded,
+              size: 64,
+              color: colorScheme.primary.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Buscar productos',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${Publications.getFormatAmount(value: widget.products.length)} productos disponibles',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header con título y botón cerrar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'Catálogo',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: IconButton.styleFrom(
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      foregroundColor: colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Campo de búsqueda fijo en la parte superior
+            Container(
+              padding: const EdgeInsets.all(16), 
+              child: _buildSearchField(),
+            ),
+
+            // Contenido principal
+            Expanded(
+              child: _isSearching ? _buildProductList() : _buildEmptyState(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return ProductSearchField(
+      controller: _searchController,
+      focusNode: _searchFocusNode,
+      hintText: 'Buscar por nombre, marca, código...',
+      autofocus: true,
+      onChanged: (query) {
+        // El método _onSearchChanged ya maneja la lógica de filtrado
+        _onSearchChanged();
+      },
+      onClear: _clearSearch,
+    );
+  }
+
+  Widget _buildProductList() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    if (_filteredProducts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 48,
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _searchController.text.isEmpty 
+                  ? 'No hay productos disponibles'
+                  : 'Sin resultados',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            if (_searchController.text.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Prueba con otros términos de búsqueda',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _filteredProducts.length,
+      itemBuilder: (context, index) {
+        final product = _filteredProducts[index];
+        return _buildProductListItem(product);
+      },
+    );
+  }
+
+  Widget _buildProductListItem(ProductCatalogue product) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Verificar si el producto está en el ticket
+    final ticketProducts = widget.sellProvider.ticket.products;
+    ProductCatalogue? selectedProduct;
+    try {
+      selectedProduct = ticketProducts
+          .firstWhere((p) => p.id == product.id && p.quantity > 0);
+    } catch (_) {
+      selectedProduct = null;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Card(
+        elevation: 0,
+        color: selectedProduct != null
+            ? colorScheme.primaryContainer.withValues(alpha: 0.18)
+            : colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: selectedProduct != null
+              ? BorderSide(color: colorScheme.primary, width: 1.2)
+              : BorderSide(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          leading: ProductImage(
+            imageUrl: product.image,
+            size: 56,
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.description,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (product.nameMark.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    product.nameMark,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.primary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              product.code,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.secondary,
+              ),
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                Publications.getFormatoPrecio(value: product.salePrice),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                  fontSize: 17,
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (selectedProduct != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    selectedProduct.quantity.toString(),
+                    style: TextStyle(
+                      color: colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          onTap: () {
+            widget.sellProvider.addProductsticket(product.copyWith());
+            setState(() {}); // Actualizar la vista al seleccionar
+          },
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
     );
   }
 }

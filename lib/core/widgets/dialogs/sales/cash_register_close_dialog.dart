@@ -5,7 +5,6 @@ import '../../../../core/utils/fuctions.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
-import '../../buttons/app_button.dart';
 import '../components/dialog_components.dart';
 
 /// Diálogo para cerrar una caja registradora

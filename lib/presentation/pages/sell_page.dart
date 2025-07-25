@@ -908,7 +908,7 @@ class _SellPageState extends State<SellPage> {
     // Usa surface con una opacidad muy baja para crear un contraste sutil
     Widget itemDefault = Card(
       elevation: 0, 
-      color: colorScheme.outline.withValues(alpha: 0.08),
+      color: colorScheme.onSurface.withValues(alpha: 0.07),
     );
 
     return LayoutBuilder(

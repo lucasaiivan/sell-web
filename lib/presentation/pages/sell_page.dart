@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog_new.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
@@ -120,8 +122,7 @@ class _SellPageState extends State<SellPage> {
           body: LayoutBuilder(
             builder: (context, constraints) {
               return Row(
-                children: [
-                  // view :
+                children: [  
                   Flexible(
                     child: Stack(
                       children: [
@@ -910,61 +911,129 @@ class _SellPageState extends State<SellPage> {
       color: colorScheme.onSurface.withValues(alpha: 0.07),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        int crossAxisCount;
-        if (constraints.maxWidth < 600) {
-          // Ancho mínimo para móviles
-          crossAxisCount = 3;
-        } else if (constraints.maxWidth < 800) {
-          // Ancho para tablets
-          crossAxisCount = 4;
-        } else if (constraints.maxWidth < 1000) {
-          // Ancho para pantallas medianas
-          crossAxisCount = 5;
-        } else {
-          crossAxisCount = 6; // Ancho para pantallas grandes
-        }
-        // Usar los productos seleccionados del ticket
-        final List<ProductCatalogue> list =
-            provider.ticket.products.toList().reversed.toList();
-        // Calcular cuántas filas caben en la vista
-        final double itemHeight = (constraints.maxWidth / crossAxisCount) *
-            1.1; // Ajusta el factor según el aspecto de los ítems
-        int rowCount = 1;
-        int minItemCount = crossAxisCount;
-        // Si la altura del contenedor es finita y mayor a 0, calcular el número de filas
-        if (constraints.maxHeight.isFinite &&
-            constraints.maxHeight > 0 &&
-            itemHeight > 0) {
-          rowCount = (constraints.maxHeight / itemHeight).ceil();
-          minItemCount = rowCount * crossAxisCount;
-        }
-        int totalItems = list.length;
-        int remainder = totalItems % crossAxisCount;
-        int fillCount = remainder == 0 ? 0 : crossAxisCount - remainder;
-        int itemCount = totalItems + fillCount;
-        // Si la cantidad de ítems no llena la vista, agregar más itemDefault
-        if (itemCount < minItemCount) {
-          itemCount = minItemCount;
-        }
-        return GridView.builder(
-          padding: const EdgeInsets.all(12),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 1.0,
-            mainAxisSpacing: 1.0,
-          ),
-          itemCount: itemCount,
-          itemBuilder: (context, index) {
-            if (index < list.length) {
-              return ProductoItem(producto: list[index]);
+    return Consumer<CatalogueProvider>(
+      builder: (context, catalogueProvider, child) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            int crossAxisCount;
+            if (constraints.maxWidth < 600) {
+              // Ancho mínimo para móviles
+              crossAxisCount = 3;
+            } else if (constraints.maxWidth < 800) {
+              // Ancho para tablets
+              crossAxisCount = 4;
+            } else if (constraints.maxWidth < 1000) {
+              // Ancho para pantallas medianas
+              crossAxisCount = 5;
             } else {
-              return itemDefault;
+              crossAxisCount = 6; // Ancho para pantallas grandes
             }
-          },
-        );
+            // Usar los productos seleccionados del ticket
+            final List<ProductCatalogue> list =
+                provider.ticket.products.toList().reversed.toList();
+            // Calcular cuántas filas caben en la vista
+            final double itemHeight = (constraints.maxWidth / crossAxisCount) *
+                1.1; // Ajusta el factor según el aspecto de los ítems
+            int rowCount = 1;
+            int minItemCount = crossAxisCount;
+            // Si la altura del contenedor es finita y mayor a 0, calcular el número de filas
+            if (constraints.maxHeight.isFinite &&
+                constraints.maxHeight > 0 &&
+                itemHeight > 0) {
+              rowCount = (constraints.maxHeight / itemHeight).ceil();
+              minItemCount = rowCount * crossAxisCount;
+            }
+            int totalItems = list.length;
+            int remainder = totalItems % crossAxisCount;
+            int fillCount = remainder == 0 ? 0 : crossAxisCount - remainder;
+            int itemCount = totalItems + fillCount;
+            // Si la cantidad de ítems no llena la vista, agregar más itemDefault
+            if (itemCount < minItemCount) {
+              itemCount = minItemCount;
+            }
+
+            return NestedScrollView(
+              headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+                return [
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      [
+                        _buildFavoriteProductsRow(provider)
+                      ],
+                    ),
+                  ),
+                ];
+              },
+              body: GridView.builder(
+                padding: const EdgeInsets.all(12),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 1.0,
+                  mainAxisSpacing: 1.0,
+                ),
+                itemCount: itemCount,
+                itemBuilder: (context, index) {
+                  if (index < list.length) {
+                    return ProductoItem(producto: list[index]);
+                  } else {
+                    return itemDefault;
+                  }
+                },
+              ),
+            );
+          });
       },
+    );
+  }
+
+  /// Construye la lista horizontal de productos favoritos con estilo de historias de Instagram
+  Widget _buildFavoriteProductsRow(SellProvider provider) {
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false); 
+    
+    // Usar el método del provider para obtener productos más vendidos
+    final displayProducts = catalogueProvider.getTopSellingProducts();
+    
+    // Si no hay productos con ventas, no mostrar nada
+    if (displayProducts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      height: 100,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ScrollConfiguration(
+        behavior: const MaterialScrollBehavior().copyWith(
+          scrollbars: true,
+          dragDevices: {
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.touch,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.unknown,
+          },
+        ),
+        child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: displayProducts.length,
+        itemBuilder: (context, index) {
+          final product = displayProducts[index];
+          final isInTicket = provider.ticket.products.any((p) => p.id == product.id);
+          
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: AvatarProduct(
+              product: product,
+              isSelected: isInTicket,
+              onTap: () {
+                // Agregar producto al ticket al hacer tap
+                provider.addProductsticket(product.copyWith());
+                 
+              },
+            ),
+          );
+        },
+      )
+      )
     );
   }
 

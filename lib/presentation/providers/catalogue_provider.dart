@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/product_search_algorithm.dart';
+import 'package:sellweb/core/utils/catalogue_filter.dart';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
@@ -118,6 +119,17 @@ class CatalogueProvider extends ChangeNotifier {
   bool get showSplash => _state.showSplash;
   String? get scanError => _state.scanError;
   bool get isLoading => _state.isLoading;
+
+  /// Obtiene los productos más vendidos ordenados por cantidad de ventas
+  /// [limit] Número máximo de productos a retornar (por defecto 8)
+  /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
+  List<ProductCatalogue> getTopSellingProducts({int limit = 50, int minimumSales = 1}) {
+    return CatalogueProductFilterAlgorithm.getTopSellingProducts(
+      products: _state.products,
+      limit: limit,
+      minimumSales: minimumSales,
+    );
+  }
 
   CatalogueProvider({
     required this.getProductsStreamUseCase,

@@ -7,8 +7,7 @@ import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart'
 import 'package:sellweb/core/widgets/dialogs/sales/cash_flow_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_close_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/tickets/last_ticket_dialog_new.dart';
+import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart'; 
 import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
 import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_drawer_widget.dart';
 import 'package:web/web.dart' as html;
@@ -25,6 +24,7 @@ import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import 'package:sellweb/core/widgets/component/ui.dart';
+import '../../core/widgets/dialogs/tickets/last_ticket_dialog.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';

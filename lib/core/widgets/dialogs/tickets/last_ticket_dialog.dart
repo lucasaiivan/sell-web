@@ -92,7 +92,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                 ),
           ),
           DialogComponents.itemSpacing,
-
+          // view : lista de productos 
           DialogComponents.itemList(
             context: context,
             items: widget.ticket.products.map((product) {
@@ -100,69 +100,69 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
               final description = product.description;
               final unitPrice = product.salePrice;
               final totalPrice = unitPrice * quantity;
-
-              return Row(
-                children: [
-                  // Cantidad en badge
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$quantity',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
+              // view : item de producto
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    // Cantidad en badge
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$quantity',
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  // Descripción del producto
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          description,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${Publications.getFormatoPrecio(value: unitPrice)} c/u',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
-                      ],
+                
+                    const SizedBox(width: 12),
+                
+                    // Descripción del producto
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            description,
+                            style:Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                            maxLines:1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            Publications.getFormatoPrecio(value: unitPrice),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-
-                  // Precio total
-                  Text(
-                    Publications.getFormatoPrecio(value: totalPrice),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                  ),
-                ],
+                    const SizedBox(width:8),
+                    // Precio total
+                    Text(
+                      Publications.getFormatoPrecio(value: totalPrice),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                    ),
+                  ],
+                ),
               );
             }).toList(),
           ),

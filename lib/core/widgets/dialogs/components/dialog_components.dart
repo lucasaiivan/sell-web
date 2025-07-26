@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/widgets/ui/expandable_list_container.dart';
 import '../../../widgets/inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3
@@ -55,39 +56,136 @@ class DialogComponents {
     );
   }
 
-  /// Lista de elementos con divisores estilizados
+  /// Lista de elementos con divisores estilizados y funcionalidad de expandir/colapsar
+  /// 
+  /// Características:
+  /// - Automáticamente usa ExpandableListContainer para listas largas (> maxVisibleItems)
+  /// - Diseño responsivo que se adapta a móvil/tablet/desktop
+  /// - Soporte para títulos opcionales y textos personalizados de expansión
+  /// - Divisores configurables entre elementos
+  /// - Estilo consistente con Material Design 3
   static Widget itemList({
     required List<Widget> items,
     bool showDividers = true,
+    String? title,
+    int maxVisibleItems = 5,
+    String? expandText,
+    String? collapseText,
+    Color? backgroundColor,
+    Color? borderColor,
+    double borderRadius = 12,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+    // Si hay pocos elementos o no se requiere expansión, usar el diseño simple
+    if (items.length <= maxVisibleItems) {
+      return Container(
+        decoration: BoxDecoration(
+          color: backgroundColor ?? theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(
+            color: borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
         ),
-      ),
-      child: Column(
-        children: items.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
+        child: Column(
+          children: items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
 
-          return Column(
-            children: [
-              item,
-              if (showDividers && index < items.length - 1)
-                Divider(
-                  height: 1,
-                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                ),
-            ],
-          );
-        }).toList(),
-      ),
+            return Column(
+              children: [
+                item,
+                if (showDividers && index < items.length - 1)
+                  Divider(
+                    height: 1,
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+              ],
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    // Para listas largas, usar ExpandableListContainer
+    return ExpandableListContainer<Widget>(
+      items: items,
+      isMobile: isMobile,
+      theme: theme,
+      title: title,
+      maxVisibleItems: maxVisibleItems,
+      expandText: expandText,
+      collapseText: collapseText,
+      showDividers: showDividers,
+      backgroundColor: backgroundColor ?? theme.colorScheme.surface,
+      borderColor: borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+      borderRadius: borderRadius,
+      itemBuilder: (context, item, index, isLast) {
+        return Column(
+          children: [
+            item,
+            if (showDividers && !isLast)
+              Divider(
+                height: 1,
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Lista tipada con funcionalidad expandible para datos específicos
+  static Widget expandableDataList<T>({
+    required List<T> items,
+    required Widget Function(BuildContext context, T item, int index, bool isLast) itemBuilder,
+    String? title,
+    int maxVisibleItems = 5,
+    String? expandText,
+    String? collapseText,
+    bool showDividers = true,
+    Color? backgroundColor,
+    Color? borderColor,
+    double borderRadius = 12,
+    required BuildContext context,
+  }) {
+    final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    return ExpandableListContainer<T>(
+      items: items,
+      itemBuilder: (context, item, index, isLast) {
+        final builtItem = itemBuilder(context, item, index, isLast);
+        
+        // Si no queremos divisores, devolver el item directamente
+        if (!showDividers) return builtItem;
+        
+        // Si queremos divisores, envolverlo en un Column con Divider
+        return Column(
+          children: [
+            builtItem,
+            if (!isLast)
+              Divider(
+                height: 1,
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              ),
+          ],
+        );
+      },
+      isMobile: isMobile,
+      theme: theme,
+      title: title,
+      maxVisibleItems: maxVisibleItems,
+      expandText: expandText,
+      collapseText: collapseText,
+      showDividers: false, // Manejamos los divisores manualmente
+      backgroundColor: backgroundColor ?? theme.colorScheme.surface,
+      borderColor: borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+      borderRadius: borderRadius,
     );
   }
 
@@ -442,4 +540,94 @@ class DialogComponents {
 
   /// Espaciado mínimo entre elementos relacionados
   static const Widget minSpacing = SizedBox(height: 8);
+}
+
+// =============================================================================
+// EJEMPLOS DE USO DE LAS LISTAS EXPANDIBLES EN DIÁLOGOS
+// =============================================================================
+
+/// Ejemplos de uso de las nuevas funcionalidades de listas expandibles en DialogComponents
+class DialogListExamples {
+  /// Ejemplo: Lista de productos expandible en un diálogo
+  static Widget buildProductsDialog({
+    required List<Map<String, dynamic>> products,
+    required BuildContext context,
+  }) {
+    return AlertDialog(
+      title: const Text('Catálogo de Productos'),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Usando el método expandableDataList para datos tipados
+            DialogComponents.expandableDataList<Map<String, dynamic>>(
+              items: products,
+              title: 'Productos disponibles',
+              maxVisibleItems: 4,
+              expandText: 'Ver más productos',
+              collapseText: 'Mostrar menos',
+              showDividers: true,
+              context: context,
+              itemBuilder: (context, product, index, isLast) {
+                return ListTile(
+                  leading: const Icon(Icons.inventory),
+                  title: Text(product['name'] ?? 'Producto'),
+                  subtitle: Text('\$${product['price'] ?? 0}'),
+                  trailing: Text('Stock: ${product['stock'] ?? 0}'),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        DialogComponents.secondaryActionButton(
+          text: 'Cerrar',
+          onPressed: () => Navigator.of(context).pop(),
+          context: context,
+        ),
+      ],
+    );
+  }
+
+  /// Ejemplo: Lista simple de widgets con expansión automática
+  static Widget buildTransactionsDialog({
+    required List<Widget> transactionWidgets,
+    required BuildContext context,
+  }) {
+    return AlertDialog(
+      title: const Text('Últimas Transacciones'),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Usando el método itemList mejorado
+            DialogComponents.itemList(
+              items: transactionWidgets,
+              title: 'Historial reciente',
+              maxVisibleItems: 6,
+              expandText: 'Ver todas las transacciones',
+              showDividers: true,
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+              context: context,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        DialogComponents.primaryActionButton(
+          text: 'Exportar',
+          onPressed: () {
+            // Lógica de exportación
+          },
+          icon: Icons.download,
+          context: context,
+        ),
+        DialogComponents.secondaryActionButton(
+          text: 'Cerrar',
+          onPressed: () => Navigator.of(context).pop(),
+          context: context,
+        ),
+      ],
+    );
+  }
 }

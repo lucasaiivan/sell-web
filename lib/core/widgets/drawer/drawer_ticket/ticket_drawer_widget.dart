@@ -27,8 +27,7 @@ class TicketDrawerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return showConfirmedPurchase
-        ? _TicketConfirmedPurchase(
-            width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
+        ? _TicketConfirmedPurchase(  width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
           ).animate().scale(
               duration: 600.ms,
               curve: Curves.elasticOut,
@@ -143,8 +142,7 @@ class _TicketContent extends StatelessWidget {
       children: [
         // view : contenido principal del ticket
         SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-              12, 12, 12, 75), // Ajustado para coincidir con gradiente
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 75), // Ajustado para coincidir con gradiente
           child: Column(
             children: [
               // Encabezado del ticket
@@ -255,7 +253,7 @@ class _TicketContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 1),
-        Text('ticker de compra', style: textSmallStyle),
+        Text('ticket de compra', style: textSmallStyle),
         const SizedBox(height: 1),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
@@ -875,8 +873,8 @@ class _TicketConfirmedPurchase extends StatelessWidget {
     final paymentIcon = _getPaymentMethodIcon(ticket.payMode);
 
     return Container(
-      width: width,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      width: width-24,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
@@ -914,9 +912,9 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                 size: 60,
               ),
             ),
-
+    
             const SizedBox(height: 24),
-
+    
             // Título principal
             Text(
               '¡Venta exitosa!',
@@ -926,9 +924,9 @@ class _TicketConfirmedPurchase extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-
+    
             const SizedBox(height: 8),
-
+    
             // Subtítulo
             Text(
               'Transacción completada correctamente',
@@ -937,9 +935,9 @@ class _TicketConfirmedPurchase extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-
+    
             const SizedBox(height: 32),
-
+    
             // Card con detalles
             Container(
               width: double.infinity,
@@ -976,9 +974,9 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                         ),
                       ],
                     ),
-
+    
                     const SizedBox(height: 8),
-
+    
                     // Descuento
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -998,17 +996,17 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                         ),
                       ],
                     ),
-
+    
                     const SizedBox(height: 12),
-
+    
                     Container(
                       height: 1,
                       color: Colors.white.withValues(alpha: 0.2),
                     ),
-
+    
                     const SizedBox(height: 12),
                   ],
-
+    
                   // Total de la venta
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1031,16 +1029,16 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                       ),
                     ],
                   ),
-
+    
                   const SizedBox(height: 16),
-
+    
                   Container(
                     height: 1,
                     color: Colors.white.withValues(alpha: 0.3),
                   ),
-
+    
                   const SizedBox(height: 16),
-
+    
                   // Información adicional
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1065,7 +1063,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                           ),
                         ],
                       ),
-
+    
                       // Método de pago
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1099,7 +1097,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                       ),
                     ],
                   ),
-
+    
                   // Mostrar vuelto si aplica
                   if (ticket.valueReceived > 0 &&
                       ticket.valueReceived > ticket.getTotalPrice) ...[
@@ -1138,9 +1136,9 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                 ],
               ),
             ),
-
+    
             const SizedBox(height: 24),
-
+    
             // Información de fecha y hora
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

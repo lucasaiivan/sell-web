@@ -22,11 +22,11 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   final _formKey = GlobalKey<FormState>();
   final _priceController = AppMoneyTextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   // FocusNodes para navegación por teclado
   final _priceFocusNode = FocusNode();
   final _descriptionFocusNode = FocusNode();
-  
+
   bool _isProcessing = false;
   bool _showPriceError = false;
 
@@ -73,7 +73,9 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               textInputAction: TextInputAction.next,
               label: 'Precio de Venta',
               hint: '\$0.0',
-              errorText: _showPriceError && (_priceController.text.isEmpty || _priceController.doubleValue <= 0) 
+              errorText: _showPriceError &&
+                      (_priceController.text.isEmpty ||
+                          _priceController.doubleValue <= 0)
                   ? 'El precio es obligatorio y debe ser mayor a 0'
                   : null,
               onChanged: (value) {
@@ -108,10 +110,10 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
                 // Al presionar Enter en el campo de descripción, procesar la venta
                 _processQuickSale();
               },
-              onSuffixPressed: () => _showPriceError = false, 
+              onSuffixPressed: () => _showPriceError = false,
             ),
 
-            DialogComponents.sectionSpacing, 
+            DialogComponents.sectionSpacing,
           ],
         ),
       ),
@@ -130,7 +132,6 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
       ],
     );
   }
- 
 
   Future<void> _processQuickSale() async {
     // Validar que el precio no esté vacío y sea mayor a 0
@@ -161,7 +162,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
       );
 
       if (mounted) {
-        Navigator.of(context).pop(); 
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {

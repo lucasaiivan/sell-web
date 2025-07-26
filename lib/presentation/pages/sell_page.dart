@@ -283,14 +283,14 @@ class _SellPageState extends State<SellPage> {
             const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+              children: [
                 const Spacer(),
                 // button : cancelar
                 AppOutlinedButton(
                   text: 'Cancelar',
                   onPressed: () {
-                  accionRealizada = true;
-                  Navigator.of(context).pop();
+                    accionRealizada = true;
+                    Navigator.of(context).pop();
                   },
                 ),
                 const SizedBox(width: 12),
@@ -298,11 +298,11 @@ class _SellPageState extends State<SellPage> {
                 AppButton(
                   text: 'Crear producto',
                   onPressed: () {
-                  accionRealizada = true;
-                  Navigator.of(context).pop();
-                  showAddProductDialog(context, 
-                    isNew: true, 
-                    product: ProductCatalogue(id: code, code: code));
+                    accionRealizada = true;
+                    Navigator.of(context).pop();
+                    showAddProductDialog(context,
+                        isNew: true,
+                        product: ProductCatalogue(id: code, code: code));
                   },
                 ),
               ],
@@ -618,19 +618,18 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                    SizedBox(
-                    width: double.infinity,
-                    child: AppButton(
-                      text: 'Descargar App',
-                      onPressed: () {
-                        // Abre la URL de descarga de la app
-                        html.window.open(
-                          'https://play.google.com/store/apps/details?id=com.sellweb.app',
-                          '_blank',
-                        );
-                      }, 
-                    )
-                  ),
+                  SizedBox(
+                      width: double.infinity,
+                      child: AppButton(
+                        text: 'Descargar App',
+                        onPressed: () {
+                          // Abre la URL de descarga de la app
+                          html.window.open(
+                            'https://play.google.com/store/apps/details?id=com.sellweb.app',
+                            '_blank',
+                          );
+                        },
+                      )),
                 ],
               ),
             ),
@@ -903,11 +902,11 @@ class _SellPageState extends State<SellPage> {
     // widgets
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Color adaptativo para items default que se ve bien en tema claro y oscuro
     // Usa surface con una opacidad muy baja para crear un contraste sutil
     Widget itemDefault = Card(
-      elevation: 0, 
+      elevation: 0,
       color: colorScheme.onSurface.withValues(alpha: 0.07),
     );
 
@@ -1255,8 +1254,9 @@ class _SellPageState extends State<SellPage> {
 
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => _ProductCatalogueFullScreenView(
-          products: products,sellProvider: sellProvider),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            _ProductCatalogueFullScreenView(
+                products: products, sellProvider: sellProvider),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;
@@ -1937,7 +1937,7 @@ class _ProductCatalogueFullScreenViewState
     extends State<_ProductCatalogueFullScreenView> {
   late TextEditingController _searchController;
   late FocusNode _searchFocusNode;
-  
+
   bool _isSearching = false;
   List<ProductCatalogue> _filteredProducts = [];
 
@@ -1966,7 +1966,7 @@ class _ProductCatalogueFullScreenViewState
   // Utiliza el algoritmo avanzado de búsqueda para filtrar productos
   void _onSearchChanged() {
     final query = _searchController.text.trim();
-    
+
     setState(() {
       if (query.isEmpty) {
         _isSearching = false;
@@ -1975,34 +1975,34 @@ class _ProductCatalogueFullScreenViewState
         _isSearching = true;
         try {
           // Usar el algoritmo avanzado de búsqueda
-          final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
-          
+          final catalogueProvider =
+              Provider.of<CatalogueProvider>(context, listen: false);
+
           // Usar productos directos si el provider no tiene productos
-          final productsToSearch = catalogueProvider.products.isNotEmpty 
-              ? catalogueProvider.products 
-              : widget.products;
-          
+
           _filteredProducts = catalogueProvider.searchProducts(
             query: query,
             maxResults: 50, // Limitar a 50 resultados para mejor rendimiento
           );
-          
+
           // Si el provider no tiene productos, usar búsqueda directa con el algoritmo
-          if (_filteredProducts.isEmpty && catalogueProvider.products.isEmpty && widget.products.isNotEmpty) {
+          if (_filteredProducts.isEmpty &&
+              catalogueProvider.products.isEmpty &&
+              widget.products.isNotEmpty) {
             _filteredProducts = ProductSearchAlgorithm.searchProducts(
               products: widget.products,
               query: query,
               maxResults: 50,
             );
           }
-          
+
           // Si no hay resultados con el algoritmo avanzado, usar búsqueda simple como fallback
           if (_filteredProducts.isEmpty) {
             _filteredProducts = widget.products.where((product) {
               final queryLower = query.toLowerCase();
               return product.description.toLowerCase().contains(queryLower) ||
-                     product.nameMark.toLowerCase().contains(queryLower) ||
-                     product.code.toLowerCase().contains(queryLower);
+                  product.nameMark.toLowerCase().contains(queryLower) ||
+                  product.code.toLowerCase().contains(queryLower);
             }).toList();
           }
         } catch (e) {
@@ -2010,8 +2010,8 @@ class _ProductCatalogueFullScreenViewState
           _filteredProducts = widget.products.where((product) {
             final queryLower = query.toLowerCase();
             return product.description.toLowerCase().contains(queryLower) ||
-                   product.nameMark.toLowerCase().contains(queryLower) ||
-                   product.code.toLowerCase().contains(queryLower);
+                product.nameMark.toLowerCase().contains(queryLower) ||
+                product.code.toLowerCase().contains(queryLower);
           }).toList();
         }
       }
@@ -2036,7 +2036,7 @@ class _ProductCatalogueFullScreenViewState
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -2116,7 +2116,7 @@ class _ProductCatalogueFullScreenViewState
 
             // Campo de búsqueda fijo en la parte superior
             Container(
-              padding: const EdgeInsets.all(16), 
+              padding: const EdgeInsets.all(16),
               child: _buildSearchField(),
             ),
 
@@ -2160,7 +2160,7 @@ class _ProductCatalogueFullScreenViewState
             ),
             const SizedBox(height: 16),
             Text(
-              _searchController.text.isEmpty 
+              _searchController.text.isEmpty
                   ? 'No hay productos disponibles'
                   : 'Sin resultados',
               style: theme.textTheme.titleMedium?.copyWith(
@@ -2194,7 +2194,7 @@ class _ProductCatalogueFullScreenViewState
   Widget _buildProductListItem(ProductCatalogue product) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Verificar si el producto está en el ticket
     final ticketProducts = widget.sellProvider.ticket.products;
     ProductCatalogue? selectedProduct;
@@ -2222,7 +2222,8 @@ class _ProductCatalogueFullScreenViewState
                 ),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           leading: ProductImage(
             imageUrl: product.image,
             size: 56,
@@ -2276,7 +2277,8 @@ class _ProductCatalogueFullScreenViewState
               const SizedBox(width: 12),
               if (selectedProduct != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: colorScheme.primary,
                     borderRadius: BorderRadius.circular(20),

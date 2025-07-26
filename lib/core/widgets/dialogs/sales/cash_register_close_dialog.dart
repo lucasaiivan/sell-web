@@ -95,24 +95,23 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
       actions: [
         Row(
           children: [
-             const Spacer(),
-            // button : Cerrar caja 
+            const Spacer(),
+            // button : Cerrar caja
             Consumer<SellProvider>(
               builder: (context, sellProvider, child) {
                 return DialogComponents.primaryActionButton(
-                  context: context,
-                  text: 'Cerrar Caja',
-                  isLoading: cashRegisterProvider.isProcessing,
-                  icon: Icons.exit_to_app_rounded,  
-                  onPressed: () { 
-                    if (cashRegisterProvider.isProcessing) return;
-                    _handleCloseCashRegister(
-                      context,
-                      cashRegisterProvider,
-                      sellProvider,
-                    );
-                  }
-                );
+                    context: context,
+                    text: 'Cerrar Caja',
+                    isLoading: cashRegisterProvider.isProcessing,
+                    icon: Icons.exit_to_app_rounded,
+                    onPressed: () {
+                      if (cashRegisterProvider.isProcessing) return;
+                      _handleCloseCashRegister(
+                        context,
+                        cashRegisterProvider,
+                        sellProvider,
+                      );
+                    });
               },
             ),
             // button : Cancelar cierre de caja

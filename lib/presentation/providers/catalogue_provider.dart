@@ -210,13 +210,13 @@ class CatalogueProvider extends ChangeNotifier {
   }) {
     print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
     print('📦 Productos disponibles en state: ${_state.products.length}');
-    
+
     final results = ProductSearchAlgorithm.searchProducts(
       products: _state.products,
       query: query,
       maxResults: maxResults,
     );
-    
+
     print('✅ Resultados de búsqueda: ${results.length}');
     return results;
   }
@@ -229,7 +229,7 @@ class CatalogueProvider extends ChangeNotifier {
   }) {
     // Cancelar timer anterior si existe
     _searchDebounceTimer?.cancel();
-    
+
     // Crear nuevo timer
     _searchDebounceTimer = Timer(delay, () {
       final results = searchProducts(query: query, maxResults: maxResults);
@@ -285,7 +285,7 @@ class CatalogueProvider extends ChangeNotifier {
       query: query,
       maxSuggestions: maxSuggestions,
     );
-    
+
     return suggestions;
   }
 

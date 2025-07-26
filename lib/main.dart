@@ -27,8 +27,12 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Inicializar repositorios
-  final authRepository =
-      AuthRepositoryImpl(fb_auth.FirebaseAuth.instance, GoogleSignIn());
+  final authRepository = AuthRepositoryImpl(
+    fb_auth.FirebaseAuth.instance, 
+    GoogleSignIn(
+      scopes: ['email', 'profile'],
+    ),
+  );
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 

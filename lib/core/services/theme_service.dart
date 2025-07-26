@@ -12,7 +12,7 @@ class ThemeService {
 
   final ValueNotifier<ThemeMode> _themeMode = ValueNotifier(ThemeMode.system);
   final ValueNotifier<Color> _seedColor = ValueNotifier(Colors.blue);
-  
+
   // Configuraciones personalizables para tonalidades de desenfoque
   double _dialogBarrierOpacityLight = 0.2;
   double _dialogBarrierOpacityDark = 0.15;
@@ -121,21 +121,21 @@ class ThemeService {
   /// Configuración del tema claro
   ThemeData get lightTheme {
     late ColorScheme colorScheme;
-    
+
     // Para el color negro, crear un tema con fondo completamente negro
     if (_seedColor.value == Colors.black) {
       colorScheme = _createBlackColorScheme(Brightness.light);
     } else {
       colorScheme = ColorScheme.fromSeed(seedColor: _seedColor.value);
     }
-    
+
     return _buildTheme(colorScheme, false);
   }
 
   /// Configuración del tema oscuro
   ThemeData get darkTheme {
     late ColorScheme colorScheme;
-    
+
     // Para el color negro, crear un tema con fondo completamente negro
     if (_seedColor.value == Colors.black) {
       colorScheme = _createBlackColorScheme(Brightness.dark);
@@ -145,7 +145,7 @@ class ThemeService {
         brightness: Brightness.dark,
       );
     }
-    
+
     return _buildTheme(colorScheme, true);
   }
 
@@ -201,7 +201,7 @@ class ThemeService {
         onError: Color(0xFF690005),
         errorContainer: Color(0xFF93000A),
         onErrorContainer: Color(0xFFFFDAD6),
-        surface: Colors.black,  // Fondo completamente negro
+        surface: Colors.black, // Fondo completamente negro
         onSurface: Colors.white,
         surfaceContainerHighest: Color(0xFF1C1C1C),
         onSurfaceVariant: Color(0xFFBDBDBD),
@@ -217,44 +217,44 @@ class ThemeService {
   }
 
   /// Obtiene el color de fondo optimizado para ElevatedButton
-  Color _getElevatedButtonBackgroundColor(ColorScheme colorScheme, bool isDark) {
+  Color _getElevatedButtonBackgroundColor(
+      ColorScheme colorScheme, bool isDark) {
     // Para el tema negro, usar un color que contraste bien
     if (_seedColor.value == Colors.black) {
-      return isDark 
-        ? const Color(0xFF2A2A2A)  // Gris muy oscuro en tema oscuro
-        : colorScheme.primary;     // Negro en tema claro
+      return isDark
+          ? const Color(0xFF2A2A2A) // Gris muy oscuro en tema oscuro
+          : colorScheme.primary; // Negro en tema claro
     }
-    
+
     // Para otros colores, usar el primaryContainer con mejor saturación
-    return isDark 
-      ? colorScheme.primaryContainer.withOpacity(0.9)
-      : colorScheme.primary;
+    return isDark
+        ? colorScheme.primaryContainer.withOpacity(0.9)
+        : colorScheme.primary;
   }
 
   /// Obtiene el color de texto optimizado para ElevatedButton
-  Color _getElevatedButtonForegroundColor(ColorScheme colorScheme, bool isDark) {
+  Color _getElevatedButtonForegroundColor(
+      ColorScheme colorScheme, bool isDark) {
     // Para el tema negro, asegurar contraste máximo
     if (_seedColor.value == Colors.black) {
-      return isDark 
-        ? Colors.white              // Blanco en tema oscuro
-        : colorScheme.onPrimary;    // Blanco en tema claro
+      return isDark
+          ? Colors.white // Blanco en tema oscuro
+          : colorScheme.onPrimary; // Blanco en tema claro
     }
-    
+
     // Para otros colores, usar los colores apropiados del esquema
-    return isDark 
-      ? colorScheme.onPrimaryContainer
-      : colorScheme.onPrimary;
+    return isDark ? colorScheme.onPrimaryContainer : colorScheme.onPrimary;
   }
 
   /// Obtiene el tinte de superficie para ElevatedButton
   Color _getElevatedButtonSurfaceTint(ColorScheme colorScheme, bool isDark) {
     // Para el tema negro, usar un tinte sutil
     if (_seedColor.value == Colors.black) {
-      return isDark 
-        ? Colors.white.withOpacity(0.1)
-        : Colors.black.withOpacity(0.1);
+      return isDark
+          ? Colors.white.withOpacity(0.1)
+          : Colors.black.withOpacity(0.1);
     }
-    
+
     // Para otros colores, usar el primary con opacidad reducida
     return colorScheme.primary.withOpacity(isDark ? 0.2 : 0.3);
   }
@@ -265,7 +265,7 @@ class ThemeService {
       colorScheme: colorScheme,
       useMaterial3: true,
       brightness: isDark ? Brightness.dark : Brightness.light,
-      
+
       // Configuración personalizada para diálogos
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
@@ -279,7 +279,7 @@ class ThemeService {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      
+
       // Configuración personalizada para drawers
       drawerTheme: DrawerThemeData(
         backgroundColor: colorScheme.surface,
@@ -296,14 +296,16 @@ class ThemeService {
           ),
         ),
       ),
-      
+
       // Configuración para Bottom Sheets (si los usas)
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         modalBackgroundColor: colorScheme.surface,
         modalBarrierColor: colorScheme.onSurface.withOpacity(
-          isDark ? _bottomSheetBarrierOpacityDark : _bottomSheetBarrierOpacityLight,
+          isDark
+              ? _bottomSheetBarrierOpacityDark
+              : _bottomSheetBarrierOpacityLight,
         ),
         elevation: 1,
         shape: const RoundedRectangleBorder(
@@ -312,29 +314,31 @@ class ThemeService {
           ),
         ),
       ),
-      
+
       // Configuración mejorada para ElevatedButton
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           // Color de fondo mejorado con mejor contraste
-          backgroundColor: _getElevatedButtonBackgroundColor(colorScheme, isDark),
-          foregroundColor: _getElevatedButtonForegroundColor(colorScheme, isDark),
-          
+          backgroundColor:
+              _getElevatedButtonBackgroundColor(colorScheme, isDark),
+          foregroundColor:
+              _getElevatedButtonForegroundColor(colorScheme, isDark),
+
           // Mejora de la elevación y sombras
           elevation: isDark ? 2 : 1,
           shadowColor: colorScheme.shadow.withOpacity(isDark ? 0.3 : 0.2),
-          
+
           // Configuración de superficie para Material 3
           surfaceTintColor: _getElevatedButtonSurfaceTint(colorScheme, isDark),
-          
+
           // Forma consistente con el diseño general
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          
+
           // Padding optimizado para mejor UX
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          
+
           // Configuración de estados (hover, pressed, disabled)
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith((states) {

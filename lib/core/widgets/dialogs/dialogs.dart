@@ -55,6 +55,7 @@ export 'catalogue/add_product_dialog.dart' show showAddProductDialog;
 export 'sales/quick_sale_dialog.dart' show showQuickSaleDialog;
 export 'tickets/ticket_options_dialog.dart' show showTicketOptionsDialog;
 export 'tickets/last_ticket_dialog.dart' show showLastTicketDialog;
-export 'configuration/theme_color_selector_dialog.dart' show ThemeColorSelectorDialog;
+export 'configuration/theme_color_selector_dialog.dart'
+    show ThemeColorSelectorDialog;
 
 // Nota: Archivos legacy eliminados - migración completada el 2025-07-12

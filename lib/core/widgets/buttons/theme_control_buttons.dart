@@ -4,8 +4,8 @@ import '../dialogs/dialogs.dart';
 import '../../../presentation/providers/theme_data_app_provider.dart';
 
 /// Widget reutilizable para controles de tema dinámico
-/// 
-/// Proporciona botones para cambiar el brillo del tema y seleccionar 
+///
+/// Proporciona botones para cambiar el brillo del tema y seleccionar
 /// el color semilla de manera consistente en toda la aplicación
 class ThemeControlButtons extends StatelessWidget {
   const ThemeControlButtons({
@@ -59,7 +59,6 @@ class ThemeControlButtons extends StatelessWidget {
         if (showColorButton && showBrightnessButton) {
           buttons.add(SizedBox(width: spacing));
         }
- 
 
         return Row(
           mainAxisSize: mainAxisSize,
@@ -118,7 +117,8 @@ class ThemeBrightnessButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = themeProvider.themeMode == ThemeMode.dark;
-    final defaultTooltip = isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
+    final defaultTooltip =
+        isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
 
     return Material(
       color: Colors.transparent,

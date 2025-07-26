@@ -47,13 +47,14 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
 
   void _onTextChanged() {
     final query = widget.controller.text.trim();
-    
+
     if (query.isNotEmpty && query.length >= 2) {
       try {
         // Obtener sugerencias del provider
-        final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+        final catalogueProvider =
+            Provider.of<CatalogueProvider>(context, listen: false);
         _suggestions = catalogueProvider.getSearchSuggestions(query: query);
-        
+
         if (_suggestions.isNotEmpty && widget.focusNode.hasFocus) {
           _showSuggestionsOverlay();
         } else {
@@ -76,14 +77,15 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
       Future.delayed(const Duration(milliseconds: 150), () {
         _hideSuggestions();
       });
-    } else if (_suggestions.isNotEmpty && widget.controller.text.trim().length >= 2) {
+    } else if (_suggestions.isNotEmpty &&
+        widget.controller.text.trim().length >= 2) {
       _showSuggestionsOverlay();
     }
   }
 
   void _showSuggestionsOverlay() {
     _removeOverlay();
-    
+
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         width: _getSearchFieldWidth(),
@@ -100,7 +102,10 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.2),
                 ),
               ),
               child: ListView.builder(
@@ -159,7 +164,7 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: Container(
@@ -167,8 +172,8 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: widget.focusNode.hasFocus 
-                ? colorScheme.primary 
+            color: widget.focusNode.hasFocus
+                ? colorScheme.primary
                 : colorScheme.outline.withValues(alpha: 0.3),
             width: widget.focusNode.hasFocus ? 2 : 1,
           ),

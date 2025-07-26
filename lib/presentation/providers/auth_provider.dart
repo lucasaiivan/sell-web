@@ -82,7 +82,9 @@ class AuthProvider extends ChangeNotifier {
 
   /// Inicia sesión como invitado usando Firebase Auth anónimo
   Future<void> signInAsGuest() async {
-    final user = await SignInAnonymouslyUseCase(signInWithGoogleUseCase.repository).call();
+    final user =
+        await SignInAnonymouslyUseCase(signInWithGoogleUseCase.repository)
+            .call();
     _user = user;
     _accountsAssociateds = [];
     notifyListeners();

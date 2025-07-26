@@ -128,7 +128,7 @@ class AppBarButtonCircle extends StatelessWidget {
         theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
     final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
     final bool hasText = text != null && text!.isNotEmpty;
-    
+
     // Calcular tamaño del icono basado en el tamaño del botón (40% del área)
     const double buttonSize = 48.0;
     const double iconSize = buttonSize * 0.4; // 19.2 ≈ 20
@@ -143,11 +143,13 @@ class AppBarButtonCircle extends StatelessWidget {
           style: TextButton.styleFrom(
             backgroundColor: effectiveBackgroundColor,
             shape: hasText ? const StadiumBorder() : const CircleBorder(),
-            padding: hasText 
+            padding: hasText
                 ? const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0)
-                : EdgeInsets.zero, // Sin padding para botón circular - centrado perfecto
+                : EdgeInsets
+                    .zero, // Sin padding para botón circular - centrado perfecto
             minimumSize: const Size(buttonSize, buttonSize),
-            maximumSize: hasText ? Size.infinite : const Size(buttonSize, buttonSize),
+            maximumSize:
+                hasText ? Size.infinite : const Size(buttonSize, buttonSize),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: hasText

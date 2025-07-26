@@ -10,12 +10,12 @@ class ThemeColorSelectorDialog extends StatelessWidget {
   /// Lista unificada de colores semilla disponibles para cualquier tema
   /// Seleccionados siguiendo las mejores prácticas de Material Design
   static const List<Color> availableColors = [
-    Colors.black,        // Negro: elegante y premium
-    Colors.blue,         // Azul: clásico y confiable 
-    Colors.indigo,       // Índigo: profesional y confiable  
-    Colors.deepPurple,   // Púrpura profundo: moderno y creativo
-    Colors.orange,      // Naranja: vibrante y enérgico
-    Colors.pink,        // Rosa: juguetón y romántico
+    Colors.black, // Negro: elegante y premium
+    Colors.blue, // Azul: clásico y confiable
+    Colors.indigo, // Índigo: profesional y confiable
+    Colors.deepPurple, // Púrpura profundo: moderno y creativo
+    Colors.orange, // Naranja: vibrante y enérgico
+    Colors.pink, // Rosa: juguetón y romántico
   ];
 
   /// Muestra el diálogo de selección de color
@@ -46,7 +46,8 @@ class ThemeColorSelectorDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, ThemeDataAppProvider themeProvider) {
+  Widget _buildContent(
+      BuildContext context, ThemeDataAppProvider themeProvider) {
     final theme = Theme.of(context);
 
     return Column(
@@ -55,9 +56,9 @@ class ThemeColorSelectorDialog extends StatelessWidget {
       children: [
         // Control de brillo
         _buildBrightnessControl(context, themeProvider),
-        
+
         const SizedBox(height: 20),
-        
+
         // Colores disponibles
         Text(
           'Color del tema',
@@ -66,14 +67,15 @@ class ThemeColorSelectorDialog extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Grid de colores simplificado
         _buildSimpleColorGrid(context, themeProvider),
       ],
     );
   }
 
-  Widget _buildBrightnessControl(BuildContext context, ThemeDataAppProvider themeProvider) {
+  Widget _buildBrightnessControl(
+      BuildContext context, ThemeDataAppProvider themeProvider) {
     final theme = Theme.of(context);
     final isDark = themeProvider.themeMode == ThemeMode.dark;
 
@@ -110,7 +112,8 @@ class ThemeColorSelectorDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildSimpleColorGrid(BuildContext context, ThemeDataAppProvider themeProvider) {
+  Widget _buildSimpleColorGrid(
+      BuildContext context, ThemeDataAppProvider themeProvider) {
     final currentColor = themeProvider.seedColor;
 
     return Wrap(
@@ -156,11 +159,11 @@ class ThemeColorSelectorDialog extends StatelessWidget {
               shape: BoxShape.circle,
               color: color,
               border: Border.all(
-                color: isSelected 
-                  ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-                  : Colors.transparent,
+                color: isSelected
+                    ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+                    : Colors.transparent,
                 width: isSelected ? 2 : 0,
-              ), 
+              ),
             ),
             child: AnimatedScale(
               duration: const Duration(milliseconds: 150),
@@ -170,12 +173,12 @@ class ThemeColorSelectorDialog extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: isSelected
-                  ? Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    )
-                  : null,
+                    ? Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      )
+                    : null,
               ),
             ),
           ),

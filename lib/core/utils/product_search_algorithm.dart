@@ -3,17 +3,16 @@ import '../../domain/entities/catalogue.dart';
 /// Algoritmo eficiente de búsqueda de productos que permite buscar sin importar
 /// el orden de las palabras y con tolerancia a errores de escritura.
 class ProductSearchAlgorithm {
-  
   /// Busca productos usando un algoritmo eficiente que permite:
   /// - Búsqueda por palabras sin importar el orden
   /// - Búsqueda en múltiples campos (descripción, marca, código)
   /// - Normalización de texto (sin tildes, minúsculas)
   /// - Tolerancia a espacios extra
-  /// 
+  ///
   /// [products] Lista de productos donde buscar
   /// [query] Término de búsqueda
   /// [maxResults] Máximo número de resultados (opcional)
-  /// 
+  ///
   /// Retorna una lista ordenada por relevancia
   static List<ProductCatalogue> searchProducts({
     required List<ProductCatalogue> products,
@@ -26,16 +25,16 @@ class ProductSearchAlgorithm {
 
     // Normalizar y dividir la consulta en palabras
     final normalizedQuery = _normalizeText(query);
-    final queryWords = normalizedQuery.split(' ').where((word) => word.isNotEmpty).toList();
-  
-    
+    final queryWords =
+        normalizedQuery.split(' ').where((word) => word.isNotEmpty).toList();
+
     if (queryWords.isEmpty) {
       return products;
     }
 
     // Buscar y puntuar productos
     final scoredResults = <_ScoredProduct>[];
-    
+
     for (final product in products) {
       final score = _calculateProductScore(product, queryWords);
       if (score > 0) {
@@ -56,7 +55,7 @@ class ProductSearchAlgorithm {
       final limitedResults = results.take(maxResults).toList();
       return limitedResults;
     }
-    
+
     return results;
   }
 
@@ -78,8 +77,9 @@ class ProductSearchAlgorithm {
   }) {
     final normalizedCategory = _normalizeText(category);
     return products.where((product) {
-      return _normalizeText(product.nameCategory).contains(normalizedCategory) ||
-             _normalizeText(product.category).contains(normalizedCategory);
+      return _normalizeText(product.nameCategory)
+              .contains(normalizedCategory) ||
+          _normalizeText(product.category).contains(normalizedCategory);
     }).toList();
   }
 
@@ -109,7 +109,8 @@ class ProductSearchAlgorithm {
   }
 
   /// Calcula la puntuación de relevancia de un producto para una consulta
-  static double _calculateProductScore(ProductCatalogue product, List<String> queryWords) {
+  static double _calculateProductScore(
+      ProductCatalogue product, List<String> queryWords) {
     if (queryWords.isEmpty) return 0.0;
 
     // Textos normalizados del producto
@@ -182,7 +183,7 @@ class ProductSearchAlgorithm {
       // Bonificación menor si coinciden al menos el 50% de las palabras
       totalScore *= 1.1;
     }
-    
+
     // Aplicar factor de coincidencia para que productos con más palabras coincidentes aparezcan primero
     final matchFactor = matchedWords / queryWords.length;
     totalScore *= matchFactor;
@@ -204,7 +205,7 @@ class ProductSearchAlgorithm {
   /// Búsqueda difusa mejorada para encontrar coincidencias similares
   static bool _fuzzyMatch(String text, String word) {
     if (word.length < 2) return false; // Muy corta para búsqueda difusa
-    
+
     // Caso 1: Buscar subcadenas de la palabra en el texto (método original)
     for (int i = 0; i <= word.length - 2; i++) {
       final substring = word.substring(i, i + 2);
@@ -212,7 +213,7 @@ class ProductSearchAlgorithm {
         return true;
       }
     }
-    
+
     // Caso 2: Verificar si las primeras letras de la palabra coinciden con alguna palabra del texto
     final firstThreeChars = word.length >= 3 ? word.substring(0, 3) : word;
     final textWords = text.split(' ');
@@ -221,7 +222,7 @@ class ProductSearchAlgorithm {
         return true;
       }
     }
-    
+
     // Caso 3: Tolerancia a errores de tipeo (una letra diferente)
     if (word.length >= 4) {
       final textWords = text.split(' ');
@@ -231,27 +232,27 @@ class ProductSearchAlgorithm {
         }
       }
     }
-    
+
     return false;
   }
 
   /// Verifica si dos palabras son similares con tolerancia a un error de tipeo
   static bool _isTypoTolerant(String word1, String word2) {
     if ((word1.length - word2.length).abs() > 1) return false;
-    
+
     int differences = 0;
     int minLength = word1.length < word2.length ? word1.length : word2.length;
-    
+
     for (int i = 0; i < minLength; i++) {
       if (word1[i] != word2[i]) {
         differences++;
         if (differences > 1) return false;
       }
     }
-    
+
     // Añadir diferencia por diferencia de longitud
     differences += (word1.length - word2.length).abs();
-    
+
     return differences <= 1;
   }
 
@@ -271,7 +272,8 @@ class ProductSearchAlgorithm {
     for (final product in products) {
       // Sugerencias de descripción
       final description = _normalizeText(product.description);
-      if (description.contains(normalizedQuery) && product.description.isNotEmpty) {
+      if (description.contains(normalizedQuery) &&
+          product.description.isNotEmpty) {
         suggestions.add(product.description);
       }
 
@@ -283,7 +285,8 @@ class ProductSearchAlgorithm {
 
       // Sugerencias de categoría
       final category = _normalizeText(product.nameCategory);
-      if (category.contains(normalizedQuery) && product.nameCategory.isNotEmpty) {
+      if (category.contains(normalizedQuery) &&
+          product.nameCategory.isNotEmpty) {
         suggestions.add(product.nameCategory);
       }
     }
@@ -291,7 +294,6 @@ class ProductSearchAlgorithm {
     final result = suggestions.take(maxSuggestions).toList();
     return result;
   }
-
 }
 
 /// Clase interna para manejar productos con puntuación

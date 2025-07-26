@@ -21,7 +21,6 @@ class WelcomePage extends StatelessWidget {
 
   /// Construye una tarjeta de cuenta con avatar, nombre y ubicación mejorada
   Widget _buildAccountCard(BuildContext context, ProfileAccountModel account) {
-    
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -197,7 +196,8 @@ class WelcomePage extends StatelessWidget {
                     ),
                   // view : muestra lista de cuentas asociadas al usuario
                   if (accounts.isNotEmpty)
-                    ...accounts.map((account) => _buildAccountCard(context, account)),
+                    ...accounts
+                        .map((account) => _buildAccountCard(context, account)),
                   const SizedBox(height: 30),
                   // Botón para cerrar sesión del usuario
                   if (authProvider.user?.email != null)

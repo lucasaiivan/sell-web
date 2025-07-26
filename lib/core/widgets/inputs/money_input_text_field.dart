@@ -78,7 +78,7 @@ class MoneyInputTextField extends StatelessWidget {
         // Si se especifica un callback personalizado, ejecutarlo
         if (onEditingComplete != null) {
           onEditingComplete!();
-        } 
+        }
         // Si se especifica un nodo de enfoque siguiente, mover el foco
         else if (nextFocusNode != null) {
           nextFocusNode!.requestFocus();

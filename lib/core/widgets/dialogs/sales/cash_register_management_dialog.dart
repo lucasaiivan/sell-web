@@ -69,13 +69,15 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 );
               }
               // view : Construir contenido responsivo de la  información de caja
-              return _buildResponsiveContent(context, cashRegisterProvider, isMobile);
+              return _buildResponsiveContent(
+                  context, cashRegisterProvider, isMobile);
             },
           ),
           actions: [
             // Botones de acción de caja (Deseleccionar/Cerrar) - Solo si hay caja activa
             if (cashRegisterProvider.hasActiveCashRegister)
-              ..._buildCashRegisterActionButtons(context, cashRegisterProvider, isMobile),
+              ..._buildCashRegisterActionButtons(
+                  context, cashRegisterProvider, isMobile),
           ],
         );
       },
@@ -124,8 +126,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildCashRegisterActionButtons(BuildContext context, CashRegisterProvider provider, bool isMobile) {
-    final cashRegister = provider.currentActiveCashRegister!; 
+  List<Widget> _buildCashRegisterActionButtons(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
+    final cashRegister = provider.currentActiveCashRegister!;
 
     return [
       DialogComponents.secondaryActionButton(
@@ -202,7 +205,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   Widget _buildNoCashRegister(BuildContext context, bool isMobile) {
- 
     final theme = Theme.of(context);
     final provider = context.watch<CashRegisterProvider>();
     final authProvider = context.watch<AuthProvider>();
@@ -218,7 +220,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [ 
+      children: [
         // Verificar si hay cajas disponibles
         if (provider.hasAvailableCashRegisters) ...[
           // Mostrar lista de cajas disponibles usando ExpandableListContainer
@@ -288,7 +290,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
             DialogComponents.primaryActionButton(
               context: context,
               text: 'Nueva caja',
-              onPressed: authProvider.isGuest ? null : () => _showOpenDialog(context),
+              onPressed:
+                  authProvider.isGuest ? null : () => _showOpenDialog(context),
               isLoading: provider.isLoadingActive,
             ),
           ],

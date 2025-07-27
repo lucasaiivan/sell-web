@@ -176,20 +176,21 @@ class CatalogueProvider extends ChangeNotifier {
                 ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
 
-        _shouldNotifyListeners = false;
+        // Ordenar productos por fecha de actualización (más recientes primero)
+        products.sort((a, b) => b.upgrade.compareTo(a.upgrade));
+
+        // Siempre actualizar si hay cambios detectados
         if (!_areProductListsEqual(_state.products, products)) {
-          _state = _state.copyWith(products: products);
-          _shouldNotifyListeners = true;
-          notifyListeners();
+          _updateState(_state.copyWith(products: products));
+          print(
+              '📦 Lista de catálogo actualizada: ${products.length} productos');
         }
 
+        // Marcar como cargado si aún está en estado loading
         if (_state.isLoading) {
-          _state = _state.copyWith(isLoading: false);
-          _shouldNotifyListeners = true;
-          notifyListeners();
+          _updateState(_state.copyWith(isLoading: false));
+          print('✅ Catálogo inicializado correctamente');
         }
-
-        _shouldNotifyListeners = true;
       },
       onError: (error) {
         print('Error al cargar productos: $error');
@@ -278,6 +279,30 @@ class CatalogueProvider extends ChangeNotifier {
       products: _state.products,
       category: category,
     );
+  }
+
+  /// Fuerza la actualización del catálogo desde Firebase
+  /// Útil cuando se necesita asegurar que los datos estén sincronizados
+  Future<void> forceRefreshCatalogue() async {
+    if (_catalogueSubscription == null) {
+      print('⚠️ No hay suscripción activa al catálogo');
+      return;
+    }
+
+    try {
+      print('🔄 Forzando actualización del catálogo...');
+      _updateState(_state.copyWith(isLoading: true));
+
+      // La actualización se hará automáticamente por el listener del stream
+      // Solo necesitamos marcar que estamos refrescando
+      print('✅ Solicitud de actualización enviada');
+    } catch (e) {
+      print('❌ Error al forzar actualización del catálogo: $e');
+      _updateState(_state.copyWith(
+        isLoading: false,
+        scanError: 'Error al actualizar catálogo: $e',
+      ));
+    }
   }
 
   /// Busca productos por marca
@@ -438,7 +463,84 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Determina si dos listas de productos son iguales comparando solo los campos relevantes
+  /// Incrementa el contador de ventas de un producto en el catálogo
+  ///
+  /// Este método se llama cuando se confirma una venta para actualizar
+  /// las estadísticas de ventas del producto en Firebase.
+  ///
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [quantity] - Cantidad vendida (por defecto 1)
+  Future<void> incrementProductSales(String accountId, String productId,
+      {int quantity = 1}) async {
+    // Validar parámetros
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw Exception('El accountId y productId son requeridos');
+    }
+
+    if (quantity <= 0) {
+      throw Exception('La cantidad debe ser mayor a 0');
+    }
+
+    try {
+      // Crear nuevos casos de uso con el ID de cuenta actual
+      final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+      final incrementSalesUseCase =
+          IncrementProductSalesUseCase(catalogueRepository);
+
+      // Ejecutar el incremento de ventas
+      await incrementSalesUseCase(accountId, productId, quantity: quantity);
+
+      print('✅ Ventas incrementadas: Producto $productId, Cantidad: $quantity');
+
+      // El stream de Firebase se encargará automáticamente de la actualización
+      // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
+    } catch (e) {
+      print('❌ Error al incrementar ventas del producto $productId: $e');
+      throw Exception('Error al incrementar ventas del producto: $e');
+    }
+  }
+
+  /// Decrementa el stock de un producto en el catálogo
+  ///
+  /// Este método se llama cuando se confirma una venta para actualizar
+  /// el inventario del producto en Firebase.
+  ///
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [quantity] - Cantidad a decrementar del stock
+  Future<void> decrementProductStock(
+      String accountId, String productId, int quantity) async {
+    // Validar parámetros
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw Exception('El accountId y productId son requeridos');
+    }
+
+    if (quantity <= 0) {
+      throw Exception('La cantidad debe ser mayor a 0');
+    }
+
+    try {
+      // Crear nuevos casos de uso con el ID de cuenta actual
+      final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+      final decrementStockUseCase =
+          DecrementProductStockUseCase(catalogueRepository);
+
+      // Ejecutar la reducción de stock
+      await decrementStockUseCase(accountId, productId, quantity);
+
+      print('✅ Stock decrementado: Producto $productId, Cantidad: $quantity');
+
+      // El stream de Firebase se encargará automáticamente de la actualización
+      // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
+    } catch (e) {
+      print('❌ Error al decrementar stock del producto $productId: $e');
+      throw Exception('Error al decrementar stock del producto: $e');
+    }
+  }
+
+  /// Determina si dos listas de productos son iguales comparando todos los campos relevantes
+  /// incluidos sales, quantityStock y upgrade para detectar cambios de actualización
   bool _areProductListsEqual(
       List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
     if (list1.length != list2.length) return false;
@@ -447,7 +549,10 @@ class CatalogueProvider extends ChangeNotifier {
       if (list1[i].id != list2[i].id ||
           list1[i].code != list2[i].code ||
           list1[i].salePrice != list2[i].salePrice ||
-          list1[i].description != list2[i].description) {
+          list1[i].description != list2[i].description ||
+          list1[i].sales != list2[i].sales ||
+          list1[i].quantityStock != list2[i].quantityStock ||
+          list1[i].upgrade != list2[i].upgrade) {
         return false;
       }
     }

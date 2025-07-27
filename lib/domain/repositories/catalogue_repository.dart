@@ -11,4 +11,8 @@ abstract class CatalogueRepository {
       ProductCatalogue product, String accountId);
   // Crea un nuevo producto en la base de datos pública
   Future<void> createPublicProduct(Product product);
+  // Incrementa el contador de ventas de un producto
+  Future<void> incrementSales(String accountId, String productId, int quantity);
+  // Decrementa el stock de un producto
+  Future<void> decrementStock(String accountId, String productId, int quantity);
 }

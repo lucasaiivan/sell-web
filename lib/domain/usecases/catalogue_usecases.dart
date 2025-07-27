@@ -54,3 +54,31 @@ class CreatePublicProductUseCase {
   CreatePublicProductUseCase(this.repository);
   Future<void> call(Product product) => repository.createPublicProduct(product);
 }
+
+// case use : Incrementa el contador de ventas de un producto
+class IncrementProductSalesUseCase {
+  final CatalogueRepository repository;
+  IncrementProductSalesUseCase(this.repository);
+
+  /// Incrementa el contador de ventas de un producto específico
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [quantity] - Cantidad vendida (por defecto 1)
+  Future<void> call(String accountId, String productId, {int quantity = 1}) {
+    return repository.incrementSales(accountId, productId, quantity);
+  }
+}
+
+// case use : Decrementa el stock de un producto
+class DecrementProductStockUseCase {
+  final CatalogueRepository repository;
+  DecrementProductStockUseCase(this.repository);
+
+  /// Decrementa el stock de un producto específico
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [quantity] - Cantidad a decrementar
+  Future<void> call(String accountId, String productId, int quantity) {
+    return repository.decrementStock(accountId, productId, quantity);
+  }
+}

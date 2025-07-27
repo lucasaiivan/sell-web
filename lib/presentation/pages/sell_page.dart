@@ -148,19 +148,13 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
-                      (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase:
-                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                      onEditCashAmount: () =>
-                          dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                      onConfirmSale: () =>
-                          _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider
-                          .setTicketView(false), // para cerrar el ticket
+                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      onEditCashAmount: () => dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                      onConfirmSale: () => _confirmSale(sellProvider), // para confirmar la venta
+                      onCloseTicket: () => sellProvider.setTicketView(false), // para cerrar el ticket
                     ),
                 ],
               );
@@ -809,6 +803,11 @@ class _SellPageState extends State<SellPage> {
       sellerName: userName,
       sellerId: userEmail,
     );
+
+    // ===== INCREMENTAR VENTAS DE PRODUCTOS EN EL CATÁLOGO =====
+    await _updateProductSalesAndStock(provider);
+
+    // Imprimir resultado del guardado
     await _finalizeSale(provider);
   }
 
@@ -848,6 +847,10 @@ class _SellPageState extends State<SellPage> {
       sellerName: userName,
       sellerId: userEmail,
     );
+
+    // ===== INCREMENTAR VENTAS DE PRODUCTOS EN EL CATÁLOGO =====
+    await _updateProductSalesAndStock(provider);
+
     // Imprimir resultado del guardado
     await _finalizeSale(provider);
   }
@@ -866,6 +869,78 @@ class _SellPageState extends State<SellPage> {
         provider.discartTicket();
       }
     });
+  }
+
+  /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo
+  ///
+  /// Este método se ejecuta después de confirmar una venta para:
+  /// 1. Incrementar el contador de ventas de cada producto
+  /// 2. Decrementar el stock si el producto tiene habilitado el control de stock
+  Future<void> _updateProductSalesAndStock(SellProvider provider) async {
+    try {
+      // Obtener el provider del catálogo
+      final catalogueProvider =
+          Provider.of<CatalogueProvider>(context, listen: false);
+      final accountId = provider.profileAccountSelected.id;
+
+      // Procesar cada producto del ticket
+      for (final product in provider.ticket.products) {
+        if (product.code.isEmpty) {
+          // Si el producto no tiene código, saltar (productos de venta rápida)
+          continue;
+        }
+
+        try {
+          // Incrementar ventas del producto en el catálogo
+          await catalogueProvider.incrementProductSales(
+            accountId,
+            product.id,
+            quantity: product.quantity,
+          );
+
+          // Si el producto tiene control de stock habilitado, decrementar stock
+          if (product.stock && product.quantityStock > 0) {
+            await catalogueProvider.decrementProductStock(
+              accountId,
+              product.id,
+              product.quantity,
+            );
+          }
+
+         } catch (productError) {
+          // Si falla la actualización de un producto específico, continuar con los demás
+        }
+      }
+
+    } catch (e) {
+      // Registrar el error pero no fallar la venta
+
+      // Opcionalmente mostrar una notificación al usuario
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.white),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Venta registrada correctamente. Hay un problema menor con la actualización de estadísticas.',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   /// Botones para la vista principal. Solo visible en móvil y cuando el ticket no está visible.

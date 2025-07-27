@@ -63,4 +63,56 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       throw Exception('Error al crear producto público en Firestore: $e');
     }
   }
+
+  // future : incrementa el contador de ventas de un producto
+  @override
+  Future<void> incrementSales(
+      String accountId, String productId, int quantity) async {
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw ArgumentError('El accountId y productId son obligatorios');
+    }
+
+    if (quantity <= 0) {
+      throw ArgumentError('La cantidad debe ser mayor a 0');
+    }
+
+    try {
+      final ref = FirebaseFirestore.instance
+          .collection('/ACCOUNTS/$accountId/CATALOGUE')
+          .doc(productId);
+
+      await ref.update({
+        'sales': FieldValue.increment(quantity),
+        'upgrade': Timestamp.now(), // Actualizar timestamp de modificación
+      });
+    } catch (e) {
+      throw Exception('Error al incrementar ventas del producto: $e');
+    }
+  }
+
+  // future : decrementa el stock de un producto
+  @override
+  Future<void> decrementStock(
+      String accountId, String productId, int quantity) async {
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw ArgumentError('El accountId y productId son obligatorios');
+    }
+
+    if (quantity <= 0) {
+      throw ArgumentError('La cantidad debe ser mayor a 0');
+    }
+
+    try {
+      final ref = FirebaseFirestore.instance
+          .collection('/ACCOUNTS/$accountId/CATALOGUE')
+          .doc(productId);
+
+      await ref.update({
+        'quantityStock': FieldValue.increment(-quantity),
+        'upgrade': Timestamp.now(), // Actualizar timestamp de modificación
+      });
+    } catch (e) {
+      throw Exception('Error al decrementar stock del producto: $e');
+    }
+  }
 }

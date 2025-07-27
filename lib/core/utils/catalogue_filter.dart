@@ -310,7 +310,7 @@ class CatalogueProductFilterAlgorithm {
   /// [products] Lista de productos a filtrar
   /// [limit] Número máximo de productos a retornar (opcional)
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
-  /// Retorna una lista ordenada donde aparecen primero los productos favoritos 
+  /// Retorna una lista ordenada donde aparecen primero los productos favoritos
   /// ordenados por ventas (descendente), seguidos de los no favoritos también ordenados por ventas
   static List<ProductCatalogue> getTopSellingProducts({
     required List<ProductCatalogue> products,
@@ -318,20 +318,21 @@ class CatalogueProductFilterAlgorithm {
     int minimumSales = 1,
   }) {
     // Filtrar productos que tienen ventas >= minimumSales
-    final filteredProducts = products
-        .where((product) => product.sales >= minimumSales)
-        .toList();
+    final filteredProducts =
+        products.where((product) => product.sales >= minimumSales).toList();
 
     // Separar productos favoritos y no favoritos
     final favoriteProducts = filteredProducts
         .where((product) => product.favorite)
         .toList()
-      ..sort((a, b) => b.sales.compareTo(a.sales)); // Ordenar favoritos por ventas descendente
+      ..sort((a, b) => b.sales
+          .compareTo(a.sales)); // Ordenar favoritos por ventas descendente
 
     final nonFavoriteProducts = filteredProducts
         .where((product) => !product.favorite)
         .toList()
-      ..sort((a, b) => b.sales.compareTo(a.sales)); // Ordenar no favoritos por ventas descendente
+      ..sort((a, b) => b.sales
+          .compareTo(a.sales)); // Ordenar no favoritos por ventas descendente
 
     // Combinar listas: favoritos primero, luego no favoritos
     final topProducts = [...favoriteProducts, ...nonFavoriteProducts];

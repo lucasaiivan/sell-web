@@ -70,7 +70,7 @@ class _TicketContent extends StatelessWidget {
 
     // Estilos del ticket
     final borderColor = colorScheme.onSurface;
-    final backgroundColor = colorScheme.primary.withValues(alpha: 0.1);
+    final backgroundColor = colorScheme.primaryContainer.withValues(alpha: 0.3);
 
     final textValuesStyle = TextStyle(
       fontFamily: 'RobotoMono',
@@ -110,18 +110,15 @@ class _TicketContent extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Flexible(
-        fit: FlexFit.tight,
-        child: _buildScrollableContentWithGradient(
-          context: context,
-          ticket: ticket,
-          textValuesStyle: textValuesStyle,
-          textDescriptionStyle: textDescriptionStyle,
-          textSmallStyle: textSmallStyle,
-          textTotalStyle: textTotalStyle,
-          colorScheme: colorScheme,
-          backgroundColor: backgroundColor,
-        ),
+      child: _buildScrollableContentWithGradient(
+        context: context,
+        ticket: ticket,
+        textValuesStyle: textValuesStyle,
+        textDescriptionStyle: textDescriptionStyle,
+        textSmallStyle: textSmallStyle,
+        textTotalStyle: textTotalStyle,
+        colorScheme: colorScheme,
+        backgroundColor: backgroundColor,
       ),
     );
   }
@@ -212,11 +209,8 @@ class _TicketContent extends StatelessWidget {
     required dynamic ticket,
     required Color backgroundColor,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    // Usar el color de superficie base del card sin tinte de color primario
-    final baseCardColor = colorScheme.surface;
+    // Usar el color de superficie del card para asegurar consistencia
+    final gradientBaseColor = backgroundColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -225,10 +219,10 @@ class _TicketContent extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent, // Completamente transparente arriba
-            baseCardColor.withValues(alpha: 0.1), // Muy sutil
-            baseCardColor.withValues(alpha: 0.5), // Opacidad media
-            baseCardColor.withValues(alpha: 0.9), // Casi opaco
-            baseCardColor, // Color completo en la parte inferior
+            gradientBaseColor.withValues(alpha: 0.2), // Muy sutil
+            gradientBaseColor.withValues(alpha: 0.6), // Opacidad media
+            gradientBaseColor.withValues(alpha: 0.9), // Casi opaco
+            gradientBaseColor, // Color completo en la parte inferior
           ],
           stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
         ),

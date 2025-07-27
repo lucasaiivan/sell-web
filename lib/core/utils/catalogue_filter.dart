@@ -296,7 +296,7 @@ class CatalogueProductFilterAlgorithm {
   }
 
   /// Filtra productos marcados como favoritos
-  /// 
+  ///
   /// [products] Lista de productos a filtrar
   /// Retorna una lista con solo los productos marcados como favoritos
   static List<ProductCatalogue> getFavoriteProducts({
@@ -305,22 +305,36 @@ class CatalogueProductFilterAlgorithm {
     return products.where((product) => product.favorite).toList();
   }
 
-  /// Obtiene productos ordenados por cantidad de ventas
-  /// 
+  /// Obtiene productos ordenados por cantidad de ventas con prioridad para favoritos
+  ///
   /// [products] Lista de productos a filtrar
   /// [limit] Número máximo de productos a retornar (opcional)
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
-  /// Retorna una lista ordenada de productos por cantidad de ventas (descendente)
+  /// Retorna una lista ordenada donde aparecen primero los productos favoritos 
+  /// ordenados por ventas (descendente), seguidos de los no favoritos también ordenados por ventas
   static List<ProductCatalogue> getTopSellingProducts({
     required List<ProductCatalogue> products,
     int? limit,
     int minimumSales = 1,
   }) {
     // Filtrar productos que tienen ventas >= minimumSales
-    final topProducts = products
+    final filteredProducts = products
         .where((product) => product.sales >= minimumSales)
+        .toList();
+
+    // Separar productos favoritos y no favoritos
+    final favoriteProducts = filteredProducts
+        .where((product) => product.favorite)
         .toList()
-      ..sort((a, b) => b.sales.compareTo(a.sales)); // Ordenar por ventas descendente
+      ..sort((a, b) => b.sales.compareTo(a.sales)); // Ordenar favoritos por ventas descendente
+
+    final nonFavoriteProducts = filteredProducts
+        .where((product) => !product.favorite)
+        .toList()
+      ..sort((a, b) => b.sales.compareTo(a.sales)); // Ordenar no favoritos por ventas descendente
+
+    // Combinar listas: favoritos primero, luego no favoritos
+    final topProducts = [...favoriteProducts, ...nonFavoriteProducts];
 
     // Aplicar límite si se especifica
     if (limit != null && limit > 0) {

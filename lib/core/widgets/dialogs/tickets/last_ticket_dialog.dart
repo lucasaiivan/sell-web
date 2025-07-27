@@ -92,7 +92,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                 ),
           ),
           DialogComponents.itemSpacing,
-          // view : lista de productos 
+          // view : lista de productos
           DialogComponents.itemList(
             context: context,
             items: widget.ticket.products.map((product) {
@@ -116,18 +116,19 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                       child: Center(
                         child: Text(
                           '$quantity',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ),
                     ),
-                
+
                     const SizedBox(width: 12),
-                
+
                     // Descripción del producto
                     Expanded(
                       child: Column(
@@ -135,8 +136,11 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                         children: [
                           Text(
                             description,
-                            style:Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                            maxLines:1,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
@@ -152,7 +156,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                         ],
                       ),
                     ),
-                    const SizedBox(width:8),
+                    const SizedBox(width: 8),
                     // Precio total
                     Text(
                       Publications.getFormatoPrecio(value: totalPrice),

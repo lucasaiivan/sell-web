@@ -7,19 +7,19 @@ import 'package:sellweb/domain/entities/catalogue.dart';
 class AvatarProduct extends StatelessWidget {
   /// Datos del producto a mostrar
   final ProductCatalogue product;
-  
+
   /// Si el producto está seleccionado/agregado al ticket
   final bool isSelected;
-  
+
   /// Callback cuando se hace tap en el avatar
   final VoidCallback? onTap;
-  
+
   /// Tamaño del avatar (diámetro del círculo)
   final double size;
-  
+
   /// Ancho máximo del texto descriptivo
   final double textWidth;
-  
+
   /// Número máximo de caracteres antes de truncar el texto
   final int maxTextLength;
 
@@ -36,47 +36,37 @@ class AvatarProduct extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [ 
+        children: [
           Stack(
             children: [
-              // view : avatar 
+              // view : avatar
               Container(
                 width: size,
                 height: size,
                 // decoration : dibuja un círculo con gradient solo si es favorito
-                decoration: BoxDecoration( 
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: product.favorite 
-                    ? LinearGradient(
-                        colors: [
-                          Colors.amber.shade300,
-                          Colors.orange.shade400,
-                          Colors.deepOrange.shade400,
-                          Colors.red.shade400,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null, // Sin gradiente si no es favorito
-                  color: product.favorite 
-                    ? null 
-                    : theme.colorScheme.surface, // Color sólido si no es favorito
-                  boxShadow: [
-                    BoxShadow(
-                      color: isSelected 
-                        ? Colors.green.withValues(alpha: 0.3)
-                        : product.favorite 
-                          ? Colors.amber.withValues(alpha: 0.3)
-                          : Colors.grey.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  gradient: product.favorite
+                      ? LinearGradient(
+                          colors: [
+                            Colors.amber.shade300,
+                            Colors.orange.shade400,
+                            Colors.deepOrange.shade400,
+                            Colors.red.shade400,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null, // Sin gradiente si no es favorito
+                  color: product.favorite
+                      ? null
+                      : theme.colorScheme
+                          .surface, // Color sólido si no es favorito
                 ),
                 child: Container(
                   margin: const EdgeInsets.all(2),
@@ -115,35 +105,62 @@ class AvatarProduct extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.check,
-                      size: size * 0.12,
+                      size: size * 0.10,
                       color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),
-              // posicioned : icon star si es favorito
-              if (product.favorite && !isSelected)
+                // Badge de cantidad de ventas
+                if (product.sales > 0)
+                  Positioned(
+                    bottom: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.colorScheme.surface,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        '${product.sales}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSecondary,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              // Badge alerta de stock bajo
+              if (product.stock && product.quantityStock < 5)
+
                 Positioned(
                   top: 4,
-                  right: 4,
+                  left: 0,
                   child: Container(
-                    width: size * 0.25,
-                    height: size * 0.25,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.amber.shade600,
+                      color: Colors.red.shade400,
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Colors.white,
+                        color: theme.colorScheme.surface,
                         width: 1,
                       ),
                     ),
-                    child: Icon(
-                      Icons.star,
-                      size: size * 0.15,
-                      color: Colors.white,
+                    child: Text(
+                      'Bajo Stock',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onError,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-                    
             ],
           ),
           const SizedBox(height: 6),

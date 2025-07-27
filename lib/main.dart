@@ -28,7 +28,7 @@ void main() async {
 
   // Inicializar repositorios
   final authRepository = AuthRepositoryImpl(
-    fb_auth.FirebaseAuth.instance, 
+    fb_auth.FirebaseAuth.instance,
     GoogleSignIn(
       scopes: ['email', 'profile'],
     ),

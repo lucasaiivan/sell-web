@@ -53,7 +53,7 @@ export 'examples/example_modern_dialog.dart' show showExampleModernDialog;
 export 'catalogue/product_edit_dialog.dart' show showProductEditDialog;
 export 'catalogue/add_product_dialog.dart' show showAddProductDialog;
 export 'sales/quick_sale_dialog.dart' show showQuickSaleDialog;
-export 'tickets/ticket_options_dialog.dart' show showTicketOptionsDialog; 
+export 'tickets/ticket_options_dialog.dart' show showTicketOptionsDialog;
 export 'configuration/theme_color_selector_dialog.dart'
     show ThemeColorSelectorDialog;
 

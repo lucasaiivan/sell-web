@@ -57,7 +57,7 @@ class DialogComponents {
   }
 
   /// Lista de elementos con divisores estilizados y funcionalidad de expandir/colapsar
-  /// 
+  ///
   /// Características:
   /// - Automáticamente usa ExpandableListContainer para listas largas (> maxVisibleItems)
   /// - Diseño responsivo que se adapta a móvil/tablet/desktop
@@ -87,7 +87,8 @@ class DialogComponents {
           color: backgroundColor ?? theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+            color:
+                borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -121,7 +122,8 @@ class DialogComponents {
       collapseText: collapseText,
       showDividers: showDividers,
       backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-      borderColor: borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+      borderColor:
+          borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
       borderRadius: borderRadius,
       itemBuilder: (context, item, index, isLast) {
         return Column(
@@ -141,7 +143,9 @@ class DialogComponents {
   /// Lista tipada con funcionalidad expandible para datos específicos
   static Widget expandableDataList<T>({
     required List<T> items,
-    required Widget Function(BuildContext context, T item, int index, bool isLast) itemBuilder,
+    required Widget Function(
+            BuildContext context, T item, int index, bool isLast)
+        itemBuilder,
     String? title,
     int maxVisibleItems = 5,
     String? expandText,
@@ -160,10 +164,10 @@ class DialogComponents {
       items: items,
       itemBuilder: (context, item, index, isLast) {
         final builtItem = itemBuilder(context, item, index, isLast);
-        
+
         // Si no queremos divisores, devolver el item directamente
         if (!showDividers) return builtItem;
-        
+
         // Si queremos divisores, envolverlo en un Column con Divider
         return Column(
           children: [
@@ -184,7 +188,8 @@ class DialogComponents {
       collapseText: collapseText,
       showDividers: false, // Manejamos los divisores manualmente
       backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-      borderColor: borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+      borderColor:
+          borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
       borderRadius: borderRadius,
     );
   }

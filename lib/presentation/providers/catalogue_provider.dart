@@ -123,7 +123,8 @@ class CatalogueProvider extends ChangeNotifier {
   /// Obtiene los productos más vendidos ordenados por cantidad de ventas
   /// [limit] Número máximo de productos a retornar (por defecto 8)
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
-  List<ProductCatalogue> getTopSellingProducts({int limit = 50, int minimumSales = 1}) {
+  List<ProductCatalogue> getTopFilterProducts(
+      {int limit = 50, int minimumSales = 1}) {
     return CatalogueProductFilterAlgorithm.getTopSellingProducts(
       products: _state.products,
       limit: limit,

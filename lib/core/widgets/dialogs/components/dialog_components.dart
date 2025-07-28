@@ -76,14 +76,16 @@ class DialogComponents {
     double borderRadius = 12,
     required BuildContext context,
   }) {
-
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final decoration  = BoxDecoration(
-      color: backgroundColor ?? Colors.transparent,
-      borderRadius: BorderRadius.circular(borderRadius),
-      border: Border.all(color:borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),width:1));
+    final decoration = BoxDecoration(
+        color: backgroundColor ?? Colors.transparent,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+            color:
+                borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),
+            width: 1));
 
     // Si hay pocos elementos o no se requiere expansión, usar el diseño simple
     if (items.length <= maxVisibleItems) {
@@ -92,12 +94,14 @@ class DialogComponents {
         child: Column(
           children: items.asMap().entries.map((entry) {
             final index = entry.key;
-            final item = entry.value; 
+            final item = entry.value;
             return Column(
               children: [
                 item,
                 if (showDividers && index < items.length - 1)
-                  Divider(height: 1,color: theme.colorScheme.outline.withValues(alpha: 0.2) ),
+                  Divider(
+                      height: 1,
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2)),
               ],
             );
           }).toList(),
@@ -107,7 +111,7 @@ class DialogComponents {
 
     // Para listas largas, usar ExpandableListContainer
     return Container(
-      decoration:decoration,
+      decoration: decoration,
       clipBehavior: Clip.antiAlias,
       child: SingleChildScrollView(
         child: ExpandableListContainer<Widget>(

@@ -74,10 +74,12 @@ class ExpandableListContainer<T> extends StatefulWidget {
   });
 
   @override
-  State<ExpandableListContainer<T>> createState() => _ExpandableListContainerState<T>();
+  State<ExpandableListContainer<T>> createState() =>
+      _ExpandableListContainerState<T>();
 }
 
-class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>> {
+class _ExpandableListContainerState<T>
+    extends State<ExpandableListContainer<T>> {
   bool showAllItems = false;
 
   @override
@@ -113,10 +115,10 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
               final index = entry.key;
               final item = entry.value;
               final isLast = index == itemsToShow.length - 1;
-        
+
               return widget.itemBuilder(context, item, index, isLast);
             }),
-        
+
             // Botón "Ver más" si hay más elementos
             if (hasMoreItems && !showAllItems) ...[
               if (widget.showDividers) const AppDivider(),
@@ -149,7 +151,7 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
                 ),
               ),
             ],
-        
+
             // Botón "Ver menos" si se están mostrando todos
             if (showAllItems && hasMoreItems) ...[
               if (widget.showDividers) const AppDivider(),
@@ -163,18 +165,15 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      
-                      Text(
-                        'Mostrando ${widget.items.length} elementos',
-                        style: widget.theme.textTheme.titleSmall
-                      ),
+                      Text('Mostrando ${widget.items.length} elementos',
+                          style: widget.theme.textTheme.titleSmall),
                       SizedBox(width: 8),
                       Icon(
                         Icons.expand_less_rounded,
                         color: widget.theme.colorScheme.onSurfaceVariant,
                       ),
                     ],
-                  ), 
+                  ),
                 ),
               ),
             ],

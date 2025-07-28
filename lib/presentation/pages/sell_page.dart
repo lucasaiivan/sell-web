@@ -148,13 +148,19 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) &&
+                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                      (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                      onEditCashAmount: () => dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                      onConfirmSale: () => _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider.setTicketView(false), // para cerrar el ticket
+                      showConfirmedPurchase:
+                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      onEditCashAmount: () =>
+                          dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                      onConfirmSale: () =>
+                          _confirmSale(sellProvider), // para confirmar la venta
+                      onCloseTicket: () => sellProvider
+                          .setTicketView(false), // para cerrar el ticket
                     ),
                 ],
               );
@@ -906,12 +912,10 @@ class _SellPageState extends State<SellPage> {
               product.quantity,
             );
           }
-
-         } catch (productError) {
+        } catch (productError) {
           // Si falla la actualización de un producto específico, continuar con los demás
         }
       }
-
     } catch (e) {
       // Registrar el error pero no fallar la venta
 
@@ -1394,7 +1398,10 @@ class _SellPageState extends State<SellPage> {
     final products = catalogueProvider.products;
 
     Navigator.of(context).push(
-      PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => _ProductCatalogueFullScreenView(products: products, sellProvider: sellProvider),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            _ProductCatalogueFullScreenView(
+                products: products, sellProvider: sellProvider),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;

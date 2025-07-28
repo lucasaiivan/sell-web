@@ -16,7 +16,7 @@ import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.
-/// 
+///
 /// Permite buscar y seleccionar productos del catálogo para agregar al ticket de venta.
 /// Incluye algoritmo de búsqueda inteligente y filtrado en tiempo real.
 class ProductCatalogueFullScreenView extends StatefulWidget {
@@ -272,7 +272,8 @@ class _ProductCatalogueFullScreenViewState
 
     // Limitar a 7 marcas visibles
     const int maxVisibleBrands = 7;
-    final List<String> visibleBrands = sortedBrands.take(maxVisibleBrands).toList();
+    final List<String> visibleBrands =
+        sortedBrands.take(maxVisibleBrands).toList();
     final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
 
     return Column(
@@ -306,16 +307,17 @@ class _ProductCatalogueFullScreenViewState
                   // Mantener el foco en el campo de búsqueda
                   _searchFocusNode.requestFocus();
                 },
-                backgroundColor: colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                backgroundColor:
+                    colorScheme.secondaryContainer.withValues(alpha: 0.3),
                 side: BorderSide(
                   color: colorScheme.outline.withValues(alpha: 0.2),
                   width: 0.5,
                 ),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact, 
+                visualDensity: VisualDensity.compact,
               );
             }),
-            
+
             // Chip "Ver más" si hay más marcas
             if (hasMoreBrands)
               ActionChip(
@@ -573,10 +575,13 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
     });
   }
 
-  Widget _buildBrandListItem(String brand, ThemeData theme, ColorScheme colorScheme) {
-    return ListTile( 
-      title: Text(brand, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-      onTap: () => widget.onBrandSelected(brand), 
+  Widget _buildBrandListItem(
+      String brand, ThemeData theme, ColorScheme colorScheme) {
+    return ListTile(
+      title: Text(brand,
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600)),
+      onTap: () => widget.onBrandSelected(brand),
     );
   }
 
@@ -641,7 +646,7 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
                     : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                ), 
+                ),
               ),
               onChanged: (_) => _onSearchChanged(),
             ),
@@ -672,29 +677,32 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
                           Text(
                             'No se encontraron marcas',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Intenta con otros términos de búsqueda',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.5),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
                       ),
                     )
-                  : DialogComponents.itemList( 
-                    context: context,
-                    showDividers: true,
-                    maxVisibleItems: 20, // Mostrar más elementos antes de expandir
-                    expandText: 'Ver todas las marcas',
-                    collapseText: 'Mostrar menos',
-                    items: _filteredBrands.map((brand) {
-                      return _buildBrandListItem(brand, theme, colorScheme);
-                    }).toList(),
-                  ),
+                  : DialogComponents.itemList(
+                      context: context,
+                      showDividers: true,
+                      maxVisibleItems:
+                          20, // Mostrar más elementos antes de expandir
+                      expandText: 'Ver todas las marcas',
+                      collapseText: 'Mostrar menos',
+                      items: _filteredBrands.map((brand) {
+                        return _buildBrandListItem(brand, theme, colorScheme);
+                      }).toList(),
+                    ),
             ),
           ],
         ),

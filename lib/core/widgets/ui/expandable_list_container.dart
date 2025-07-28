@@ -74,12 +74,10 @@ class ExpandableListContainer<T> extends StatefulWidget {
   });
 
   @override
-  State<ExpandableListContainer<T>> createState() =>
-      _ExpandableListContainerState<T>();
+  State<ExpandableListContainer<T>> createState() => _ExpandableListContainerState<T>();
 }
 
-class _ExpandableListContainerState<T>
-    extends State<ExpandableListContainer<T>> {
+class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>> {
   bool showAllItems = false;
 
   @override
@@ -108,78 +106,79 @@ class _ExpandableListContainerState<T>
         ],
 
         // Contenedor estilizado con la lista
-        Container(
-          decoration: BoxDecoration(
-            color: widget.backgroundColor ??
-                widget.theme.colorScheme.surfaceContainer
-                    .withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border.all(
-              color: widget.borderColor ??
-                  widget.theme.colorScheme.outline.withValues(alpha: 0.2),
-            ),
-          ),
-          child: Column(
-            children: [
-              // Items de la lista
-              ...itemsToShow.asMap().entries.map((entry) {
-                final index = entry.key;
-                final item = entry.value;
-                final isLast = index == itemsToShow.length - 1;
-
-                return widget.itemBuilder(context, item, index, isLast);
-              }),
-
-              // Botón "Ver más" si hay más elementos
-              if (hasMoreItems && !showAllItems) ...[
-                if (widget.showDividers) const AppDivider(),
-                Padding(
+        Column(
+          children: [
+            // Items de la lista
+            ...itemsToShow.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final isLast = index == itemsToShow.length - 1;
+        
+              return widget.itemBuilder(context, item, index, isLast);
+            }),
+        
+            // Botón "Ver más" si hay más elementos
+            if (hasMoreItems && !showAllItems) ...[
+              if (widget.showDividers) const AppDivider(),
+              InkWell(
+                onTap: () => setState(() => showAllItems = true),
+                child: Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: widget.isMobile ? 12 : 16,
                     vertical: widget.isMobile ? 8 : 12,
                   ),
                   child: SizedBox(
                     width: double.infinity,
-                    child: AppOutlinedButton(
-                      icon: const Icon(Icons.expand_more_rounded),
-                      text: widget.expandText ??
-                          'Ver más (${widget.items.length - widget.maxVisibleItems})',
-                      onPressed: () => setState(() => showAllItems = true),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      margin: EdgeInsets.zero,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.expandText ?? 'Ver más',
+                          style: widget.theme.textTheme.titleSmall?.copyWith(
+                            color: widget.theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.expand_more_rounded,
+                          color: widget.theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-
-              // Botón "Ver menos" si se están mostrando todos
-              if (showAllItems && hasMoreItems) ...[
-                if (widget.showDividers) const AppDivider(),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: widget.isMobile ? 12 : 16,
-                    vertical: widget.isMobile ? 8 : 12,
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: AppOutlinedButton(
-                      icon: const Icon(Icons.expand_less_rounded),
-                      text: widget.collapseText ?? 'Ver menos',
-                      onPressed: () => setState(() => showAllItems = false),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      margin: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ],
-          ),
+        
+            // Botón "Ver menos" si se están mostrando todos
+            if (showAllItems && hasMoreItems) ...[
+              if (widget.showDividers) const AppDivider(),
+              InkWell(
+                onTap: () => setState(() => showAllItems = false),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.isMobile ? 12 : 16,
+                    vertical: widget.isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      
+                      Text(
+                        'Mostrando ${widget.items.length} elementos',
+                        style: widget.theme.textTheme.titleSmall
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.expand_less_rounded,
+                        color: widget.theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ), 
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );

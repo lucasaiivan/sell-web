@@ -168,8 +168,7 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
     return CompositedTransformTarget(
       link: _layerLink,
       child: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+        decoration: BoxDecoration( 
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: widget.focusNode.hasFocus

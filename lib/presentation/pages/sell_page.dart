@@ -1394,10 +1394,7 @@ class _SellPageState extends State<SellPage> {
     final products = catalogueProvider.products;
 
     Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            _ProductCatalogueFullScreenView(
-                products: products, sellProvider: sellProvider),
+      PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) => _ProductCatalogueFullScreenView(products: products, sellProvider: sellProvider),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;

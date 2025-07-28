@@ -85,8 +85,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   // view : Construir contenido responsivo de la información de caja existente o muestra mensaje de no caja activa
-  Widget _buildResponsiveContent(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildResponsiveContent(BuildContext context, CashRegisterProvider provider, bool isMobile) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -117,8 +116,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
           value: Publications.getFormatoPrecio(
               value: cashRegister.getExpectedBalance),
           icon: Icons.monetization_on_rounded,
-          backgroundColor:
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           child: _buildCashFlowButtons(context, provider, isMobile),
         ),
         DialogComponents.sectionSpacing,
@@ -443,8 +441,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         ),
 
         // Lista de movimientos de caja
-        if (cashRegister.cashInFlowList.isNotEmpty ||
-            cashRegister.cashOutFlowList.isNotEmpty) ...[
+        if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[
           SizedBox(height: ResponsiveHelper.getSpacing(context, scale: 1.5)),
           _buildCashFlowMovements(context, cashRegister, isMobile),
         ],
@@ -452,8 +449,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildCashFlowMovements(
-      BuildContext context, CashRegister cashRegister, bool isMobile) {
+  Widget _buildCashFlowMovements(BuildContext context, CashRegister cashRegister, bool isMobile) {
     final theme = Theme.of(context);
 
     // Combinar y ordenar movimientos por fecha (más recientes primero)
@@ -485,8 +481,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
     // Ordenar por fecha (más recientes primero)
     allMovements.sort((a, b) => b['date'].compareTo(a['date']));
-
-    // Usar el widget reutilizable [ExpandableListContainer] para mostrar la lista
+ 
     return ExpandableListContainer<Map<String, dynamic>>(
       items: allMovements,
       isMobile: isMobile,

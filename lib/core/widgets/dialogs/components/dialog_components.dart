@@ -84,10 +84,7 @@ class DialogComponents {
     final decoration = BoxDecoration(
         color: backgroundColor ?? Colors.transparent,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-            color:
-                borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),
-            width: 1));
+        border: Border.all(color:borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),width: 1));
 
     // Si hay pocos elementos o no se requiere expansión, usar el diseño simple
     if (items.length <= maxVisibleItems) {
@@ -592,47 +589,6 @@ class DialogListExamples {
         ),
       ),
       actions: [
-        DialogComponents.secondaryActionButton(
-          text: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(),
-          context: context,
-        ),
-      ],
-    );
-  }
-
-  /// Ejemplo: Lista simple de widgets con expansión automática
-  static Widget buildTransactionsDialog({
-    required List<Widget> transactionWidgets,
-    required BuildContext context,
-  }) {
-    return AlertDialog(
-      title: const Text('Últimas Transacciones'),
-      content: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Usando el método itemList mejorado
-            DialogComponents.itemList(
-              items: transactionWidgets,
-              title: 'Historial reciente',
-              maxVisibleItems: 6,
-              expandText: 'Ver todas las transacciones',
-              showDividers: true,
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-              context: context,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        DialogComponents.primaryActionButton(
-          text: 'Exportar',
-          onPressed: () {
-            // Lógica de exportación
-          },
-          icon: Icons.download,
-          context: context,
-        ),
         DialogComponents.secondaryActionButton(
           text: 'Cerrar',
           onPressed: () => Navigator.of(context).pop(),

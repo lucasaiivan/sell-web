@@ -221,7 +221,8 @@ class _ProductCatalogueFullScreenViewState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSearchField(), 
+                  _buildSearchField(),
+                  const SizedBox(height: 12),
                   _buildSuggestionChips(),
                 ],
               ),
@@ -370,11 +371,11 @@ class _ProductCatalogueFullScreenViewState
     }
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(8.0),
       child: DialogComponents.itemList(
         context: context,
-        showDividers:true,
-        maxVisibleItems: 100,  
+        showDividers: true,
+        maxVisibleItems: 15, // Reducir para evitar overflow
         expandText: 'Ver todos los productos (${_filteredProducts.length})',
         collapseText: 'Mostrar menos productos',
         items: _filteredProducts.map((product) {

@@ -26,12 +26,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Configuración de GoogleSignIn mejorada para Web
+  final googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    // Client ID que debe coincidir con el configurado en web/index.html
+    clientId: '232181553323-eilihkps148nu7dp45cole4mlr7pkf1d.apps.googleusercontent.com',
+  );
+
   // Inicializar repositorios
   final authRepository = AuthRepositoryImpl(
     fb_auth.FirebaseAuth.instance,
-    GoogleSignIn(
-      scopes: ['email', 'profile'],
-    ),
+    googleSignIn,
   );
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:sellweb/core/services/thermal_printer_http_service.dart';
+import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
@@ -165,6 +166,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Widget _buildServerConfiguration() {
     final theme = Theme.of(context);
+    final mobile = isMobile(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,48 +178,87 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           ),
         ),
         DialogComponents.itemSpacing,
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: DialogComponents.textField(
-                context: context,
-                controller: _serverHostController,
-                label: 'Dirección del Servidor',
-                hint: 'localhost',
-                prefixIcon: Icons.computer_rounded,
-                validator: (value) {
-                  if (value?.trim().isEmpty == true) {
-                    return 'La dirección es requerida';
-                  }
-                  return null;
-                },
-              ),
+        
+        // Layout responsive: Column en móvil, Row en desktop
+        mobile 
+          ? Column(
+              children: [
+                DialogComponents.textField(
+                  context: context,
+                  controller: _serverHostController,
+                  label: 'Dirección del Servidor',
+                  hint: 'localhost',
+                  prefixIcon: Icons.computer_rounded,
+                  validator: (value) {
+                    if (value?.trim().isEmpty == true) {
+                      return 'La dirección es requerida';
+                    }
+                    return null;
+                  },
+                ),
+                DialogComponents.itemSpacing,
+                DialogComponents.textField(
+                  context: context,
+                  controller: _serverPortController,
+                  label: 'Puerto',
+                  hint: '3000',
+                  prefixIcon: Icons.settings_ethernet_rounded,
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value?.trim().isEmpty == true) {
+                      return 'Puerto requerido';
+                    }
+                    final port = int.tryParse(value!);
+                    if (port == null || port < 1 || port > 65535) {
+                      return 'Puerto inválido';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: DialogComponents.textField(
+                    context: context,
+                    controller: _serverHostController,
+                    label: 'Dirección del Servidor',
+                    hint: 'localhost',
+                    prefixIcon: Icons.computer_rounded,
+                    validator: (value) {
+                      if (value?.trim().isEmpty == true) {
+                        return 'La dirección es requerida';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: DialogComponents.textField(
+                    context: context,
+                    controller: _serverPortController,
+                    label: 'Puerto',
+                    hint: '3000',
+                    prefixIcon: Icons.settings_ethernet_rounded,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value?.trim().isEmpty == true) {
+                        return 'Puerto requerido';
+                      }
+                      final port = int.tryParse(value!);
+                      if (port == null || port < 1 || port > 65535) {
+                        return 'Puerto inválido';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: DialogComponents.textField(
-                context: context,
-                controller: _serverPortController,
-                label: 'Puerto',
-                hint: '3000',
-                prefixIcon: Icons.settings_ethernet_rounded,
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value?.trim().isEmpty == true) {
-                    return 'Puerto requerido';
-                  }
-                  final port = int.tryParse(value!);
-                  if (port == null || port < 1 || port > 65535) {
-                    return 'Puerto inválido';
-                  }
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

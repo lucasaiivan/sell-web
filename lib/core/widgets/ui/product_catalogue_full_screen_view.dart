@@ -276,73 +276,60 @@ class _ProductCatalogueFullScreenViewState
         sortedBrands.take(maxVisibleBrands).toList();
     final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
       children: [
-        Text(
-          'Marcas disponibles',
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurface.withValues(alpha: 0.7),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            // Chips de marcas visibles
-            ...visibleBrands.map((brand) {
-              return ActionChip(
-                label: Text(
-                  brand,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onPressed: () {
-                  // Agregar la marca al campo de búsqueda
-                  _searchController.text = brand;
-                  _onSearchChanged();
-                  // Mantener el foco en el campo de búsqueda
-                  _searchFocusNode.requestFocus();
-                },
-                backgroundColor:
-                    colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                side: BorderSide(
-                  color: colorScheme.outline.withValues(alpha: 0.2),
-                  width: 0.5,
-                ),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              );
-            }),
-
-            // Chip "Ver más" si hay más marcas
-            if (hasMoreBrands)
-              ActionChip(
-                label: Text(
-                  'Ver más (+${sortedBrands.length - maxVisibleBrands})',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                onPressed: () => _showAllBrandsDialog(sortedBrands),
-                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-                side: BorderSide(
-                  color: colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                avatar: Icon(
-                  Icons.expand_more,
-                  size: 16,
-                  color: colorScheme.primary,
-                ),
+        // Chips de marcas visibles
+        ...visibleBrands.map((brand) {
+          return ActionChip(
+            label: Text(
+              brand,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
               ),
-          ],
-        ),
+            ),
+            onPressed: () {
+              // Agregar la marca al campo de búsqueda
+              _searchController.text = brand;
+              _onSearchChanged();
+              // Mantener el foco en el campo de búsqueda
+              _searchFocusNode.requestFocus();
+            },
+            backgroundColor:
+                colorScheme.secondaryContainer.withValues(alpha: 0.3),
+            side: BorderSide(
+              color: colorScheme.outline.withValues(alpha: 0.2),
+              width: 0.5,
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          );
+        }),
+    
+        // Chip "Ver más" si hay más marcas
+        if (hasMoreBrands)
+          ActionChip(
+            label: Text(
+              'Ver más (+${sortedBrands.length - maxVisibleBrands})',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            onPressed: () => _showAllBrandsDialog(sortedBrands),
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+            side: BorderSide(
+              color: colorScheme.primary.withValues(alpha: 0.3),
+              width: 1,
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+            avatar: Icon(
+              Icons.expand_more,
+              size: 16,
+              color: colorScheme.primary,
+            ),
+          ),
       ],
     );
   }

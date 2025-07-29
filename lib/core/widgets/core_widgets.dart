@@ -18,3 +18,4 @@ export 'media/media_widgets.dart';
 
 // 📢 Feedback y notificaciones
 export 'dialogs/feedback/feedback.dart';
+export 'feedback/feedback.dart';

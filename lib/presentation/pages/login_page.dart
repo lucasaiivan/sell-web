@@ -5,7 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
+import 'package:sellweb/core/widgets/feedback/auth_feedback_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 
@@ -105,11 +107,44 @@ class _LoginFormState extends State<_LoginForm> {
   bool _acceptPolicy = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Limpiar errores previos al inicializar la página
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.authProvider.clearAuthError();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool darkMode = Theme.of(context).brightness == Brightness.dark;
-    TextStyle defaultStyle =
-        TextStyle(color: darkMode ? Colors.white : Colors.black, fontSize: 12);
-    TextStyle linkStyle = const TextStyle(color: Colors.blue);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    // Estilos responsivos para el texto
+    final double baseFontSize = getResponsiveValue(
+      context,
+      mobile: 11.0,
+      tablet: 12.0,
+      desktop: 13.0,
+    );
+    
+    TextStyle defaultStyle = textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurface,
+      fontSize: baseFontSize,
+      height: 1.4,
+    ) ?? TextStyle(
+      color: colorScheme.onSurface,
+      fontSize: baseFontSize,
+      height: 1.4,
+    );
+    
+    TextStyle linkStyle = defaultStyle.copyWith(
+      color: colorScheme.primary,
+      fontWeight: FontWeight.w500,
+      decoration: TextDecoration.underline,
+      decorationColor: colorScheme.primary.withValues(alpha: 0.6),
+    );
+    
     RichText text = RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
@@ -118,25 +153,25 @@ class _LoginFormState extends State<_LoginForm> {
           const TextSpan(
               text:
                   'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
-          TextSpan(
+            TextSpan(
               text: 'Términos y condiciones de uso',
-              style: linkStyle,
+              style: linkStyle.copyWith(decoration: TextDecoration.none),
               recognizer: TapGestureRecognizer()
-                ..onTap = () async {
-                  final Uri url = Uri.parse(
-                      'https://sites.google.com/view/sell-app/t%C3%A9rminos-y-condiciones-de-uso');
-                  if (!await launchUrl(url)) throw 'Could not launch $url';
-                }),
+              ..onTap = () async {
+                final Uri url = Uri.parse(
+                  'https://sites.google.com/view/sell-app/t%C3%A9rminos-y-condiciones-de-uso');
+                if (!await launchUrl(url)) throw 'Could not launch $url';
+              }),
           const TextSpan(text: ' así también como la '),
-          TextSpan(
+            TextSpan(
               text: 'Política de privacidad',
-              style: linkStyle,
+              style: linkStyle.copyWith(decoration: TextDecoration.none),
               recognizer: TapGestureRecognizer()
-                ..onTap = () async {
-                  final Uri url = Uri.parse(
-                      'https://sites.google.com/view/sell-app/pol%C3%ADticas-de-privacidad');
-                  if (!await launchUrl(url)) throw 'Could not launch $url';
-                }),
+              ..onTap = () async {
+                final Uri url = Uri.parse(
+                  'https://sites.google.com/view/sell-app/pol%C3%ADticas-de-privacidad');
+                if (!await launchUrl(url)) throw 'Could not launch $url';
+              }),
         ],
       ),
     );
@@ -152,16 +187,40 @@ class _LoginFormState extends State<_LoginForm> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // CheckboxListTile : aceptar términos y condiciones
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  // Widget de feedback unificado para errores y estados
+                  AuthFeedbackWidget(
+                    error: widget.authProvider.authError,
+                    onDismissError: widget.authProvider.clearAuthError,
+                  ),
+                  
+                  // CheckboxListTile responsivo : aceptar términos y condiciones
+                  Container(
+                    margin: getResponsivePadding(
+                      context,
+                      mobile: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      tablet: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                      desktop: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _acceptPolicy
+                            ? colorScheme.primary.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      color: _acceptPolicy
+                          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+                          : colorScheme.surface,
+                    ),
                     child: CheckboxListTile(
+                      dense: isMobile(context),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0)),
+                          borderRadius: BorderRadius.circular(12.0)),
                       selectedTileColor: Colors.transparent,
                       tileColor: Colors.transparent,
-                      checkColor: Colors.white,
-                      activeColor: Colors.blue,
+                      checkColor: colorScheme.onPrimary,
+                      activeColor: colorScheme.primary,
                       title: text,
                       value: _acceptPolicy,
                       onChanged: (value) {
@@ -169,34 +228,53 @@ class _LoginFormState extends State<_LoginForm> {
                           _acceptPolicy = value ?? false;
                         });
                       },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: getResponsivePadding(
+                        context,
+                        mobile: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        desktop: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
                     ),
                   ),
+                  
                   // ElevatedButton : Iniciar sesión con Google
                   AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
                     text: "INICIAR SESIÓN CON GOOGLE",
-                    onPressed: _acceptPolicy
+                    isLoading: widget.authProvider.isSigningInWithGoogle,
+                    onPressed: (_acceptPolicy && !widget.authProvider.isSigningInWithGoogle && !widget.authProvider.isSigningInAsGuest)
                         ? () async {
                             await widget.authProvider.signInWithGoogle();
                           }
                         : null,
                   ),
+                  
+                  const SizedBox(height: 16),
+                  
                   // ElevatedButton : Iniciar como invitado
                   AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
                     backgroundColor: Colors.blueGrey,
                     text: "ENTRAR COMO INVITADO",
-                    onPressed: () async {
-                      await widget.authProvider.signInAsGuest();
-                    },
+                    isLoading: widget.authProvider.isSigningInAsGuest,
+                    onPressed: (!widget.authProvider.isSigningInWithGoogle && !widget.authProvider.isSigningInAsGuest)
+                        ? () async {
+                            await widget.authProvider.signInAsGuest();
+                          }
+                        : null,
                   ),
                 ],
               ),
             );
           }
-          return const CircularProgressIndicator();
+          // Mostrar indicador de carga mientras se procesa la autenticación exitosa
+          return AuthFeedbackWidget(
+            showLoading: true,
+            loadingMessage: 'Configurando tu cuenta...',
+          );
         },
       ),
     );

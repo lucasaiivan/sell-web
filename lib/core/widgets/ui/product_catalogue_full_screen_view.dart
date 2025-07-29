@@ -229,7 +229,7 @@ class _ProductCatalogueFullScreenViewState
             ),
 
             // Contenido principal
-            _isSearching ? _buildProductList() : Flexible(child: _buildEmptyState()),
+            Flexible(child: _isSearching ? _buildProductList() : _buildEmptyState(),)
           ],
         ),
       ),
@@ -371,11 +371,11 @@ class _ProductCatalogueFullScreenViewState
     }
 
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(20.0),
       child: DialogComponents.itemList(
         context: context,
         showDividers: true,
-        maxVisibleItems: 15, // Reducir para evitar overflow
+        maxVisibleItems:100,  
         expandText: 'Ver todos los productos (${_filteredProducts.length})',
         collapseText: 'Mostrar menos productos',
         items: _filteredProducts.map((product) {
@@ -412,15 +412,14 @@ class _ProductCatalogueFullScreenViewState
     final ticketProducts = widget.sellProvider.ticket.products;
     ProductCatalogue? selectedProduct;
     try {
-      selectedProduct = ticketProducts
-          .firstWhere((p) => p.id == product.id && p.quantity > 0);
+      selectedProduct = ticketProducts .firstWhere((p) => p.id == product.id && p.quantity > 0);
     } catch (_) {
       selectedProduct = null;
     }
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      leading: ProductImage(imageUrl: product.image,size: 56 ),
+      leading: ProductImage(imageUrl: product.image,size: 56 ), 
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

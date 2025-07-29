@@ -85,34 +85,13 @@ class DialogComponents {
         color: backgroundColor ?? Colors.transparent,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color:borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),width: 1));
-
-    // Si hay pocos elementos o no se requiere expansión, usar el diseño simple
-    if (items.length <= maxVisibleItems) {
-      return Container(
-        decoration: decoration,
-        child: Column(
-          children: items.asMap().entries.map((entry) {
-            final index = entry.key;
-            final item = entry.value;
-            return Column(
-              children: [
-                item,
-                if (showDividers && index < items.length - 1)
-                  Divider(
-                      height: 1,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-              ],
-            );
-          }).toList(),
-        ),
-      );
-    }
+ 
 
     // Para listas largas, usar ExpandableListContainer
-    return Container(
+    return Container( 
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
+      child: SingleChildScrollView( 
         child: ExpandableListContainer<Widget>(
           items: items,
           isMobile: isMobile,

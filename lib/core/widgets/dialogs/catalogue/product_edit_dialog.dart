@@ -82,13 +82,6 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
           _buildQuantitySection(),
 
           DialogComponents.sectionSpacing,
-
-          // Resumen del total
-          DialogComponents.summaryContainer(
-            context: context,
-            value: Publications.getFormatoPrecio(value: _totalPrice),
-            backgroundColor: Colors.transparent,
-          ),
         ],
       ),
       actions: [
@@ -112,10 +105,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   Widget _buildProductInfo() {
     return DialogComponents.infoSection(
       context: context,
-      title: 'Información del Producto',
-      icon: _isQuickSaleProduct
-          ? Icons.flash_on_rounded
-          : Icons.inventory_2_rounded,
+      title: '',
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -221,57 +211,88 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         // view : selección de cantidad de unidades del producto
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainer,
+          decoration: BoxDecoration( 
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
             children: [
-              Text(
-                'Unidades',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              // Header con total destacado
               Row(
-                mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Spacer(),
+                // Contenedor destacado para el total
+                Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Text(
+                  'Total: ${Publications.getFormatoPrecio(value: _totalPrice)}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                ),
+              ],
+              ),
+              
+              const SizedBox(height: 12),
+              // view : cantidad de unidades del producto
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Botón decrementar
-                  _buildQuantityButton(
-                    icon: Icons.remove_rounded,
-                    onPressed: _quantity > 1
-                        ? () => _updateQuantity(_quantity - 1)
-                        : null,
-                    isEnabled: _quantity > 1,
-                  ),
-
-                  // Cantidad actual
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
+                  Text(
+                    'Unidades',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
                     ),
-                    child: Text(
-                      '$_quantity',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Botón decrementar
+                      _buildQuantityButton(
+                        icon: Icons.remove_rounded,
+                        onPressed: _quantity > 1
+                            ? () => _updateQuantity(_quantity - 1)
+                            : null,
+                        isEnabled: _quantity > 1,
                       ),
-                    ),
-                  ),
-
-                  // Botón incrementar
-                  _buildQuantityButton(
-                    icon: Icons.add_rounded,
-                    onPressed: () => _updateQuantity(_quantity + 1),
-                    isEnabled: true,
+              
+                      // Cantidad actual
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$_quantity',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+              
+                      // Botón incrementar
+                      _buildQuantityButton(
+                        icon: Icons.add_rounded,
+                        onPressed: () => _updateQuantity(_quantity + 1),
+                        isEnabled: true,
+                      ),
+                    ],
                   ),
                 ],
               ),

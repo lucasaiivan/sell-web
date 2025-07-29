@@ -40,6 +40,8 @@ class DialogComponents {
                 ),
                 const SizedBox(width: 8),
               ],
+              title.isEmpty?
+                  const SizedBox.shrink() :
               Text(
                 title,
                 style: theme.textTheme.titleSmall?.copyWith(

@@ -4,7 +4,6 @@ import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/core/widgets/responsive/responsive_helper.dart';
 import 'package:sellweb/core/widgets/component/dividers.dart';
-import 'package:sellweb/core/widgets/ui/expandable_list_container.dart';
 import '../../../../core/utils/fuctions.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
@@ -223,11 +222,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
       children: [
         // Verificar si hay cajas disponibles
         if (provider.hasAvailableCashRegisters) ...[
-          // Mostrar lista de cajas disponibles usando ExpandableListContainer
-          ExpandableListContainer<CashRegister>(
-            items: provider.activeCashRegisters,
-            isMobile: isMobile,
-            theme: theme,
+          // Mostrar lista de cajas disponibles usando DialogComponents.itemList
+          DialogComponents.itemList(
+            context: context,
             title: 'Cajas activas',
             maxVisibleItems: 4,
             expandText:
@@ -236,10 +233,16 @@ class CashRegisterManagementDialog extends StatelessWidget {
             backgroundColor:
                 theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
             borderColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-            itemBuilder: (context, cashRegister, index, isLast) {
+            items: provider.activeCashRegisters
+                .asMap()
+                .entries
+                .map((entry) {
+              final index = entry.key;
+              final cashRegister = entry.value;
+              final isLast = index == provider.activeCashRegisters.length - 1;
               return _buildCashRegisterTile(
                   context, cashRegister, provider, isMobile, isLast);
-            },
+            }).toList(),
           ),
           SizedBox(height: isMobile ? 16 : 24),
         ] else ...[
@@ -454,8 +457,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _buildCashFlowMovements(
       BuildContext context, CashRegister cashRegister, bool isMobile) {
-    final theme = Theme.of(context);
-
     // Combinar y ordenar movimientos por fecha (más recientes primero)
     final allMovements = <Map<String, dynamic>>[];
 
@@ -486,18 +487,19 @@ class CashRegisterManagementDialog extends StatelessWidget {
     // Ordenar por fecha (más recientes primero)
     allMovements.sort((a, b) => b['date'].compareTo(a['date']));
 
-    return ExpandableListContainer<Map<String, dynamic>>(
-      items: allMovements,
-      isMobile: isMobile,
-      theme: theme,
+    return DialogComponents.itemList(
+      context: context,
       title: 'Movimientos de caja',
       maxVisibleItems: 5,
       expandText:
           'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
       collapseText: 'Ver menos',
-      itemBuilder: (context, movement, index, isLast) {
+      items: allMovements.asMap().entries.map((entry) {
+        final index = entry.key;
+        final movement = entry.value;
+        final isLast = index == allMovements.length - 1;
         return _buildCashFlowMovementTile(context, movement, isMobile, isLast);
-      },
+      }).toList(),
     );
   }
 

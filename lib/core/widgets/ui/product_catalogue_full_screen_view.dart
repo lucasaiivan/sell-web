@@ -179,6 +179,7 @@ class _ProductCatalogueFullScreenViewState
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
+          
           children: [
             // Header con título y botón cerrar
             Container(
@@ -220,17 +221,14 @@ class _ProductCatalogueFullScreenViewState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSearchField(),
-                  const SizedBox(height: 12),
+                  _buildSearchField(), 
                   _buildSuggestionChips(),
                 ],
               ),
             ),
 
             // Contenido principal
-            Expanded(
-              child: _isSearching ? _buildProductList() : _buildEmptyState(),
-            ),
+            _isSearching ? _buildProductList() : Flexible(child: _buildEmptyState()),
           ],
         ),
       ),
@@ -371,13 +369,18 @@ class _ProductCatalogueFullScreenViewState
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _filteredProducts.length,
-      itemBuilder: (context, index) {
-        final product = _filteredProducts[index];
-        return _buildProductListItem(product);
-      },
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: DialogComponents.itemList(
+        context: context,
+        showDividers:true,
+        maxVisibleItems: 100,  
+        expandText: 'Ver todos los productos (${_filteredProducts.length})',
+        collapseText: 'Mostrar menos productos',
+        items: _filteredProducts.map((product) {
+          return _buildProductListItem(product);
+        }).toList(),
+      ),
     );
   }
 
@@ -414,104 +417,79 @@ class _ProductCatalogueFullScreenViewState
       selectedProduct = null;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Card(
-        elevation: 0,
-        color: selectedProduct != null
-            ? colorScheme.primaryContainer.withValues(alpha: 0.18)
-            : colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: selectedProduct != null
-              ? BorderSide(color: colorScheme.primary, width: 1.2)
-              : BorderSide(
-                  color: colorScheme.outline.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-        ),
-        child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          leading: ProductImage(
-            imageUrl: product.image,
-            size: 56,
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      leading: ProductImage(imageUrl: product.image,size: 56 ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            product.description,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                product.description,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+          if (product.nameMark.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                product.nameMark,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
                 ),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (product.nameMark.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    product.nameMark,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.primary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              product.code,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.secondary,
-              ),
             ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                Publications.getFormatoPrecio(value: product.salePrice),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                  fontSize: 17,
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (selectedProduct != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    selectedProduct.quantity.toString(),
-                    style: TextStyle(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          onTap: () {
-            widget.sellProvider.addProductsticket(product.copyWith());
-            setState(() {}); // Actualizar la vista al seleccionar
-          },
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        ],
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          product.code,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colorScheme.secondary,
           ),
         ),
       ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            Publications.getFormatoPrecio(value: product.salePrice),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+              fontSize: 17,
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (selectedProduct != null)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                selectedProduct.quantity.toString(),
+                style: TextStyle(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+        ],
+      ),
+      onTap: () {
+        widget.sellProvider.addProductsticket(product.copyWith());
+        setState(() {}); // Actualizar la vista al seleccionar
+      }, 
     );
   }
 }

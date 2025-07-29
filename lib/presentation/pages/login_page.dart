@@ -139,24 +139,26 @@ class _LoginFormState extends State<_LoginForm> {
           height: 1.4,
         );
 
-    TextStyle linkStyle = defaultStyle.copyWith(
-      color: colorScheme.primary,
-      fontWeight: FontWeight.w500,
-      decoration: TextDecoration.underline,
-      decorationColor: colorScheme.primary.withValues(alpha: 0.6),
-    );
-
+    TextStyle aceptPolitikTextStyle = textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurface,
+          fontSize: baseFontSize * 0.9,
+          height: 1.4,
+        ) ??
+        TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: baseFontSize * 0.9,
+          height: 1.4,
+        );
+ 
     RichText text = RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: defaultStyle,
+        style: aceptPolitikTextStyle,
         children: <TextSpan>[
-          const TextSpan(
-              text:
-                  'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
+          const TextSpan(text:'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
           TextSpan(
               text: 'Términos y condiciones de uso',
-              style: linkStyle.copyWith(decoration: TextDecoration.none),
+              style: aceptPolitikTextStyle.copyWith(decoration: TextDecoration.none,color: colorScheme.primary),
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
                   final Uri url = Uri.parse(
@@ -166,7 +168,7 @@ class _LoginFormState extends State<_LoginForm> {
           const TextSpan(text: ' así también como la '),
           TextSpan(
               text: 'Política de privacidad',
-              style: linkStyle.copyWith(decoration: TextDecoration.none),
+              style: aceptPolitikTextStyle.copyWith(decoration: TextDecoration.none,color: colorScheme.primary),
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
                   final Uri url = Uri.parse(
@@ -219,8 +221,7 @@ class _LoginFormState extends State<_LoginForm> {
                     ),
                     child: CheckboxListTile(
                       dense: isMobile(context),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                       selectedTileColor: Colors.transparent,
                       tileColor: Colors.transparent,
                       checkColor: colorScheme.onPrimary,
@@ -267,7 +268,7 @@ class _LoginFormState extends State<_LoginForm> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
                     backgroundColor: Colors.blueGrey,
-                    text: "ENTRAR COMO INVITADO",
+                    text: "CONTINUAR COMO INVITADO",
                     isLoading: widget.authProvider.isSigningInAsGuest,
                     onPressed: (!widget.authProvider.isSigningInWithGoogle &&
                             !widget.authProvider.isSigningInAsGuest)

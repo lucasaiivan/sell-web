@@ -18,7 +18,7 @@ class AuthProvider extends ChangeNotifier {
   List<ProfileAccountModel> get accountsAssociateds => _accountsAssociateds;
   bool _isLoadingAccounts = false;
   bool get isLoadingAccounts => _isLoadingAccounts;
-  
+
   // Estados para manejar el proceso de autenticación
   bool _isSigningInWithGoogle = false;
   bool get isSigningInWithGoogle => _isSigningInWithGoogle;
@@ -46,19 +46,20 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
-    
+
     // REMOVIDO: No inicializar autenticación automática
     // La autenticación solo debe ocurrir cuando el usuario presione el botón
   }
 
   // Inicia sesión con Google usando el caso de uso con manejo de errores y estado de carga
   Future<void> signInWithGoogle() async {
-    if (_isSigningInWithGoogle) return; // Prevenir múltiples llamadas simultáneas
-    
+    if (_isSigningInWithGoogle)
+      return; // Prevenir múltiples llamadas simultáneas
+
     _isSigningInWithGoogle = true;
     _authError = null;
     notifyListeners();
-    
+
     try {
       await signInWithGoogleUseCase();
       // El éxito se maneja automáticamente por el stream en el constructor
@@ -112,11 +113,11 @@ class AuthProvider extends ChangeNotifier {
   /// Inicia sesión como invitado usando Firebase Auth anónimo con manejo de errores
   Future<void> signInAsGuest() async {
     if (_isSigningInAsGuest) return; // Prevenir múltiples llamadas simultáneas
-    
+
     _isSigningInAsGuest = true;
     _authError = null;
     notifyListeners();
-    
+
     try {
       final user =
           await SignInAnonymouslyUseCase(signInWithGoogleUseCase.repository)

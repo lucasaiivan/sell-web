@@ -40,15 +40,15 @@ class DialogComponents {
                 ),
                 const SizedBox(width: 8),
               ],
-              title.isEmpty?
-                  const SizedBox.shrink() :
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+              title.isEmpty
+                  ? const SizedBox.shrink()
+                  : Text(
+                      title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
             ],
           ),
           const SizedBox(height: 8),

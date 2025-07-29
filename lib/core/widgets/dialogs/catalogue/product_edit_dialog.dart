@@ -211,40 +211,42 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         // view : selección de cantidad de unidades del producto
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration( 
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
-            child: Column(
+          child: Column(
             children: [
               // Header con total destacado
               Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Spacer(),
-                // Contenedor destacado para el total
-                Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Spacer(),
+                  // Contenedor destacado para el total
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Text(
+                      'Total: ${Publications.getFormatoPrecio(value: _totalPrice)}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  'Total: ${Publications.getFormatoPrecio(value: _totalPrice)}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                ),
-              ],
+                ],
               ),
-              
+
               const SizedBox(height: 12),
               // view : cantidad de unidades del producto
               Row(
@@ -267,12 +269,12 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                             : null,
                         isEnabled: _quantity > 1,
                       ),
-              
+
                       // Cantidad actual
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16),
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
@@ -285,7 +287,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                           ),
                         ),
                       ),
-              
+
                       // Botón incrementar
                       _buildQuantityButton(
                         icon: Icons.add_rounded,

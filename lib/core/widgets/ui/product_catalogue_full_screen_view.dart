@@ -306,7 +306,7 @@ class _ProductCatalogueFullScreenViewState
             visualDensity: VisualDensity.compact,
           );
         }),
-    
+
         // Chip "Ver más" si hay más marcas
         if (hasMoreBrands)
           ActionChip(

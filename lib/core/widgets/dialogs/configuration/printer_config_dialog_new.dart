@@ -178,50 +178,12 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           ),
         ),
         DialogComponents.itemSpacing,
-        
+
         // Layout responsive: Column en móvil, Row en desktop
-        mobile 
-          ? Column(
-              children: [
-                DialogComponents.textField(
-                  context: context,
-                  controller: _serverHostController,
-                  label: 'Dirección del Servidor',
-                  hint: 'localhost',
-                  prefixIcon: Icons.computer_rounded,
-                  validator: (value) {
-                    if (value?.trim().isEmpty == true) {
-                      return 'La dirección es requerida';
-                    }
-                    return null;
-                  },
-                ),
-                DialogComponents.itemSpacing,
-                DialogComponents.textField(
-                  context: context,
-                  controller: _serverPortController,
-                  label: 'Puerto',
-                  hint: '3000',
-                  prefixIcon: Icons.settings_ethernet_rounded,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.trim().isEmpty == true) {
-                      return 'Puerto requerido';
-                    }
-                    final port = int.tryParse(value!);
-                    if (port == null || port < 1 || port > 65535) {
-                      return 'Puerto inválido';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: DialogComponents.textField(
+        mobile
+            ? Column(
+                children: [
+                  DialogComponents.textField(
                     context: context,
                     controller: _serverHostController,
                     label: 'Dirección del Servidor',
@@ -234,11 +196,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                       return null;
                     },
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: DialogComponents.textField(
+                  DialogComponents.itemSpacing,
+                  DialogComponents.textField(
                     context: context,
                     controller: _serverPortController,
                     label: 'Puerto',
@@ -256,9 +215,50 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
                       return null;
                     },
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: DialogComponents.textField(
+                      context: context,
+                      controller: _serverHostController,
+                      label: 'Dirección del Servidor',
+                      hint: 'localhost',
+                      prefixIcon: Icons.computer_rounded,
+                      validator: (value) {
+                        if (value?.trim().isEmpty == true) {
+                          return 'La dirección es requerida';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: DialogComponents.textField(
+                      context: context,
+                      controller: _serverPortController,
+                      label: 'Puerto',
+                      hint: '3000',
+                      prefixIcon: Icons.settings_ethernet_rounded,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value?.trim().isEmpty == true) {
+                          return 'Puerto requerido';
+                        }
+                        final port = int.tryParse(value!);
+                        if (port == null || port < 1 || port > 65535) {
+                          return 'Puerto inválido';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
       ],
     );
   }

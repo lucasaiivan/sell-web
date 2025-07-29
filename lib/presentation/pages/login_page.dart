@@ -119,7 +119,7 @@ class _LoginFormState extends State<_LoginForm> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     // Estilos responsivos para el texto
     final double baseFontSize = getResponsiveValue(
       context,
@@ -127,24 +127,25 @@ class _LoginFormState extends State<_LoginForm> {
       tablet: 12.0,
       desktop: 13.0,
     );
-    
+
     TextStyle defaultStyle = textTheme.bodySmall?.copyWith(
-      color: colorScheme.onSurface,
-      fontSize: baseFontSize,
-      height: 1.4,
-    ) ?? TextStyle(
-      color: colorScheme.onSurface,
-      fontSize: baseFontSize,
-      height: 1.4,
-    );
-    
+          color: colorScheme.onSurface,
+          fontSize: baseFontSize,
+          height: 1.4,
+        ) ??
+        TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: baseFontSize,
+          height: 1.4,
+        );
+
     TextStyle linkStyle = defaultStyle.copyWith(
       color: colorScheme.primary,
       fontWeight: FontWeight.w500,
       decoration: TextDecoration.underline,
       decorationColor: colorScheme.primary.withValues(alpha: 0.6),
     );
-    
+
     RichText text = RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
@@ -153,25 +154,25 @@ class _LoginFormState extends State<_LoginForm> {
           const TextSpan(
               text:
                   'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
-            TextSpan(
+          TextSpan(
               text: 'Términos y condiciones de uso',
               style: linkStyle.copyWith(decoration: TextDecoration.none),
               recognizer: TapGestureRecognizer()
-              ..onTap = () async {
-                final Uri url = Uri.parse(
-                  'https://sites.google.com/view/sell-app/t%C3%A9rminos-y-condiciones-de-uso');
-                if (!await launchUrl(url)) throw 'Could not launch $url';
-              }),
+                ..onTap = () async {
+                  final Uri url = Uri.parse(
+                      'https://sites.google.com/view/sell-app/t%C3%A9rminos-y-condiciones-de-uso');
+                  if (!await launchUrl(url)) throw 'Could not launch $url';
+                }),
           const TextSpan(text: ' así también como la '),
-            TextSpan(
+          TextSpan(
               text: 'Política de privacidad',
               style: linkStyle.copyWith(decoration: TextDecoration.none),
               recognizer: TapGestureRecognizer()
-              ..onTap = () async {
-                final Uri url = Uri.parse(
-                  'https://sites.google.com/view/sell-app/pol%C3%ADticas-de-privacidad');
-                if (!await launchUrl(url)) throw 'Could not launch $url';
-              }),
+                ..onTap = () async {
+                  final Uri url = Uri.parse(
+                      'https://sites.google.com/view/sell-app/pol%C3%ADticas-de-privacidad');
+                  if (!await launchUrl(url)) throw 'Could not launch $url';
+                }),
         ],
       ),
     );
@@ -192,14 +193,17 @@ class _LoginFormState extends State<_LoginForm> {
                     error: widget.authProvider.authError,
                     onDismissError: widget.authProvider.clearAuthError,
                   ),
-                  
+
                   // CheckboxListTile responsivo : aceptar términos y condiciones
                   Container(
                     margin: getResponsivePadding(
                       context,
-                      mobile: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                      tablet: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                      desktop: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      mobile: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 8),
+                      tablet: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 12),
+                      desktop: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(
@@ -231,28 +235,33 @@ class _LoginFormState extends State<_LoginForm> {
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: getResponsivePadding(
                         context,
-                        mobile: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        desktop: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        mobile: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        tablet: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        desktop: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
-                  
+
                   // ElevatedButton : Iniciar sesión con Google
                   AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
                     text: "INICIAR SESIÓN CON GOOGLE",
                     isLoading: widget.authProvider.isSigningInWithGoogle,
-                    onPressed: (_acceptPolicy && !widget.authProvider.isSigningInWithGoogle && !widget.authProvider.isSigningInAsGuest)
+                    onPressed: (_acceptPolicy &&
+                            !widget.authProvider.isSigningInWithGoogle &&
+                            !widget.authProvider.isSigningInAsGuest)
                         ? () async {
                             await widget.authProvider.signInWithGoogle();
                           }
                         : null,
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // ElevatedButton : Iniciar como invitado
                   AppButton(
                     padding: const EdgeInsets.symmetric(
@@ -260,7 +269,8 @@ class _LoginFormState extends State<_LoginForm> {
                     backgroundColor: Colors.blueGrey,
                     text: "ENTRAR COMO INVITADO",
                     isLoading: widget.authProvider.isSigningInAsGuest,
-                    onPressed: (!widget.authProvider.isSigningInWithGoogle && !widget.authProvider.isSigningInAsGuest)
+                    onPressed: (!widget.authProvider.isSigningInWithGoogle &&
+                            !widget.authProvider.isSigningInAsGuest)
                         ? () async {
                             await widget.authProvider.signInAsGuest();
                           }

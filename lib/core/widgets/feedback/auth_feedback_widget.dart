@@ -108,8 +108,12 @@ class _LoadingWidget extends StatelessWidget {
         Text(
           message,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-          ),
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withOpacity(0.7),
+              ),
         ).animate().fadeIn(delay: 300.ms),
       ],
     );

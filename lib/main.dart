@@ -7,7 +7,8 @@ import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'firebase_options.dart';
+import 'core/config/firebase_options.dart';
+import 'core/config/oauth_config.dart';
 import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
@@ -26,11 +27,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Configuración de GoogleSignIn mejorada para Web
+  // Configuración de GoogleSignIn usando configuración centralizada y segura
   final googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-    // Client ID que debe coincidir con el configurado en web/index.html
-    clientId: '232181553323-eilihkps148nu7dp45cole4mlr7pkf1d.apps.googleusercontent.com',
+    scopes: OAuthConfig.googleSignInScopes,
+    clientId: OAuthConfig.googleSignInClientId,
   );
 
   // Inicializar repositorios

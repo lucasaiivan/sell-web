@@ -61,4 +61,8 @@ class DefaultFirebaseOptions {
       messagingSenderId: "232181553323",
       appId: "1:232181553323:web:42281e8ed0eab5ba9b3fee",
       measurementId: "G-W2S3NL0B9H");
+
+  /// Google Sign-In Client ID para Web
+  /// Este ID debe coincidir con el configurado en web/index.html 
+  static const String googleSignInClientId =  '232181553323-1qcbn5q2qoomdqv2lckbolclrs2tsaoe.apps.googleusercontent.com';//'232181553323-eilihkps148nu7dp45cole4mlr7pkf1d.apps.googleusercontent.com';
 }

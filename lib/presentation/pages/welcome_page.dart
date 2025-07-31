@@ -29,8 +29,7 @@ class WelcomePage extends StatelessWidget {
     // Obtener la ubicación con prioridad
     final location = _getAccountLocation(account);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    return InkWell( 
       onTap: () async => await onSelectAccount(account),
       splashColor: colorScheme.primary.withValues(alpha: 0.1),
       highlightColor: colorScheme.primary.withValues(alpha: 0.05),

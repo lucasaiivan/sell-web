@@ -97,6 +97,7 @@ class SellProvider extends ChangeNotifier {
     String sellerId = '',
     double priceTotal = 0.0,
     double discount = 0.0,
+    bool discountIsPercentage = false,
     String transactionType = 'sale',
     String currencySymbol = '\$',
   }) {
@@ -111,6 +112,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: sellerId,
       priceTotal: priceTotal,
       discount: discount,
+      discountIsPercentage: discountIsPercentage,
       transactionType: transactionType,
       currencySymbol: currencySymbol,
     );
@@ -264,6 +266,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: currentTicket.sellerId,
       priceTotal: currentTicket.priceTotal,
       discount: currentTicket.discount,
+      discountIsPercentage: currentTicket.discountIsPercentage,
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
@@ -294,6 +297,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: currentTicket.sellerId,
       priceTotal: currentTicket.priceTotal,
       discount: currentTicket.discount,
+      discountIsPercentage: currentTicket.discountIsPercentage,
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
@@ -344,6 +348,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: currentTicket.sellerId,
       priceTotal: currentTicket.priceTotal,
       discount: currentTicket.discount,
+      discountIsPercentage: currentTicket.discountIsPercentage,
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
@@ -356,7 +361,10 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setDiscount({required double discount}) {
+  void setDiscount({
+    required double discount, 
+    bool isPercentage = false
+  }) {
     if (discount < 0) return; // No permitir descuentos negativos
 
     final currentTicket = _state.ticket;
@@ -370,6 +378,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: currentTicket.sellerId,
       priceTotal: currentTicket.priceTotal,
       discount: discount,
+      discountIsPercentage: isPercentage,
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
@@ -395,6 +404,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: currentTicket.sellerId,
       priceTotal: currentTicket.priceTotal,
       discount: currentTicket.discount,
+      discountIsPercentage: currentTicket.discountIsPercentage,
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
@@ -436,6 +446,7 @@ class SellProvider extends ChangeNotifier {
       sellerId: currentTicket.sellerId,
       priceTotal: currentTicket.priceTotal,
       discount: currentTicket.discount,
+      discountIsPercentage: currentTicket.discountIsPercentage,
       transactionType: currentTicket.transactionType,
       currencySymbol: currentTicket.currencySymbol,
     );
@@ -491,6 +502,7 @@ class SellProvider extends ChangeNotifier {
         sellerId: currentTicket.sellerId,
         priceTotal: currentTicket.priceTotal,
         discount: currentTicket.discount,
+        discountIsPercentage: currentTicket.discountIsPercentage,
         transactionType: currentTicket.transactionType,
         currencySymbol: currentTicket.currencySymbol,
       );

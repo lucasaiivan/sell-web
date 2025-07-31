@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/widgets/ui/expandable_list_container.dart';
+import 'package:sellweb/core/widgets/component/dividers.dart';
 import '../../../widgets/inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3
 class DialogComponents {
+
   DialogComponents._();
 
   /// Sección de información con contenedor estilizado
@@ -78,13 +79,12 @@ class DialogComponents {
     double borderRadius = 12,
     required BuildContext context,
   }) {
+
+    final lineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final decoration = BoxDecoration(
-        color: backgroundColor ?? Colors.transparent,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color:borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),width: 1));
+    final decoration = BoxDecoration(color: backgroundColor ?? Colors.transparent,borderRadius: BorderRadius.circular(borderRadius),border: Border.all(color:borderColor ?? lineColor,width:1));
  
 
     // Para listas largas, usar ExpandableListContainer
@@ -102,18 +102,13 @@ class DialogComponents {
           collapseText: collapseText,
           showDividers: showDividers,
           backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-          borderColor:
-              borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+          borderColor: borderColor ?? lineColor,
           borderRadius: borderRadius,
           itemBuilder: (context, item, index, isLast) {
             return Column(
               children: [
                 item,
-                if (showDividers && !isLast)
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                if (showDividers && !isLast) Divider( thickness:1 ,color: lineColor,height: 0),
               ],
             );
           },
@@ -528,50 +523,187 @@ class DialogComponents {
   /// Espaciado mínimo entre elementos relacionados
   static const Widget minSpacing = SizedBox(height: 8);
 }
+  
+
+/// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.
+///
+/// Incluye ejemplos de uso con diferentes tipos de datos.
+///
+/// Características del widget principal:
+/// - Contenedor con bordes redondeados y estilo Material Design 3
+/// - Lista de elementos con separadores opcionales
+/// - Funcionalidad de expandir/colapsar con límite configurable
+/// - Diseño responsivo para móvil y desktop
+/// - Título personalizable
+/// - Soporte para widgets personalizados en cada elemento
 
 // =============================================================================
-// EJEMPLOS DE USO DE LAS LISTAS EXPANDIBLES EN DIÁLOGOS
+// WIDGET PRINCIPAL: ExpandableListContainer
 // =============================================================================
 
-/// Ejemplos de uso de las nuevas funcionalidades de listas expandibles en DialogComponents
-class DialogListExamples {
-  /// Ejemplo: Lista de productos expandible en un diálogo
-  static Widget buildProductsDialog({
-    required List<Map<String, dynamic>> products,
-    required BuildContext context,
-  }) {
-    return AlertDialog(
-      title: const Text('Catálogo de Productos'),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Usando el método expandableDataList para datos tipados
-            DialogComponents.expandableDataList<Map<String, dynamic>>(
-              items: products,
-              title: 'Productos disponibles',
-              maxVisibleItems: 4,
-              expandText: 'Ver más productos',
-              collapseText: 'Mostrar menos',
-              showDividers: true,
-              context: context,
-              itemBuilder: (context, product, index, isLast) {
-                return ListTile(
-                  leading: const Icon(Icons.inventory),
-                  title: Text(product['name'] ?? 'Producto'),
-                  subtitle: Text('\$${product['price'] ?? 0}'),
-                  trailing: Text('Stock: ${product['stock'] ?? 0}'),
-                );
-              },
+/// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.
+class ExpandableListContainer<T> extends StatefulWidget {
+  /// Lista de elementos a mostrar
+  final List<T> items;
+
+  /// Función para construir cada elemento de la lista
+  final Widget Function(BuildContext context, T item, int index, bool isLast)
+      itemBuilder;
+
+  /// Título de la sección (opcional)
+  final String? title;
+
+  /// Número máximo de elementos visibles inicialmente
+  final int maxVisibleItems;
+
+  /// Si es una vista móvil
+  final bool isMobile;
+
+  /// Tema de la aplicación
+  final ThemeData theme;
+
+  /// Texto para el botón "Ver más"
+  final String? expandText;
+
+  /// Texto para el botón "Ver menos"
+  final String? collapseText;
+
+  /// Si mostrar separadores entre elementos
+  final bool showDividers;
+
+  /// Color de fondo del contenedor (opcional, usa el por defecto si es null)
+  final Color? backgroundColor;
+
+  /// Color del borde (opcional, usa el por defecto si es null)
+  final Color? borderColor;
+
+  /// Radio de los bordes del contenedor
+  final double borderRadius;
+
+  const ExpandableListContainer({
+    super.key,
+    required this.items,
+    required this.itemBuilder,
+    required this.isMobile,
+    required this.theme,
+    this.title,
+    this.maxVisibleItems = 5,
+    this.expandText,
+    this.collapseText,
+    this.showDividers = true,
+    this.backgroundColor,
+    this.borderColor,
+    this.borderRadius = 12,
+  });
+
+  @override
+  State<ExpandableListContainer<T>> createState() => _ExpandableListContainerState<T>();
+}
+
+class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>> {
+ 
+  bool showAllItems = false;
+
+  @override
+  Widget build(BuildContext context) { 
+
+    final hasMoreItems = widget.items.length > widget.maxVisibleItems;
+    final itemsToShow = showAllItems
+        ? widget.items
+        : widget.items.take(widget.maxVisibleItems).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Título de la sección (si se proporciona)
+        if (widget.title != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(top:5, left: 12),
+            child: Text(
+              widget.title!,
+              style: (widget.isMobile
+                      ? widget.theme.textTheme.bodyMedium
+                      : widget.theme.textTheme.bodyLarge)
+                  ?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: widget.theme.colorScheme.onSurfaceVariant,
+              ),
             ),
+          ),
+          SizedBox(height: widget.isMobile ? 8 : 12),
+        ],
+    
+        // Contenedor estilizado con la lista
+        Column(
+          children: [
+            // Items de la lista
+            ...itemsToShow.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final isLast = index == itemsToShow.length - 1;
+    
+              return widget.itemBuilder(context, item, index, isLast);
+            }),
+    
+            // Botón "Ver más" si hay más elementos
+            if (hasMoreItems && !showAllItems) ...[
+              if (widget.showDividers) const Divider(),
+              InkWell(
+                onTap: () => setState(() => showAllItems = true),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.isMobile ? 12 : 16,
+                    vertical: widget.isMobile ? 8 : 12,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.expandText ?? 'Ver más',
+                          style: widget.theme.textTheme.titleSmall?.copyWith(
+                            color: widget.theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.expand_more_rounded,
+                          color: widget.theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+    
+            // Botón "Ver menos" si se están mostrando todos
+            if (showAllItems && hasMoreItems) ...[
+              if (widget.showDividers) const Divider(),
+              InkWell(
+                onTap: () => setState(() => showAllItems = false),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.isMobile ? 12 : 16,
+                    vertical: widget.isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Mostrando ${widget.items.length} elementos',
+                          style: widget.theme.textTheme.titleSmall),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.expand_less_rounded,
+                        color: widget.theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
-        ),
-      ),
-      actions: [
-        DialogComponents.secondaryActionButton(
-          text: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(),
-          context: context,
         ),
       ],
     );

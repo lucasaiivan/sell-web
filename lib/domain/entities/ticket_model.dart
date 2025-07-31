@@ -12,8 +12,11 @@ class TicketModel {
       ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
   double priceTotal = 0.0; // precio total de la venta
   double valueReceived = 0.0; // valor recibido por la venta
-  double discount = 0.0; // descuento aplicado a la venta
+  double discount = 0.0; // descuento aplicado: valor original ingresado (porcentaje o monto)
   String currencySymbol = '\$';
+  
+  /// Información del descuento aplicado
+  bool discountIsPercentage = false; // true si el descuento es porcentual, false si es monto fijo
 
   /// Tipo de transacción que representa este ticket
   ///
@@ -42,6 +45,7 @@ class TicketModel {
     this.priceTotal = 0.0,
     this.valueReceived = 0.0,
     this.discount = 0.0,
+    this.discountIsPercentage = false,
     this.transactionType = "sale",
     required List<dynamic> listPoduct,
     required this.creation,
@@ -287,7 +291,8 @@ class TicketModel {
         "cashRegisterName": cashRegisterName,
         'cashRegisterId': cashRegisterId,
         "priceTotal": priceTotal,
-        "valueReceived": valueReceived,
+        "valueReceived": valueReceived, 
+        "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
         // Usar directamente ProductTicketModel optimizado (solo datos esenciales)
@@ -324,7 +329,8 @@ class TicketModel {
         "cashRegisterName": cashRegisterName,
         'cashRegisterId': cashRegisterId,
         "priceTotal": priceTotal,
-        "valueReceived": valueReceived,
+        "valueReceived": valueReceived, 
+        "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
         // Usar directamente el _listPoduct (que ya está optimizado con ProductTicketModel)
@@ -342,7 +348,8 @@ class TicketModel {
         "cashRegisterName": cashRegisterName,
         'cashRegisterId': cashRegisterId,
         "priceTotal": priceTotal,
-        "valueReceived": valueReceived,
+        "valueReceived": valueReceived, 
+        "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
         // Usar directamente ProductTicketModel optimizado (incluyendo todos los campos esenciales)
@@ -399,7 +406,10 @@ class TicketModel {
           : 0.0,
       valueReceived: data.containsKey('valueReceived')
           ? (data['valueReceived'] ?? 0).toDouble()
-          : 0.0,
+          : 0.0, 
+      discountIsPercentage: data.containsKey('discountIsPercentage')
+          ? (data['discountIsPercentage'] ?? false) as bool
+          : false,
       discount: data.containsKey('discount')
           ? (data['discount'] ?? 0.0).toDouble()
           : 0.0,
@@ -424,6 +434,7 @@ class TicketModel {
     double priceTotal = 0.0,
     double valueReceived = 0.0,
     double discount = 0.0,
+    bool discountIsPercentage = false,
     String transactionType = "sale",
     Timestamp? creation,
   }) {
@@ -438,6 +449,7 @@ class TicketModel {
       priceTotal: priceTotal,
       valueReceived: valueReceived,
       discount: discount,
+      discountIsPercentage: discountIsPercentage,
       transactionType: transactionType,
       listPoduct: [],
       creation: creation ?? Timestamp.now(),
@@ -465,7 +477,8 @@ class TicketModel {
     cashRegisterName = data['cashRegister'] ?? '';
     cashRegisterId = data['cashRegisterId'] ?? '';
     priceTotal = data['priceTotal'];
-    valueReceived = data['valueReceived'];
+    valueReceived = data['valueReceived']; 
+    discountIsPercentage = data['discountIsPercentage'] ?? false;
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
     _listPoduct = data['listPoduct'] ?? [];
@@ -490,8 +503,8 @@ class TicketModel {
     }
 
     // si existe un descuento se calcula el porcentaje de ganancia con el descuento aplicado
-    if (discount != 0) {
-      total -= discount;
+    if (getDiscountAmount != 0) {
+      total -= getDiscountAmount;
     }
 
     // se calcula el porcentaje de ganancia
@@ -508,6 +521,22 @@ class TicketModel {
     return percentage.toInt();
   }
 
+  /// Obtiene el monto real del descuento aplicado
+  /// Si es porcentual, calcula el monto basado en el porcentaje
+  /// Si es monto fijo, retorna el valor tal como está
+  double get getDiscountAmount {
+    if (discount <= 0) return 0.0;
+    
+    if (discountIsPercentage) {
+      // El valor de discount representa el porcentaje, calcular el monto
+      final subtotal = getTotalPriceWithoutDiscount;
+      return (subtotal * discount / 100);
+    } else {
+      // El valor de discount ya es el monto fijo
+      return discount;
+    }
+  }
+
   // double : obtenemos las ganancias de la venta del ticket
   double get getProfit {
     // se obtiene el total de la venta de los productos sin descuento
@@ -522,11 +551,11 @@ class TicketModel {
     }
 
     // si existe un descuento se calcula el porcentaje de ganancia con el descuento aplicado
-    if (discount > 0 && total > 0) {
-      if (total - discount < 0) {
+    if (getDiscountAmount > 0 && total > 0) {
+      if (total - getDiscountAmount < 0) {
         return 0;
       }
-      total -= discount;
+      total -= getDiscountAmount;
     }
 
     return total;
@@ -556,7 +585,7 @@ class TicketModel {
       total += salePrice * quantity;
     }
 
-    return total - discount;
+    return total - getDiscountAmount;
   }
 
   //

@@ -138,100 +138,70 @@ class _TicketContent extends StatelessWidget {
 
     return Stack(
       children: [
-        // view : contenido principal del ticket
-        SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-              12, 12, 12, 75), // Ajustado para coincidir con gradiente
-          child: Column(
-            children: [
-              // Encabezado del ticket
-              _buildTicketHeader(
-                  provider.profileAccountSelected.name.isNotEmpty
-                      ? provider.profileAccountSelected.name
-                      : 'TICKET',
-                  textDescriptionStyle,
-                  textSmallStyle),
-              _buildDividerLine(colorScheme),
-              // Encabezados de columnas
-              _buildColumnHeaders(textSmallStyle),
-              _buildDividerLine(colorScheme),
-              // Lista de productos que se contrae al contenido
-              _TicketProductList(
-                ticket: ticket,
-                textValuesStyle: textValuesStyle,
-              ),
-              _buildDividerLine(colorScheme),
-              // Cantidad total de artículos
-              _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
-              _buildDividerLine(colorScheme),
-              const SizedBox(height: 5),
-              // Total del ticket
-              _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
-                  textDescriptionStyle),
-              // Vuelto (solo si corresponde)
-              if (ticket.valueReceived > 0 &&
-                  ticket.valueReceived >= ticket.getTotalPrice)
-                _buildChangeAmount(
-                  ticket,
-                  onEditCashAmount,
-                  textDescriptionStyle,
-                  colorScheme,
-                ),
-              // Sección de descuento
-              _buildDiscountSection(),
-              // Métodos de pago
-              _buildPaymentMethods(onEditCashAmount),
+        // view : contenido principal del ticket con máscara de gradiente
+        ShaderMask(
+          shaderCallback: (Rect rect) {
+            return LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                Colors.white,
+                Colors.transparent,
+              ],
+              stops: [0.0, 0.8, 1.0], // 90% opaco, 10% de fade-out
+            ).createShader(rect);
+          },
+          blendMode: BlendMode.dstIn,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+                12, 12, 12, 120), // Espacio inferior para botones y gradiente
+            child: Column(
+              children: [
+                // Encabezado del ticket
+                _buildTicketHeader(
+                    provider.profileAccountSelected.name.isNotEmpty
+                        ? provider.profileAccountSelected.name
+                        : 'TICKET',
+                    textDescriptionStyle,
+                    textSmallStyle),
+                _buildDividerLine(colorScheme),
+                // Encabezados de columnas
+                _buildColumnHeaders(textSmallStyle),
+                _buildDividerLine(colorScheme),
+                // Lista de productos que se contrae al contenido
+                _TicketProductList(ticket: ticket,textValuesStyle: textValuesStyle),
+                _buildDividerLine(colorScheme),
+                // Cantidad total de artículos
+                _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
+                _buildDividerLine(colorScheme),
+                const SizedBox(height: 5),
+                // Total del ticket
+                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
+                // view : Sección unificada de vuelto y descuento con chips editables
+                _buildEditableChipsSection(ticket, onEditCashAmount, colorScheme),
+                // Métodos de pago
+                _buildPaymentMethods(onEditCashAmount),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // Checkbox para imprimir ticket
-              _buildPrintCheckbox(),
-            ],
+                // Checkbox para imprimir ticket
+                _buildPrintCheckbox(),
+              ],
+            ),
           ),
         ),
         // buttons : botones posicionados en la parte inferior
         Positioned(
           left: 0,
-          right: 0,
-          bottom: 0,
-          child: _buildFixedActionSection(
-              context: context,
-              ticket: ticket,
-              backgroundColor: backgroundColor),
+          right: 12,
+          bottom: 12,
+          child: _buildActionButtons(onConfirmSale, onCloseTicket, isMobile(context))
         ),
       ],
     );
   }
-
-  /// Construye la sección fija de acciones en la parte inferior
-  Widget _buildFixedActionSection({
-    required BuildContext context,
-    required dynamic ticket,
-    required Color backgroundColor,
-  }) {
-    // Usar el color de superficie del card para asegurar consistencia
-    final gradientBaseColor = backgroundColor;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent, // Completamente transparente arriba
-            gradientBaseColor.withValues(alpha: 0.2), // Muy sutil
-            gradientBaseColor.withValues(alpha: 0.6), // Opacidad media
-            gradientBaseColor.withValues(alpha: 0.9), // Casi opaco
-            gradientBaseColor, // Color completo en la parte inferior
-          ],
-          stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child:
-          _buildActionButtons(onConfirmSale, onCloseTicket, isMobile(context)),
-    );
-  }
+ 
 
   /// Construye el encabezado del ticket
   Widget _buildTicketHeader(
@@ -268,22 +238,16 @@ class _TicketContent extends StatelessWidget {
   /// Construye la línea divisoria punteada
   Widget _buildDividerLine(ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
-      child: Row(
-        children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return CustomPaint(
-                  size: Size(constraints.maxWidth, 1),
-                  painter: _TicketDashedLinePainter(
-                    color: colorScheme.onSurface.withValues(alpha: 0.2),
-                  ),
-                );
-              },
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 1),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return CustomPaint(
+            size: Size(constraints.maxWidth, 1),
+            painter: _TicketDashedLinePainter(
+              color: colorScheme.onSurface.withValues(alpha: 0.2),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -311,6 +275,151 @@ class _TicketContent extends StatelessWidget {
     );
   }
 
+  /// Construye la sección unificada de chips editables para vuelto y descuento
+  Widget _buildEditableChipsSection(
+    dynamic ticket,
+    VoidCallback? onEditCashAmount,
+    ColorScheme colorScheme,
+  ) {
+    return Consumer<SellProvider>(
+      builder: (context, provider, _) {
+
+        final hasDiscount = provider.ticket.discount > 0;
+        final hasChange = ticket.valueReceived > 0 && 
+                         ticket.valueReceived >= ticket.getTotalPrice;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              // Chip de vuelto (solo si aplica)
+              if (hasChange)
+                _buildEditableChip(
+                  context: context,
+                  text: 'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}', 
+                  onTap: onEditCashAmount,
+                  backgroundColor: Colors.blue.withValues(alpha: 0.15),
+                  borderColor: Colors.blue.withValues(alpha: 0.3),
+                  textColor: Colors.blue.shade700,
+                  iconColor: Colors.blue.shade600,
+                ),
+
+              // Chip de descuento
+              _buildEditableChip(
+                context: context,
+                text: hasDiscount 
+                    ? _getDiscountDisplayText(provider.ticket)
+                    : 'Agregar descuento', 
+                onTap: () => showDiscountDialog(context),
+                backgroundColor: hasDiscount 
+                    ? colorScheme.errorContainer.withValues(alpha: 0.2)
+                    : colorScheme.primaryContainer.withValues(alpha: 0.2),
+                borderColor: hasDiscount 
+                    ? colorScheme.error.withValues(alpha: 0.3)
+                    : colorScheme.primary.withValues(alpha: 0.3),
+                textColor: hasDiscount 
+                    ? colorScheme.error
+                    : colorScheme.primary,
+                iconColor: hasDiscount 
+                    ? colorScheme.error
+                    : colorScheme.primary,
+                showRemoveButton: hasDiscount,
+                onRemove: hasDiscount 
+                    ? () => provider.setDiscount(
+                        discount: 0.0, 
+                        isPercentage: false
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Construye un chip editable reutilizable
+  Widget _buildEditableChip({
+    required BuildContext context,
+    required String text,
+    IconData? icon,
+    required VoidCallback? onTap,
+    required Color backgroundColor,
+    required Color borderColor,
+    required Color textColor,
+    required Color iconColor,
+    bool showRemoveButton = false,
+    VoidCallback? onRemove,
+  }) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: borderColor,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              icon==null ? const SizedBox() :
+              Icon(
+                icon,
+                size: 18,
+                color: iconColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                text,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (showRemoveButton && onRemove != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: textColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 14,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 14,
+                  color: iconColor.withValues(alpha: 0.7),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Construye la fila de total de artículos
   Widget _buildTotalItems(
     dynamic ticket,
@@ -332,61 +441,6 @@ class _TicketContent extends StatelessWidget {
     );
   }
 
-  /// Construye la sección de vuelto
-  Widget _buildChangeAmount(
-    dynamic ticket,
-    VoidCallback? onEditCashAmount,
-    TextStyle textDescriptionStyle,
-    ColorScheme colorScheme,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 5, top: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Spacer(),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onEditCashAmount,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
-                      style: textDescriptionStyle.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.edit_outlined,
-                      size: 16,
-                      color: colorScheme.onSurface,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Construye el widget del total con animación
   /// Construye la sección de total (con o sin descuento)
   Widget _buildTotalSection(
     dynamic ticket,
@@ -402,6 +456,13 @@ class _TicketContent extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: hasDiscount
@@ -493,96 +554,6 @@ class _TicketContent extends StatelessWidget {
     );
   }
 
-  /// Construye la sección de descuento
-  Widget _buildDiscountSection() {
-    return Consumer<SellProvider>(
-      builder: (context, provider, _) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-        final hasDiscount = provider.ticket.discount > 0;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Column(
-            children: [
-              // Mostrar descuento aplicado si existe
-              if (hasDiscount) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: colorScheme.error.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.discount_rounded,
-                        color: colorScheme.error,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Descuento aplicado',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.error,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              '- ${Publications.getFormatoPrecio(value: provider.ticket.discount)}',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: colorScheme.error,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      AppTextButton(
-                        text: 'Quitar',
-                        onPressed: () => provider.setDiscount(discount: 0.0),
-                        foregroundColor: colorScheme.error,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Botón para agregar descuento
-              AppTextButton.icon(
-                text: hasDiscount ? 'Editar descuento' : 'Agregar descuento',
-                icon: Icon(
-                  hasDiscount ? Icons.edit_rounded : Icons.percent_rounded,
-                  size: 18,
-                ),
-                onPressed: () => showDiscountDialog(context),
-                foregroundColor: colorScheme.primary,
-                backgroundColor:
-                    colorScheme.primaryContainer.withValues(alpha: 0.3),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   /// Construye los métodos de pago
   Widget _buildPaymentMethods(VoidCallback? onCashPaymentSelected) {
     return Builder(
@@ -591,14 +562,10 @@ class _TicketContent extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'Métodos de pago:',
-              style: TextStyle(
-                fontFamily: 'RobotoMono',
-                fontSize: 13,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.87),
+              'Forma de pago:',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
               ),
             ),
             const SizedBox(height: 6),
@@ -731,6 +698,20 @@ class _TicketContent extends StatelessWidget {
       ],
     );
   }
+
+  /// Genera el texto a mostrar en el chip de descuento
+  String _getDiscountDisplayText(dynamic ticket) {
+    if (ticket.discount <= 0) return 'Agregar descuento';
+    
+    if (ticket.discountIsPercentage) {
+      // Mostrar tanto el porcentaje como el monto calculado
+      final discountAmount = ticket.getDiscountAmount;
+      return 'Descuento ${ticket.discount.toStringAsFixed(0)}% (${Publications.getFormatoPrecio(value: discountAmount)})';
+    } else {
+      // Solo mostrar el monto fijo
+      return 'Descuento ${Publications.getFormatoPrecio(value: ticket.discount)}';
+    }
+  }
 }
 
 /// Widget personalizado que muestra la lista de productos en el ticket
@@ -805,7 +786,7 @@ class _TicketProductListState extends State<_TicketProductList> {
         // Indicador para expandir/contraer si hay más de 7 items
         if (shouldShowExpander)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -817,8 +798,7 @@ class _TicketProductListState extends State<_TicketProductList> {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -829,7 +809,7 @@ class _TicketProductListState extends State<_TicketProductList> {
                         color: colorScheme.primary,
                         size: 20,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 2),
                       Text(
                         _isExpanded
                             ? 'Ver menos'
@@ -978,13 +958,15 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Descuento:',
+                          ticket.discountIsPercentage 
+                              ? 'Descuento (${ticket.discount.toStringAsFixed(0)}%):'
+                              : 'Descuento:',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: Colors.white.withValues(alpha: 0.8),
                           ),
                         ),
                         Text(
-                          '- ${Publications.getFormatoPrecio(value: ticket.discount)}',
+                          '- ${Publications.getFormatoPrecio(value: ticket.getDiscountAmount)}',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontFamily: 'RobotoMono',

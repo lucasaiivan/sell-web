@@ -139,10 +139,6 @@ class ThemeColorSelectorDialog extends StatelessWidget {
     VoidCallback onTap,
   ) {
     final theme = Theme.of(context);
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: color,
-      brightness: theme.brightness,
-    );
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),

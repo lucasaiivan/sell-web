@@ -319,11 +319,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 opacity: value,
                 child: Material(
                   color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
+                  child: InkWell( 
                     onTap: () => provider.selectCashRegister(cashRegister),
-                    hoverColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.05),
+                    hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: EdgeInsets.symmetric(

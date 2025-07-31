@@ -178,6 +178,7 @@ class BaseDialog extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
+            // IgnorePointer : para que el gradiente no interfiera con los botones
             child: IgnorePointer(
               child: Container(
                 height: 56, // Altura del gradiente más amplia para efecto suave

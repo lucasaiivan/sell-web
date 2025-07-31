@@ -26,6 +26,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
     // Inicializar con el descuento actual si existe
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     if (sellProvider.ticket.discount > 0) {
+      // Restaurar el estado del descuento
+      _isPercentage = sellProvider.ticket.discountIsPercentage;
       _discountController.text = sellProvider.ticket.discount.toString();
     }
   }
@@ -190,7 +192,10 @@ class _DiscountDialogState extends State<DiscountDialog> {
               AppTextButton(
                 text: 'Quitar descuento',
                 onPressed: () {
-                  sellProvider.setDiscount(discount: 0.0);
+                  sellProvider.setDiscount(
+                    discount: 0.0, 
+                    isPercentage: false
+                  );
                   Navigator.of(context).pop();
                 },
                 foregroundColor: colorScheme.error,
@@ -388,13 +393,16 @@ class _DiscountDialogState extends State<DiscountDialog> {
     final discountValue = double.tryParse(_discountController.text) ?? 0;
     if (discountValue <= 0) return;
 
-    final discountAmount =
-        _isPercentage ? (totalTicket * discountValue / 100) : discountValue;
-
-    // Aplicar el descuento
-    sellProvider.setDiscount(discount: discountAmount);
+    // Aplicar el descuento con la información completa
+    sellProvider.setDiscount(
+      discount: discountValue, 
+      isPercentage: _isPercentage
+    );
 
     // Mostrar confirmación
+    final discountAmount =
+        _isPercentage ? (totalTicket * discountValue / 100) : discountValue;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

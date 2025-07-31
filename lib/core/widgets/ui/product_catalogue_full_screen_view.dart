@@ -6,7 +6,6 @@ import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/product_search_algorithm.dart';
 import 'package:sellweb/core/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/core/widgets/component/image.dart';
-import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 
 // Domain imports
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
@@ -387,7 +386,7 @@ class _ProductCatalogueFullScreenViewState
     final colorScheme = theme.colorScheme;
 
     // Limitar a 7 marcas visibles
-    const int maxVisibleBrands = 4;
+    const int maxVisibleBrands = 3;
     final List<String> visibleBrands =
         sortedBrands.take(maxVisibleBrands).toList();
     final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
@@ -487,15 +486,35 @@ class _ProductCatalogueFullScreenViewState
       );
     }
 
-    return DialogComponents.itemList(
-      context: context,
-      showDividers: true,
-      maxVisibleItems: 100,  
-      expandText: 'Ver todos los productos (${_filteredProducts.length})',
-      collapseText: 'Mostrar menos productos',
-      items: _filteredProducts.map((product) {
-        return _buildProductListItem(product);
-      }).toList(),
+    // Lista personalizada optimizada para NestedScrollView con AppBar colapsable
+    return CustomScrollView(
+      slivers: [
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              final product = _filteredProducts[index];
+              return Column(
+                children: [
+                  _buildProductListItem(product),
+                  // Divisor entre elementos (excepto el último)
+                  if (index < _filteredProducts.length - 1)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                ],
+              );
+            },
+            childCount: _filteredProducts.length,
+          ),
+        ),
+        
+        // Espaciado adicional al final para mejor UX
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 80), // Espacio para el FloatingActionButton
+        ),
+      ],
     );
   }
 
@@ -792,16 +811,17 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
                         ],
                       ),
                     )
-                  : DialogComponents.itemList(
-                      context: context,
-                      showDividers: true,
-                      maxVisibleItems:
-                          20, // Mostrar más elementos antes de expandir
-                      expandText: 'Ver todas las marcas',
-                      collapseText: 'Mostrar menos',
-                      items: _filteredBrands.map((brand) {
+                  : ListView.separated(
+                      itemCount: _filteredBrands.length,
+                      separatorBuilder: (context, index) => Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                      itemBuilder: (context, index) {
+                        final brand = _filteredBrands[index];
                         return _buildBrandListItem(brand, theme, colorScheme);
-                      }).toList(),
+                      },
                     ),
             ),
           ],

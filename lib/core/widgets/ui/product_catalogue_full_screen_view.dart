@@ -122,6 +122,35 @@ class _ProductCatalogueFullScreenViewState
     // Solo cambiar a modo búsqueda si hay texto escrito
     // El foco por sí solo no debe cambiar la vista
   }
+ 
+
+  /// Obtiene la cantidad total de productos seleccionados en el ticket (suma de cantidades)
+  int _getSelectedProductsCount() {
+    return widget.sellProvider.ticket.products
+        .where((product) => product.quantity > 0)
+        .fold(0, (total, product) => total + product.quantity);
+  }
+
+  /// Disminuye la cantidad de un producto en el ticket o lo elimina si la cantidad llega a 0
+  void _decreaseProductQuantity(ProductCatalogue product) {
+    final ticketProducts = widget.sellProvider.ticket.products;
+    
+    // Buscar el producto en el ticket
+    final productIndex = ticketProducts.indexWhere((p) => p.id == product.id);
+    
+    if (productIndex != -1) {
+      final currentProduct = ticketProducts[productIndex];
+      
+      if (currentProduct.quantity > 1) {
+        // Si tiene más de 1, agregar con cantidad -1 (disminuye en 1)
+        final decreasedProduct = currentProduct.copyWith(quantity: currentProduct.quantity - 1);
+        widget.sellProvider.addProductsticket(decreasedProduct, replaceQuantity: true);
+      } else {
+        // Si tiene 1 o menos, remover completamente del ticket
+        widget.sellProvider.removeProduct(currentProduct);
+      }
+    }
+  }
 
   void _clearSearch() {
     _searchController.clear();
@@ -144,13 +173,13 @@ class _ProductCatalogueFullScreenViewState
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.search_rounded,
-              size: 64,
+              Icons.inventory_2_outlined,
+              size: 80,
               color: colorScheme.primary.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 24),
             Text(
-              'Buscar productos',
+              'Explora tu catálogo',
               style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -158,9 +187,18 @@ class _ProductCatalogueFullScreenViewState
             ),
             const SizedBox(height: 12),
             Text(
-              '${Publications.getFormatAmount(value: widget.products.length)} productos disponibles',
+              'Usa el buscador para encontrar productos específicos o explora por marcas',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${Publications.getFormatAmount(value: widget.products.length)} productos disponibles',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
             ),
@@ -178,60 +216,139 @@ class _ProductCatalogueFullScreenViewState
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
-        child: Column(
-          
-          children: [
-            // Header con título y botón cerrar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                    width: 1,
+        child: NestedScrollView(
+          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+            return [
+              // AppBar colapsable con título, búsqueda y chips
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                snap: true,
+                expandedHeight: 210, // Altura adaptativa basada en el contenido
+                backgroundColor: colorScheme.surface,
+                surfaceTintColor: colorScheme.surface,
+                elevation: 0,
+                scrolledUnderElevation: 2,
+                leading: const SizedBox.shrink(), // Ocultar botón de back automático
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: EdgeInsets.zero,
+                  title: AnimatedOpacity(
+                    opacity: innerBoxIsScrolled ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Catálogo • ${Publications.getFormatAmount(value: _filteredProducts.length)} resultados',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  background: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header con título y botón cerrar
+                        Row(
+                          children: [
+                            // titulo del catálogo con cantidad de productos seleccionados
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Catálogo',
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Chip con cantidad de productos seleccionados
+                                  if (_getSelectedProductsCount() > 0)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primary,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        '${_getSelectedProductsCount()}',
+                                        style: TextStyle(
+                                          color: colorScheme.onPrimary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: IconButton.styleFrom(
+                                backgroundColor: colorScheme.surfaceContainerHighest,
+                                foregroundColor: colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Campo de búsqueda
+                        _buildSearchField(),
+                        const SizedBox(height: 12),
+                        
+                        // Chips de sugerencias
+                        _buildSuggestionChips(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    'Catálogo',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                actions: [
+                  // Contador de productos visible cuando está colapsado
+                  if (innerBoxIsScrolled)
+                    Container(
+                      margin: const EdgeInsets.only(right: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_filteredProducts.length}',
+                        style: TextStyle(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: IconButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      foregroundColor: colorScheme.onSurface,
-                    ),
-                  ),
                 ],
               ),
-            ),
-
-            // Campo de búsqueda fijo en la parte superior
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchField(),
-                  const SizedBox(height: 12),
-                  _buildSuggestionChips(),
-                ],
-              ),
-            ),
-
-            // Contenido principal
-            Flexible(child: _isSearching ? _buildProductList() : _buildEmptyState(),)
-          ],
+            ];
+          },
+          body: _isSearching ? _buildProductList() : _buildEmptyState(),
+          
         ),
+        
+      ),
+   floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.of(context).pop(),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        child: const Icon(Icons.clear),
       ),
     );
   }
@@ -270,7 +387,7 @@ class _ProductCatalogueFullScreenViewState
     final colorScheme = theme.colorScheme;
 
     // Limitar a 7 marcas visibles
-    const int maxVisibleBrands = 7;
+    const int maxVisibleBrands = 4;
     final List<String> visibleBrands =
         sortedBrands.take(maxVisibleBrands).toList();
     final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
@@ -370,18 +487,15 @@ class _ProductCatalogueFullScreenViewState
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: DialogComponents.itemList(
-        context: context,
-        showDividers: true,
-        maxVisibleItems:100,  
-        expandText: 'Ver todos los productos (${_filteredProducts.length})',
-        collapseText: 'Mostrar menos productos',
-        items: _filteredProducts.map((product) {
-          return _buildProductListItem(product);
-        }).toList(),
-      ),
+    return DialogComponents.itemList(
+      context: context,
+      showDividers: true,
+      maxVisibleItems: 100,  
+      expandText: 'Ver todos los productos (${_filteredProducts.length})',
+      collapseText: 'Mostrar menos productos',
+      items: _filteredProducts.map((product) {
+        return _buildProductListItem(product);
+      }).toList(),
     );
   }
 
@@ -420,6 +534,10 @@ class _ProductCatalogueFullScreenViewState
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       leading: ProductImage(imageUrl: product.image,size: 56 ), 
+      tileColor: selectedProduct != null 
+          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+          : null
+      ,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -458,32 +576,49 @@ class _ProductCatalogueFullScreenViewState
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // text : Precio de venta
           Text(
             Publications.getFormatoPrecio(value: product.salePrice),
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
-              fontSize: 17,
+              fontWeight: FontWeight.bold, 
+              fontSize: 24,
             ),
           ),
           const SizedBox(width: 12),
-          if (selectedProduct != null)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                borderRadius: BorderRadius.circular(20),
+            if (selectedProduct != null) ...[
+            // Botón para disminuir cantidad - con estilo similar al contador
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.8),
+              child: InkWell(
+              onTap: () {
+                // Disminuir cantidad del producto en el ticket
+                _decreaseProductQuantity(product);
+                setState(() {}); // Actualizar la vista
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Icon(
+                Icons.remove,
+                size: 16,
+                color: colorScheme.onErrorContainer,
               ),
-              child: Text(
-                selectedProduct.quantity.toString(),
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
               ),
             ),
+            const SizedBox(width: 8),
+            // Cantidad seleccionada como CircleAvatar
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: colorScheme.primary,
+              child: Text(
+              selectedProduct.quantity.toString(),
+              style: TextStyle(
+                color: colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              ),
+            ),
+          ],
         ],
       ),
       onTap: () {

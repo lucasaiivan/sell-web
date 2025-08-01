@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:sellweb/core/widgets/component/dividers.dart';
+import 'package:flutter/material.dart'; 
 import '../../../widgets/inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3

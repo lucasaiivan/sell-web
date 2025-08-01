@@ -4,7 +4,7 @@ import 'package:sellweb/domain/entities/catalogue.dart';
 
 /// Avatar de producto con estilo Instagram Stories
 /// Incluye gradiente animado, imagen del producto y texto descriptivo
-class AvatarProduct extends StatelessWidget {
+class AvatarCircleProduct extends StatelessWidget {
   /// Datos del producto a mostrar
   final ProductCatalogue product;
 
@@ -23,7 +23,7 @@ class AvatarProduct extends StatelessWidget {
   /// Número máximo de caracteres antes de truncar el texto
   final int maxTextLength;
 
-  const AvatarProduct({
+  const AvatarCircleProduct({
     super.key,
     required this.product,
     this.isSelected = false,

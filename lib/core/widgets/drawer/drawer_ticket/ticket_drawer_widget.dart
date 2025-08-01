@@ -27,9 +27,7 @@ class TicketDrawerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return showConfirmedPurchase
-        ? _TicketConfirmedPurchase(
-            width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
-          ).animate().scale(
+        ? _TicketConfirmedPurchase(width: isMobile(context) ? MediaQuery.of(context).size.width : 400).animate().scale(
               duration: 600.ms,
               curve: Curves.elasticOut,
               begin: const Offset(0.8, 0.8),

@@ -6,6 +6,7 @@ import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/product_search_algorithm.dart';
 import 'package:sellweb/core/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/core/widgets/component/image.dart';
+import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 
 // Domain imports
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
@@ -16,6 +17,13 @@ import 'package:sellweb/presentation/providers/sell_provider.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.
 ///
+/// Implementa NestedScrollView con SliverAppBar optimizado siguiendo las mejores prácticas:
+/// - `floatHeaderSlivers: true` para mejor coordinación de scroll entre header y body
+/// - `SliverOverlapAbsorber` y `SliverOverlapInjector` para manejo de overlaps
+/// - AppBar flotante/pinned/snap basado en el estado de búsqueda
+/// - Animaciones suaves y transiciones optimizadas
+/// - Soporte para refresh y stretch en iOS
+/// 
 /// Permite buscar y seleccionar productos del catálogo para agregar al ticket de venta.
 /// Incluye algoritmo de búsqueda inteligente y filtrado en tiempo real.
 class ProductCatalogueFullScreenView extends StatefulWidget {
@@ -38,7 +46,6 @@ class _ProductCatalogueFullScreenViewState
   late TextEditingController _searchController;
   late FocusNode _searchFocusNode;
 
-  bool _isSearching = false;
   List<ProductCatalogue> _filteredProducts = [];
 
   @override
@@ -69,10 +76,8 @@ class _ProductCatalogueFullScreenViewState
 
     setState(() {
       if (query.isEmpty) {
-        _isSearching = false;
         _filteredProducts = widget.products;
       } else {
-        _isSearching = true;
         try {
           // Usar el algoritmo avanzado de búsqueda
           final catalogueProvider =
@@ -125,9 +130,7 @@ class _ProductCatalogueFullScreenViewState
 
   /// Obtiene la cantidad total de productos seleccionados en el ticket (suma de cantidades)
   int _getSelectedProductsCount() {
-    return widget.sellProvider.ticket.products
-        .where((product) => product.quantity > 0)
-        .fold(0, (total, product) => total + product.quantity);
+    return widget.sellProvider.ticket.products.where((product) => product.quantity > 0).fold(0, (total, product) => total + product.quantity);
   }
 
   /// Disminuye la cantidad de un producto en el ticket o lo elimina si la cantidad llega a 0
@@ -154,56 +157,68 @@ class _ProductCatalogueFullScreenViewState
   void _clearSearch() {
     _searchController.clear();
     setState(() {
-      _isSearching = false;
       _filteredProducts = widget.products;
     });
     // Mantener el foco en el campo de búsqueda
     _searchFocusNode.requestFocus();
   }
 
-  Widget _buildEmptyState() {
+  /// Construye el estado vacío como sliver para mejor integración con NestedScrollView
+  /// Construye la lista de productos como sliver optimizado para NestedScrollView
+  Widget _buildProductListAsSliver() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 80,
-              color: colorScheme.primary.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Explora tu catálogo',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+    if (_filteredProducts.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off_rounded,
+                size: 48,
+                color: colorScheme.onSurface.withValues(alpha: 0.4),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Usa el buscador para encontrar productos específicos o explora por marcas',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              const SizedBox(height: 16),
+              Text(
+                _searchController.text.isEmpty
+                    ? 'No hay productos disponibles'
+                    : 'Sin resultados',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${Publications.getFormatAmount(value: widget.products.length)} productos disponibles',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              if (_searchController.text.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Prueba con otros términos de búsqueda',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
+      );
+    }
+
+    // Usar SliverList.separated para mejor rendimiento y separadores automáticos
+    return SliverList.separated(
+      itemCount: _filteredProducts.length,
+      separatorBuilder: (context, index) => Divider(
+        height: 1,
+        thickness: 1,
+        color: colorScheme.outline.withValues(alpha: 0.2),
+        indent: 72, // Alinear con el contenido del ListTile
+        endIndent: 16,
       ),
+      itemBuilder: (context, index) {
+        final product = _filteredProducts[index];
+        return _buildProductListItem(product);
+      },
     );
   }
 
@@ -216,138 +231,166 @@ class _ProductCatalogueFullScreenViewState
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: NestedScrollView(
+          // Habilitar floating headers para mejor comportamiento de coordinación de scroll
+          floatHeaderSlivers: true,
+          // Mejorar el comportamiento de scroll en móviles
+          physics: const BouncingScrollPhysics(),
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
             return [
-              // AppBar colapsable con título, búsqueda y chips
-              SliverAppBar(
-                floating: true,
-                pinned: true,
-                snap: true,
-                expandedHeight: 210, // Altura adaptativa basada en el contenido
-                backgroundColor: colorScheme.surface,
-                surfaceTintColor: colorScheme.surface,
-                elevation: 0,
-                scrolledUnderElevation: 2,
-                leading: const SizedBox.shrink(), // Ocultar botón de back automático
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: EdgeInsets.zero,
-                  title: AnimatedOpacity(
-                    opacity: innerBoxIsScrolled ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Catálogo • ${Publications.getFormatAmount(value: _filteredProducts.length)} resultados',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  background: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header con título y botón cerrar
-                        Row(
+              SliverOverlapAbsorber(
+                // Absorber el overlap para evitar problemas de posicionamiento
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                sliver: SliverAppBar(
+                  // Configuración optimizada del SliverAppBar para NestedScrollView
+                  floating: true,
+                  pinned: true,
+                  snap: true,
+                  expandedHeight: 210, // Altura fija para siempre mostrar búsqueda y chips
+                  backgroundColor: colorScheme.surface,
+                  surfaceTintColor: colorScheme.surface,
+                  elevation: 0,
+                  scrolledUnderElevation: innerBoxIsScrolled ? 2 : 0,
+                  forceElevated: innerBoxIsScrolled,
+                  leading: const SizedBox.shrink(),
+                  // Usar stretch para mejor UX en iOS y permitir over-scroll
+                  stretch: true,
+                  onStretchTrigger: () async {
+                    // Opcional: agregar funcionalidad de pull-to-refresh
+                  },
+                  flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [
+                      StretchMode.zoomBackground,
+                      StretchMode.fadeTitle,
+                    ],
+                    titlePadding: EdgeInsets.zero,
+                    title: AnimatedOpacity(
+                      opacity: innerBoxIsScrolled ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOutCubic,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
                           children: [
-                            // titulo del catálogo con cantidad de productos seleccionados
                             Expanded(
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Catálogo',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Chip con cantidad de productos seleccionados
-                                  if (_getSelectedProductsCount() > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primary,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        '${_getSelectedProductsCount()}',
-                                        style: TextStyle(
-                                          color: colorScheme.onPrimary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close_rounded),
-                              onPressed: () => Navigator.of(context).pop(),
-                              style: IconButton.styleFrom(
-                                backgroundColor: colorScheme.surfaceContainerHighest,
-                                foregroundColor: colorScheme.onSurface,
+                              child: Text(
+                                'Catálogo • ${Publications.getFormatAmount(value: _filteredProducts.length)} resultados',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        
-                        // Campo de búsqueda
-                        _buildSearchField(),
-                        const SizedBox(height: 12),
-                        
-                        // Chips de sugerencias
-                        _buildSuggestionChips(),
-                      ],
+                      ),
                     ),
-                  ),
+                    background: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header principal con título y botón de cierre
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Catálogo',
+                                      style: theme.textTheme.headlineSmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    if (_getSelectedProductsCount() > 0)
+                                      AnimatedContainer(
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.elasticOut,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.primary,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          '${_getSelectedProductsCount()}',
+                                          style: TextStyle(
+                                            color: colorScheme.onPrimary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded),
+                                onPressed: () => Navigator.of(context).pop(),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                  foregroundColor: colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Campo de búsqueda - siempre visible
+                          _buildSearchField(),
+                          
+                          // Chips de sugerencias - siempre visibles
+                          const SizedBox(height: 12),
+                          _buildSuggestionChips(),
+                        ],
+                      ),
+                    ),
+                  ), 
                 ),
-                actions: [
-                  // Contador de productos visible cuando está colapsado
-                  if (innerBoxIsScrolled)
-                    Container(
-                      margin: const EdgeInsets.only(right: 16),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${_filteredProducts.length}',
-                        style: TextStyle(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                ],
               ),
             ];
           },
-          body: _isSearching ? _buildProductList() : _buildEmptyState(),
-          
+          body: Builder(
+            builder: (BuildContext context) {
+              return CustomScrollView(
+                // Inyectar el overlap para mantener consistencia
+                slivers: [
+                  SliverOverlapInjector(
+                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  ),
+                  // Siempre mostrar la lista de productos (filtrados o todos)
+                  _buildProductListAsSliver(),
+                  
+                  // Espacio adicional para el FloatingActionButton
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 80),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
-        
       ),
-   floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).pop(),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        child: const Icon(Icons.clear),
+      floatingActionButton: AnimatedSlide(
+        offset: Offset.zero, // Siempre visible
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+        child: AnimatedOpacity(
+          opacity: 1.0, // Siempre visible
+          duration: const Duration(milliseconds: 300),
+          child: FloatingActionButton.extended(
+            onPressed: () => Navigator.of(context).pop(),
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            elevation: 4,
+            highlightElevation: 8,
+            label: Text('Continuar',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -367,6 +410,7 @@ class _ProductCatalogueFullScreenViewState
   }
 
   /// Construye los chips de sugerencias con las marcas disponibles en el catálogo
+  /// Calcula dinámicamente cuántos chips caben en la primera línea según el ancho de pantalla
   Widget _buildSuggestionChips() {
     // Obtener marcas únicas de los productos
     final Set<String> uniqueBrands = widget.products
@@ -382,140 +426,100 @@ class _ProductCatalogueFullScreenViewState
       return const SizedBox.shrink();
     }
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        
+        // Calcular cuántos chips caben en la primera línea
+        final chipSpacing = 8.0;
+        final horizontalPadding = 32.0; // 16px de cada lado
+        final availableWidth = constraints.maxWidth - horizontalPadding;
+        
+        // Estimar ancho promedio de un chip (incluye padding, texto y bordes)
+        final estimatedChipWidth = _estimateChipWidth(theme);
+        final maxChipsPerLine = ((availableWidth + chipSpacing) / (estimatedChipWidth + chipSpacing)).floor();
+        
+        // Asegurar al menos 2 chips y máximo la cantidad que cabe
+        final maxVisibleBrands = (maxChipsPerLine - 1).clamp(2, sortedBrands.length);
+        
+        // Lista de marcas que se mostrarán
+        final List<String> visibleBrands = sortedBrands.take(maxVisibleBrands).toList();
+        final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
 
-    // Limitar a 7 marcas visibles
-    const int maxVisibleBrands = 3;
-    final List<String> visibleBrands =
-        sortedBrands.take(maxVisibleBrands).toList();
-    final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
+        return Wrap(
+          spacing: chipSpacing,
+          runSpacing: 6,
+          children: [
+            // Chips de marcas visibles (llenan la primera línea)
+            ...visibleBrands.map((brand) {
+              return ActionChip(
+                label: Text(
+                  brand,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onPressed: () {
+                  // Agregar la marca al campo de búsqueda
+                  _searchController.text = brand;
+                  _onSearchChanged();
+                  // Mantener el foco en el campo de búsqueda
+                  _searchFocusNode.requestFocus();
+                },
+                backgroundColor:
+                    colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                side: BorderSide(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  width: 0.5,
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              );
+            }),
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 6,
-      children: [
-        // Chips de marcas visibles
-        ...visibleBrands.map((brand) {
-          return ActionChip(
-            label: Text(
-              brand,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w500,
+            // Chip "Ver más" si hay más marcas (se ajusta al espacio restante)
+            if (hasMoreBrands)
+              ActionChip(
+                label: Text(
+                  'Ver más (+${sortedBrands.length - maxVisibleBrands})',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onPressed: () => _showAllBrandsDialog(sortedBrands),
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                side: BorderSide(
+                  color: colorScheme.primary.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                avatar: Icon(
+                  Icons.expand_more,
+                  size: 16,
+                  color: colorScheme.primary,
+                ),
               ),
-            ),
-            onPressed: () {
-              // Agregar la marca al campo de búsqueda
-              _searchController.text = brand;
-              _onSearchChanged();
-              // Mantener el foco en el campo de búsqueda
-              _searchFocusNode.requestFocus();
-            },
-            backgroundColor:
-                colorScheme.secondaryContainer.withValues(alpha: 0.3),
-            side: BorderSide(
-              color: colorScheme.outline.withValues(alpha: 0.2),
-              width: 0.5,
-            ),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-          );
-        }),
-
-        // Chip "Ver más" si hay más marcas
-        if (hasMoreBrands)
-          ActionChip(
-            label: Text(
-              'Ver más (+${sortedBrands.length - maxVisibleBrands})',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            onPressed: () => _showAllBrandsDialog(sortedBrands),
-            backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-            side: BorderSide(
-              color: colorScheme.primary.withValues(alpha: 0.3),
-              width: 1,
-            ),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-            avatar: Icon(
-              Icons.expand_more,
-              size: 16,
-              color: colorScheme.primary,
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildProductList() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    if (_filteredProducts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 48,
-              color: colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _searchController.text.isEmpty
-                  ? 'No hay productos disponibles'
-                  : 'Sin resultados',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-            if (_searchController.text.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Prueba con otros términos de búsqueda',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    // Lista personalizada optimizada para NestedScrollView con AppBar colapsable
-    return CustomScrollView(
-      slivers: [
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (BuildContext context, int index) {
-              final product = _filteredProducts[index];
-              return Column(
-                children: [
-                  _buildProductListItem(product),
-                  // Divisor entre elementos (excepto el último)
-                  if (index < _filteredProducts.length - 1)
-                    Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                ],
-              );
-            },
-            childCount: _filteredProducts.length,
-          ),
-        ),
-        
-        // Espaciado adicional al final para mejor UX
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 80), // Espacio para el FloatingActionButton
-        ),
-      ],
-    );
+  /// Estima el ancho promedio de un chip basado en el texto y estilo
+  double _estimateChipWidth(ThemeData theme) {
+    // Ancho base del chip (padding interno, bordes, etc.)
+    const double chipPadding = 24.0; // 12px de cada lado
+    const double iconSpace = 20.0; // Espacio para el ícono cuando aplique
+    
+    // Ancho promedio basado en caracteres comunes de marcas
+    // La mayoría de marcas tienen entre 4-8 caracteres
+    const double averageCharWidth = 8.0;
+    const double averageTextLength = 6.0; // caracteres promedio
+    const double estimatedTextWidth = averageCharWidth * averageTextLength;
+    
+    return chipPadding + estimatedTextWidth + iconSpace;
   }
 
   /// Muestra un diálogo con todas las marcas disponibles y permite filtrar por ellas
@@ -552,7 +556,7 @@ class _ProductCatalogueFullScreenViewState
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      leading: ProductImage(imageUrl: product.image,size: 56 ), 
+      leading: ProductImage(imageUrl: product.image), 
       tileColor: selectedProduct != null 
           ? colorScheme.primaryContainer.withValues(alpha: 0.3)
           : null
@@ -811,17 +815,12 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
                         ],
                       ),
                     )
-                  : ListView.separated(
-                      itemCount: _filteredBrands.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: colorScheme.outline.withValues(alpha: 0.2),
-                      ),
-                      itemBuilder: (context, index) {
-                        final brand = _filteredBrands[index];
-                        return _buildBrandListItem(brand, theme, colorScheme);
-                      },
+                  : DialogComponents.itemList(
+                      context: context,
+                      items: _filteredBrands.map((brand) => 
+                        _buildBrandListItem(brand, theme, colorScheme)
+                      ).toList(),
+                      showDividers: true,
                     ),
             ),
           ],

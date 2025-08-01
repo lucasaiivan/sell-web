@@ -32,11 +32,16 @@ class ProductImage extends StatelessWidget {
     final Color effectiveBackground =
         backgroundColor ?? Theme.of(context).colorScheme.surfaceContainer;
 
-    return Container(
-      color: effectiveBackground.withValues(alpha: 0.2),
+    return SizedBox(
       width: size,
       height: size,
-      child: _buildImageContent(),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          color: effectiveBackground.withAlpha(51), // alpha: 0.2*255 ≈ 51
+          child: _buildImageContent(),
+        ),
+      ),
     );
   }
 

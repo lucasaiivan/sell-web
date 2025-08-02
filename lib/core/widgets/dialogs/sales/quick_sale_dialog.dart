@@ -152,7 +152,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
     try {
       final price = _priceController.doubleValue;
       final description = _descriptionController.text.trim().isEmpty
-          ? 'Venta rápida'
+          ? ''
           : _descriptionController.text.trim();
 
       // Agregar el producto de venta rápida

@@ -1535,6 +1535,14 @@ class ProductoItem extends StatefulWidget {
 }
 
 class _ProductoItemState extends State<ProductoItem> {
+  
+  // Identifica si es un producto de venta rápida
+  bool get _isQuickSaleProduct {
+    return widget.producto.id.isEmpty || 
+           widget.producto.id.startsWith('quick_') ||
+           widget.producto.description.isEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     //  values
@@ -1554,37 +1562,8 @@ class _ProductoItemState extends State<ProductoItem> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // view : alerta de stock bajo o sin stock
-              alertStockText == ''
-                  ? Container()
-                  : Container(
-                      width: double.infinity,
-                      color: Colors.red,
-                      child: Center(
-                          child: Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Text(alertStockText,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold)),
-                      ))),
-              // image : imagen del producto que ocupa parte de la tarjeta
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: ProductImage(
-                    imageUrl: widget.producto.image,
-                  ),
-                ),
-              ),
-              // view : información del producto
-              contentInfo(),
-            ],
-          ),
+          // Si es venta rápida, mostrar solo precio centrado
+          _isQuickSaleProduct ? _buildQuickSaleLayout() : _buildNormalLayout(alertStockText),
           // view : selección del producto
           Positioned.fill(
             child: Material(
@@ -1597,7 +1576,6 @@ class _ProductoItemState extends State<ProductoItem> {
                     context,
                     producto: widget.producto,
                     onProductUpdated: () {
-                      // Callback opcional para actualizar la UI después de modificar el producto
                       setState(() {});
                     },
                   );
@@ -1631,6 +1609,66 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 
   // WIDGETS COMPONETS
+
+  /// Layout para productos de venta rápida - solo precio centrado
+  Widget _buildQuickSaleLayout() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration( 
+        color: Colors.grey.shade200.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            Publications.getFormatoPrecio(value: widget.producto.salePrice),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22, // Precio más grande
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Layout normal para productos con descripción
+  Widget _buildNormalLayout(String alertStockText) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // view : alerta de stock bajo o sin stock
+        alertStockText == ''
+            ? Container()
+            : Container(
+                width: double.infinity,
+                color: Colors.red,
+                child: Center(
+                    child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: Text(alertStockText,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                ))),
+        // image : imagen del producto que ocupa parte de la tarjeta
+        Expanded(
+          flex: 2,
+          child: ProductImage(
+            imageUrl: widget.producto.image,
+            fit: BoxFit.cover,
+          ),
+        ),
+        // view : información del producto
+        contentInfo(),
+      ],
+    );
+  }
 
   Widget contentInfo() {
     return widget.producto.description == ''

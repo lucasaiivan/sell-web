@@ -32,16 +32,25 @@ class ProductImage extends StatelessWidget {
     final Color effectiveBackground =
         backgroundColor ?? Theme.of(context).colorScheme.surfaceContainer;
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: Container(
-          color: effectiveBackground.withAlpha(51), // alpha: 0.2*255 ≈ 51
-          child: _buildImageContent(),
+    // Si se especifica un size, usar SizedBox con AspectRatio 1:1
+    if (size != null) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            color: effectiveBackground.withAlpha(51), // alpha: 0.2*255 ≈ 51
+            child: _buildImageContent(),
+          ),
         ),
-      ),
+      );
+    }
+
+    // Si no se especifica size, permitir que se expanda completamente
+    return Container(
+      color: effectiveBackground.withAlpha(51), // alpha: 0.2*255 ≈ 51
+      child: _buildImageContent(),
     );
   }
 
@@ -64,10 +73,8 @@ class ProductImage extends StatelessWidget {
           maxWidthDiskCache: size != null ? (size! * 3).round() : null,
           maxHeightDiskCache: size != null ? (size! * 3).round() : null,
           // Manejo de errores y placeholder optimizado
-          errorWidget: (context, url, error) =>
-              _buildDefaultImageWithAnimation(context),
-          placeholder: (context, url) =>
-              _buildDefaultImageWithAnimation(context),
+          errorWidget: (context, url, error) => _buildDefaultImageWithAnimation(context),
+          placeholder: (context, url) => _buildDefaultImageWithAnimation(context),
           // Configuración adicional para mejor UX
           useOldImageOnUrlChange: true,
           filterQuality: FilterQuality.medium,
@@ -103,9 +110,7 @@ class ProductImage extends StatelessWidget {
         child: Image.asset(
           defaultAsset,
           fit: fit,
-          width: size != null
-              ? size! * 0.6
-              : null, // Reducir tamaño del icono para mejor proporción
+          width: size != null ? size! * 0.6 : null,
           height: size != null ? size! * 0.6 : null,
           filterQuality: FilterQuality.medium,
           color: iconColor,

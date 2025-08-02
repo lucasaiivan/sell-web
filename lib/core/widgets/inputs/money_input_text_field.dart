@@ -54,9 +54,8 @@ class MoneyInputTextField extends StatelessWidget {
         errorText: errorText,
         prefixIcon: const Icon(Icons.attach_money),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-        fillColor: fillColor ??
-            theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
+        filled: false,
+        fillColor: fillColor ?? theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
       ),
       onChanged: (value) {
         // Forzar actualización del controlador para asegurar sincronía

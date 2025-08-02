@@ -65,6 +65,7 @@ class DialogComponents {
   /// - Soporte para títulos opcionales y textos personalizados de expansión
   /// - Divisores configurables entre elementos
   /// - Estilo consistente con Material Design 3
+  /// - Opciones de UI: outlined (por defecto) o filled
   static Widget itemList({
     required List<Widget> items,
     bool showDividers = true,
@@ -75,22 +76,44 @@ class DialogComponents {
     Color? backgroundColor,
     Color? borderColor,
     double borderRadius = 12,
+    bool useFillStyle = false, // Nueva opción para estilo fill
+    EdgeInsetsGeometry? padding,
     required BuildContext context,
   }) {
-    final lineColor =
-        Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
     final theme = Theme.of(context);
+    final lineColor = theme.colorScheme.outline.withValues(alpha: 0.2);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final decoration = BoxDecoration(
-        color: backgroundColor ?? Colors.transparent,
+    
+    // Configuración de estilo basada en useFillStyle
+    final BoxDecoration decoration;
+    final Color effectiveBackgroundColor;
+    final Color dividerColor;
+    
+    if (useFillStyle) {
+      // Estilo fill: contenedor con background sólido y sin borde
+      effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surfaceContainer;
+      dividerColor = theme.colorScheme.outline.withValues(alpha: 0.1);
+      decoration = BoxDecoration(
+        color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: borderColor ?? lineColor, width: 1));
+      );
+    } else {
+      // Estilo outlined: contenedor transparente con borde
+      effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
+      dividerColor = lineColor;
+      decoration = BoxDecoration(
+        color: effectiveBackgroundColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: borderColor ?? lineColor, width: 1),
+      );
+    }
 
     // Para listas largas, usar ExpandableListContainer
     return Container(
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
+      padding: padding,
       child: SingleChildScrollView(
         child: ExpandableListContainer<Widget>(
           items: items,
@@ -101,15 +124,33 @@ class DialogComponents {
           expandText: expandText,
           collapseText: collapseText,
           showDividers: showDividers,
-          backgroundColor: backgroundColor ?? theme.colorScheme.surface,
+          backgroundColor: effectiveBackgroundColor,
           borderColor: borderColor ?? lineColor,
           borderRadius: borderRadius,
+          useFillStyle: useFillStyle,
           itemBuilder: (context, item, index, isLast) {
+            // Para el estilo fill, agregar padding interno a cada item
+            final Widget wrappedItem = useFillStyle
+                ? Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12 : 16,
+                      vertical: isMobile ? 8 : 10,
+                    ),
+                    child: item,
+                  )
+                : item;
+
             return Column(
               children: [
-                item,
+                wrappedItem,
                 if (showDividers && !isLast)
-                  Divider(thickness: 1, color: lineColor, height: 0),
+                  Divider(
+                    thickness: useFillStyle ? 0.5 : 1,
+                    color: dividerColor,
+                    height: useFillStyle ? 1 : 0,
+                    indent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                    endIndent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  ),
               ],
             );
           },
@@ -132,43 +173,69 @@ class DialogComponents {
     Color? backgroundColor,
     Color? borderColor,
     double borderRadius = 12,
+    bool useFillStyle = false, // Nueva opción para estilo fill
+    EdgeInsetsGeometry? padding,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
 
-    return ExpandableListContainer<T>(
-      items: items,
-      itemBuilder: (context, item, index, isLast) {
-        final builtItem = itemBuilder(context, item, index, isLast);
+    return Container(
+      padding: padding,
+      child: ExpandableListContainer<T>(
+        items: items,
+        itemBuilder: (context, item, index, isLast) {
+          final builtItem = itemBuilder(context, item, index, isLast);
 
-        // Si no queremos divisores, devolver el item directamente
-        if (!showDividers) return builtItem;
+          // Para el estilo fill, agregar padding interno
+          final Widget wrappedItem = useFillStyle
+              ? Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 12 : 16,
+                    vertical: isMobile ? 8 : 10,
+                  ),
+                  child: builtItem,
+                )
+              : builtItem;
 
-        // Si queremos divisores, envolverlo en un Column con Divider
-        return Column(
-          children: [
-            builtItem,
-            if (!isLast)
-              Divider(
-                height: 1,
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-          ],
-        );
-      },
-      isMobile: isMobile,
-      theme: theme,
-      title: title,
-      maxVisibleItems: maxVisibleItems,
-      expandText: expandText,
-      collapseText: collapseText,
-      showDividers: false, // Manejamos los divisores manualmente
-      backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-      borderColor:
-          borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
-      borderRadius: borderRadius,
+          // Si no queremos divisores, devolver el item directamente
+          if (!showDividers) return wrappedItem;
+
+          // Si queremos divisores, envolverlo en un Column con Divider
+          final dividerColor = useFillStyle 
+              ? theme.colorScheme.outline.withValues(alpha: 0.1)
+              : theme.colorScheme.outline.withValues(alpha: 0.2);
+
+          return Column(
+            children: [
+              wrappedItem,
+              if (!isLast)
+                Divider(
+                  height: useFillStyle ? 1 : 1,
+                  thickness: useFillStyle ? 0.5 : 1,
+                  color: dividerColor,
+                  indent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  endIndent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                ),
+            ],
+          );
+        },
+        isMobile: isMobile,
+        theme: theme,
+        title: title,
+        maxVisibleItems: maxVisibleItems,
+        expandText: expandText,
+        collapseText: collapseText,
+        showDividers: false, // Manejamos los divisores manualmente
+        backgroundColor: backgroundColor ?? (useFillStyle 
+            ? theme.colorScheme.surfaceContainer 
+            : theme.colorScheme.surface),
+        borderColor:
+            borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+        borderRadius: borderRadius,
+        useFillStyle: useFillStyle,
+      ),
     );
   }
 
@@ -580,6 +647,9 @@ class ExpandableListContainer<T> extends StatefulWidget {
   /// Radio de los bordes del contenedor
   final double borderRadius;
 
+  /// Si usar el estilo fill en lugar de outlined
+  final bool useFillStyle;
+
   const ExpandableListContainer({
     super.key,
     required this.items,
@@ -594,6 +664,7 @@ class ExpandableListContainer<T> extends StatefulWidget {
     this.backgroundColor,
     this.borderColor,
     this.borderRadius = 12,
+    this.useFillStyle = false,
   });
 
   @override
@@ -647,32 +718,35 @@ class _ExpandableListContainerState<T>
 
             // Botón "Ver más" si hay más elementos
             if (hasMoreItems && !showAllItems) ...[
-              if (widget.showDividers) const Divider(),
+              if (widget.showDividers) 
+                Divider(
+                  thickness: widget.useFillStyle ? 0.5 : 1,
+                  color: widget.useFillStyle 
+                      ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
+                      : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+                  height: widget.useFillStyle ? 1 : 0,
+                  indent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
+                  endIndent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
+                ),
               InkWell(
                 onTap: () => setState(() => showAllItems = true),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: widget.isMobile ? 12 : 16,
-                    vertical: widget.isMobile ? 8 : 12,
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.expandText ?? 'Ver más',
-                          style: widget.theme.textTheme.titleSmall?.copyWith(
-                            color: widget.theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.expand_more_rounded,
+                child: Container(
+                  padding: EdgeInsets.symmetric( horizontal: widget.isMobile ? 12 : 16,vertical: widget.isMobile ? 8 : 12), 
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.expandText ?? 'Ver más',
+                        style: widget.theme.textTheme.titleSmall?.copyWith(
                           color: widget.theme.colorScheme.onSurfaceVariant,
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        color: widget.theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -680,14 +754,20 @@ class _ExpandableListContainerState<T>
 
             // Botón "Ver menos" si se están mostrando todos
             if (showAllItems && hasMoreItems) ...[
-              if (widget.showDividers) const Divider(),
+              if (widget.showDividers) 
+                Divider(
+                  thickness: widget.useFillStyle ? 0.5 : 1,
+                  color: widget.useFillStyle 
+                      ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
+                      : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+                  height: widget.useFillStyle ? 1 : 0,
+                  indent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
+                  endIndent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
+                ),
               InkWell(
                 onTap: () => setState(() => showAllItems = false),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: widget.isMobile ? 12 : 16,
-                    vertical: widget.isMobile ? 8 : 12,
-                  ),
+                child: Container( 
+                  padding: EdgeInsets.symmetric( horizontal: widget.isMobile ? 12 : 16,vertical: widget.isMobile ? 8 : 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

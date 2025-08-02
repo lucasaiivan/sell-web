@@ -149,8 +149,7 @@ class AppButton extends StatelessWidget {
 
     return Text(
       text,
-      style: TextStyle(
-        color: foregroundColor,
+      style: TextStyle( 
         fontSize: fontSize,
       ),
       textAlign: TextAlign.center,

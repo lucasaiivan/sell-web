@@ -162,12 +162,10 @@ class BaseDialog extends StatelessWidget {
         // Contenido scrollable
         SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            24,
+            20,
             16,
-            24,
-            hasActions
-                ? 48
-                : 16, // Más padding inferior si hay acciones para el gradiente
+            20,
+            hasActions? 48: 16, // Más padding inferior si hay acciones para el gradiente
           ),
           child: content,
         ),

@@ -523,14 +523,14 @@ class TicketModel {
     return percentage.toInt();
   }
 
-  /// Obtiene el monto real del descuento aplicado
-  /// Si es porcentual, calcula el monto basado en el porcentaje
+  /// Obtiene el monto real del descuento aplicado en pesos
+  /// Si es porcentual, calcula el monto basado en el porcentaje y total actual
   /// Si es monto fijo, retorna el valor tal como está
   double get getDiscountAmount {
     if (discount <= 0) return 0.0;
 
     if (discountIsPercentage) {
-      // El valor de discount representa el porcentaje, calcular el monto
+      // El valor de discount representa el porcentaje, calcular el monto basado en el total actual
       final subtotal = getTotalPriceWithoutDiscount;
       return (subtotal * discount / 100);
     } else {

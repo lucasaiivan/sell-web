@@ -456,14 +456,7 @@ class _TicketContent extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(8),  
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: hasDiscount
@@ -498,7 +491,9 @@ class _TicketContent extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'DESCUENTO',
+                        ticket.discountIsPercentage
+                            ? 'DESCUENTO (${ticket.discount.toStringAsFixed(0)}%)'
+                            : 'DESCUENTO',
                         style: textDescriptionStyle.copyWith(
                           fontSize: 14,
                           color: Colors.white.withValues(alpha: 0.8),
@@ -506,7 +501,7 @@ class _TicketContent extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        '- ${Publications.getFormatoPrecio(value: ticket.discount)}',
+                        '- ${Publications.getFormatoPrecio(value: ticket.getDiscountAmount)}',
                         style: textDescriptionStyle.copyWith(
                           fontSize: 14,
                           color: Colors.white.withValues(alpha: 0.8),
@@ -634,8 +629,8 @@ class _TicketContent extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(6),
               color: !sellProvider.shouldPrintTicket
-                  ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-                  : colorScheme.primaryContainer.withValues(alpha: 0.7),
+                  ? null
+                  : colorScheme.primaryContainer.withValues(alpha: 0.1),
             ),
             child: CheckboxListTile(
               dense: true,
@@ -663,10 +658,7 @@ class _TicketContent extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 2,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              ), 
             ),
           );
         },
@@ -708,7 +700,7 @@ class _TicketContent extends StatelessWidget {
     if (ticket.discount <= 0) return 'Agregar descuento';
 
     if (ticket.discountIsPercentage) {
-      // Mostrar tanto el porcentaje como el monto calculado
+      // Mostrar el porcentaje y el monto calculado dinámicamente
       final discountAmount = ticket.getDiscountAmount;
       return 'Descuento ${ticket.discount.toStringAsFixed(0)}% (${Publications.getFormatoPrecio(value: discountAmount)})';
     } else {

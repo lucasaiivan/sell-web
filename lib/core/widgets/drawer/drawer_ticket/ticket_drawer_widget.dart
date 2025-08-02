@@ -27,7 +27,11 @@ class TicketDrawerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return showConfirmedPurchase
-        ? _TicketConfirmedPurchase(width: isMobile(context) ? MediaQuery.of(context).size.width : 400).animate().scale(
+        ? _TicketConfirmedPurchase(
+                width:
+                    isMobile(context) ? MediaQuery.of(context).size.width : 400)
+            .animate()
+            .scale(
               duration: 600.ms,
               curve: Curves.elasticOut,
               begin: const Offset(0.8, 0.8),
@@ -168,16 +172,19 @@ class _TicketContent extends StatelessWidget {
                 _buildColumnHeaders(textSmallStyle),
                 _buildDividerLine(colorScheme),
                 // Lista de productos que se contrae al contenido
-                _TicketProductList(ticket: ticket,textValuesStyle: textValuesStyle),
+                _TicketProductList(
+                    ticket: ticket, textValuesStyle: textValuesStyle),
                 _buildDividerLine(colorScheme),
                 // Cantidad total de artículos
                 _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
                 _buildDividerLine(colorScheme),
                 const SizedBox(height: 5),
                 // Total del ticket
-                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
+                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
+                    textDescriptionStyle),
                 // view : Sección unificada de vuelto y descuento con chips editables
-                _buildEditableChipsSection(ticket, onEditCashAmount, colorScheme),
+                _buildEditableChipsSection(
+                    ticket, onEditCashAmount, colorScheme),
                 // Métodos de pago
                 _buildPaymentMethods(onEditCashAmount),
 
@@ -191,15 +198,14 @@ class _TicketContent extends StatelessWidget {
         ),
         // buttons : botones posicionados en la parte inferior
         Positioned(
-          left: 0,
-          right: 12,
-          bottom: 12,
-          child: _buildActionButtons(onConfirmSale, onCloseTicket, isMobile(context))
-        ),
+            left: 0,
+            right: 12,
+            bottom: 12,
+            child: _buildActionButtons(
+                onConfirmSale, onCloseTicket, isMobile(context))),
       ],
     );
   }
- 
 
   /// Construye el encabezado del ticket
   Widget _buildTicketHeader(
@@ -281,10 +287,9 @@ class _TicketContent extends StatelessWidget {
   ) {
     return Consumer<SellProvider>(
       builder: (context, provider, _) {
-
         final hasDiscount = provider.ticket.discount > 0;
-        final hasChange = ticket.valueReceived > 0 && 
-                         ticket.valueReceived >= ticket.getTotalPrice;
+        final hasChange = ticket.valueReceived > 0 &&
+            ticket.valueReceived >= ticket.getTotalPrice;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -297,7 +302,8 @@ class _TicketContent extends StatelessWidget {
               if (hasChange)
                 _buildEditableChip(
                   context: context,
-                  text: 'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}', 
+                  text:
+                      'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
                   onTap: onEditCashAmount,
                   backgroundColor: Colors.blue.withValues(alpha: 0.15),
                   borderColor: Colors.blue.withValues(alpha: 0.3),
@@ -308,28 +314,24 @@ class _TicketContent extends StatelessWidget {
               // Chip de descuento
               _buildEditableChip(
                 context: context,
-                text: hasDiscount 
+                text: hasDiscount
                     ? _getDiscountDisplayText(provider.ticket)
-                    : 'Agregar descuento', 
+                    : 'Agregar descuento',
                 onTap: () => showDiscountDialog(context),
-                backgroundColor: hasDiscount 
+                backgroundColor: hasDiscount
                     ? colorScheme.errorContainer.withValues(alpha: 0.2)
                     : colorScheme.primaryContainer.withValues(alpha: 0.2),
-                borderColor: hasDiscount 
+                borderColor: hasDiscount
                     ? colorScheme.error.withValues(alpha: 0.3)
                     : colorScheme.primary.withValues(alpha: 0.3),
-                textColor: hasDiscount 
-                    ? colorScheme.error
-                    : colorScheme.primary,
-                iconColor: hasDiscount 
-                    ? colorScheme.error
-                    : colorScheme.primary,
+                textColor:
+                    hasDiscount ? colorScheme.error : colorScheme.primary,
+                iconColor:
+                    hasDiscount ? colorScheme.error : colorScheme.primary,
                 showRemoveButton: hasDiscount,
-                onRemove: hasDiscount 
-                    ? () => provider.setDiscount(
-                        discount: 0.0, 
-                        isPercentage: false
-                      )
+                onRemove: hasDiscount
+                    ? () =>
+                        provider.setDiscount(discount: 0.0, isPercentage: false)
                     : null,
               ),
             ],
@@ -372,12 +374,13 @@ class _TicketContent extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              icon==null ? const SizedBox() :
-              Icon(
-                icon,
-                size: 18,
-                color: iconColor,
-              ),
+              icon == null
+                  ? const SizedBox()
+                  : Icon(
+                      icon,
+                      size: 18,
+                      color: iconColor,
+                    ),
               const SizedBox(width: 8),
               Text(
                 text,
@@ -562,9 +565,12 @@ class _TicketContent extends StatelessWidget {
             Text(
               'Forma de pago:',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
-              ),
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.87),
+                  ),
             ),
             const SizedBox(height: 6),
             Consumer<SellProvider>(
@@ -700,7 +706,7 @@ class _TicketContent extends StatelessWidget {
   /// Genera el texto a mostrar en el chip de descuento
   String _getDiscountDisplayText(dynamic ticket) {
     if (ticket.discount <= 0) return 'Agregar descuento';
-    
+
     if (ticket.discountIsPercentage) {
       // Mostrar tanto el porcentaje como el monto calculado
       final discountAmount = ticket.getDiscountAmount;
@@ -796,7 +802,8 @@ class _TicketProductListState extends State<_TicketProductList> {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -956,7 +963,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          ticket.discountIsPercentage 
+                          ticket.discountIsPercentage
                               ? 'Descuento (${ticket.discount.toStringAsFixed(0)}%):'
                               : 'Descuento:',
                           style: theme.textTheme.bodyMedium?.copyWith(

@@ -127,21 +127,11 @@ class _LoginFormState extends State<_LoginForm> {
       tablet: 12.0,
       desktop: 13.0,
     );
-
-    TextStyle defaultStyle = textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface,
-          fontSize: baseFontSize,
-          height: 1.4,
-        ) ??
-        TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: baseFontSize,
-          height: 1.4,
-        );
+  
 
     TextStyle aceptPolitikTextStyle = textTheme.bodySmall?.copyWith(
           color: colorScheme.onSurface,
-          fontSize: baseFontSize * 0.9,
+          fontSize: baseFontSize * 0.95,
           height: 1.4,
         ) ??
         TextStyle(
@@ -149,16 +139,19 @@ class _LoginFormState extends State<_LoginForm> {
           fontSize: baseFontSize * 0.9,
           height: 1.4,
         );
- 
+
     RichText text = RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
         style: aceptPolitikTextStyle,
         children: <TextSpan>[
-          const TextSpan(text:'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
+          const TextSpan(
+              text:
+                  'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
           TextSpan(
               text: 'Términos y condiciones de uso',
-              style: aceptPolitikTextStyle.copyWith(decoration: TextDecoration.none,color: colorScheme.primary),
+              style: aceptPolitikTextStyle.copyWith(
+                  decoration: TextDecoration.none, color: colorScheme.primary),
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
                   final Uri url = Uri.parse(
@@ -168,7 +161,8 @@ class _LoginFormState extends State<_LoginForm> {
           const TextSpan(text: ' así también como la '),
           TextSpan(
               text: 'Política de privacidad',
-              style: aceptPolitikTextStyle.copyWith(decoration: TextDecoration.none,color: colorScheme.primary),
+              style: aceptPolitikTextStyle.copyWith(
+                  decoration: TextDecoration.none, color: colorScheme.primary),
               recognizer: TapGestureRecognizer()
                 ..onTap = () async {
                   final Uri url = Uri.parse(
@@ -184,101 +178,125 @@ class _LoginFormState extends State<_LoginForm> {
         animation: widget.authProvider,
         builder: (context, _) {
           if (widget.authProvider.user == null) {
-            return Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Widget de feedback unificado para errores y estados
-                  AuthFeedbackWidget(
-                    error: widget.authProvider.authError,
-                    onDismissError: widget.authProvider.clearAuthError,
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Widget de feedback unificado para errores y estados
+                AuthFeedbackWidget(
+                  error: widget.authProvider.authError,
+                  onDismissError: widget.authProvider.clearAuthError,
+                ),
+            
+                // Texto de bienvenida centrado
+                Padding(
+                  padding: getResponsivePadding(
+                    context,
+                    mobile: const EdgeInsets.only(bottom: 50,top: 25),
+                    tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 50),
+                    desktop: const EdgeInsets.symmetric(horizontal: 16, vertical: 50),
                   ),
-
-                  // CheckboxListTile responsivo : aceptar términos y condiciones
-                  Container(
-                    margin: getResponsivePadding(
+                  child: Column(
+                    children: [
+                      Text(
+                        'Ingresá a tu cuenta',
+                        style: textTheme.headlineSmall?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Seguí ganando tiempo y dinero',style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.7),fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+            
+                // CheckboxListTile responsivo : aceptar términos y condiciones
+                Container(
+                  margin: getResponsivePadding(
+                    context,
+                    mobile: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 4),
+                    tablet: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 12),
+                    desktop: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 16),
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _acceptPolicy
+                          ? colorScheme.primary.withValues(alpha: 0.3)
+                          : colorScheme.outline.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: _acceptPolicy
+                        ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+                        : colorScheme.surface,
+                  ),
+                  child: CheckboxListTile(
+                    dense: isMobile(context),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0)),
+                    selectedTileColor: Colors.transparent,
+                    tileColor: Colors.transparent,
+                    checkColor: colorScheme.onPrimary,
+                    activeColor: colorScheme.primary,
+                    title: text,
+                    value: _acceptPolicy,
+                    onChanged: (value) {
+                      setState(() {
+                        _acceptPolicy = value ?? false;
+                      });
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: getResponsivePadding(
                       context,
                       mobile: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 8),
+                          horizontal: 8, vertical: 4),
                       tablet: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 12),
+                          horizontal: 12, vertical: 8),
                       desktop: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 16),
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: _acceptPolicy
-                            ? colorScheme.primary.withValues(alpha: 0.3)
-                            : colorScheme.outline.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      color: _acceptPolicy
-                          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-                          : colorScheme.surface,
-                    ),
-                    child: CheckboxListTile(
-                      dense: isMobile(context),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                      selectedTileColor: Colors.transparent,
-                      tileColor: Colors.transparent,
-                      checkColor: colorScheme.onPrimary,
-                      activeColor: colorScheme.primary,
-                      title: text,
-                      value: _acceptPolicy,
-                      onChanged: (value) {
-                        setState(() {
-                          _acceptPolicy = value ?? false;
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity.leading,
-                      contentPadding: getResponsivePadding(
-                        context,
-                        mobile: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        tablet: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        desktop: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
+                          horizontal: 16, vertical: 12),
                     ),
                   ),
-
-                  // ElevatedButton : Iniciar sesión con Google
-                  AppButton(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                    text: "INICIAR SESIÓN CON GOOGLE",
-                    isLoading: widget.authProvider.isSigningInWithGoogle,
-                    onPressed: (_acceptPolicy &&
-                            !widget.authProvider.isSigningInWithGoogle &&
-                            !widget.authProvider.isSigningInAsGuest)
-                        ? () async {
-                            await widget.authProvider.signInWithGoogle();
-                          }
-                        : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ElevatedButton : Iniciar como invitado
-                  AppButton(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                    backgroundColor: Colors.blueGrey,
-                    text: "CONTINUAR COMO INVITADO",
-                    isLoading: widget.authProvider.isSigningInAsGuest,
-                    onPressed: (!widget.authProvider.isSigningInWithGoogle &&
-                            !widget.authProvider.isSigningInAsGuest)
-                        ? () async {
-                            await widget.authProvider.signInAsGuest();
-                          }
-                        : null,
-                  ),
-                ],
-              ),
+                ),
+            
+                // ElevatedButton : Iniciar sesión con Google
+                AppButton(
+                  
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  backgroundColor: Colors.blue.shade700,
+                  text: "CONTINUAR CON GOOGLE",
+                  icon: const Icon(Icons.login_rounded, size: 20),
+                  isLoading: widget.authProvider.isSigningInWithGoogle,
+                  onPressed: (_acceptPolicy &&
+                          !widget.authProvider.isSigningInWithGoogle &&
+                          !widget.authProvider.isSigningInAsGuest)
+                      ? () async {
+                          await widget.authProvider.signInWithGoogle();
+                        }
+                      : null,
+                ), 
+            
+                // ElevatedButton : Iniciar como invitado
+                AppButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
+                  backgroundColor: Colors.blueGrey,
+                  text: "CONTINUAR COMO INVITADO",
+                  isLoading: widget.authProvider.isSigningInAsGuest,
+                  onPressed: (!widget.authProvider.isSigningInWithGoogle &&
+                          !widget.authProvider.isSigningInAsGuest)
+                      ? () async {
+                          await widget.authProvider.signInAsGuest();
+                        }
+                      : null,
+                ),
+              ],
             );
           }
           // Mostrar indicador de carga mientras se procesa la autenticación exitosa
@@ -619,22 +637,82 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
         ? Colors.white
         : Colors.black;
     colorIcon ??= colorContent;
+    
+    // Tamaños de fuente responsivos
+    final double tituloFontSize = getResponsiveValue(
+      context,
+      mobile: 32.0,
+      tablet: 42.0,
+      desktop: 50.0,
+    );
+    
+    final double subtituloFontSize = getResponsiveValue(
+      context,
+      mobile: 16.0,
+      tablet: 20.0,
+      desktop: 24.0,
+    );
+    
+    // Tamaño del icono responsivo
+    final double iconSize = getResponsiveValue(
+      context,
+      mobile: screenSize.height * 0.05,
+      tablet: screenSize.height * 0.06,
+      desktop: screenSize.height * 0.07,
+    );
+    
+    // Padding responsivo para el icono
+    final EdgeInsets iconPadding = getResponsivePadding(
+      context,
+      mobile: const EdgeInsets.all(12.0),
+      tablet: const EdgeInsets.all(16.0),
+      desktop: const EdgeInsets.all(20.0),
+    );
+    
+    // Margin responsivo para el icono
+    final EdgeInsets iconMargin = getResponsivePadding(
+      context,
+      mobile: const EdgeInsets.all(12.0),
+      tablet: const EdgeInsets.all(16.0),
+      desktop: const EdgeInsets.all(20.0),
+    );
+    
+    // Espaciado responsivo
+    final double topSpacing = getResponsiveValue(
+      context,
+      mobile: 20.0,
+      tablet: 30.0,
+      desktop: 40.0,
+    );
+    
+    final double bottomSpacing = getResponsiveValue(
+      context,
+      mobile: 20.0,
+      tablet: 30.0,
+      desktop: 40.0,
+    );
+
     final estiloTitulo = TextStyle(
-        fontSize: 50.0, fontWeight: FontWeight.bold, color: textColor);
+        fontSize: tituloFontSize, 
+        fontWeight: FontWeight.bold, 
+        color: textColor);
     final estiloSubTitulo = TextStyle(
-        fontSize: 24.0,
+        fontSize: subtituloFontSize,
         fontWeight: FontWeight.bold,
         color: textColor.withValues(alpha: 0.8));
 
     return SafeArea(
         child: Padding(
-      padding: const EdgeInsets.all(20.0),
+      padding: getResponsivePadding(
+        context,
+        mobile: const EdgeInsets.all(12.0),
+        tablet: const EdgeInsets.all(16.0),
+        desktop: const EdgeInsets.all(20.0),
+      ),
       child: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            const SizedBox(
-              height: 40,
-            ), // Espacio para centrar un poco el contenido
+            SizedBox(height: topSpacing), // Espacio para centrar un poco el contenido
             // view : si existe mostramos una imagen de asset
             assetImage != null
                 ? Padding(
@@ -651,17 +729,17 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
                     ),
                   )
                 : Container(),
-            // icon : un icono con animion
+            // icon : un icono con animación
             iconData != null
                 ? Container(
-                    padding: const EdgeInsets.all(20.0),
-                    margin: const EdgeInsets.all(20.0),
+                    padding: iconPadding,
+                    margin: iconMargin,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.black.withValues(alpha: 0.2),
                     ),
                     child: Icon(iconData,
-                        size: screenSize.height * 0.07, color: colorIcon),
+                        size: iconSize, color: colorIcon),
                   )
                     .animate(key: Key(titulo))
                     .fadeIn(duration: const Duration(milliseconds: 500))
@@ -670,14 +748,19 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
                         duration: const Duration(milliseconds: 500))
                 : Container(),
             Text(titulo, style: estiloTitulo, textAlign: TextAlign.center),
-            const SizedBox(height: 12.0),
-            // text : un texto con animacion
+            SizedBox(height: getResponsiveValue(
+              context,
+              mobile: 8.0,
+              tablet: 10.0,
+              desktop: 12.0,
+            )),
+            // text : un texto con animación
             Text(subtitulo, style: estiloSubTitulo, textAlign: TextAlign.center)
                 .animate()
                 .fadeIn(duration: const Duration(milliseconds: 500))
                 .slideY(
                     begin: 0.2, duration: const Duration(milliseconds: 500)),
-            const SizedBox(height: 40),
+            SizedBox(height: bottomSpacing),
           ],
         ),
       ),

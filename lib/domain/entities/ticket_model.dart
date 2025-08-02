@@ -12,11 +12,13 @@ class TicketModel {
       ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
   double priceTotal = 0.0; // precio total de la venta
   double valueReceived = 0.0; // valor recibido por la venta
-  double discount = 0.0; // descuento aplicado: valor original ingresado (porcentaje o monto)
+  double discount =
+      0.0; // descuento aplicado: valor original ingresado (porcentaje o monto)
   String currencySymbol = '\$';
-  
+
   /// Información del descuento aplicado
-  bool discountIsPercentage = false; // true si el descuento es porcentual, false si es monto fijo
+  bool discountIsPercentage =
+      false; // true si el descuento es porcentual, false si es monto fijo
 
   /// Tipo de transacción que representa este ticket
   ///
@@ -291,7 +293,7 @@ class TicketModel {
         "cashRegisterName": cashRegisterName,
         'cashRegisterId': cashRegisterId,
         "priceTotal": priceTotal,
-        "valueReceived": valueReceived, 
+        "valueReceived": valueReceived,
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
@@ -329,7 +331,7 @@ class TicketModel {
         "cashRegisterName": cashRegisterName,
         'cashRegisterId': cashRegisterId,
         "priceTotal": priceTotal,
-        "valueReceived": valueReceived, 
+        "valueReceived": valueReceived,
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
@@ -348,7 +350,7 @@ class TicketModel {
         "cashRegisterName": cashRegisterName,
         'cashRegisterId': cashRegisterId,
         "priceTotal": priceTotal,
-        "valueReceived": valueReceived, 
+        "valueReceived": valueReceived,
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
@@ -406,7 +408,7 @@ class TicketModel {
           : 0.0,
       valueReceived: data.containsKey('valueReceived')
           ? (data['valueReceived'] ?? 0).toDouble()
-          : 0.0, 
+          : 0.0,
       discountIsPercentage: data.containsKey('discountIsPercentage')
           ? (data['discountIsPercentage'] ?? false) as bool
           : false,
@@ -477,7 +479,7 @@ class TicketModel {
     cashRegisterName = data['cashRegister'] ?? '';
     cashRegisterId = data['cashRegisterId'] ?? '';
     priceTotal = data['priceTotal'];
-    valueReceived = data['valueReceived']; 
+    valueReceived = data['valueReceived'];
     discountIsPercentage = data['discountIsPercentage'] ?? false;
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
@@ -526,7 +528,7 @@ class TicketModel {
   /// Si es monto fijo, retorna el valor tal como está
   double get getDiscountAmount {
     if (discount <= 0) return 0.0;
-    
+
     if (discountIsPercentage) {
       // El valor de discount representa el porcentaje, calcular el monto
       final subtotal = getTotalPriceWithoutDiscount;

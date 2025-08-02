@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/component/ui.dart';
 import '../../core/widgets/core_widgets.dart';
-import '../../core/widgets/dialogs/components/dialog_components.dart';
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
@@ -29,7 +27,7 @@ class WelcomePage extends StatelessWidget {
     // Obtener la ubicación con prioridad
     final location = _getAccountLocation(account);
 
-    return InkWell( 
+    return InkWell(
       onTap: () async => await onSelectAccount(account),
       splashColor: colorScheme.primary.withValues(alpha: 0.1),
       highlightColor: colorScheme.primary.withValues(alpha: 0.05),
@@ -40,9 +38,8 @@ class WelcomePage extends StatelessWidget {
             // Avatar mejorado con sombra sutil
             UserAvatar(
               imageUrl: account.image,
-              text: account.name.isNotEmpty
-                  ? account.name[0].toUpperCase()
-                  : '',
+              text:
+                  account.name.isNotEmpty ? account.name[0].toUpperCase() : '',
               radius: 22,
               backgroundColor: colorScheme.primaryContainer,
             ),
@@ -176,15 +173,16 @@ class WelcomePage extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: DialogComponents.itemList(
                         context: context,
-                        items: accounts
-                            .map((account) => _buildAccountCard(context, account))
-                            .toList(),
+                        items: accounts.map((account) =>_buildAccountCard(context, account)).toList(),
                         showDividers: true,
                         maxVisibleItems: 4,
                         expandText: 'Ver más cuentas',
                         collapseText: 'Ver menos',
                         borderRadius: 16,
-                        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withValues(alpha: 0.5),
                       ),
                     ),
                   const SizedBox(height: 30),

@@ -233,10 +233,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
             backgroundColor:
                 theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
             borderColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-            items: provider.activeCashRegisters
-                .asMap()
-                .entries
-                .map((entry) {
+            items: provider.activeCashRegisters.asMap().entries.map((entry) {
               final index = entry.key;
               final cashRegister = entry.value;
               final isLast = index == provider.activeCashRegisters.length - 1;
@@ -319,9 +316,10 @@ class CashRegisterManagementDialog extends StatelessWidget {
                 opacity: value,
                 child: Material(
                   color: Colors.transparent,
-                  child: InkWell( 
+                  child: InkWell(
                     onTap: () => provider.selectCashRegister(cashRegister),
-                    hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+                    hoverColor:
+                        theme.colorScheme.primary.withValues(alpha: 0.05),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: EdgeInsets.symmetric(

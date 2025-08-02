@@ -23,7 +23,7 @@ import 'package:sellweb/presentation/providers/sell_provider.dart';
 /// - AppBar flotante/pinned/snap basado en el estado de búsqueda
 /// - Animaciones suaves y transiciones optimizadas
 /// - Soporte para refresh y stretch en iOS
-/// 
+///
 /// Permite buscar y seleccionar productos del catálogo para agregar al ticket de venta.
 /// Incluye algoritmo de búsqueda inteligente y filtrado en tiempo real.
 class ProductCatalogueFullScreenView extends StatefulWidget {
@@ -126,27 +126,30 @@ class _ProductCatalogueFullScreenViewState
     // Solo cambiar a modo búsqueda si hay texto escrito
     // El foco por sí solo no debe cambiar la vista
   }
- 
 
   /// Obtiene la cantidad total de productos seleccionados en el ticket (suma de cantidades)
   int _getSelectedProductsCount() {
-    return widget.sellProvider.ticket.products.where((product) => product.quantity > 0).fold(0, (total, product) => total + product.quantity);
+    return widget.sellProvider.ticket.products
+        .where((product) => product.quantity > 0)
+        .fold(0, (total, product) => total + product.quantity);
   }
 
   /// Disminuye la cantidad de un producto en el ticket o lo elimina si la cantidad llega a 0
   void _decreaseProductQuantity(ProductCatalogue product) {
     final ticketProducts = widget.sellProvider.ticket.products;
-    
+
     // Buscar el producto en el ticket
     final productIndex = ticketProducts.indexWhere((p) => p.id == product.id);
-    
+
     if (productIndex != -1) {
       final currentProduct = ticketProducts[productIndex];
-      
+
       if (currentProduct.quantity > 1) {
         // Si tiene más de 1, agregar con cantidad -1 (disminuye en 1)
-        final decreasedProduct = currentProduct.copyWith(quantity: currentProduct.quantity - 1);
-        widget.sellProvider.addProductsticket(decreasedProduct, replaceQuantity: true);
+        final decreasedProduct =
+            currentProduct.copyWith(quantity: currentProduct.quantity - 1);
+        widget.sellProvider
+            .addProductsticket(decreasedProduct, replaceQuantity: true);
       } else {
         // Si tiene 1 o menos, remover completamente del ticket
         widget.sellProvider.removeProduct(currentProduct);
@@ -239,13 +242,15 @@ class _ProductCatalogueFullScreenViewState
             return [
               SliverOverlapAbsorber(
                 // Absorber el overlap para evitar problemas de posicionamiento
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                handle:
+                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
                   // Configuración optimizada del SliverAppBar para NestedScrollView
                   floating: true,
                   pinned: true,
                   snap: true,
-                  expandedHeight: 210, // Altura fija para siempre mostrar búsqueda y chips
+                  expandedHeight:
+                      210, // Altura fija para siempre mostrar búsqueda y chips
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surface,
                   elevation: 0,
@@ -268,7 +273,8 @@ class _ProductCatalogueFullScreenViewState
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOutCubic,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         child: Row(
                           children: [
                             Expanded(
@@ -299,7 +305,8 @@ class _ProductCatalogueFullScreenViewState
                                   children: [
                                     Text(
                                       'Catálogo',
-                                      style: theme.textTheme.headlineSmall?.copyWith(
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: colorScheme.onSurface,
                                       ),
@@ -307,12 +314,15 @@ class _ProductCatalogueFullScreenViewState
                                     const SizedBox(width: 12),
                                     if (_getSelectedProductsCount() > 0)
                                       AnimatedContainer(
-                                        duration: const Duration(milliseconds: 300),
+                                        duration:
+                                            const Duration(milliseconds: 300),
                                         curve: Curves.elasticOut,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: colorScheme.primary,
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Text(
                                           '${_getSelectedProductsCount()}',
@@ -330,24 +340,25 @@ class _ProductCatalogueFullScreenViewState
                                 icon: const Icon(Icons.close_rounded),
                                 onPressed: () => Navigator.of(context).pop(),
                                 style: IconButton.styleFrom(
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                  backgroundColor:
+                                      colorScheme.surfaceContainerHighest,
                                   foregroundColor: colorScheme.onSurface,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Campo de búsqueda - siempre visible
                           _buildSearchField(),
-                          
+
                           // Chips de sugerencias - siempre visibles
                           const SizedBox(height: 12),
                           _buildSuggestionChips(),
                         ],
                       ),
                     ),
-                  ), 
+                  ),
                 ),
               ),
             ];
@@ -358,11 +369,12 @@ class _ProductCatalogueFullScreenViewState
                 // Inyectar el overlap para mantener consistencia
                 slivers: [
                   SliverOverlapInjector(
-                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                        context),
                   ),
                   // Siempre mostrar la lista de productos (filtrados o todos)
                   _buildProductListAsSliver(),
-                  
+
                   // Espacio adicional para el FloatingActionButton
                   const SliverToBoxAdapter(
                     child: SizedBox(height: 80),
@@ -386,7 +398,8 @@ class _ProductCatalogueFullScreenViewState
             foregroundColor: colorScheme.onPrimary,
             elevation: 4,
             highlightElevation: 8,
-            label: Text('Continuar',
+            label: Text(
+              'Continuar',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -430,21 +443,25 @@ class _ProductCatalogueFullScreenViewState
       builder: (context, constraints) {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-        
+
         // Calcular cuántos chips caben en la primera línea
         final chipSpacing = 8.0;
         final horizontalPadding = 32.0; // 16px de cada lado
         final availableWidth = constraints.maxWidth - horizontalPadding;
-        
+
         // Estimar ancho promedio de un chip (incluye padding, texto y bordes)
         final estimatedChipWidth = _estimateChipWidth(theme);
-        final maxChipsPerLine = ((availableWidth + chipSpacing) / (estimatedChipWidth + chipSpacing)).floor();
-        
+        final maxChipsPerLine = ((availableWidth + chipSpacing) /
+                (estimatedChipWidth + chipSpacing))
+            .floor();
+
         // Asegurar al menos 2 chips y máximo la cantidad que cabe
-        final maxVisibleBrands = (maxChipsPerLine - 1).clamp(2, sortedBrands.length);
-        
+        final maxVisibleBrands =
+            (maxChipsPerLine - 1).clamp(2, sortedBrands.length);
+
         // Lista de marcas que se mostrarán
-        final List<String> visibleBrands = sortedBrands.take(maxVisibleBrands).toList();
+        final List<String> visibleBrands =
+            sortedBrands.take(maxVisibleBrands).toList();
         final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
 
         return Wrap(
@@ -512,13 +529,13 @@ class _ProductCatalogueFullScreenViewState
     // Ancho base del chip (padding interno, bordes, etc.)
     const double chipPadding = 24.0; // 12px de cada lado
     const double iconSpace = 20.0; // Espacio para el ícono cuando aplique
-    
+
     // Ancho promedio basado en caracteres comunes de marcas
     // La mayoría de marcas tienen entre 4-8 caracteres
     const double averageCharWidth = 8.0;
     const double averageTextLength = 6.0; // caracteres promedio
     const double estimatedTextWidth = averageCharWidth * averageTextLength;
-    
+
     return chipPadding + estimatedTextWidth + iconSpace;
   }
 
@@ -549,18 +566,18 @@ class _ProductCatalogueFullScreenViewState
     final ticketProducts = widget.sellProvider.ticket.products;
     ProductCatalogue? selectedProduct;
     try {
-      selectedProduct = ticketProducts .firstWhere((p) => p.id == product.id && p.quantity > 0);
+      selectedProduct = ticketProducts
+          .firstWhere((p) => p.id == product.id && p.quantity > 0);
     } catch (_) {
       selectedProduct = null;
     }
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      leading: ProductImage(imageUrl: product.image), 
-      tileColor: selectedProduct != null 
+      leading: ProductImage(imageUrl: product.image),
+      tileColor: selectedProduct != null
           ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-          : null
-      ,
+          : null,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -603,28 +620,29 @@ class _ProductCatalogueFullScreenViewState
           Text(
             Publications.getFormatoPrecio(value: product.salePrice),
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold, 
+              fontWeight: FontWeight.bold,
               fontSize: 24,
             ),
           ),
           const SizedBox(width: 12),
-            if (selectedProduct != null) ...[
+          if (selectedProduct != null) ...[
             // Botón para disminuir cantidad - con estilo similar al contador
             CircleAvatar(
               radius: 16,
-              backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.8),
+              backgroundColor:
+                  colorScheme.errorContainer.withValues(alpha: 0.8),
               child: InkWell(
-              onTap: () {
-                // Disminuir cantidad del producto en el ticket
-                _decreaseProductQuantity(product);
-                setState(() {}); // Actualizar la vista
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Icon(
-                Icons.remove,
-                size: 16,
-                color: colorScheme.onErrorContainer,
-              ),
+                onTap: () {
+                  // Disminuir cantidad del producto en el ticket
+                  _decreaseProductQuantity(product);
+                  setState(() {}); // Actualizar la vista
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Icon(
+                  Icons.remove,
+                  size: 16,
+                  color: colorScheme.onErrorContainer,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -633,12 +651,12 @@ class _ProductCatalogueFullScreenViewState
               radius: 18,
               backgroundColor: colorScheme.primary,
               child: Text(
-              selectedProduct.quantity.toString(),
-              style: TextStyle(
-                color: colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+                selectedProduct.quantity.toString(),
+                style: TextStyle(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
@@ -647,7 +665,7 @@ class _ProductCatalogueFullScreenViewState
       onTap: () {
         widget.sellProvider.addProductsticket(product.copyWith());
         setState(() {}); // Actualizar la vista al seleccionar
-      }, 
+      },
     );
   }
 }
@@ -817,9 +835,10 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
                     )
                   : DialogComponents.itemList(
                       context: context,
-                      items: _filteredBrands.map((brand) => 
-                        _buildBrandListItem(brand, theme, colorScheme)
-                      ).toList(),
+                      items: _filteredBrands
+                          .map((brand) =>
+                              _buildBrandListItem(brand, theme, colorScheme))
+                          .toList(),
                       showDividers: true,
                     ),
             ),

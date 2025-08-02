@@ -149,7 +149,9 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) &&
+                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                      (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
                       showConfirmedPurchase:
@@ -642,7 +644,8 @@ class _SellPageState extends State<SellPage> {
   /// Lógica para confirmar la venta y procesar el ticket
   Future<void> _confirmSale(SellProvider provider) async {
     setState(() {
-      _showConfirmedPurchase = true; // para mostrar el mensaje de compra confirmada
+      _showConfirmedPurchase =
+          true; // para mostrar el mensaje de compra confirmada
     });
 
     // Si el checkbox está activo, procesar la impresión/generación de tickets

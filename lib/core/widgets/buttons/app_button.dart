@@ -24,6 +24,7 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final Color? loadingColor;
   final double loadingSize;
+  final double borderRadius;
 
   const AppButton({
     super.key,
@@ -44,6 +45,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
+    this.borderRadius = 20,
   });
 
   /// Constructor factory para botón primario (compatibilidad con PrimaryButton)
@@ -54,6 +56,7 @@ class AppButton extends StatelessWidget {
     bool isLoading = false,
     Color? backgroundColor,
     Color? textColor,
+    double borderRadius = 16,
   }) {
     return AppButton(
       key: key,
@@ -63,6 +66,7 @@ class AppButton extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: textColor,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      borderRadius: borderRadius,
     );
   }
 
@@ -156,7 +160,7 @@ class AppButton extends StatelessWidget {
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return ElevatedButton.styleFrom(
       elevation: defaultStyle ? 0 : elevation,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
@@ -189,6 +193,7 @@ class AppOutlinedButton extends StatelessWidget {
   final bool isLoading;
   final Color? loadingColor;
   final double loadingSize;
+  final double borderRadius;
 
   const AppOutlinedButton({
     super.key,
@@ -208,6 +213,7 @@ class AppOutlinedButton extends StatelessWidget {
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
+    this.borderRadius = 20,
   });
 
   @override
@@ -297,7 +303,7 @@ class AppOutlinedButton extends StatelessWidget {
 
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return OutlinedButton.styleFrom(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor ?? colorScheme.primary,
@@ -328,6 +334,7 @@ class AppFilledButton extends StatelessWidget {
   final bool isLoading;
   final Color? loadingColor;
   final double loadingSize;
+  final double borderRadius;
 
   const AppFilledButton({
     super.key,
@@ -346,6 +353,7 @@ class AppFilledButton extends StatelessWidget {
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
+    this.borderRadius = 20,
   });
 
   @override
@@ -435,7 +443,7 @@ class AppFilledButton extends StatelessWidget {
 
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return FilledButton.styleFrom(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,

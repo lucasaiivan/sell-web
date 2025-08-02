@@ -192,10 +192,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
               AppTextButton(
                 text: 'Quitar descuento',
                 onPressed: () {
-                  sellProvider.setDiscount(
-                    discount: 0.0, 
-                    isPercentage: false
-                  );
+                  sellProvider.setDiscount(discount: 0.0, isPercentage: false);
                   Navigator.of(context).pop();
                 },
                 foregroundColor: colorScheme.error,
@@ -395,14 +392,12 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
     // Aplicar el descuento con la información completa
     sellProvider.setDiscount(
-      discount: discountValue, 
-      isPercentage: _isPercentage
-    );
+        discount: discountValue, isPercentage: _isPercentage);
 
     // Mostrar confirmación
     final discountAmount =
         _isPercentage ? (totalTicket * discountValue / 100) : discountValue;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import '../../../widgets/inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3
 class DialogComponents {
-
   DialogComponents._();
 
   /// Sección de información con contenedor estilizado
@@ -78,19 +77,21 @@ class DialogComponents {
     double borderRadius = 12,
     required BuildContext context,
   }) {
-
-    final lineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
+    final lineColor =
+        Theme.of(context).colorScheme.outline.withValues(alpha: 0.2);
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final decoration = BoxDecoration(color: backgroundColor ?? Colors.transparent,borderRadius: BorderRadius.circular(borderRadius),border: Border.all(color:borderColor ?? lineColor,width:1));
- 
+    final decoration = BoxDecoration(
+        color: backgroundColor ?? Colors.transparent,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: borderColor ?? lineColor, width: 1));
 
     // Para listas largas, usar ExpandableListContainer
-    return Container( 
+    return Container(
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView( 
+      child: SingleChildScrollView(
         child: ExpandableListContainer<Widget>(
           items: items,
           isMobile: isMobile,
@@ -107,7 +108,8 @@ class DialogComponents {
             return Column(
               children: [
                 item,
-                if (showDividers && !isLast) Divider( thickness:1 ,color: lineColor,height: 0),
+                if (showDividers && !isLast)
+                  Divider(thickness: 1, color: lineColor, height: 0),
               ],
             );
           },
@@ -522,7 +524,6 @@ class DialogComponents {
   /// Espaciado mínimo entre elementos relacionados
   static const Widget minSpacing = SizedBox(height: 8);
 }
-  
 
 /// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.
 ///
@@ -596,16 +597,16 @@ class ExpandableListContainer<T> extends StatefulWidget {
   });
 
   @override
-  State<ExpandableListContainer<T>> createState() => _ExpandableListContainerState<T>();
+  State<ExpandableListContainer<T>> createState() =>
+      _ExpandableListContainerState<T>();
 }
 
-class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>> {
- 
+class _ExpandableListContainerState<T>
+    extends State<ExpandableListContainer<T>> {
   bool showAllItems = false;
 
   @override
-  Widget build(BuildContext context) { 
-
+  Widget build(BuildContext context) {
     final hasMoreItems = widget.items.length > widget.maxVisibleItems;
     final itemsToShow = showAllItems
         ? widget.items
@@ -617,7 +618,7 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
         // Título de la sección (si se proporciona)
         if (widget.title != null) ...[
           Padding(
-            padding: const EdgeInsets.only(top:5, left: 12),
+            padding: const EdgeInsets.only(top: 5, left: 12),
             child: Text(
               widget.title!,
               style: (widget.isMobile
@@ -631,7 +632,7 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
           ),
           SizedBox(height: widget.isMobile ? 8 : 12),
         ],
-    
+
         // Contenedor estilizado con la lista
         Column(
           children: [
@@ -640,10 +641,10 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
               final index = entry.key;
               final item = entry.value;
               final isLast = index == itemsToShow.length - 1;
-    
+
               return widget.itemBuilder(context, item, index, isLast);
             }),
-    
+
             // Botón "Ver más" si hay más elementos
             if (hasMoreItems && !showAllItems) ...[
               if (widget.showDividers) const Divider(),
@@ -676,7 +677,7 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
                 ),
               ),
             ],
-    
+
             // Botón "Ver menos" si se están mostrando todos
             if (showAllItems && hasMoreItems) ...[
               if (widget.showDividers) const Divider(),

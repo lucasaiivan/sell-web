@@ -361,10 +361,7 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setDiscount({
-    required double discount, 
-    bool isPercentage = false
-  }) {
+  void setDiscount({required double discount, bool isPercentage = false}) {
     if (discount < 0) return; // No permitir descuentos negativos
 
     final currentTicket = _state.ticket;

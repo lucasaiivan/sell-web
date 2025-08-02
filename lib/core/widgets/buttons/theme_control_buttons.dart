@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../dialogs/dialogs.dart';
+import '../dialogs/configuration/theme_color_selector_dialog.dart';
 import '../../../presentation/providers/theme_data_app_provider.dart';
 
 /// Widget reutilizable para controles de tema dinámico
@@ -93,7 +93,13 @@ class ThemeColorButton extends StatelessWidget {
           size: iconSize,
         ),
         tooltip: tooltip,
-        onPressed: () => ThemeColorSelectorDialog.show(context),
+        onPressed: () async {
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: true,
+            builder: (context) => const ThemeColorSelectorDialog(),
+          );
+        },
       ),
     );
   }

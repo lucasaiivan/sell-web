@@ -320,14 +320,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-
-        // Mostrar confirmación
-        showInfoDialog(
-          context: context,
-          title: 'Producto Agregado',
-          message: 'El producto se ha agregado al ticket de venta.',
-          icon: Icons.check_circle_outline_rounded,
-        );
+ 
       }
 
       // Procesar en segundo plano

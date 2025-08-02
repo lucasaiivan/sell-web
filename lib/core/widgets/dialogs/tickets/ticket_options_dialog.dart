@@ -421,16 +421,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
       // Mostrar resultados
       if (mounted) {
-        Navigator.of(context).pop();
-
-        if (successMessages.isNotEmpty) {
-          showInfoDialog(
-            context: context,
-            title: '¡Procesamiento Exitoso!',
-            message: successMessages.join('\n'),
-            icon: Icons.check_circle_outline_rounded,
-          );
-        }
+        Navigator.of(context).pop(); 
 
         if (errorMessages.isNotEmpty) {
           showErrorDialog(

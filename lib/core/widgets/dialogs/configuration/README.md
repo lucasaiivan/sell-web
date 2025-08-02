@@ -10,14 +10,20 @@ Diálogos relacionados con la configuración del sistema y dispositivos.
 - **Propósito**: Permite configurar la conexión con impresoras térmicas via HTTP
 - **Uso**: Configuración de dispositivos de impresión
 
-### `theme_color_selector_dialog.dart` ⭐ **ACTUALIZADO**
-- **Contexto**: Diálogo para seleccionar color semilla del tema dinámico
-- **Propósito**: Permite al usuario cambiar el color base de la aplicación
-- **Características**: 
-  - ✅ Paleta unificada de 6 colores (blue, teal, deepPurple, indigo, green, orange)
-  - ✅ Grid layout 3x2 para mejor organización visual
-  - ✅ Funciona tanto para tema claro como oscuro
-  - ✅ UI simplificada con un solo título
+### `theme_color_selector_dialog.dart` ⭐ **MEJORADO CON CHIPS**
+- **Contexto**: Diálogo premium para personalización completa del tema con diseño moderno
+- **Propósito**: Permite al usuario personalizar completamente la apariencia de la aplicación
+- **Características mejoradas**: 
+  - ✅ **Chips elegantes**: Diseño moderno con nombres artísticos de colores
+  - ✅ **Paleta extendida**: 15 colores cuidadosamente seleccionados vs 6 originales
+  - ✅ **Animaciones fluidas**: Transiciones suaves al abrir/cerrar el diálogo
+  - ✅ **Layout responsivo**: Wrap layout que se adapta automáticamente al contenido
+  - ✅ **Feedback visual**: Hover effects, sombras y animaciones de selección
+  - ✅ **Vista previa en tiempo real**: Componentes de ejemplo con el tema seleccionado
+  - ✅ **Control de brillo mejorado**: Interfaz más intuitiva con gradientes
+  - ✅ **Accesibilidad**: Contraste automático de texto y navegación por teclado
+  - ✅ **Diseño premium**: Gradientes, sombras y Material Design 3 completo
+  - ✅ **UX intuitiva**: Chips con círculo de color y texto descriptivo
   - ✅ Vista previa del color actual seleccionado
   - ✅ Indicadores visuales mejorados (check circle + border grueso)
 

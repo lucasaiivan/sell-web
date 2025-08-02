@@ -383,15 +383,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        widget.onProductUpdated?.call();
-
-        // Mostrar confirmación
-        showInfoDialog(
-          context: context,
-          title: 'Producto Eliminado',
-          message: 'El producto ha sido eliminado del ticket.',
-          icon: Icons.check_circle_outline_rounded,
-        );
+        widget.onProductUpdated?.call(); 
       }
     }
   }

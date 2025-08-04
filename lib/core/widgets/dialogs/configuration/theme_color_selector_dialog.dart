@@ -228,12 +228,12 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
     final currentColor = themeProvider.seedColor;
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 16,
+      runSpacing: 16,
       children: availableColors.map((colorData) {
         final isSelected = colorData.color == currentColor;
         
-        return _buildColorChip(
+        return _buildColorAvatar(
           context,
           colorData,
           isSelected,
@@ -243,78 +243,80 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
     );
   }
 
-  Widget _buildColorChip(
+  Widget _buildColorAvatar(
     BuildContext context,
     ({Color color, String name}) colorData,
     bool isSelected,
     VoidCallback onTap,
   ) {
     final color = colorData.color;
+    final theme = Theme.of(context);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? color : color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? color
-                    : color.withValues(alpha: 0.3),
-                width: 1.5,
-              ), 
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Círculo de color
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? _getContrastColor(color).withValues(alpha: 0.3)
-                          : Colors.transparent,
-                      width: 1,
-                    ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // CircleAvatar con animación
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(30),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outline.withValues(alpha: 0.3),
+                    width: isSelected ? 3 : 2,
                   ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: color,
                   child: isSelected
                       ? Icon(
                           Icons.check_rounded,
                           color: _getContrastColor(color),
-                          size: 14,
+                          size: 20,
                         )
                       : null,
                 ),
-                const SizedBox(width: 8),
-                
-                // Texto del nombre
-                Text(
-                  colorData.name,
-                  style: TextStyle(
-                    color: isSelected
-                        ? _getContrastColor(color)
-                        : color,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+        
+        const SizedBox(height: 8),
+        
+        // Etiqueta del color
+        Text(
+          colorData.name,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 

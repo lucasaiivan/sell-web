@@ -29,6 +29,9 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) { 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {
       return SizedBox(
@@ -37,7 +40,10 @@ class ProductImage extends StatelessWidget {
         child: AspectRatio(
           aspectRatio: 1,
           child: Container(
-            color: Colors.white,
+            decoration: BoxDecoration(
+              color: backgroundColor ?? Colors.white,
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
             child: _buildImageContent(),
           ),
         ),
@@ -46,7 +52,10 @@ class ProductImage extends StatelessWidget {
 
     // Si no se especifica size, permitir que se expanda completamente
     return Container(
-      color: Colors.white, 
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
       child: _buildImageContent(),
     );
   }
@@ -89,21 +98,17 @@ class ProductImage extends StatelessWidget {
 
   /// Construye la imagen por defecto con animación suave
   Widget _buildDefaultImageWithAnimation(BuildContext context) {
-    // Determinar si el tema es claro u oscuro
-    final bool isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-
-    // Colores discretos basados en el brillo del tema
-    final Color iconColor = isDarkTheme
-        ? Colors.grey.shade400 // Gris claro discreto para tema oscuro
-        : Colors.grey.shade200; // Gris medio discreto para tema claro
-
-    final Color backgroundOverlay = isDarkTheme
-        ? Colors.grey.shade500 // Overlay sutil para tema oscuro
-        : Colors.grey.shade100; // Overlay sutil para tema claro
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    // Colores adaptativos basados en el tema actual
+    final Color iconColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+    final Color backgroundOverlay = colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundOverlay,
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: Center(
         child: Image.asset(

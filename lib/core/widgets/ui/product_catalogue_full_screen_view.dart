@@ -211,16 +211,13 @@ class _ProductCatalogueFullScreenViewState
     // Usar SliverList.separated para mejor rendimiento y separadores automáticos
     return SliverList.separated(
       itemCount: _filteredProducts.length,
-      separatorBuilder: (context, index) => Divider(
-        height: 1,
-        thickness: 1,
-        color: colorScheme.outline.withValues(alpha: 0.2),
-        indent: 72, // Alinear con el contenido del ListTile
-        endIndent: 16,
-      ),
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final product = _filteredProducts[index];
-        return _buildProductListItem(product);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildProductListItem(product),
+        );
       },
     );
   }
@@ -572,12 +569,22 @@ class _ProductCatalogueFullScreenViewState
       selectedProduct = null;
     }
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      leading: ProductImage(imageUrl: product.image),
-      tileColor: selectedProduct != null
+    return Material(
+      color: selectedProduct != null
           ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-          : null,
+          : colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(12),
+      elevation: selectedProduct != null ? 2 : 1,
+      shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        leading: ProductImage(
+          imageUrl: product.image,
+          size: 56,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -585,6 +592,7 @@ class _ProductCatalogueFullScreenViewState
             product.description,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -622,6 +630,7 @@ class _ProductCatalogueFullScreenViewState
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 24,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 12),
@@ -662,10 +671,11 @@ class _ProductCatalogueFullScreenViewState
           ],
         ],
       ),
-      onTap: () {
-        widget.sellProvider.addProductsticket(product.copyWith());
-        setState(() {}); // Actualizar la vista al seleccionar
-      },
+        onTap: () {
+          widget.sellProvider.addProductsticket(product.copyWith());
+          setState(() {}); // Actualizar la vista al seleccionar
+        },
+      ),
     );
   }
 }

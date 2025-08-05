@@ -19,7 +19,7 @@ import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
-import 'presentation/pages/login_page.dart';
+import 'presentation/pages/app_presentation_page.dart';
 import 'presentation/pages/sell_page.dart';
 import 'presentation/pages/welcome_page.dart';
 
@@ -79,7 +79,7 @@ void main() async {
             home: Consumer<AuthProvider>(
               builder: (context, authProvider, _) {
                 if (authProvider.user == null) {
-                  return LoginPage(authProvider: authProvider);
+                  return const AppPresentationPage();
                 }
 
                 return Consumer<SellProvider>(

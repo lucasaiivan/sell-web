@@ -37,7 +37,7 @@ class AppButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width = double.infinity,
+    this.width,
     this.elevation = 0,
     this.disable = false,
     this.defaultStyle = false,
@@ -75,19 +75,9 @@ class AppButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: Padding(
-        key: ValueKey('$disable-$isLoading'),
-        padding: margin!,
-        child: SizedBox(
-          width: width,
-          child: _buildButton(colorScheme),
-        ),
-      ),
+    return SizedBox(
+      width: width,
+      child: _buildButton(colorScheme),
     );
   }
 
@@ -206,7 +196,7 @@ class AppOutlinedButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width = double.infinity,
+    this.width ,
     this.disable = false,
     this.minimumSize,
     this.isLoading = false,
@@ -220,19 +210,9 @@ class AppOutlinedButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: Padding(
-        key: ValueKey('$disable-$isLoading'),
-        padding: margin!,
-        child: SizedBox(
-          width: width,
-          child: _buildButton(colorScheme),
-        ),
-      ),
+    return SizedBox(
+      width: width,
+      child: _buildButton(colorScheme),
     );
   }
 
@@ -346,7 +326,7 @@ class AppFilledButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width = double.infinity,
+    this.width ,
     this.disable = false,
     this.minimumSize,
     this.isLoading = false,
@@ -360,19 +340,9 @@ class AppFilledButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: Padding(
-        key: ValueKey('$disable-$isLoading'),
-        padding: margin!,
-        child: SizedBox(
-          width: width,
-          child: _buildButton(colorScheme),
-        ),
-      ),
+    return SizedBox(
+      width: width,
+      child: _buildButton(colorScheme),
     );
   }
 

@@ -50,6 +50,16 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     final double width = MediaQuery.of(context).size.width;
     final colorScheme = Theme.of(context).colorScheme;
+    Color accentAppbarColor = _isScrolled
+        ? (Theme.of(context).brightness == Brightness.light
+            ? colorScheme.primary.withValues(alpha: 0.8)
+            : colorScheme.primary.withValues(alpha: 0.8))
+        : Colors.white;
+    Color appbarColor = _isScrolled
+        ? (Theme.of(context).brightness == Brightness.light
+            ? colorScheme.surface.withValues(alpha: 0.2)
+            : colorScheme.surface.withValues(alpha: 0.2))
+        : Colors.transparent;
 
     return Title(
       title: 'Bienvenido - Sell Web',
@@ -66,21 +76,22 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               child: AppBar(
                 title: Row(
                   children: [
-                    Image.asset('assets/launcher.png', height: 32),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset('assets/launcher.png', height: 32),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Sell',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle( 
-                        color: _isScrolled ? Colors.amber.shade800 : Colors.white,
+                        color: accentAppbarColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
+                  ], 
                 ),
-                backgroundColor: _isScrolled 
-                  ? Colors.amber.shade50.withValues(alpha: 0.85)
-                  : Colors.transparent,
+                backgroundColor: appbarColor,
                 elevation: 0, 
                 scrolledUnderElevation: 0,
                 surfaceTintColor: Colors.transparent,
@@ -98,7 +109,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                       );
                     },
                     child: _isScrolled
-                        ? AppOutlinedButton(
+                        ? AppFilledButton(
                             key: const ValueKey('login_button'),
                             onPressed: () => _navigateToLogin(
                                 context, Provider.of<AuthProvider>(context, listen: false)),
@@ -114,11 +125,13 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     builder: (context, themeProvider, _) {
                       return IconButton(
                         onPressed: themeProvider.toggleTheme,
-                        icon: Icon(
-                          themeProvider.themeMode == ThemeMode.dark 
-                            ? Icons.light_mode_outlined
-                            : Icons.dark_mode_outlined,
-                          color: _isScrolled ? Colors.amber.shade800 : Colors.white,
+                        icon: Icon( 
+                          _isScrolled
+                              ? themeProvider.themeMode == ThemeMode.dark
+                                  ? Icons.light_mode_outlined
+                                  : Icons.dark_mode_outlined
+                              : Icons.dark_mode_outlined,
+                          color: accentAppbarColor,
                         ),
                         tooltip: themeProvider.themeMode == ThemeMode.dark 
                           ? 'Cambiar a tema claro'
@@ -154,9 +167,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     return Column(
       children: [
         _buildHeroSection(context), 
-        _buildFeaturesSection(context, axis: Axis.vertical),
-        const SizedBox(height: 48),
-        _buildTestimonialsSection(context),
+        _buildFeaturesSection(context, axis: Axis.vertical), 
         const SizedBox(height: 48),
         _buildCallToActionSection(context),
         const SizedBox(height: 32),
@@ -170,9 +181,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       children: [
         _buildHeroSection(context),
         const SizedBox(height: 64),
-        _buildFeaturesSection(context, axis: Axis.horizontal),
-        const SizedBox(height: 64),
-        _buildTestimonialsSection(context),
+        _buildFeaturesSection(context, axis: Axis.horizontal), 
         const SizedBox(height: 64),
         _buildCallToActionSection(context),
         const SizedBox(height: 32),
@@ -186,9 +195,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       children: [
         _buildHeroSection(context),
         const SizedBox(height: 12),
-        _buildFeaturesSection(context, axis: Axis.horizontal),
-        const SizedBox(height: 80),
-        _buildTestimonialsSection(context),
+        _buildFeaturesSection(context, axis: Axis.horizontal), 
         const SizedBox(height: 80),
         _buildCallToActionSection(context),
         const SizedBox(height: 48),
@@ -321,10 +328,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const SizedBox(height:30), 
-        const SizedBox(height: 32),
+        const SizedBox(height:30),  
         Text(
-          'Gestiona Tus Ventas y el Inventario',
+          'GESTIONA TUS VENTAS E INVENTARIO',
           textAlign: TextAlign.center,
           style: theme.textTheme.displayLarge?.copyWith(
             fontWeight: FontWeight.w800,
@@ -333,9 +339,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             foreground: Paint()
               ..shader = const LinearGradient(
                 colors: [
-                  Color(0xFF007BFF),
-                  Color(0xFF0056CC),
-                  Color(0xFF003D99),
+                  Colors.blueAccent,
+                  Colors.lightBlue,
+                  Colors.indigoAccent,
                 ],
               ).createShader(const Rect.fromLTWH(0.0, 0.0, 400.0, 70.0)),
           ),
@@ -346,8 +352,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           texts: const [
             'Punto de venta fácil de usar',
             'Inventario controlado',
-            'Reportes analiticos instantáneos',  
-
+            'Reportes analiticos instantáneos',   
           ],
           style: theme.textTheme.headlineMedium?.copyWith(
             color: colorScheme.onSurface.withValues(alpha: 0.8),
@@ -362,7 +367,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 20),
         Text(
-          'Agilizá tu proceso de ventas con sistema más fácil y rápido para vender, facturar y gestionar tu Punto de Venta',
+          'Agilizá tu proceso de ventas fácil, rápido para vender y controlar tu inventario desde cualquier lugar',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: colorScheme.onSurface.withOpacity(0.7),
@@ -379,9 +384,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           runSpacing: 16,
           children: [
             AppButton(
-              text: 'Descargar desde Play Store',
-              icon: Icon(Icons.shop_outlined),
-              backgroundColor: Colors.blue.shade700,
+              text: 'Disponible en Play Store',
+              icon: Image.asset('assets/playstore.png',width: 24, height: 24),
+              backgroundColor: Colors.black,
               onPressed: () {
                 // Acción para descargar desde Play Store
               },
@@ -397,6 +402,25 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           ],
         ),
         const SizedBox(height: 50),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 40),
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Colors.transparent,
+                colorScheme.onSurface.withOpacity(0.3),
+                colorScheme.onSurface.withOpacity(0.6),
+                colorScheme.onSurface.withOpacity(0.3),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+            ),
+          ),
+        ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -421,283 +445,6 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     );
   }
  
-
-  Widget _buildTestimonialsSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: Theme.of(context).brightness == Brightness.light
-              ? [
-                  const Color(0xFFF8F9FF),
-                  Colors.white,
-                  const Color(0xFFF0F7FF),
-                ]
-              : [
-                  colorScheme.surfaceContainerLowest,
-                  colorScheme.surface,
-                  colorScheme.surfaceContainerLowest,
-                ],
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(50),
-              border: Border.all(
-                color: Colors.amber.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(5, (index) => 
-                    Icon(Icons.star, color: Colors.amber, size: 16)
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Miles de clientes satisfechos',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.amber.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 600.ms),
-          const SizedBox(height: 24),
-          Text(
-            'Transformamos negocios\nen todo el país',
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-              height: 1.2,
-            ),
-            textAlign: TextAlign.center,
-          ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
-          const SizedBox(height: 16),
-          Text(
-            'Únete a la comunidad de empresarios que ya digitalizaron su negocio',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.7),
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
-          const SizedBox(height: 48),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width > 800 ? 3 : 1,
-              childAspectRatio: MediaQuery.of(context).size.width > 800 ? 1.1 : 2.5,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-            ),
-            itemCount: 3,
-            itemBuilder: (context, index) {
-              final testimonials = [
-                {
-                  'quote': '"Sell Web transformó completamente mi negocio. En solo 5 minutos ya estaba vendiendo."',
-                  'author': 'María González',
-                  'business': 'Tienda de Ropa',
-                  'location': 'Buenos Aires',
-                  'rating': 5,
-                  'color': const Color(0xFF4ECDC4),
-                },
-                {
-                  'quote': '"El mejor punto de venta que he usado. Súper fácil y confiable. Lo recomiendo 100%."',
-                  'author': 'Carlos Ruiz',
-                  'business': 'Ferretería',
-                  'location': 'Córdoba',
-                  'rating': 5,
-                  'color': const Color(0xFF45B7D1),
-                },
-                {
-                  'quote': '"El soporte es increíble y la app funciona perfecto. Mis ventas aumentaron 40%."',
-                  'author': 'Ana Torres',
-                  'business': 'Panadería',
-                  'location': 'Rosario',
-                  'rating': 5,
-                  'color': const Color(0xFF96CEB4),
-                },
-              ];
-              
-              return _buildModernTestimonialCard(
-                context, 
-                testimonials[index],
-                colorScheme
-              ).animate(delay: Duration(milliseconds: 200 * index))
-                .fadeIn(duration: 600.ms)
-                .slideY(begin: 0.2);
-            },
-          ),
-          const SizedBox(height: 48),
-          // Estadísticas rápidas
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF007BFF),
-                  Color(0xFF0056CC),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF007BFF).withOpacity(0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem('5,000+', 'Negocios activos'),
-                _buildStatItem('99.8%', 'Uptime'),
-                _buildStatItem('24/7', 'Soporte'),
-              ],
-            ),
-          ).animate(delay: 800.ms).fadeIn(duration: 800.ms).scale(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModernTestimonialCard(BuildContext context, Map<String, dynamic> testimonial, ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (testimonial['color'] as Color).withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Estrellas
-          Row(
-            children: List.generate(testimonial['rating'] as int, (index) => 
-              Icon(Icons.star, color: Colors.amber, size: 20)
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Quote
-          Text(
-            testimonial['quote'] as String,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontStyle: FontStyle.italic,
-              color: colorScheme.onSurface,
-              height: 1.5,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          // Author info
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      testimonial['color'] as Color,
-                      (testimonial['color'] as Color).withOpacity(0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      testimonial['author'] as String,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      '${testimonial['business']} • ${testimonial['location']}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String number, String label) {
-    return Column(
-      children: [
-        Text(
-          number,
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white.withOpacity(0.9),
-            fontWeight: FontWeight.w500,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
   Widget _buildFeaturesSection(BuildContext context, {required Axis axis}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -705,28 +452,42 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     
     final features = [
       _FeatureData(
-        icon: Icons.inventory_2_outlined,
-        title: 'Control de Inventario Inteligente',
-        description: 'Automatiza tu inventario con alertas de stock mínimo, códigos de barras y reportes en tiempo real.',
-        image: 'assets/catalogue02.png',
-        benefit: 'Reduce 68% pérdidas',
-        stats: '68%',
-        color: const Color(0xFF4ECDC4),
-      ),
-      _FeatureData(
         icon: Icons.point_of_sale_outlined,
-        title: 'Punto de Venta Profesional',
-        description: 'Procesa ventas rápidamente con tickets automáticos, múltiples formas de pago y control de clientes.',
-        image: 'assets/sell02.jpeg',
+        title: 'Sistema de Ventas Inteligente',
+        description: 'Automatiza tu proceso comercial con herramientas profesionales',
+        checkItems: [
+          'Ventas rápidas y eficientes',
+          'Múltiples formas de pago', 
+          'Interfaz intuitiva'
+        ],
         benefit: 'Reduce 78% errores',
         stats: '78%',
         color: const Color(0xFF45B7D1),
       ),
       _FeatureData(
+        icon: Icons.inventory_2_outlined,
+        title: 'Inventario controlado',
+        description: 'Mantén tu inventario siempre actualizado y evita pérdidas',
+        checkItems: [
+          'Alertas de stock mínimo o agotado',
+          'Códigos de barras',
+          'Reportes en tiempo real', 
+        ],
+        benefit: 'Reduce 68% pérdidas',
+        stats: '68%',
+        color: const Color(0xFF4ECDC4),
+      ),
+      
+      _FeatureData(
         icon: Icons.analytics_outlined,
         title: 'Reportes y Analytics',
-        description: 'Obtén insights de tu negocio con dashboards interactivos y reportes automáticos en la nube.',
-        image: 'assets/sell05.jpeg',
+        description: 'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura en la nube',
+        checkItems: [
+          'Productos y categorías populares',
+          'Sigue tendencias de venta',
+          'Ventas por empleado',
+          'Ganancias y márgenes',
+        ],
         benefit: 'Reduce 83% tiempo',
         stats: '83%',
         color: const Color(0xFF96CEB4),
@@ -735,24 +496,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  colorScheme.surface,
-                  colorScheme.surfaceContainerLowest,
-                  colorScheme.surface,
-                ]
-              : [
-                  Colors.white,
-                  const Color(0xFFFAFBFF),
-                  Colors.white,
-                ],
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24), 
       child: Column(
         children: [
           Container(
@@ -770,7 +514,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               ),
             ),
             child: Text(
-              '⚡ Funcionalidades potentes',
+              '⚡ Potencia tu negocio',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isDark 
                   ? const Color(0xFF64B5F6)
@@ -781,7 +525,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           ).animate().fadeIn(duration: 600.ms),
           const SizedBox(height: 24),
           Text(
-            'Potencia tu negocio y\nacelera tu crecimiento',
+            'Toma el control de tu negocio y simplifica tu operación diaria',
             style: theme.textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
@@ -792,7 +536,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 16),
           Text(
-            'Todo lo que necesitas para gestionar tu negocio de forma profesional',
+            'Todo lo que necesitas para gestionar de forma profesional',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurface.withOpacity(0.7),
               height: 1.5,
@@ -894,7 +638,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 16),
           Text(
-            'Únete a miles de empresarios que ya digitalizaron su negocio\ny aumentaron sus ventas con Sell Web',
+            'Únete a miles de comerciantes que ya digitalizaron su negocio\ny aumentaron la eficiencia de sus ventas',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white.withOpacity(0.9),
               height: 1.6,
@@ -910,10 +654,12 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             spacing: 24,
             runSpacing: 16,
             children: [
-              _buildCTABenefit('✓ Gratis por 30 días'),
-              _buildCTABenefit('✓ Sin tarjeta de crédito'),
-              _buildCTABenefit('✓ Configuración en 5 min'),
-              _buildCTABenefit('✓ Soporte personal'),
+              _buildCTABenefit('✓ Funciones gratuitas'),   
+              _buildCTABenefit('✓ Soporte 24/7'),
+              _buildCTABenefit('✓ Fácil de usar'), 
+              _buildCTABenefit('✓ Actualizaciones constantes'), 
+              _buildCTABenefit('✓ Acceso desde cualquier lugar'), 
+              _buildCTABenefit('✓ Ideal para emprendedores'), 
             ],
           ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 40),
@@ -968,7 +714,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                 ),
                 child: ElevatedButton.icon(
                   onPressed: (){},
-                  icon: const Icon(Icons.shop_outlined, size: 22),
+                  icon: Image.asset('assets/playstore.png', width: 24, height: 24),
                   label: const Text(
                     'Play Store',
                     style: TextStyle(
@@ -1012,7 +758,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Garantía de satisfacción 100% • Cancela cuando quieras',
+                  '100% Seguro y Confiable',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withOpacity(0.9),
                     fontWeight: FontWeight.w500,
@@ -1065,7 +811,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/launcher.png', height: 32),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset('assets/launcher.png', height: 32),
+              ),
               const SizedBox(width: 12),
               Text(
                 'Sell Web',
@@ -1106,10 +855,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           const SizedBox(height: 32),
           
           // Copyright y enlaces
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 24,
-            runSpacing: 16,
+          Column(  
             children: [
               Text(
                 '© 2025 Sell Web',
@@ -1164,7 +910,7 @@ class _FeatureData {
   final IconData icon;
   final String title;
   final String description;
-  final String image;
+  final List<String>? checkItems;
   final String? benefit;
   final String? stats;
   final Color? color;
@@ -1173,7 +919,7 @@ class _FeatureData {
     required this.icon,
     required this.title,
     required this.description,
-    required this.image,
+    this.checkItems,
     this.benefit,
     this.stats,
     this.color,
@@ -1287,6 +1033,42 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                   fontSize: 15,
                 ),
               ),
+              
+              // Check items
+              if (widget.feature.checkItems != null && widget.feature.checkItems!.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                ...widget.feature.checkItems!.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: (widget.feature.color ?? const Color(0xFF007BFF)).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          size: 14,
+                          color: widget.feature.color ?? const Color(0xFF007BFF),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )).toList(),
+              ],
               
               if (widget.feature.benefit != null || widget.feature.stats != null) ...[
                 const SizedBox(height: 24),

@@ -7,6 +7,8 @@ import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
 import 'login_page.dart';
+import 'dart:async';
+import 'dart:ui';
 
 /// Página de presentación de la aplicación que muestra las características principales
 /// y permite al usuario iniciar sesión a través del AppBar
@@ -45,81 +47,96 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   @override
   Widget build(BuildContext context) {
+
     final double width = MediaQuery.of(context).size.width;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Title(
       title: 'Bienvenido - Sell Web',
       color: colorScheme.primary,
-      child: Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset('assets/launcher.png', height: 32),
-            const SizedBox(width: 8),
-            Text(
-              'Sell',
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle( 
-                color: _isScrolled ? colorScheme.onSurface : Colors.white,
+      child: Scaffold( 
+        extendBodyBehindAppBar: true, // Permite que el cuerpo se extienda detrás del AppBar 
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: _isScrolled 
+                ? ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0)
+                : ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
+              child: AppBar(
+                title: Row(
+                  children: [
+                    Image.asset('assets/launcher.png', height: 32),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sell',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle( 
+                        color: _isScrolled ? Colors.amber.shade800 : Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: _isScrolled 
+                  ? Colors.amber.shade50.withValues(alpha: 0.85)
+                  : Colors.transparent,
+                elevation: 0, 
+                scrolledUnderElevation: 0,
+                surfaceTintColor: Colors.transparent,
+                actions: [
+                  // Botón de login
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: animation,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _isScrolled
+                        ? AppOutlinedButton(
+                            key: const ValueKey('login_button'),
+                            onPressed: () => _navigateToLogin(
+                                context, Provider.of<AuthProvider>(context, listen: false)),
+                            text: 'Iniciar Sesión',
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          )
+                        : const SizedBox(key: ValueKey('placeholder')),
+                  ),
+
+                  // Botón para cambiar tema
+                  Consumer<ThemeDataAppProvider>(
+                    builder: (context, themeProvider, _) {
+                      return IconButton(
+                        onPressed: themeProvider.toggleTheme,
+                        icon: Icon(
+                          themeProvider.themeMode == ThemeMode.dark 
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
+                          color: _isScrolled ? Colors.amber.shade800 : Colors.white,
+                        ),
+                        tooltip: themeProvider.themeMode == ThemeMode.dark 
+                          ? 'Cambiar a tema claro'
+                          : 'Cambiar a tema oscuro',
+                      );
+                    },
+                  ), 
+                  const SizedBox(width: 16),
+                ],
               ),
             ),
-          ],
-        ),
-        backgroundColor: _isScrolled ? colorScheme.surface.withValues(alpha: 0.95): Colors.transparent,
-        elevation: _isScrolled ? 1 : 0, 
-        scrolledUnderElevation: 2,
-        surfaceTintColor: colorScheme.surfaceTint, 
-        actions: [
-          // Botón de login
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(
-                  scale: animation,
-                  child: child,
-                ),
-              );
-            },
-            child: _isScrolled
-                ? AppOutlinedButton(
-                    key: const ValueKey('login_button'),
-                    onPressed: () => _navigateToLogin(
-                        context, Provider.of<AuthProvider>(context, listen: false)),
-                    text: 'Iniciar Sesión',
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                  )
-                : const SizedBox(key: ValueKey('placeholder')),
           ),
-
-          // Botón para cambiar tema
-          Consumer<ThemeDataAppProvider>(
-            builder: (context, themeProvider, _) {
-              return IconButton(
-                onPressed: themeProvider.toggleTheme,
-                icon: Icon(
-                  themeProvider.themeMode == ThemeMode.dark 
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
-                ),
-                tooltip: themeProvider.themeMode == ThemeMode.dark 
-                  ? 'Cambiar a tema claro'
-                  : 'Cambiar a tema oscuro',
-              );
-            },
-          ), 
-          const SizedBox(width: 16),
-        ],
+        ),
+        body: SingleChildScrollView(
+          controller: _scrollController,
+          child: _buildResponsiveContent(context, width),
+        ),
       ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        child: _buildResponsiveContent(context, width),
-      ),
-    ),
     );
   }
 
@@ -136,10 +153,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   Widget _buildMobileLayout(BuildContext context) {
     return Column(
       children: [
-        _buildHeroSection(context),
-        const SizedBox(height: 48),
-        _buildProblemSolutionSection(context),
-        const SizedBox(height: 48),
+        _buildHeroSection(context), 
         _buildFeaturesSection(context, axis: Axis.vertical),
         const SizedBox(height: 48),
         _buildTestimonialsSection(context),
@@ -156,8 +170,6 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       children: [
         _buildHeroSection(context),
         const SizedBox(height: 64),
-        _buildProblemSolutionSection(context),
-        const SizedBox(height: 64),
         _buildFeaturesSection(context, axis: Axis.horizontal),
         const SizedBox(height: 64),
         _buildTestimonialsSection(context),
@@ -173,9 +185,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     return Column(
       children: [
         _buildHeroSection(context),
-        const SizedBox(height: 80),
-        _buildProblemSolutionSection(context),
-        const SizedBox(height: 80),
+        const SizedBox(height: 12),
         _buildFeaturesSection(context, axis: Axis.horizontal),
         const SizedBox(height: 80),
         _buildTestimonialsSection(context),
@@ -189,307 +199,228 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   Widget _buildHeroSection(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme; 
+    final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 64 + MediaQuery.of(context).padding.top,
-        bottom: 64,
-      ),
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment.center,
-          radius: 1.5,
-          colors: Theme.of(context).brightness == Brightness.light
-              ? [
-                  colorScheme.surface,
-                  Colors.amberAccent.shade100,
-                ]
-              : [
-                  colorScheme.surface,
-                  colorScheme.primaryContainer,
-                ],
+    return ClipPath(
+      clipper: WaveClipper(isMobile: isMobile),
+      child: Container(
+        width: double.infinity,
+        constraints: BoxConstraints(
+          minHeight: isMobile ? screenHeight * 0.7 : screenHeight * 0.9,
+          maxHeight: screenHeight * 1.1, // Evitar desbordamiento
+        ),
+        decoration: BoxDecoration( 
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 6,
+            stops: const [0.0, 1, 0.6, 0.0],
+            colors: Theme.of(context).brightness == Brightness.light
+                ? [
+                    Colors.yellow, // Centro completamente sólido
+                    Colors.yellow,
+                    Colors.yellow,
+                    Colors.yellow.shade600.withValues(alpha: 0.4), // Bordes más transparentes
+                  ]
+                : [
+                    Colors.yellow.withValues(alpha: 0.1), // Centro más opaco en modo oscuro
+                    Colors.yellow.withValues(alpha: 0.10),
+                    Colors.yellow.withValues(alpha: 0.01),
+                    Colors.yellow.withValues(alpha: 0.01), // Bordes más transparentes
+                  ],
+          ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Imagen de fondo que también será cortada por el clipper con gradiente
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.3, 0.7, 1.0],
+                    colors: Theme.of(context).brightness == Brightness.light
+                        ? [
+                            // Inicio solo color sólido
+                            Colors.yellow,
+                            Colors.yellow.shade600.withValues(alpha: 0.9),
+                            Colors.yellow.shade700.withValues(alpha: 0.7),
+                            // Final con más transparencia para mostrar imagen
+                            Colors.yellow.shade700.withValues(alpha: 0.4),
+                          ]
+                        : [
+                            // Modo oscuro
+                            Colors.yellow.withValues(alpha: 0.05),
+                            Colors.yellow.withValues(alpha: 0.08),
+                            Colors.yellow.withValues(alpha: 0.12),
+                            Colors.yellow.withValues(alpha: 0.15),
+                          ],
+                  ),
+                ),
+                child: Opacity(
+                  opacity: 0.6,
+                  child: Image.asset(
+                    'assets/sell06.jpeg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.transparent,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Gradiente adicional para mejorar legibilidad del texto
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.4, 0.8, 1.0],
+                    colors: Theme.of(context).brightness == Brightness.light
+                        ? [
+                            Colors.yellow.withValues(alpha: 0.8),
+                            Colors.yellow.withValues(alpha: 0.5),
+                            Colors.yellow.withValues(alpha: 0.5),
+                            Colors.yellow.withValues(alpha: 0.5),
+                          ]
+                        : [
+                            Colors.yellow.withValues(alpha: 0.1),
+                            Colors.yellow.withValues(alpha: 0.08),
+                            Colors.yellow.withValues(alpha: 0.05),
+                            Colors.yellow.withValues(alpha: 0.5),
+                          ],
+                  ),
+                ),
+              ),
+            ),
+            // Contenido principal con SafeArea
+            SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: isMobile ? 16 : 24,
+                  right: isMobile ? 16 : 24,
+                  top: isMobile ? 20 : 64,
+                  bottom: isMobile ? 80 : 120, // Espacio para la onda responsivo
+                ),
+                child: _buildHeroContentOnly(context, theme, colorScheme),
+              ),
+            ),
+          ],
         ),
       ),
-      child: _buildHeroMobileLayout(context, theme, colorScheme),
     );
   }
 
-  Widget _buildHeroMobileLayout(
-      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildHeroContentOnly(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildHeroContent(context, theme, colorScheme, isMobile: true),
+        const SizedBox(height:30), 
         const SizedBox(height: 32),
-        _buildHeroImage(colorScheme, height: 400),
+        Text(
+          'Gestiona Tus Ventas y el Inventario',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.displayLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 1.1,
+            foreground: Paint()
+              ..shader = const LinearGradient(
+                colors: [
+                  Color(0xFF007BFF),
+                  Color(0xFF0056CC),
+                  Color(0xFF003D99),
+                ],
+              ).createShader(const Rect.fromLTWH(0.0, 0.0, 400.0, 70.0)),
+          ),
+        ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.3),
+        const SizedBox(height: 16),
+        // text : secundario 
+        TypewriterText(
+          texts: const [
+            'Punto de venta fácil de usar',
+            'Inventario controlado',
+            'Reportes analiticos instantáneos',  
+
+          ],
+          style: theme.textTheme.headlineMedium?.copyWith(
+            color: colorScheme.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.4,
+            fontSize: 30,
+          ),
+          textAlign: TextAlign.center,
+          typingSpeed: const Duration(milliseconds: 100),
+          pauseDuration: const Duration(milliseconds: 2500),
+          backspacingSpeed: const Duration(milliseconds: 50),
+        ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
+        const SizedBox(height: 20),
+        Text(
+          'Agilizá tu proceso de ventas con sistema más fácil y rápido para vender, facturar y gestionar tu Punto de Venta',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurface.withOpacity(0.7),
+            fontWeight: FontWeight.w500,
+            height: 1.6,
+            fontSize: 18,
+          ),
+        ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
+        const SizedBox(height: 30),
+        // buttons : acciones principales
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            AppButton(
+              text: 'Descargar desde Play Store',
+              icon: Icon(Icons.shop_outlined),
+              backgroundColor: Colors.blue.shade700,
+              onPressed: () {
+                // Acción para descargar desde Play Store
+              },
+            ),
+            AppFilledButton(
+              text: 'Comenzar Ahora',
+              icon: Icon(Icons.auto_fix_high_outlined),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              onPressed: () => _navigateToLogin(
+                  context, Provider.of<AuthProvider>(context, listen: false)),
+            ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
+          ],
+        ),
+        const SizedBox(height: 50),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '✓ web',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.8),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 24),
+            Text(
+              '✓ android',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.8),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ).animate(delay: 1000.ms).fadeIn(duration: 600.ms),
       ],
     );
   }
  
-
-  Widget _buildHeroContent(BuildContext context, ThemeData theme, ColorScheme colorScheme, {bool isMobile = false}) {
-    return Column(
-      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Sistema de Ventas e Inventario Simple',
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: theme.textTheme.displayLarge,
-        ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.3),
-        const SizedBox(height: 16),
-        Text(
-          'El punto de venta más fácil de usar',
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: theme.textTheme.headlineSmall?.copyWith(
-        color: colorScheme.onPrimaryContainer.withOpacity(0.9),
-        fontWeight: FontWeight.w600,
-          ),
-        ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
-        const SizedBox(height: 8),
-        Text(
-          'Tu negocio necesita un cambio. Controla inventario, procesa ventas y genera reportes desde cualquier dispositivo.',
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: theme.textTheme.bodyLarge?.copyWith(
-        color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-        height: 1.6,
-          ),
-        ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
-        const SizedBox(height: 24),
-        // Beneficios rápidos
-        Row(
-          mainAxisAlignment: isMobile ? MainAxisAlignment.center : MainAxisAlignment.start,
-          children: [
-        _buildBenefitChip(context, '✓ Cualquier negocio', colorScheme),
-        const SizedBox(width: 8),
-        _buildBenefitChip(context, '✓ Celular o computadora', colorScheme),
-        if (!isMobile) const SizedBox(width: 8),
-        if (!isMobile) _buildBenefitChip(context, '✓ Acompañamiento', colorScheme),
-          ],
-        ).animate(delay: 500.ms).fadeIn(duration: 800.ms),
-        const SizedBox(height: 32),
-        Wrap(
-          alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            
-            AppFilledButton(
-              onPressed: () => _showDemoDialog(context),
-              text: 'Descargar de Play Store',
-              icon: const Icon(Icons.shop, size: 20),
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-              borderRadius: 24,
-            ).animate(delay: 800.ms).fadeIn(duration: 800.ms).scale(),
-            AppFilledButton(
-              onPressed: () => _navigateToLogin( context, Provider.of<AuthProvider>(context, listen: false)),
-              text: 'Comenzar ahora',
-              icon: const Icon(Icons.rocket_launch, size: 20),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black87,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-              borderRadius: 24,
-            ).animate(delay: 600.ms).fadeIn(duration: 800.ms).scale(),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeroImage(ColorScheme colorScheme, {required double height}) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20), 
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Image.asset(
-          'assets/sell06.jpeg',
-          height: height,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            height: height,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.image_not_supported_outlined,
-              color: colorScheme.onSurface.withOpacity(0.5), 
-              size: 50
-            ),
-          ),
-        ).animate().fadeIn(duration: 1000.ms).slideX(begin: 0.3),
-      ),
-    );
-  }
-
-  void _showDemoDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.play_circle_outline, color: Colors.blue),
-            SizedBox(width: 8),
-            Text('Demo Interactiva'),
-          ],
-        ),
-        content: const Text(
-            'Próximamente tendremos una demo interactiva disponible. Por ahora, puedes crear una cuenta gratuita para explorar todas las funcionalidades.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cerrar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false));
-            },
-            child: const Text('Crear Cuenta'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBenefitChip(BuildContext context, String text, ColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration( 
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.9),
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProblemSolutionSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
-      color: colorScheme.surfaceContainerLowest,
-      child: Column(
-        children: [
-          Text(
-            '¿Tus semanas se ven así?',
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 600.ms),
-          const SizedBox(height: 48),
-          Wrap(
-            spacing: 24,
-            runSpacing: 24,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildProblemCard(context, '5 hrs', 'controlando inventario manual', colorScheme),
-              _buildProblemCard(context, '+4 hrs', 'registrando ventas en papel', colorScheme),
-              _buildProblemCard(context, '+3 hrs', 'anotando gastos en Excel', colorScheme),
-              _buildProblemCard(context, '+4 hrs', 'elaborando informes manuales', colorScheme),
-              _buildProblemCard(context, '+\$\$\$', 'tomando pedidos erróneos', colorScheme),
-              _buildProblemCard(context, '+ ∞ hrs', 'pensando como mejorar...', colorScheme),
-            ],
-          ).animate(delay: 200.ms).fadeIn(duration: 800.ms),
-          const SizedBox(height: 48),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: colorScheme.errorContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  '20+ horas',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onErrorContainer,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'con dolor de cabeza 💥',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onErrorContainer,
-                  ),
-                ),
-              ],
-            ),
-          ).animate(delay: 400.ms).fadeIn(duration: 800.ms).scale(),
-          const SizedBox(height: 32),
-          Icon(
-            Icons.arrow_downward,
-            size: 48,
-            color: colorScheme.primary,
-          ).animate(delay: 600.ms).fadeIn(duration: 800.ms),
-          const SizedBox(height: 32),
-          Text(
-            'Hay una forma más sencilla',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
-            ),
-            textAlign: TextAlign.center,
-          ).animate(delay: 800.ms).fadeIn(duration: 800.ms), 
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProblemCard(BuildContext context, String time, String problem, ColorScheme colorScheme) {
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            time,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            problem,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.8),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTestimonialsSection(BuildContext context) {
     final theme = Theme.of(context);
@@ -497,140 +428,388 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 80),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: Theme.of(context).brightness == Brightness.light
+              ? [
+                  const Color(0xFFF8F9FF),
+                  Colors.white,
+                  const Color(0xFFF0F7FF),
+                ]
+              : [
+                  colorScheme.surfaceContainerLowest,
+                  colorScheme.surface,
+                  colorScheme.surfaceContainerLowest,
+                ],
+        ),
+      ),
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(
+                color: Colors.amber.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(5, (index) => 
+                    Icon(Icons.star, color: Colors.amber, size: 16)
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Miles de clientes satisfechos',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.amber.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 600.ms),
+          const SizedBox(height: 24),
           Text(
-            'Clientes satisfechos alrededor del mundo',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            'Transformamos negocios\nen todo el país',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+              height: 1.2,
             ),
             textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 600.ms),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) => 
-              Icon(Icons.star, color: Colors.amber, size: 32)
-            ),
           ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
+          const SizedBox(height: 16),
+          Text(
+            'Únete a la comunidad de empresarios que ya digitalizaron su negocio',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.7),
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 48),
-          Wrap(
-            spacing: 24,
-            runSpacing: 24,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildTestimonialCard(
-                context,
-                '"En 5 min empecé"',
-                'App Store',
-                colorScheme,
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: MediaQuery.of(context).size.width > 800 ? 3 : 1,
+              childAspectRatio: MediaQuery.of(context).size.width > 800 ? 1.1 : 2.5,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+            ),
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              final testimonials = [
+                {
+                  'quote': '"Sell Web transformó completamente mi negocio. En solo 5 minutos ya estaba vendiendo."',
+                  'author': 'María González',
+                  'business': 'Tienda de Ropa',
+                  'location': 'Buenos Aires',
+                  'rating': 5,
+                  'color': const Color(0xFF4ECDC4),
+                },
+                {
+                  'quote': '"El mejor punto de venta que he usado. Súper fácil y confiable. Lo recomiendo 100%."',
+                  'author': 'Carlos Ruiz',
+                  'business': 'Ferretería',
+                  'location': 'Córdoba',
+                  'rating': 5,
+                  'color': const Color(0xFF45B7D1),
+                },
+                {
+                  'quote': '"El soporte es increíble y la app funciona perfecto. Mis ventas aumentaron 40%."',
+                  'author': 'Ana Torres',
+                  'business': 'Panadería',
+                  'location': 'Rosario',
+                  'rating': 5,
+                  'color': const Color(0xFF96CEB4),
+                },
+              ];
+              
+              return _buildModernTestimonialCard(
+                context, 
+                testimonials[index],
+                colorScheme
+              ).animate(delay: Duration(milliseconds: 200 * index))
+                .fadeIn(duration: 600.ms)
+                .slideY(begin: 0.2);
+            },
+          ),
+          const SizedBox(height: 48),
+          // Estadísticas rápidas
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF007BFF),
+                  Color(0xFF0056CC),
+                ],
               ),
-              _buildTestimonialCard(
-                context,
-                '"Lo recomiendo al 100%"',
-                'Google Play',
-                colorScheme,
-              ),
-              _buildTestimonialCard(
-                context,
-                '"Soporte Increíble"',
-                'Cliente Verificado',
-                colorScheme,
-              ),
-            ],
-          ).animate(delay: 400.ms).fadeIn(duration: 800.ms),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF007BFF).withOpacity(0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem('5,000+', 'Negocios activos'),
+                _buildStatItem('99.8%', 'Uptime'),
+                _buildStatItem('24/7', 'Soporte'),
+              ],
+            ),
+          ).animate(delay: 800.ms).fadeIn(duration: 800.ms).scale(),
         ],
       ),
     );
   }
 
-  Widget _buildTestimonialCard(BuildContext context, String quote, String source, ColorScheme colorScheme) {
+  Widget _buildModernTestimonialCard(BuildContext context, Map<String, dynamic> testimonial, ColorScheme colorScheme) {
     return Container(
-      width: 280,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: (testimonial['color'] as Color).withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Estrellas
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) => 
+            children: List.generate(testimonial['rating'] as int, (index) => 
               Icon(Icons.star, color: Colors.amber, size: 20)
             ),
           ),
           const SizedBox(height: 16),
+          
+          // Quote
           Text(
-            quote,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            testimonial['quote'] as String,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontStyle: FontStyle.italic,
               color: colorScheme.onSurface,
+              height: 1.5,
+              fontSize: 16,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          Text(
-            source,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.7),
-              fontWeight: FontWeight.w500,
-            ),
+          const SizedBox(height: 20),
+          
+          // Author info
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      testimonial['color'] as Color,
+                      (testimonial['color'] as Color).withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      testimonial['author'] as String,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '${testimonial['business']} • ${testimonial['location']}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+  Widget _buildStatItem(String number, String label) {
+    return Column(
+      children: [
+        Text(
+          number,
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
   Widget _buildFeaturesSection(BuildContext context, {required Axis axis}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     final features = [
       _FeatureData(
         icon: Icons.inventory_2_outlined,
-        title: 'Inventario Controlado',
-        description: 'Verifica existencias, alertas de stock mínimo y olvida el Excel para siempre.',
+        title: 'Control de Inventario Inteligente',
+        description: 'Automatiza tu inventario con alertas de stock mínimo, códigos de barras y reportes en tiempo real.',
         image: 'assets/catalogue02.png',
-        benefit: 'Reduce 68% robo hormiga',
+        benefit: 'Reduce 68% pérdidas',
+        stats: '68%',
+        color: const Color(0xFF4ECDC4),
       ),
       _FeatureData(
         icon: Icons.point_of_sale_outlined,
-        title: 'Punto de Venta Fácil',
-        description: 'Toma control de tu negocio con tickets impresos, ventas a crédito y descuentos.',
+        title: 'Punto de Venta Profesional',
+        description: 'Procesa ventas rápidamente con tickets automáticos, múltiples formas de pago y control de clientes.',
         image: 'assets/sell02.jpeg',
         benefit: 'Reduce 78% errores',
+        stats: '78%',
+        color: const Color(0xFF45B7D1),
       ),
       _FeatureData(
         icon: Icons.analytics_outlined,
-        title: 'Reportes Instantáneos',
-        description: 'Accede desde cualquier lugar a tus análisis y reportes guardados en la nube.',
+        title: 'Reportes y Analytics',
+        description: 'Obtén insights de tu negocio con dashboards interactivos y reportes automáticos en la nube.',
         image: 'assets/sell05.jpeg',
         benefit: 'Reduce 83% tiempo',
+        stats: '83%',
+        color: const Color(0xFF96CEB4),
       ),
     ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [
+                  colorScheme.surface,
+                  colorScheme.surfaceContainerLowest,
+                  colorScheme.surface,
+                ]
+              : [
+                  Colors.white,
+                  const Color(0xFFFAFBFF),
+                  Colors.white,
+                ],
+        ),
+      ),
       child: Column(
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark 
+                ? const Color(0xFF007BFF).withOpacity(0.15)
+                : const Color(0xFF007BFF).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(
+                color: isDark
+                  ? const Color(0xFF007BFF).withOpacity(0.3)
+                  : const Color(0xFF007BFF).withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              '⚡ Funcionalidades potentes',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark 
+                  ? const Color(0xFF64B5F6)
+                  : const Color(0xFF007BFF),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ).animate().fadeIn(duration: 600.ms),
+          const SizedBox(height: 24),
           Text(
-            'Potencia tu negocio y aumenta tus ingresos',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            'Potencia tu negocio y\nacelera tu crecimiento',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+              height: 1.2,
+              color: isDark ? colorScheme.onSurface : null,
             ),
             textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 600.ms),
-          const SizedBox(height: 48),
+          ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
+          const SizedBox(height: 16),
+          Text(
+            'Todo lo que necesitas para gestionar tu negocio de forma profesional',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.7),
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
+          const SizedBox(height: 64),
           if (axis == Axis.horizontal) 
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: features
                   .asMap()
                   .entries
                   .map((entry) => Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: _FeatureCard(
+                          child: _ModernFeatureCard(
                             feature: entry.value,
                             delay: Duration(milliseconds: entry.key * 200),
                           ),
@@ -644,8 +823,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   .asMap()
                   .entries
                   .map((entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: _FeatureCard(
+                        padding: const EdgeInsets.only(bottom: 32),
+                        child: _ModernFeatureCard(
                           feature: entry.value,
                           delay: Duration(milliseconds: entry.key * 200),
                         ),
@@ -659,78 +838,202 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   Widget _buildCallToActionSection(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(64),
+      padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primary.withOpacity(0.1),
-            colorScheme.secondary.withOpacity(0.1),
+            Color(0xFF007BFF),
+            Color(0xFF0056CC),
+            Color(0xFF003D99),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colorScheme.primary.withOpacity(0.2),
-          width: 2,
-        ),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF007BFF).withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text(
-            'Deja el papel y las tareas repetitivas',
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1,
+              ),
             ),
-            textAlign: TextAlign.center,
+            child: Text(
+              '🚀 ¡Es momento de crecer!',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ).animate().fadeIn(duration: 600.ms),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            'Únete a miles de negocios satisfechos que ya transformaron su forma de trabajar.',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.8),
-              height: 1.6,
+            'Transforma tu negocio hoy',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
             ),
             textAlign: TextAlign.center,
           ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
-          const SizedBox(height: 40),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: [
-              AppButton(
-                onPressed: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
-                text: 'Empezar Gratis Ahora',
-                icon: const Icon(Icons.rocket_launch, size: 20),
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              ).animate(delay: 400.ms).fadeIn(duration: 600.ms).scale(),
-              AppOutlinedButton(
-                onPressed: () => _showDemoDialog(context),
-                text: 'Ver Demo',
-                icon: const Icon(Icons.play_circle_outline, size: 20),
-                foregroundColor: colorScheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              ).animate(delay: 600.ms).fadeIn(duration: 600.ms).scale(),
-            ],
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Text(
-            'Sin tarjeta de crédito • Configuración en 5 minutos',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.6),
+            'Únete a miles de empresarios que ya digitalizaron su negocio\ny aumentaron sus ventas con Sell Web',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: Colors.white.withOpacity(0.9),
+              height: 1.6,
+              fontSize: 18,
             ),
             textAlign: TextAlign.center,
-          ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
+          ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
+          const SizedBox(height: 40),
+          
+          // Beneficios rápidos
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 24,
+            runSpacing: 16,
+            children: [
+              _buildCTABenefit('✓ Gratis por 30 días'),
+              _buildCTABenefit('✓ Sin tarjeta de crédito'),
+              _buildCTABenefit('✓ Configuración en 5 min'),
+              _buildCTABenefit('✓ Soporte personal'),
+            ],
+          ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
+          const SizedBox(height: 40),
+          
+          // Botones principales
+          Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.center,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
+                  icon: const Icon(Icons.rocket_launch, size: 22),
+                  label: const Text(
+                    'Empezar Ahora',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF007BFF),
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ).animate(delay: 800.ms).fadeIn(duration: 600.ms).scale(),
+              
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 2,
+                  ),
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: (){},
+                  icon: const Icon(Icons.shop_outlined, size: 22),
+                  label: const Text(
+                    'Play Store',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ).animate(delay: 1000.ms).fadeIn(duration: 600.ms).scale(),
+            ],
+          ),
+          const SizedBox(height: 32),
+          
+          // Garantía
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.security,
+                  color: Colors.white.withOpacity(0.9),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Garantía de satisfacción 100% • Cancela cuando quieras',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ).animate(delay: 1200.ms).fadeIn(duration: 600.ms),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCTABenefit(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.95),
+        fontWeight: FontWeight.w600,
+        fontSize: 15,
       ),
     );
   }
@@ -740,22 +1043,108 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      color: theme.colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: Theme.of(context).brightness == Brightness.light
+              ? [
+                  Colors.white,
+                  const Color(0xFFF8F9FF),
+                ]
+              : [
+                  theme.colorScheme.surface,
+                  theme.colorScheme.surfaceContainerLow,
+                ],
+        ),
+      ),
       child: Column(
         children: [
-          Text(
-            '© 2025 Sell Web. Todos los derechos reservados.',
-            style: theme.textTheme.bodySmall,
-            textAlign: TextAlign.center,
+          // Logo y descripción
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/launcher.png', height: 32),
+              const SizedBox(width: 12),
+              Text(
+                'Sell Web',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF007BFF),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Text(
-            'Sistema de punto de venta moderno para tu negocio.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+            'La plataforma de punto de venta más intuitiva para hacer crecer tu negocio',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          
+          // Separador
+          Container(
+            height: 1,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.transparent,
+                  theme.colorScheme.outline.withOpacity(0.2),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          // Copyright y enlaces
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 24,
+            runSpacing: 16,
+            children: [
+              Text(
+                '© 2025 Sell Web',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                '•',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                ),
+              ),
+              Text(
+                'Hecho con ❤️ en Argentina',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                '•',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                ),
+              ),
+              Text(
+                'Todos los derechos reservados',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -777,6 +1166,8 @@ class _FeatureData {
   final String description;
   final String image;
   final String? benefit;
+  final String? stats;
+  final Color? color;
 
   _FeatureData({
     required this.icon,
@@ -784,7 +1175,182 @@ class _FeatureData {
     required this.description,
     required this.image,
     this.benefit,
+    this.stats,
+    this.color,
   });
+}
+
+class _ModernFeatureCard extends StatefulWidget {
+  final _FeatureData feature;
+  final Duration delay;
+
+  const _ModernFeatureCard({
+    required this.feature,
+    required this.delay,
+  });
+
+  @override
+  State<_ModernFeatureCard> createState() => _ModernFeatureCardState();
+}
+
+class _ModernFeatureCardState extends State<_ModernFeatureCard>
+    with SingleTickerProviderStateMixin {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        transform: Matrix4.identity()
+          ..scale(_isHovered ? 1.03 : 1.0)
+          ..translate(0.0, _isHovered ? -8.0 : 0.0),
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark
+                ? (widget.feature.color?.withOpacity(0.3) ?? colorScheme.outline.withOpacity(0.3))
+                : (widget.feature.color?.withOpacity(0.2) ?? const Color(0xFF007BFF).withOpacity(0.1)),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                  ? Colors.black.withOpacity(0.3)
+                  : _isHovered 
+                    ? (widget.feature.color?.withOpacity(0.15) ?? const Color(0xFF007BFF).withOpacity(0.15))
+                    : Colors.black.withOpacity(0.05),
+                blurRadius: _isHovered ? 20 : 12,
+                offset: Offset(0, _isHovered ? 12 : 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Ícono con background colorido
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.feature.color ?? const Color(0xFF007BFF),
+                      (widget.feature.color ?? const Color(0xFF007BFF)).withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (widget.feature.color ?? const Color(0xFF007BFF)).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  widget.feature.icon,
+                  size: 32,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Título
+              Text(
+                widget.feature.title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Descripción
+              Text(
+                widget.feature.description,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.7),
+                  height: 1.5,
+                  fontSize: 15,
+                ),
+              ),
+              
+              if (widget.feature.benefit != null || widget.feature.stats != null) ...[
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    if (widget.feature.stats != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isDark
+                            ? (widget.feature.color ?? const Color(0xFF007BFF)).withOpacity(0.2)
+                            : (widget.feature.color ?? const Color(0xFF007BFF)).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: isDark 
+                            ? Border.all(
+                                color: (widget.feature.color ?? const Color(0xFF007BFF)).withOpacity(0.3),
+                                width: 1,
+                              )
+                            : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.feature.stats!,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: isDark
+                                  ? (widget.feature.color ?? const Color(0xFF64B5F6))
+                                  : (widget.feature.color ?? const Color(0xFF007BFF)),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.trending_up,
+                              size: 16,
+                              color: isDark
+                                ? (widget.feature.color ?? const Color(0xFF64B5F6))
+                                : (widget.feature.color ?? const Color(0xFF007BFF)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    if (widget.feature.benefit != null)
+                      Expanded(
+                        child: Text(
+                          widget.feature.benefit!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.6),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
+  }
 }
 
 class _FeatureCard extends StatefulWidget {
@@ -891,5 +1457,297 @@ class _FeatureCardState extends State<_FeatureCard>
         ),
       ),
     ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
+  }
+}
+
+/// Custom clipper para crear forma de onda en la parte inferior del hero section
+class WaveClipper extends CustomClipper<Path> {
+  final bool isMobile;
+  
+  const WaveClipper({this.isMobile = false});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    
+    // Comenzar desde la esquina superior izquierda
+    path.moveTo(0, 0);
+    
+    // Línea superior
+    path.lineTo(size.width, 0);
+    
+    // Altura de la onda adaptativa según el dispositivo
+    final waveOffset = isMobile ? 40.0 : 60.0;
+    final waveHeight = isMobile ? 20.0 : 40.0;
+    
+    // Línea derecha hasta antes de la onda
+    path.lineTo(size.width, size.height - waveOffset);
+    
+    // Crear la onda usando curvas cuadráticas
+    final waveLength = size.width / (isMobile ? 2 : 3); // Menos ondas en móvil
+    
+    if (isMobile) {
+      // Versión simplificada para móvil (2 ondas)
+      // Segunda onda
+      path.quadraticBezierTo(
+        size.width - (waveLength * 0.5), (size.height - waveOffset) + waveHeight * 0.8,
+        size.width - waveLength, size.height - waveOffset,
+      );
+      
+      // Primera onda
+      path.quadraticBezierTo(
+        size.width - (waveLength * 1.5), (size.height - waveOffset) - waveHeight * 0.6,
+        0, size.height - waveOffset,
+      );
+    } else {
+      // Versión completa para desktop (3 ondas)
+      // Tercera onda (de derecha a izquierda)
+      path.quadraticBezierTo(
+        size.width - (waveLength * 0.5), (size.height - waveOffset) + waveHeight * 0.9,
+        size.width - waveLength, size.height - waveOffset,
+      );
+      
+      // Segunda onda
+      path.quadraticBezierTo(
+        size.width - (waveLength * 1.5), (size.height - waveOffset) - waveHeight * 0.8,
+        size.width - (waveLength * 2), size.height - waveOffset,
+      );
+      
+      // Primera onda
+      path.quadraticBezierTo(
+        size.width - (waveLength * 2.5), (size.height - waveOffset) + waveHeight,
+        0, size.height - waveOffset,
+      );
+    }
+    
+    // Línea izquierda de vuelta al inicio
+    path.lineTo(0, 0);
+    
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant WaveClipper oldClipper) => isMobile != oldClipper.isMobile;
+}
+
+/// Custom painter para crear forma de onda en la parte inferior del hero section
+class WavePainter extends CustomPainter {
+  final Color color;
+  final Color backgroundColor;
+
+  WavePainter({
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final backgroundPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    
+    // Comenzar desde la esquina superior izquierda
+    path.moveTo(0, 0);
+    
+    // Crear la onda usando curvas cuadráticas
+    final waveHeight = size.height * 0.6;
+    final waveLength = size.width / 3;
+    
+    // Primera onda
+    path.quadraticBezierTo(
+      waveLength * 0.5, waveHeight,
+      waveLength, 0,
+    );
+    
+    // Segunda onda
+    path.quadraticBezierTo(
+      waveLength * 1.5, -waveHeight * 0.8,
+      waveLength * 2, 0,
+    );
+    
+    // Tercera onda
+    path.quadraticBezierTo(
+      waveLength * 2.5, waveHeight * 0.9,
+      size.width, 0,
+    );
+    
+    // Completar el rectángulo hacia abajo
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    
+    // Primero pintar el fondo
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      backgroundPaint,
+    );
+    
+    // Luego pintar la onda
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+/// Widget que simula efecto de tipeo secuencial con cursor
+class TypewriterText extends StatefulWidget {
+  final List<String> texts;
+  final TextStyle? style;
+  final TextAlign textAlign;
+  final Duration typingSpeed;
+  final Duration pauseDuration;
+  final Duration backspacingSpeed;
+
+  const TypewriterText({
+    super.key,
+    required this.texts,
+    this.style,
+    this.textAlign = TextAlign.center,
+    this.typingSpeed = const Duration(milliseconds: 100),
+    this.pauseDuration = const Duration(milliseconds: 2000),
+    this.backspacingSpeed = const Duration(milliseconds: 50),
+  });
+
+  @override
+  State<TypewriterText> createState() => _TypewriterTextState();
+}
+
+class _TypewriterTextState extends State<TypewriterText>
+    with TickerProviderStateMixin {
+  String _currentText = '';
+  int _currentIndex = 0;
+  int _charIndex = 0;
+  bool _isTyping = true;
+  bool _showCursor = true;
+  
+  Timer? _typingTimer;
+  Timer? _cursorTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTypewriterEffect();
+    _startCursorBlinking();
+  }
+
+  @override
+  void dispose() {
+    _typingTimer?.cancel();
+    _cursorTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCursorBlinking() {
+    _cursorTimer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
+      if (mounted) {
+        setState(() {
+          _showCursor = !_showCursor;
+        });
+      }
+    });
+  }
+
+  void _startTypewriterEffect() {
+    if (widget.texts.isEmpty) return;
+    
+    _typingTimer = Timer.periodic(
+      _isTyping ? widget.typingSpeed : widget.backspacingSpeed,
+      (timer) {
+        if (!mounted) return;
+        
+        setState(() {
+          if (_isTyping) {
+            // Escribiendo
+            if (_charIndex < widget.texts[_currentIndex].length) {
+              _currentText = widget.texts[_currentIndex].substring(0, _charIndex + 1);
+              _charIndex++;
+            } else {
+              // Terminó de escribir, pausa antes de borrar
+              timer.cancel();
+              Timer(widget.pauseDuration, () {
+                if (mounted) {
+                  setState(() {
+                    _isTyping = false;
+                  });
+                  _startTypewriterEffect();
+                }
+              });
+            }
+          } else {
+            // Borrando
+            if (_charIndex > 0) {
+              _charIndex--;
+              _currentText = widget.texts[_currentIndex].substring(0, _charIndex);
+            } else {
+              // Terminó de borrar, cambiar al siguiente texto
+              _currentIndex = (_currentIndex + 1) % widget.texts.length;
+              _isTyping = true;
+              timer.cancel();
+              Timer(const Duration(milliseconds: 300), () {
+                if (mounted) {
+                  _startTypewriterEffect();
+                }
+              });
+            }
+          }
+        });
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculamos la altura del texto más largo para mantener consistencia
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'TOMA EL CONTROL DE TU NEGOCIO', // El texto más largo de la lista
+        style: widget.style,
+      ),
+      textDirection: TextDirection.ltr,
+      textAlign: widget.textAlign,
+    );
+    textPainter.layout();
+    final textHeight = textPainter.height;
+    
+    return SizedBox(
+      height: textHeight + 8, // Altura fija con padding adicional
+      child: Align(
+        alignment: Alignment.center,
+        child: RichText(
+          textAlign: widget.textAlign,
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: _currentText,
+                style: widget.style,
+              ),
+              TextSpan(
+                text: _showCursor ? '●' : '●',
+                style: widget.style?.copyWith(
+                  color: _showCursor ? (widget.style?.color ?? Colors.white) : Colors.transparent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: (widget.style?.fontSize ?? 24) * 0.6, // 60% del tamaño del texto
+                  shadows: _showCursor ? [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 1,
+                      offset: const Offset(0, 0.5),
+                    ),
+                  ] : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

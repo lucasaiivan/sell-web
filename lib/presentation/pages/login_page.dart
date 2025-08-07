@@ -83,7 +83,7 @@ class LoginPage extends StatelessWidget {
           content,
           // Botones de configuración del tema
           Positioned(
-            top: 20,
+            top: 30,
             right: 20,
             child: ThemeControlButtons(
               spacing: 8,
@@ -188,34 +188,8 @@ class _LoginFormState extends State<_LoginForm> {
                 AuthFeedbackWidget(
                   error: widget.authProvider.authError,
                   onDismissError: widget.authProvider.clearAuthError,
-                ),
-            
-                // Texto de bienvenida centrado
-                Padding(
-                  padding: getResponsivePadding(
-                    context,
-                    mobile: const EdgeInsets.only(bottom: 50,top: 25),
-                    tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 50),
-                    desktop: const EdgeInsets.symmetric(horizontal: 16, vertical: 50),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Ingresá a tu cuenta',
-                        style: textTheme.headlineSmall?.copyWith(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w900,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text('Seguí ganando tiempo y dinero',style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface.withValues(alpha: 0.7),fontWeight: FontWeight.w500),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-            
+                ), 
+
                 // CheckboxListTile responsivo : aceptar términos y condiciones
                 Container(
                   margin: getResponsivePadding(
@@ -266,10 +240,10 @@ class _LoginFormState extends State<_LoginForm> {
                     ),
                   ),
                 ),
-            
+                const SizedBox(height: 12),
                 // ElevatedButton : Iniciar sesión con Google
                 AppButton(
-                  
+                  width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   backgroundColor: Colors.blue.shade700,
                   text: "CONTINUAR CON GOOGLE",
@@ -283,9 +257,10 @@ class _LoginFormState extends State<_LoginForm> {
                         }
                       : null,
                 ), 
-            
+                const SizedBox(height: 12),
                 // ElevatedButton : Iniciar como invitado
                 AppButton(
+                  width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
                   backgroundColor: Colors.blueGrey,

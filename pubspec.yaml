@@ -99,6 +99,13 @@ flutter:
       - assets/sell06.jpeg
       - assets/stock.jpeg
       - assets/product_default.png
+      - assets/screenshot00.png
+      - assets/screenshot01.png
+      - assets/screenshot02.png
+      - assets/screenshot03.png
+      - assets/screenshot04.png
+      - assets/screenshot05.png
+      - assets/screenshot06.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

@@ -50,18 +50,23 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
     final colorScheme = Theme.of(context).colorScheme;
-    backgroundContainerColor = (Theme.of(context).brightness == Brightness.light
-        ? Colors.white
-        : Colors.black);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    backgroundContainerColor = isDark ? Colors.black : Colors.white;
+    
+    // Colores mejorados para el AppBar considerando el tema
     Color accentAppbarColor = _isScrolled
-        ? (Theme.of(context).brightness == Brightness.light
-            ? colorScheme.primary.withValues(alpha: 0.8)
-            : colorScheme.primary.withValues(alpha: 0.8))
-        : Colors.white;
+        ? (isDark 
+            ? colorScheme.primary.withValues(alpha: 0.9)
+            : colorScheme.primary.withValues(alpha: 0.85))
+        : (isDark 
+            ? Colors.white.withValues(alpha: 0.95)
+            : Colors.white);
+            
     Color appbarColor = _isScrolled
-        ? (Theme.of(context).brightness == Brightness.light
-            ? colorScheme.surface.withValues(alpha: 0.2)
-            : colorScheme.surface.withValues(alpha: 0.2))
+        ? (isDark 
+            ? colorScheme.surface.withValues(alpha: 0.85)
+            : Colors.white.withValues(alpha: 0.9))
         : Colors.transparent;
 
     return Title(
@@ -76,79 +81,168 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           child: ClipRect(
             child: BackdropFilter(
               filter: _isScrolled
-                  ? ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0)
+                  ? ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0)
                   : ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
-              child: AppBar(
-                title: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset('assets/launcher.png', height: 32),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Sell',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: accentAppbarColor,
-                        fontWeight: FontWeight.w600,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: appbarColor,
+                  border: _isScrolled 
+                      ? Border(
+                          bottom: BorderSide(
+                            color: isDark 
+                                ? colorScheme.outline.withValues(alpha: 0.3)
+                                : colorScheme.outline.withValues(alpha: 0.2),
+                            width: 0.5,
+                          ),
+                        )
+                      : null,
+                ),
+                child: AppBar(
+                  title: Row(
+                    children: [
+                      // Logo con animación mejorada
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        transform: _isScrolled 
+                            ? (Matrix4.identity()..scale(1.05))
+                            : Matrix4.identity(),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _isScrolled
+                                ? [
+                                    BoxShadow(
+                                      color: colorScheme.primary.withValues(alpha: 0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset('assets/launcher.png', height: 32),
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      // Título con gradiente mejorado
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 300),
+                        style: TextStyle(
+                          fontSize: _isScrolled ? 20 : 18,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                        ),
+                        child: Text(
+                          'Sell',
+                            style: TextStyle(
+                            color: _isScrolled
+                              ? accentAppbarColor
+                              : (isDark 
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : Colors.white),
+                            ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                  actions: [
+                    // Botón de login con animación mejorada
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder:
+                          (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _isScrolled
+                          ? Container(
+                              key: const ValueKey('login_button'),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: AppFilledButton(
+                                onPressed: () => _navigateToLogin(
+                                    context,
+                                    Provider.of<AuthProvider>(context,
+                                        listen: false)),
+                                text: 'Iniciar Sesión',
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                                backgroundColor: isDark 
+                                    ? colorScheme.primary
+                                    : colorScheme.primary,
+                                foregroundColor: isDark 
+                                    ? colorScheme.onPrimary
+                                    : Colors.white,
+                              ),
+                            )
+                          : const SizedBox(key: ValueKey('placeholder')),
                     ),
+
+                    // Botón para cambiar tema con diseño mejorado
+                    Consumer<ThemeDataAppProvider>(
+                      builder: (context, themeProvider, _) {
+                        return Container(
+                          margin: const EdgeInsets.only(left: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: _isScrolled
+                                ? (isDark 
+                                    ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.8)
+                                    : colorScheme.surfaceContainerHigh.withValues(alpha: 0.6))
+                                : (isDark 
+                                    ? Colors.white.withValues(alpha: 0.15)
+                                    : Colors.black.withValues(alpha: 0.1)),
+                          ),
+                          child: IconButton(
+                            onPressed: themeProvider.toggleTheme,
+                            icon: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              transitionBuilder: (child, animation) {
+                                return RotationTransition(
+                                  turns: animation,
+                                  child: child,
+                                );
+                              },
+                              child: Icon(
+                                themeProvider.themeMode == ThemeMode.dark
+                                    ? Icons.light_mode_outlined
+                                    : Icons.dark_mode_outlined,
+                                key: ValueKey(themeProvider.themeMode),
+                                color: _isScrolled
+                                    ? accentAppbarColor
+                                    : (isDark ? Colors.white.withValues(alpha: 0.9) : Colors.white),
+                                size: 22,
+                              ),
+                            ),
+                            tooltip: themeProvider.themeMode == ThemeMode.dark
+                                ? 'Cambiar a tema claro'
+                                : 'Cambiar a tema oscuro',
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 16),
                   ],
                 ),
-                backgroundColor: appbarColor,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                surfaceTintColor: Colors.transparent,
-                actions: [
-                  // Botón de login
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder:
-                        (Widget child, Animation<double> animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: ScaleTransition(
-                          scale: animation,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: _isScrolled
-                        ? AppFilledButton(
-                            key: const ValueKey('login_button'),
-                            onPressed: () => _navigateToLogin(
-                                context,
-                                Provider.of<AuthProvider>(context,
-                                    listen: false)),
-                            text: 'Iniciar Sesión',
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                          )
-                        : const SizedBox(key: ValueKey('placeholder')),
-                  ),
-
-                  // Botón para cambiar tema
-                  Consumer<ThemeDataAppProvider>(
-                    builder: (context, themeProvider, _) {
-                      return IconButton(
-                        onPressed: themeProvider.toggleTheme,
-                        icon: Icon(
-                          _isScrolled
-                              ? themeProvider.themeMode == ThemeMode.dark
-                                  ? Icons.light_mode_outlined
-                                  : Icons.dark_mode_outlined
-                              : Icons.dark_mode_outlined,
-                          color: accentAppbarColor,
-                        ),
-                        tooltip: themeProvider.themeMode == ThemeMode.dark
-                            ? 'Cambiar a tema claro'
-                            : 'Cambiar a tema oscuro',
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                ],
               ),
             ),
           ),
@@ -215,6 +309,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   Widget _buildHeroSection(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
@@ -227,7 +322,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 50),
+          padding: const EdgeInsets.only(bottom: 90),
           child: ClipPath(
             clipper: WaveClipper(
               isMobile: isMobile,
@@ -250,23 +345,21 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          stops: const [1.0, 0.3, 0.7, 1.0],
-                          colors: Theme.of(context).brightness ==
-                                  Brightness.light
+                          stops: const [0.0, 0.3, 0.7, 1.0],
+                          colors: isDark
                               ? [
-                                  // Inicio solo color sólido
-                                  Colors.yellow,
-                                  Colors.yellow.shade600.withValues(alpha: 0.9),
-                                  Colors.yellow,
-                                  // Final con más transparencia para mostrar imagen
-                                  Colors.yellow,
+                                  // Modo oscuro - colores más sutiles
+                                  colorScheme.primary.withValues(alpha: 0.4),
+                                  colorScheme.primary.withValues(alpha: 0.3),
+                                  colorScheme.primary.withValues(alpha: 0.4),
+                                  colorScheme.primary.withValues(alpha: 0.5),
                                 ]
                               : [
-                                  // Modo oscuro
-                                  Colors.yellow.withValues(alpha: 0.5),
-                                  Colors.yellow.withValues(alpha: 0.5),
-                                  Colors.yellow.withValues(alpha: 0.5),
-                                  Colors.yellow.withValues(alpha: 0.7),
+                                  // Modo claro - mantener los amarillos pero más suaves
+                                  Colors.yellow.shade300,
+                                  Colors.yellow.shade400.withValues(alpha: 0.9),
+                                  Colors.yellow.shade300,
+                                  Colors.yellow.shade400,
                                 ],
                         ),
                       ),
@@ -291,20 +384,21 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           stops: const [0.0, 0.4, 0.8, 1.0],
-                          colors:
-                              Theme.of(context).brightness == Brightness.light
-                                  ? [
-                                      Colors.yellow.withValues(alpha: 0.8),
-                                      Colors.yellow.withValues(alpha: 0.4),
-                                      Colors.yellow,
-                                      Colors.yellow,
-                                    ]
-                                  : [
-                                      Colors.yellow.withValues(alpha: 0.5),
-                                      Colors.yellow.withValues(alpha: 0.08),
-                                      Colors.yellow,
-                                      Colors.yellow,
-                                    ],
+                          colors: isDark
+                              ? [
+                                  // Modo oscuro - gradiente más sutil
+                                  colorScheme.surface.withValues(alpha: 0.3),
+                                  Colors.transparent,
+                                  colorScheme.primary.withValues(alpha: 0.2),
+                                  colorScheme.primary.withValues(alpha: 0.4),
+                                ]
+                              : [
+                                  // Modo claro - gradiente amarillo suave
+                                  Colors.yellow.shade200.withValues(alpha: 0.8),
+                                  Colors.yellow.shade300.withValues(alpha: 0.4),
+                                  Colors.yellow.shade400,
+                                  Colors.yellow.shade500,
+                                ],
                         ),
                       ),
                     ),
@@ -317,7 +411,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                         right: isMobile ? 16 : 24,
                         top: isMobile ? 20 : 64,
                         bottom: isMobile
-                            ? 140
+                            ? 22
                             : 180, // Más espacio para acomodar las imágenes con texto
                       ),
                       child: _buildHeroContentOnly(context, theme, colorScheme),
@@ -330,7 +424,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         ),
         // Imagen del dispositivo móvil posicionada para no tapar el texto
         Positioned(
-          bottom: 22,
+          bottom: 20,
           left: 0,
           right: 0,
           child: AnimatedContainer(
@@ -357,7 +451,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     heightFallback:
                         isMobile ? 140 : 180, // Ajustar altura para el texto
                     deviceType: DeviceType.mobile,
-                    text: 'Móvil',
+                    text: '✓ Móvil',
                   ),
                   // Imagen de la captura web
                   _deviceImageWithHover(
@@ -367,7 +461,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     widthFactor: isMobile ? 0.35 : 0.25,
                     heightFallback: isMobile ? 120 : 150,
                     deviceType: DeviceType.desktop,
-                    text: 'Web',
+                    text: '✓ Web',
                   ),
                 ],
               ),
@@ -384,6 +478,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   Widget _buildHeroContentOnly(
       BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -397,12 +493,20 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             fontSize: 40,
             letterSpacing: -0.5,
             foreground: Paint()
-              ..shader = const LinearGradient(
-                colors: [
-                  Colors.blueAccent,
-                  Colors.lightBlue,
-                  Colors.lightBlue,
-                ],
+              ..shader = LinearGradient(
+                colors: isDark
+                    ? [
+                        // Modo oscuro - gradiente con colores primarios
+                        colorScheme.primary,
+                        colorScheme.primaryContainer,
+                        colorScheme.secondary,
+                      ]
+                    : [
+                        // Modo claro - gradiente azul vibrante
+                        Colors.blueAccent,
+                        Colors.lightBlue,
+                        Colors.blue.shade700,
+                      ],
               ).createShader(const Rect.fromLTWH(0.0, 0.0, 400.0, 70.0)),
           ),
         ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.3),
@@ -431,35 +535,23 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           'Agilizá tu proceso de ventas fácil, rápido para vender y controlar tu inventario desde cualquier lugar',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurface.withValues(alpha: 0.9),
+            color: isDark 
+                ? colorScheme.onSurface.withValues(alpha: 0.85)
+                : colorScheme.onSurface.withValues(alpha: 0.9),
             fontWeight: FontWeight.w500,
             height: 1.6,
             fontSize: 18,
+            shadows: isDark 
+                ? null
+                : [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      offset: const Offset(0, 1),
+                      blurRadius: 2,
+                    ),
+                  ],
           ),
         ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
-        const SizedBox(height: 30),
-        // buttons : acciones principales
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            AppButton(
-              text: 'Disponible en Play Store',
-              icon: Image.asset('assets/playstore.png', width: 24, height: 24),
-              backgroundColor: Colors.black,
-              onPressed: _launchPlayStore,
-            ),
-            AppFilledButton(
-              text: 'Comenzar Ahora',
-              icon: Icon(Icons.auto_fix_high_outlined),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              onPressed: () => _navigateToLogin(
-                  context, Provider.of<AuthProvider>(context, listen: false)),
-            ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
-          ],
-        ),
         const SizedBox(height: 50),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 40),
@@ -479,6 +571,51 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             ),
           ),
         ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
+        const SizedBox(height: 50),
+        // text : disponible en:
+        Text(
+          'Disponible en:',
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: isDark
+                ? colorScheme.onSurface.withValues(alpha: 0.85)
+                : colorScheme.onSurface.withValues(alpha: 0.9),
+            fontWeight: FontWeight.w500,
+            height: 1.6,
+            fontSize: 18,
+            shadows: isDark
+                ? null
+                : [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      offset: const Offset(0, 1),
+                      blurRadius: 2,
+                    ),
+                  ],
+          ),
+        ),
+        const SizedBox(height: 50),
+        // buttons : acciones principales
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            AppButton(
+              text: 'Play Store',
+              icon: Image.asset('assets/playstore.png', width: 24, height: 24),
+              backgroundColor: Colors.black,
+              onPressed: _launchPlayStore,
+            ),
+            AppFilledButton(
+              text: 'Comenzar Ahora',
+              icon: Icon(Icons.auto_fix_high_outlined),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              onPressed: () => _navigateToLogin(
+                  context, Provider.of<AuthProvider>(context, listen: false)),
+            ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
+          ],
+        ), 
       ],
     );
   }

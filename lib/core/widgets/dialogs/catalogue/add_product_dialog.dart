@@ -320,7 +320,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
- 
       }
 
       // Procesar en segundo plano

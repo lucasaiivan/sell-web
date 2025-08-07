@@ -139,7 +139,7 @@ class AppButton extends StatelessWidget {
 
     return Text(
       text,
-      style: TextStyle( 
+      style: TextStyle(
         fontSize: fontSize,
       ),
       textAlign: TextAlign.center,
@@ -149,7 +149,8 @@ class AppButton extends StatelessWidget {
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return ElevatedButton.styleFrom(
       elevation: defaultStyle ? 0 : elevation,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
@@ -196,7 +197,7 @@ class AppOutlinedButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width ,
+    this.width,
     this.disable = false,
     this.minimumSize,
     this.isLoading = false,
@@ -282,7 +283,8 @@ class AppOutlinedButton extends StatelessWidget {
 
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return OutlinedButton.styleFrom(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor ?? colorScheme.primary,
@@ -326,7 +328,7 @@ class AppFilledButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width ,
+    this.width,
     this.disable = false,
     this.minimumSize,
     this.isLoading = false,
@@ -412,7 +414,8 @@ class AppFilledButton extends StatelessWidget {
 
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return FilledButton.styleFrom(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,

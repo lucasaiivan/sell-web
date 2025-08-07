@@ -332,7 +332,7 @@ class Utils {
       // Para web: descarga el PDF usando url_launcher
       final bytes = await pdf.save();
       final url = 'data:application/pdf;base64,${base64Encode(bytes)}';
-      
+
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.platformDefault);

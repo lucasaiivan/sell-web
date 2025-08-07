@@ -313,8 +313,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => provider.selectCashRegister(cashRegister),
-                hoverColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.05),
+                hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: EdgeInsets.symmetric(
@@ -327,10 +326,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
                         duration: const Duration(milliseconds: 200),
                         padding: EdgeInsets.all(isMobile ? 6 : 8),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary
-                              .withValues(alpha: 0.1),
-                          borderRadius:
-                              BorderRadius.circular(isMobile ? 4 : 6),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(isMobile ? 4 : 6),
                         ),
                         child: Icon(
                           Icons.point_of_sale_rounded,
@@ -481,16 +479,17 @@ class CashRegisterManagementDialog extends StatelessWidget {
       showDividers: true,
       title: 'Movimientos de caja',
       maxVisibleItems: 5,
-      expandText:'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
-      collapseText: 'Ver menos', 
+      expandText:
+          'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
+      collapseText: 'Ver menos',
       items: allMovements.map((movement) {
         return _buildCashFlowMovementTile(context, movement, isMobile);
       }).toList(),
     );
   }
 
-  Widget _buildCashFlowMovementTile(BuildContext context,
-      Map<String, dynamic> movement, bool isMobile) {
+  Widget _buildCashFlowMovementTile(
+      BuildContext context, Map<String, dynamic> movement, bool isMobile) {
     final theme = Theme.of(context);
     final cashFlow = movement['cashFlow'] as CashFlow;
     final isIngreso = movement['type'] == 'ingreso';
@@ -554,8 +553,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
                       ? theme.textTheme.labelSmall
                       : theme.textTheme.labelMedium)
                   ?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant
-                    .withValues(alpha: 0.7),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
           ],

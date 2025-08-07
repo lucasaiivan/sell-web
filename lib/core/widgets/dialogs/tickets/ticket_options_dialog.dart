@@ -421,7 +421,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
       // Mostrar resultados
       if (mounted) {
-        Navigator.of(context).pop(); 
+        Navigator.of(context).pop();
 
         if (errorMessages.isNotEmpty) {
           showErrorDialog(

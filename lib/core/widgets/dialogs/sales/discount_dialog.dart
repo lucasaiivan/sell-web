@@ -26,7 +26,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     super.initState();
     _discountController = TextEditingController();
     _moneyController = AppMoneyTextEditingController();
-    
+
     // Inicializar con el descuento actual si existe
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     if (sellProvider.ticket.discount > 0) {
@@ -34,7 +34,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
       _isPercentage = sellProvider.ticket.discountIsPercentage;
       if (_isPercentage) {
         // Para porcentaje, asegurar que sea entero
-        _discountController.text = sellProvider.ticket.discount.round().toString();
+        _discountController.text =
+            sellProvider.ticket.discount.round().toString();
       } else {
         // Para monto fijo, usar el controlador de dinero
         _moneyController.updateValue(sellProvider.ticket.discount);
@@ -142,7 +143,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
                           }
 
                           // Validar que el descuento calculado no exceda el total
-                          final calculatedDiscount = totalTicket * numValue / 100;
+                          final calculatedDiscount =
+                              totalTicket * numValue / 100;
                           if (calculatedDiscount > totalTicket) {
                             return 'El descuento excede el total';
                           }
@@ -158,7 +160,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
                         labelText: 'Monto del descuento',
                         errorText: _validateMoneyAmount(totalTicket),
                         onChanged: (value) {
-                          setState(() {}); // Para actualizar el preview y validación
+                          setState(
+                              () {}); // Para actualizar el preview y validación
                         },
                       ),
               ],
@@ -183,7 +186,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
             AppButton(
               text: 'Aplicar descuento',
-              
+
               onPressed: _canApplyDiscount(totalTicket)
                   ? () => _applyDiscount(context, sellProvider, totalTicket)
                   : null, // Deshabilitar si no es válido
@@ -213,9 +216,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primaryContainer
-              : colorScheme.surface,
+          color:
+              isSelected ? colorScheme.primaryContainer : colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
@@ -257,7 +259,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     final discountValue = _isPercentage
         ? (double.tryParse(_discountController.text) ?? 0)
         : _moneyController.doubleValue;
-    
+
     // Calcular valores para mostrar siempre el preview
     final discountAmount = discountValue > 0
         ? (_isPercentage ? (totalTicket * discountValue / 100) : discountValue)
@@ -317,7 +319,9 @@ class _DiscountDialogState extends State<DiscountDialog> {
               Text(
                 'Descuento${discountValue > 0 && _isPercentage ? ' ($discountValue%)' : ''}:',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: discountAmount > 0 ? colorScheme.error : colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: discountAmount > 0
+                      ? colorScheme.error
+                      : colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               Text(
@@ -326,7 +330,9 @@ class _DiscountDialogState extends State<DiscountDialog> {
                     : Publications.getFormatoPrecio(value: 0),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: discountAmount > 0 ? colorScheme.error : colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: discountAmount > 0
+                      ? colorScheme.error
+                      : colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -345,7 +351,9 @@ class _DiscountDialogState extends State<DiscountDialog> {
                 Publications.getFormatoPrecio(value: finalTotal),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: discountAmount > 0 ? colorScheme.primary : colorScheme.onSurface,
+                  color: discountAmount > 0
+                      ? colorScheme.primary
+                      : colorScheme.onSurface,
                 ),
               ),
             ],
@@ -358,15 +366,15 @@ class _DiscountDialogState extends State<DiscountDialog> {
   /// Valida el monto del descuento en tiempo real
   String? _validateMoneyAmount(double totalTicket) {
     final moneyValue = _moneyController.doubleValue;
-    
+
     if (moneyValue <= 0) {
       return null; // No mostrar error si está vacío
     }
-    
+
     if (moneyValue > totalTicket) {
       return 'El descuento no puede ser mayor al total';
     }
-    
+
     return null; // Valor válido
   }
 
@@ -375,9 +383,9 @@ class _DiscountDialogState extends State<DiscountDialog> {
     final discountValue = _isPercentage
         ? (double.tryParse(_discountController.text) ?? 0)
         : _moneyController.doubleValue;
-        
+
     if (discountValue <= 0) return false;
-    
+
     if (_isPercentage) {
       return discountValue <= 100;
     } else {
@@ -394,7 +402,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     final discountValue = _isPercentage
         ? (double.tryParse(_discountController.text) ?? 0)
         : _moneyController.doubleValue;
-        
+
     if (discountValue <= 0) {
       _showErrorSnackBar(context, 'Por favor ingrese un valor válido');
       return;

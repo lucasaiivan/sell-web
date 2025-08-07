@@ -53,8 +53,9 @@ class AuthProvider extends ChangeNotifier {
 
   // Inicia sesión con Google usando el caso de uso con manejo de errores y estado de carga
   Future<void> signInWithGoogle() async {
-    if (_isSigningInWithGoogle)
+    if (_isSigningInWithGoogle) {
       return; // Prevenir múltiples llamadas simultáneas
+    }
 
     _isSigningInWithGoogle = true;
     _authError = null;

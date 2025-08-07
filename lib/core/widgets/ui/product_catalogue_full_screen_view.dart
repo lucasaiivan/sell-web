@@ -577,7 +577,8 @@ class _ProductCatalogueFullScreenViewState
       elevation: selectedProduct != null ? 2 : 1,
       shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         leading: ProductImage(
           imageUrl: product.image,
           size: 56,
@@ -585,92 +586,92 @@ class _ProductCatalogueFullScreenViewState
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            product.description,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (product.nameMark.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                product.nameMark,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.primary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              product.description,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-        ],
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(
-          product.code,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.secondary,
+            if (product.nameMark.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  product.nameMark,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            product.code,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.secondary,
+            ),
           ),
         ),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // text : Precio de venta
-          Text(
-            Publications.getFormatoPrecio(value: product.salePrice),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 12),
-          if (selectedProduct != null) ...[
-            // Botón para disminuir cantidad - con estilo similar al contador
-            CircleAvatar(
-              radius: 16,
-              backgroundColor:
-                  colorScheme.errorContainer.withValues(alpha: 0.8),
-              child: InkWell(
-                onTap: () {
-                  // Disminuir cantidad del producto en el ticket
-                  _decreaseProductQuantity(product);
-                  setState(() {}); // Actualizar la vista
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Icon(
-                  Icons.remove,
-                  size: 16,
-                  color: colorScheme.onErrorContainer,
-                ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // text : Precio de venta
+            Text(
+              Publications.getFormatoPrecio(value: product.salePrice),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: colorScheme.onSurface,
               ),
             ),
-            const SizedBox(width: 8),
-            // Cantidad seleccionada como CircleAvatar
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: colorScheme.primary,
-              child: Text(
-                selectedProduct.quantity.toString(),
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+            const SizedBox(width: 12),
+            if (selectedProduct != null) ...[
+              // Botón para disminuir cantidad - con estilo similar al contador
+              CircleAvatar(
+                radius: 16,
+                backgroundColor:
+                    colorScheme.errorContainer.withValues(alpha: 0.8),
+                child: InkWell(
+                  onTap: () {
+                    // Disminuir cantidad del producto en el ticket
+                    _decreaseProductQuantity(product);
+                    setState(() {}); // Actualizar la vista
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Icon(
+                    Icons.remove,
+                    size: 16,
+                    color: colorScheme.onErrorContainer,
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              // Cantidad seleccionada como CircleAvatar
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: colorScheme.primary,
+                child: Text(
+                  selectedProduct.quantity.toString(),
+                  style: TextStyle(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
-      ),
+        ),
         onTap: () {
           widget.sellProvider.addProductsticket(product.copyWith());
           setState(() {}); // Actualizar la vista al seleccionar

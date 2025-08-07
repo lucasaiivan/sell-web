@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +20,6 @@ class AppPresentationPage extends StatefulWidget {
 }
 
 class _AppPresentationPageState extends State<AppPresentationPage> {
-
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
   Color backgroundContainerColor = Colors.transparent;
@@ -50,10 +48,11 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   @override
   Widget build(BuildContext context) {
-
     final double width = MediaQuery.of(context).size.width;
     final colorScheme = Theme.of(context).colorScheme;
-    backgroundContainerColor = (Theme.of(context).brightness == Brightness.light? Colors.white: Colors.black);
+    backgroundContainerColor = (Theme.of(context).brightness == Brightness.light
+        ? Colors.white
+        : Colors.black);
     Color accentAppbarColor = _isScrolled
         ? (Theme.of(context).brightness == Brightness.light
             ? colorScheme.primary.withValues(alpha: 0.8)
@@ -68,16 +67,17 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     return Title(
       title: 'Bienvenido - Sell Web',
       color: colorScheme.primary,
-      child: Scaffold( 
-        extendBodyBehindAppBar: true, // Permite que el cuerpo se extienda detrás del AppBar 
+      child: Scaffold(
+        extendBodyBehindAppBar:
+            true, // Permite que el cuerpo se extienda detrás del AppBar
         backgroundColor: backgroundContainerColor,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: ClipRect(
             child: BackdropFilter(
-              filter: _isScrolled 
-                ? ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0)
-                : ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
+              filter: _isScrolled
+                  ? ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0)
+                  : ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
               child: AppBar(
                 title: Row(
                   children: [
@@ -89,22 +89,23 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     Text(
                       'Sell',
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle( 
+                      style: TextStyle(
                         color: accentAppbarColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ], 
+                  ],
                 ),
                 backgroundColor: appbarColor,
-                elevation: 0, 
+                elevation: 0,
                 scrolledUnderElevation: 0,
                 surfaceTintColor: Colors.transparent,
                 actions: [
                   // Botón de login
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
                       return FadeTransition(
                         opacity: animation,
                         child: ScaleTransition(
@@ -117,7 +118,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                         ? AppFilledButton(
                             key: const ValueKey('login_button'),
                             onPressed: () => _navigateToLogin(
-                                context, Provider.of<AuthProvider>(context, listen: false)),
+                                context,
+                                Provider.of<AuthProvider>(context,
+                                    listen: false)),
                             text: 'Iniciar Sesión',
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
@@ -130,7 +133,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     builder: (context, themeProvider, _) {
                       return IconButton(
                         onPressed: themeProvider.toggleTheme,
-                        icon: Icon( 
+                        icon: Icon(
                           _isScrolled
                               ? themeProvider.themeMode == ThemeMode.dark
                                   ? Icons.light_mode_outlined
@@ -138,12 +141,12 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                               : Icons.dark_mode_outlined,
                           color: accentAppbarColor,
                         ),
-                        tooltip: themeProvider.themeMode == ThemeMode.dark 
-                          ? 'Cambiar a tema claro'
-                          : 'Cambiar a tema oscuro',
+                        tooltip: themeProvider.themeMode == ThemeMode.dark
+                            ? 'Cambiar a tema claro'
+                            : 'Cambiar a tema oscuro',
                       );
                     },
-                  ), 
+                  ),
                   const SizedBox(width: 16),
                 ],
               ),
@@ -171,8 +174,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   Widget _buildMobileLayout(BuildContext context) {
     return Column(
       children: [
-        _buildHeroSection(context), 
-        _buildFeaturesSection(context, axis: Axis.vertical), 
+        _buildHeroSection(context),
+        _buildFeaturesSection(context, axis: Axis.vertical),
         const SizedBox(height: 48),
         _buildCallToActionSection(context),
         const SizedBox(height: 32),
@@ -186,7 +189,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       children: [
         _buildHeroSection(context),
         const SizedBox(height: 64),
-        _buildFeaturesSection(context, axis: Axis.horizontal), 
+        _buildFeaturesSection(context, axis: Axis.horizontal),
         const SizedBox(height: 64),
         _buildCallToActionSection(context),
         const SizedBox(height: 32),
@@ -200,7 +203,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       children: [
         _buildHeroSection(context),
         const SizedBox(height: 12),
-        _buildFeaturesSection(context, axis: Axis.horizontal), 
+        _buildFeaturesSection(context, axis: Axis.horizontal),
         const SizedBox(height: 80),
         _buildCallToActionSection(context),
         const SizedBox(height: 48),
@@ -218,7 +221,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     // Constantes para alineación perfecta entre clipper y dispositivo
     final deviceImageTopPadding = isMobile ? 40.0 : 60.0;
-    final waveClipperOffset = deviceImageTopPadding; // Mismo valor para perfecta alineación
+    final waveClipperOffset =
+        deviceImageTopPadding; // Mismo valor para perfecta alineación
 
     return Stack(
       children: [
@@ -227,14 +231,15 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           child: ClipPath(
             clipper: WaveClipper(
               isMobile: isMobile,
-              customWaveOffset: waveClipperOffset, // Usar el mismo offset que la imagen
+              customWaveOffset:
+                  waveClipperOffset, // Usar el mismo offset que la imagen
             ),
             child: Container(
               width: double.infinity,
               constraints: BoxConstraints(
                 minHeight: isMobile ? screenHeight * 0.7 : screenHeight * 0.9,
                 maxHeight: screenHeight * 1.1, // Evitar desbordamiento
-              ), 
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -246,7 +251,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           stops: const [1.0, 0.3, 0.7, 1.0],
-                          colors: Theme.of(context).brightness == Brightness.light
+                          colors: Theme.of(context).brightness ==
+                                  Brightness.light
                               ? [
                                   // Inicio solo color sólido
                                   Colors.yellow,
@@ -269,7 +275,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                         child: Image.asset(
                           'assets/premium.jpeg',
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
                             color: Colors.transparent,
                           ),
                         ),
@@ -284,19 +291,20 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           stops: const [0.0, 0.4, 0.8, 1.0],
-                          colors: Theme.of(context).brightness == Brightness.light
-                              ? [
-                                  Colors.yellow.withValues(alpha: 0.8),
-                                  Colors.yellow.withValues(alpha: 0.4),
-                                  Colors.yellow ,
-                                  Colors.yellow,
-                                ]
-                              : [
-                                  Colors.yellow.withValues(alpha: 0.5),
-                                  Colors.yellow.withValues(alpha: 0.08),
-                                  Colors.yellow ,
-                                  Colors.yellow,
-                                ],
+                          colors:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? [
+                                      Colors.yellow.withValues(alpha: 0.8),
+                                      Colors.yellow.withValues(alpha: 0.4),
+                                      Colors.yellow,
+                                      Colors.yellow,
+                                    ]
+                                  : [
+                                      Colors.yellow.withValues(alpha: 0.5),
+                                      Colors.yellow.withValues(alpha: 0.08),
+                                      Colors.yellow,
+                                      Colors.yellow,
+                                    ],
                         ),
                       ),
                     ),
@@ -308,7 +316,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                         left: isMobile ? 16 : 24,
                         right: isMobile ? 16 : 24,
                         top: isMobile ? 20 : 64,
-                        bottom: isMobile ? 140 : 180, // Más espacio para acomodar las imágenes con texto
+                        bottom: isMobile
+                            ? 140
+                            : 180, // Más espacio para acomodar las imágenes con texto
                       ),
                       child: _buildHeroContentOnly(context, theme, colorScheme),
                     ),
@@ -325,7 +335,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           right: 0,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            height: isMobile ? screenHeight * 0.28 : screenHeight * 0.42, // Reducir altura ligeramente
+            height: isMobile
+                ? screenHeight * 0.28
+                : screenHeight * 0.42, // Reducir altura ligeramente
             alignment: Alignment.topCenter,
             child: Padding(
               padding: EdgeInsets.only(
@@ -340,8 +352,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     screenWidth: screenWidth,
                     isMobile: isMobile,
                     assetPath: 'assets/screenshot00.png',
-                    widthFactor: isMobile ? 0.25 : 0.15, // Ajustar ancho para el texto
-                    heightFallback: isMobile ? 140 : 180, // Ajustar altura para el texto
+                    widthFactor:
+                        isMobile ? 0.25 : 0.15, // Ajustar ancho para el texto
+                    heightFallback:
+                        isMobile ? 140 : 180, // Ajustar altura para el texto
                     deviceType: DeviceType.mobile,
                     text: 'Móvil',
                   ),
@@ -359,27 +373,29 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               ),
             ),
           ),
-        ).animate(delay: 1200.ms)
-          .fadeIn(duration: 800.ms)
-          .scaleXY(begin: 0.8, end: 1.0, curve: Curves.easeOut)
-          .slideY(begin: 0.3, end: 0.0),
+        )
+            .animate(delay: 1200.ms)
+            .fadeIn(duration: 800.ms)
+            .scaleXY(begin: 0.8, end: 1.0, curve: Curves.easeOut)
+            .slideY(begin: 0.3, end: 0.0),
       ],
     );
   }
 
-  Widget _buildHeroContentOnly(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildHeroContentOnly(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const SizedBox(height:30),  
+        const SizedBox(height: 30),
         Text(
           'GESTIONA TUS VENTAS E INVENTARIO',
           textAlign: TextAlign.center,
           style: theme.textTheme.displayLarge?.copyWith(
             fontWeight: FontWeight.w800,
-            fontSize:40,
-            letterSpacing: -0.5, 
+            fontSize: 40,
+            letterSpacing: -0.5,
             foreground: Paint()
               ..shader = const LinearGradient(
                 colors: [
@@ -391,16 +407,16 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           ),
         ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 16),
-        // text : secundario 
+        // text : secundario
         TypewriterText(
           texts: const [
             'Punto de venta fácil de usar ',
             'Inventario controlado desde cualquier lugar',
-            'Reportes analíticos instantáneos',   
+            'Reportes analíticos instantáneos',
             'Concentrate en vender, nosotros hacemos el resto',
           ],
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: colorScheme.onSurface ,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.4,
             fontSize: 30,
@@ -430,7 +446,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           children: [
             AppButton(
               text: 'Disponible en Play Store',
-              icon: Image.asset('assets/playstore.png',width: 24, height: 24),
+              icon: Image.asset('assets/playstore.png', width: 24, height: 24),
               backgroundColor: Colors.black,
               onPressed: _launchPlayStore,
             ),
@@ -462,24 +478,25 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
             ),
           ),
-        ).animate(delay: 800.ms).fadeIn(duration: 600.ms), 
+        ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
       ],
     );
   }
- 
+
   Widget _buildFeaturesSection(BuildContext context, {required Axis axis}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     final features = [
       _FeatureData(
         icon: Icons.point_of_sale_outlined,
         title: 'Sistema de Ventas',
-        description: 'Automatiza tu proceso comercial con herramientas profesionales',
+        description:
+            'Automatiza tu proceso comercial con herramientas profesionales',
         checkItems: [
           'Ventas rápidas y eficientes',
-          'Múltiples formas de pago', 
+          'Múltiples formas de pago',
           'Arqueo de caja',
           'Interfaz intuitiva'
         ],
@@ -490,21 +507,22 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       _FeatureData(
         icon: Icons.inventory_2_outlined,
         title: 'Inventario controlado',
-        description: 'Mantén tu inventario siempre actualizado y evita pérdidas',
+        description:
+            'Mantén tu inventario siempre actualizado y evita pérdidas',
         checkItems: [
           'Alertas de stock mínimo o agotado',
           'Códigos de barras',
-          'Reportes en tiempo real', 
+          'Reportes en tiempo real',
         ],
         benefit: 'Reduce 68% pérdidas',
         stats: '68%',
         color: const Color(0xFF4ECDC4),
       ),
-      
       _FeatureData(
         icon: Icons.analytics_outlined,
         title: 'Reportes y Analytics',
-        description: 'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura en la nube',
+        description:
+            'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura en la nube',
         checkItems: [
           'Productos y categorías populares',
           'Sigue tendencias de venta',
@@ -519,29 +537,28 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top:100, bottom: 64, left: 24, right: 24), 
+      padding: const EdgeInsets.only(top: 100, bottom: 64, left: 24, right: 24),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark 
-                ? const Color(0xFF007BFF).withValues(alpha: 0.15)
-                : const Color(0xFF007BFF).withValues(alpha: 0.1),
+              color: isDark
+                  ? const Color(0xFF007BFF).withValues(alpha: 0.15)
+                  : const Color(0xFF007BFF).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(50),
               border: Border.all(
                 color: isDark
-                  ? const Color(0xFF007BFF).withValues(alpha: 0.3)
-                  : const Color(0xFF007BFF).withValues(alpha: 0.2),
+                    ? const Color(0xFF007BFF).withValues(alpha: 0.3)
+                    : const Color(0xFF007BFF).withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
             child: Text(
               '⚡ Potencia tu negocio',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark 
-                  ? const Color(0xFF64B5F6)
-                  : const Color(0xFF007BFF),
+                color:
+                    isDark ? const Color(0xFF64B5F6) : const Color(0xFF007BFF),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -567,7 +584,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             textAlign: TextAlign.center,
           ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 64),
-          if (axis == Axis.horizontal) 
+          if (axis == Axis.horizontal)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: features
@@ -670,23 +687,23 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             textAlign: TextAlign.center,
           ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 40),
-          
+
           // Beneficios rápidos
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 24,
             runSpacing: 16,
             children: [
-              _buildCTABenefit('✓ Funciones gratuitas'),   
+              _buildCTABenefit('✓ Funciones gratuitas'),
               _buildCTABenefit('✓ Soporte 24/7'),
-              _buildCTABenefit('✓ Fácil de usar'), 
-              _buildCTABenefit('✓ Actualizaciones constantes'), 
-              _buildCTABenefit('✓ Acceso desde cualquier lugar'), 
-              _buildCTABenefit('✓ Ideal para emprendedores'), 
+              _buildCTABenefit('✓ Fácil de usar'),
+              _buildCTABenefit('✓ Actualizaciones constantes'),
+              _buildCTABenefit('✓ Acceso desde cualquier lugar'),
+              _buildCTABenefit('✓ Ideal para emprendedores'),
             ],
           ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
           const SizedBox(height: 40),
-          
+
           // Botones principales
           Wrap(
             spacing: 20,
@@ -706,7 +723,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  onPressed: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
+                  onPressed: () => _navigateToLogin(context,
+                      Provider.of<AuthProvider>(context, listen: false)),
                   icon: const Icon(Icons.rocket_launch, size: 22),
                   label: const Text(
                     'Empezar Ahora',
@@ -719,14 +737,14 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF007BFF),
                     shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                 ),
               ).animate(delay: 800.ms).fadeIn(duration: 600.ms).scale(),
-              
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
@@ -737,7 +755,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                 ),
                 child: ElevatedButton.icon(
                   onPressed: _launchPlayStore,
-                  icon: Image.asset('assets/playstore.png', width: 24, height: 24),
+                  icon: Image.asset('assets/playstore.png',
+                      width: 24, height: 24),
                   label: const Text(
                     'Play Store',
                     style: TextStyle(
@@ -749,7 +768,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -759,7 +779,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             ],
           ),
           const SizedBox(height: 32),
-          
+
           // Garantía
           Container(
             padding: const EdgeInsets.all(20),
@@ -809,7 +829,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   Widget _buildFooterSection(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
@@ -858,7 +878,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          
+
           // Separador
           Container(
             height: 1,
@@ -876,9 +896,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Copyright y enlaces
-          Column(  
+          Column(
             children: [
               Text(
                 '© 2025 Sell Web',
@@ -929,8 +949,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   }
 
   Future<void> _launchPlayStore() async {
-    const url = 'https://play.google.com/store/apps/details?id=com.logicabooleana.sell&pcampaignid=web_share';
-    
+    const url =
+        'https://play.google.com/store/apps/details?id=com.logicabooleana.sell&pcampaignid=web_share';
+
     try {
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
@@ -1024,13 +1045,13 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     // Verificar si el widget está visible en el viewport
-    final isCurrentlyVisible = position.dy < screenHeight && 
-                              (position.dy + size.height) > 0;
+    final isCurrentlyVisible =
+        position.dy < screenHeight && (position.dy + size.height) > 0;
 
     // Verificar si está en la zona de zoom (más específico)
     final zoomThreshold = screenHeight * 0.7; // 70% del viewport
-    final isInZoomZone = position.dy < zoomThreshold && 
-                        (position.dy + size.height) > (screenHeight * 0.3);
+    final isInZoomZone = position.dy < zoomThreshold &&
+        (position.dy + size.height) > (screenHeight * 0.3);
 
     if (isCurrentlyVisible != isVisible || isInZoomZone != isZoomed) {
       setState(() {
@@ -1105,7 +1126,8 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                     duration: const Duration(milliseconds: 300),
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(widget.deviceType == DeviceType.desktop ? 16 : 12),
+                        borderRadius: BorderRadius.circular(
+                            widget.deviceType == DeviceType.desktop ? 16 : 12),
                       ),
                       child: SizedBox(
                         width: widget.screenWidth * widget.widthFactor,
@@ -1115,7 +1137,8 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                                 child: Image.asset(
                                   widget.assetPath,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) => _buildErrorContainer(
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _buildErrorContainer(
                                     isDesktop: true,
                                   ),
                                 ),
@@ -1125,7 +1148,8 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                                 child: Image.asset(
                                   widget.assetPath,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) => _buildErrorContainer(
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _buildErrorContainer(
                                     isDesktop: false,
                                   ),
                                 ),
@@ -1217,17 +1241,20 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isDark
-                ? (widget.feature.color?.withValues(alpha: 0.3) ?? colorScheme.outline.withValues(alpha: 0.3))
-                : (widget.feature.color?.withValues(alpha: 0.2) ?? const Color(0xFF007BFF).withValues(alpha: 0.1)),
+                  ? (widget.feature.color?.withValues(alpha: 0.3) ??
+                      colorScheme.outline.withValues(alpha: 0.3))
+                  : (widget.feature.color?.withValues(alpha: 0.2) ??
+                      const Color(0xFF007BFF).withValues(alpha: 0.1)),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: isDark
-                  ? Colors.black.withValues(alpha: 0.3)
-                  : _isHovered 
-                    ? (widget.feature.color?.withValues(alpha: 0.15) ?? const Color(0xFF007BFF).withValues(alpha: 0.15))
-                    : Colors.black.withValues(alpha: 0.05),
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : _isHovered
+                        ? (widget.feature.color?.withValues(alpha: 0.15) ??
+                            const Color(0xFF007BFF).withValues(alpha: 0.15))
+                        : Colors.black.withValues(alpha: 0.05),
                 blurRadius: _isHovered ? 20 : 12,
                 offset: Offset(0, _isHovered ? 12 : 4),
               ),
@@ -1246,13 +1273,15 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                     end: Alignment.bottomRight,
                     colors: [
                       widget.feature.color ?? const Color(0xFF007BFF),
-                      (widget.feature.color ?? const Color(0xFF007BFF)).withValues(alpha: 0.7),
+                      (widget.feature.color ?? const Color(0xFF007BFF))
+                          .withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: (widget.feature.color ?? const Color(0xFF007BFF)).withValues(alpha: 0.3),
+                      color: (widget.feature.color ?? const Color(0xFF007BFF))
+                          .withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -1265,7 +1294,7 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Título
               Text(
                 widget.feature.title,
@@ -1276,7 +1305,7 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Descripción
               Text(
                 widget.feature.description,
@@ -1286,61 +1315,76 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                   fontSize: 15,
                 ),
               ),
-              
+
               // Check items
-              if (widget.feature.checkItems != null && widget.feature.checkItems!.isNotEmpty) ...[
+              if (widget.feature.checkItems != null &&
+                  widget.feature.checkItems!.isNotEmpty) ...[
                 const SizedBox(height: 20),
-                ...widget.feature.checkItems!.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: (widget.feature.color ?? const Color(0xFF007BFF)).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          size: 14,
-                          color: widget.feature.color ?? const Color(0xFF007BFF),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          item,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w500,
+                ...widget.feature.checkItems!
+                    .map((item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: (widget.feature.color ??
+                                          const Color(0xFF007BFF))
+                                      .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: widget.feature.color ??
+                                      const Color(0xFF007BFF),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  item,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.8),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )).toList(),
+                        ))
+                    .toList(),
               ],
-              
-              if (widget.feature.benefit != null || widget.feature.stats != null) ...[
+
+              if (widget.feature.benefit != null ||
+                  widget.feature.stats != null) ...[
                 const SizedBox(height: 24),
                 Row(
                   children: [
                     if (widget.feature.stats != null) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: isDark
-                            ? (widget.feature.color ?? const Color(0xFF007BFF)).withValues(alpha: 0.2)
-                            : (widget.feature.color ?? const Color(0xFF007BFF)).withValues(alpha: 0.1),
+                              ? (widget.feature.color ??
+                                      const Color(0xFF007BFF))
+                                  .withValues(alpha: 0.2)
+                              : (widget.feature.color ??
+                                      const Color(0xFF007BFF))
+                                  .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
-                          border: isDark 
-                            ? Border.all(
-                                color: (widget.feature.color ?? const Color(0xFF007BFF)).withValues(alpha: 0.3),
-                                width: 1,
-                              )
-                            : null,
+                          border: isDark
+                              ? Border.all(
+                                  color: (widget.feature.color ??
+                                          const Color(0xFF007BFF))
+                                      .withValues(alpha: 0.3),
+                                  width: 1,
+                                )
+                              : null,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1349,8 +1393,10 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                               widget.feature.stats!,
                               style: theme.textTheme.labelLarge?.copyWith(
                                 color: isDark
-                                  ? (widget.feature.color ?? const Color(0xFF64B5F6))
-                                  : (widget.feature.color ?? const Color(0xFF007BFF)),
+                                    ? (widget.feature.color ??
+                                        const Color(0xFF64B5F6))
+                                    : (widget.feature.color ??
+                                        const Color(0xFF007BFF)),
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1359,8 +1405,10 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                               Icons.trending_up,
                               size: 16,
                               color: isDark
-                                ? (widget.feature.color ?? const Color(0xFF64B5F6))
-                                : (widget.feature.color ?? const Color(0xFF007BFF)),
+                                  ? (widget.feature.color ??
+                                      const Color(0xFF64B5F6))
+                                  : (widget.feature.color ??
+                                      const Color(0xFF007BFF)),
                             ),
                           ],
                         ),
@@ -1472,7 +1520,8 @@ class _FeatureCardState extends State<_FeatureCard>
                 if (widget.feature.benefit != null) ...[
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -1499,7 +1548,7 @@ class _FeatureCardState extends State<_FeatureCard>
 class WaveClipper extends CustomClipper<Path> {
   final bool isMobile;
   final double? customWaveOffset;
-  
+
   const WaveClipper({
     this.isMobile = false,
     this.customWaveOffset,
@@ -1508,69 +1557,79 @@ class WaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    
+
     // Comenzar desde la esquina superior izquierda
     path.moveTo(0, 0);
-    
+
     // Línea superior
     path.lineTo(size.width, 0);
-    
+
     // Altura de la onda adaptativa según el dispositivo
     // Usar customWaveOffset si se proporciona, sino usar valores por defecto
     final waveOffset = customWaveOffset ?? (isMobile ? 40.0 : 60.0);
     final waveHeight = isMobile ? 20.0 : 40.0;
-    
+
     // Línea derecha hasta antes de la onda
     path.lineTo(size.width, size.height - waveOffset);
-    
+
     // Crear la onda usando curvas cuadráticas
     final waveLength = size.width / (isMobile ? 2 : 3); // Menos ondas en móvil
-    
+
     if (isMobile) {
       // Versión simplificada para móvil (2 ondas)
       // Segunda onda
       path.quadraticBezierTo(
-        size.width - (waveLength * 0.5), (size.height - waveOffset) + waveHeight * 0.8,
-        size.width - waveLength, size.height - waveOffset,
+        size.width - (waveLength * 0.5),
+        (size.height - waveOffset) + waveHeight * 0.8,
+        size.width - waveLength,
+        size.height - waveOffset,
       );
-      
+
       // Primera onda
       path.quadraticBezierTo(
-        size.width - (waveLength * 1.5), (size.height - waveOffset) - waveHeight * 0.6,
-        0, size.height - waveOffset,
+        size.width - (waveLength * 1.5),
+        (size.height - waveOffset) - waveHeight * 0.6,
+        0,
+        size.height - waveOffset,
       );
     } else {
       // Versión completa para desktop (3 ondas)
       // Tercera onda (de derecha a izquierda)
       path.quadraticBezierTo(
-        size.width - (waveLength * 0.5), (size.height - waveOffset) + waveHeight * 0.9,
-        size.width - waveLength, size.height - waveOffset,
+        size.width - (waveLength * 0.5),
+        (size.height - waveOffset) + waveHeight * 0.9,
+        size.width - waveLength,
+        size.height - waveOffset,
       );
-      
+
       // Segunda onda
       path.quadraticBezierTo(
-        size.width - (waveLength * 1.5), (size.height - waveOffset) - waveHeight * 0.8,
-        size.width - (waveLength * 2), size.height - waveOffset,
+        size.width - (waveLength * 1.5),
+        (size.height - waveOffset) - waveHeight * 0.8,
+        size.width - (waveLength * 2),
+        size.height - waveOffset,
       );
-      
+
       // Primera onda
       path.quadraticBezierTo(
-        size.width - (waveLength * 2.5), (size.height - waveOffset) + waveHeight,
-        0, size.height - waveOffset,
+        size.width - (waveLength * 2.5),
+        (size.height - waveOffset) + waveHeight,
+        0,
+        size.height - waveOffset,
       );
     }
-    
+
     // Línea izquierda de vuelta al inicio
     path.lineTo(0, 0);
-    
+
     path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(covariant WaveClipper oldClipper) => 
-    isMobile != oldClipper.isMobile || 
-    customWaveOffset != oldClipper.customWaveOffset;
+  bool shouldReclip(covariant WaveClipper oldClipper) =>
+      isMobile != oldClipper.isMobile ||
+      customWaveOffset != oldClipper.customWaveOffset;
 }
 
 /// Custom painter para crear forma de onda en la parte inferior del hero section
@@ -1594,43 +1653,49 @@ class WavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final path = Path();
-    
+
     // Comenzar desde la esquina superior izquierda
     path.moveTo(0, 0);
-    
+
     // Crear la onda usando curvas cuadráticas
     final waveHeight = size.height * 0.6;
     final waveLength = size.width / 3;
-    
+
     // Primera onda
     path.quadraticBezierTo(
-      waveLength * 0.5, waveHeight,
-      waveLength, 0,
+      waveLength * 0.5,
+      waveHeight,
+      waveLength,
+      0,
     );
-    
+
     // Segunda onda
     path.quadraticBezierTo(
-      waveLength * 1.5, -waveHeight * 0.8,
-      waveLength * 2, 0,
+      waveLength * 1.5,
+      -waveHeight * 0.8,
+      waveLength * 2,
+      0,
     );
-    
+
     // Tercera onda
     path.quadraticBezierTo(
-      waveLength * 2.5, waveHeight * 0.9,
-      size.width, 0,
+      waveLength * 2.5,
+      waveHeight * 0.9,
+      size.width,
+      0,
     );
-    
+
     // Completar el rectángulo hacia abajo
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
-    
+
     // Primero pintar el fondo
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
       backgroundPaint,
     );
-    
+
     // Luego pintar la onda
     canvas.drawPath(path, paint);
   }
@@ -1669,7 +1734,7 @@ class _TypewriterTextState extends State<TypewriterText>
   int _charIndex = 0;
   bool _isTyping = true;
   bool _showCursor = true;
-  
+
   Timer? _typingTimer;
   Timer? _cursorTimer;
 
@@ -1699,17 +1764,18 @@ class _TypewriterTextState extends State<TypewriterText>
 
   void _startTypewriterEffect() {
     if (widget.texts.isEmpty) return;
-    
+
     _typingTimer = Timer.periodic(
       _isTyping ? widget.typingSpeed : widget.backspacingSpeed,
       (timer) {
         if (!mounted) return;
-        
+
         setState(() {
           if (_isTyping) {
             // Escribiendo
             if (_charIndex < widget.texts[_currentIndex].length) {
-              _currentText = widget.texts[_currentIndex].substring(0, _charIndex + 1);
+              _currentText =
+                  widget.texts[_currentIndex].substring(0, _charIndex + 1);
               _charIndex++;
             } else {
               // Terminó de escribir, pausa antes de borrar
@@ -1727,7 +1793,8 @@ class _TypewriterTextState extends State<TypewriterText>
             // Borrando
             if (_charIndex > 0) {
               _charIndex--;
-              _currentText = widget.texts[_currentIndex].substring(0, _charIndex);
+              _currentText =
+                  widget.texts[_currentIndex].substring(0, _charIndex);
             } else {
               // Terminó de borrar, cambiar al siguiente texto
               _currentIndex = (_currentIndex + 1) % widget.texts.length;
@@ -1750,12 +1817,13 @@ class _TypewriterTextState extends State<TypewriterText>
     // Obtener el ancho disponible considerando el padding horizontal
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
-    final availableWidth = screenWidth - (isMobile ? 32 : 48); // Considerando padding lateral
-    
+    final availableWidth =
+        screenWidth - (isMobile ? 32 : 48); // Considerando padding lateral
+
     // Encontrar el texto más largo de la lista para calcular altura máxima
-    String longestText = widget.texts.fold('', (prev, text) => 
-      text.length > prev.length ? text : prev);
-    
+    String longestText = widget.texts
+        .fold('', (prev, text) => text.length > prev.length ? text : prev);
+
     // Calcular altura dinámica basada en el texto más largo y el ancho disponible
     final textPainter = TextPainter(
       text: TextSpan(
@@ -1767,11 +1835,13 @@ class _TypewriterTextState extends State<TypewriterText>
     );
     textPainter.layout(maxWidth: availableWidth);
     final maxTextHeight = textPainter.height;
-    
+
     // Calcular altura para el texto actual
     final currentTextPainter = TextPainter(
       text: TextSpan(
-        text: _currentText.isEmpty ? ' ' : _currentText, // Espacio para evitar altura cero
+        text: _currentText.isEmpty
+            ? ' '
+            : _currentText, // Espacio para evitar altura cero
         style: widget.style,
       ),
       textDirection: TextDirection.ltr,
@@ -1779,10 +1849,10 @@ class _TypewriterTextState extends State<TypewriterText>
     );
     currentTextPainter.layout(maxWidth: availableWidth);
     final currentTextHeight = currentTextPainter.height;
-    
+
     // Usar la altura máxima para mantener consistencia visual
     final finalHeight = maxTextHeight + 16; // Padding adicional para el cursor
-    
+
     return SizedBox(
       height: finalHeight,
       width: double.infinity,
@@ -1804,16 +1874,21 @@ class _TypewriterTextState extends State<TypewriterText>
                 TextSpan(
                   text: _showCursor ? '●' : '●',
                   style: widget.style?.copyWith(
-                    color: _showCursor ? (widget.style?.color ?? Colors.white) : Colors.transparent,
+                    color: _showCursor
+                        ? (widget.style?.color ?? Colors.white)
+                        : Colors.transparent,
                     fontWeight: FontWeight.w900,
-                    fontSize: (widget.style?.fontSize ?? 24) * 0.6, // 60% del tamaño del texto
-                    shadows: _showCursor ? [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 1,
-                        offset: const Offset(0, 0.5),
-                      ),
-                    ] : null,
+                    fontSize: (widget.style?.fontSize ?? 24) *
+                        0.6, // 60% del tamaño del texto
+                    shadows: _showCursor
+                        ? [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 1,
+                              offset: const Offset(0, 0.5),
+                            ),
+                          ]
+                        : null,
                   ),
                 ),
               ],

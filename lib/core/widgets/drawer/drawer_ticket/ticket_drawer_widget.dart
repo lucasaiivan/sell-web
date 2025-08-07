@@ -456,7 +456,7 @@ class _TicketContent extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(8),  
+          borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: hasDiscount
@@ -658,7 +658,7 @@ class _TicketContent extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 2,
-              ), 
+              ),
             ),
           );
         },

@@ -78,21 +78,21 @@ class LoginPage extends StatelessWidget {
       title: 'Punto de venta',
       color: Theme.of(context).colorScheme.primary,
       child: Scaffold(
-      body: Stack(
-        children: [
-          content,
-          // Botones de configuración del tema
-          Positioned(
-            top: 30,
-            right: 20,
-            child: ThemeControlButtons(
-              spacing: 8,
-              iconSize: 24,
+        body: Stack(
+          children: [
+            content,
+            // Botones de configuración del tema
+            Positioned(
+              top: 30,
+              right: 20,
+              child: ThemeControlButtons(
+                spacing: 8,
+                iconSize: 24,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -129,7 +129,6 @@ class _LoginFormState extends State<_LoginForm> {
       tablet: 12.0,
       desktop: 13.0,
     );
-  
 
     TextStyle aceptPolitikTextStyle = textTheme.bodySmall?.copyWith(
           color: colorScheme.onSurface,
@@ -179,6 +178,19 @@ class _LoginFormState extends State<_LoginForm> {
       child: AnimatedBuilder(
         animation: widget.authProvider,
         builder: (context, _) {
+          // Si el usuario se autentica exitosamente, navegar de vuelta
+          if (widget.authProvider.user != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            });
+            return AuthFeedbackWidget(
+              showLoading: true,
+              loadingMessage: 'Configurando tu cuenta...',
+            );
+          }
+
           if (widget.authProvider.user == null) {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -188,16 +200,16 @@ class _LoginFormState extends State<_LoginForm> {
                 AuthFeedbackWidget(
                   error: widget.authProvider.authError,
                   onDismissError: widget.authProvider.clearAuthError,
-                ), 
+                ),
 
                 // CheckboxListTile responsivo : aceptar términos y condiciones
                 Container(
                   margin: getResponsivePadding(
                     context,
-                    mobile: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 4),
-                    tablet: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 12),
+                    mobile:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    tablet:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                     desktop: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 16),
                   ),
@@ -244,7 +256,8 @@ class _LoginFormState extends State<_LoginForm> {
                 // ElevatedButton : Iniciar sesión con Google
                 AppButton(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   backgroundColor: Colors.blue.shade700,
                   text: "CONTINUAR CON GOOGLE",
                   icon: const Icon(Icons.login_rounded, size: 20),
@@ -256,13 +269,14 @@ class _LoginFormState extends State<_LoginForm> {
                           await widget.authProvider.signInWithGoogle();
                         }
                       : null,
-                ), 
+                ),
                 const SizedBox(height: 12),
                 // ElevatedButton : Iniciar como invitado
                 AppButton(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
                   backgroundColor: Colors.blueGrey,
                   text: "CONTINUAR COMO INVITADO",
                   isLoading: widget.authProvider.isSigningInAsGuest,
@@ -276,11 +290,9 @@ class _LoginFormState extends State<_LoginForm> {
               ],
             );
           }
-          // Mostrar indicador de carga mientras se procesa la autenticación exitosa
-          return AuthFeedbackWidget(
-            showLoading: true,
-            loadingMessage: 'Configurando tu cuenta...',
-          );
+          
+          // Estado por defecto - no debería llegar aquí
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -614,7 +626,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
         ? Colors.white
         : Colors.black;
     colorIcon ??= colorContent;
-    
+
     // Tamaños de fuente responsivos
     final double tituloFontSize = getResponsiveValue(
       context,
@@ -622,14 +634,14 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
       tablet: 42.0,
       desktop: 50.0,
     );
-    
+
     final double subtituloFontSize = getResponsiveValue(
       context,
       mobile: 16.0,
       tablet: 20.0,
       desktop: 24.0,
     );
-    
+
     // Tamaño del icono responsivo
     final double iconSize = getResponsiveValue(
       context,
@@ -637,7 +649,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
       tablet: screenSize.height * 0.06,
       desktop: screenSize.height * 0.07,
     );
-    
+
     // Padding responsivo para el icono
     final EdgeInsets iconPadding = getResponsivePadding(
       context,
@@ -645,7 +657,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
       tablet: const EdgeInsets.all(16.0),
       desktop: const EdgeInsets.all(20.0),
     );
-    
+
     // Margin responsivo para el icono
     final EdgeInsets iconMargin = getResponsivePadding(
       context,
@@ -653,7 +665,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
       tablet: const EdgeInsets.all(16.0),
       desktop: const EdgeInsets.all(20.0),
     );
-    
+
     // Espaciado responsivo
     final double topSpacing = getResponsiveValue(
       context,
@@ -661,7 +673,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
       tablet: 30.0,
       desktop: 40.0,
     );
-    
+
     final double bottomSpacing = getResponsiveValue(
       context,
       mobile: 20.0,
@@ -670,8 +682,8 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
     );
 
     final estiloTitulo = TextStyle(
-        fontSize: tituloFontSize, 
-        fontWeight: FontWeight.bold, 
+        fontSize: tituloFontSize,
+        fontWeight: FontWeight.bold,
         color: textColor);
     final estiloSubTitulo = TextStyle(
         fontSize: subtituloFontSize,
@@ -689,7 +701,9 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
       child: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            SizedBox(height: topSpacing), // Espacio para centrar un poco el contenido
+            SizedBox(
+                height:
+                    topSpacing), // Espacio para centrar un poco el contenido
             // view : si existe mostramos una imagen de asset
             assetImage != null
                 ? Padding(
@@ -715,8 +729,7 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
                       shape: BoxShape.circle,
                       color: Colors.black.withValues(alpha: 0.2),
                     ),
-                    child: Icon(iconData,
-                        size: iconSize, color: colorIcon),
+                    child: Icon(iconData, size: iconSize, color: colorIcon),
                   )
                     .animate(key: Key(titulo))
                     .fadeIn(duration: const Duration(milliseconds: 500))
@@ -725,7 +738,8 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
                         duration: const Duration(milliseconds: 500))
                 : Container(),
             Text(titulo, style: estiloTitulo, textAlign: TextAlign.center),
-            SizedBox(height: getResponsiveValue(
+            SizedBox(
+                height: getResponsiveValue(
               context,
               mobile: 8.0,
               tablet: 10.0,

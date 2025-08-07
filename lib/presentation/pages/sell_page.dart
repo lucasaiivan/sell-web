@@ -1535,12 +1535,11 @@ class ProductoItem extends StatefulWidget {
 }
 
 class _ProductoItemState extends State<ProductoItem> {
-  
   // Identifica si es un producto de venta rápida
   bool get _isQuickSaleProduct {
-    return widget.producto.id.isEmpty || 
-           widget.producto.id.startsWith('quick_') ||
-           widget.producto.description.isEmpty;
+    return widget.producto.id.isEmpty ||
+        widget.producto.id.startsWith('quick_') ||
+        widget.producto.description.isEmpty;
   }
 
   @override
@@ -1563,7 +1562,9 @@ class _ProductoItemState extends State<ProductoItem> {
       child: Stack(
         children: [
           // Si es venta rápida, mostrar solo precio centrado
-          _isQuickSaleProduct ? _buildQuickSaleLayout() : _buildNormalLayout(alertStockText),
+          _isQuickSaleProduct
+              ? _buildQuickSaleLayout()
+              : _buildNormalLayout(alertStockText),
           // view : selección del producto
           Positioned.fill(
             child: Material(
@@ -1615,7 +1616,7 @@ class _ProductoItemState extends State<ProductoItem> {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: BoxDecoration( 
+      decoration: BoxDecoration(
         color: Colors.grey.shade200.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12.0),
       ),

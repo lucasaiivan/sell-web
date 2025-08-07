@@ -84,15 +84,16 @@ class DialogComponents {
     final lineColor = theme.colorScheme.outline.withValues(alpha: 0.2);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    
+
     // Configuración de estilo basada en useFillStyle
     final BoxDecoration decoration;
     final Color effectiveBackgroundColor;
     final Color dividerColor;
-    
+
     if (useFillStyle) {
       // Estilo fill: contenedor con background sólido y sin borde
-      effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surfaceContainer;
+      effectiveBackgroundColor =
+          backgroundColor ?? theme.colorScheme.surfaceContainer;
       dividerColor = theme.colorScheme.outline.withValues(alpha: 0.1);
       decoration = BoxDecoration(
         color: effectiveBackgroundColor,
@@ -148,8 +149,10 @@ class DialogComponents {
                     thickness: useFillStyle ? 0.5 : 1,
                     color: dividerColor,
                     height: useFillStyle ? 1 : 0,
-                    indent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
-                    endIndent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                    indent:
+                        useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                    endIndent:
+                        useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
                   ),
               ],
             );
@@ -203,7 +206,7 @@ class DialogComponents {
           if (!showDividers) return wrappedItem;
 
           // Si queremos divisores, envolverlo en un Column con Divider
-          final dividerColor = useFillStyle 
+          final dividerColor = useFillStyle
               ? theme.colorScheme.outline.withValues(alpha: 0.1)
               : theme.colorScheme.outline.withValues(alpha: 0.2);
 
@@ -215,8 +218,10 @@ class DialogComponents {
                   height: useFillStyle ? 1 : 1,
                   thickness: useFillStyle ? 0.5 : 1,
                   color: dividerColor,
-                  indent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
-                  endIndent: useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  indent:
+                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  endIndent:
+                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
                 ),
             ],
           );
@@ -228,9 +233,10 @@ class DialogComponents {
         expandText: expandText,
         collapseText: collapseText,
         showDividers: false, // Manejamos los divisores manualmente
-        backgroundColor: backgroundColor ?? (useFillStyle 
-            ? theme.colorScheme.surfaceContainer 
-            : theme.colorScheme.surface),
+        backgroundColor: backgroundColor ??
+            (useFillStyle
+                ? theme.colorScheme.surfaceContainer
+                : theme.colorScheme.surface),
         borderColor:
             borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
         borderRadius: borderRadius,
@@ -718,20 +724,26 @@ class _ExpandableListContainerState<T>
 
             // Botón "Ver más" si hay más elementos
             if (hasMoreItems && !showAllItems) ...[
-              if (widget.showDividers) 
+              if (widget.showDividers)
                 Divider(
                   thickness: widget.useFillStyle ? 0.5 : 1,
-                  color: widget.useFillStyle 
+                  color: widget.useFillStyle
                       ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
                       : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
                   height: widget.useFillStyle ? 1 : 0,
-                  indent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
-                  endIndent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
+                  indent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
+                  endIndent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
                 ),
               InkWell(
                 onTap: () => setState(() => showAllItems = true),
                 child: Container(
-                  padding: EdgeInsets.symmetric( horizontal: widget.isMobile ? 12 : 16,vertical: widget.isMobile ? 8 : 12), 
+                  padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 12 : 16,
+                      vertical: widget.isMobile ? 8 : 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -754,20 +766,26 @@ class _ExpandableListContainerState<T>
 
             // Botón "Ver menos" si se están mostrando todos
             if (showAllItems && hasMoreItems) ...[
-              if (widget.showDividers) 
+              if (widget.showDividers)
                 Divider(
                   thickness: widget.useFillStyle ? 0.5 : 1,
-                  color: widget.useFillStyle 
+                  color: widget.useFillStyle
                       ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
                       : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
                   height: widget.useFillStyle ? 1 : 0,
-                  indent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
-                  endIndent: widget.useFillStyle && widget.isMobile ? 12 : (widget.useFillStyle ? 16 : 0),
+                  indent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
+                  endIndent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
                 ),
               InkWell(
                 onTap: () => setState(() => showAllItems = false),
-                child: Container( 
-                  padding: EdgeInsets.symmetric( horizontal: widget.isMobile ? 12 : 16,vertical: widget.isMobile ? 8 : 12),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 12 : 16,
+                      vertical: widget.isMobile ? 8 : 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

@@ -173,7 +173,10 @@ class WelcomePage extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: DialogComponents.itemList(
                         context: context,
-                        items: accounts.map((account) =>_buildAccountCard(context, account)).toList(),
+                        items: accounts
+                            .map((account) =>
+                                _buildAccountCard(context, account))
+                            .toList(),
                         showDividers: true,
                         maxVisibleItems: 4,
                         expandText: 'Ver más cuentas',

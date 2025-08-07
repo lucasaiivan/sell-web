@@ -165,7 +165,9 @@ class BaseDialog extends StatelessWidget {
             12,
             16,
             12,
-            hasActions? 48: 16, // Más padding inferior si hay acciones para el gradiente
+            hasActions
+                ? 48
+                : 16, // Más padding inferior si hay acciones para el gradiente
           ),
           child: content,
         ),

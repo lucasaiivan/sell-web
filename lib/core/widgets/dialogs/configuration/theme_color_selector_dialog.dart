@@ -8,10 +8,12 @@ class ThemeColorSelectorDialog extends StatefulWidget {
   const ThemeColorSelectorDialog({super.key});
 
   @override
-  State<ThemeColorSelectorDialog> createState() => _ThemeColorSelectorDialogState();
+  State<ThemeColorSelectorDialog> createState() =>
+      _ThemeColorSelectorDialogState();
 }
 
-class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> with TickerProviderStateMixin {
+class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog>
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -21,11 +23,11 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
   static const List<({Color color, String name})> availableColors = [
     (color: Colors.blue, name: 'Azul'),
     (color: Colors.indigo, name: 'Índigo'),
-    (color: Colors.deepPurple, name: 'Púrpura'), 
+    (color: Colors.deepPurple, name: 'Púrpura'),
     (color: Colors.pink, name: 'Rosa'),
     (color: Colors.red, name: 'Rojo'),
-    (color: Colors.orange, name: 'Naranja'),   
-    (color: Colors.black, name: 'Negro'), 
+    (color: Colors.orange, name: 'Naranja'),
+    (color: Colors.black, name: 'Negro'),
   ];
 
   @override
@@ -35,7 +37,7 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -60,7 +62,6 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
     _animationController.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +111,7 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
           // Sección de colores
           _buildColorSection(context, themeProvider),
 
-          const SizedBox(height: 20), 
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -232,7 +233,7 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
       runSpacing: 16,
       children: availableColors.map((colorData) {
         final isSelected = colorData.color == currentColor;
-        
+
         return _buildColorAvatar(
           context,
           colorData,
@@ -302,9 +303,9 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
             ),
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Etiqueta del color
         Text(
           colorData.name,
@@ -320,12 +321,11 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog> wit
     );
   }
 
-
   /// Obtiene un color de contraste apropiado para el texto sobre el color de fondo
   Color _getContrastColor(Color backgroundColor) {
     // Calcula la luminancia del color de fondo
     final luminance = backgroundColor.computeLuminance();
-    
+
     // Si la luminancia es alta (color claro), usar texto oscuro
     // Si la luminancia es baja (color oscuro), usar texto claro
     return luminance > 0.5 ? Colors.black87 : Colors.white;

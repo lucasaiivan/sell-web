@@ -383,7 +383,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        widget.onProductUpdated?.call(); 
+        widget.onProductUpdated?.call();
       }
     }
   }

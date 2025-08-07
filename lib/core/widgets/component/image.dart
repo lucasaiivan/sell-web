@@ -28,10 +28,10 @@ class ProductImage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {
       return SizedBox(
@@ -80,8 +80,10 @@ class ProductImage extends StatelessWidget {
             maxWidthDiskCache: size != null ? (size! * 3).round() : null,
             maxHeightDiskCache: size != null ? (size! * 3).round() : null,
             // Manejo de errores y placeholder optimizado
-            errorWidget: (context, url, error) => _buildDefaultImageWithAnimation(context),
-            placeholder: (context, url) => _buildDefaultImageWithAnimation(context),
+            errorWidget: (context, url, error) =>
+                _buildDefaultImageWithAnimation(context),
+            placeholder: (context, url) =>
+                _buildDefaultImageWithAnimation(context),
             // Configuración adicional para mejor UX
             useOldImageOnUrlChange: true,
             filterQuality: FilterQuality.medium,
@@ -100,10 +102,11 @@ class ProductImage extends StatelessWidget {
   Widget _buildDefaultImageWithAnimation(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Colores adaptativos basados en el tema actual
     final Color iconColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
-    final Color backgroundOverlay = colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
+    final Color backgroundOverlay =
+        colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
 
     return Container(
       decoration: BoxDecoration(

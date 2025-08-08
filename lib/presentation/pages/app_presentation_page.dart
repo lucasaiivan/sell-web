@@ -295,8 +295,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   Widget _buildDesktopLayout(BuildContext context) {
     return Column(
       children: [
-        _buildHeroSection(context),
-        const Divider(height: 1, color: Colors.red),
+        _buildHeroSection(context), 
         _buildFeaturesSection(context, axis: Axis.horizontal),
         const SizedBox(height: 80),
         _buildCallToActionSection(context),
@@ -316,196 +315,195 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     // Constantes para alineación perfecta entre clipper y dispositivo
     final deviceImageTopPadding = isMobile ? 40.0 : 60.0;
-    final waveClipperOffset =
-        deviceImageTopPadding; // Mismo valor para perfecta alineación
+    final waveClipperOffset = deviceImageTopPadding; // Mismo valor para perfecta alineación 
+    double spaceAdictional = 150;  
 
-    return Stack(
-      children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: isMobile ? 150 : 300),
-          child: ClipPath(
-            clipper: WaveClipper(
-              isMobile: isMobile,
-              customWaveOffset:
-                  waveClipperOffset, // Usar el mismo offset que la imagen
-            ),
-            child: Container(
-              width: double.infinity,
-              constraints: BoxConstraints(
-                minHeight: isMobile ? screenHeight * 0.7 : screenHeight * 0.9,
-                maxHeight: screenHeight * 1.1, // Evitar desbordamiento
+    return SizedBox(
+      width: double.infinity,
+      height: screenHeight + spaceAdictional ,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [ 
+          // view : fondo con clipper y gradiente
+          Padding(
+            padding: EdgeInsets.only(bottom:spaceAdictional),
+            child: ClipPath(
+              clipper: WaveClipper(
+                isMobile: isMobile,
+                customWaveOffset:
+                    waveClipperOffset, // Usar el mismo offset que la imagen
               ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Imagen de fondo que también será cortada por el clipper con gradiente
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: const [0.0, 0.3, 0.7, 1.0],
-                          colors: isDark
-                              ? [
-                                  // Modo oscuro - colores más sutiles
-                                  colorScheme.primary.withValues(alpha: 0.4),
-                                  colorScheme.primary.withValues(alpha: 0.3),
-                                  colorScheme.primary.withValues(alpha: 0.4),
-                                  colorScheme.primary.withValues(alpha: 0.5),
-                                ]
-                              : [
-                                  // Modo claro - mantener los amarillos pero más suaves
-                                  Colors.yellow.shade300,
-                                  Colors.yellow.shade400.withValues(alpha: 0.9),
-                                  Colors.yellow.shade300,
-                                  Colors.yellow.shade400,
-                                ],
+              child: Container(
+                width: double.infinity,
+                constraints: BoxConstraints(
+                  minHeight: isMobile ? screenHeight * 0.7 : screenHeight * 0.9,
+                  maxHeight: screenHeight * 1.1, // Evitar desbordamiento
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Imagen de fondo que también será cortada por el clipper con gradiente
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: const [0.0, 0.3, 0.7, 1.0],
+                            colors: isDark
+                                ? [
+                                    // Modo oscuro - colores más sutiles
+                                    colorScheme.primary.withValues(alpha: 0.4),
+                                    colorScheme.primary.withValues(alpha: 0.3),
+                                    colorScheme.primary.withValues(alpha: 0.4),
+                                    colorScheme.primary.withValues(alpha: 0.5),
+                                  ]
+                                : [
+                                    // Modo claro - mantener los amarillos pero más suaves
+                                    Colors.yellow.shade300,
+                                    Colors.yellow.shade400.withValues(alpha: 0.9),
+                                    Colors.yellow.shade300,
+                                    Colors.yellow.shade400,
+                                  ],
+                          ),
                         ),
-                      ),
-                      child: Opacity(
-                        opacity: 0.4,
-                        child: Image.asset(
-                          'assets/premium.jpeg',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            color: Colors.transparent,
+                        child: Opacity(
+                          opacity: 0.4,
+                          child: Image.asset(
+                            'assets/premium.jpeg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: Colors.transparent,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  // Gradiente adicional para mejorar legibilidad del texto
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: const [0.0, 0.4, 0.8, 1.0],
-                          colors: isDark
-                              ? [
-                                  // Modo oscuro - gradiente más sutil
-                                  colorScheme.surface.withValues(alpha: 0.3),
-                                  Colors.transparent,
-                                  colorScheme.primary.withValues(alpha: 0.2),
-                                  colorScheme.primary.withValues(alpha: 0.4),
-                                ]
-                              : [
-                                  // Modo claro - gradiente amarillo suave
-                                  Colors.yellow.shade200.withValues(alpha: 0.8),
-                                  Colors.yellow.shade300.withValues(alpha: 0.4),
-                                  Colors.yellow.shade400,
-                                  Colors.yellow.shade500,
-                                ],
+                    // Gradiente adicional para mejorar legibilidad del texto
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: const [0.0, 0.4, 0.8, 1.0],
+                            colors: isDark
+                                ? [
+                                    // Modo oscuro - gradiente más sutil
+                                    colorScheme.surface.withValues(alpha: 0.3),
+                                    Colors.transparent,
+                                    colorScheme.primary.withValues(alpha: 0.2),
+                                    colorScheme.primary.withValues(alpha: 0.4),
+                                  ]
+                                : [
+                                    // Modo claro - gradiente amarillo suave
+                                    Colors.yellow.shade200.withValues(alpha: 0.8),
+                                    Colors.yellow.shade300.withValues(alpha: 0.4),
+                                    Colors.yellow.shade400,
+                                    Colors.yellow.shade500,
+                                  ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  // Contenido principal con SafeArea
-                  SafeArea(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: isMobile ? 16 : 24,
-                        right: isMobile ? 16 : 24,
-                        top: isMobile ? 20 : 64,
-                        bottom: isMobile
-                            ? 22
-                            : 180, // Más espacio para acomodar las imágenes con texto
+                    // Contenido principal con SafeArea
+                    SafeArea(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: isMobile ? 16 : 24,
+                          right: isMobile ? 16 : 24,
+                          top: isMobile ? 20 : 64,
+                          bottom: isMobile
+                              ? 22
+                              : 180, // Más espacio para acomodar las imágenes con texto
+                        ),
+                        child: _buildHeroContentOnly(context, theme, colorScheme),
                       ),
-                      child: _buildHeroContentOnly(context, theme, colorScheme),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        // Imagen del dispositivo móvil posicionada para no tapar el texto
-        Positioned(
-          bottom: 20,
-          left: 0,
-          right: 0,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: isMobile ? screenHeight * 0.40 : screenHeight * 0.60, // Reducir altura ligeramente
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: deviceImageTopPadding + 15, // Reducir padding superior
-                bottom: isMobile ? 10 : 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Imagen del dispositivo móvil
-                  _deviceImageWithHover(
-                    screenWidth: screenWidth,
-                    isMobile: isMobile,
-                    assetPath: 'assets/screenshot00.png',
-                    widthFactor: isMobile ? 0.25 : 0.15, // Ajustar ancho para el texto
-                    heightFallback: isMobile ? 140 : 180, // Ajustar altura para el texto
-                    deviceType: DeviceType.mobile,
-                    actionWidget: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.green.withValues(alpha: 0.3),
-                          width: 1,
+          // image : Imagen del dispositivo móvil posicionada en la parte más baja disponible
+          Positioned(
+            bottom: 0, // Posicionar exactamente en el fondo
+            left: 0,
+            right: 0, 
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: isMobile ? screenHeight * 0.40 : screenHeight * 0.60,
+              alignment: Alignment.bottomCenter, // Alinear al fondo del contenedor
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: isMobile ? 20 : 30, // Solo padding inferior para separar del borde
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Imagen del dispositivo móvil
+                    _deviceImageWithHover(
+                      screenWidth: screenWidth,
+                      assetPath: 'assets/screenshot00.png',
+                      zoomFactor: 1.6, // Zoom más moderado para móvil
+                      actionWidget: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        '📱 Móvil',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.w600,
-                          fontSize: isMobile ? 10 : 12,
+                        child: Text(
+                          '📱 Móvil',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                            fontSize: isMobile ? 10 : 12,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  // Imagen de la captura web
-                  _deviceImageWithHover(
-                    screenWidth: screenWidth,
-                    isMobile: isMobile,
-                    assetPath: 'assets/screenshot06.png',
-                    widthFactor: isMobile ? 0.35 : 0.25,
-                    heightFallback: isMobile ? 120 : 150,
-                    deviceType: DeviceType.desktop,
-                    actionWidget: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                          width: 1,
+                    // Imagen de la captura web
+                    _deviceImageWithHover(
+                      screenWidth: screenWidth,
+                      assetPath: 'assets/screenshot06.png',
+                      zoomFactor: 2.0, // Zoom más pronunciado para desktop
+                      actionWidget: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        '💻 Web',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: isMobile ? 10 : 12,
+                        child: Text(
+                          '💻 Web',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: isMobile ? 10 : 12,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        )
-            .animate(delay: 1200.ms)
-            .fadeIn(duration: 800.ms)
-            .scaleXY(begin: 0.8, end: 1.0, curve: Curves.easeOut)
-            .slideY(begin: 0.3, end: 0.0),
-      ],
+          )
+              .animate(delay: 1200.ms)
+              .fadeIn(duration: 800.ms)
+              .scaleXY(begin: 0.8, end: 1.0, curve: Curves.easeOut)
+              .slideY(begin: 0.3, end: 0.0),
+        ],
+      ),
     );
   }
 
@@ -650,7 +648,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 100, bottom: 64, left: 24, right: 24),
+      padding: const EdgeInsets.only(top: 50, bottom: 64, left: 24, right: 24),
       child: Column(
         children: [
           Container(
@@ -1080,50 +1078,33 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
 
   Widget _deviceImageWithHover({
     required double screenWidth,
-    required bool isMobile,
     required String assetPath,
-    required double widthFactor,
-    required double heightFallback,
-    required DeviceType deviceType,
     required Widget actionWidget,
+    double zoomFactor = 1.8,
   }) {
     return _DeviceScrollWidget(
       screenWidth: screenWidth,
-      isMobile: isMobile,
       scrollController: _scrollController,
       assetPath: assetPath,
-      widthFactor: widthFactor,
-      heightFallback: heightFallback,
-      deviceType: deviceType,
       actionWidget: actionWidget,
+      zoomFactor: zoomFactor,
     );
   }
 }
 
-enum DeviceType {
-  mobile,
-  desktop,
-}
-
 class _DeviceScrollWidget extends StatefulWidget {
   final double screenWidth;
-  final bool isMobile;
   final ScrollController scrollController;
   final String assetPath;
-  final double widthFactor;
-  final double heightFallback;
-  final DeviceType deviceType;
   final Widget actionWidget;
+  final double zoomFactor;
 
   const _DeviceScrollWidget({
     required this.screenWidth,
-    required this.isMobile,
     required this.scrollController,
     required this.assetPath,
-    required this.widthFactor,
-    required this.heightFallback,
-    required this.deviceType,
     required this.actionWidget,
+    this.zoomFactor = 1.8, // Factor de zoom por defecto
   });
 
   @override
@@ -1147,7 +1128,6 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
   }
 
   void _onScroll() {
-    // Calcular si la imagen está visible en el viewport con mejor precisión
     if (!mounted) return;
 
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
@@ -1158,22 +1138,24 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
       final size = renderBox.size;
       final screenHeight = MediaQuery.of(context).size.height;
       
-      // Verificar si el widget está visible en el viewport con margen de seguridad
-      final visibilityMargin = screenHeight * 0.1; // 10% de margen
+      // Verificar si el widget está visible en el viewport
+      final visibilityMargin = screenHeight * 0.1;
       final isCurrentlyVisible = position.dy < (screenHeight + visibilityMargin) && 
           (position.dy + size.height) > -visibilityMargin;
 
-      // Zona de zoom más adaptativa según el tamaño de pantalla
-      final zoomStart = widget.isMobile ? 0.8 : 0.75; // 80% o 75% del viewport
-      final zoomEnd = widget.isMobile ? 0.2 : 0.25;   // 20% o 25% del viewport
+      // Zona de zoom simplificada
+      // Zona de zoom más simple y efectiva
+      final centerY = screenHeight / 2;
+      final widgetCenterY = position.dy + (size.height / 2);
       
-      final zoomThreshold = screenHeight * zoomStart;
-      final zoomEndThreshold = screenHeight * zoomEnd;
+      // Zona de zoom centrada en el viewport
+      final zoomZoneHeight = screenHeight * 0.6; // 60% de la pantalla
+      final zoomZoneTop = centerY - (zoomZoneHeight / 2);
+      final zoomZoneBottom = centerY + (zoomZoneHeight / 2);
       
-      final isInZoomZone = position.dy < zoomThreshold &&
-          (position.dy + size.height) > zoomEndThreshold;
+      // Verificar si el centro del widget está en la zona de zoom
+      final isInZoomZone = widgetCenterY >= zoomZoneTop && widgetCenterY <= zoomZoneBottom;
 
-      // Solo actualizar el estado si hay cambios significativos
       if (isCurrentlyVisible != isVisible || isInZoomZone != isZoomed) {
         setState(() {
           isVisible = isCurrentlyVisible;
@@ -1181,121 +1163,59 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
         });
       }
     } catch (e) {
-      // Manejo silencioso de errores durante el cálculo de posición
       debugPrint('Error en _onScroll: $e');
     }
   }
  
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile;
     
-    // Calcular dimensiones responsivas con límites seguros
-    final maxWidth = screenWidth * widget.widthFactor;
-    final minWidth = widget.isMobile ? 80.0 : 120.0;
-    final safeWidth = maxWidth.clamp(minWidth, screenWidth * 0.45);
+    // Calcular dimensiones basadas solo en screenWidth
+    final widgetWidth = _calculateWidth(widget.screenWidth, isMobile);
+    final widgetHeight = _calculateHeight(widget.screenWidth, isMobile);
     
-    final maxHeight = widget.isMobile ? 200.0 : 180.0;
-    final minHeight = widget.isMobile ? 120.0 : 140.0;
-    final safeHeight = maxHeight.clamp(minHeight, screenHeight * 0.25);
+    // Altura para el actionWidget
+    final actionWidgetHeight = isMobile ? 32.0 : 40.0;
+    final imageContainerHeight = widgetHeight - actionWidgetHeight - 8;
     
-    // Altura fija para el actionWidget para mantener alineación entre instancias
-    final actionWidgetHeight = widget.isMobile ? 32.0 : 40.0;
-    final imageContainerHeight = safeHeight - actionWidgetHeight - 8; // 8px de spacing
-    
-    // Escala de zoom más pronunciada para efecto visual llamativo
-    final zoomScale = widget.isMobile ? 1.8 : 2.2;
-    final finalScale = isZoomed ? zoomScale : widget.isMobile ? 1.0 : 1.9;
-    
-    // Calcular si el widget escalado se desbordará
-    final scaledWidth = safeWidth * finalScale;
-    final scaledHeight = imageContainerHeight * finalScale;
-    final willOverflow = scaledWidth > screenWidth * 0.9 || scaledHeight > screenHeight * 0.4;
-    
-    // Ajustar escala si hay desbordamiento (parámetros ajustados para zoom grande)
-    final adjustedScale = willOverflow ? (screenWidth * 0.75) / scaledWidth * finalScale: finalScale;
+    // Aplicar zoom cuando está en la zona de zoom
+    final scale = isZoomed ? widget.zoomFactor : 1.0;
 
     return Container(
-      height: safeHeight,
-      width: safeWidth,
-      constraints: BoxConstraints(
-        minWidth: minWidth,
-        maxWidth: screenWidth * 0.45,
-        minHeight: minHeight,
-        maxHeight: screenHeight * 0.25,
-      ),
+      height: widgetHeight,
+      width: widgetWidth,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Contenedor de la imagen con zoom (parte superior)
+          // Contenedor de imagen con zoom
           Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none, // Permitir overflow controlado para sombras
-              children: [
-                // Overlay de atenuación del fondo cuando hay zoom
-                if (isZoomed)
-                  Positioned.fill(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 600),
-                      child: Center(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 600),
-                          width: (safeWidth * 0.8).clamp(80.0, 150.0),
-                          height: (imageContainerHeight * 1.2).clamp(100.0, 200.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(widget.deviceType == DeviceType.mobile ? 25 : 12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: widget.isMobile ? 25 : 35,
-                                spreadRadius: widget.isMobile ? 6 : 12,
-                                offset: Offset(0, widget.isMobile ? 10 : 16),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                
-                // Imagen del dispositivo con zoom responsivo
-                AnimatedScale(
-                  scale: adjustedScale,
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.elasticOut,
-                  child: AnimatedOpacity(
-                    opacity: isVisible ? 1.0 : 0.8,
-                    duration: const Duration(milliseconds: 300),
-                    child: Container(
-                      margin: EdgeInsets.only(bottom:widget.isMobile? 24 : 50),
-                      width: safeWidth,
-                      height: imageContainerHeight,
-                      constraints: BoxConstraints(
-                        maxWidth: safeWidth,
-                        maxHeight: imageContainerHeight,
-                      ),
-                      child: Image.asset(
-                        widget.assetPath,
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.high,
-                        errorBuilder: (context, error, stackTrace) => 
-                            _buildErrorContainer(isDesktop: widget.deviceType == DeviceType.desktop),
-                      ),
-                    ),
+            child: Center(
+              child: AnimatedScale(
+                scale: scale,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+                child: Container(
+                  margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
+                  width: widgetWidth,
+                  height: imageContainerHeight,
+                  child: Image.asset(
+                    widget.assetPath,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                    errorBuilder: (context, error, stackTrace) => _buildErrorContainer(isMobile),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
           
-          // Espaciado fijo entre imagen y actionWidget
           const SizedBox(height: 8),
-          // ActionWidget en posición fija en la parte inferior
+          
+          // ActionWidget
           Container(
             height: actionWidgetHeight,
-            width: safeWidth,
+            width: widgetWidth,
             alignment: Alignment.center,
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -1307,42 +1227,57 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
     );
   }
 
-  Widget _buildErrorContainer({required bool isDesktop}) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    
-    // Calcular dimensiones responsivas para el contenedor de error
-    final containerWidth = isDesktop 
-        ? (screenWidth * 0.2).clamp(150.0, 250.0)
-        : (screenWidth * 0.15).clamp(80.0, 120.0);
-    
-    // Usar la altura disponible para la imagen (sin el actionWidget)
-    final actionWidgetHeight = widget.isMobile ? 32.0 : 40.0;
-    final maxHeight = widget.isMobile ? 200.0 : 180.0;
-    final minHeight = widget.isMobile ? 120.0 : 140.0;
-    final safeHeight = maxHeight.clamp(minHeight, MediaQuery.of(context).size.height * 0.25);
-    final imageContainerHeight = safeHeight - actionWidgetHeight - 8;
-    
-    final containerHeight = imageContainerHeight.clamp(
-      widget.isMobile ? 80.0 : 100.0, 
-      widget.isMobile ? 140.0 : 160.0
-    );
-    
-    final iconSize = isDesktop 
-        ? (containerWidth * 0.25).clamp(40.0, 80.0)
-        : (containerWidth * 0.4).clamp(30.0, 60.0);
+  /// Calcula el ancho del widget basado en screenWidth
+  double _calculateWidth(double screenWidth, bool isMobile) {
+    if (isMobile) {
+      // Móvil: tamaño más grande para mejor visibilidad del zoom
+      return (screenWidth * 0.35).clamp(90.0, 160.0);
+    } else if (screenWidth < ResponsiveBreakpoints.tablet) {
+      // Tablet: tamaño moderado
+      return (screenWidth * 0.28).clamp(140.0, 220.0);
+    } else if (screenWidth < ResponsiveBreakpoints.desktop) {
+      // Desktop pequeño: tamaño estándar
+      return (screenWidth * 0.24).clamp(180.0, 280.0);
+    } else if (screenWidth < ResponsiveBreakpoints.largeDesktop) {
+      // Desktop estándar: tamaño optimizado para zoom
+      return (screenWidth * 0.22).clamp(220.0, 320.0);
+    } else {
+      // Desktop muy grande: tamaño escalado
+      return (screenWidth * 0.20).clamp(260.0, 360.0);
+    }
+  }
+
+  /// Calcula la altura del widget basado en screenWidth
+  double _calculateHeight(double screenWidth, bool isMobile) {
+    if (isMobile) {
+      // Móvil: altura proporcionalmente mayor para el zoom
+      return (screenWidth * 0.55).clamp(160.0, 240.0);
+    } else if (screenWidth < ResponsiveBreakpoints.tablet) {
+      // Tablet: altura moderada
+      return (screenWidth * 0.40).clamp(200.0, 300.0);
+    } else if (screenWidth < ResponsiveBreakpoints.desktop) {
+      // Desktop pequeño: altura estándar
+      return (screenWidth * 0.32).clamp(240.0, 350.0);
+    } else if (screenWidth < ResponsiveBreakpoints.largeDesktop) {
+      // Desktop estándar: altura optimizada para zoom
+      return (screenWidth * 0.28).clamp(280.0, 400.0);
+    } else {
+      // Desktop muy grande: altura escalada
+      return (screenWidth * 0.25).clamp(320.0, 450.0);
+    }
+  }
+
+  /// Construye contenedor de error
+  Widget _buildErrorContainer(bool isMobile) {
+    final containerSize = isMobile ? 100.0 : 150.0;
+    final iconSize = isMobile ? 40.0 : 60.0;
 
     return Container(
-      height: containerHeight,
-      width: containerWidth,
-      constraints: BoxConstraints(
-        minWidth: widget.isMobile ? 80.0 : 120.0,
-        maxWidth: screenWidth * 0.4,
-        minHeight: widget.isMobile ? 80.0 : 100.0,
-        maxHeight: widget.isMobile ? 140.0 : 160.0,
-      ),
+      height: containerSize,
+      width: containerSize,
       decoration: BoxDecoration(
         color: Colors.grey.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(isDesktop ? 8 : 16),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.grey.withValues(alpha: 0.3),
           width: 1,
@@ -1352,17 +1287,17 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            isDesktop ? Icons.desktop_windows : Icons.phone_android,
+            Icons.image_not_supported_outlined,
             color: Colors.grey.withValues(alpha: 0.6),
             size: iconSize,
           ),
-          if (containerHeight > 100) ...[
+          if (!isMobile) ...[
             const SizedBox(height: 8),
             Text(
-              isDesktop ? 'Vista Web' : 'Vista Móvil',
+              'Imagen no disponible',
               style: TextStyle(
                 color: Colors.grey.withValues(alpha: 0.7),
-                fontSize: (containerWidth * 0.08).clamp(10.0, 14.0),
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,

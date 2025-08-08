@@ -52,7 +52,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    backgroundContainerColor = isDark ? Colors.black : Colors.white;
+    // Fondo optimizado para UI/UX - no usar negro puro en modo oscuro
+    backgroundContainerColor = isDark 
+        ? const Color(0xFF0F0F0F)  // Gris muy oscuro en lugar de negro puro
+        : Colors.white;
     
     // Colores mejorados para el AppBar considerando el tema
     Color accentAppbarColor = _isScrolled
@@ -545,136 +548,195 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
 
     final features = [
       _FeatureData(
         icon: Icons.point_of_sale_outlined,
         title: 'Sistema de Ventas',
         description:
-            'Automatiza tu proceso comercial con herramientas profesionales',
+            'Acelera tu proceso comercial con tecnología avanzada que optimiza cada transacción y reduce errores operativos',
         checkItems: [
-          'Ventas rápidas y eficientes',
-          'Múltiples formas de pago',
-          'Arqueo de caja',
-          'Interfaz intuitiva'
+          'Interfaz intuitiva con atajos de teclado',
+          'Soporte para múltiples métodos de pago',
+          'Reportes y analytics en tiempo real',
+          'Sistema de descuentos y promociones automáticas',
+          'Sincronización automática con inventario'
         ],
-        benefit: 'Reduce 78% errores',
-        stats: '78%',
-        color: const Color(0xFF45B7D1),
+        benefit: 'Aumenta la velocidad de ventas en 78%', 
+        color: const Color(0xFF4F46E5), // Indigo moderno
+        imageAsset: 'assets/sell02.jpeg',
+        imageOnRight: false,
+        category: 'Punto de Venta',
+        ctaText: 'Probar Demo de Ventas',
+        onTap: () => debugPrint('Navegar a demo de ventas'),
       ),
       _FeatureData(
         icon: Icons.inventory_2_outlined,
-        title: 'Inventario controlado',
+        title: 'Gestión de Inventario Automatizada',
         description:
-            'Mantén tu inventario siempre actualizado y evita pérdidas',
+            'Controla tu stock con precisión usando alertas inteligentes, códigos de barras y predicciones de demanda',
         checkItems: [
-          'Alertas de stock mínimo o agotado',
-          'Códigos de barras',
-          'Reportes en tiempo real',
+          'Alertas automáticas de stock crítico',
+          'Escáner de códigos de barras integrado',
+          'Historial completo de movimientos',
+          'Predicción de demanda con IA',
+          'Control de lotes y fechas de vencimiento'
         ],
-        benefit: 'Reduce 68% pérdidas',
-        stats: '68%',
-        color: const Color(0xFF4ECDC4),
+        benefit: 'Reduce pérdidas por stock en 68%', 
+        color: const Color(0xFF059669), // Verde esmeralda
+        imageAsset: 'assets/catalogue02.png',
+        imageOnRight: true,
+        category: 'Control de Stock',
+        ctaText: 'Explorar Inventario',
+        onTap: () => debugPrint('Navegar a demo de inventario'),
       ),
       _FeatureData(
         icon: Icons.analytics_outlined,
-        title: 'Reportes y Analytics',
+        title: 'Analytics y Business Intelligence',
         description:
-            'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura en la nube',
+            'Convierte datos en decisiones estratégicas con dashboards personalizables y métricas avanzadas de negocio',
         checkItems: [
-          'Productos y categorías populares',
-          'Sigue tendencias de venta',
-          'Ventas por empleado',
-          'Ganancias y márgenes',
+          'Dashboard personalizable y dinámico',
+          'Análisis predictivo de tendencias',
+          'Reportes exportables por período',
+          'Métricas de rentabilidad por producto',
+          'Comparativas históricas y benchmarking'
         ],
-        benefit: 'Reduce 83% tiempo',
-        stats: '83%',
-        color: const Color(0xFF96CEB4),
+        benefit: 'Mejora decisiones estratégicas en 83%', 
+        color: const Color(0xFFDC2626), // Rojo moderno
+        imageAsset: 'assets/premium.jpeg',
+        imageOnRight: false,
+        category: 'Business Intelligence',
+        ctaText: 'Ver Reportes Avanzados',
+        onTap: () => debugPrint('Navegar a demo de analytics'),
       ),
     ];
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(top: 50, bottom: 64, left: 24, right: 24),
+    return SizedBox(
+      width: double.infinity, 
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF007BFF).withValues(alpha: 0.15)
-                  : const Color(0xFF007BFF).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(50),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF007BFF).withValues(alpha: 0.3)
-                    : const Color(0xFF007BFF).withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              '⚡ Potencia tu negocio',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color:
-                    isDark ? const Color(0xFF64B5F6) : const Color(0xFF007BFF),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ).animate().fadeIn(duration: 600.ms),
-          const SizedBox(height: 24),
-          Text(
-            'Toma el control de tu negocio y simplifica tu operación diaria',
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-              height: 1.2,
-              color: isDark ? colorScheme.onSurface : null,
-            ),
-            textAlign: TextAlign.center,
-          ).animate(delay: 200.ms).fadeIn(duration: 600.ms),
-          const SizedBox(height: 16),
-          Text(
-            'Todo lo que necesitas para gestionar de forma profesional',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.7),
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ).animate(delay: 400.ms).fadeIn(duration: 600.ms),
-          const SizedBox(height: 64),
-          if (axis == Axis.horizontal)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: features
-                  .asMap()
-                  .entries
-                  .map((entry) => Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: _ModernFeatureCard(
-                            feature: entry.value,
-                            delay: Duration(milliseconds: entry.key * 200),
-                          ),
-                        ),
-                      ))
-                  .toList(),
-            )
-          else
-            Column(
-              children: features
-                  .asMap()
-                  .entries
-                  .map((entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 32),
-                        child: _ModernFeatureCard(
-                          feature: entry.value,
-                          delay: Duration(milliseconds: entry.key * 200),
-                        ),
-                      ))
-                  .toList(),
-            ),
+          // Header mejorado con mejor jerarquía visual
+          Column(
+            children: [
+              // Badge de sección con mejor diseño
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                      const Color(0xFF7C3AED).withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: const Color(0xFF4F46E5),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Características Principales',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF4F46E5),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 600.ms)
+                  .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+              
+              SizedBox(height: isMobile ? 24 : 32),
+              
+              // Título principal con mejor tipografía
+              Text(
+                'Todo lo que necesitas para\nhacer crecer tu negocio',
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
+                  height: 1.1,
+                  fontSize: isMobile ? 28 : 48,
+                  color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              )
+                  .animate(delay: 200.ms)
+                  .fadeIn(duration: 800.ms)
+                  .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+              
+              SizedBox(height: isMobile ? 16 : 20),
+              
+              // Subtítulo mejorado
+              Container(
+                constraints: BoxConstraints(
+                  maxWidth: isMobile ? double.infinity : 600,
+                ),
+                child: Text(
+                  'Herramientas profesionales diseñadas para optimizar cada aspecto de tu operación comercial',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                    height: 1.5,
+                    fontSize: isMobile ? 16 : 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              )
+                  .animate(delay: 400.ms)
+                  .fadeIn(duration: 800.ms)
+                  .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+            ],
+          ),
+          
+          SizedBox(height: isMobile ? 48 : 80),
+          
+          // Grid de características con animaciones escalonadas
+          _buildFeaturesGrid(features, theme, colorScheme, isDark, isMobile, axis),
+           
         ],
       ),
+    );
+  }
+
+  Widget _buildFeaturesGrid(
+    List<_FeatureData> features,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    bool isDark,
+    bool isMobile,
+    Axis axis,
+  ) {
+    // Determinar si usar layout horizontal basado en el eje y tamaño de pantalla
+    final bool useHorizontalLayout = axis == Axis.horizontal && !isMobile;
+    
+    return Column(
+      children: features
+          .asMap()
+          .entries
+          .expand((entry) => [
+                _ModernFeatureCard(
+                  feature: entry.value,
+                  delay: Duration(milliseconds: entry.key * (useHorizontalLayout ? 300 : 200)),
+                  isFullWidth: useHorizontalLayout,
+                  featureIndex: entry.key,
+                ), 
+              ])
+          .toList(),
     );
   }
 
@@ -1276,28 +1338,40 @@ class _FeatureData {
   final String title;
   final String description;
   final List<String>? checkItems;
-  final String? benefit;
-  final String? stats;
+  final String? benefit; 
   final Color? color;
+  final String? imageAsset;
+  final bool imageOnRight;
+  final String? category; // Nueva: categoría para agrupación
+  final String? ctaText; // Nueva: texto de call to action
+  final VoidCallback? onTap; // Nueva: acción opcional
 
   _FeatureData({
     required this.icon,
     required this.title,
     required this.description,
     this.checkItems,
-    this.benefit,
-    this.stats,
+    this.benefit, 
     this.color,
+    this.imageAsset,
+    this.imageOnRight = true,
+    this.category,
+    this.ctaText,
+    this.onTap,
   });
 }
 
 class _ModernFeatureCard extends StatefulWidget {
   final _FeatureData feature;
   final Duration delay;
+  final bool isFullWidth;
+  final int featureIndex; // Nuevo: índice para diferenciación visual
 
   const _ModernFeatureCard({
     required this.feature,
     required this.delay,
+    this.isFullWidth = false,
+    this.featureIndex = 0, // Valor por defecto
   });
 
   @override
@@ -1313,6 +1387,28 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
+
+    // En móvil o cuando se especifica, siempre mostrar en columna
+    if (isMobile || !widget.isFullWidth) {
+      return _buildMobileLayout(theme, colorScheme, isDark);
+    }
+
+    // En tablet/desktop con full width, mostrar lado a lado
+    return _buildDesktopLayout(theme, colorScheme, isDark);
+  }
+
+  Widget _buildMobileLayout(ThemeData theme, ColorScheme colorScheme, bool isDark) {
+    // Colores de fondo diferenciados para cada feature
+    final backgroundColors = [
+      widget.feature.color?.withValues(alpha: isDark ? 0.08 : 0.05) ?? 
+          colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
+      widget.feature.color?.withValues(alpha: isDark ? 0.06 : 0.04) ?? 
+          colorScheme.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
+      widget.feature.color?.withValues(alpha: isDark ? 0.07 : 0.045) ?? 
+          colorScheme.tertiary.withValues(alpha: isDark ? 0.07 : 0.045),
+    ];
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -1320,207 +1416,339 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         transform: Matrix4.identity()
-          ..scale(_isHovered ? 1.03 : 1.0)
-          ..translate(0.0, _isHovered ? -8.0 : 0.0),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark
-                  ? (widget.feature.color?.withValues(alpha: 0.3) ??
-                      colorScheme.outline.withValues(alpha: 0.3))
-                  : (widget.feature.color?.withValues(alpha: 0.2) ??
-                      const Color(0xFF007BFF).withValues(alpha: 0.1)),
-              width: 1,
+          ..translate(0.0, _isHovered ? -4.0 : 0.0),
+        decoration: BoxDecoration(
+          color: backgroundColors[widget.featureIndex % backgroundColors.length], 
+        ), 
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+        child: Stack(
+          children: [
+            // Fondo con figuras circulares y óvalos
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _FeatureBackgroundPainter(
+                  featureIndex: widget.featureIndex,
+                  primaryColor: widget.feature.color ?? colorScheme.primary,
+                  isDark: isDark,
+                  isMobile: true,
+                ),
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.3)
-                    : _isHovered
-                        ? (widget.feature.color?.withValues(alpha: 0.15) ??
-                            const Color(0xFF007BFF).withValues(alpha: 0.15))
-                        : Colors.black.withValues(alpha: 0.05),
-                blurRadius: _isHovered ? 20 : 12,
-                offset: Offset(0, _isHovered ? 12 : 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Ícono con background colorido
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      widget.feature.color ?? const Color(0xFF007BFF),
-                      (widget.feature.color ?? const Color(0xFF007BFF))
-                          .withValues(alpha: 0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (widget.feature.color ?? const Color(0xFF007BFF))
-                          .withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
+            // Contenido principal
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Contenido de características
+                  _buildFeatureContent(theme, colorScheme, isDark),
+                  
+                  // Imagen abajo en móvil
+                  if (widget.feature.imageAsset != null) ...[
+                    const SizedBox(height: 32),
+                    _buildFeatureImage(isMobile: true),
                   ],
-                ),
-                child: Icon(
-                  widget.feature.icon,
-                  size: 32,
-                  color: Colors.white,
-                ),
+                ],
               ),
-              const SizedBox(height: 24),
-
-              // Título
-              Text(
-                widget.feature.title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Descripción
-              Text(
-                widget.feature.description,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  height: 1.5,
-                  fontSize: 15,
-                ),
-              ),
-
-              // Check items
-              if (widget.feature.checkItems != null &&
-                  widget.feature.checkItems!.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                ...widget.feature.checkItems!
-                    .map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  color: (widget.feature.color ??
-                                          const Color(0xFF007BFF))
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: widget.feature.color ??
-                                      const Color(0xFF007BFF),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  item,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurface
-                                        .withValues(alpha: 0.8),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ))
-                    .toList(),
-              ],
-
-              if (widget.feature.benefit != null ||
-                  widget.feature.stats != null) ...[
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    if (widget.feature.stats != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? (widget.feature.color ??
-                                      const Color(0xFF007BFF))
-                                  .withValues(alpha: 0.2)
-                              : (widget.feature.color ??
-                                      const Color(0xFF007BFF))
-                                  .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: isDark
-                              ? Border.all(
-                                  color: (widget.feature.color ??
-                                          const Color(0xFF007BFF))
-                                      .withValues(alpha: 0.3),
-                                  width: 1,
-                                )
-                              : null,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.feature.stats!,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: isDark
-                                    ? (widget.feature.color ??
-                                        const Color(0xFF64B5F6))
-                                    : (widget.feature.color ??
-                                        const Color(0xFF007BFF)),
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.trending_up,
-                              size: 16,
-                              color: isDark
-                                  ? (widget.feature.color ??
-                                      const Color(0xFF64B5F6))
-                                  : (widget.feature.color ??
-                                      const Color(0xFF007BFF)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    if (widget.feature.benefit != null)
-                      Expanded(
-                        child: Text(
-                          widget.feature.benefit!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.6),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
+  }
+
+  Widget _buildDesktopLayout(ThemeData theme, ColorScheme colorScheme, bool isDark) {
+    // Colores de fondo diferenciados para cada feature
+    final backgroundColors = [
+      widget.feature.color?.withValues(alpha: isDark ? 0.08 : 0.05) ?? 
+          colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
+      widget.feature.color?.withValues(alpha: isDark ? 0.06 : 0.04) ?? 
+          colorScheme.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
+      widget.feature.color?.withValues(alpha: isDark ? 0.07 : 0.045) ?? 
+          colorScheme.tertiary.withValues(alpha: isDark ? 0.07 : 0.045),
+    ];
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        transform: Matrix4.identity()
+          ..translate(0.0, _isHovered ? -6.0 : 0.0),
+        decoration: BoxDecoration(
+          color: backgroundColors[widget.featureIndex % backgroundColors.length], 
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+        child: Stack(
+          children: [
+            // Fondo con figuras circulares y óvalos
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _FeatureBackgroundPainter(
+                  featureIndex: widget.featureIndex,
+                  primaryColor: widget.feature.color ?? colorScheme.primary,
+                  isDark: isDark,
+                  isMobile: false,
+                ),
+              ),
+            ),
+            // Contenido en fila
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: widget.feature.imageOnRight
+                    ? [
+                        // Contenido a la izquierda
+                        Expanded(
+                          flex: 3,
+                          child: _buildFeatureContent(theme, colorScheme, isDark),
+                        ),
+                        const SizedBox(width: 48),
+                        // Imagen a la derecha
+                        if (widget.feature.imageAsset != null)
+                          Expanded(
+                            flex: 2,
+                            child: _buildFeatureImage(),
+                          ),
+                      ]
+                    : [
+                        // Imagen a la izquierda
+                        if (widget.feature.imageAsset != null)
+                          Expanded(
+                            flex: 2,
+                            child: _buildFeatureImage(),
+                          ),
+                        const SizedBox(width: 48),
+                        // Contenido a la derecha
+                        Expanded(
+                          flex: 3,
+                          child: _buildFeatureContent(theme, colorScheme, isDark),
+                        ),
+                      ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
+  }
+
+  Widget _buildFeatureContent(ThemeData theme, ColorScheme colorScheme, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Ícono mejorado con accesibilidad
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                widget.feature.color ?? const Color(0xFF4F46E5),
+                (widget.feature.color ?? const Color(0xFF4F46E5))
+                    .withValues(alpha: 0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: (widget.feature.color ?? const Color(0xFF4F46E5))
+                    .withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Icon(
+            widget.feature.icon,
+            size: 32,
+            color: Colors.white,
+            semanticLabel: '${widget.feature.title} ícono',
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Título
+        Text(
+          widget.feature.title,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+            height: 1.2,
+            color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Descripción
+        Text(
+          widget.feature.description,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: colorScheme.onSurface.withValues(alpha: 0.7),
+            height: 1.6,
+            fontSize: 16,
+          ),
+        ),
+
+        // Check items
+        if (widget.feature.checkItems != null &&
+            widget.feature.checkItems!.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          ...widget.feature.checkItems!
+              .map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          margin: const EdgeInsets.only(top: 2),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                (widget.feature.color ?? const Color(0xFF4F46E5))
+                                    .withValues(alpha: 0.2),
+                                (widget.feature.color ?? const Color(0xFF4F46E5))
+                                    .withValues(alpha: 0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: (widget.feature.color ?? const Color(0xFF4F46E5))
+                                  .withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: widget.feature.color ?? const Color(0xFF4F46E5),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ))
+              ,
+        ],
+
+        // Estadísticas y beneficios
+        if ( widget.feature.benefit != null) ...[
+          const SizedBox(height: 32),
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            children: [
+              if (widget.feature.benefit != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        (widget.feature.color ?? const Color(0xFF4F46E5))
+                            .withValues(alpha: 0.15),
+                        (widget.feature.color ?? const Color(0xFF4F46E5))
+                            .withValues(alpha: 0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: (widget.feature.color ?? const Color(0xFF4F46E5))
+                          .withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.feature.benefit!,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: widget.feature.color ?? const Color(0xFF4F46E5),
+                          fontWeight: FontWeight.w900, 
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.trending_up_rounded,
+                        size: 20,
+                        color: widget.feature.color ?? const Color(0xFF4F46E5),
+                      ),
+                    ],
+                  ),
+                ), 
+            ],
+          ),
+          
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFeatureImage({bool isMobile = false}) {
+    return Container(
+      height: isMobile ? 200 : 280,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+        boxShadow: [
+          BoxShadow(
+            color: (widget.feature.color ?? const Color(0xFF007BFF))
+                .withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+        child: Image.asset(
+          widget.feature.imageAsset!,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (context, error, stackTrace) => Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.image_not_supported_outlined,
+                    size: isMobile ? 32 : 48,
+                    color: Colors.grey.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Imagen no disponible',
+                    style: TextStyle(
+                      color: Colors.grey.withValues(alpha: 0.7),
+                      fontSize: isMobile ? 12 : 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1985,5 +2213,264 @@ class _TypewriterTextState extends State<TypewriterText>
         ),
       ),
     );
+  }
+}
+
+/// CustomPainter para crear figuras de fondo diferenciadas en cada feature
+class _FeatureBackgroundPainter extends CustomPainter {
+  final int featureIndex;
+  final Color primaryColor;
+  final bool isDark;
+  final bool isMobile;
+
+  _FeatureBackgroundPainter({
+    required this.featureIndex,
+    required this.primaryColor,
+    required this.isDark,
+    required this.isMobile,
+  });
+
+  @override
+  void paint(Canvas canvas, Size containerSize) {
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    // Configurar colores base con opacidad adaptativa
+    final baseOpacity = isDark ? 0.06 : 0.04;
+    final accentOpacity = isDark ? 0.08 : 0.06;
+    
+    final baseColor = primaryColor.withValues(alpha: baseOpacity);
+    final accentColor = primaryColor.withValues(alpha: accentOpacity);
+    final highlightColor = primaryColor.withValues(alpha: accentOpacity * 1.3);
+
+    // Diferencias según el índice de la feature con formas circulares y óvalos únicamente
+    switch (featureIndex % 3) {
+      case 0: // Primer feature - Círculos de diferentes tamaños
+        _drawCircularPatterns(canvas, containerSize, paint, baseColor, accentColor, highlightColor);
+        break;
+      case 1: // Segunda feature - Óvalos en diferentes orientaciones
+        _drawOvalPatterns(canvas, containerSize, paint, baseColor, accentColor, highlightColor);
+        break;
+      case 2: // Tercera feature - Combinación de círculos y óvalos
+        _drawMixedCircularOvalPatterns(canvas, containerSize, paint, baseColor, accentColor, highlightColor);
+        break;
+    }
+  }
+
+  /// Patrón de círculos variados (Feature 0)
+  void _drawCircularPatterns(Canvas canvas, Size containerSize, Paint paint, 
+      Color baseColor, Color accentColor, Color highlightColor) {
+    
+    // Círculo grande principal
+    paint.color = baseColor;
+    canvas.drawCircle(
+      Offset(containerSize.width * 0.85, containerSize.height * 0.2),
+      isMobile ? 35 : 60,
+      paint,
+    );
+
+    // Círculo mediano
+    paint.color = accentColor;
+    canvas.drawCircle(
+      Offset(containerSize.width * 0.15, containerSize.height * 0.7),
+      isMobile ? 25 : 45,
+      paint,
+    );
+
+    // Círculo pequeño destacado
+    paint.color = highlightColor;
+    canvas.drawCircle(
+      Offset(containerSize.width * 0.9, containerSize.height * 0.75),
+      isMobile ? 15 : 25,
+      paint,
+    );
+
+    // Círculos pequeños dispersos
+    paint.color = accentColor.withValues(alpha: accentColor.alpha * 0.7);
+    final smallCircles = [
+      {'x': 0.2, 'y': 0.25, 'radius': isMobile ? 8.0 : 12.0},
+      {'x': 0.6, 'y': 0.15, 'radius': isMobile ? 6.0 : 10.0},
+      {'x': 0.3, 'y': 0.5, 'radius': isMobile ? 10.0 : 15.0},
+      {'x': 0.75, 'y': 0.45, 'radius': isMobile ? 7.0 : 11.0},
+      {'x': 0.1, 'y': 0.35, 'radius': isMobile ? 5.0 : 8.0},
+    ];
+
+    for (final circle in smallCircles) {
+      canvas.drawCircle(
+        Offset(
+          containerSize.width * (circle['x'] as double),
+          containerSize.height * (circle['y'] as double),
+        ),
+        circle['radius'] as double,
+        paint,
+      );
+    }
+  }
+
+  /// Patrón de óvalos en diferentes orientaciones (Feature 1)
+  void _drawOvalPatterns(Canvas canvas, Size containerSize, Paint paint,
+      Color baseColor, Color accentColor, Color highlightColor) {
+    
+    // Óvalo horizontal grande
+    paint.color = baseColor;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(containerSize.width * 0.8, containerSize.height * 0.25),
+        width: isMobile ? 70 : 120,
+        height: isMobile ? 35 : 60,
+      ),
+      paint,
+    );
+
+    // Óvalo vertical mediano
+    paint.color = accentColor;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(containerSize.width * 0.2, containerSize.height * 0.6),
+        width: isMobile ? 25 : 40,
+        height: isMobile ? 50 : 80,
+      ),
+      paint,
+    );
+
+    // Óvalo inclinado (rotado)
+    paint.color = highlightColor;
+    canvas.save();
+    canvas.translate(containerSize.width * 0.85, containerSize.height * 0.7);
+    canvas.rotate(0.785398); // 45 grados en radianes
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: isMobile ? 40 : 60,
+        height: isMobile ? 20 : 30,
+      ),
+      paint,
+    );
+    canvas.restore();
+
+    // Óvalos pequeños dispersos con diferentes orientaciones
+    paint.color = accentColor.withValues(alpha: accentColor.alpha * 0.8);
+    final smallOvals = [
+      {'x': 0.15, 'y': 0.2, 'width': 20.0, 'height': 12.0, 'rotation': 0.0},
+      {'x': 0.5, 'y': 0.1, 'width': 15.0, 'height': 25.0, 'rotation': 0.0},
+      {'x': 0.4, 'y': 0.45, 'width': 18.0, 'height': 10.0, 'rotation': 0.52}, // 30 grados
+      {'x': 0.7, 'y': 0.5, 'width': 22.0, 'height': 14.0, 'rotation': -0.26}, // -15 grados
+      {'x': 0.1, 'y': 0.4, 'width': 12.0, 'height': 18.0, 'rotation': 0.0},
+    ];
+
+    for (final oval in smallOvals) {
+      final scaleFactor = isMobile ? 0.7 : 1.0;
+      canvas.save();
+      canvas.translate(
+        containerSize.width * (oval['x'] as double),
+        containerSize.height * (oval['y'] as double),
+      );
+      canvas.rotate(oval['rotation'] as double);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: (oval['width'] as double) * scaleFactor,
+          height: (oval['height'] as double) * scaleFactor,
+        ),
+        paint,
+      );
+      canvas.restore();
+    }
+  }
+
+  /// Patrón mixto de círculos y óvalos (Feature 2)
+  void _drawMixedCircularOvalPatterns(Canvas canvas, Size containerSize, Paint paint,
+      Color baseColor, Color accentColor, Color highlightColor) {
+    
+    // Óvalo grande horizontal como base
+    paint.color = baseColor;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(containerSize.width * 0.7, containerSize.height * 0.3),
+        width: isMobile ? 80 : 140,
+        height: isMobile ? 40 : 70,
+      ),
+      paint,
+    );
+
+    // Círculo mediano superpuesto
+    paint.color = accentColor;
+    canvas.drawCircle(
+      Offset(containerSize.width * 0.25, containerSize.height * 0.65),
+      isMobile ? 30 : 50,
+      paint,
+    );
+
+    // Óvalo vertical destacado
+    paint.color = highlightColor;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(containerSize.width * 0.85, containerSize.height * 0.8),
+        width: isMobile ? 18 : 30,
+        height: isMobile ? 35 : 55,
+      ),
+      paint,
+    );
+
+    // Combinación de formas pequeñas
+    paint.color = accentColor.withValues(alpha: accentColor.alpha * 0.6);
+    
+    // Círculos pequeños
+    final mixedShapes = [
+      {'type': 'circle', 'x': 0.15, 'y': 0.25, 'size': isMobile ? 8.0 : 14.0},
+      {'type': 'circle', 'x': 0.6, 'y': 0.1, 'size': isMobile ? 10.0 : 16.0},
+      {'type': 'circle', 'x': 0.4, 'y': 0.75, 'size': isMobile ? 6.0 : 10.0},
+    ];
+
+    for (final shape in mixedShapes) {
+      if (shape['type'] == 'circle') {
+        canvas.drawCircle(
+          Offset(
+            containerSize.width * (shape['x'] as double),
+            containerSize.height * (shape['y'] as double),
+          ),
+          shape['size'] as double,
+          paint,
+        );
+      }
+    }
+
+    // Óvalos pequeños dispersos
+    paint.color = highlightColor.withValues(alpha: highlightColor.alpha * 0.7);
+    final smallOvals = [
+      {'x': 0.45, 'y': 0.2, 'width': 16.0, 'height': 8.0, 'rotation': 0.3},
+      {'x': 0.1, 'y': 0.45, 'width': 12.0, 'height': 20.0, 'rotation': 0.0},
+      {'x': 0.9, 'y': 0.15, 'width': 14.0, 'height': 7.0, 'rotation': -0.4},
+      {'x': 0.3, 'y': 0.9, 'width': 18.0, 'height': 10.0, 'rotation': 0.2},
+    ];
+
+    for (final oval in smallOvals) {
+      final scaleFactor = isMobile ? 0.8 : 1.0;
+      canvas.save();
+      canvas.translate(
+        containerSize.width * (oval['x'] as double),
+        containerSize.height * (oval['y'] as double),
+      );
+      canvas.rotate(oval['rotation'] as double);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: (oval['width'] as double) * scaleFactor,
+          height: (oval['height'] as double) * scaleFactor,
+        ),
+        paint,
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return oldDelegate is! _FeatureBackgroundPainter ||
+        oldDelegate.featureIndex != featureIndex ||
+        oldDelegate.primaryColor != primaryColor ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.isMobile != isMobile;
   }
 }

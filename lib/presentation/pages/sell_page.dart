@@ -541,8 +541,7 @@ class _SellPageState extends State<SellPage> {
                   (provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text:
-                              isMobile(buildContext) ? '' : 'Descartar ticket',
+                          text: const Text('Descartar ticket'),
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
                           backgroundColor: Colors.red.withValues(alpha: 0.1),
@@ -2090,11 +2089,13 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               ? Colors.green.withValues(alpha: 0.1)
               : Colors.grey.withValues(alpha: 0.1),
           iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)
-              ? null
-              : isActive
-                  ? '${provider.currentActiveCashRegister?.description}'
-                  : 'Iniciar caja',
+          text: isMobile(context) ? null : Text(
+            isActive ? 'Caja abierta' : 'Caja cerrada',
+            style: TextStyle(
+              color: isActive ? Colors.green.shade700 : Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         );
       },
     );

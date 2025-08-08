@@ -166,77 +166,24 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                         );
                       },
                       child: _isScrolled
-                          ? Container(
-                              key: const ValueKey('login_button'),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: colorScheme.primary.withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: AppFilledButton(
-                                onPressed: () => _navigateToLogin(
-                                    context,
-                                    Provider.of<AuthProvider>(context,
-                                        listen: false)),
-                                text: 'Iniciar Sesión',
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                                backgroundColor: isDark 
-                                    ? colorScheme.primary
-                                    : colorScheme.primary,
-                                foregroundColor: isDark 
-                                    ? colorScheme.onPrimary
-                                    : Colors.white,
-                              ),
-                            )
+                          ?AppBarButton(
+                              text: const Text('Iniciar Sesión'),
+                              onTap: () => _navigateToLogin( context, Provider.of<AuthProvider>(context, listen: false)),
+                          
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          )
                           : const SizedBox(key: ValueKey('placeholder')),
                     ),
 
                     // Botón para cambiar tema con diseño mejorado
                     Consumer<ThemeDataAppProvider>(
                       builder: (context, themeProvider, _) {
-                        return Container(
-                          margin: const EdgeInsets.only(left: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: _isScrolled
-                                ? (isDark 
-                                    ? colorScheme.surfaceContainerHigh.withValues(alpha: 0.8)
-                                    : colorScheme.surfaceContainerHigh.withValues(alpha: 0.6))
-                                : (isDark 
-                                    ? Colors.white.withValues(alpha: 0.15)
-                                    : Colors.black.withValues(alpha: 0.1)),
-                          ),
-                          child: IconButton(
-                            onPressed: themeProvider.toggleTheme,
-                            icon: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              transitionBuilder: (child, animation) {
-                                return RotationTransition(
-                                  turns: animation,
-                                  child: child,
-                                );
-                              },
-                              child: Icon(
-                                themeProvider.themeMode == ThemeMode.dark
-                                    ? Icons.light_mode_outlined
-                                    : Icons.dark_mode_outlined,
-                                key: ValueKey(themeProvider.themeMode),
-                                color: _isScrolled
-                                    ? accentAppbarColor
-                                    : (isDark ? Colors.white.withValues(alpha: 0.9) : Colors.white),
-                                size: 22,
-                              ),
-                            ),
-                            tooltip: themeProvider.themeMode == ThemeMode.dark
-                                ? 'Cambiar a tema claro'
-                                : 'Cambiar a tema oscuro',
-                          ),
+                        return AppBarButton(
+                          text: themeProvider.darkTheme.brightness == Brightness.dark
+                              ? const Icon(Icons.dark_mode)
+                              : const Icon(Icons.light_mode), 
+                          onTap: themeProvider.toggleTheme, 
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         );
                       },
                     ),
@@ -360,10 +307,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                                   ]
                                 : [
                                     // Modo claro - mantener los amarillos pero más suaves
-                                    Colors.yellow.shade300,
-                                    Colors.yellow.shade400.withValues(alpha: 0.9),
-                                    Colors.yellow.shade300,
-                                    Colors.yellow.shade400,
+                                    Colors.amber.shade300,
+                                    Colors.amber.shade400.withValues(alpha: 0.9),
+                                    Colors.amber.shade300,
+                                    Colors.amber,
                                   ],
                           ),
                         ),
@@ -398,10 +345,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                                   ]
                                 : [
                                     // Modo claro - gradiente amarillo suave
-                                    Colors.yellow.shade200.withValues(alpha: 0.8),
-                                    Colors.yellow.shade300.withValues(alpha: 0.4),
-                                    Colors.yellow.shade400,
-                                    Colors.yellow.shade500,
+                                    Colors.amber.shade200.withValues(alpha: 0.8),
+                                    Colors.amber.shade300.withValues(alpha: 0.4),
+                                    Colors.amber.shade300,
+                                    Colors.amber.shade300,
                                   ],
                           ),
                         ),
@@ -547,7 +494,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 20),
         Text(
-          'Agilizá tu proceso de ventas fácil, rápido y controla tu inventario desde cualquier lugar',
+          'Tu negocio necesita un cambio, agilizá tu proceso de ventas fácil, rápido y controla tu inventario desde cualquier lugar',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: isDark 
@@ -1170,6 +1117,8 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
   @override
   Widget build(BuildContext context) {
     final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
     // Calcular dimensiones basadas solo en screenWidth
     final widgetWidth = _calculateWidth(widget.screenWidth, isMobile);
@@ -1188,7 +1137,7 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Contenedor de imagen con zoom
+          // Contenedor de imagen con zoom y sombra adaptativa
           Expanded(
             child: Center(
               child: AnimatedScale(
@@ -1199,11 +1148,18 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                   margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
                   width: widgetWidth,
                   height: imageContainerHeight,
-                  child: Image.asset(
-                    widget.assetPath,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.high,
-                    errorBuilder: (context, error, stackTrace) => _buildErrorContainer(isMobile),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                    boxShadow: _buildAdaptiveShadow(isMobile, isDark, scale),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                    child: Image.asset(
+                      widget.assetPath,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (context, error, stackTrace) => _buildErrorContainer(isMobile),
+                    ),
                   ),
                 ),
               ),
@@ -1265,6 +1221,12 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
       // Desktop muy grande: altura escalada
       return (screenWidth * 0.25).clamp(320.0, 450.0);
     }
+  }
+
+  /// Construye sombras adaptativas respetando dimensiones de imagen
+  List<BoxShadow> _buildAdaptiveShadow(bool isMobile, bool isDark, double scale) {
+    // Sin sombras para las imágenes de dispositivos
+    return [];
   }
 
   /// Construye contenedor de error

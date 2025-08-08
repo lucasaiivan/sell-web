@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Botón para AppBar con diseño personalizado
-/// Soporta iconos leading/trailing y texto configurable
+/// Soporta iconos leading/trailing y contenido widget configurable
 class AppBarButton extends StatelessWidget {
-  final String text;
+  final Widget text;
   final VoidCallback? onTap;
   final Color? colorBackground;
   final Color? colorAccent;
@@ -54,20 +54,11 @@ class AppBarButton extends StatelessWidget {
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child: Opacity(
-                opacity: textOpacity ? 0.5 : 1,
-                child: Text(
-                  text,
-                  style: TextStyle(color: accentColor),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            if (hasTrailingIcon) ...[
-              const SizedBox(width: 8),
+            
+            if (hasTrailingIcon) ...[ 
               Icon(iconTrailing, color: accentColor, size: 24),
             ],
+            text,
           ],
         ),
       );
@@ -76,14 +67,7 @@ class AppBarButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onTap,
       style: _buildButtonStyle(backgroundColor, accentColor),
-      child: Opacity(
-        opacity: textOpacity ? 0.5 : 1,
-        child: Text(
-          text,
-          style: TextStyle(color: accentColor),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
+      child: text,
     );
   }
 
@@ -92,14 +76,13 @@ class AppBarButton extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: accentColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-      elevation: 0,
-      padding: const EdgeInsets.only(left: 14, right: 20, top: 8, bottom: 8),
+      elevation: 0, 
     );
   }
 }
 
 /// Un botón circular para el AppBar, personalizable y reutilizable.
-/// Puede mostrar solo un icono o un icono con texto.
+/// Puede mostrar solo un icono o un icono con contenido widget.
 /// Incluye soporte para estado de carga con CircularProgressIndicator.
 class AppBarButtonCircle extends StatelessWidget {
   const AppBarButtonCircle({
@@ -108,6 +91,7 @@ class AppBarButtonCircle extends StatelessWidget {
     required this.onPressed,
     required this.tooltip,
     this.backgroundColor,
+    this.colorAccent,
     this.iconColor,
     this.text,
     this.isLoading = false,
@@ -117,8 +101,9 @@ class AppBarButtonCircle extends StatelessWidget {
   final VoidCallback? onPressed;
   final String tooltip;
   final Color? backgroundColor;
+  final Color? colorAccent;
   final Color? iconColor;
-  final String? text;
+  final Widget? text;
   final bool isLoading;
 
   @override
@@ -126,8 +111,10 @@ class AppBarButtonCircle extends StatelessWidget {
     final theme = Theme.of(context);
     final effectiveBackgroundColor = backgroundColor ??
         theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
-    final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
-    final bool hasText = text != null && text!.isNotEmpty;
+    final effectiveIconColor = iconColor ?? 
+        colorAccent ?? 
+        theme.colorScheme.primary;
+    final bool hasText = text != null;
 
     // Calcular tamaño del icono basado en el tamaño del botón (40% del área)
     const double buttonSize = 48.0;
@@ -177,15 +164,7 @@ class AppBarButtonCircle extends StatelessWidget {
                           ),
                     const SizedBox(width: 6.0),
                     Flexible(
-                      child: Text(
-                        text!,
-                        style: TextStyle(
-                          color: effectiveIconColor,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child: text!,
                     ),
                   ],
                 )

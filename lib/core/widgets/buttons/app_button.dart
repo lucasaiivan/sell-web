@@ -35,7 +35,7 @@ class AppButton extends StatelessWidget {
     this.foregroundColor,
     this.fontSize = 14,
     this.iconSize,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+    this.padding = const EdgeInsets.symmetric(horizontal: 20 , vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     this.width,
     this.elevation = 0,
@@ -149,8 +149,7 @@ class AppButton extends StatelessWidget {
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return ElevatedButton.styleFrom(
       elevation: defaultStyle ? 0 : elevation,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius)),
+      shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,

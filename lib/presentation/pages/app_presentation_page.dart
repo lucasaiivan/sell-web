@@ -316,7 +316,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     // Constantes para alineación perfecta entre clipper y dispositivo
     final deviceImageTopPadding = isMobile ? 40.0 : 60.0;
     final waveClipperOffset = deviceImageTopPadding; // Mismo valor para perfecta alineación 
-    double spaceAdictional = 150;  
+    double spaceAdictional = isMobile? 200 : 300; // Espacio adicional para evitar desbordamiento en pantallas grandes
 
     return SizedBox(
       width: double.infinity,

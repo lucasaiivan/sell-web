@@ -24,6 +24,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
   Color backgroundContainerColor = Colors.transparent;
+  
+  // Variables para controlar el efecto de blur cuando los dispositivos hacen zoom
+  bool _anyDeviceInZoom = false;
+  final Set<String> _devicesInZoom = <String>{};
 
   @override
   void initState() {
@@ -48,6 +52,25 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     // Trigger rebuild para actualizar el CustomPaint dinámico
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  // Métodos para controlar el estado de zoom de los dispositivos
+  void _onDeviceZoomChanged(String deviceId, bool isZoomed) {
+    final wasAnyDeviceInZoom = _anyDeviceInZoom;
+    
+    if (isZoomed) {
+      _devicesInZoom.add(deviceId);
+    } else {
+      _devicesInZoom.remove(deviceId);
+    }
+    
+    final isAnyDeviceInZoom = _devicesInZoom.isNotEmpty;
+    
+    if (wasAnyDeviceInZoom != isAnyDeviceInZoom) {
+      setState(() {
+        _anyDeviceInZoom = isAnyDeviceInZoom;
+      });
     }
   }
 
@@ -108,8 +131,27 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   ),
                 ),
               ),
-              // Contenido principal
-              _buildResponsiveContent(context, width),
+              // Contenido principal que se difumina cuando hay zoom
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                child: _anyDeviceInZoom
+                    ? ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                        child: _buildResponsiveContent(context, width),
+                      )
+                    : _buildResponsiveContent(context, width),
+              ),
+              // Overlay transparente para prevenir interacciones cuando hay blur
+              if (_anyDeviceInZoom)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.transparent,
+                    child: AbsorbPointer(
+                      absorbing: false, // Permitir scroll
+                      child: Container(),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -306,9 +348,11 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   children: [
                     // Imagen del dispositivo móvil
                     _deviceImageWithHover(
+                      deviceId: 'mobile_device',
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot00.png',
                       zoomFactor: 1.6, // Zoom más moderado para móvil
+                      onZoomChanged: _onDeviceZoomChanged,
                       actionWidget: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -332,9 +376,11 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     ),
                     // Imagen de la captura web
                     _deviceImageWithHover(
+                      deviceId: 'web_device',
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot06.png',
                       zoomFactor: 2.0, // Zoom más pronunciado para desktop
+                      onZoomChanged: _onDeviceZoomChanged,
                       actionWidget: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -998,17 +1044,21 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   }
 
   Widget _deviceImageWithHover({
+    required String deviceId,
     required double screenWidth,
     required String assetPath,
     required Widget actionWidget,
+    required void Function(String deviceId, bool isZoomed) onZoomChanged,
     double zoomFactor = 1.8,
   }) {
     return _DeviceScrollWidget(
+      deviceId: deviceId,
       screenWidth: screenWidth,
       scrollController: _scrollController,
       assetPath: assetPath,
       actionWidget: actionWidget,
       zoomFactor: zoomFactor,
+      onZoomChanged: onZoomChanged,
     );
   }
 }
@@ -1091,17 +1141,21 @@ class _TypewriterTextState extends State<TypewriterText> {
 }
 
 class _DeviceScrollWidget extends StatefulWidget {
+  final String deviceId;
   final double screenWidth;
   final ScrollController scrollController;
   final String assetPath;
   final Widget actionWidget;
   final double zoomFactor;
+  final void Function(String deviceId, bool isZoomed) onZoomChanged;
 
   const _DeviceScrollWidget({
+    required this.deviceId,
     required this.screenWidth,
     required this.scrollController,
     required this.assetPath,
     required this.actionWidget,
+    required this.onZoomChanged,
     this.zoomFactor = 1.8, // Factor de zoom por defecto
   });
 

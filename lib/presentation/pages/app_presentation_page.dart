@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
@@ -44,6 +45,10 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         _isScrolled = isScrolled;
       });
     }
+    // Trigger rebuild para actualizar el CustomPaint dinámico
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -79,127 +84,34 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         extendBodyBehindAppBar:
             true, // Permite que el cuerpo se extienda detrás del AppBar
         backgroundColor: backgroundContainerColor,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: _isScrolled
-                  ? ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0)
-                  : ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: appbarColor,
-                  border: _isScrolled 
-                      ? Border(
-                          bottom: BorderSide(
-                            color: isDark 
-                                ? colorScheme.outline.withValues(alpha: 0.3)
-                                : colorScheme.outline.withValues(alpha: 0.2),
-                            width: 0.5,
-                          ),
-                        )
-                      : null,
-                ),
-                child: AppBar(
-                  title: Row(
-                    children: [
-                      // Logo con animación mejorada
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        transform: _isScrolled 
-                            ? (Matrix4.identity()..scale(1.05))
-                            : Matrix4.identity(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: _isScrolled
-                                ? [
-                                    BoxShadow(
-                                      color: colorScheme.primary.withValues(alpha: 0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.asset('assets/launcher.png', height: 32),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Título con gradiente mejorado
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 300),
-                        style: TextStyle(
-                          fontSize: _isScrolled ? 20 : 18,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                        ),
-                        child: Text(
-                          'Sell',
-                            style: TextStyle(
-                            color: _isScrolled
-                              ? accentAppbarColor
-                              : (isDark 
-                                ? Colors.white.withValues(alpha: 0.9)
-                                : Colors.white),
-                            ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  surfaceTintColor: Colors.transparent,
-                  actions: [
-                    // Botón de login con animación mejorada
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder:
-                          (Widget child, Animation<double> animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: ScaleTransition(
-                            scale: animation,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _isScrolled
-                          ?AppBarButton(
-                              text: const Text('Iniciar Sesión'),
-                              onTap: () => _navigateToLogin( context, Provider.of<AuthProvider>(context, listen: false)),
-                          
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          )
-                          : const SizedBox(key: ValueKey('placeholder')),
-                    ),
-
-                    // Botón para cambiar tema con diseño mejorado
-                    Consumer<ThemeDataAppProvider>(
-                      builder: (context, themeProvider, _) {
-                        return AppBarButton(
-                          text: themeProvider.darkTheme.brightness == Brightness.dark
-                              ? const Icon(Icons.dark_mode)
-                              : const Icon(Icons.light_mode), 
-                          onTap: themeProvider.toggleTheme, 
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        appBar: _PresentationAppBar(
+          isScrolled: _isScrolled,
+          isDark: isDark,
+          colorScheme: colorScheme,
+          appbarColor: appbarColor,
+          accentAppbarColor: accentAppbarColor,
+          onLoginTap: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
         ),
         body: SingleChildScrollView(
           controller: _scrollController,
-          child: _buildResponsiveContent(context, width),
+          child: Stack(
+            children: [
+              // Fondo con CustomPaint dinámico que se adapta al contenido
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _DynamicBackgroundPainter(
+                    scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0.0,
+                    primaryColor: Theme.of(context).colorScheme.primary,
+                    isDark: Theme.of(context).brightness == Brightness.dark,
+                    isMobile: MediaQuery.of(context).size.width < ResponsiveBreakpoints.mobile,
+                    screenHeight: MediaQuery.of(context).size.height,
+                  ),
+                ),
+              ),
+              // Contenido principal
+              _buildResponsiveContent(context, width),
+            ],
+          ),
         ),
       ),
     );
@@ -566,7 +478,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         ],
         benefit: 'Aumenta la velocidad de ventas en 78%', 
         color: const Color(0xFF4F46E5), // Indigo moderno
-        imageAsset: 'assets/sell02.jpeg',
+        imageAsset: 'assets/screenshot00.png',
         imageOnRight: false,
         category: 'Punto de Venta',
         ctaText: 'Probar Demo de Ventas',
@@ -575,8 +487,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       _FeatureData(
         icon: Icons.inventory_2_outlined,
         title: 'Gestión de Inventario Automatizada',
-        description:
-            'Controla tu stock con precisión usando alertas inteligentes, códigos de barras y predicciones de demanda',
+        description: 'Controla tu stock con precisión usando alertas inteligentes, códigos de barras y predicciones de demanda',
         checkItems: [
           'Alertas automáticas de stock crítico',
           'Escáner de códigos de barras integrado',
@@ -586,7 +497,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         ],
         benefit: 'Reduce pérdidas por stock en 68%', 
         color: const Color(0xFF059669), // Verde esmeralda
-        imageAsset: 'assets/catalogue02.png',
+        imageAsset: 'assets/screenshot02.png',
         imageOnRight: true,
         category: 'Control de Stock',
         ctaText: 'Explorar Inventario',
@@ -606,7 +517,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
         ],
         benefit: 'Mejora decisiones estratégicas en 83%', 
         color: const Color(0xFFDC2626), // Rojo moderno
-        imageAsset: 'assets/premium.jpeg',
+        imageAsset: 'assets/screenshot04.png',
         imageOnRight: false,
         category: 'Business Intelligence',
         ctaText: 'Ver Reportes Avanzados',
@@ -734,7 +645,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   delay: Duration(milliseconds: entry.key * (useHorizontalLayout ? 300 : 200)),
                   isFullWidth: useHorizontalLayout,
                   featureIndex: entry.key,
-                ), 
+                ),
+                const SizedBox(height: 50),
               ])
           .toList(),
     );
@@ -1101,6 +1013,83 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   }
 }
 
+/// Widget simple de máquina de escribir para mostrar textos alternados
+class TypewriterText extends StatefulWidget {
+  final List<String> texts;
+  final TextStyle? style;
+  final TextAlign? textAlign;
+  final Duration typingSpeed;
+  final Duration pauseDuration;
+  final Duration backspacingSpeed;
+
+  const TypewriterText({
+    super.key,
+    required this.texts,
+    this.style,
+    this.textAlign,
+    this.typingSpeed = const Duration(milliseconds: 80),
+    this.pauseDuration = const Duration(milliseconds: 2000),
+    this.backspacingSpeed = const Duration(milliseconds: 40),
+  });
+
+  @override
+  State<TypewriterText> createState() => _TypewriterTextState();
+}
+
+class _TypewriterTextState extends State<TypewriterText> {
+  int _textIndex = 0;
+  int _charCount = 0;
+  bool _backspacing = false;
+  late final Ticker _ticker;
+  Duration _accum = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Ticker(_onTick)..start();
+  }
+
+  void _onTick(Duration elapsed) {
+    final delta = elapsed - _accum;
+    final step = _backspacing ? widget.backspacingSpeed : widget.typingSpeed;
+    if (delta >= step) {
+      _accum = elapsed;
+      setState(() {
+        final current = widget.texts[_textIndex];
+        if (_backspacing) {
+          if (_charCount > 0) {
+            _charCount--;
+          } else {
+            _backspacing = false;
+            _textIndex = (_textIndex + 1) % widget.texts.length;
+          }
+        } else {
+          if (_charCount < current.length) {
+            _charCount++;
+          } else {
+            _backspacing = true;
+            // pequeña pausa al final de la palabra
+            _accum = elapsed - widget.pauseDuration;
+          }
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = widget.texts[_textIndex];
+    final visible = current.substring(0, _charCount);
+    return Text(visible, style: widget.style, textAlign: widget.textAlign);
+  }
+}
+
 class _DeviceScrollWidget extends StatefulWidget {
   final double screenWidth;
   final ScrollController scrollController;
@@ -1421,36 +1410,17 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
           color: backgroundColors[widget.featureIndex % backgroundColors.length], 
         ), 
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fondo con figuras circulares y óvalos
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _FeatureBackgroundPainter(
-                  featureIndex: widget.featureIndex,
-                  primaryColor: widget.feature.color ?? colorScheme.primary,
-                  isDark: isDark,
-                  isMobile: true,
-                ),
-              ),
-            ),
-            // Contenido principal
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Contenido de características
-                  _buildFeatureContent(theme, colorScheme, isDark),
-                  
-                  // Imagen abajo en móvil
-                  if (widget.feature.imageAsset != null) ...[
-                    const SizedBox(height: 32),
-                    _buildFeatureImage(isMobile: true),
-                  ],
-                ],
-              ),
-            ),
+            // Contenido de características
+            _buildFeatureContent(theme, colorScheme, isDark),
+            
+            // Imagen abajo en móvil
+            if (widget.feature.imageAsset != null) ...[
+              const SizedBox(height: 32),
+              Center(child: _buildFeatureImage(isMobile: true)),
+            ],
           ],
         ),
       ),
@@ -1479,56 +1449,37 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
           color: backgroundColors[widget.featureIndex % backgroundColors.length], 
         ),
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
-        child: Stack(
-          children: [
-            // Fondo con figuras circulares y óvalos
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _FeatureBackgroundPainter(
-                  featureIndex: widget.featureIndex,
-                  primaryColor: widget.feature.color ?? colorScheme.primary,
-                  isDark: isDark,
-                  isMobile: false,
-                ),
-              ),
-            ),
-            // Contenido en fila
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: widget.feature.imageOnRight
-                    ? [
-                        // Contenido a la izquierda
-                        Expanded(
-                          flex: 3,
-                          child: _buildFeatureContent(theme, colorScheme, isDark),
-                        ),
-                        const SizedBox(width: 48),
-                        // Imagen a la derecha
-                        if (widget.feature.imageAsset != null)
-                          Expanded(
-                            flex: 2,
-                            child: _buildFeatureImage(),
-                          ),
-                      ]
-                    : [
-                        // Imagen a la izquierda
-                        if (widget.feature.imageAsset != null)
-                          Expanded(
-                            flex: 2,
-                            child: _buildFeatureImage(),
-                          ),
-                        const SizedBox(width: 48),
-                        // Contenido a la derecha
-                        Expanded(
-                          flex: 3,
-                          child: _buildFeatureContent(theme, colorScheme, isDark),
-                        ),
-                      ],
-              ),
-            ),
-          ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: widget.feature.imageOnRight
+              ? [
+                  // Contenido a la izquierda
+                  Expanded(
+                    flex: 3,
+                    child: _buildFeatureContent(theme, colorScheme, isDark),
+                  ),
+                  const SizedBox(width: 48),
+                  // Imagen a la derecha
+                  if (widget.feature.imageAsset != null)
+                    Expanded(
+                      flex: 2,
+                      child: _buildFeatureImage(),
+                    ),
+                ]
+              : [
+                  // Imagen a la izquierda
+                  if (widget.feature.imageAsset != null)
+                    Expanded(
+                      flex: 2,
+                      child: _buildFeatureImage(),
+                    ),
+                  const SizedBox(width: 48),
+                  // Contenido a la derecha
+                  Expanded(
+                    flex: 3,
+                    child: _buildFeatureContent(theme, colorScheme, isDark),
+                  ),
+                ],
         ),
       ),
     ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
@@ -1701,49 +1652,46 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
   }
 
   Widget _buildFeatureImage({bool isMobile = false}) {
+    // Dimensiones optimizadas para mostrar dispositivos móviles completos
+    // Móvil: 280x160 - Desktop: 380x220 para mantener proporciones de dispositivo
+    final containerHeight = isMobile ? 350.0 : 450.0; 
+    
     return Container(
-      height: isMobile ? 200 : 280,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
-        boxShadow: [
-          BoxShadow(
-            color: (widget.feature.color ?? const Color(0xFF007BFF))
-                .withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+      height: containerHeight, 
+      padding: const EdgeInsets.all(8), 
+      child: Image.asset(
+        widget.feature.imageAsset!,
+        // BoxFit.contain asegura que todo el dispositivo se muestre sin recortes
+        // Perfecto para screenshots de móviles PNG con fondo transparente
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        // Centrar la imagen para mejor presentación visual
+        alignment: Alignment.center,
+        errorBuilder: (context, error, stackTrace) => Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
-        child: Image.asset(
-          widget.feature.imageAsset!,
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (context, error, stackTrace) => Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.image_not_supported_outlined,
-                    size: isMobile ? 32 : 48,
-                    color: Colors.grey.withValues(alpha: 0.5),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.smartphone_outlined,
+                  size: isMobile ? 48 : 64,
+                  color: Colors.grey.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Vista previa del dispositivo\nno disponible',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey.withValues(alpha: 0.7),
+                    fontSize: isMobile ? 12 : 14,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Imagen no disponible',
-                    style: TextStyle(
-                      color: Colors.grey.withValues(alpha: 0.7),
-                      fontSize: isMobile ? 12 : 14,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1855,8 +1803,7 @@ class _FeatureCardState extends State<_FeatureCard>
             ),
           ),
         ),
-      ),
-    ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
+  )).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
   }
 }
 
@@ -1948,265 +1895,135 @@ class WaveClipper extends CustomClipper<Path> {
       customWaveOffset != oldClipper.customWaveOffset;
 }
 
-/// Custom painter para crear forma de onda en la parte inferior del hero section
-class WavePainter extends CustomPainter {
-  final Color color;
-  final Color backgroundColor;
+/// Widget del AppBar de presentación con efectos de scroll y animaciones
+class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final bool isScrolled;
+  final bool isDark;
+  final ColorScheme colorScheme;
+  final Color appbarColor;
+  final Color accentAppbarColor;
+  final VoidCallback onLoginTap;
 
-  WavePainter({
-    required this.color,
-    required this.backgroundColor,
+  const _PresentationAppBar({
+    required this.isScrolled,
+    required this.isDark,
+    required this.colorScheme,
+    required this.appbarColor,
+    required this.accentAppbarColor,
+    required this.onLoginTap,
   });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final backgroundPaint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-
-    // Comenzar desde la esquina superior izquierda
-    path.moveTo(0, 0);
-
-    // Crear la onda usando curvas cuadráticas
-    final waveHeight = size.height * 0.6;
-    final waveLength = size.width / 3;
-
-    // Primera onda
-    path.quadraticBezierTo(
-      waveLength * 0.5,
-      waveHeight,
-      waveLength,
-      0,
-    );
-
-    // Segunda onda
-    path.quadraticBezierTo(
-      waveLength * 1.5,
-      -waveHeight * 0.8,
-      waveLength * 2,
-      0,
-    );
-
-    // Tercera onda
-    path.quadraticBezierTo(
-      waveLength * 2.5,
-      waveHeight * 0.9,
-      size.width,
-      0,
-    );
-
-    // Completar el rectángulo hacia abajo
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    // Primero pintar el fondo
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      backgroundPaint,
-    );
-
-    // Luego pintar la onda
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
-/// Widget que simula efecto de tipeo secuencial con cursor
-class TypewriterText extends StatefulWidget {
-  final List<String> texts;
-  final TextStyle? style;
-  final TextAlign textAlign;
-  final Duration typingSpeed;
-  final Duration pauseDuration;
-  final Duration backspacingSpeed;
-
-  const TypewriterText({
-    super.key,
-    required this.texts,
-    this.style,
-    this.textAlign = TextAlign.center,
-    this.typingSpeed = const Duration(milliseconds: 100),
-    this.pauseDuration = const Duration(milliseconds: 2000),
-    this.backspacingSpeed = const Duration(milliseconds: 50),
-  });
-
-  @override
-  State<TypewriterText> createState() => _TypewriterTextState();
-}
-
-class _TypewriterTextState extends State<TypewriterText>
-    with TickerProviderStateMixin {
-  String _currentText = '';
-  int _currentIndex = 0;
-  int _charIndex = 0;
-  bool _isTyping = true;
-  bool _showCursor = true;
-
-  Timer? _typingTimer;
-  Timer? _cursorTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startTypewriterEffect();
-    _startCursorBlinking();
-  }
-
-  @override
-  void dispose() {
-    _typingTimer?.cancel();
-    _cursorTimer?.cancel();
-    super.dispose();
-  }
-
-  void _startCursorBlinking() {
-    _cursorTimer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
-      if (mounted) {
-        setState(() {
-          _showCursor = !_showCursor;
-        });
-      }
-    });
-  }
-
-  void _startTypewriterEffect() {
-    if (widget.texts.isEmpty) return;
-
-    _typingTimer = Timer.periodic(
-      _isTyping ? widget.typingSpeed : widget.backspacingSpeed,
-      (timer) {
-        if (!mounted) return;
-
-        setState(() {
-          if (_isTyping) {
-            // Escribiendo
-            if (_charIndex < widget.texts[_currentIndex].length) {
-              _currentText =
-                  widget.texts[_currentIndex].substring(0, _charIndex + 1);
-              _charIndex++;
-            } else {
-              // Terminó de escribir, pausa antes de borrar
-              timer.cancel();
-              Timer(widget.pauseDuration, () {
-                if (mounted) {
-                  setState(() {
-                    _isTyping = false;
-                  });
-                  _startTypewriterEffect();
-                }
-              });
-            }
-          } else {
-            // Borrando
-            if (_charIndex > 0) {
-              _charIndex--;
-              _currentText =
-                  widget.texts[_currentIndex].substring(0, _charIndex);
-            } else {
-              // Terminó de borrar, cambiar al siguiente texto
-              _currentIndex = (_currentIndex + 1) % widget.texts.length;
-              _isTyping = true;
-              timer.cancel();
-              Timer(const Duration(milliseconds: 300), () {
-                if (mounted) {
-                  _startTypewriterEffect();
-                }
-              });
-            }
-          }
-        });
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Obtener el ancho disponible considerando el padding horizontal
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
-    final availableWidth =
-        screenWidth - (isMobile ? 32 : 48); // Considerando padding lateral
-
-    // Encontrar el texto más largo de la lista para calcular altura máxima
-    String longestText = widget.texts
-        .fold('', (prev, text) => text.length > prev.length ? text : prev);
-
-    // Calcular altura dinámica basada en el texto más largo y el ancho disponible
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: longestText,
-        style: widget.style,
-      ),
-      textDirection: TextDirection.ltr,
-      textAlign: widget.textAlign,
-    );
-    textPainter.layout(maxWidth: availableWidth);
-    final maxTextHeight = textPainter.height;
-
-    // Calcular altura para el texto actual
-    final currentTextPainter = TextPainter(
-      text: TextSpan(
-        text: _currentText.isEmpty
-            ? ' '
-            : _currentText, // Espacio para evitar altura cero
-        style: widget.style,
-      ),
-      textDirection: TextDirection.ltr,
-      textAlign: widget.textAlign,
-    );
-    currentTextPainter.layout(maxWidth: availableWidth);
-    final currentTextHeight = currentTextPainter.height;
-
-    // Usar la altura máxima para mantener consistencia visual
-    final finalHeight = maxTextHeight + 16; // Padding adicional para el cursor
-
-    return SizedBox(
-      height: finalHeight,
-      width: double.infinity,
-      child: Align(
-        alignment: Alignment.center,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: availableWidth,
-            minHeight: currentTextHeight,
-          ),
-          child: RichText(
-            textAlign: widget.textAlign,
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: _currentText,
-                  style: widget.style,
-                ),
-                TextSpan(
-                  text: _showCursor ? '●' : '●',
-                  style: widget.style?.copyWith(
-                    color: _showCursor
-                        ? (widget.style?.color ?? Colors.white)
-                        : Colors.transparent,
-                    fontWeight: FontWeight.w900,
-                    fontSize: (widget.style?.fontSize ?? 24) *
-                        0.6, // 60% del tamaño del texto
-                    shadows: _showCursor
-                        ? [
-                            Shadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 1,
-                              offset: const Offset(0, 0.5),
-                            ),
-                          ]
-                        : null,
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: isScrolled
+              ? ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0)
+              : ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: appbarColor,
+              border: isScrolled 
+                  ? Border(
+                      bottom: BorderSide(
+                        color: isDark 
+                            ? colorScheme.outline.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.2),
+                        width: 0.5,
+                      ),
+                    )
+                  : null,
+            ),
+            child: AppBar(
+              title: Row(
+                children: [
+                  // Logo con animación mejorada
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    transform: isScrolled 
+                        ? (Matrix4.identity()..scale(1.05))
+                        : Matrix4.identity(),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: isScrolled
+                            ? [
+                                BoxShadow(
+                                  color: colorScheme.primary.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset('assets/launcher.png', height: 32),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  // Título con gradiente mejorado
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
+                    style: TextStyle(
+                      fontSize: isScrolled ? 20 : 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
+                    child: Text(
+                      'Sell',
+                      style: TextStyle(
+                        color: isScrolled
+                          ? accentAppbarColor
+                          : (isDark 
+                            ? Colors.white.withValues(alpha: 0.9)
+                            : Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                // Botón de login con animación mejorada
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: animation,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: isScrolled
+                      ? AppBarButton(
+                          text: const Text('Iniciar Sesión'),
+                          onTap: onLoginTap,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        )
+                      : const SizedBox(key: ValueKey('placeholder')),
                 ),
+
+                // Botón para cambiar tema con diseño mejorado
+                Consumer<ThemeDataAppProvider>(
+                  builder: (context, themeProvider, _) {
+                    return AppBarButton(
+                      text: themeProvider.darkTheme.brightness == Brightness.dark? const Icon(Icons.dark_mode): const Icon(Icons.light_mode), 
+                      onTap: themeProvider.toggleTheme, 
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    );
+                  },
+                ),
+                const SizedBox(width: 16),
               ],
             ),
           ),
@@ -2214,263 +2031,384 @@ class _TypewriterTextState extends State<TypewriterText>
       ),
     );
   }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-/// CustomPainter para crear figuras de fondo diferenciadas en cada feature
-class _FeatureBackgroundPainter extends CustomPainter {
-  final int featureIndex;
-  final Color primaryColor;
-  final bool isDark;
-  final bool isMobile;
+// Pintor de fondo dinámico con efecto parallax basado en el scroll
+class _DynamicBackgroundPainter extends CustomPainter {
+  final double scrollOffset;
+  final Color primaryColor; // Reservado por si se desea tematizar colores en el futuro
+  final bool isDark;        // Reservado para variantes de tema
+  final bool isMobile;      // Reservado para ajustar curvas/escala si se necesita
+  final double screenHeight; // Reservado para cálculos dependientes de altura visible
 
-  _FeatureBackgroundPainter({
-    required this.featureIndex,
+  _DynamicBackgroundPainter({
+    required this.scrollOffset,
     required this.primaryColor,
     required this.isDark,
     required this.isMobile,
+    required this.screenHeight,
   });
 
   @override
-  void paint(Canvas canvas, Size containerSize) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
 
-    // Configurar colores base con opacidad adaptativa
-    final baseOpacity = isDark ? 0.06 : 0.04;
-    final accentOpacity = isDark ? 0.08 : 0.06;
+    // Colores adaptativos según el tema con transparencia optimizada para legibilidad
+    final baseColors = isDark 
+        ? [
+            const Color(0xFF2A3D5C).withValues(alpha: 0.15), // Azul oscuro - reducido para legibilidad
+            const Color(0xFF3A5F4C).withValues(alpha: 0.12), // Verde oscuro - reducido para legibilidad
+            const Color(0xFF5C4A3A).withValues(alpha: 0.10), // Marrón oscuro - reducido para legibilidad
+            const Color(0xFF4C3A5C).withValues(alpha: 0.13), // Púrpura oscuro - reducido para legibilidad
+            const Color(0xFF5C3A3A).withValues(alpha: 0.11), // Rojo oscuro - reducido para legibilidad
+            const Color(0xFF3A5C5C).withValues(alpha: 0.08), // Teal oscuro - reducido para legibilidad
+          ]
+        : [
+            const Color(0xFFA3D8D1).withValues(alpha: 0.12), // Verde agua - reducido para legibilidad
+            const Color(0xFFFAD86A).withValues(alpha: 0.10), // Amarillo - reducido para legibilidad
+            const Color(0xFFA7C6ED).withValues(alpha: 0.13), // Azul - reducido para legibilidad
+            const Color(0xFFFFB3D1).withValues(alpha: 0.11), // Rosa suave - reducido para legibilidad
+            const Color(0xFFD1A3FF).withValues(alpha: 0.09), // Púrpura suave - reducido para legibilidad
+            const Color(0xFFFFA3B3).withValues(alpha: 0.08), // Coral suave - reducido para legibilidad
+          ];
+
+    // --- CÍRCULOS GIGANTES CON DIFUMINADO (fondo) ---
     
-    final baseColor = primaryColor.withValues(alpha: baseOpacity);
-    final accentColor = primaryColor.withValues(alpha: accentOpacity);
-    final highlightColor = primaryColor.withValues(alpha: accentOpacity * 1.3);
-
-    // Diferencias según el índice de la feature con formas circulares y óvalos únicamente
-    switch (featureIndex % 3) {
-      case 0: // Primer feature - Círculos de diferentes tamaños
-        _drawCircularPatterns(canvas, containerSize, paint, baseColor, accentColor, highlightColor);
-        break;
-      case 1: // Segunda feature - Óvalos en diferentes orientaciones
-        _drawOvalPatterns(canvas, containerSize, paint, baseColor, accentColor, highlightColor);
-        break;
-      case 2: // Tercera feature - Combinación de círculos y óvalos
-        _drawMixedCircularOvalPatterns(canvas, containerSize, paint, baseColor, accentColor, highlightColor);
-        break;
-    }
-  }
-
-  /// Patrón de círculos variados (Feature 0)
-  void _drawCircularPatterns(Canvas canvas, Size containerSize, Paint paint, 
-      Color baseColor, Color accentColor, Color highlightColor) {
+    // Círculo gigante izquierdo (solo se ve la mitad derecha)
+    final leftGiantRadius = size.width * (isMobile ? 0.6 : 0.5);
+    final leftGiantPaint = Paint()..style = PaintingStyle.fill;
     
-    // Círculo grande principal
-    paint.color = baseColor;
+    // Gradiente radial para el círculo izquierdo con difuminado - transparencia optimizada
+    leftGiantPaint.shader = RadialGradient(
+      center: Alignment.centerLeft,
+      radius: 1.2,
+      colors: [
+        baseColors[0].withValues(alpha: isDark ? 0.06 : 0.03), // Reducido para mejor legibilidad
+        baseColors[1].withValues(alpha: isDark ? 0.03 : 0.015), // Reducido para mejor legibilidad
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.6, 1.0],
+    ).createShader(Rect.fromCircle(
+      center: Offset(-leftGiantRadius * 0.5 + scrollOffset * 0.01, size.height * 0.5),
+      radius: leftGiantRadius,
+    ));
+
     canvas.drawCircle(
-      Offset(containerSize.width * 0.85, containerSize.height * 0.2),
-      isMobile ? 35 : 60,
+      Offset(-leftGiantRadius * 0.5 + scrollOffset * 0.01, size.height * 0.5),
+      leftGiantRadius,
+      leftGiantPaint,
+    );
+
+    // Círculo gigante derecho (solo se ve la mitad izquierda)
+    final rightGiantRadius = size.width * (isMobile ? 0.55 : 0.45);
+    final rightGiantPaint = Paint()..style = PaintingStyle.fill;
+    
+    // Gradiente radial para el círculo derecho con difuminado - transparencia optimizada
+    rightGiantPaint.shader = RadialGradient(
+      center: Alignment.centerRight,
+      radius: 1.1,
+      colors: [
+        baseColors[2].withValues(alpha: isDark ? 0.05 : 0.025), // Reducido para mejor legibilidad
+        baseColors[3].withValues(alpha: isDark ? 0.025 : 0.012), // Reducido para mejor legibilidad
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.7, 1.0],
+    ).createShader(Rect.fromCircle(
+      center: Offset(size.width + rightGiantRadius * 0.5 + scrollOffset * 0.008, size.height * 0.3),
+      radius: rightGiantRadius,
+    ));
+
+    canvas.drawCircle(
+      Offset(size.width + rightGiantRadius * 0.5 + scrollOffset * 0.008, size.height * 0.3),
+      rightGiantRadius,
+      rightGiantPaint,
+    );
+
+    // --- CÍRCULOS PRINCIPALES (por encima de los gigantes) ---
+
+    // Círculo principal 1: Grande en la esquina superior derecha
+    paint.color = baseColors[0];
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.85 + scrollOffset * 0.02,
+        size.height * 0.15 + scrollOffset * 0.03,
+      ),
+      size.width * (isMobile ? 0.15 : 0.12),
       paint,
     );
 
-    // Círculo mediano
-    paint.color = accentColor;
+    // Círculo principal 2: Grande en la esquina inferior izquierda
+    paint.color = baseColors[1];
     canvas.drawCircle(
-      Offset(containerSize.width * 0.15, containerSize.height * 0.7),
-      isMobile ? 25 : 45,
+      Offset(
+        size.width * 0.15 + scrollOffset * 0.04,
+        size.height * 0.8 + scrollOffset * 0.02,
+      ),
+      size.width * (isMobile ? 0.18 : 0.14),
       paint,
     );
 
-    // Círculo pequeño destacado
-    paint.color = highlightColor;
+    // Círculo principal 3: Mediano en el centro-derecha
+    paint.color = baseColors[2];
     canvas.drawCircle(
-      Offset(containerSize.width * 0.9, containerSize.height * 0.75),
-      isMobile ? 15 : 25,
+      Offset(
+        size.width * 0.88 + scrollOffset * 0.03,
+        size.height * 0.6 + scrollOffset * 0.05,
+      ),
+      size.width * (isMobile ? 0.12 : 0.09),
       paint,
     );
 
-    // Círculos pequeños dispersos
-    paint.color = accentColor.withValues(alpha: accentColor.alpha * 0.7);
-    final smallCircles = [
-      {'x': 0.2, 'y': 0.25, 'radius': isMobile ? 8.0 : 12.0},
-      {'x': 0.6, 'y': 0.15, 'radius': isMobile ? 6.0 : 10.0},
-      {'x': 0.3, 'y': 0.5, 'radius': isMobile ? 10.0 : 15.0},
-      {'x': 0.75, 'y': 0.45, 'radius': isMobile ? 7.0 : 11.0},
-      {'x': 0.1, 'y': 0.35, 'radius': isMobile ? 5.0 : 8.0},
-    ];
+    // Círculo principal 4: Mediano en el centro-izquierda
+    paint.color = baseColors[3];
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.12 + scrollOffset * 0.06,
+        size.height * 0.35 + scrollOffset * 0.04,
+      ),
+      size.width * (isMobile ? 0.14 : 0.1),
+      paint,
+    );
 
-    for (final circle in smallCircles) {
+    // Círculo principal 5: Mediano en el centro superior
+    paint.color = baseColors[4];
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.6 + scrollOffset * 0.01,
+        size.height * 0.2 + scrollOffset * 0.03,
+      ),
+      size.width * (isMobile ? 0.1 : 0.08),
+      paint,
+    );
+
+    // --- CÍRCULOS ADICIONALES PARA DESKTOP ---
+    if (!isMobile) {
+      // Círculo 6: Pequeño flotante centro
+      paint.color = baseColors[5];
       canvas.drawCircle(
         Offset(
-          containerSize.width * (circle['x'] as double),
-          containerSize.height * (circle['y'] as double),
+          size.width * 0.45 + scrollOffset * 0.07,
+          size.height * 0.45 + scrollOffset * 0.02,
         ),
-        circle['radius'] as double,
+        size.width * 0.06,
+        paint,
+      );
+
+      // Círculo 7: Pequeño superior centro-izquierda - transparencia optimizada
+      paint.color = baseColors[0].withValues(alpha: isDark ? 0.12 : 0.08); // Reducido para legibilidad
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.3 + scrollOffset * 0.05,
+          size.height * 0.1 + scrollOffset * 0.04,
+        ),
+        size.width * 0.05,
+        paint,
+      );
+
+      // Círculo 8: Pequeño inferior centro-derecha - transparencia optimizada
+      paint.color = baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06); // Reducido para legibilidad
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.75 + scrollOffset * 0.03,
+          size.height * 0.85 + scrollOffset * 0.06,
+        ),
+        size.width * 0.07,
+        paint,
+      );
+
+      // Círculo 9: Muy pequeño decorativo superior - transparencia optimizada
+      paint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05); // Reducido para legibilidad
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.2 + scrollOffset * 0.08,
+          size.height * 0.05 + scrollOffset * 0.02,
+        ),
+        size.width * 0.03,
+        paint,
+      );
+
+      // Círculo 10: Muy pequeño decorativo inferior - transparencia optimizada
+      paint.color = baseColors[3].withValues(alpha: isDark ? 0.06 : 0.04); // Reducido para legibilidad
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.9 + scrollOffset * 0.04,
+          size.height * 0.9 + scrollOffset * 0.05,
+        ),
+        size.width * 0.04,
         paint,
       );
     }
-  }
 
-  /// Patrón de óvalos en diferentes orientaciones (Feature 1)
-  void _drawOvalPatterns(Canvas canvas, Size containerSize, Paint paint,
-      Color baseColor, Color accentColor, Color highlightColor) {
+    // --- CÍRCULO CON GRADIENTE CENTRAL (con efecto de profundidad) ---
+    final gradientPaint = Paint()..style = PaintingStyle.fill;
     
-    // Óvalo horizontal grande
-    paint.color = baseColor;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(containerSize.width * 0.8, containerSize.height * 0.25),
-        width: isMobile ? 70 : 120,
-        height: isMobile ? 35 : 60,
+    // Gradiente radial para círculo principal - transparencia optimizada
+    gradientPaint.shader = RadialGradient(
+      colors: [
+        primaryColor.withValues(alpha: isDark ? 0.08 : 0.12), // Reducido para mejor legibilidad
+        primaryColor.withValues(alpha: isDark ? 0.04 : 0.06), // Reducido para mejor legibilidad
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.7, 1.0],
+    ).createShader(Rect.fromCircle(
+      center: Offset(
+        size.width * 0.5 + scrollOffset * 0.01,
+        size.height * 0.7 + scrollOffset * 0.03,
       ),
-      paint,
-    );
+      radius: size.width * (isMobile ? 0.2 : 0.15),
+    ));
 
-    // Óvalo vertical mediano
-    paint.color = accentColor;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(containerSize.width * 0.2, containerSize.height * 0.6),
-        width: isMobile ? 25 : 40,
-        height: isMobile ? 50 : 80,
-      ),
-      paint,
-    );
-
-    // Óvalo inclinado (rotado)
-    paint.color = highlightColor;
-    canvas.save();
-    canvas.translate(containerSize.width * 0.85, containerSize.height * 0.7);
-    canvas.rotate(0.785398); // 45 grados en radianes
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: isMobile ? 40 : 60,
-        height: isMobile ? 20 : 30,
-      ),
-      paint,
-    );
-    canvas.restore();
-
-    // Óvalos pequeños dispersos con diferentes orientaciones
-    paint.color = accentColor.withValues(alpha: accentColor.alpha * 0.8);
-    final smallOvals = [
-      {'x': 0.15, 'y': 0.2, 'width': 20.0, 'height': 12.0, 'rotation': 0.0},
-      {'x': 0.5, 'y': 0.1, 'width': 15.0, 'height': 25.0, 'rotation': 0.0},
-      {'x': 0.4, 'y': 0.45, 'width': 18.0, 'height': 10.0, 'rotation': 0.52}, // 30 grados
-      {'x': 0.7, 'y': 0.5, 'width': 22.0, 'height': 14.0, 'rotation': -0.26}, // -15 grados
-      {'x': 0.1, 'y': 0.4, 'width': 12.0, 'height': 18.0, 'rotation': 0.0},
-    ];
-
-    for (final oval in smallOvals) {
-      final scaleFactor = isMobile ? 0.7 : 1.0;
-      canvas.save();
-      canvas.translate(
-        containerSize.width * (oval['x'] as double),
-        containerSize.height * (oval['y'] as double),
-      );
-      canvas.rotate(oval['rotation'] as double);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: (oval['width'] as double) * scaleFactor,
-          height: (oval['height'] as double) * scaleFactor,
-        ),
-        paint,
-      );
-      canvas.restore();
-    }
-  }
-
-  /// Patrón mixto de círculos y óvalos (Feature 2)
-  void _drawMixedCircularOvalPatterns(Canvas canvas, Size containerSize, Paint paint,
-      Color baseColor, Color accentColor, Color highlightColor) {
-    
-    // Óvalo grande horizontal como base
-    paint.color = baseColor;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(containerSize.width * 0.7, containerSize.height * 0.3),
-        width: isMobile ? 80 : 140,
-        height: isMobile ? 40 : 70,
-      ),
-      paint,
-    );
-
-    // Círculo mediano superpuesto
-    paint.color = accentColor;
     canvas.drawCircle(
-      Offset(containerSize.width * 0.25, containerSize.height * 0.65),
-      isMobile ? 30 : 50,
-      paint,
-    );
-
-    // Óvalo vertical destacado
-    paint.color = highlightColor;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(containerSize.width * 0.85, containerSize.height * 0.8),
-        width: isMobile ? 18 : 30,
-        height: isMobile ? 35 : 55,
+      Offset(
+        size.width * 0.5 + scrollOffset * 0.01,
+        size.height * 0.7 + scrollOffset * 0.03,
       ),
-      paint,
+      size.width * (isMobile ? 0.2 : 0.15),
+      gradientPaint,
     );
 
-    // Combinación de formas pequeñas
-    paint.color = accentColor.withValues(alpha: accentColor.alpha * 0.6);
-    
-    // Círculos pequeños
-    final mixedShapes = [
-      {'type': 'circle', 'x': 0.15, 'y': 0.25, 'size': isMobile ? 8.0 : 14.0},
-      {'type': 'circle', 'x': 0.6, 'y': 0.1, 'size': isMobile ? 10.0 : 16.0},
-      {'type': 'circle', 'x': 0.4, 'y': 0.75, 'size': isMobile ? 6.0 : 10.0},
+    // --- CÍRCULOS FLOTANTES PEQUEÑOS CON DIFERENTES VELOCIDADES ---
+    final smallCircles = [
+      {'x': 0.25, 'y': 0.25, 'radius': 0.02, 'speed': 0.08, 'color': 0},
+      {'x': 0.65, 'y': 0.35, 'radius': 0.025, 'speed': 0.05, 'color': 1},
+      {'x': 0.8, 'y': 0.45, 'radius': 0.015, 'speed': 0.12, 'color': 2},
+      {'x': 0.35, 'y': 0.65, 'radius': 0.03, 'speed': 0.06, 'color': 3},
+      {'x': 0.15, 'y': 0.55, 'radius': 0.018, 'speed': 0.1, 'color': 4},
+      {'x': 0.95, 'y': 0.3, 'radius': 0.022, 'speed': 0.07, 'color': 5},
+      {'x': 0.05, 'y': 0.15, 'radius': 0.012, 'speed': 0.15, 'color': 0},
+      {'x': 0.55, 'y': 0.05, 'radius': 0.016, 'speed': 0.09, 'color': 1},
     ];
 
-    for (final shape in mixedShapes) {
-      if (shape['type'] == 'circle') {
+    paint.style = PaintingStyle.fill;
+    for (final circle in smallCircles) {
+      final colorIndex = circle['color'] as int;
+      paint.color = baseColors[colorIndex % baseColors.length]
+          .withValues(alpha: isDark ? 0.08 : 0.12); // Transparencia uniforme optimizada para legibilidad
+      
+      canvas.drawCircle(
+        Offset(
+          size.width * (circle['x'] as double) + scrollOffset * (circle['speed'] as double),
+          size.height * (circle['y'] as double) + scrollOffset * (circle['speed'] as double) * 0.3,
+        ),
+        size.width * (circle['radius'] as double),
+        paint,
+      );
+    }
+
+    // --- ANILLOS DECORATIVOS (círculos con solo borde) - transparencia optimizada ---
+    final ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isDark ? 1.0 : 1.5 // Líneas más sutiles para mejor legibilidad
+      ..strokeCap = StrokeCap.round;
+
+    final rings = [
+      {'x': 0.4, 'y': 0.3, 'radius': 0.08, 'speed': 0.04},
+      {'x': 0.7, 'y': 0.7, 'radius': 0.06, 'speed': 0.06},
+      {'x': 0.25, 'y': 0.75, 'radius': 0.05, 'speed': 0.03},
+    ];
+
+    if (!isMobile) {
+      for (int i = 0; i < rings.length; i++) {
+        final ring = rings[i];
+        ringPaint.color = baseColors[i % baseColors.length]
+            .withValues(alpha: isDark ? 0.06 : 0.10); // Reducido para mejor legibilidad
+        
         canvas.drawCircle(
           Offset(
-            containerSize.width * (shape['x'] as double),
-            containerSize.height * (shape['y'] as double),
+            size.width * (ring['x'] as double) + scrollOffset * (ring['speed'] as double),
+            size.height * (ring['y'] as double) + scrollOffset * (ring['speed'] as double) * 0.2,
           ),
-          shape['size'] as double,
-          paint,
+          size.width * (ring['radius'] as double),
+          ringPaint,
         );
       }
     }
 
-    // Óvalos pequeños dispersos
-    paint.color = highlightColor.withValues(alpha: highlightColor.alpha * 0.7);
-    final smallOvals = [
-      {'x': 0.45, 'y': 0.2, 'width': 16.0, 'height': 8.0, 'rotation': 0.3},
-      {'x': 0.1, 'y': 0.45, 'width': 12.0, 'height': 20.0, 'rotation': 0.0},
-      {'x': 0.9, 'y': 0.15, 'width': 14.0, 'height': 7.0, 'rotation': -0.4},
-      {'x': 0.3, 'y': 0.9, 'width': 18.0, 'height': 10.0, 'rotation': 0.2},
-    ];
+    // --- PUNTOS MICRO DECORATIVOS - transparencia optimizada ---
+    final microDotPaint = Paint()..style = PaintingStyle.fill;
+    final microDots = List.generate(15, (index) => {
+      'x': 0.1 + (index * 0.06) % 0.8,
+      'y': 0.1 + (index * 0.07) % 0.8,
+      'size': 1.0 + (index % 3),
+      'speed': 0.02 + (index % 5) * 0.01,
+    });
 
-    for (final oval in smallOvals) {
-      final scaleFactor = isMobile ? 0.8 : 1.0;
-      canvas.save();
-      canvas.translate(
-        containerSize.width * (oval['x'] as double),
-        containerSize.height * (oval['y'] as double),
-      );
-      canvas.rotate(oval['rotation'] as double);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: (oval['width'] as double) * scaleFactor,
-          height: (oval['height'] as double) * scaleFactor,
+    for (final dot in microDots) {
+      microDotPaint.color = primaryColor.withValues(alpha: isDark ? 0.04 : 0.08); // Reducido para mejor legibilidad
+      canvas.drawCircle(
+        Offset(
+          size.width * (dot['x'] as double) + scrollOffset * (dot['speed'] as double),
+          size.height * (dot['y'] as double) + scrollOffset * (dot['speed'] as double) * 0.1,
         ),
-        paint,
+        dot['size'] as double,
+        microDotPaint,
       );
-      canvas.restore();
+    }
+
+    // --- EFECTOS DE DIFUMINADO ADICIONALES - transparencia optimizada ---
+    
+    // Círculo de difuminado superior izquierdo
+    if (!isMobile) {
+      final topLeftBlurPaint = Paint()..style = PaintingStyle.fill;
+      topLeftBlurPaint.shader = RadialGradient(
+        colors: [
+          baseColors[4].withValues(alpha: isDark ? 0.02 : 0.015), // Reducido para mejor legibilidad
+          Colors.transparent,
+        ],
+        stops: const [0.0, 1.0],
+      ).createShader(Rect.fromCircle(
+        center: Offset(
+          size.width * 0.1 + scrollOffset * 0.015,
+          size.height * 0.1 + scrollOffset * 0.02,
+        ),
+        radius: size.width * 0.25,
+      ));
+
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.1 + scrollOffset * 0.015,
+          size.height * 0.1 + scrollOffset * 0.02,
+        ),
+        size.width * 0.25,
+        topLeftBlurPaint,
+      );
+
+      // Círculo de difuminado inferior derecho
+      final bottomRightBlurPaint = Paint()..style = PaintingStyle.fill;
+      bottomRightBlurPaint.shader = RadialGradient(
+        colors: [
+          baseColors[5].withValues(alpha: isDark ? 0.018 : 0.012), // Reducido para mejor legibilidad
+          Colors.transparent,
+        ],
+        stops: const [0.0, 1.0],
+      ).createShader(Rect.fromCircle(
+        center: Offset(
+          size.width * 0.9 + scrollOffset * 0.012,
+          size.height * 0.85 + scrollOffset * 0.018,
+        ),
+        radius: size.width * 0.2,
+      ));
+
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.9 + scrollOffset * 0.012,
+          size.height * 0.85 + scrollOffset * 0.018,
+        ),
+        size.width * 0.2,
+        bottomRightBlurPaint,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return oldDelegate is! _FeatureBackgroundPainter ||
-        oldDelegate.featureIndex != featureIndex ||
+  bool shouldRepaint(covariant _DynamicBackgroundPainter oldDelegate) {
+    return oldDelegate.scrollOffset != scrollOffset ||
         oldDelegate.primaryColor != primaryColor ||
         oldDelegate.isDark != isDark ||
-        oldDelegate.isMobile != isMobile;
+        oldDelegate.isMobile != isMobile ||
+        oldDelegate.screenHeight != screenHeight;
   }
 }

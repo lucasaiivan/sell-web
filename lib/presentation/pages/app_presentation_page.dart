@@ -135,23 +135,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 400),
                 child: _anyDeviceInZoom
-                    ? ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-                        child: _buildResponsiveContent(context, width),
-                      )
+                    ? _buildResponsiveContent(context, width)
                     : _buildResponsiveContent(context, width),
-              ),
-              // Overlay transparente para prevenir interacciones cuando hay blur
-              if (_anyDeviceInZoom)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.transparent,
-                    child: AbsorbPointer(
-                      absorbing: false, // Permitir scroll
-                      child: Container(),
-                    ),
-                  ),
-                ),
+              ), 
             ],
           ),
         ),
@@ -331,6 +317,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               child: Padding(
                 padding: EdgeInsets.only(
                   bottom: isMobile ? 20 : 30, // Solo padding inferior para separar del borde
+                  right: isMobile ? 33 : 0, // Padding derecho en pantallas grandes
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -440,7 +427,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           textAlign: TextAlign.center,
           typingSpeed: const Duration(milliseconds: 100),
           pauseDuration: const Duration(milliseconds: 2500),
-          backspacingSpeed: const Duration(milliseconds: 50),
+          backspacingSpeed: const Duration(milliseconds: 25), // Más rápido: de 50ms a 25ms
+          showCursor: true,
         ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 20),
         Text(
@@ -511,7 +499,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
           'Reportes y analytics en tiempo real',
         ],
         benefit: 'Aumenta la velocidad de ventas 78%', 
-        color:  Colors.amber.shade300, // Indigo moderno
+        color:  Colors.amber, // Indigo moderno
         imageAsset: 'assets/screenshot00.png',
         imageOnRight: false,
         category: 'Punto de Venta',
@@ -588,12 +576,13 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                     const SizedBox(width: 8),
                     Text(
                       'Características Principales',
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodyLarge?.copyWith(
                         color: const Color(0xFF4F46E5),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.6,
                       ),
                     ),
+                    const SizedBox(width:20),
                   ],
                 ),
               )
@@ -1046,7 +1035,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   }
 }
 
-/// Widget simple de máquina de escribir para mostrar textos alternados
+/// Widget simple de máquina de escribir para mostrar textos alternados con cursor animado
 class TypewriterText extends StatefulWidget {
   final List<String> texts;
   final TextStyle? style;
@@ -1054,6 +1043,8 @@ class TypewriterText extends StatefulWidget {
   final Duration typingSpeed;
   final Duration pauseDuration;
   final Duration backspacingSpeed;
+  final bool showCursor;
+  final Color? cursorColor;
 
   const TypewriterText({
     super.key,
@@ -1063,23 +1054,26 @@ class TypewriterText extends StatefulWidget {
     this.typingSpeed = const Duration(milliseconds: 80),
     this.pauseDuration = const Duration(milliseconds: 2000),
     this.backspacingSpeed = const Duration(milliseconds: 40),
+    this.showCursor = true,
+    this.cursorColor,
   });
 
   @override
   State<TypewriterText> createState() => _TypewriterTextState();
 }
 
-class _TypewriterTextState extends State<TypewriterText> {
+class _TypewriterTextState extends State<TypewriterText>
+    with TickerProviderStateMixin {
   int _textIndex = 0;
   int _charCount = 0;
   bool _backspacing = false;
-  late final Ticker _ticker;
+  late final Ticker _typingTicker;
   Duration _accum = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _ticker = Ticker(_onTick)..start();
+    _typingTicker = Ticker(_onTick)..start();
   }
 
   void _onTick(Duration elapsed) {
@@ -1111,7 +1105,7 @@ class _TypewriterTextState extends State<TypewriterText> {
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _typingTicker.dispose();
     super.dispose();
   }
 
@@ -1119,7 +1113,39 @@ class _TypewriterTextState extends State<TypewriterText> {
   Widget build(BuildContext context) {
     final current = widget.texts[_textIndex];
     final visible = current.substring(0, _charCount);
-    return Text(visible, style: widget.style, textAlign: widget.textAlign);
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    // Calcular el tamaño del cursor basado en el tamaño del texto
+    final textStyle = widget.style ?? Theme.of(context).textTheme.bodyMedium!;
+    final fontSize = textStyle.fontSize ?? 14.0;
+    final cursorSize = fontSize * 0.5; // La mitad del tamaño del texto
+    
+    // Obtener color del texto del estilo
+    final textColor = textStyle.color ?? colorScheme.onSurface;
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center, // Centrar verticalmente
+      children: [
+        Flexible(
+          child: Text(
+            visible,
+            style: widget.style,
+            textAlign: widget.textAlign,
+          ),
+        ),
+        if (widget.showCursor)
+          Container(
+            margin: const EdgeInsets.only(left: 4), // Solo margen izquierdo
+            width: cursorSize,
+            height: cursorSize,
+            decoration: BoxDecoration(
+              color: widget.cursorColor ?? textColor, // Usar color del texto por defecto
+              shape: BoxShape.circle,
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -1204,8 +1230,7 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
  
   @override
   Widget build(BuildContext context) {
-    final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile;
-    final theme = Theme.of(context); 
+    final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile; 
     
     // Calcular dimensiones basadas solo en screenWidth
     final widgetWidth = _calculateWidth(widget.screenWidth, isMobile);
@@ -2105,8 +2130,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
 
     // --- CÍRCULOS GIGANTES CON DIFUMINADO (fondo) ---
     
-    // Círculo gigante izquierdo (solo se ve la mitad derecha)
-    final leftGiantRadius = size.width * (isMobile ? 0.6 : 0.5);
+    // Círculo gigante izquierdo (solo se ve la mitad derecha) - AUMENTADO
+    final leftGiantRadius = size.width * (isMobile ? 0.8 : 0.7);
     final leftGiantPaint = Paint()..style = PaintingStyle.fill;
     
     // Gradiente radial para el círculo izquierdo con difuminado - transparencia optimizada
@@ -2130,8 +2155,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
       leftGiantPaint,
     );
 
-    // Círculo gigante derecho (solo se ve la mitad izquierda)
-    final rightGiantRadius = size.width * (isMobile ? 0.55 : 0.45);
+    // Círculo gigante derecho (solo se ve la mitad izquierda) - AUMENTADO
+    final rightGiantRadius = size.width * (isMobile ? 0.75 : 0.65);
     final rightGiantPaint = Paint()..style = PaintingStyle.fill;
     
     // Gradiente radial para el círculo derecho con difuminado - transparencia optimizada
@@ -2155,125 +2180,205 @@ class _DynamicBackgroundPainter extends CustomPainter {
       rightGiantPaint,
     );
 
-    // --- CÍRCULOS PRINCIPALES (por encima de los gigantes) ---
+    // Círculo gigante superior central - NUEVO
+    final topGiantRadius = size.width * (isMobile ? 0.6 : 0.5);
+    final topGiantPaint = Paint()..style = PaintingStyle.fill;
+    
+    topGiantPaint.shader = RadialGradient(
+      center: Alignment.topCenter,
+      radius: 1.0,
+      colors: [
+        baseColors[4].withValues(alpha: isDark ? 0.04 : 0.02),
+        baseColors[5].withValues(alpha: isDark ? 0.02 : 0.01),
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.6, 1.0],
+    ).createShader(Rect.fromCircle(
+      center: Offset(size.width * 0.5 + scrollOffset * 0.005, -topGiantRadius * 0.3),
+      radius: topGiantRadius,
+    ));
 
-    // Círculo principal 1: Grande en la esquina superior derecha
+    canvas.drawCircle(
+      Offset(size.width * 0.5 + scrollOffset * 0.005, -topGiantRadius * 0.3),
+      topGiantRadius,
+      topGiantPaint,
+    );
+
+    // --- CÍRCULOS PRINCIPALES (por encima de los gigantes) - AUMENTADOS ---
+
+    // Círculo principal 1: Muy grande en la esquina superior derecha - AUMENTADO
     paint.color = baseColors[0];
     canvas.drawCircle(
       Offset(
         size.width * 0.85 + scrollOffset * 0.02,
         size.height * 0.15 + scrollOffset * 0.03,
       ),
-      size.width * (isMobile ? 0.15 : 0.12),
+      size.width * (isMobile ? 0.25 : 0.20),
       paint,
     );
 
-    // Círculo principal 2: Grande en la esquina inferior izquierda
+    // Círculo principal 2: Muy grande en la esquina inferior izquierda - AUMENTADO
     paint.color = baseColors[1];
     canvas.drawCircle(
       Offset(
         size.width * 0.15 + scrollOffset * 0.04,
         size.height * 0.8 + scrollOffset * 0.02,
       ),
-      size.width * (isMobile ? 0.18 : 0.14),
+      size.width * (isMobile ? 0.28 : 0.22),
       paint,
     );
 
-    // Círculo principal 3: Mediano en el centro-derecha
+    // Círculo principal 3: Grande en el centro-derecha - AUMENTADO
     paint.color = baseColors[2];
     canvas.drawCircle(
       Offset(
         size.width * 0.88 + scrollOffset * 0.03,
         size.height * 0.6 + scrollOffset * 0.05,
       ),
-      size.width * (isMobile ? 0.12 : 0.09),
+      size.width * (isMobile ? 0.18 : 0.15),
       paint,
     );
 
-    // Círculo principal 4: Mediano en el centro-izquierda
+    // Círculo principal 4: Grande en el centro-izquierda - AUMENTADO
     paint.color = baseColors[3];
     canvas.drawCircle(
       Offset(
         size.width * 0.12 + scrollOffset * 0.06,
         size.height * 0.35 + scrollOffset * 0.04,
       ),
-      size.width * (isMobile ? 0.14 : 0.1),
+      size.width * (isMobile ? 0.22 : 0.17),
       paint,
     );
 
-    // Círculo principal 5: Mediano en el centro superior
+    // Círculo principal 5: Grande en el centro superior - AUMENTADO
     paint.color = baseColors[4];
     canvas.drawCircle(
       Offset(
         size.width * 0.6 + scrollOffset * 0.01,
         size.height * 0.2 + scrollOffset * 0.03,
       ),
-      size.width * (isMobile ? 0.1 : 0.08),
+      size.width * (isMobile ? 0.16 : 0.13),
       paint,
     );
 
-    // --- CÍRCULOS ADICIONALES PARA DESKTOP ---
+    // Círculo principal 6: Nuevo círculo grande central - NUEVO
+    paint.color = baseColors[5];
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.4 + scrollOffset * 0.02,
+        size.height * 0.55 + scrollOffset * 0.04,
+      ),
+      size.width * (isMobile ? 0.20 : 0.16),
+      paint,
+    );
+
+    // --- CÍRCULOS ADICIONALES PARA DESKTOP Y MÓVIL - AUMENTADOS ---
+    
+    // Círculo 7: Grande flotante centro - AUMENTADO
+    paint.color = baseColors[5];
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.45 + scrollOffset * 0.07,
+        size.height * 0.45 + scrollOffset * 0.02,
+      ),
+      size.width * (isMobile ? 0.14 : 0.12),
+      paint,
+    );
+
+    // Círculo 8: Grande superior centro-izquierda - AUMENTADO
+    paint.color = baseColors[0].withValues(alpha: isDark ? 0.12 : 0.08);
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.3 + scrollOffset * 0.05,
+        size.height * 0.1 + scrollOffset * 0.04,
+      ),
+      size.width * (isMobile ? 0.12 : 0.10),
+      paint,
+    );
+
+    // Círculo 9: Grande inferior centro-derecha - AUMENTADO
+    paint.color = baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06);
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.75 + scrollOffset * 0.03,
+        size.height * 0.85 + scrollOffset * 0.06,
+      ),
+      size.width * (isMobile ? 0.15 : 0.13),
+      paint,
+    );
+
+    // Círculo 10: Nuevo círculo grande superior derecha - NUEVO
+    paint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05);
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.8 + scrollOffset * 0.04,
+        size.height * 0.05 + scrollOffset * 0.03,
+      ),
+      size.width * (isMobile ? 0.11 : 0.09),
+      paint,
+    );
+
+    // Círculo 11: Nuevo círculo grande inferior izquierda - NUEVO
+    paint.color = baseColors[3].withValues(alpha: isDark ? 0.06 : 0.04);
+    canvas.drawCircle(
+      Offset(
+        size.width * 0.2 + scrollOffset * 0.06,
+        size.height * 0.9 + scrollOffset * 0.04,
+      ),
+      size.width * (isMobile ? 0.13 : 0.11),
+      paint,
+    );
+
     if (!isMobile) {
-      // Círculo 6: Pequeño flotante centro
-      paint.color = baseColors[5];
-      canvas.drawCircle(
-        Offset(
-          size.width * 0.45 + scrollOffset * 0.07,
-          size.height * 0.45 + scrollOffset * 0.02,
-        ),
-        size.width * 0.06,
-        paint,
-      );
-
-      // Círculo 7: Pequeño superior centro-izquierda - transparencia optimizada
-      paint.color = baseColors[0].withValues(alpha: isDark ? 0.12 : 0.08); // Reducido para legibilidad
-      canvas.drawCircle(
-        Offset(
-          size.width * 0.3 + scrollOffset * 0.05,
-          size.height * 0.1 + scrollOffset * 0.04,
-        ),
-        size.width * 0.05,
-        paint,
-      );
-
-      // Círculo 8: Pequeño inferior centro-derecha - transparencia optimizada
-      paint.color = baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06); // Reducido para legibilidad
-      canvas.drawCircle(
-        Offset(
-          size.width * 0.75 + scrollOffset * 0.03,
-          size.height * 0.85 + scrollOffset * 0.06,
-        ),
-        size.width * 0.07,
-        paint,
-      );
-
-      // Círculo 9: Muy pequeño decorativo superior - transparencia optimizada
-      paint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05); // Reducido para legibilidad
+      // Círculo 12: Grande decorativo superior - AUMENTADO
+      paint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05);
       canvas.drawCircle(
         Offset(
           size.width * 0.2 + scrollOffset * 0.08,
           size.height * 0.05 + scrollOffset * 0.02,
         ),
-        size.width * 0.03,
+        size.width * 0.08,
         paint,
       );
 
-      // Círculo 10: Muy pequeño decorativo inferior - transparencia optimizada
-      paint.color = baseColors[3].withValues(alpha: isDark ? 0.06 : 0.04); // Reducido para legibilidad
+      // Círculo 13: Grande decorativo inferior - AUMENTADO
+      paint.color = baseColors[3].withValues(alpha: isDark ? 0.06 : 0.04);
       canvas.drawCircle(
         Offset(
           size.width * 0.9 + scrollOffset * 0.04,
           size.height * 0.9 + scrollOffset * 0.05,
         ),
-        size.width * 0.04,
+        size.width * 0.09,
+        paint,
+      );
+
+      // Círculo 14: Nuevo círculo grande centro-vertical izquierda - NUEVO
+      paint.color = baseColors[4].withValues(alpha: isDark ? 0.07 : 0.05);
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.05 + scrollOffset * 0.03,
+          size.height * 0.6 + scrollOffset * 0.04,
+        ),
+        size.width * 0.10,
+        paint,
+      );
+
+      // Círculo 15: Nuevo círculo grande centro-vertical derecha - NUEVO
+      paint.color = baseColors[5].withValues(alpha: isDark ? 0.05 : 0.03);
+      canvas.drawCircle(
+        Offset(
+          size.width * 0.95 + scrollOffset * 0.02,
+          size.height * 0.4 + scrollOffset * 0.05,
+        ),
+        size.width * 0.11,
         paint,
       );
     }
 
-    // --- CÍRCULO CON GRADIENTE CENTRAL (con efecto de profundidad) ---
+    // --- CÍRCULO CON GRADIENTE CENTRAL (con efecto de profundidad) - AUMENTADO ---
     final gradientPaint = Paint()..style = PaintingStyle.fill;
     
-    // Gradiente radial para círculo principal - transparencia optimizada
+    // Gradiente radial para círculo principal - transparencia optimizada y AUMENTADO
     gradientPaint.shader = RadialGradient(
       colors: [
         primaryColor.withValues(alpha: isDark ? 0.08 : 0.12), // Reducido para mejor legibilidad
@@ -2286,7 +2391,7 @@ class _DynamicBackgroundPainter extends CustomPainter {
         size.width * 0.5 + scrollOffset * 0.01,
         size.height * 0.7 + scrollOffset * 0.03,
       ),
-      radius: size.width * (isMobile ? 0.2 : 0.15),
+      radius: size.width * (isMobile ? 0.35 : 0.28),
     ));
 
     canvas.drawCircle(
@@ -2294,24 +2399,26 @@ class _DynamicBackgroundPainter extends CustomPainter {
         size.width * 0.5 + scrollOffset * 0.01,
         size.height * 0.7 + scrollOffset * 0.03,
       ),
-      size.width * (isMobile ? 0.2 : 0.15),
+      size.width * (isMobile ? 0.35 : 0.28),
       gradientPaint,
     );
 
-    // --- CÍRCULOS FLOTANTES PEQUEÑOS CON DIFERENTES VELOCIDADES ---
-    final smallCircles = [
-      {'x': 0.25, 'y': 0.25, 'radius': 0.02, 'speed': 0.08, 'color': 0},
-      {'x': 0.65, 'y': 0.35, 'radius': 0.025, 'speed': 0.05, 'color': 1},
-      {'x': 0.8, 'y': 0.45, 'radius': 0.015, 'speed': 0.12, 'color': 2},
-      {'x': 0.35, 'y': 0.65, 'radius': 0.03, 'speed': 0.06, 'color': 3},
-      {'x': 0.15, 'y': 0.55, 'radius': 0.018, 'speed': 0.1, 'color': 4},
-      {'x': 0.95, 'y': 0.3, 'radius': 0.022, 'speed': 0.07, 'color': 5},
-      {'x': 0.05, 'y': 0.15, 'radius': 0.012, 'speed': 0.15, 'color': 0},
-      {'x': 0.55, 'y': 0.05, 'radius': 0.016, 'speed': 0.09, 'color': 1},
+    // --- CÍRCULOS FLOTANTES MEDIANOS CON DIFERENTES VELOCIDADES - AUMENTADOS ---
+    final mediumCircles = [
+      {'x': 0.25, 'y': 0.25, 'radius': 0.04, 'speed': 0.08, 'color': 0},
+      {'x': 0.65, 'y': 0.35, 'radius': 0.045, 'speed': 0.05, 'color': 1},
+      {'x': 0.8, 'y': 0.45, 'radius': 0.035, 'speed': 0.12, 'color': 2},
+      {'x': 0.35, 'y': 0.65, 'radius': 0.05, 'speed': 0.06, 'color': 3},
+      {'x': 0.15, 'y': 0.55, 'radius': 0.038, 'speed': 0.1, 'color': 4},
+      {'x': 0.95, 'y': 0.3, 'radius': 0.042, 'speed': 0.07, 'color': 5},
+      {'x': 0.05, 'y': 0.15, 'radius': 0.032, 'speed': 0.15, 'color': 0},
+      {'x': 0.55, 'y': 0.05, 'radius': 0.036, 'speed': 0.09, 'color': 1},
+      {'x': 0.75, 'y': 0.25, 'radius': 0.04, 'speed': 0.11, 'color': 2},
+      {'x': 0.4, 'y': 0.8, 'radius': 0.047, 'speed': 0.04, 'color': 3},
     ];
 
     paint.style = PaintingStyle.fill;
-    for (final circle in smallCircles) {
+    for (final circle in mediumCircles) {
       final colorIndex = circle['color'] as int;
       paint.color = baseColors[colorIndex % baseColors.length]
           .withValues(alpha: isDark ? 0.08 : 0.12); // Transparencia uniforme optimizada para legibilidad
@@ -2326,16 +2433,18 @@ class _DynamicBackgroundPainter extends CustomPainter {
       );
     }
 
-    // --- ANILLOS DECORATIVOS (círculos con solo borde) - transparencia optimizada ---
+    // --- ANILLOS DECORATIVOS GRANDES (círculos con solo borde) - AUMENTADOS ---
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isDark ? 1.0 : 1.5 // Líneas más sutiles para mejor legibilidad
+      ..strokeWidth = isDark ? 2.0 : 2.5 // Líneas más gruesas para círculos más grandes
       ..strokeCap = StrokeCap.round;
 
     final rings = [
-      {'x': 0.4, 'y': 0.3, 'radius': 0.08, 'speed': 0.04},
-      {'x': 0.7, 'y': 0.7, 'radius': 0.06, 'speed': 0.06},
-      {'x': 0.25, 'y': 0.75, 'radius': 0.05, 'speed': 0.03},
+      {'x': 0.4, 'y': 0.3, 'radius': 0.12, 'speed': 0.04},
+      {'x': 0.7, 'y': 0.7, 'radius': 0.10, 'speed': 0.06},
+      {'x': 0.25, 'y': 0.75, 'radius': 0.08, 'speed': 0.03},
+      {'x': 0.85, 'y': 0.2, 'radius': 0.09, 'speed': 0.05},
+      {'x': 0.1, 'y': 0.4, 'radius': 0.11, 'speed': 0.07},
     ];
 
     if (!isMobile) {
@@ -2350,6 +2459,22 @@ class _DynamicBackgroundPainter extends CustomPainter {
             size.height * (ring['y'] as double) + scrollOffset * (ring['speed'] as double) * 0.2,
           ),
           size.width * (ring['radius'] as double),
+          ringPaint,
+        );
+      }
+    } else {
+      // En móvil también mostrar algunos anillos pero más pequeños
+      for (int i = 0; i < 3; i++) {
+        final ring = rings[i];
+        ringPaint.color = baseColors[i % baseColors.length]
+            .withValues(alpha: isDark ? 0.05 : 0.08);
+        
+        canvas.drawCircle(
+          Offset(
+            size.width * (ring['x'] as double) + scrollOffset * (ring['speed'] as double),
+            size.height * (ring['y'] as double) + scrollOffset * (ring['speed'] as double) * 0.2,
+          ),
+          size.width * ((ring['radius'] as double) * 0.8), // Ligeramente más pequeños en móvil
           ringPaint,
         );
       }

@@ -1205,8 +1205,7 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
   @override
   Widget build(BuildContext context) {
     final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final theme = Theme.of(context); 
     
     // Calcular dimensiones basadas solo en screenWidth
     final widgetWidth = _calculateWidth(widget.screenWidth, isMobile);
@@ -1232,50 +1231,23 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                 scale: scale,
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOut,
-                child: Stack(
-                  alignment: Alignment.center,
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Efecto de resplandor gausiano
-                    Positioned.fill(
-                      child: AnimatedOpacity(
-                        opacity: isZoomed ? 0.7 : 0.0,
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeOut,
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                            ),
-                          ),
-                        ),
-                      ),
+                child: Container(
+                  margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
+                  width: widgetWidth,
+                  height: imageContainerHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                    child: Image.asset(
+                      widget.assetPath,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildErrorContainer(isMobile),
                     ),
-                    // Contenedor de la imagen
-                    Container(
-                      margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
-                      width: widgetWidth,
-                      height: imageContainerHeight,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                        boxShadow: _buildAdaptiveShadow(isMobile, isDark, scale),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                        child: Image.asset(
-                          widget.assetPath,
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.high,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _buildErrorContainer(isMobile),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1336,12 +1308,6 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
       // Desktop muy grande: altura escalada
       return (screenWidth * 0.25).clamp(320.0, 450.0);
     }
-  }
-
-  /// Construye sombras adaptativas respetando dimensiones de imagen
-  List<BoxShadow> _buildAdaptiveShadow(bool isMobile, bool isDark, double scale) {
-    // Sin sombras para las imágenes de dispositivos
-    return [];
   }
 
   /// Construye contenedor de error
@@ -1510,7 +1476,7 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
         decoration: BoxDecoration(
           color: backgroundColors[widget.featureIndex % backgroundColors.length], 
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+        padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 30),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: widget.feature.imageOnRight
@@ -1694,6 +1660,7 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: widget.feature.color ?? const Color(0xFF4F46E5),
                           fontWeight: FontWeight.w900, 
+                          fontSize: 14
                         ),
                       ),
                       const SizedBox(width: 8),

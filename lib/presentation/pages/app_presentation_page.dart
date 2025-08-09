@@ -162,10 +162,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
   Widget _buildResponsiveContent(BuildContext context, double width) {
     if (width < ResponsiveBreakpoints.mobile) {
       return _buildMobileLayout(context);
-    } else if (width < ResponsiveBreakpoints.tablet) {
-      return _buildTabletLayout(context);
     } else {
-      return _buildDesktopLayout(context);
+      return _buildLargeScreenLayout(context, width);
     }
   }
 
@@ -173,8 +171,9 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     return Column(
       children: [
         _buildHeroSection(context), 
+        const SizedBox(height: 100),
         _buildFeaturesSection(context, axis: Axis.vertical),
-        const SizedBox(height: 48),
+        const SizedBox(height: 50),
         _buildCallToActionSection(context),
         const SizedBox(height: 32),
         _buildFooterSection(context),
@@ -182,28 +181,18 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     );
   }
 
-  Widget _buildTabletLayout(BuildContext context) {
+  Widget _buildLargeScreenLayout(BuildContext context, double width) {
+    // Espaciado dinámico basado en el tamaño de pantalla
+    final bool isDesktop = width >= ResponsiveBreakpoints.desktop;
+    
     return Column(
       children: [
         _buildHeroSection(context),
-        const SizedBox(height: 64),
+        const SizedBox(height: 100),
         _buildFeaturesSection(context, axis: Axis.horizontal),
-        const SizedBox(height: 64),
+        SizedBox(height: isDesktop ? 80 : 64), // Desktop: 80, Tablet: 64
         _buildCallToActionSection(context),
-        const SizedBox(height: 32),
-        _buildFooterSection(context),
-      ],
-    );
-  }
-
-  Widget _buildDesktopLayout(BuildContext context) {
-    return Column(
-      children: [
-        _buildHeroSection(context), 
-        _buildFeaturesSection(context, axis: Axis.horizontal),
-        const SizedBox(height: 80),
-        _buildCallToActionSection(context),
-        const SizedBox(height: 48),
+        SizedBox(height: isDesktop ? 48 : 32), // Desktop: 48, Tablet: 32
         _buildFooterSection(context),
       ],
     );
@@ -512,62 +501,56 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     final features = [
       _FeatureData(
         icon: Icons.point_of_sale_outlined,
-        title: 'Sistema de Ventas',
-        description:
-            'Acelera tu proceso comercial con tecnología avanzada que optimiza cada transacción y reduce errores operativos',
+        title: 'Punto de venta fácil de usar',
+        description:'Sistema de ventas que combina escritorio y móvil, convirtiendo cualquier ubicación en tu punto de venta principal',
         checkItems: [
-          'Interfaz intuitiva con atajos de teclado',
-          'Soporte para múltiples métodos de pago',
+          'Interfaz intuitiva',
+          'Gestión del flujo de caja', 
+          'Tickets digitales o impresos',
+          'Aplica descuentos y promociones', 
           'Reportes y analytics en tiempo real',
-          'Sistema de descuentos y promociones automáticas',
-          'Sincronización automática con inventario'
         ],
-        benefit: 'Aumenta la velocidad de ventas en 78%', 
-        color: const Color(0xFF4F46E5), // Indigo moderno
+        benefit: 'Aumenta la velocidad de ventas 78%', 
+        color:  Colors.amber.shade300, // Indigo moderno
         imageAsset: 'assets/screenshot00.png',
         imageOnRight: false,
         category: 'Punto de Venta',
-        ctaText: 'Probar Demo de Ventas',
-        onTap: () => debugPrint('Navegar a demo de ventas'),
+        ctaText: 'Probar Demo de Ventas', 
       ),
       _FeatureData(
         icon: Icons.inventory_2_outlined,
-        title: 'Gestión de Inventario Automatizada',
-        description: 'Controla tu stock con precisión usando alertas inteligentes, códigos de barras y predicciones de demanda',
+        title: 'Inventario del catálogo',
+        description: 'Controla la existencias y el stock de tus productos ',
         checkItems: [
-          'Alertas automáticas de stock crítico',
-          'Escáner de códigos de barras integrado',
-          'Historial completo de movimientos',
-          'Predicción de demanda con IA',
-          'Control de lotes y fechas de vencimiento'
+          'Determina costos y márgenes de ganancia',
+          'Seguimiento de existencias',
+          'Alertas de stock mínimo o agotado',
+          'Gestión de categorías',
         ],
         benefit: 'Reduce pérdidas por stock en 68%', 
         color: const Color(0xFF059669), // Verde esmeralda
         imageAsset: 'assets/screenshot02.png',
         imageOnRight: true,
         category: 'Control de Stock',
-        ctaText: 'Explorar Inventario',
-        onTap: () => debugPrint('Navegar a demo de inventario'),
+        ctaText: 'Explorar Inventario', 
       ),
       _FeatureData(
         icon: Icons.analytics_outlined,
-        title: 'Analytics y Business Intelligence',
+        title: 'Reportes y analíticas',
         description:
-            'Convierte datos en decisiones estratégicas con dashboards personalizables y métricas avanzadas de negocio',
+            'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura desde cualquier lugar',
         checkItems: [
-          'Dashboard personalizable y dinámico',
-          'Análisis predictivo de tendencias',
-          'Reportes exportables por período',
-          'Métricas de rentabilidad por producto',
-          'Comparativas históricas y benchmarking'
+          'Productos populares',
+          'Sigue tendencias de ventas',
+          'Ventas por empleado',  
+          
         ],
         benefit: 'Mejora decisiones estratégicas en 83%', 
-        color: const Color(0xFFDC2626), // Rojo moderno
+        color: Colors.indigo, // Rojo moderno
         imageAsset: 'assets/screenshot04.png',
         imageOnRight: false,
         category: 'Business Intelligence',
-        ctaText: 'Ver Reportes Avanzados',
-        onTap: () => debugPrint('Navegar a demo de analytics'),
+        ctaText: 'Ver Reportes Avanzados', 
       ),
     ];
 
@@ -644,7 +627,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   maxWidth: isMobile ? double.infinity : 600,
                 ),
                 child: Text(
-                  'Herramientas profesionales diseñadas para optimizar cada aspecto de tu operación comercial',
+                  'Sistema diseñado para optimizar cada aspecto de tu operación comercial',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.7),
                     height: 1.5,
@@ -1236,7 +1219,7 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
     // Aplicar zoom cuando está en la zona de zoom
     final scale = isZoomed ? widget.zoomFactor : 1.0;
 
-    return Container(
+    return SizedBox(
       height: widgetHeight,
       width: widgetWidth,
       child: Column(
@@ -1249,23 +1232,50 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                 scale: scale,
                 duration: const Duration(milliseconds: 400),
                 curve: Curves.easeOut,
-                child: Container(
-                  margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
-                  width: widgetWidth,
-                  height: imageContainerHeight,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                    boxShadow: _buildAdaptiveShadow(isMobile, isDark, scale),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                    child: Image.asset(
-                      widget.assetPath,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                      errorBuilder: (context, error, stackTrace) => _buildErrorContainer(isMobile),
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Efecto de resplandor gausiano
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        opacity: isZoomed ? 0.7 : 0.0,
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeOut,
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    // Contenedor de la imagen
+                    Container(
+                      margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
+                      width: widgetWidth,
+                      height: imageContainerHeight,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                        boxShadow: _buildAdaptiveShadow(isMobile, isDark, scale),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                        child: Image.asset(
+                          widget.assetPath,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildErrorContainer(isMobile),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1386,8 +1396,7 @@ class _FeatureData {
   final String? imageAsset;
   final bool imageOnRight;
   final String? category; // Nueva: categoría para agrupación
-  final String? ctaText; // Nueva: texto de call to action
-  final VoidCallback? onTap; // Nueva: acción opcional
+  final String? ctaText; // Nueva: texto de call to action 
 
   _FeatureData({
     required this.icon,
@@ -1399,8 +1408,7 @@ class _FeatureData {
     this.imageAsset,
     this.imageOnRight = true,
     this.category,
-    this.ctaText,
-    this.onTap,
+    this.ctaText, 
   });
 }
 
@@ -1462,8 +1470,8 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
           ..translate(0.0, _isHovered ? -4.0 : 0.0),
         decoration: BoxDecoration(
           color: backgroundColors[widget.featureIndex % backgroundColors.length], 
-        ), 
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+        ),  
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2070,10 +2078,9 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
                 // Botón para cambiar tema con diseño mejorado
                 Consumer<ThemeDataAppProvider>(
                   builder: (context, themeProvider, _) {
-                    return AppBarButton(
-                      text: themeProvider.darkTheme.brightness == Brightness.dark? const Icon(Icons.dark_mode): const Icon(Icons.light_mode), 
-                      onTap: themeProvider.toggleTheme, 
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    return ThemeBrightnessButton(
+                      themeProvider: themeProvider,
+                      iconColor: isScrolled ? themeProvider.darkTheme.brightness == Brightness.dark ? Colors.white : Colors.black : Colors.white,
                     );
                   },
                 ),

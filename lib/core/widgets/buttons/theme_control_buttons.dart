@@ -130,8 +130,7 @@ class ThemeBrightnessButton extends StatelessWidget {
       color: Colors.transparent,
       child: IconButton(
         icon: Icon(
-          isDark ? Icons.light_mode : Icons.dark_mode,
-          color: iconColor,
+          isDark ? Icons.light_mode : Icons.dark_mode, 
           size: iconSize,
         ),
         tooltip: tooltip ?? defaultTooltip,

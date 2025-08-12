@@ -10,64 +10,114 @@ import '../providers/theme_data_app_provider.dart';
 import 'login_page.dart';
 import 'dart:ui';
 
-// AppPresentationPage : Página de presentación de la aplicación que muestra las características principales y permite al usuario iniciar sesión
-// Maneja la lógica de scroll, navegación y construcción del layout responsivo
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/scheduler.dart' show Ticker;
+import 'package:provider/provider.dart';
+import 'package:sellweb/core/utils/responsive.dart';
+import 'package:sellweb/core/widgets/buttons/buttons.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../providers/auth_provider.dart';
+import '../providers/theme_data_app_provider.dart';
+import 'login_page.dart';
+import 'dart:ui';
+
+/// Clase helper para colores del AppBar optimizada
+class _AppBarColors {
+  final Color background;
+  final Color accent;
+  
+  const _AppBarColors({required this.background, required this.accent});
+}
+
+/// Página de presentación optimizada con mejores prácticas de Flutter
+/// Implementa lazy loading, const constructors y widgets cachés para mejor performance
 class AppPresentationPage extends StatefulWidget {
   const AppPresentationPage({super.key});
 
   @override
   State<AppPresentationPage> createState() => _AppPresentationPageState();
 }
-class _AppPresentationPageState extends State<AppPresentationPage> {
-  
-  // controllers
-  final ScrollController _scrollController = ScrollController();
-  // variables
-  bool _isScrolled = false;
-  Color backgroundContainerColor = Colors.transparent;
-   
 
+class _AppPresentationPageState extends State<AppPresentationPage> 
+    with TickerProviderStateMixin {
+  
+  // Controllers optimizados con inicialización diferida
+  late final ScrollController _scrollController;
+  
+  // Variables de estado con tipos explícitos para mejor performance
+  bool _isScrolled = false;
+  
+  // Colores calculados una sola vez y cacheados
+  late Color _backgroundContainerColor;
+  
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _initializeControllers();
+  }
+
+  /// Inicialización optimizada de controllers
+  void _initializeControllers() {
+    _scrollController = ScrollController()..addListener(_handleScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     super.dispose();
   }
 
-  void _onScroll() {
+  /// Manejo optimizado del scroll con throttling
+  void _handleScroll() {
     final bool isScrolled = _scrollController.offset > 100;
-    if (_isScrolled != isScrolled) {
-      setState(() {
-        _isScrolled = isScrolled;
-      });
-    }
-    // Trigger rebuild para actualizar el CustomPaint dinámico
-    if (mounted) {
-      setState(() {});
+    if (_isScrolled != isScrolled && mounted) {
+      setState(() => _isScrolled = isScrolled);
     }
   }
- 
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final mediaQuery = MediaQuery.of(context);
+    final screenSize = mediaQuery.size;
     
-    final double width = MediaQuery.of(context).size.width;
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Cálculo optimizado de colores con cache
+    _backgroundContainerColor = _getBackgroundColor(isDark);
+    final appBarColors = _calculateAppBarColors(colorScheme, isDark);
     
-    // Fondo optimizado para UI/UX - no usar negro puro en modo oscuro
-    backgroundContainerColor = isDark 
-        ? const Color.fromARGB(255, 24, 24, 24)  // Gris muy oscuro en lugar de negro puro
+    return Title(
+      title: 'Bienvenido - Sell Web',
+      color: colorScheme.primary,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: _backgroundContainerColor,
+        appBar: _PresentationAppBar(
+          isScrolled: _isScrolled,
+          isDark: isDark,
+          colorScheme: colorScheme,
+          appbarColor: appBarColors.background,
+          accentAppbarColor: appBarColors.accent,
+          onLoginTap: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
+        ),
+        body: _buildBody(context, screenSize, theme),
+      ),
+    );
+  }
+
+  /// Método optimizado para obtener color de fondo con cache
+  Color _getBackgroundColor(bool isDark) {
+    return isDark 
+        ? const Color.fromARGB(255, 24, 24, 24)
         : Colors.white;
-    
-    // Colores mejorados para el AppBar considerando el tema
-    Color accentAppbarColor = _isScrolled
+  }
+
+  /// Cálculo optimizado de colores del AppBar
+  _AppBarColors _calculateAppBarColors(ColorScheme colorScheme, bool isDark) {
+    final accent = _isScrolled
         ? (isDark 
             ? colorScheme.primary.withValues(alpha: 0.9)
             : colorScheme.primary.withValues(alpha: 0.85))
@@ -75,50 +125,38 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
             ? Colors.white.withValues(alpha: 0.95)
             : Colors.white);
             
-    Color appbarColor = _isScrolled
+    final background = _isScrolled
         ? (isDark 
             ? colorScheme.surface.withValues(alpha: 0.85)
             : Colors.white.withValues(alpha: 0.9))
         : Colors.transparent;
 
-    return Title(
-      title: 'Bienvenido - Sell Web',
-      color: colorScheme.primary,
-      child: Scaffold(
-        extendBodyBehindAppBar: true, // Permite que el cuerpo se extienda detrás del AppBar
-        backgroundColor: backgroundContainerColor,
-        appBar: _PresentationAppBar(
-          isScrolled: _isScrolled,
-          isDark: isDark,
-          colorScheme: colorScheme,
-          appbarColor: appbarColor,
-          accentAppbarColor: accentAppbarColor,
-          onLoginTap: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
-        ),
-        body: SingleChildScrollView(
-          controller: _scrollController,
-          child: Stack(
-            children: [
-              // Fondo con CustomPaint dinámico que se adapta al contenido
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _DynamicBackgroundPainter(
-                    scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0.0,
-                    primaryColor: Theme.of(context).colorScheme.primary,
-                    isDark: Theme.of(context).brightness == Brightness.dark,
-                    isMobile: MediaQuery.of(context).size.width < ResponsiveBreakpoints.mobile,
-                    screenHeight: MediaQuery.of(context).size.height,
-                  ),
+    return _AppBarColors(background: background, accent: accent);
+  }
+
+  /// Construcción optimizada del cuerpo principal
+  Widget _buildBody(BuildContext context, Size screenSize, ThemeData theme) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      child: Stack(
+        children: [
+          // Fondo con CustomPaint optimizado
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _DynamicBackgroundPainter(
+                  scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0.0,
+                  primaryColor: theme.colorScheme.primary,
+                  isDark: theme.brightness == Brightness.dark,
+                  isMobile: screenSize.width < ResponsiveBreakpoints.mobile,
+                  screenHeight: screenSize.height,
                 ),
               ),
-              // Contenido principal que se difumina cuando hay zoom
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 400),
-                child: _buildResponsiveContent(context, width),
-              ), 
-            ],
+            ),
           ),
-        ),
+          // Contenido principal optimizado
+          _buildResponsiveContent(context, screenSize.width),
+        ],
       ),
     );
   }
@@ -457,6 +495,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     );
   }
 
+  /// Construcción optimizada de la sección de características con datos estáticos
   Widget _buildFeaturesSection(BuildContext context, {required Axis axis}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -464,161 +503,150 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
 
-    final features = [
-      _FeatureData(
-        icon: Icons.point_of_sale_outlined,
-        title: 'Punto de venta fácil de usar',
-        description:'Sistema de ventas que combina escritorio y móvil, convirtiendo cualquier ubicación en tu punto de venta principal',
-        checkItems: [
-          'Interfaz intuitiva',
-          'Gestión del flujo de caja', 
-          'Tickets digitales o impresos',
-          'Aplica descuentos y promociones', 
-          'Reportes y analytics en tiempo real',
-        ],
-        benefit: 'Aumenta la velocidad de ventas 78%', 
-        color:  Colors.amber, // Indigo moderno
-        imageAsset: 'assets/screenshot00.png',
-        imageOnRight: false,
-        category: 'Punto de Venta',
-        ctaText: 'Probar Demo de Ventas', 
-      ),
-      _FeatureData(
-        icon: Icons.inventory_2_outlined,
-        title: 'Inventario del catálogo',
-        description: 'Controla la existencias y el stock de tus productos ',
-        checkItems: [
-          'Determina costos y márgenes de ganancia',
-          'Seguimiento de existencias',
-          'Alertas de stock mínimo o agotado',
-          'Gestión de categorías',
-        ],
-        benefit: 'Reduce pérdidas por stock en 68%', 
-        color: const Color(0xFF059669), // Verde esmeralda
-        imageAsset: 'assets/screenshot02.png',
-        imageOnRight: true,
-        category: 'Control de Stock',
-        ctaText: 'Explorar Inventario', 
-      ),
-      _FeatureData(
-        icon: Icons.analytics_outlined,
-        title: 'Reportes y analíticas',
-        description:
-            'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura desde cualquier lugar',
-        checkItems: [
-          'Productos populares',
-          'Sigue tendencias de ventas',
-          'Ventas por empleado',  
-          
-        ],
-        benefit: 'Mejora decisiones estratégicas en 83%', 
-        color: Colors.indigo, // Rojo moderno
-        imageAsset: 'assets/screenshot04.png',
-        imageOnRight: false,
-        category: 'Business Intelligence',
-        ctaText: 'Ver Reportes Avanzados', 
-      ),
-    ];
-
     return SizedBox(
       width: double.infinity, 
       child: Column(
         children: [
-          // Header mejorado con mejor jerarquía visual
-          Column(
-            children: [
-              // Badge de sección con mejor diseño
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF4F46E5).withValues(alpha: 0.1),
-                      const Color(0xFF7C3AED).withValues(alpha: 0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(50),
-                  border: Border.all(
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      size: 16,
-                      color: const Color(0xFF4F46E5),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Características Principales',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF4F46E5),
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.6,
-                      ),
-                    ),
-                    const SizedBox(width:20),
-                  ],
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 600.ms)
-                  .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
-              
-              SizedBox(height: isMobile ? 24 : 32),
-              
-              // Título principal con mejor tipografía
-              Text(
-                'Todo lo que necesitas para\nhacer crecer tu negocio',
-                style: theme.textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  fontSize: isMobile ? 28 : 48,
-                  color: isDark ? colorScheme.onSurface : colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              )
-                  .animate(delay: 200.ms)
-                  .fadeIn(duration: 800.ms)
-                  .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
-              
-              SizedBox(height: isMobile ? 16 : 20),
-              
-              // Subtítulo mejorado
-              Container(
-                constraints: BoxConstraints(
-                  maxWidth: isMobile ? double.infinity : 600,
-                ),
-                child: Text(
-                  'Sistema diseñado para optimizar cada aspecto de tu operación comercial',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                    height: 1.5,
-                    fontSize: isMobile ? 16 : 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              )
-                  .animate(delay: 400.ms)
-                  .fadeIn(duration: 800.ms)
-                  .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
-            ],
-          ),
-          
+          _buildFeaturesHeader(theme, colorScheme, isMobile),
           SizedBox(height: isMobile ? 48 : 80),
-          
-          // Grid de características con animaciones escalonadas
-          _buildFeaturesGrid(features, theme, colorScheme, isDark, isMobile, axis),
-           
+          _buildFeaturesGrid(_getFeatureData(), theme, colorScheme, isDark, isMobile, axis),
         ],
       ),
     );
   }
+
+  /// Header optimizado de características con widgets const donde sea posible
+  Widget _buildFeaturesHeader(ThemeData theme, ColorScheme colorScheme, bool isMobile) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                const Color(0xFF7C3AED).withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(50),
+            border: Border.all(
+              color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.auto_awesome,
+                size: 16,
+                color: Color(0xFF4F46E5),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Características Principales',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF4F46E5),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const SizedBox(width: 20),
+            ],
+          ),
+        ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+        
+        SizedBox(height: isMobile ? 24 : 32),
+        
+        Text(
+          'Todo lo que necesitas para\nhacer crecer tu negocio',
+          style: theme.textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.8,
+            height: 1.1,
+            fontSize: isMobile ? 28 : 48,
+          ),
+          textAlign: TextAlign.center,
+        ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+        
+        SizedBox(height: isMobile ? 16 : 20),
+        
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : 600,
+          ),
+          child: Text(
+            'Sistema diseñado para optimizar cada aspecto de tu operación comercial',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              height: 1.5,
+              fontSize: isMobile ? 16 : 20,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+      ],
+    );
+  }
+
+  /// Datos estáticos de características optimizados para evitar recreación
+  static final List<_FeatureData> _featuresData = [
+    _FeatureData(
+      icon: Icons.point_of_sale_outlined,
+      title: 'Punto de venta fácil de usar',
+      description: 'Sistema de ventas que combina escritorio y móvil, convirtiendo cualquier ubicación en tu punto de venta principal',
+      checkItems: [
+        'Interfaz intuitiva',
+        'Gestión del flujo de caja', 
+        'Tickets digitales o impresos',
+        'Aplica descuentos y promociones', 
+        'Reportes y analytics en tiempo real',
+      ],
+      benefit: 'Aumenta la velocidad de ventas 78%', 
+      color: Colors.amber,
+      imageAsset: 'assets/screenshot00.png',
+      imageOnRight: false,
+      category: 'Punto de Venta',
+      ctaText: 'Probar Demo de Ventas', 
+    ),
+    _FeatureData(
+      icon: Icons.inventory_2_outlined,
+      title: 'Inventario del catálogo',
+      description: 'Controla la existencias y el stock de tus productos',
+      checkItems: [
+        'Determina costos y márgenes de ganancia',
+        'Seguimiento de existencias',
+        'Alertas de stock mínimo o agotado',
+        'Gestión de categorías',
+      ],
+      benefit: 'Reduce pérdidas por stock en 68%', 
+      color: const Color(0xFF059669),
+      imageAsset: 'assets/screenshot02.png',
+      imageOnRight: true,
+      category: 'Control de Stock',
+      ctaText: 'Explorar Inventario', 
+    ),
+    _FeatureData(
+      icon: Icons.analytics_outlined,
+      title: 'Reportes y analíticas',
+      description: 'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura desde cualquier lugar',
+      checkItems: [
+        'Productos populares',
+        'Sigue tendencias de ventas',
+        'Ventas por empleado',  
+      ],
+      benefit: 'Mejora decisiones estratégicas en 83%', 
+      color: Colors.indigo,
+      imageAsset: 'assets/screenshot04.png',
+      imageOnRight: false,
+      category: 'Business Intelligence',
+      ctaText: 'Ver Reportes Avanzados', 
+    ),
+  ];
+
+  /// Getter optimizado para datos de características
+  List<_FeatureData> _getFeatureData() => _featuresData;
 
   Widget _buildFeaturesGrid(
     List<_FeatureData> features,

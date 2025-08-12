@@ -8,18 +8,16 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
 import 'login_page.dart';
-import 'dart:async';
 import 'dart:ui';
 
-/// Página de presentación de la aplicación que muestra las características principales
-/// y permite al usuario iniciar sesión a través del AppBar
+// AppPresentationPage : Página de presentación de la aplicación que muestra las características principales y permite al usuario iniciar sesión
+// Maneja la lógica de scroll, navegación y construcción del layout responsivo
 class AppPresentationPage extends StatefulWidget {
   const AppPresentationPage({super.key});
 
   @override
   State<AppPresentationPage> createState() => _AppPresentationPageState();
 }
-
 class _AppPresentationPageState extends State<AppPresentationPage> {
   
   // controllers
@@ -970,6 +968,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     );
   }
 
+  /// Navega a la página de login con el provider de autenticación
   void _navigateToLogin(BuildContext context, AuthProvider authProvider) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -978,6 +977,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
     );
   }
 
+  /// Abre la aplicación en Google Play Store en el navegador externo
   Future<void> _launchPlayStore() async {
     const url =
         'https://play.google.com/store/apps/details?id=com.logicabooleana.sell&pcampaignid=web_share';
@@ -997,7 +997,8 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
  
 }
 
-/// Widget simple de máquina de escribir para mostrar textos alternados con cursor animado
+// TypewriterText : Widget para texto de máquina de escribir con cursor animado
+// Permite mostrar múltiples textos con efectos animado de tipeo y borrado
 class TypewriterText extends StatefulWidget {
   final List<String> texts;
   final TextStyle? style;
@@ -1023,9 +1024,9 @@ class TypewriterText extends StatefulWidget {
   @override
   State<TypewriterText> createState() => _TypewriterTextState();
 }
-
 class _TypewriterTextState extends State<TypewriterText>
     with TickerProviderStateMixin {
+  // Variables de estado para el efecto de máquina de escribir
   int _textIndex = 0;
   int _charCount = 0;
   bool _backspacing = false;
@@ -1111,6 +1112,8 @@ class _TypewriterTextState extends State<TypewriterText>
   }
 }
 
+// _DeviceScrollWidget : Widget que muestra una imagen de dispositivo con efectos de scroll y zoom
+// Se anima y escala basado en la posición del scroll del usuario
 class _DeviceScrollWidget extends StatefulWidget {
   final String deviceId;
   final double screenWidth;
@@ -1131,8 +1134,8 @@ class _DeviceScrollWidget extends StatefulWidget {
   @override
   State<_DeviceScrollWidget> createState() => _DeviceScrollWidgetState();
 }
-
 class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
+  // Variables de estado para animaciones de visibilidad y zoom
   bool isVisible = false;
   bool isZoomed = false;
 
@@ -1337,6 +1340,8 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
   }
 }
 
+// _FeatureData : Clase de datos para almacenar información de características/funcionalidades
+// Contiene iconos, títulos, descripciones y configuración de presentación
 class _FeatureData {
   final IconData icon;
   final String title;
@@ -1363,6 +1368,8 @@ class _FeatureData {
   });
 }
 
+// _ModernFeatureCard : Widget moderno para mostrar tarjetas de características con layout responsivo
+// Adapta su diseño entre móvil (columna) y desktop (fila) con efectos hover
 class _ModernFeatureCard extends StatefulWidget {
   final _FeatureData feature;
   final Duration delay;
@@ -1380,8 +1387,10 @@ class _ModernFeatureCard extends StatefulWidget {
   State<_ModernFeatureCard> createState() => _ModernFeatureCardState();
 }
 
+// _ModernFeatureCardState : Estado para _ModernFeatureCard con manejo de animaciones hover
 class _ModernFeatureCardState extends State<_ModernFeatureCard>
     with SingleTickerProviderStateMixin {
+  // Estado para animaciones de hover
   bool _isHovered = false;
 
   @override
@@ -1714,114 +1723,8 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
   }
 }
 
-class _FeatureCard extends StatefulWidget {
-  final _FeatureData feature;
-  final Duration delay;
-
-  const _FeatureCard({
-    required this.feature,
-    required this.delay,
-  });
-
-  @override
-  State<_FeatureCard> createState() => _FeatureCardState();
-}
-
-class _FeatureCardState extends State<_FeatureCard>
-    with SingleTickerProviderStateMixin {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()
-          ..scale(_isHovered ? 1.02 : 1.0)
-          ..translate(0.0, _isHovered ? -4.0 : 0.0),
-        child: Card(
-          elevation: _isHovered ? 8 : 2,
-          shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: _isHovered
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colorScheme.surface,
-                        colorScheme.surfaceContainerLow,
-                      ],
-                    )
-                  : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    widget.feature.icon,
-                    size: 32,
-                    color: colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  widget.feature.title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.feature.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                    height: 1.5,
-                  ),
-                ),
-                if (widget.feature.benefit != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      widget.feature.benefit!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-  )).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
-  }
-}
-
-/// Custom clipper para crear forma de onda en la parte inferior del hero section
+// WaveClipper : Custom clipper que crea formas de onda en la parte inferior del hero section
+// Adapta el número y tamaño de ondas según el dispositivo (móvil vs desktop)
 class WaveClipper extends CustomClipper<Path> {
   final bool isMobile;
   final double? customWaveOffset;
@@ -1909,7 +1812,8 @@ class WaveClipper extends CustomClipper<Path> {
       customWaveOffset != oldClipper.customWaveOffset;
 }
 
-/// Widget del AppBar de presentación con efectos de scroll y animaciones
+// _PresentationAppBar : AppBar personalizado con efectos de blur y transparencia según el scroll
+// Incluye animaciones de logo, botones y cambio de tema
 class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isScrolled;
   final bool isDark;
@@ -2049,7 +1953,8 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-// Pintor de fondo dinámico con efecto parallax basado en el scroll
+// _DynamicBackgroundPainter : Pintor personalizado que crea fondos animados con formas geométricas
+// Genera círculos, gradientes y efectos parallax que responden al scroll del usuario
 class _DynamicBackgroundPainter extends CustomPainter {
   final double scrollOffset;
   final Color primaryColor; // Reservado por si se desea tematizar colores en el futuro

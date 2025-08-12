@@ -21,13 +21,13 @@ class AppPresentationPage extends StatefulWidget {
 }
 
 class _AppPresentationPageState extends State<AppPresentationPage> {
+  
+  // controllers
   final ScrollController _scrollController = ScrollController();
+  // variables
   bool _isScrolled = false;
   Color backgroundContainerColor = Colors.transparent;
-  
-  // Variables para controlar el efecto de blur cuando los dispositivos hacen zoom
-  bool _anyDeviceInZoom = false;
-  final Set<String> _devicesInZoom = <String>{};
+   
 
   @override
   void initState() {
@@ -54,35 +54,18 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       setState(() {});
     }
   }
-
-  // Métodos para controlar el estado de zoom de los dispositivos
-  void _onDeviceZoomChanged(String deviceId, bool isZoomed) {
-    final wasAnyDeviceInZoom = _anyDeviceInZoom;
-    
-    if (isZoomed) {
-      _devicesInZoom.add(deviceId);
-    } else {
-      _devicesInZoom.remove(deviceId);
-    }
-    
-    final isAnyDeviceInZoom = _devicesInZoom.isNotEmpty;
-    
-    if (wasAnyDeviceInZoom != isAnyDeviceInZoom) {
-      setState(() {
-        _anyDeviceInZoom = isAnyDeviceInZoom;
-      });
-    }
-  }
+ 
 
   @override
   Widget build(BuildContext context) {
+    
     final double width = MediaQuery.of(context).size.width;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // Fondo optimizado para UI/UX - no usar negro puro en modo oscuro
     backgroundContainerColor = isDark 
-        ? const Color(0xFF0F0F0F)  // Gris muy oscuro en lugar de negro puro
+        ? const Color.fromARGB(255, 24, 24, 24)  // Gris muy oscuro en lugar de negro puro
         : Colors.white;
     
     // Colores mejorados para el AppBar considerando el tema
@@ -104,8 +87,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       title: 'Bienvenido - Sell Web',
       color: colorScheme.primary,
       child: Scaffold(
-        extendBodyBehindAppBar:
-            true, // Permite que el cuerpo se extienda detrás del AppBar
+        extendBodyBehindAppBar: true, // Permite que el cuerpo se extienda detrás del AppBar
         backgroundColor: backgroundContainerColor,
         appBar: _PresentationAppBar(
           isScrolled: _isScrolled,
@@ -134,9 +116,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
               // Contenido principal que se difumina cuando hay zoom
               AnimatedContainer(
                 duration: const Duration(milliseconds: 400),
-                child: _anyDeviceInZoom
-                    ? _buildResponsiveContent(context, width)
-                    : _buildResponsiveContent(context, width),
+                child: _buildResponsiveContent(context, width),
               ), 
             ],
           ),
@@ -323,12 +303,12 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     // Imagen del dispositivo móvil
-                    _deviceImageWithHover(
+                    _DeviceScrollWidget(
+                      scrollController: _scrollController,
                       deviceId: 'mobile_device',
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot00.png',
-                      zoomFactor: 1.6, // Zoom más moderado para móvil
-                      onZoomChanged: _onDeviceZoomChanged,
+                      zoomFactor: 1.6, // Zoom más moderado para móvil 
                       actionWidget: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -351,12 +331,12 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
                       ),
                     ),
                     // Imagen de la captura web
-                    _deviceImageWithHover(
+                    _DeviceScrollWidget(
+                      scrollController: _scrollController,
                       deviceId: 'web_device',
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot06.png',
-                      zoomFactor: 2.0, // Zoom más pronunciado para desktop
-                      onZoomChanged: _onDeviceZoomChanged,
+                      zoomFactor: 2.0, // Zoom más pronunciado para desktop 
                       actionWidget: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -1014,25 +994,7 @@ class _AppPresentationPageState extends State<AppPresentationPage> {
       debugPrint('Error al abrir Play Store: $e');
     }
   }
-
-  Widget _deviceImageWithHover({
-    required String deviceId,
-    required double screenWidth,
-    required String assetPath,
-    required Widget actionWidget,
-    required void Function(String deviceId, bool isZoomed) onZoomChanged,
-    double zoomFactor = 1.8,
-  }) {
-    return _DeviceScrollWidget(
-      deviceId: deviceId,
-      screenWidth: screenWidth,
-      scrollController: _scrollController,
-      assetPath: assetPath,
-      actionWidget: actionWidget,
-      zoomFactor: zoomFactor,
-      onZoomChanged: onZoomChanged,
-    );
-  }
+ 
 }
 
 /// Widget simple de máquina de escribir para mostrar textos alternados con cursor animado
@@ -1155,16 +1117,14 @@ class _DeviceScrollWidget extends StatefulWidget {
   final ScrollController scrollController;
   final String assetPath;
   final Widget actionWidget;
-  final double zoomFactor;
-  final void Function(String deviceId, bool isZoomed) onZoomChanged;
+  final double zoomFactor; 
 
   const _DeviceScrollWidget({
     required this.deviceId,
     required this.screenWidth,
     required this.scrollController,
     required this.assetPath,
-    required this.actionWidget,
-    required this.onZoomChanged,
+    required this.actionWidget, 
     this.zoomFactor = 1.8, // Factor de zoom por defecto
   });
 
@@ -1932,7 +1892,7 @@ class WaveClipper extends CustomClipper<Path> {
         size.width - (waveLength * 2.5),
         (size.height - waveOffset) + waveHeight,
         0,
-        size.height - waveOffset,
+        size.height - waveOffset
       );
     }
 

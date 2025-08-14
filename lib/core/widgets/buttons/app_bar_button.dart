@@ -82,39 +82,49 @@ class AppBarButton extends StatelessWidget {
 }
 
 /// Un botón circular para el AppBar, personalizable y reutilizable.
-/// Puede mostrar solo un icono o un icono con contenido widget.
+/// Puede mostrar solo un icono o un icono con texto.
 /// Incluye soporte para estado de carga con CircularProgressIndicator.
 class AppBarButtonCircle extends StatelessWidget {
   const AppBarButtonCircle({
     super.key,
-    required this.icon,
+    this.icon,
     required this.onPressed,
     required this.tooltip,
     this.backgroundColor,
     this.colorAccent,
-    this.iconColor,
     this.text,
     this.isLoading = false,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final VoidCallback? onPressed;
   final String tooltip;
   final Color? backgroundColor;
   final Color? colorAccent;
-  final Color? iconColor;
-  final Widget? text;
+  final String? text;
   final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveBackgroundColor = backgroundColor ??
-        theme.colorScheme.primaryContainer.withValues(alpha: 0.1);
-    final effectiveIconColor = iconColor ?? 
-        colorAccent ?? 
-        theme.colorScheme.primary;
-    final bool hasText = text != null;
+    final bool isDisabled = onPressed == null && !isLoading;
+    
+    // Colores efectivos basados en el estado del botón
+    final effectiveBackgroundColor = isDisabled
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
+        : (backgroundColor ?? theme.colorScheme.primaryContainer.withValues(alpha: 0.5));
+    
+    final effectiveIconColor = isDisabled
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
+        : (colorAccent ?? theme.colorScheme.primary);
+    
+    final bool hasText = text != null && text!.isNotEmpty;
+    final bool hasIcon = icon != null;
+
+    // Si no hay icono ni texto, no mostrar nada
+    if (!hasIcon && !hasText) {
+      return const SizedBox.shrink();
+    }
 
     // Calcular tamaño del icono basado en el tamaño del botón (40% del área)
     const double buttonSize = 48.0;
@@ -145,47 +155,71 @@ class AppBarButtonCircle extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Contenido con texto
-                    isLoading
-                        ? SizedBox(
-                            width: iconSize,
-                            height: iconSize,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                effectiveIconColor,
+                    // Contenido con icono (si existe)
+                    if (hasIcon) ...[
+                      isLoading
+                          ? SizedBox(
+                              width: iconSize,
+                              height: iconSize,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  effectiveIconColor,
+                                ),
                               ),
+                            )
+                          : Icon(
+                              icon!,
+                              color: effectiveIconColor,
+                              size: iconSize,
                             ),
-                          )
-                        : Icon(
-                            icon,
+                      if (hasText) const SizedBox(width: 6.0),
+                    ],
+                    // Contenido con texto (si existe)
+                    if (hasText)
+                      Flexible(
+                        child: Text(
+                          text!,
+                          style: TextStyle(
                             color: effectiveIconColor,
-                            size: iconSize,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
-                    const SizedBox(width: 6.0),
-                    Flexible(
-                      child: text!,
-                    ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                   ],
                 )
               : Center(
-                  // Centrado perfecto para botón solo con icono
-                  child: isLoading
-                      ? SizedBox(
-                          width: iconSize,
-                          height: iconSize,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              effectiveIconColor,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          icon,
-                          color: effectiveIconColor,
-                          size: iconSize,
-                        ),
+                  // Centrado perfecto para botón solo con icono o texto
+                  child: hasIcon
+                      ? (isLoading
+                          ? SizedBox(
+                              width: iconSize,
+                              height: iconSize,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  effectiveIconColor,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              icon!,
+                              color: effectiveIconColor,
+                              size: iconSize,
+                            ))
+                      : hasText
+                          ? Text(
+                              text!,
+                              style: TextStyle(
+                                color: effectiveIconColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          : const SizedBox.shrink(),
                 ),
         ),
       ),

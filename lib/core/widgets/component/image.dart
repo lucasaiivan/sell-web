@@ -29,8 +29,6 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {

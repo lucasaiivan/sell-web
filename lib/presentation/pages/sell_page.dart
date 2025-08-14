@@ -500,10 +500,10 @@ class _SellPageState extends State<SellPage> {
                         onPressed: () => _showPrinterConfigDialog(buildContext),
                         backgroundColor: isConnected
                             ? Colors.green.withValues(alpha: 0.1)
-                            : Colors.orange.withValues(alpha: 0.07),
-                        iconColor: isConnected
+                            : null,
+                        colorAccent: isConnected
                             ? Colors.green.shade700
-                            : Colors.orange.shade500,
+                            : null,
                       );
                     },
                   ),
@@ -521,15 +521,11 @@ class _SellPageState extends State<SellPage> {
                             ? () => _showLastTicketDialog(
                                 buildContext, sellProvider)
                             : null,
-                        backgroundColor: hasLastTicket
-                            ? Theme.of(buildContext)
+                        backgroundColor:Theme.of(buildContext)
                                 .colorScheme
                                 .primaryContainer
-                                .withValues(alpha: 0.4)
-                            : Colors.grey.withValues(alpha: 0.15),
-                        iconColor: hasLastTicket
-                            ? Theme.of(buildContext).colorScheme.primary
-                            : Colors.grey.shade400,
+                                .withValues(alpha: 0.4),
+                        colorAccent: Theme.of(buildContext).colorScheme.primary
                       );
                     },
                   ),
@@ -538,14 +534,17 @@ class _SellPageState extends State<SellPage> {
                   CashRegisterStatusWidget(),
 
                   // Botón de descartar ticket (existente) usando [AppBarButtonCircle]
+                  // En pantallas reducidas solo muestra el icono, en pantallas grandes muestra icono y texto
                   (provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text: const Text('Descartar ticket'),
+                          text: isMobile(buildContext) 
+                              ? null 
+                              : 'Descartar ticket',
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
+                          colorAccent: Colors.red.shade700,
                           backgroundColor: Colors.red.withValues(alpha: 0.1),
-                          iconColor: Colors.red.shade700,
                         )
                       : Container(),
                 ],
@@ -2075,7 +2074,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
         return AppBarButtonCircle(
           isLoading: _isInitializing,
           icon: Icons.point_of_sale_outlined,
-          tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
+          tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
           onPressed: () {
             // Si no hay caja activa, abrir directamente el administrador de caja
             if (!isActive) {
@@ -2087,15 +2086,11 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           },
           backgroundColor: isActive
               ? Colors.green.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.1),
-          iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context) ? null : Text(
-            isActive ? 'Caja abierta' : 'Caja cerrada',
-            style: TextStyle(
-              color: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+              : null,
+          colorAccent: isActive ? Colors.green.shade700 : null,
+          text: isMobile(context) 
+              ? null 
+              : (isActive ? 'Caja abierta' : 'Abrir caja'),
         );
       },
     );

@@ -466,12 +466,15 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           runSpacing: 16,
           children: [
             AppButton(
+              borderRadius:5,
               text: 'Play Store',
-              icon: Image.asset('assets/playstore.png', width: 24, height: 24),
+              icon: Image.asset('assets/playstore.png', width: 20, height: 20),
               backgroundColor: Colors.black,
               onPressed: _launchPlayStore,
             ),
-            AppFilledButton(
+            const SizedBox(height: 16),
+            AppButton(
+              borderRadius:5,
               text: 'Comenzar Ahora',
               icon: Icon(Icons.auto_fix_high_outlined),
               backgroundColor: Colors.white,

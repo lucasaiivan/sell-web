@@ -136,6 +136,8 @@ Widget _buildAccountSpecificProviders({
               AddProductToCatalogueUseCase(catalogueRepository),
           createPublicProductUseCase:
               CreatePublicProductUseCase(catalogueRepository),
+          registerProductPriceUseCase:
+              RegisterProductPriceUseCase(catalogueRepository),
           getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
         )..initCatalogue(accountId),
       ),

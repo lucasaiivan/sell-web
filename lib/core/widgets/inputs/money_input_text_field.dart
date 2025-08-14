@@ -19,6 +19,7 @@ class MoneyInputTextField extends StatelessWidget {
   final bool autofocus;
   final TextStyle? style;
   final TextInputAction? textInputAction;
+  final String? Function(String?)? validator;
 
   const MoneyInputTextField({
     super.key,
@@ -36,12 +37,13 @@ class MoneyInputTextField extends StatelessWidget {
     this.autofocus = false,
     this.style,
     this.textInputAction,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return TextField(
+    return TextFormField(
       controller: controller,
       focusNode: focusNode,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -49,6 +51,7 @@ class MoneyInputTextField extends StatelessWidget {
       autofocus: autofocus,
       style: style ?? theme.textTheme.titleLarge,
       textInputAction: textInputAction ?? TextInputAction.done,
+      validator: validator,
       decoration: InputDecoration(
         labelText: labelText,
         errorText: errorText,
@@ -69,7 +72,7 @@ class MoneyInputTextField extends StatelessWidget {
           onTextChanged!(value);
         }
       },
-      onSubmitted: (value) {
+      onFieldSubmitted: (value) {
         if (onSubmitted != null) {
           onSubmitted!(controller.doubleValue);
         }

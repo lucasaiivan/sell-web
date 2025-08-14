@@ -6,6 +6,7 @@ import 'package:sellweb/core/utils/product_search_algorithm.dart';
 import 'package:sellweb/core/utils/catalogue_filter.dart';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
 import '../../domain/usecases/account_usecase.dart';
 
@@ -101,6 +102,7 @@ class CatalogueProvider extends ChangeNotifier {
   final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
   AddProductToCatalogueUseCase addProductToCatalogueUseCase;
   CreatePublicProductUseCase createPublicProductUseCase;
+  RegisterProductPriceUseCase registerProductPriceUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
   // Stream subscription y timer para debouncing
@@ -139,6 +141,7 @@ class CatalogueProvider extends ChangeNotifier {
     required this.getPublicProductByCodeUseCase,
     required this.addProductToCatalogueUseCase,
     required this.createPublicProductUseCase,
+    required this.registerProductPriceUseCase,
     required this.getUserAccountsUseCase,
   }); // Removido _initProducts() del constructor
 
@@ -166,6 +169,8 @@ class CatalogueProvider extends ChangeNotifier {
         AddProductToCatalogueUseCase(newCatalogueRepository);
     createPublicProductUseCase =
         CreatePublicProductUseCase(newCatalogueRepository);
+    registerProductPriceUseCase =
+        RegisterProductPriceUseCase(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
     _catalogueSubscription = getProductsStreamUseCase().listen(
@@ -205,10 +210,13 @@ class CatalogueProvider extends ChangeNotifier {
   /// Busca un producto por código de barras en el catálogo local.
   ProductCatalogue? getProductByCode(String code) {
     final normalizedCode = code.trim().toUpperCase();
-    return _state.products.firstWhere(
-      (product) => product.code.trim().toUpperCase() == normalizedCode,
-      orElse: () => ProductCatalogue(),
-    );
+    try {
+      return _state.products.firstWhere(
+        (product) => product.code.trim().toUpperCase() == normalizedCode,
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Busca un producto público por código de barra en la base pública.
@@ -218,10 +226,8 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos usando el algoritmo avanzado de búsqueda
   /// Permite buscar sin importar el orden de las palabras
-  List<ProductCatalogue> searchProducts({
-    required String query,
-    int? maxResults,
-  }) {
+  List<ProductCatalogue> searchProducts({required String query,int? maxResults,}) {
+
     print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
     print('📦 Productos disponibles en state: ${_state.products.length}');
 
@@ -409,9 +415,10 @@ class CatalogueProvider extends ChangeNotifier {
   ///
   /// [product] El producto a agregar o actualizar en el catálogo
   /// [accountId] El ID de la cuenta donde se agregará el producto
+  /// [accountProfile] El perfil de la cuenta para registrar el precio (opcional)
   /// Retorna un [Future<void>] que se completa cuando la operación termina
-  Future<void> addProductToCatalogue(
-      ProductCatalogue product, String accountId) async {
+  Future<void> addAndUpdateProductToCatalogue(
+      ProductCatalogue product, String accountId, {ProfileAccountModel? accountProfile}) async {
     // Validar parámetros requeridos
     if (accountId.isEmpty) {
       throw Exception(
@@ -444,6 +451,29 @@ class CatalogueProvider extends ChangeNotifier {
           documentIdUpgrade: accountId,
         );
         await addProductToCatalogueUseCase(newProduct, accountId);
+      }
+
+      // Registrar precio del producto en la base de datos pública si se proporciona accountProfile
+      if (accountProfile != null && product.salePrice > 0) {
+        try {
+          final productPrice = ProductPrice(
+            id: accountId,
+            idAccount: accountId,
+            imageAccount: accountProfile.image,
+            nameAccount: accountProfile.name,
+            price: product.salePrice,
+            time: Utils().getTimestampNow(),
+            currencySign: accountProfile.currencySign,
+            province: accountProfile.province,
+            town: accountProfile.town,
+          );
+
+          await registerProductPriceUseCase(productPrice, product.code);
+          print('✅ Precio registrado en base pública para producto: ${product.code}');
+        } catch (e) {
+          print('⚠️ Error al registrar precio en base pública: $e');
+          // No lanzamos error aquí para no interrumpir el flujo principal
+        }
       }
 
       _state = _state.copyWith(

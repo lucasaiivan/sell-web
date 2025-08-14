@@ -15,4 +15,6 @@ abstract class CatalogueRepository {
   Future<void> incrementSales(String accountId, String productId, int quantity);
   // Decrementa el stock de un producto
   Future<void> decrementStock(String accountId, String productId, int quantity);
+  // Registra el precio de un producto en la base de datos pública
+  Future<void> registerProductPrice(ProductPrice productPrice, String productCode);
 }

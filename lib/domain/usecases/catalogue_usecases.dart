@@ -82,3 +82,16 @@ class DecrementProductStockUseCase {
     return repository.decrementStock(accountId, productId, quantity);
   }
 }
+
+// case use : Registra el precio de un producto en la base de datos pública
+class RegisterProductPriceUseCase {
+  final CatalogueRepository repository;
+  RegisterProductPriceUseCase(this.repository);
+
+  /// Registra el precio de un producto en la base de datos pública
+  /// [productPrice] - Datos del precio del producto
+  /// [productCode] - Código del producto
+  Future<void> call(ProductPrice productPrice, String productCode) {
+    return repository.registerProductPrice(productPrice, productCode);
+  }
+}

@@ -200,18 +200,16 @@ class _SellPageState extends State<SellPage> {
     final context = _focusNode.context;
     if (context == null) return;
 
-    final catalogueProvider =
-        Provider.of<CatalogueProvider>(context, listen: false);
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
-    if (product != null) {
-      // - Si se encuentra el producto en el catálogo, agregarlo al ticket -
+    if (product != null && product.id.isNotEmpty && product.description.isNotEmpty) {
+      // - Si se encuentra el producto en el catálogo con datos válidos, agregarlo al ticket -
       homeProvider.addProductsticket(product.copyWith());
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
-      final publicProduct =
-          await catalogueProvider.getPublicProductByCode(code);
+      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
 
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
@@ -224,7 +222,7 @@ class _SellPageState extends State<SellPage> {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
           // ignore: use_build_context_synchronously
-          showAddProductDialog(context,
+         showAddProductDialog(context,
               isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }

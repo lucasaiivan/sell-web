@@ -115,4 +115,26 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       throw Exception('Error al decrementar stock del producto: $e');
     }
   }
+
+  // future : registra el precio de un producto en la base de datos pública
+  @override
+  Future<void> registerProductPrice(ProductPrice productPrice, String productCode) async {
+    if (productCode.isEmpty) {
+      throw ArgumentError('El código del producto es obligatorio');
+    }
+
+    if (productPrice.idAccount.isEmpty) {
+      throw ArgumentError('El ID de la cuenta es obligatorio');
+    }
+
+    try {
+      final ref = FirebaseFirestore.instance
+          .collection('/APP/ARG/PRODUCTOS/$productCode/PRICES')
+          .doc(productPrice.idAccount);
+
+      await ref.set(productPrice.toJson(), SetOptions(merge: true));
+    } catch (e) {
+      throw Exception('Error al registrar precio del producto: $e');
+    }
+  }
 }

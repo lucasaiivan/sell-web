@@ -440,6 +440,7 @@ class DialogComponents {
       nextFocusNode: nextFocusNode,
       autofocus: autofocus,
       textInputAction: textInputAction,
+      validator: validator,
     );
   }
 

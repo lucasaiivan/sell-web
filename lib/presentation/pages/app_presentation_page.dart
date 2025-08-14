@@ -10,18 +10,6 @@ import '../providers/theme_data_app_provider.dart';
 import 'login_page.dart';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter/scheduler.dart' show Ticker;
-import 'package:provider/provider.dart';
-import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../providers/auth_provider.dart';
-import '../providers/theme_data_app_provider.dart';
-import 'login_page.dart';
-import 'dart:ui';
-
 /// Clase helper para colores del AppBar optimizada
 class _AppBarColors {
   final Color background;
@@ -345,6 +333,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot00.png',
                       zoomFactor: 1.6, // Zoom más moderado para móvil 
+                      onTap: _launchPlayStore, // Abrir Play Store al tocar el dispositivo móvil
                       actionWidget: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -373,6 +362,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot06.png',
                       zoomFactor: 2.0, // Zoom más pronunciado para desktop 
+                      onTap: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)), // Navegar al login al tocar el dispositivo web
                       actionWidget: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -1109,34 +1099,80 @@ class _TypewriterTextState extends State<TypewriterText>
     // Calcular el tamaño del cursor basado en el tamaño del texto
     final textStyle = widget.style ?? Theme.of(context).textTheme.bodyMedium!;
     final fontSize = textStyle.fontSize ?? 14.0;
-    final cursorSize = fontSize * 0.5; // La mitad del tamaño del texto
+    final cursorSize = fontSize * 0.6; // Ajustado para mejor visibilidad
     
     // Obtener color del texto del estilo
     final textColor = textStyle.color ?? colorScheme.onSurface;
+    final cursorColor = widget.cursorColor ?? textColor;
     
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center, // Centrar verticalmente
+    // Calcular altura máxima necesaria para evitar movimiento de widgets
+    final maxHeight = _calculateMaxHeight(context, textStyle);
+    
+    // Crear TextSpan con el cursor integrado
+    final textSpan = TextSpan(
       children: [
-        Flexible(
-          child: Text(
-            visible,
-            style: widget.style,
-            textAlign: widget.textAlign,
-          ),
+        // Texto visible
+        TextSpan(
+          text: visible,
+          style: textStyle,
         ),
+        // Cursor como WidgetSpan que sigue al texto
         if (widget.showCursor)
-          Container(
-            margin: const EdgeInsets.only(left: 4), // Solo margen izquierdo
-            width: cursorSize,
-            height: cursorSize,
-            decoration: BoxDecoration(
-              color: widget.cursorColor ?? textColor, // Usar color del texto por defecto
-              shape: BoxShape.circle,
+          WidgetSpan(
+            child: Container(
+              margin: const EdgeInsets.only(left: 2, bottom: 2), // Margen mínimo para separación
+              width: cursorSize,
+              height: cursorSize,
+              decoration: BoxDecoration(
+                color: cursorColor,
+                shape: BoxShape.circle,
+              ),
             ),
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
           ),
       ],
     );
+    
+    // Contenedor con altura fija para evitar movimiento de widgets
+    return SizedBox(
+      height: maxHeight,
+      child: Align(
+        alignment: Alignment.center,
+        child: RichText(
+          text: textSpan,
+          textAlign: widget.textAlign ?? TextAlign.start,
+          softWrap: true, // Permitir que el texto se envuelva
+          overflow: TextOverflow.visible, // Mostrar todo el texto
+        ),
+      ),
+    );
+  }
+
+  /// Calcula la altura máxima necesaria para todos los textos
+  double _calculateMaxHeight(BuildContext context, TextStyle textStyle) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    double maxHeight = 0.0;
+    
+    // Calcular altura para cada texto en la lista
+    for (final text in widget.texts) {
+      final textPainter = TextPainter(
+        text: TextSpan(text: text, style: textStyle),
+        textDirection: TextDirection.ltr,
+        textAlign: widget.textAlign ?? TextAlign.start,
+      );
+      
+      // Usar un ancho máximo basado en el contexto disponible
+      final maxWidth = screenWidth * 0.9; // 90% del ancho de pantalla como máximo
+      textPainter.layout(maxWidth: maxWidth);
+      
+      if (textPainter.height > maxHeight) {
+        maxHeight = textPainter.height;
+      }
+    }
+    
+    // Agregar padding adicional para el cursor y márgenes
+    return maxHeight + 20; // 20px de padding adicional
   }
 }
 
@@ -1148,7 +1184,8 @@ class _DeviceScrollWidget extends StatefulWidget {
   final ScrollController scrollController;
   final String assetPath;
   final Widget actionWidget;
-  final double zoomFactor; 
+  final double zoomFactor;
+  final VoidCallback? onTap; // Nueva función de callback para manejar taps
 
   const _DeviceScrollWidget({
     required this.deviceId,
@@ -1157,6 +1194,7 @@ class _DeviceScrollWidget extends StatefulWidget {
     required this.assetPath,
     required this.actionWidget, 
     this.zoomFactor = 1.8, // Factor de zoom por defecto
+    this.onTap, // Callback opcional para manejar taps
   });
 
   @override
@@ -1234,54 +1272,57 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
     // Aplicar zoom cuando está en la zona de zoom
     final scale = isZoomed ? widget.zoomFactor : 1.0;
 
-    return SizedBox(
-      height: widgetHeight,
-      width: widgetWidth,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Contenedor de imagen con zoom y sombra adaptativa
-          Expanded(
-            child: Center(
-              child: AnimatedScale(
-                scale: scale,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOut,
-                child: Container(
-                  margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
-                  width: widgetWidth,
-                  height: imageContainerHeight,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-                    child: Image.asset(
-                      widget.assetPath,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildErrorContainer(isMobile),
+    return GestureDetector(
+      onTap: widget.onTap, // Llamar al callback cuando se toque el widget
+      child: SizedBox(
+        height: widgetHeight,
+        width: widgetWidth,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Contenedor de imagen con zoom y sombra adaptativa
+            Expanded(
+              child: Center(
+                child: AnimatedScale(
+                  scale: scale,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOut,
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: isMobile ? 24 : 50),
+                    width: widgetWidth,
+                    height: imageContainerHeight,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                      child: Image.asset(
+                        widget.assetPath,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildErrorContainer(isMobile),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          // ActionWidget
-          Container(
-            height: actionWidgetHeight,
-            width: widgetWidth,
-            alignment: Alignment.center,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: widget.actionWidget,
+            
+            const SizedBox(height: 8),
+            
+            // ActionWidget
+            Container(
+              height: actionWidgetHeight,
+              width: widgetWidth,
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: widget.actionWidget,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2001,6 +2042,21 @@ class _DynamicBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
+    
+    // Paint específico para elementos difuminados
+    final blurredPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0); // Blur suave
+    
+    // Paint para elementos muy difuminados (fondo)
+    final heavyBlurPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15.0); // Blur fuerte
+    
+    // Paint para elementos con blur sutil
+    final subtleBlurPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0); // Blur sutil
 
     // Colores adaptativos según el tema con transparencia optimizada para legibilidad
     final baseColors = isDark 
@@ -2099,29 +2155,29 @@ class _DynamicBackgroundPainter extends CustomPainter {
 
     // --- CÍRCULOS PRINCIPALES (por encima de los gigantes) - AUMENTADOS ---
 
-    // Círculo principal 1: Muy grande en la esquina superior derecha - AUMENTADO
-    paint.color = baseColors[0];
+    // Círculo principal 1: Muy grande en la esquina superior derecha - CON BLUR SUTIL
+    subtleBlurPaint.color = baseColors[0];
     canvas.drawCircle(
       Offset(
         size.width * 0.85 + scrollOffset * 0.02,
         size.height * 0.15 + scrollOffset * 0.03,
       ),
       size.width * (isMobile ? 0.25 : 0.20),
-      paint,
+      subtleBlurPaint,
     );
 
-    // Círculo principal 2: Muy grande en la esquina inferior izquierda - AUMENTADO
-    paint.color = baseColors[1];
+    // Círculo principal 2: Muy grande en la esquina inferior izquierda - CON BLUR MEDIO
+    blurredPaint.color = baseColors[1];
     canvas.drawCircle(
       Offset(
         size.width * 0.15 + scrollOffset * 0.04,
         size.height * 0.8 + scrollOffset * 0.02,
       ),
       size.width * (isMobile ? 0.28 : 0.22),
-      paint,
+      blurredPaint,
     );
 
-    // Círculo principal 3: Grande en el centro-derecha - AUMENTADO
+    // Círculo principal 3: Grande en el centro-derecha - SIN BLUR (nítido)
     paint.color = baseColors[2];
     canvas.drawCircle(
       Offset(
@@ -2132,18 +2188,18 @@ class _DynamicBackgroundPainter extends CustomPainter {
       paint,
     );
 
-    // Círculo principal 4: Grande en el centro-izquierda - AUMENTADO
-    paint.color = baseColors[3];
+    // Círculo principal 4: Grande en el centro-izquierda - CON BLUR FUERTE
+    heavyBlurPaint.color = baseColors[3];
     canvas.drawCircle(
       Offset(
         size.width * 0.12 + scrollOffset * 0.06,
         size.height * 0.35 + scrollOffset * 0.04,
       ),
       size.width * (isMobile ? 0.22 : 0.17),
-      paint,
+      heavyBlurPaint,
     );
 
-    // Círculo principal 5: Grande en el centro superior - AUMENTADO
+    // Círculo principal 5: Grande en el centro superior - SIN BLUR (nítido)
     paint.color = baseColors[4];
     canvas.drawCircle(
       Offset(
@@ -2154,31 +2210,31 @@ class _DynamicBackgroundPainter extends CustomPainter {
       paint,
     );
 
-    // Círculo principal 6: Nuevo círculo grande central - NUEVO
-    paint.color = baseColors[5];
+    // Círculo principal 6: Nuevo círculo grande central - CON BLUR SUTIL
+    subtleBlurPaint.color = baseColors[5];
     canvas.drawCircle(
       Offset(
         size.width * 0.4 + scrollOffset * 0.02,
         size.height * 0.55 + scrollOffset * 0.04,
       ),
       size.width * (isMobile ? 0.20 : 0.16),
-      paint,
+      subtleBlurPaint,
     );
 
     // --- CÍRCULOS ADICIONALES PARA DESKTOP Y MÓVIL - AUMENTADOS ---
     
-    // Círculo 7: Grande flotante centro - AUMENTADO
-    paint.color = baseColors[5];
+    // Círculo 7: Grande flotante centro - CON BLUR MEDIO
+    blurredPaint.color = baseColors[5];
     canvas.drawCircle(
       Offset(
         size.width * 0.45 + scrollOffset * 0.07,
         size.height * 0.45 + scrollOffset * 0.02,
       ),
       size.width * (isMobile ? 0.14 : 0.12),
-      paint,
+      blurredPaint,
     );
 
-    // Círculo 8: Grande superior centro-izquierda - AUMENTADO
+    // Círculo 8: Grande superior centro-izquierda - SIN BLUR (nítido)
     paint.color = baseColors[0].withValues(alpha: isDark ? 0.12 : 0.08);
     canvas.drawCircle(
       Offset(
@@ -2189,29 +2245,29 @@ class _DynamicBackgroundPainter extends CustomPainter {
       paint,
     );
 
-    // Círculo 9: Grande inferior centro-derecha - AUMENTADO
-    paint.color = baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06);
+    // Círculo 9: Grande inferior centro-derecha - CON BLUR FUERTE
+    heavyBlurPaint.color = baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06);
     canvas.drawCircle(
       Offset(
         size.width * 0.75 + scrollOffset * 0.03,
         size.height * 0.85 + scrollOffset * 0.06,
       ),
       size.width * (isMobile ? 0.15 : 0.13),
-      paint,
+      heavyBlurPaint,
     );
 
-    // Círculo 10: Nuevo círculo grande superior derecha - NUEVO
-    paint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05);
+    // Círculo 10: Nuevo círculo grande superior derecha - CON BLUR SUTIL
+    subtleBlurPaint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05);
     canvas.drawCircle(
       Offset(
         size.width * 0.8 + scrollOffset * 0.04,
         size.height * 0.05 + scrollOffset * 0.03,
       ),
       size.width * (isMobile ? 0.11 : 0.09),
-      paint,
+      subtleBlurPaint,
     );
 
-    // Círculo 11: Nuevo círculo grande inferior izquierda - NUEVO
+    // Círculo 11: Nuevo círculo grande inferior izquierda - SIN BLUR (nítido)
     paint.color = baseColors[3].withValues(alpha: isDark ? 0.06 : 0.04);
     canvas.drawCircle(
       Offset(
@@ -2296,25 +2352,43 @@ class _DynamicBackgroundPainter extends CustomPainter {
       gradientPaint,
     );
 
-    // --- CÍRCULOS FLOTANTES MEDIANOS CON DIFERENTES VELOCIDADES - AUMENTADOS ---
+    // --- CÍRCULOS FLOTANTES MEDIANOS CON DIFERENTES VELOCIDADES Y BLUR SELECTIVO - AUMENTADOS ---
     final mediumCircles = [
-      {'x': 0.25, 'y': 0.25, 'radius': 0.04, 'speed': 0.08, 'color': 0},
-      {'x': 0.65, 'y': 0.35, 'radius': 0.045, 'speed': 0.05, 'color': 1},
-      {'x': 0.8, 'y': 0.45, 'radius': 0.035, 'speed': 0.12, 'color': 2},
-      {'x': 0.35, 'y': 0.65, 'radius': 0.05, 'speed': 0.06, 'color': 3},
-      {'x': 0.15, 'y': 0.55, 'radius': 0.038, 'speed': 0.1, 'color': 4},
-      {'x': 0.95, 'y': 0.3, 'radius': 0.042, 'speed': 0.07, 'color': 5},
-      {'x': 0.05, 'y': 0.15, 'radius': 0.032, 'speed': 0.15, 'color': 0},
-      {'x': 0.55, 'y': 0.05, 'radius': 0.036, 'speed': 0.09, 'color': 1},
-      {'x': 0.75, 'y': 0.25, 'radius': 0.04, 'speed': 0.11, 'color': 2},
-      {'x': 0.4, 'y': 0.8, 'radius': 0.047, 'speed': 0.04, 'color': 3},
+      {'x': 0.25, 'y': 0.25, 'radius': 0.04, 'speed': 0.08, 'color': 0, 'blur': 'heavy'},
+      {'x': 0.65, 'y': 0.35, 'radius': 0.045, 'speed': 0.05, 'color': 1, 'blur': 'none'},
+      {'x': 0.8, 'y': 0.45, 'radius': 0.035, 'speed': 0.12, 'color': 2, 'blur': 'subtle'},
+      {'x': 0.35, 'y': 0.65, 'radius': 0.05, 'speed': 0.06, 'color': 3, 'blur': 'medium'},
+      {'x': 0.15, 'y': 0.55, 'radius': 0.038, 'speed': 0.1, 'color': 4, 'blur': 'none'},
+      {'x': 0.95, 'y': 0.3, 'radius': 0.042, 'speed': 0.07, 'color': 5, 'blur': 'subtle'},
+      {'x': 0.05, 'y': 0.15, 'radius': 0.032, 'speed': 0.15, 'color': 0, 'blur': 'heavy'},
+      {'x': 0.55, 'y': 0.05, 'radius': 0.036, 'speed': 0.09, 'color': 1, 'blur': 'medium'},
+      {'x': 0.75, 'y': 0.25, 'radius': 0.04, 'speed': 0.11, 'color': 2, 'blur': 'none'},
+      {'x': 0.4, 'y': 0.8, 'radius': 0.047, 'speed': 0.04, 'color': 3, 'blur': 'subtle'},
     ];
 
-    paint.style = PaintingStyle.fill;
     for (final circle in mediumCircles) {
       final colorIndex = circle['color'] as int;
-      paint.color = baseColors[colorIndex % baseColors.length]
+      final blurType = circle['blur'] as String;
+      final circleColor = baseColors[colorIndex % baseColors.length]
           .withValues(alpha: isDark ? 0.08 : 0.12); // Transparencia uniforme optimizada para legibilidad
+      
+      // Seleccionar el paint según el tipo de blur
+      Paint circlePaint;
+      switch (blurType) {
+        case 'heavy':
+          circlePaint = heavyBlurPaint..color = circleColor;
+          break;
+        case 'medium':
+          circlePaint = blurredPaint..color = circleColor;
+          break;
+        case 'subtle':
+          circlePaint = subtleBlurPaint..color = circleColor;
+          break;
+        case 'none':
+        default:
+          circlePaint = paint..color = circleColor;
+          break;
+      }
       
       canvas.drawCircle(
         Offset(
@@ -2322,7 +2396,7 @@ class _DynamicBackgroundPainter extends CustomPainter {
           size.height * (circle['y'] as double) + scrollOffset * (circle['speed'] as double) * 0.3,
         ),
         size.width * (circle['radius'] as double),
-        paint,
+        circlePaint,
       );
     }
 

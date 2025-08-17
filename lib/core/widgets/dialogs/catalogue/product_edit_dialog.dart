@@ -6,17 +6,20 @@ import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/core/widgets/component/image.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
-/// Diálogo modernizado para editar productos en el ticket siguiendo Material Design 3
+/// Diálogo para editar producto seleccionado
 class ProductEditDialog extends StatefulWidget {
   const ProductEditDialog({
     super.key,
     required this.product,
+    required this.catalogueProvider,
     this.onProductUpdated,
   });
 
   final ProductCatalogue product;
+  final CatalogueProvider catalogueProvider;
   final VoidCallback? onProductUpdated;
 
   @override
@@ -39,48 +42,39 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     if (widget.product.description.isNotEmpty) {
       return widget.product.description.split(' ').take(2).join(' ');
     }
-    return 'Producto';
+    return '';
   }
 
   String get _productDescription {
     return widget.product.description.isNotEmpty
         ? widget.product.description
-        : 'Producto de venta rápida';
+        : 'Sin descripción';
   }
 
   String get _productCode {
     return widget.product.code.isNotEmpty ? widget.product.code : 'Sin código';
   }
 
-  bool get _isQuickSaleProduct {
-    return widget.product.id.isEmpty || widget.product.id.startsWith('quick_');
-  }
 
   double get _totalPrice {
     return widget.product.salePrice * _quantity;
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context) { 
 
     return BaseDialog(
-      title: _isQuickSaleProduct ? 'Venta Rápida' : 'Editar Producto',
-      icon: _isQuickSaleProduct ? Icons.flash_on_rounded : Icons.edit_rounded,
+      title:  'Editar',
+      icon: Icons.check_box,
       width: 450,
-      headerColor:
-          _isQuickSaleProduct ? theme.colorScheme.tertiaryContainer : null,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Información principal del producto
           _buildProductInfo(),
-
           DialogComponents.sectionSpacing,
-
           // Controles de cantidad
           _buildQuantitySection(),
-
           DialogComponents.sectionSpacing,
         ],
       ),
@@ -104,7 +98,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
   Widget _buildProductInfo() {
     return DialogComponents.infoSection(
-      context: context,
+      context: context, 
       title: '',
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,19 +107,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
           SizedBox(
             width: 80,
             height: 80,
-            child: _isQuickSaleProduct
-                ? Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.flash_on_rounded,
-                      color: Theme.of(context).colorScheme.onTertiaryContainer,
-                      size: 40,
-                    ),
-                  )
-                : ClipRRect(
+            child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: ProductImage(
                       imageUrl: widget.product.image,
@@ -133,38 +115,67 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     ),
                   ),
           ),
-
+      
           const SizedBox(width: 16),
-
+      
           // Información del producto
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nombre/marca del producto
-                Text(
-                  _productName,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+                // Nombre/marca del producto con verificación
+                Row(
+                  children: [
+                    // Ícono de verificación si el producto está verificado
+                    if (widget.product.verified) ...[
+                      Icon(
+                        Icons.verified,
+                        size: 20,
+                        color: Colors.blue,
                       ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 6),
+                    ],
+                    // Nombre del producto
+                    Expanded(
+                      child: Text(
+                        _productName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600,color: widget.product.verified ? Colors.blue : null,fontSize: 16),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // button : agregar/quitar de favorito
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      
+                      icon: Icon(
+                        widget.product.favorite
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: widget.product.favorite
+                            ? Colors.yellow
+                            : null,
+                      ),
+                      onPressed: _isProcessing
+                          ? null
+                          : _toggleFavorite,
+                    ),
+                  ],
                 ),
-
+      
                 const SizedBox(height: 4),
-
+      
                 // Descripción
                 Text(
                   _productDescription,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-
+      
                 const SizedBox(height: 8),
-
+      
                 // Código y precio
                 Row(
                   children: [
@@ -184,16 +195,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                           Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ],
-                ),
-
-                if (_isQuickSaleProduct) ...[
-                  const SizedBox(height: 8),
-                  DialogComponents.infoBadge(
-                    context: context,
-                    text: 'Venta Rápida',
-                    icon: Icons.flash_on_rounded,
-                  ),
-                ],
+                ), 
               ],
             ),
           ),
@@ -206,100 +208,79 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     final theme = Theme.of(context);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // view : selección de cantidad de unidades del producto
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+        // view : cantidad de unidades del producto
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Spacer(),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Botón decrementar
+                _buildQuantityButton(
+                  icon: Icons.remove_rounded,
+                  onPressed: _quantity > 1
+                      ? () => _updateQuantity(_quantity - 1)
+                      : null,
+                  isEnabled: _quantity > 1,
+                ),
+        
+                // Cantidad actual
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$_quantity',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+        
+                // Botón incrementar
+                _buildQuantityButton(
+                  icon: Icons.add_rounded,
+                  onPressed: () => _updateQuantity(_quantity + 1),
+                  isEnabled: true,
+                ),
+              ],
             ),
-          ),
-          child: Column(
-            children: [
-              // Header con total destacado
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Spacer(),
-                  // Contenedor destacado para el total
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: Text(
-                      'Total: ${Publications.getFormatoPrecio(value: _totalPrice)}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ],
+          ],
+        ),
+        const SizedBox(height: 20),
+        // Header con total destacado
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Spacer(),
+            // Contenedor destacado para el total
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer
+                    .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                ),
               ),
-
-              const SizedBox(height: 12),
-              // view : cantidad de unidades del producto
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Unidades',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Botón decrementar
-                      _buildQuantityButton(
-                        icon: Icons.remove_rounded,
-                        onPressed: _quantity > 1
-                            ? () => _updateQuantity(_quantity - 1)
-                            : null,
-                        isEnabled: _quantity > 1,
-                      ),
-
-                      // Cantidad actual
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '$_quantity',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
-                      // Botón incrementar
-                      _buildQuantityButton(
-                        icon: Icons.add_rounded,
-                        onPressed: () => _updateQuantity(_quantity + 1),
-                        isEnabled: true,
-                      ),
-                    ],
-                  ),
-                ],
+              child: Text(
+                'Total: ${Publications.getFormatoPrecio(value: _totalPrice)}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -359,6 +340,69 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     });
   }
 
+  Future<void> _toggleFavorite() async {
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // Obtener el SellProvider
+      final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
+      
+      // Obtener el ID de la cuenta
+      final accountId = sellProvider.profileAccountSelected.id;
+      
+      if (accountId.isEmpty) {
+        throw Exception('No se pudo obtener el ID de la cuenta');
+      }
+
+      // Cambiar el estado local primero para dar feedback inmediato
+      final newFavoriteState = !widget.product.favorite;
+      setState(() {
+        widget.product.favorite = newFavoriteState;
+      });
+
+      // Actualizar en Firebase a través del provider pasado como parámetro
+      await widget.catalogueProvider.updateProductFavorite(
+        accountId, 
+        widget.product.id, 
+        newFavoriteState,
+      );
+
+      // Llamar al callback si existe
+      widget.onProductUpdated?.call();
+
+      print('✅ Favorito actualizado: ${widget.product.description} - Favorito: $newFavoriteState');
+
+    } catch (e) {
+      // Si hay error, revertir el cambio local
+      setState(() {
+        widget.product.favorite = !widget.product.favorite;
+      });
+      
+      print('❌ Error al actualizar favorito: $e');
+      
+      // Mostrar mensaje de error al usuario
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar favorito: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
   Future<void> _removeProduct() async {
     // Mostrar confirmación antes de eliminar
     final confirmed = await showConfirmationDialog(
@@ -395,10 +439,13 @@ Future<void> showProductEditDialog(
   required ProductCatalogue producto,
   VoidCallback? onProductUpdated,
 }) {
+  final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
+  
   return showDialog(
     context: context,
     builder: (context) => ProductEditDialog(
       product: producto,
+      catalogueProvider: catalogueProvider,
       onProductUpdated: onProductUpdated,
     ),
   );

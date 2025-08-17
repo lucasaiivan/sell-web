@@ -3,7 +3,7 @@ import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/core/widgets/component/image.dart';
+import 'package:sellweb/core/widgets/component/ui.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
@@ -85,22 +85,29 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   context: context,
                   title: 'Código del Producto', 
                   backgroundColor: theme.colorScheme.surfaceContainer,
-                  content: Row(
-                  children: [
-                    Icon(
-                    Icons.qr_code_rounded,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                    widget.product.code.isNotEmpty
-                      ? widget.product.code
-                      : 'Sin código asignado',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    ),
-                  ],
+                  content: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.qr_code_rounded,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.product.code.isNotEmpty
+                                ? widget.product.code
+                                : 'Sin código asignado',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
                 ],

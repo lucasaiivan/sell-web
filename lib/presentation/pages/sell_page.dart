@@ -22,7 +22,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/component/ui.dart';
+import 'package:sellweb/core/widgets/component/ui.dart'; 
 import '../../core/widgets/dialogs/tickets/last_ticket_dialog.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
@@ -147,13 +147,10 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
-                      (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase:
-                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
                       onEditCashAmount: () =>
                           dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
                       onConfirmSale: () =>
@@ -862,7 +859,7 @@ class _SellPageState extends State<SellPage> {
     await provider.saveLastSoldTicket();
 
     // Limpiar ticket después del proceso
-    Future.delayed(const Duration(milliseconds: 300)).then((_) {
+    Future.delayed(const Duration(milliseconds: 1)).then((_) {
       if (mounted) {
         setState(() {
           _showConfirmedPurchase = false;
@@ -1002,8 +999,7 @@ class _SellPageState extends State<SellPage> {
             crossAxisCount = 6; // Ancho para pantallas grandes
           }
           // Usar los productos seleccionados del ticket
-          final List<ProductCatalogue> list =
-              provider.ticket.products.toList().reversed.toList();
+          final List<ProductCatalogue> list = provider.ticket.products.toList().reversed.toList();
           // Calcular cuántas filas caben en la vista
           final double itemHeight = (constraints.maxWidth / crossAxisCount) *
               1.1; // Ajusta el factor según el aspecto de los ítems

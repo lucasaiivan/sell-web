@@ -29,10 +29,10 @@ class TicketModel {
   /// - 'adjustment': Ajuste de inventario
   String transactionType = 'sale';
 
-  /// Lista de productos en el ticket almacenados como mapas
-  /// Se convierte desde/hacia ProductTicketModel para mayor eficiencia
+  /// Lista de productos en el ticket almacenados como mapas de ProductCatalogue
+  /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
-  List<dynamic> _listPoduct = [];
+  List<Map<String, dynamic>> _listPoduct = [];
   late Timestamp
       creation; // Marca de tiempo ( hora en que se reporto el producto )
 
@@ -49,7 +49,7 @@ class TicketModel {
     this.discount = 0.0,
     this.discountIsPercentage = false,
     this.transactionType = "sale",
-    required List<dynamic> listPoduct,
+    required List<Map<String, dynamic>> listPoduct,
     required this.creation,
   }) : _listPoduct = listPoduct;
 
@@ -58,59 +58,35 @@ class TicketModel {
   // ==========================================
 
   /// Obtiene los productos como lista de ProductCatalogue
-  /// (convierte internamente desde ProductTicketModel para mayor eficiencia)
+  /// (convierte desde mapas almacenados internamente)
   List<ProductCatalogue> get products {
     return _listPoduct.map((productMap) {
-      // Convertir desde ProductTicketModel a ProductCatalogue
-      final ticketProduct =
-          ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
-      return ProductCatalogue(
-        id: ticketProduct.id,
-        code: ticketProduct.code,
-        description: ticketProduct.description,
-        image: ticketProduct.image,
-        nameMark: ticketProduct.nameMark,
-        quantity: ticketProduct.quantity,
-        salePrice: ticketProduct.salePrice,
-        // Valores por defecto para campos no esenciales en el ticket
-        purchasePrice: 0.0,
-        stock: false,
-        category: '',
-        nameCategory: '',
-        creation: Timestamp.now(),
-      );
+      return ProductCatalogue.fromMap(productMap);
     }).toList();
   }
 
   /// Establece los productos desde una lista de ProductCatalogue
-  /// (convierte internamente a ProductTicketModel para optimizar almacenamiento)
+  /// (almacena directamente como mapas)
   set products(List<ProductCatalogue> productList) {
     _listPoduct = productList.map((product) {
-      // Convertir ProductCatalogue a ProductTicketModel (solo datos esenciales)
-      final ticketProduct = ProductTicketModel.fromProduct(product);
-      return ticketProduct.toMap();
+      return product.toMap();
     }).toList();
-
-    // Asegurar consistencia después de modificar
-    _ensureProductListConsistency();
   }
 
   /// Agrega un producto desde ProductCatalogue
   void addProductFromCatalogue(ProductCatalogue product) {
-    // Convertir a ProductTicketModel para almacenamiento optimizado
-    final ticketProduct = ProductTicketModel.fromProduct(product);
-    addProductTicketModel(ticketProduct);
+    addProductMap(product.toMap());
   }
 
-  /// Agrega un ProductTicketModel al ticket
-  void addProductTicketModel(ProductTicketModel product) {
+  /// Agrega un producto desde un mapa de ProductCatalogue al ticket
+  void addProductMap(Map<String, dynamic> productMap) {
     // Verificar si el producto ya existe
     bool exist = false;
     for (var i = 0; i < _listPoduct.length; i++) {
-      if (_listPoduct[i]['id'] == product.id) {
+      if (_listPoduct[i]['id'] == productMap['id']) {
         // Incrementar cantidad
         _listPoduct[i]['quantity'] =
-            (_listPoduct[i]['quantity'] ?? 0) + product.quantity;
+            (_listPoduct[i]['quantity'] ?? 0) + (productMap['quantity'] ?? 1);
         exist = true;
         break;
       }
@@ -118,7 +94,7 @@ class TicketModel {
 
     // Si no existe, agregarlo
     if (!exist) {
-      _listPoduct.add(product.toMap());
+      _listPoduct.add(Map<String, dynamic>.from(productMap));
     }
   }
 
@@ -126,22 +102,7 @@ class TicketModel {
   ProductCatalogue? getProductById(String productId) {
     for (var productMap in _listPoduct) {
       if (productMap['id'] == productId) {
-        final ticketProduct =
-            ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
-        return ProductCatalogue(
-          id: ticketProduct.id,
-          code: ticketProduct.code,
-          description: ticketProduct.description,
-          image: ticketProduct.image,
-          nameMark: ticketProduct.nameMark,
-          quantity: ticketProduct.quantity,
-          salePrice: ticketProduct.salePrice,
-          purchasePrice: 0.0,
-          stock: false,
-          category: '',
-          nameCategory: '',
-          creation: Timestamp.now(),
-        );
+        return ProductCatalogue.fromMap(productMap);
       }
     }
     return null;
@@ -179,13 +140,11 @@ class TicketModel {
 
   /// Getter de solo lectura para acceso controlado a la lista interna
   /// Solo para depuración y casos especiales - NO modificar directamente
-  List<dynamic> get internalProductList => List.unmodifiable(_listPoduct);
+  List<Map<String, dynamic>> get internalProductList => List.unmodifiable(_listPoduct);
 
-  /// Valida que todos los elementos en _listPoduct tengan la estructura de ProductTicketModel
+  /// Valida que todos los elementos en _listPoduct tengan la estructura de ProductCatalogue
   bool _validateInternalProductStructure() {
     for (var product in _listPoduct) {
-      if (product is! Map<String, dynamic>) return false;
-
       final requiredFields = [
         'id',
         'code',
@@ -197,7 +156,7 @@ class TicketModel {
         if (!product.containsKey(field)) return false;
       }
 
-      // Validar tipos de datos
+      // Validar tipos de datos básicos
       if (product['id'] is! String) return false;
       if (product['code'] is! String) return false;
       if (product['description'] is! String) return false;
@@ -207,54 +166,7 @@ class TicketModel {
     return true;
   }
 
-  /// Normaliza un elemento para asegurar que tenga la estructura de ProductTicketModel
-  Map<String, dynamic> _normalizeProductToTicketModel(dynamic productData) {
-    if (productData is Map<String, dynamic>) {
-      // Si ya es un mapa, intentar convertir a ProductTicketModel y de vuelta
-      try {
-        final ticketProduct = ProductTicketModel.fromMap(productData);
-        return ticketProduct.toMap();
-      } catch (e) {
-        // Si falla, crear desde ProductCatalogue
-        try {
-          final catalogueProduct = ProductCatalogue.fromMap(productData);
-          final ticketProduct =
-              ProductTicketModel.fromProduct(catalogueProduct);
-          return ticketProduct.toMap();
-        } catch (e) {
-          // Como último recurso, crear un producto con los datos disponibles
-          return ProductTicketModel(
-            id: productData['id']?.toString() ?? '',
-            code: productData['code']?.toString() ?? '',
-            description: productData['description']?.toString() ?? '',
-            image: productData['image']?.toString() ?? '',
-            nameMark: productData['nameMark']?.toString() ?? '',
-            quantity:
-                productData['quantity'] is int ? productData['quantity'] : 1,
-            salePrice: productData['salePrice'] is num
-                ? productData['salePrice'].toDouble()
-                : 0.0,
-          ).toMap();
-        }
-      }
-    }
 
-    // Si no es un mapa, crear producto vacío
-    return ProductTicketModel(
-      id: '',
-      code: '',
-      description: 'Producto no válido',
-      quantity: 1,
-      salePrice: 0.0,
-    ).toMap();
-  }
-
-  /// Método privado para asegurar que _listPoduct mantenga consistencia
-  void _ensureProductListConsistency() {
-    _listPoduct = _listPoduct
-        .map((product) => _normalizeProductToTicketModel(product))
-        .toList();
-  }
 
   // ==========================================
   // MÉTODOS EXISTENTES
@@ -297,31 +209,12 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
-        // Usar directamente ProductTicketModel optimizado (solo datos esenciales)
-        "listPoduct": _listPoduct.map((productData) {
-          // Verificar el tipo de datos antes de procesar
-          if (productData is Map<String, dynamic>) {
-            // Asegurar que solo se guarden los campos de ProductTicketModel
-            return {
-              'id': productData['id'] ?? '',
-              'code': productData['code'] ?? '',
-              'description': productData['description'] ?? '',
-              'quantity': productData['quantity'] ?? 1,
-              'salePrice': productData['salePrice'] ?? 0.0,
-            };
-          } else if (productData is ProductCatalogue) {
-            // Si es directamente un ProductCatalogue, convertir a ProductTicketModel
-            final ticketProduct = ProductTicketModel.fromProduct(productData);
-            return ticketProduct.toMap();
-          } else {
-            // Como último recurso, intentar normalizar el producto
-            return _normalizeProductToTicketModel(productData);
-          }
-        }).toList(),
+        // Usar directamente los mapas de ProductCatalogue almacenados
+        "listPoduct": _listPoduct,
         "creation": creation,
       };
 
-  /// Serializa el ticket usando ProductCatalogue (método optimizado con ProductTicketModel internamente)
+  /// Serializa el ticket usando ProductCatalogue almacenados directamente como mapas
   Map<String, dynamic> toMapOptimized() => {
         "id": id,
         "payMode": payMode,
@@ -335,7 +228,7 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
-        // Usar directamente el _listPoduct (que ya está optimizado con ProductTicketModel)
+        // Usar directamente el _listPoduct (que contiene mapas de ProductCatalogue)
         "listPoduct": _listPoduct,
         "creation": creation,
       };
@@ -354,24 +247,25 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
-        // Usar directamente ProductTicketModel optimizado (incluyendo todos los campos esenciales)
-        "listPoduct": _listPoduct.map((productData) {
-          // Verificar el tipo de datos antes de procesar
-          if (productData is Map<String, dynamic>) {
-            // Asegurar que se guarden todos los campos de ProductTicketModel incluyendo image y nameMark
-            return {
-              'id': productData['id'] ?? '',
-              'code': productData['code'] ?? '',
-              'description': productData['description'] ?? '',
-              'image': productData['image'] ?? '',
-              'nameMark': productData['nameMark'] ?? '',
-              'quantity': productData['quantity'] ?? 1,
-              'salePrice': productData['salePrice'] ?? 0.0,
-            };
-          } else {
-            // Como último recurso, normalizar a ProductTicketModel
-            return _normalizeProductToTicketModel(productData);
+        // Serializar productos con Timestamp convertidos a milliseconds para SharedPreferences
+        "listPoduct": _listPoduct.map((productMap) {
+          Map<String, dynamic> serializedProduct = Map<String, dynamic>.from(productMap);
+          
+          // Convertir campos Timestamp a milliseconds para JSON
+          if (serializedProduct['creation'] is Timestamp) {
+            serializedProduct['creation'] = (serializedProduct['creation'] as Timestamp).millisecondsSinceEpoch;
           }
+          if (serializedProduct['upgrade'] is Timestamp) {
+            serializedProduct['upgrade'] = (serializedProduct['upgrade'] as Timestamp).millisecondsSinceEpoch;
+          }
+          if (serializedProduct['documentCreation'] is Timestamp) {
+            serializedProduct['documentCreation'] = (serializedProduct['documentCreation'] as Timestamp).millisecondsSinceEpoch;
+          }
+          if (serializedProduct['documentUpgrade'] is Timestamp) {
+            serializedProduct['documentUpgrade'] = (serializedProduct['documentUpgrade'] as Timestamp).millisecondsSinceEpoch;
+          }
+          
+          return serializedProduct;
         }).toList(),
         // Serializamos creation como int (milisegundos desde época)
         "creation": creation.millisecondsSinceEpoch,
@@ -392,6 +286,34 @@ class TicketModel {
     } else {
       creationTimestamp = Timestamp.now();
     }
+
+    // Procesar la lista de productos y convertir milliseconds de vuelta a Timestamp
+    List<Map<String, dynamic>> processedProducts = [];
+    if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
+      final productList = data['listPoduct'] as List;
+      processedProducts = productList.map((item) {
+        Map<String, dynamic> productMap = item is Map<String, dynamic> 
+            ? Map<String, dynamic>.from(item) 
+            : Map<String, dynamic>.from(item as Map);
+        
+        // Convertir campos de milliseconds de vuelta a Timestamp
+        if (productMap['creation'] is int) {
+          productMap['creation'] = Timestamp.fromMillisecondsSinceEpoch(productMap['creation']);
+        }
+        if (productMap['upgrade'] is int) {
+          productMap['upgrade'] = Timestamp.fromMillisecondsSinceEpoch(productMap['upgrade']);
+        }
+        if (productMap['documentCreation'] is int) {
+          productMap['documentCreation'] = Timestamp.fromMillisecondsSinceEpoch(productMap['documentCreation']);
+        }
+        if (productMap['documentUpgrade'] is int) {
+          productMap['documentUpgrade'] = Timestamp.fromMillisecondsSinceEpoch(productMap['documentUpgrade']);
+        }
+        
+        return productMap;
+      }).toList();
+    }
+
     return TicketModel(
       id: data.containsKey('id') ? data['id'] : '',
       payMode: data.containsKey('payMode') ? data['payMode'] : '',
@@ -418,13 +340,13 @@ class TicketModel {
       transactionType: data.containsKey('transactionType')
           ? data['transactionType'] as String
           : 'sale',
-      listPoduct: data.containsKey('listPoduct') ? data['listPoduct'] : [],
+      listPoduct: processedProducts,
       creation: creationTimestamp,
     );
   }
 
   /// Factory constructor desde una lista de ProductCatalogue
-  factory TicketModel.fromProductTicketModels({
+  factory TicketModel.fromProductCatalogues({
     required List<ProductCatalogue> products,
     String id = "",
     String payMode = "",
@@ -467,10 +389,9 @@ class TicketModel {
 
     return ticket;
   }
-  TicketModel.fromDocumentSnapshot(
-      {required DocumentSnapshot documentSnapshot}) {
-    Map data = documentSnapshot.data() as Map;
+  TicketModel.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
 
+    Map data = documentSnapshot.data() as Map;
     id = data['id'] ?? '';
     payMode = data['payMode'] ?? '';
     sellerName = data['sellerName'] ?? '';
@@ -483,11 +404,14 @@ class TicketModel {
     discountIsPercentage = data['discountIsPercentage'] ?? false;
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
-    _listPoduct = data['listPoduct'] ?? [];
+    _listPoduct = data['listPoduct'] != null 
+        ? List<Map<String, dynamic>>.from(
+            (data['listPoduct'] as List).map((item) => 
+              item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map)
+            )
+          )
+        : [];
     creation = data['creation'];
-
-    // Asegurar que los datos tienen el formato correcto
-    _ensureProductListConsistency();
   }
 
   // get : obtenemos el porcentaje de ganancia de la venta del ticket
@@ -496,7 +420,7 @@ class TicketModel {
     double total = 0.0;
     double totalWithoutDiscount = getTotalPrice;
 
-    // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
+    // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
       // condition : si el producto tiene un valor de compra y venta se calcula la ganancia
       if (product.purchasePrice != 0) {
@@ -544,7 +468,7 @@ class TicketModel {
     // se obtiene el total de la venta de los productos sin descuento
     double total = 0.0;
 
-    // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
+    // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
       // condition : si el producto tiene un valor de compra y venta se calcula la ganancia
       if (product.purchasePrice > 0) {
@@ -568,7 +492,7 @@ class TicketModel {
     // se obtiene el total de la venta de los productos sin descuento
     double total = 0.0;
 
-    // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
+    // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
       total += product.salePrice * product.quantity;
     }
@@ -580,7 +504,7 @@ class TicketModel {
     // se obtiene el total de la venta de los productos con todos los descuentos aplicados al ticket
     double total = 0.0;
 
-    // Usar el getter products que convierte desde ProductTicketModel a ProductCatalogue
+    // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
       int quantity = product.quantity;
       double salePrice = product.salePrice;
@@ -659,22 +583,7 @@ class TicketModel {
   ProductCatalogue? findProductByCode(String code) {
     for (var productMap in _listPoduct) {
       if (productMap['code'] == code) {
-        final ticketProduct =
-            ProductTicketModel.fromMap(productMap as Map<String, dynamic>);
-        return ProductCatalogue(
-          id: ticketProduct.id,
-          code: ticketProduct.code,
-          description: ticketProduct.description,
-          image: ticketProduct.image,
-          nameMark: ticketProduct.nameMark,
-          quantity: ticketProduct.quantity,
-          salePrice: ticketProduct.salePrice,
-          purchasePrice: 0.0,
-          stock: false,
-          category: '',
-          nameCategory: '',
-          creation: Timestamp.now(),
-        );
+        return ProductCatalogue.fromMap(productMap);
       }
     }
     return null;
@@ -758,88 +667,4 @@ class TicketModel {
   }
 }
 
-/// Modelo simplificado de producto para tickets
-///
-/// Representa únicamente los datos esenciales de un producto
-/// dentro de un ticket de venta para optimizar el almacenamiento
-/// y mejorar la performance.
-class ProductTicketModel {
-  final String id;
-  final String code;
-  final String description;
-  final String image;
-  final String nameMark;
-  final int quantity;
-  final double salePrice;
 
-  const ProductTicketModel({
-    required this.id,
-    required this.code,
-    required this.description,
-    this.image = "",
-    this.nameMark = "",
-    required this.quantity,
-    required this.salePrice,
-  });
-
-  /// Crea una instancia desde un ProductCatalogue
-  factory ProductTicketModel.fromProduct(ProductCatalogue product) {
-    return ProductTicketModel(
-      id: product.id,
-      code: product.code,
-      description: product.description,
-      image: product.image,
-      nameMark: product.nameMark,
-      quantity: product.quantity,
-      salePrice: product.salePrice,
-    );
-  }
-
-  /// Serializa el modelo a un mapa
-  Map<String, dynamic> toMap() => {
-        'id': id,
-        'code': code,
-        'description': description,
-        'image': image,
-        'nameMark': nameMark,
-        'quantity': quantity,
-        'salePrice': salePrice,
-      };
-
-  /// Deserializa desde un mapa
-  factory ProductTicketModel.fromMap(Map<String, dynamic> map) {
-    return ProductTicketModel(
-      id: map['id'] ?? '',
-      code: map['code'] ?? '',
-      description: map['description'] ?? '',
-      image: map['image'] ?? '',
-      nameMark: map['nameMark'] ?? '',
-      quantity: map['quantity'] ?? 1,
-      salePrice: (map['salePrice'] ?? 0.0).toDouble(),
-    );
-  }
-
-  /// Crea una copia con valores modificados
-  ProductTicketModel copyWith({
-    String? id,
-    String? code,
-    String? description,
-    String? image,
-    String? nameMark,
-    int? quantity,
-    double? salePrice,
-  }) {
-    return ProductTicketModel(
-      id: id ?? this.id,
-      code: code ?? this.code,
-      description: description ?? this.description,
-      image: image ?? this.image,
-      nameMark: nameMark ?? this.nameMark,
-      quantity: quantity ?? this.quantity,
-      salePrice: salePrice ?? this.salePrice,
-    );
-  }
-
-  /// Calcula el subtotal del producto
-  double get subtotal => salePrice * quantity;
-}

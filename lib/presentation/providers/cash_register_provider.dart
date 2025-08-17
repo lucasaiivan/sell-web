@@ -785,7 +785,7 @@ class CashRegisterProvider extends ChangeNotifier {
         valueReceived: ticket.valueReceived,
         discount: ticket.discount,
         transactionType: ticket.transactionType,
-        listPoduct: ticket.getProductsAsCatalogue(),
+        listPoduct: ticket.products.map((product) => product.toMap()).toList(),
         creation: ticket.creation,
       );
       updatedTicket.products = ticket.products;
@@ -923,7 +923,7 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS PRIVADOS
   // ==========================================
 
-  /// Calcula el precio total usando ProductTicketModel (método optimizado)
+  /// Calcula el precio total usando ProductCatalogue almacenados como mapas
   double _calculateTotalPriceOptimized(TicketModel ticket) {
     return ticket.calculatedTotal;
   }

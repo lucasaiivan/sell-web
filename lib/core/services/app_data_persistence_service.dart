@@ -170,6 +170,8 @@ class AppDataPersistenceService {
 
   /// Guarda el ticket actual en progreso
   Future<void> saveCurrentTicket(String ticketJson) async {
+    // print [ticketJson]
+    print(' ------------- 💾 SellProvider: Guardando ticket en persistencia: $ticketJson');
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(SharedPrefsKeys.currentTicket, ticketJson);

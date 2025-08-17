@@ -95,3 +95,17 @@ class RegisterProductPriceUseCase {
     return repository.registerProductPrice(productPrice, productCode);
   }
 }
+
+// case use : Actualiza el estado de favorito de un producto
+class UpdateProductFavoriteUseCase {
+  final CatalogueRepository repository;
+  UpdateProductFavoriteUseCase(this.repository);
+
+  /// Actualiza el estado de favorito de un producto específico
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [isFavorite] - Nuevo estado de favorito
+  Future<void> call(String accountId, String productId, bool isFavorite) {
+    return repository.updateProductFavorite(accountId, productId, isFavorite);
+  }
+}

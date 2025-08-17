@@ -103,6 +103,7 @@ class CatalogueProvider extends ChangeNotifier {
   AddProductToCatalogueUseCase addProductToCatalogueUseCase;
   CreatePublicProductUseCase createPublicProductUseCase;
   RegisterProductPriceUseCase registerProductPriceUseCase;
+  UpdateProductFavoriteUseCase? updateProductFavoriteUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
   // Stream subscription y timer para debouncing
@@ -171,6 +172,8 @@ class CatalogueProvider extends ChangeNotifier {
         CreatePublicProductUseCase(newCatalogueRepository);
     registerProductPriceUseCase =
         RegisterProductPriceUseCase(newCatalogueRepository);
+    updateProductFavoriteUseCase =
+        UpdateProductFavoriteUseCase(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
     _catalogueSubscription = getProductsStreamUseCase().listen(
@@ -519,9 +522,7 @@ class CatalogueProvider extends ChangeNotifier {
           IncrementProductSalesUseCase(catalogueRepository);
 
       // Ejecutar el incremento de ventas
-      await incrementSalesUseCase(accountId, productId, quantity: quantity);
-
-      print('✅ Ventas incrementadas: Producto $productId, Cantidad: $quantity');
+      await incrementSalesUseCase(accountId, productId, quantity: quantity); 
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -566,6 +567,39 @@ class CatalogueProvider extends ChangeNotifier {
     } catch (e) {
       print('❌ Error al decrementar stock del producto $productId: $e');
       throw Exception('Error al decrementar stock del producto: $e');
+    }
+  }
+
+  /// Actualiza el estado de favorito de un producto en el catálogo
+  ///
+  /// Este método se llama cuando el usuario marca/desmarca un producto como favorito
+  /// para sincronizar el estado con Firebase.
+  ///
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [isFavorite] - Nuevo estado de favorito
+  Future<void> updateProductFavorite(
+      String accountId, String productId, bool isFavorite) async {
+    // Validar parámetros
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw Exception('El accountId y productId son requeridos');
+    }
+
+    if (updateProductFavoriteUseCase == null) {
+      throw Exception('UpdateProductFavoriteUseCase no está inicializado');
+    }
+
+    try {
+      // Ejecutar la actualización de favorito
+      await updateProductFavoriteUseCase!(accountId, productId, isFavorite);
+
+      print('✅ Favorito actualizado: Producto $productId, Favorito: $isFavorite');
+
+      // El stream de Firebase se encargará automáticamente de la actualización
+      // gracias a que actualizamos el timestamp de modificación
+    } catch (e) {
+      print('❌ Error al actualizar favorito del producto $productId: $e');
+      throw Exception('Error al actualizar favorito del producto: $e');
     }
   }
 

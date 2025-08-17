@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/services/app_data_persistence_service.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
@@ -121,8 +122,7 @@ class SellProvider extends ChangeNotifier {
   // Getters que no causan rebuild
   bool get ticketView => _state.ticketView;
   bool get shouldPrintTicket => _state.shouldPrintTicket;
-  ProfileAccountModel get profileAccountSelected =>
-      _state.profileAccountSelected;
+  ProfileAccountModel get profileAccountSelected => _state.profileAccountSelected;
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
@@ -139,7 +139,7 @@ class SellProvider extends ChangeNotifier {
     ]);
   }
 
-  void cleanData() {
+  void cleanData() { 
     _state = _state.copyWith(
       profileAccountSelected: ProfileAccountModel(),
       ticket: _createEmptyTicketStatic(),
@@ -156,7 +156,8 @@ class SellProvider extends ChangeNotifier {
     required ProfileAccountModel account,
     required BuildContext context,
   }) async {
-    cleanData();
+    // Solo limpiar datos si la cuenta es diferente a la actual
+    // Esto preserva el ticket en progreso cuando se reselecciona la misma cuenta
     _state = _state.copyWith(profileAccountSelected: account.copyWith());
     await _saveSelectedAccount(account.id);
     notifyListeners();
@@ -207,34 +208,48 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveTicket() async {
-    await _persistenceService
-        .saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
+    try {
+      await _persistenceService.saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
+    } catch (e) {
+      // Log del error para debugging
+      if (kDebugMode) {
+        print('❌ SellProvider (_saveTicket) : Error al guardar ticket en persistencia: $e');
+      }
+      rethrow;
+    }
   }
 
   Future<void> _loadTicket() async {
     final ticketJson = await _persistenceService.getCurrentTicket();
     if (ticketJson != null) {
       try {
-        final newTicket =
-            TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         _state = _state.copyWith(ticket: newTicket);
+        
         notifyListeners();
-      } catch (_) {}
+      } catch (e) {
+        // Log del error para debugging
+        if (kDebugMode) {
+          print('❌ SellProvider: Error al cargar ticket desde persistencia: $e');
+        }
+      }
+    } else {
+      // Log para debugging
+      if (kDebugMode) {
+        print('📦 SellProvider: No hay ticket guardado en persistencia');
+      }
     }
   }
 
-  Map<String, dynamic> _decodeJson(String source) =>
-      const JsonDecoder().convert(source) as Map<String, dynamic>;
+  Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
 
-  void addProductsticket(ProductCatalogue product,
-      {bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,{bool replaceQuantity = false}) {
     // Agrega un producto al ticket actual, reemplazando la cantidad si es necesario
 
     // var
     final currentTicket = _state.ticket;
     bool exist = false;
-    final List<ProductCatalogue> updatedProducts =
-        List.from(currentTicket.products);
+    final List<ProductCatalogue> updatedProducts = List.from(currentTicket.products);
 
     for (var i = 0; i < updatedProducts.length; i++) {
       if (updatedProducts[i].id == product.id) {
@@ -313,11 +328,9 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void discartTicket() {
-    _state = _state.copyWith(
-      ticket: _createEmptyTicketStatic(),
-      ticketView: false,
-    );
+  void discartTicket() { 
+    
+    _state = _state.copyWith(ticket: _createEmptyTicketStatic(),ticketView: false);
     _saveTicket();
     notifyListeners();
   }

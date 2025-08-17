@@ -20,7 +20,7 @@ class DialogComponents {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.surfaceContainer,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: theme.colorScheme.outline.withValues(alpha: 0.2),

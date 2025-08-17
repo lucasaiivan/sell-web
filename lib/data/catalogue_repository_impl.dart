@@ -137,4 +137,26 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       throw Exception('Error al registrar precio del producto: $e');
     }
   }
+
+  // future : actualiza el estado de favorito de un producto
+  @override
+  Future<void> updateProductFavorite(
+      String accountId, String productId, bool isFavorite) async {
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw ArgumentError('El accountId y productId son obligatorios');
+    }
+
+    try {
+      final ref = FirebaseFirestore.instance
+          .collection('/ACCOUNTS/$accountId/CATALOGUE')
+          .doc(productId);
+
+      await ref.update({
+        'favorite': isFavorite,
+        'upgrade': Timestamp.now(), // Actualizar timestamp de modificación
+      });
+    } catch (e) {
+      throw Exception('Error al actualizar favorito del producto: $e');
+    }
+  }
 }

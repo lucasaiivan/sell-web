@@ -137,28 +137,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 ),
               ],
               DialogComponents.itemSpacing,
-              // DialogComponents.moneyField : entrada de monto de precio de venta
-              DialogComponents.moneyField(
-                context: context,
-                controller: _priceController,
-                label: 'Precio de venta al público',
-                hint: '\$0.00', 
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'El precio es requerido';
-                  }
-                  
-                  // Usar el método doubleValue del controlador para validación consistente
-                  final price = _priceController.doubleValue;
-                  
-                  if (price <= 0) {
-                    return 'El precio debe ser mayor a cero';
-                  }
-                  
-                  return null;
-                },
-              ),
-              DialogComponents.itemSpacing,
               // Campo de precio de compra (opcional)
               DialogComponents.moneyField(
                 context: context,
@@ -183,9 +161,30 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   return null;
                 },
               ),
-          
-              DialogComponents.sectionSpacing,
-          
+              DialogComponents.itemSpacing,
+              // DialogComponents.moneyField : entrada de monto de precio de venta
+              DialogComponents.moneyField(
+                context: context,
+                controller: _priceController,
+                label: 'Precio de venta al público',
+                hint: '\$0.00', 
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El precio es requerido';
+                  }
+                  
+                  // Usar el método doubleValue del controlador para validación consistente
+                  final price = _priceController.doubleValue;
+                  
+                  if (price <= 0) {
+                    return 'El precio debe ser mayor a cero';
+                  }
+                  
+                  return null;
+                },
+              ),
+              DialogComponents.itemSpacing,
+              DialogComponents.itemSpacing,
               // Checkbox para agregar al catálogo
               _buildCatalogueOption(),
             
@@ -224,10 +223,15 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Widget _buildExistingProductInfo() {
+    final theme = Theme.of(context);
+    
     return DialogComponents.infoSection(
       context: context,
-      title: 'Información del Producto',
-      icon: Icons.info_outline_rounded,
+      title: widget.product.code,
+      icon: widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
+      accentColor: widget.product.verified 
+          ? Colors.blue
+          : theme.colorScheme.tertiary,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -256,38 +260,24 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     },
                   ),
                 ] else if (widget.product.description.isNotEmpty) ...[
+                  // text : descripción
                   Text(
                     widget.product.description,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                // Código de barras del producto
-                if (widget.product.code.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      DialogComponents.infoBadge(
-                        context: context,
-                        text: widget.product.code,
-                        icon: Icons.qr_code_rounded,
-                      ),
-                    ],
-                  ),
-                ],
+                
+                const SizedBox(height: 8),
+                
+                // Badges de información
                 if (widget.product.nameMark.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      DialogComponents.infoBadge(
-                        context: context,
-                        text: widget.product.nameMark,
-                        icon: Icons.business_rounded,
-                      ),
-                    ],
+                  DialogComponents.infoBadge(
+                    context: context,
+                    text: widget.product.nameMark, 
                   ),
                 ],
               ],

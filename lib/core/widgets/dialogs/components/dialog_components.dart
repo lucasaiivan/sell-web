@@ -11,9 +11,11 @@ class DialogComponents {
     required Widget content,
     IconData? icon,
     Color? backgroundColor,
+    Color? accentColor,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
+    final effectiveAccentColor = accentColor ?? theme.colorScheme.onSurfaceVariant;
 
     return Container(
       width: double.infinity,
@@ -35,7 +37,7 @@ class DialogComponents {
                 Icon(
                   icon,
                   size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: effectiveAccentColor,
                 ),
                 const SizedBox(width: 8),
               ],
@@ -45,7 +47,7 @@ class DialogComponents {
                       title,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: effectiveAccentColor,
                       ),
                     ),
             ],

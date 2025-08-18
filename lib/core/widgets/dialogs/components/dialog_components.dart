@@ -382,6 +382,7 @@ class DialogComponents {
       expands: maxLines > 1,
       readOnly: readOnly,
       decoration: InputDecoration(
+        
         labelText: label,
         hintText: hint,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
@@ -391,7 +392,7 @@ class DialogComponents {
                 icon: Icon(suffixIcon),
               )
             : null,
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
       onEditingComplete: () {
         // Si se especifica un callback personalizado, ejecutarlo

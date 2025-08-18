@@ -56,7 +56,7 @@ class MoneyInputTextField extends StatelessWidget {
         labelText: labelText,
         errorText: errorText,
         prefixIcon: const Icon(Icons.attach_money),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         filled: false,
         fillColor: fillColor ??
             theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),

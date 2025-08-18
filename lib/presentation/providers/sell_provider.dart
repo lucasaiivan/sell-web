@@ -254,7 +254,9 @@ class SellProvider extends ChangeNotifier {
     for (var i = 0; i < updatedProducts.length; i++) {
       if (updatedProducts[i].id == product.id) {
         if (replaceQuantity) {
-          updatedProducts[i].quantity = product.quantity;
+          // Reemplazar el producto completo pero preservar la cantidad original si el producto nuevo tiene cantidad 0
+          final quantityToUse = product.quantity > 0 ? product.quantity : updatedProducts[i].quantity;
+          updatedProducts[i] = product.copyWith(quantity: quantityToUse);
         } else {
           updatedProducts[i].quantity +=
               (product.quantity > 0 ? product.quantity : 1);

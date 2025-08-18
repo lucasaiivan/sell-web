@@ -134,9 +134,11 @@ Future<void> showInfoDialog({
   required String message,
   String buttonText = 'Entendido',
   IconData icon = Icons.info_outline_rounded,
+  bool barrierDismissible = false, // Por defecto no se cierra al hacer click fuera
 }) {
   return showDialog(
     context: context,
+    barrierDismissible: barrierDismissible,
     builder: (context) => InfoDialog(
       title: title,
       message: message,
@@ -224,9 +226,11 @@ Future<void> showErrorDialog({
   required String message,
   String buttonText = 'Cerrar',
   String? details,
+  bool barrierDismissible = false, // Por defecto no se cierra al hacer click fuera
 }) {
   return showDialog(
     context: context,
+    barrierDismissible: barrierDismissible,
     builder: (context) => ErrorDialog(
       title: title,
       message: message,

@@ -36,6 +36,7 @@ class AddProductDialog extends StatefulWidget {
 class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
   late final AppMoneyTextEditingController _priceController;
+  late final AppMoneyTextEditingController _purchasePriceController;
   late final TextEditingController _descriptionController;
   bool _checkAddCatalogue = true;
   bool _isLoading = false;
@@ -45,17 +46,24 @@ class _AddProductDialogState extends State<AddProductDialog> {
   void initState() {
     super.initState();
     _priceController = AppMoneyTextEditingController();
+    _purchasePriceController = AppMoneyTextEditingController();
     _descriptionController = TextEditingController(text: widget.product.description);
     
     // Si es un producto existente y tiene precio, establecerlo en el controlador
     if (!widget.isNew && widget.product.salePrice > 0) {
       _priceController.updateValue(widget.product.salePrice);
     }
+    
+    // Si es un producto existente y tiene precio de compra, establecerlo en el controlador
+    if (!widget.isNew && widget.product.purchasePrice > 0) {
+      _purchasePriceController.updateValue(widget.product.purchasePrice);
+    }
   }
 
   @override
   void dispose() {
     _priceController.dispose();
+    _purchasePriceController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -65,7 +73,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
     final theme = Theme.of(context);
 
     return BaseDialog(
-      title: widget.isNew ? 'Crear Producto' : 'Nuevo Producto',
+      title: widget.isNew ? 'Crear nuevo producto' : 'Nuevo producto',
       icon: widget.isNew ? Icons.public_rounded : Icons.inventory_2_rounded,
       width: 500,
       headerColor: widget.isNew ? theme.colorScheme.primaryContainer : null,
@@ -83,8 +91,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 // Solo mostrar código para productos nuevos
                 DialogComponents.infoSection(
                   context: context,
-                  title: 'Código del Producto', 
-                  backgroundColor: theme.colorScheme.surfaceContainer,
+                  title: 'Código:',  
                   content: Column(
                     children: [
                       Row(
@@ -111,15 +118,16 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   ),
                 ),
                 ],
+              
           
               // Campo de descripción para productos nuevos
               if (widget.isNew) ...[ 
+                DialogComponents.itemSpacing,
                 DialogComponents.textField(
                   context: context,
                   controller: _descriptionController,
-                  label: 'Descripción del Producto',
-                  hint: 'Ingrese una descripción descriptiva',
-                  prefixIcon: Icons.label_rounded,
+                  label: 'Descripción',
+                  hint: 'Ingrese una descripción descriptiva', 
                   validator: (value) {
                     if (value?.trim().isEmpty == true) {
                       return 'La descripción es requerida';
@@ -129,12 +137,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 ),
               ],
               DialogComponents.itemSpacing,
-              DialogComponents.itemSpacing,
               // DialogComponents.moneyField : entrada de monto de precio de venta
               DialogComponents.moneyField(
                 context: context,
                 controller: _priceController,
-                label: 'Precio',
+                label: 'Precio de venta al público',
                 hint: '\$0.00', 
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -148,6 +155,31 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     return 'El precio debe ser mayor a cero';
                   }
                   
+                  return null;
+                },
+              ),
+              DialogComponents.itemSpacing,
+              // Campo de precio de compra (opcional)
+              DialogComponents.moneyField(
+                context: context,
+                controller: _purchasePriceController,
+                label: 'Precio de compra (Opcional)',
+                hint: '\$0.00',
+                validator: (value) {
+                  // El precio de compra es opcional, pero si se ingresa debe ser válido
+                  if (value != null && value.trim().isNotEmpty) {
+                    final purchasePrice = _purchasePriceController.doubleValue;
+                    final salePrice = _priceController.doubleValue;
+                    
+                    if (purchasePrice < 0) {
+                      return 'El precio no puede ser negativo';
+                    }
+                    
+                    // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
+                    if (purchasePrice > 0 && salePrice > 0 && purchasePrice > salePrice) {
+                      return 'El precio de compra no puede ser mayor al de venta';
+                    }
+                  }
                   return null;
                 },
               ),
@@ -365,14 +397,17 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       // Usar el método doubleValue del AppMoneyTextEditingController que maneja correctamente el formateo
       final price = _priceController.doubleValue;
+      final purchasePrice = _purchasePriceController.doubleValue;
       
       if (price <= 0) {
         throw Exception('El precio debe ser un número válido mayor a cero');
       }
 
       print('🔄 Procesando producto: ${widget.isNew ? "nuevo" : "existente"}');
-      print('💰 Texto del controlador: "${_priceController.text}"');
-      print('💰 Precio parseado: \$${price.toStringAsFixed(2)}');
+      print('💰 Texto del controlador precio venta: "${_priceController.text}"');
+      print('💰 Precio de venta parseado: \$${price.toStringAsFixed(2)}');
+      print('💰 Texto del controlador precio compra: "${_purchasePriceController.text}"');
+      print('💰 Precio de compra parseado: \$${purchasePrice.toStringAsFixed(2)}');
 
       // Usar los providers pasados como parámetros
       final sellProvider = widget.sellProvider;
@@ -389,9 +424,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
         description: _descriptionController.text.trim(),
         code: widget.product.code,
         salePrice: price,
+        purchasePrice: purchasePrice,
       );
 
-      print('📦 Producto actualizado: ${updatedProduct.description} - \$${updatedProduct.salePrice}');
+      print('📦 Producto actualizado: ${updatedProduct.description} - Venta: \$${updatedProduct.salePrice} - Compra: \$${updatedProduct.purchasePrice}');
 
       // Agregar al ticket
       sellProvider.addProductsticket(updatedProduct);

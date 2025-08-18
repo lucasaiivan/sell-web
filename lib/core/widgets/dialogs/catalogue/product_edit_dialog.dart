@@ -4,6 +4,7 @@ import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/core/widgets/component/image.dart';
+import 'package:sellweb/core/widgets/dialogs/catalogue/product_price_edit_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
@@ -64,8 +65,8 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   Widget build(BuildContext context) { 
 
     return BaseDialog(
-      title:  'Editar',
-      icon: Icons.check_box,
+      title:  'Editar cantidad',
+      icon: Icons.edit,
       width: 450,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,12 +109,12 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
             width: 80,
             height: 80,
             child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: ProductImage(
-                      imageUrl: widget.product.image,
-                      size: 80,
-                    ),
-                  ),
+              borderRadius: BorderRadius.circular(12),
+              child: ProductImage(
+                imageUrl: widget.product.image,
+                size: 80,
+              ),
+            ),
           ),
       
           const SizedBox(width: 16),
@@ -154,7 +155,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                             ? Icons.star
                             : Icons.star_border,
                         color: widget.product.favorite
-                            ? Colors.yellow
+                            ? Colors.amber
                             : null,
                       ),
                       onPressed: _isProcessing
@@ -176,15 +177,18 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       
                 const SizedBox(height: 8),
       
-                // Código y precio
+                // badge : informacion adicional y accion de editar el precio
                 Row(
                   children: [
+                    // text : código del producto
                     DialogComponents.infoBadge(
                       context: context,
+                      backgroundColor: Colors.transparent,
                       text: _productCode,
                       icon: Icons.qr_code_rounded,
                     ),
                     const SizedBox(width: 8),
+                    // text : precio del producto
                     DialogComponents.infoBadge(
                       context: context,
                       text: Publications.getFormatoPrecio(
@@ -193,6 +197,16 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                           Theme.of(context).colorScheme.primaryContainer,
                       textColor:
                           Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    // textbutton : editar producto
+                    TextButton(
+                      onPressed: _isProcessing ? null 
+                        :(){
+                          Navigator.of(context).pop();
+                          _editProductPrices();  
+                          },
+                      child: const Text('Editar'),
                     ),
                   ],
                 ), 
@@ -403,6 +417,17 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     }
   }
 
+  Future<void> _editProductPrices() async {
+    if (_isProcessing) return;
+
+    await showProductPriceEditDialog(
+      context,
+      product: widget.product,
+      catalogueProvider: widget.catalogueProvider,
+      onProductUpdated: widget.onProductUpdated,
+    );
+  }
+
   Future<void> _removeProduct() async {
     // Mostrar confirmación antes de eliminar
     final confirmed = await showConfirmationDialog(
@@ -443,6 +468,7 @@ Future<void> showProductEditDialog(
   
   return showDialog(
     context: context,
+    barrierDismissible: true, // Permitir cerrar al hacer click fuera
     builder: (context) => ProductEditDialog(
       product: producto,
       catalogueProvider: catalogueProvider,

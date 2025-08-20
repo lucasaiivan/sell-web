@@ -10,6 +10,7 @@ class AppFloatingActionButton extends StatelessWidget {
   final Color? foregroundColor;
   final double? size;
   final bool extended;
+  final Object? heroTag; // Hero tag personalizable para evitar conflictos
 
   const AppFloatingActionButton({
     super.key,
@@ -20,6 +21,7 @@ class AppFloatingActionButton extends StatelessWidget {
     this.foregroundColor,
     this.size,
     this.extended = false,
+    this.heroTag,
   });
 
   @override
@@ -39,6 +41,7 @@ class AppFloatingActionButton extends StatelessWidget {
     if (hasText && (extended || hasIcon)) {
       // FloatingActionButton.extended para texto o icono+texto
       return FloatingActionButton.extended(
+        heroTag: heroTag, // Usar heroTag personalizado
         onPressed: onTap,
         backgroundColor: effectiveButtonColor,
         foregroundColor: effectiveForegroundColor,
@@ -54,6 +57,7 @@ class AppFloatingActionButton extends StatelessWidget {
     } else if (hasIcon) {
       // Solo icono
       return FloatingActionButton(
+        heroTag: heroTag, // Usar heroTag personalizado
         onPressed: onTap,
         backgroundColor: effectiveButtonColor,
         foregroundColor: effectiveForegroundColor,

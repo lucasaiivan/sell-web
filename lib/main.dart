@@ -7,7 +7,8 @@ import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'firebase_options.dart';
+import 'core/config/firebase_options.dart';
+import 'core/config/oauth_config.dart';
 import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
@@ -18,7 +19,7 @@ import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
-import 'presentation/pages/login_page.dart';
+import 'presentation/pages/presentation_page.dart';
 import 'presentation/pages/sell_page.dart';
 import 'presentation/pages/welcome_page.dart';
 
@@ -26,12 +27,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Configuración de GoogleSignIn usando configuración centralizada y segura
+  final googleSignIn = GoogleSignIn(
+    scopes: OAuthConfig.googleSignInScopes,
+    clientId: OAuthConfig.googleSignInClientId,
+  );
+
   // Inicializar repositorios
   final authRepository = AuthRepositoryImpl(
     fb_auth.FirebaseAuth.instance,
-    GoogleSignIn(
-      scopes: ['email', 'profile'],
-    ),
+    googleSignIn,
   );
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
@@ -74,7 +79,7 @@ void main() async {
             home: Consumer<AuthProvider>(
               builder: (context, authProvider, _) {
                 if (authProvider.user == null) {
-                  return LoginPage(authProvider: authProvider);
+                  return const AppPresentationPage();
                 }
 
                 return Consumer<SellProvider>(
@@ -131,6 +136,8 @@ Widget _buildAccountSpecificProviders({
               AddProductToCatalogueUseCase(catalogueRepository),
           createPublicProductUseCase:
               CreatePublicProductUseCase(catalogueRepository),
+          registerProductPriceUseCase:
+              RegisterProductPriceUseCase(catalogueRepository),
           getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
         )..initCatalogue(accountId),
       ),

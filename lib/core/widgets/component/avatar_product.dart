@@ -4,7 +4,7 @@ import 'package:sellweb/domain/entities/catalogue.dart';
 
 /// Avatar de producto con estilo Instagram Stories
 /// Incluye gradiente animado, imagen del producto y texto descriptivo
-class AvatarProduct extends StatelessWidget {
+class AvatarCircleProduct extends StatelessWidget {
   /// Datos del producto a mostrar
   final ProductCatalogue product;
 
@@ -23,7 +23,7 @@ class AvatarProduct extends StatelessWidget {
   /// Número máximo de caracteres antes de truncar el texto
   final int maxTextLength;
 
-  const AvatarProduct({
+  const AvatarCircleProduct({
     super.key,
     required this.product,
     this.isSelected = false,
@@ -48,25 +48,13 @@ class AvatarProduct extends StatelessWidget {
               Container(
                 width: size,
                 height: size,
-                // decoration : dibuja un círculo con gradient solo si es favorito
+                // decoration : dibuja un círculo con gradient según estado (favorito/bajo stock)
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: product.favorite
-                      ? LinearGradient(
-                          colors: [
-                            Colors.amber.shade300,
-                            Colors.orange.shade400,
-                            Colors.deepOrange.shade400,
-                            Colors.red.shade400,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null, // Sin gradiente si no es favorito
-                  color: product.favorite
+                  gradient: _getAvatarGradient(),
+                  color: product.favorite || (product.stock && product.quantityStock < 5)
                       ? null
-                      : theme.colorScheme
-                          .surface, // Color sólido si no es favorito
+                      : theme.colorScheme.onSurface.withOpacity(0.12), // Color en contraste con opacidad
                 ),
                 child: Container(
                   margin: const EdgeInsets.all(2),
@@ -87,11 +75,32 @@ class AvatarProduct extends StatelessWidget {
                   ),
                 ),
               ),
-              // posicioned : icon check si está seleccionado
+              
+              // Badge de favorito - círculo amarillo (rojo si hay bajo stock)
+              if (product.favorite)
+                Positioned(
+                  bottom: 4,
+                  right: 4,
+                  child: Container(
+                    width: size * 0.18,
+                    height: size * 0.18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: (product.stock && product.quantityStock < 5)
+                          ? Colors.red.shade400
+                          : Colors.amber.shade400,
+                      border: Border.all(
+                        color: theme.colorScheme.surface,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                // posicioned : icon check si está seleccionado
               if (isSelected)
                 Positioned(
-                  top: 4,
-                  right: 4,
+                  bottom: 3,
+                  right: 2,
                   child: Container(
                     width: size * 0.2,
                     height: size * 0.2,
@@ -107,32 +116,6 @@ class AvatarProduct extends StatelessWidget {
                       Icons.check,
                       size: size * 0.10,
                       color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
-                ),
-              // Badge de cantidad de ventas
-              if (product.sales > 0)
-                Positioned(
-                  bottom: 4,
-                  left: 4,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: theme.colorScheme.surface,
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      '${product.sales}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSecondary,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
                   ),
                 ),
@@ -182,6 +165,35 @@ class AvatarProduct extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Obtiene el gradiente apropiado según el estado del producto
+  LinearGradient? _getAvatarGradient() {
+    // Prioridad: bajo stock > favorito > sin gradiente
+    if (product.stock && product.quantityStock < 5) {
+      return LinearGradient(
+        colors: [
+          Colors.red.shade300,
+          Colors.red.shade400,
+          Colors.red.shade500,
+          Colors.red.shade600,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    } else if (product.favorite) {
+      return LinearGradient(
+        colors: [
+          Colors.orange.shade500,
+          Colors.amber.shade400,
+          Colors.amber.shade400,
+          Colors.amber.shade500,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+    }
+    return null; // Sin gradiente
   }
 
   /// Trunca el texto del producto si excede la longitud máxima

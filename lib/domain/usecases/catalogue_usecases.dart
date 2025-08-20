@@ -82,3 +82,30 @@ class DecrementProductStockUseCase {
     return repository.decrementStock(accountId, productId, quantity);
   }
 }
+
+// case use : Registra el precio de un producto en la base de datos pública
+class RegisterProductPriceUseCase {
+  final CatalogueRepository repository;
+  RegisterProductPriceUseCase(this.repository);
+
+  /// Registra el precio de un producto en la base de datos pública
+  /// [productPrice] - Datos del precio del producto
+  /// [productCode] - Código del producto
+  Future<void> call(ProductPrice productPrice, String productCode) {
+    return repository.registerProductPrice(productPrice, productCode);
+  }
+}
+
+// case use : Actualiza el estado de favorito de un producto
+class UpdateProductFavoriteUseCase {
+  final CatalogueRepository repository;
+  UpdateProductFavoriteUseCase(this.repository);
+
+  /// Actualiza el estado de favorito de un producto específico
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [isFavorite] - Nuevo estado de favorito
+  Future<void> call(String accountId, String productId, bool isFavorite) {
+    return repository.updateProductFavorite(accountId, productId, isFavorite);
+  }
+}

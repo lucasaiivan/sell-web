@@ -1,7 +1,8 @@
 import 'dart:ui';
 
-import 'package:sellweb/core/services/thermal_printer_http_service.dart';
-import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog_new.dart';
+import 'package:sellweb/core/core.dart' show ProductCatalogueFullScreenView;
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
+import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/cash_flow_dialog.dart';
@@ -9,8 +10,6 @@ import 'package:sellweb/core/widgets/dialogs/sales/cash_register_close_dialog.da
 import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
-import 'package:sellweb/core/widgets/drawer/drawer_ticket/ticket_drawer_widget.dart';
-import 'package:sellweb/core/widgets/ui/product_catalogue_full_screen_view.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,14 +17,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/utils/product_search_algorithm.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
-import 'package:sellweb/core/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/component/ui.dart';
+import 'package:sellweb/core/widgets/component/ui.dart'; 
 import '../../core/widgets/dialogs/tickets/last_ticket_dialog.dart';
+import '../../core/widgets/navigation/drawer_ticket/ticket_drawer_widget.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
@@ -149,13 +147,10 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
-                      (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase:
-                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
                       onEditCashAmount: () =>
                           dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
                       onConfirmSale: () =>
@@ -202,18 +197,16 @@ class _SellPageState extends State<SellPage> {
     final context = _focusNode.context;
     if (context == null) return;
 
-    final catalogueProvider =
-        Provider.of<CatalogueProvider>(context, listen: false);
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
-    if (product != null) {
-      // - Si se encuentra el producto en el catálogo, agregarlo al ticket -
+    if (product != null && product.id.isNotEmpty && product.description.isNotEmpty) {
+      // - Si se encuentra el producto en el catálogo con datos válidos, agregarlo al ticket -
       homeProvider.addProductsticket(product.copyWith());
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
-      final publicProduct =
-          await catalogueProvider.getPublicProductByCode(code);
+      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
 
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
@@ -226,7 +219,7 @@ class _SellPageState extends State<SellPage> {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
           // ignore: use_build_context_synchronously
-          showAddProductDialog(context,
+         showAddProductDialog(context,
               isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }
@@ -502,10 +495,10 @@ class _SellPageState extends State<SellPage> {
                         onPressed: () => _showPrinterConfigDialog(buildContext),
                         backgroundColor: isConnected
                             ? Colors.green.withValues(alpha: 0.1)
-                            : Colors.orange.withValues(alpha: 0.07),
-                        iconColor: isConnected
+                            : null,
+                        colorAccent: isConnected
                             ? Colors.green.shade700
-                            : Colors.orange.shade500,
+                            : null,
                       );
                     },
                   ),
@@ -523,15 +516,11 @@ class _SellPageState extends State<SellPage> {
                             ? () => _showLastTicketDialog(
                                 buildContext, sellProvider)
                             : null,
-                        backgroundColor: hasLastTicket
-                            ? Theme.of(buildContext)
+                        backgroundColor:Theme.of(buildContext)
                                 .colorScheme
                                 .primaryContainer
-                                .withValues(alpha: 0.4)
-                            : Colors.grey.withValues(alpha: 0.15),
-                        iconColor: hasLastTicket
-                            ? Theme.of(buildContext).colorScheme.primary
-                            : Colors.grey.shade400,
+                                .withValues(alpha: 0.4),
+                        colorAccent: Theme.of(buildContext).colorScheme.primary
                       );
                     },
                   ),
@@ -540,15 +529,17 @@ class _SellPageState extends State<SellPage> {
                   CashRegisterStatusWidget(),
 
                   // Botón de descartar ticket (existente) usando [AppBarButtonCircle]
+                  // En pantallas reducidas solo muestra el icono, en pantallas grandes muestra icono y texto
                   (provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text:
-                              isMobile(buildContext) ? '' : 'Descartar ticket',
+                          text: isMobile(buildContext) 
+                              ? null 
+                              : 'Descartar ticket',
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
+                          colorAccent: Colors.red.shade700,
                           backgroundColor: Colors.red.withValues(alpha: 0.1),
-                          iconColor: Colors.red.shade700,
                         )
                       : Container(),
                 ],
@@ -868,7 +859,7 @@ class _SellPageState extends State<SellPage> {
     await provider.saveLastSoldTicket();
 
     // Limpiar ticket después del proceso
-    Future.delayed(const Duration(milliseconds: 500)).then((_) {
+    Future.delayed(const Duration(milliseconds: 1)).then((_) {
       if (mounted) {
         setState(() {
           _showConfirmedPurchase = false;
@@ -953,6 +944,7 @@ class _SellPageState extends State<SellPage> {
     return Row(
       children: [
         AppFloatingActionButton(
+          heroTag: "quick_sale_fab", // Hero tag único
           onTap: () => showQuickSaleDialog(context, provider: sellProvider),
           icon: Icons.flash_on_rounded,
           buttonColor: Colors.amber,
@@ -961,6 +953,7 @@ class _SellPageState extends State<SellPage> {
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
             ? AppFloatingActionButton(
+                heroTag: "charge_fab", // Hero tag único
                 onTap: () {
                   if (sellProvider.ticket.getTotalPrice == 0) {
                     return;
@@ -1008,8 +1001,7 @@ class _SellPageState extends State<SellPage> {
             crossAxisCount = 6; // Ancho para pantallas grandes
           }
           // Usar los productos seleccionados del ticket
-          final List<ProductCatalogue> list =
-              provider.ticket.products.toList().reversed.toList();
+          final List<ProductCatalogue> list = provider.ticket.products.toList().reversed.toList();
           // Calcular cuántas filas caben en la vista
           final double itemHeight = (constraints.maxWidth / crossAxisCount) *
               1.1; // Ajusta el factor según el aspecto de los ítems
@@ -1101,7 +1093,7 @@ class _SellPageState extends State<SellPage> {
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: AvatarProduct(
+                  child: AvatarCircleProduct(
                     product: product,
                     isSelected: isInTicket,
                     onTap: () {
@@ -1537,6 +1529,13 @@ class ProductoItem extends StatefulWidget {
 }
 
 class _ProductoItemState extends State<ProductoItem> {
+  // Identifica si es un producto de venta rápida
+  bool get _isQuickSaleProduct {
+    return widget.producto.id.isEmpty ||
+        widget.producto.id.startsWith('quick_') ||
+        widget.producto.description.isEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     //  values
@@ -1556,37 +1555,10 @@ class _ProductoItemState extends State<ProductoItem> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // view : alerta de stock bajo o sin stock
-              alertStockText == ''
-                  ? Container()
-                  : Container(
-                      width: double.infinity,
-                      color: Colors.red,
-                      child: Center(
-                          child: Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Text(alertStockText,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold)),
-                      ))),
-              // image : imagen del producto que ocupa parte de la tarjeta
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: ProductImage(
-                    imageUrl: widget.producto.image,
-                  ),
-                ),
-              ),
-              // view : información del producto
-              contentInfo(),
-            ],
-          ),
+          // Si es venta rápida, mostrar solo precio centrado
+          _isQuickSaleProduct
+              ? _buildQuickSaleLayout()
+              : _buildNormalLayout(alertStockText),
           // view : selección del producto
           Positioned.fill(
             child: Material(
@@ -1599,7 +1571,6 @@ class _ProductoItemState extends State<ProductoItem> {
                     context,
                     producto: widget.producto,
                     onProductUpdated: () {
-                      // Callback opcional para actualizar la UI después de modificar el producto
                       setState(() {});
                     },
                   );
@@ -1633,6 +1604,66 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 
   // WIDGETS COMPONETS
+
+  /// Layout para productos de venta rápida - solo precio centrado
+  Widget _buildQuickSaleLayout() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            Publications.getFormatoPrecio(value: widget.producto.salePrice),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22, // Precio más grande
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Layout normal para productos con descripción
+  Widget _buildNormalLayout(String alertStockText) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // view : alerta de stock bajo o sin stock
+        alertStockText == ''
+            ? Container()
+            : Container(
+                width: double.infinity,
+                color: Colors.red,
+                child: Center(
+                    child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: Text(alertStockText,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                ))),
+        // image : imagen del producto que ocupa parte de la tarjeta
+        Expanded(
+          flex: 2,
+          child: ProductImage(
+            imageUrl: widget.producto.image,
+            fit: BoxFit.cover,
+          ),
+        ),
+        // view : información del producto
+        contentInfo(),
+      ],
+    );
+  }
 
   Widget contentInfo() {
     return widget.producto.description == ''
@@ -2039,7 +2070,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
         return AppBarButtonCircle(
           isLoading: _isInitializing,
           icon: Icons.point_of_sale_outlined,
-          tooltip: isActive ? 'Caja abierta' : 'Caja cerrada',
+          tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
           onPressed: () {
             // Si no hay caja activa, abrir directamente el administrador de caja
             if (!isActive) {
@@ -2051,13 +2082,11 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           },
           backgroundColor: isActive
               ? Colors.green.withValues(alpha: 0.1)
-              : Colors.grey.withValues(alpha: 0.1),
-          iconColor: isActive ? Colors.green.shade700 : Colors.grey.shade600,
-          text: isMobile(context)
-              ? null
-              : isActive
-                  ? '${provider.currentActiveCashRegister?.description}'
-                  : 'Iniciar caja',
+              : null,
+          colorAccent: isActive ? Colors.green.shade700 : null,
+          text: isMobile(context) 
+              ? null 
+              : (isActive ? 'Caja abierta' : 'Abrir caja'),
         );
       },
     );

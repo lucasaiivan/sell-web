@@ -39,7 +39,12 @@ class AuthRepositoryImpl implements AuthRepository {
         photoUrl: fbUser.photoURL,
       );
     } catch (e) {
-      // Log error para debugging si es necesario
+      // Log detallado para debugging de errores de configuración
+      print('Error en signInWithGoogle: $e');
+      if (e.toString().contains('redirect_uri_mismatch')) {
+        print(
+            'Error de redirect_uri_mismatch detectado. Verificar configuración en Google Cloud Console.');
+      }
       return null;
     }
   }

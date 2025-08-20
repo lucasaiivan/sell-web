@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/widgets/ui/expandable_list_container.dart';
 import '../../../widgets/inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3
@@ -12,16 +11,18 @@ class DialogComponents {
     required Widget content,
     IconData? icon,
     Color? backgroundColor,
+    Color? accentColor,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
+    final effectiveAccentColor = accentColor ?? theme.colorScheme.onSurfaceVariant;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.surfaceContainer,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: theme.colorScheme.outline.withValues(alpha: 0.2),
@@ -36,7 +37,7 @@ class DialogComponents {
                 Icon(
                   icon,
                   size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: effectiveAccentColor,
                 ),
                 const SizedBox(width: 8),
               ],
@@ -46,7 +47,7 @@ class DialogComponents {
                       title,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: effectiveAccentColor,
                       ),
                     ),
             ],
@@ -66,6 +67,7 @@ class DialogComponents {
   /// - Soporte para títulos opcionales y textos personalizados de expansión
   /// - Divisores configurables entre elementos
   /// - Estilo consistente con Material Design 3
+  /// - Opciones de UI: outlined (por defecto) o filled
   static Widget itemList({
     required List<Widget> items,
     bool showDividers = true,
@@ -76,38 +78,37 @@ class DialogComponents {
     Color? backgroundColor,
     Color? borderColor,
     double borderRadius = 12,
+    bool useFillStyle = false, // Nueva opción para estilo fill
+    EdgeInsetsGeometry? padding,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
+    final lineColor = theme.colorScheme.outline.withValues(alpha: 0.2);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    final decoration = BoxDecoration(
-        color: backgroundColor ?? Colors.transparent,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-            color:
-                borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.1),
-            width: 1));
 
-    // Si hay pocos elementos o no se requiere expansión, usar el diseño simple
-    if (items.length <= maxVisibleItems) {
-      return Container(
-        decoration: decoration,
-        child: Column(
-          children: items.asMap().entries.map((entry) {
-            final index = entry.key;
-            final item = entry.value;
-            return Column(
-              children: [
-                item,
-                if (showDividers && index < items.length - 1)
-                  Divider(
-                      height: 1,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-              ],
-            );
-          }).toList(),
-        ),
+    // Configuración de estilo basada en useFillStyle
+    final BoxDecoration decoration;
+    final Color effectiveBackgroundColor;
+    final Color dividerColor;
+
+    if (useFillStyle) {
+      // Estilo fill: contenedor con background sólido y sin borde
+      effectiveBackgroundColor =
+          backgroundColor ?? theme.colorScheme.surfaceContainer;
+      dividerColor = theme.colorScheme.outline.withValues(alpha: 0.1);
+      decoration = BoxDecoration(
+        color: effectiveBackgroundColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+      );
+    } else {
+      // Estilo outlined: contenedor transparente con borde
+      effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
+      dividerColor = lineColor;
+      decoration = BoxDecoration(
+        color: effectiveBackgroundColor,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: borderColor ?? lineColor, width: 1),
       );
     }
 
@@ -115,6 +116,7 @@ class DialogComponents {
     return Container(
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
+      padding: padding,
       child: SingleChildScrollView(
         child: ExpandableListContainer<Widget>(
           items: items,
@@ -125,18 +127,34 @@ class DialogComponents {
           expandText: expandText,
           collapseText: collapseText,
           showDividers: showDividers,
-          backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-          borderColor:
-              borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+          backgroundColor: effectiveBackgroundColor,
+          borderColor: borderColor ?? lineColor,
           borderRadius: borderRadius,
+          useFillStyle: useFillStyle,
           itemBuilder: (context, item, index, isLast) {
+            // Para el estilo fill, agregar padding interno a cada item
+            final Widget wrappedItem = useFillStyle
+                ? Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12 : 16,
+                      vertical: isMobile ? 8 : 10,
+                    ),
+                    child: item,
+                  )
+                : item;
+
             return Column(
               children: [
-                item,
+                wrappedItem,
                 if (showDividers && !isLast)
                   Divider(
-                    height: 1,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    thickness: useFillStyle ? 0.5 : 1,
+                    color: dividerColor,
+                    height: useFillStyle ? 1 : 0,
+                    indent:
+                        useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                    endIndent:
+                        useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
                   ),
               ],
             );
@@ -160,43 +178,72 @@ class DialogComponents {
     Color? backgroundColor,
     Color? borderColor,
     double borderRadius = 12,
+    bool useFillStyle = false, // Nueva opción para estilo fill
+    EdgeInsetsGeometry? padding,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
 
-    return ExpandableListContainer<T>(
-      items: items,
-      itemBuilder: (context, item, index, isLast) {
-        final builtItem = itemBuilder(context, item, index, isLast);
+    return Container(
+      padding: padding,
+      child: ExpandableListContainer<T>(
+        items: items,
+        itemBuilder: (context, item, index, isLast) {
+          final builtItem = itemBuilder(context, item, index, isLast);
 
-        // Si no queremos divisores, devolver el item directamente
-        if (!showDividers) return builtItem;
+          // Para el estilo fill, agregar padding interno
+          final Widget wrappedItem = useFillStyle
+              ? Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 12 : 16,
+                    vertical: isMobile ? 8 : 10,
+                  ),
+                  child: builtItem,
+                )
+              : builtItem;
 
-        // Si queremos divisores, envolverlo en un Column con Divider
-        return Column(
-          children: [
-            builtItem,
-            if (!isLast)
-              Divider(
-                height: 1,
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-          ],
-        );
-      },
-      isMobile: isMobile,
-      theme: theme,
-      title: title,
-      maxVisibleItems: maxVisibleItems,
-      expandText: expandText,
-      collapseText: collapseText,
-      showDividers: false, // Manejamos los divisores manualmente
-      backgroundColor: backgroundColor ?? theme.colorScheme.surface,
-      borderColor:
-          borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
-      borderRadius: borderRadius,
+          // Si no queremos divisores, devolver el item directamente
+          if (!showDividers) return wrappedItem;
+
+          // Si queremos divisores, envolverlo en un Column con Divider
+          final dividerColor = useFillStyle
+              ? theme.colorScheme.outline.withValues(alpha: 0.1)
+              : theme.colorScheme.outline.withValues(alpha: 0.2);
+
+          return Column(
+            children: [
+              wrappedItem,
+              if (!isLast)
+                Divider(
+                  height: useFillStyle ? 1 : 1,
+                  thickness: useFillStyle ? 0.5 : 1,
+                  color: dividerColor,
+                  indent:
+                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  endIndent:
+                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                ),
+            ],
+          );
+        },
+        isMobile: isMobile,
+        theme: theme,
+        title: title,
+        maxVisibleItems: maxVisibleItems,
+        expandText: expandText,
+        collapseText: collapseText,
+        showDividers: false, // Manejamos los divisores manualmente
+        backgroundColor: backgroundColor ??
+            (useFillStyle
+                ? theme.colorScheme.surfaceContainer
+                : theme.colorScheme.surface),
+        borderColor:
+            borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
+        borderRadius: borderRadius,
+        useFillStyle: useFillStyle,
+      ),
     );
   }
 
@@ -337,6 +384,7 @@ class DialogComponents {
       expands: maxLines > 1,
       readOnly: readOnly,
       decoration: InputDecoration(
+        
         labelText: label,
         hintText: hint,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
@@ -346,7 +394,7 @@ class DialogComponents {
                 icon: Icon(suffixIcon),
               )
             : null,
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
       onEditingComplete: () {
         // Si se especifica un callback personalizado, ejecutarlo
@@ -395,6 +443,7 @@ class DialogComponents {
       nextFocusNode: nextFocusNode,
       autofocus: autofocus,
       textInputAction: textInputAction,
+      validator: validator,
     );
   }
 
@@ -553,90 +602,210 @@ class DialogComponents {
   static const Widget minSpacing = SizedBox(height: 8);
 }
 
+/// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.
+///
+/// Incluye ejemplos de uso con diferentes tipos de datos.
+///
+/// Características del widget principal:
+/// - Contenedor con bordes redondeados y estilo Material Design 3
+/// - Lista de elementos con separadores opcionales
+/// - Funcionalidad de expandir/colapsar con límite configurable
+/// - Diseño responsivo para móvil y desktop
+/// - Título personalizable
+/// - Soporte para widgets personalizados en cada elemento
+
 // =============================================================================
-// EJEMPLOS DE USO DE LAS LISTAS EXPANDIBLES EN DIÁLOGOS
+// WIDGET PRINCIPAL: ExpandableListContainer
 // =============================================================================
 
-/// Ejemplos de uso de las nuevas funcionalidades de listas expandibles en DialogComponents
-class DialogListExamples {
-  /// Ejemplo: Lista de productos expandible en un diálogo
-  static Widget buildProductsDialog({
-    required List<Map<String, dynamic>> products,
-    required BuildContext context,
-  }) {
-    return AlertDialog(
-      title: const Text('Catálogo de Productos'),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Usando el método expandableDataList para datos tipados
-            DialogComponents.expandableDataList<Map<String, dynamic>>(
-              items: products,
-              title: 'Productos disponibles',
-              maxVisibleItems: 4,
-              expandText: 'Ver más productos',
-              collapseText: 'Mostrar menos',
-              showDividers: true,
-              context: context,
-              itemBuilder: (context, product, index, isLast) {
-                return ListTile(
-                  leading: const Icon(Icons.inventory),
-                  title: Text(product['name'] ?? 'Producto'),
-                  subtitle: Text('\$${product['price'] ?? 0}'),
-                  trailing: Text('Stock: ${product['stock'] ?? 0}'),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        DialogComponents.secondaryActionButton(
-          text: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(),
-          context: context,
-        ),
-      ],
-    );
-  }
+/// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.
+class ExpandableListContainer<T> extends StatefulWidget {
+  /// Lista de elementos a mostrar
+  final List<T> items;
 
-  /// Ejemplo: Lista simple de widgets con expansión automática
-  static Widget buildTransactionsDialog({
-    required List<Widget> transactionWidgets,
-    required BuildContext context,
-  }) {
-    return AlertDialog(
-      title: const Text('Últimas Transacciones'),
-      content: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Usando el método itemList mejorado
-            DialogComponents.itemList(
-              items: transactionWidgets,
-              title: 'Historial reciente',
-              maxVisibleItems: 6,
-              expandText: 'Ver todas las transacciones',
-              showDividers: true,
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-              context: context,
+  /// Función para construir cada elemento de la lista
+  final Widget Function(BuildContext context, T item, int index, bool isLast)
+      itemBuilder;
+
+  /// Título de la sección (opcional)
+  final String? title;
+
+  /// Número máximo de elementos visibles inicialmente
+  final int maxVisibleItems;
+
+  /// Si es una vista móvil
+  final bool isMobile;
+
+  /// Tema de la aplicación
+  final ThemeData theme;
+
+  /// Texto para el botón "Ver más"
+  final String? expandText;
+
+  /// Texto para el botón "Ver menos"
+  final String? collapseText;
+
+  /// Si mostrar separadores entre elementos
+  final bool showDividers;
+
+  /// Color de fondo del contenedor (opcional, usa el por defecto si es null)
+  final Color? backgroundColor;
+
+  /// Color del borde (opcional, usa el por defecto si es null)
+  final Color? borderColor;
+
+  /// Radio de los bordes del contenedor
+  final double borderRadius;
+
+  /// Si usar el estilo fill en lugar de outlined
+  final bool useFillStyle;
+
+  const ExpandableListContainer({
+    super.key,
+    required this.items,
+    required this.itemBuilder,
+    required this.isMobile,
+    required this.theme,
+    this.title,
+    this.maxVisibleItems = 5,
+    this.expandText,
+    this.collapseText,
+    this.showDividers = true,
+    this.backgroundColor,
+    this.borderColor,
+    this.borderRadius = 12,
+    this.useFillStyle = false,
+  });
+
+  @override
+  State<ExpandableListContainer<T>> createState() =>
+      _ExpandableListContainerState<T>();
+}
+
+class _ExpandableListContainerState<T>
+    extends State<ExpandableListContainer<T>> {
+  bool showAllItems = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasMoreItems = widget.items.length > widget.maxVisibleItems;
+    final itemsToShow = showAllItems
+        ? widget.items
+        : widget.items.take(widget.maxVisibleItems).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Título de la sección (si se proporciona)
+        if (widget.title != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 5, left: 12),
+            child: Text(
+              widget.title!,
+              style: (widget.isMobile
+                      ? widget.theme.textTheme.bodyMedium
+                      : widget.theme.textTheme.bodyLarge)
+                  ?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: widget.theme.colorScheme.onSurfaceVariant,
+              ),
             ),
+          ),
+          SizedBox(height: widget.isMobile ? 8 : 12),
+        ],
+
+        // Contenedor estilizado con la lista
+        Column(
+          children: [
+            // Items de la lista
+            ...itemsToShow.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final isLast = index == itemsToShow.length - 1;
+
+              return widget.itemBuilder(context, item, index, isLast);
+            }),
+
+            // Botón "Ver más" si hay más elementos
+            if (hasMoreItems && !showAllItems) ...[
+              if (widget.showDividers)
+                Divider(
+                  thickness: widget.useFillStyle ? 0.5 : 1,
+                  color: widget.useFillStyle
+                      ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
+                      : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+                  height: widget.useFillStyle ? 1 : 0,
+                  indent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
+                  endIndent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
+                ),
+              InkWell(
+                onTap: () => setState(() => showAllItems = true),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 12 : 16,
+                      vertical: widget.isMobile ? 8 : 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.expandText ?? 'Ver más',
+                        style: widget.theme.textTheme.titleSmall?.copyWith(
+                          color: widget.theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        color: widget.theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
+            // Botón "Ver menos" si se están mostrando todos
+            if (showAllItems && hasMoreItems) ...[
+              if (widget.showDividers)
+                Divider(
+                  thickness: widget.useFillStyle ? 0.5 : 1,
+                  color: widget.useFillStyle
+                      ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
+                      : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+                  height: widget.useFillStyle ? 1 : 0,
+                  indent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
+                  endIndent: widget.useFillStyle && widget.isMobile
+                      ? 12
+                      : (widget.useFillStyle ? 16 : 0),
+                ),
+              InkWell(
+                onTap: () => setState(() => showAllItems = false),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 12 : 16,
+                      vertical: widget.isMobile ? 8 : 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Mostrando ${widget.items.length} elementos',
+                          style: widget.theme.textTheme.titleSmall),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.expand_less_rounded,
+                        color: widget.theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
-        ),
-      ),
-      actions: [
-        DialogComponents.primaryActionButton(
-          text: 'Exportar',
-          onPressed: () {
-            // Lógica de exportación
-          },
-          icon: Icons.download,
-          context: context,
-        ),
-        DialogComponents.secondaryActionButton(
-          text: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(),
-          context: context,
         ),
       ],
     );

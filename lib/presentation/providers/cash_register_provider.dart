@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import '../../core/services/app_data_persistence_service.dart';
+import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
@@ -785,7 +785,7 @@ class CashRegisterProvider extends ChangeNotifier {
         valueReceived: ticket.valueReceived,
         discount: ticket.discount,
         transactionType: ticket.transactionType,
-        listPoduct: ticket.getProductsAsCatalogue(),
+        listPoduct: ticket.products.map((product) => product.toMap()).toList(),
         creation: ticket.creation,
       );
       updatedTicket.products = ticket.products;
@@ -923,7 +923,7 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS PRIVADOS
   // ==========================================
 
-  /// Calcula el precio total usando ProductTicketModel (método optimizado)
+  /// Calcula el precio total usando ProductCatalogue almacenados como mapas
   double _calculateTotalPriceOptimized(TicketModel ticket) {
     return ticket.calculatedTotal;
   }

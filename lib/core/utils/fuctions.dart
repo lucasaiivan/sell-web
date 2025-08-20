@@ -1,6 +1,4 @@
 import 'dart:convert';
-// ignore: deprecated_member_use, avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 import 'dart:io';
 import 'dart:math';
 
@@ -8,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
@@ -330,16 +329,14 @@ class Utils {
     );
 
     if (kIsWeb) {
-      // Para web: descarga el PDF usando un enlace oculto
+      // Para web: descarga el PDF usando url_launcher
       final bytes = await pdf.save();
       final url = 'data:application/pdf;base64,${base64Encode(bytes)}';
-      // ignore: undefined_prefixed_name
-      final anchor = html.AnchorElement(href: url)
-        ..target = 'blank'
-        ..download = '${id}Ticket.pdf';
-      html.document.body!.append(anchor);
-      anchor.click();
-      anchor.remove();
+
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
     } else {
       // Para móvil/escritorio: guarda y comparte el PDF como antes
       final output = await getTemporaryDirectory();

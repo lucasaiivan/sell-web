@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/utils/product_search_algorithm.dart';
-import 'package:sellweb/core/utils/catalogue_filter.dart';
+import 'package:sellweb/core/services/catalogue_search_service.dart';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
 import '../../domain/usecases/account_usecase.dart';
 
@@ -101,6 +101,8 @@ class CatalogueProvider extends ChangeNotifier {
   final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
   AddProductToCatalogueUseCase addProductToCatalogueUseCase;
   CreatePublicProductUseCase createPublicProductUseCase;
+  RegisterProductPriceUseCase registerProductPriceUseCase;
+  UpdateProductFavoriteUseCase? updateProductFavoriteUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
   // Stream subscription y timer para debouncing
@@ -123,9 +125,9 @@ class CatalogueProvider extends ChangeNotifier {
   /// Obtiene los productos más vendidos ordenados por cantidad de ventas
   /// [limit] Número máximo de productos a retornar (por defecto 8)
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
-  List<ProductCatalogue> getTopFilterProducts(
-      {int limit = 50, int minimumSales = 1}) {
-    return CatalogueProductFilterAlgorithm.getTopSellingProducts(
+  List<ProductCatalogue> getTopFilterProducts({int limit = 50, int minimumSales = 1}) {
+    
+    return CatalogueSearchService.getTopSellingProducts(
       products: _state.products,
       limit: limit,
       minimumSales: minimumSales,
@@ -139,6 +141,7 @@ class CatalogueProvider extends ChangeNotifier {
     required this.getPublicProductByCodeUseCase,
     required this.addProductToCatalogueUseCase,
     required this.createPublicProductUseCase,
+    required this.registerProductPriceUseCase,
     required this.getUserAccountsUseCase,
   }); // Removido _initProducts() del constructor
 
@@ -166,6 +169,10 @@ class CatalogueProvider extends ChangeNotifier {
         AddProductToCatalogueUseCase(newCatalogueRepository);
     createPublicProductUseCase =
         CreatePublicProductUseCase(newCatalogueRepository);
+    registerProductPriceUseCase =
+        RegisterProductPriceUseCase(newCatalogueRepository);
+    updateProductFavoriteUseCase =
+        UpdateProductFavoriteUseCase(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
     _catalogueSubscription = getProductsStreamUseCase().listen(
@@ -205,10 +212,13 @@ class CatalogueProvider extends ChangeNotifier {
   /// Busca un producto por código de barras en el catálogo local.
   ProductCatalogue? getProductByCode(String code) {
     final normalizedCode = code.trim().toUpperCase();
-    return _state.products.firstWhere(
-      (product) => product.code.trim().toUpperCase() == normalizedCode,
-      orElse: () => ProductCatalogue(),
-    );
+    try {
+      return _state.products.firstWhere(
+        (product) => product.code.trim().toUpperCase() == normalizedCode,
+      );
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Busca un producto público por código de barra en la base pública.
@@ -218,14 +228,12 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos usando el algoritmo avanzado de búsqueda
   /// Permite buscar sin importar el orden de las palabras
-  List<ProductCatalogue> searchProducts({
-    required String query,
-    int? maxResults,
-  }) {
+  List<ProductCatalogue> searchProducts({required String query,int? maxResults,}) {
+
     print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
     print('📦 Productos disponibles en state: ${_state.products.length}');
 
-    final results = ProductSearchAlgorithm.searchProducts(
+    final results = CatalogueSearchService.searchProducts(
       products: _state.products,
       query: query,
       maxResults: maxResults,
@@ -267,7 +275,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por código exacto
   List<ProductCatalogue> searchByExactCode(String code) {
-    return ProductSearchAlgorithm.searchByExactCode(
+    return CatalogueSearchService.searchByExactCode(
       products: _state.products,
       code: code,
     );
@@ -275,7 +283,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por categoría
   List<ProductCatalogue> searchByCategory(String category) {
-    return ProductSearchAlgorithm.searchByCategory(
+    return CatalogueSearchService.searchByCategory(
       products: _state.products,
       category: category,
     );
@@ -307,7 +315,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por marca
   List<ProductCatalogue> searchByBrand(String brand) {
-    return ProductSearchAlgorithm.searchByBrand(
+    return CatalogueSearchService.searchByBrand(
       products: _state.products,
       brand: brand,
     );
@@ -318,7 +326,7 @@ class CatalogueProvider extends ChangeNotifier {
     required String query,
     int maxSuggestions = 5,
   }) {
-    final suggestions = ProductSearchAlgorithm.getSearchSuggestions(
+    final suggestions = CatalogueSearchService.getSearchSuggestions(
       products: _state.products,
       query: query,
       maxSuggestions: maxSuggestions,
@@ -409,9 +417,10 @@ class CatalogueProvider extends ChangeNotifier {
   ///
   /// [product] El producto a agregar o actualizar en el catálogo
   /// [accountId] El ID de la cuenta donde se agregará el producto
+  /// [accountProfile] El perfil de la cuenta para registrar el precio (opcional)
   /// Retorna un [Future<void>] que se completa cuando la operación termina
-  Future<void> addProductToCatalogue(
-      ProductCatalogue product, String accountId) async {
+  Future<void> addAndUpdateProductToCatalogue(
+      ProductCatalogue product, String accountId, {ProfileAccountModel? accountProfile}) async {
     // Validar parámetros requeridos
     if (accountId.isEmpty) {
       throw Exception(
@@ -444,6 +453,29 @@ class CatalogueProvider extends ChangeNotifier {
           documentIdUpgrade: accountId,
         );
         await addProductToCatalogueUseCase(newProduct, accountId);
+      }
+
+      // Registrar precio del producto en la base de datos pública si se proporciona accountProfile
+      if (accountProfile != null && product.salePrice > 0) {
+        try {
+          final productPrice = ProductPrice(
+            id: accountId,
+            idAccount: accountId,
+            imageAccount: accountProfile.image,
+            nameAccount: accountProfile.name,
+            price: product.salePrice,
+            time: Utils().getTimestampNow(),
+            currencySign: accountProfile.currencySign,
+            province: accountProfile.province,
+            town: accountProfile.town,
+          );
+
+          await registerProductPriceUseCase(productPrice, product.code);
+          print('✅ Precio registrado en base pública para producto: ${product.code}');
+        } catch (e) {
+          print('⚠️ Error al registrar precio en base pública: $e');
+          // No lanzamos error aquí para no interrumpir el flujo principal
+        }
       }
 
       _state = _state.copyWith(
@@ -489,9 +521,7 @@ class CatalogueProvider extends ChangeNotifier {
           IncrementProductSalesUseCase(catalogueRepository);
 
       // Ejecutar el incremento de ventas
-      await incrementSalesUseCase(accountId, productId, quantity: quantity);
-
-      print('✅ Ventas incrementadas: Producto $productId, Cantidad: $quantity');
+      await incrementSalesUseCase(accountId, productId, quantity: quantity); 
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -536,6 +566,39 @@ class CatalogueProvider extends ChangeNotifier {
     } catch (e) {
       print('❌ Error al decrementar stock del producto $productId: $e');
       throw Exception('Error al decrementar stock del producto: $e');
+    }
+  }
+
+  /// Actualiza el estado de favorito de un producto en el catálogo
+  ///
+  /// Este método se llama cuando el usuario marca/desmarca un producto como favorito
+  /// para sincronizar el estado con Firebase.
+  ///
+  /// [accountId] - ID de la cuenta del negocio
+  /// [productId] - ID del producto
+  /// [isFavorite] - Nuevo estado de favorito
+  Future<void> updateProductFavorite(
+      String accountId, String productId, bool isFavorite) async {
+    // Validar parámetros
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw Exception('El accountId y productId son requeridos');
+    }
+
+    if (updateProductFavoriteUseCase == null) {
+      throw Exception('UpdateProductFavoriteUseCase no está inicializado');
+    }
+
+    try {
+      // Ejecutar la actualización de favorito
+      await updateProductFavoriteUseCase!(accountId, productId, isFavorite);
+
+      print('✅ Favorito actualizado: Producto $productId, Favorito: $isFavorite');
+
+      // El stream de Firebase se encargará automáticamente de la actualización
+      // gracias a que actualizamos el timestamp de modificación
+    } catch (e) {
+      print('❌ Error al actualizar favorito del producto $productId: $e');
+      throw Exception('Error al actualizar favorito del producto: $e');
     }
   }
 

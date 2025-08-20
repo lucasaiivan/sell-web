@@ -183,11 +183,11 @@ class ThemeService {
         inversePrimary: Colors.white,
       );
     } else {
-      // Tema oscuro con fondo completamente negro
+      // Tema oscuro con fondo gris muy oscuro (más claro que negro puro)
       return const ColorScheme.dark(
         primary: Colors.white,
         onPrimary: Colors.black,
-        primaryContainer: Color(0xFF212121),
+        primaryContainer: Color(0xFF2C2C2C),
         onPrimaryContainer: Colors.white,
         secondary: Color(0xFFBDBDBD),
         onSecondary: Colors.black,
@@ -201,9 +201,9 @@ class ThemeService {
         onError: Color(0xFF690005),
         errorContainer: Color(0xFF93000A),
         onErrorContainer: Color(0xFFFFDAD6),
-        surface: Colors.black, // Fondo completamente negro
+        surface: Color(0xFF1A1A1A), // Fondo gris muy oscuro en lugar de negro puro
         onSurface: Colors.white,
-        surfaceContainerHighest: Color(0xFF1C1C1C),
+        surfaceContainerHighest: Color(0xFF2A2A2A),
         onSurfaceVariant: Color(0xFFBDBDBD),
         outline: Color(0xFF757575),
         outlineVariant: Color(0xFF424242),
@@ -222,7 +222,7 @@ class ThemeService {
     // Para el tema negro, usar un color que contraste bien
     if (_seedColor.value == Colors.black) {
       return isDark
-          ? const Color(0xFF2A2A2A) // Gris muy oscuro en tema oscuro
+          ? const Color(0xFF333333) // Gris más claro para mejor visibilidad
           : colorScheme.primary; // Negro en tema claro
     }
 

@@ -101,7 +101,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
               builder: (context, sellProvider, child) {
                 return DialogComponents.primaryActionButton(
                     context: context,
-                    text: 'Cerrar Caja',
+                    text: 'Confirmar',
                     isLoading: cashRegisterProvider.isProcessing,
                     icon: Icons.exit_to_app_rounded,
                     onPressed: () {

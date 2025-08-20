@@ -4,7 +4,6 @@ import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/core/widgets/responsive/responsive_helper.dart';
 import 'package:sellweb/core/widgets/component/dividers.dart';
-import 'package:sellweb/core/widgets/ui/expandable_list_container.dart';
 import '../../../../core/utils/fuctions.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
@@ -130,18 +129,19 @@ class CashRegisterManagementDialog extends StatelessWidget {
       BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
-    return [
-      DialogComponents.secondaryActionButton(
-        context: context,
-        text: 'Deseleccionar',
-        icon: Icons.clear_rounded,
-        onPressed: () => provider.clearSelectedCashRegister(),
-      ),
+    return [ 
+      // button : cierre de caja
       DialogComponents.primaryActionButton(
         context: context,
         text: 'Cerrar Caja',
         icon: Icons.output_rounded,
         onPressed: () => _showCloseDialog(context, cashRegister),
+      ),
+      // button : cancelar el dialog
+      DialogComponents.secondaryActionButton(
+        context: context,
+        text: 'Cancelar', 
+        onPressed: () => Navigator.of(context).pop(),
       ),
     ];
   }
@@ -223,11 +223,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
       children: [
         // Verificar si hay cajas disponibles
         if (provider.hasAvailableCashRegisters) ...[
-          // Mostrar lista de cajas disponibles usando ExpandableListContainer
-          ExpandableListContainer<CashRegister>(
-            items: provider.activeCashRegisters,
-            isMobile: isMobile,
-            theme: theme,
+          // Mostrar lista de cajas disponibles usando DialogComponents.itemList
+          DialogComponents.itemList(
+            context: context,
             title: 'Cajas activas',
             maxVisibleItems: 4,
             expandText:
@@ -236,10 +234,10 @@ class CashRegisterManagementDialog extends StatelessWidget {
             backgroundColor:
                 theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
             borderColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-            itemBuilder: (context, cashRegister, index, isLast) {
+            items: provider.activeCashRegisters.map((cashRegister) {
               return _buildCashRegisterTile(
-                  context, cashRegister, provider, isMobile, isLast);
-            },
+                  context, cashRegister, provider, isMobile);
+            }).toList(),
           ),
           SizedBox(height: isMobile ? 16 : 24),
         ] else ...[
@@ -301,83 +299,75 @@ class CashRegisterManagementDialog extends StatelessWidget {
   }
 
   Widget _buildCashRegisterTile(BuildContext context, CashRegister cashRegister,
-      CashRegisterProvider provider, bool isMobile, bool isLast) {
+      CashRegisterProvider provider, bool isMobile) {
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 300),
-          tween: Tween(begin: 0.0, end: 1.0),
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(0, 10 * (1 - value)),
-              child: Opacity(
-                opacity: value,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => provider.selectCashRegister(cashRegister),
-                    hoverColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.05),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 8 : 12,
-                        vertical: isMobile ? 8 : 12,
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 300),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 10 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => provider.selectCashRegister(cashRegister),
+                hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 8 : 12,
+                    vertical: isMobile ? 8 : 12,
+                  ),
+                  child: Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: EdgeInsets.all(isMobile ? 6 : 8),
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(isMobile ? 4 : 6),
+                        ),
+                        child: Icon(
+                          Icons.point_of_sale_rounded,
+                          size: isMobile ? 14 : 16,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: EdgeInsets.all(isMobile ? 6 : 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.1),
-                              borderRadius:
-                                  BorderRadius.circular(isMobile ? 4 : 6),
-                            ),
-                            child: Icon(
-                              Icons.point_of_sale_rounded,
-                              size: isMobile ? 14 : 16,
-                              color: theme.colorScheme.primary,
-                            ),
+                      SizedBox(width: isMobile ? 10 : 12),
+                      Expanded(
+                        child: Text(
+                          cashRegister.description,
+                          style: (isMobile
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
+                            fontWeight: FontWeight.w500,
                           ),
-                          SizedBox(width: isMobile ? 10 : 12),
-                          Expanded(
-                            child: Text(
-                              cashRegister.description,
-                              style: (isMobile
-                                      ? theme.textTheme.bodySmall
-                                      : theme.textTheme.bodyMedium)
-                                  ?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          AnimatedRotation(
-                            duration: const Duration(milliseconds: 200),
-                            turns: 0,
-                            child: Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: isMobile ? 12 : 16,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      AnimatedRotation(
+                        duration: const Duration(milliseconds: 200),
+                        turns: 0,
+                        child: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: isMobile ? 12 : 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          },
-        ),
-        if (!isLast) const AppDivider(),
-      ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -454,8 +444,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _buildCashFlowMovements(
       BuildContext context, CashRegister cashRegister, bool isMobile) {
-    final theme = Theme.of(context);
-
     // Combinar y ordenar movimientos por fecha (más recientes primero)
     final allMovements = <Map<String, dynamic>>[];
 
@@ -486,23 +474,23 @@ class CashRegisterManagementDialog extends StatelessWidget {
     // Ordenar por fecha (más recientes primero)
     allMovements.sort((a, b) => b['date'].compareTo(a['date']));
 
-    return ExpandableListContainer<Map<String, dynamic>>(
-      items: allMovements,
-      isMobile: isMobile,
-      theme: theme,
+    return DialogComponents.itemList(
+      context: context,
+      useFillStyle: true,
+      showDividers: true,
       title: 'Movimientos de caja',
       maxVisibleItems: 5,
       expandText:
           'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
       collapseText: 'Ver menos',
-      itemBuilder: (context, movement, index, isLast) {
-        return _buildCashFlowMovementTile(context, movement, isMobile, isLast);
-      },
+      items: allMovements.map((movement) {
+        return _buildCashFlowMovementTile(context, movement, isMobile);
+      }).toList(),
     );
   }
 
-  Widget _buildCashFlowMovementTile(BuildContext context,
-      Map<String, dynamic> movement, bool isMobile, bool isLast) {
+  Widget _buildCashFlowMovementTile(
+      BuildContext context, Map<String, dynamic> movement, bool isMobile) {
     final theme = Theme.of(context);
     final cashFlow = movement['cashFlow'] as CashFlow;
     final isIngreso = movement['type'] == 'ingreso';
@@ -511,76 +499,67 @@ class CashRegisterManagementDialog extends StatelessWidget {
     final icon =
         isIngreso ? Icons.arrow_downward_rounded : Icons.arrow_outward_rounded;
 
-    return Column(
+    // Retornar solo el contenido del tile sin el divisor
+    // El divisor es manejado por DialogComponents.itemList
+    return Row(
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 12 : 16,
-            vertical: isMobile ? 8 : 8,
+        // Icono del tipo de movimiento
+        Container(
+          padding: EdgeInsets.all(isMobile ? 6 : 8),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
           ),
-          child: Row(
-            children: [
-              // Icono del tipo de movimiento
-              Container(
-                padding: EdgeInsets.all(isMobile ? 6 : 8),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
-                ),
-                child: Icon(
-                  icon,
-                  size: isMobile ? 14 : 16,
-                  color: iconColor,
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-
-              // Información del movimiento
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      cashFlow.description,
-                      style: (isMobile
-                              ? theme.textTheme.bodySmall
-                              : theme.textTheme.bodyMedium)
-                          ?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: isMobile ? 2 : 4),
-                    Text(
-                      _formatDateTime(cashFlow.date),
-                      style: (isMobile
-                              ? theme.textTheme.labelSmall
-                              : theme.textTheme.labelMedium)
-                          ?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Monto del movimiento
-              Text(
-                '${isIngreso ? '+' : '-'}${Publications.getFormatoPrecio(value: cashFlow.amount)}',
-                style: (isMobile
-                        ? theme.textTheme.bodySmall
-                        : theme.textTheme.bodyMedium)
-                    ?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: iconColor,
-                ),
-              ),
-            ],
+          child: Icon(
+            icon,
+            size: isMobile ? 14 : 16,
+            color: iconColor,
           ),
         ),
-        if (!isLast) const AppDivider(),
+        SizedBox(width: isMobile ? 8 : 12),
+
+        // Información del movimiento
+        Expanded(
+          child: Text(
+            cashFlow.description,
+            style: (isMobile
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+
+        // Monto y fecha del movimiento
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${isIngreso ? '+' : '-'}${Publications.getFormatoPrecio(value: cashFlow.amount)}',
+              style: (isMobile
+                      ? theme.textTheme.bodySmall
+                      : theme.textTheme.bodyMedium)
+                  ?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: iconColor,
+              ),
+            ),
+            SizedBox(height: isMobile ? 2 : 4),
+            Text(
+              _formatDateTime(cashFlow.date),
+              style: (isMobile
+                      ? theme.textTheme.labelSmall
+                      : theme.textTheme.labelMedium)
+                  ?.copyWith(
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

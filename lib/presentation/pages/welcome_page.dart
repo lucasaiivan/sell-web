@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/component/ui.dart';
+import '../../core/widgets/core_widgets.dart';
 import '../../domain/entities/user.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_data_app_provider.dart';
@@ -27,100 +27,73 @@ class WelcomePage extends StatelessWidget {
     // Obtener la ubicación con prioridad
     final location = _getAccountLocation(account);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-      constraints: const BoxConstraints(minWidth: 240, maxWidth: 360),
-      child: Card(
-        elevation: 2,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-                color: colorScheme.outline.withValues(alpha: 0.2), width: 1)),
-        surfaceTintColor: colorScheme.surfaceTint,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () async => await onSelectAccount(account),
-          splashColor: colorScheme.primary.withValues(alpha: 0.1),
-          highlightColor: colorScheme.primary.withValues(alpha: 0.05),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                // Avatar mejorado con sombra sutil
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+    return InkWell(
+      onTap: () async => await onSelectAccount(account),
+      splashColor: colorScheme.primary.withValues(alpha: 0.1),
+      highlightColor: colorScheme.primary.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // Avatar mejorado con sombra sutil
+            UserAvatar(
+              imageUrl: account.image,
+              text:
+                  account.name.isNotEmpty ? account.name[0].toUpperCase() : '',
+              radius: 22,
+              backgroundColor: colorScheme.primaryContainer,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Nombre de la cuenta con mejor tipografía
+                  Text(
+                    account.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: UserAvatar(
-                    imageUrl: account.image,
-                    text: account.name.isNotEmpty
-                        ? account.name[0].toUpperCase()
-                        : '',
-                    radius: 24,
-                    backgroundColor: colorScheme.primaryContainer,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Nombre de la cuenta con mejor tipografía
-                      Text(
-                        account.name,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
+                  if (location.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    // Ubicación con icono y mejor estilo
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13,
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (location.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        // Ubicación con icono y mejor estilo
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 14,
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            location,
+                            style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w400,
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                location,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-                // Icono de flecha para indicar acción
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                ),
-              ],
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+            // Icono de flecha para indicar acción
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            ),
+          ],
         ),
       ),
     );
@@ -194,10 +167,27 @@ class WelcomePage extends StatelessWidget {
                         ],
                       ),
                     ),
-                  // view : muestra lista de cuentas asociadas al usuario
+                  // view : lista de cuentas asociadas al usuario usando DialogComponents.itemList
                   if (accounts.isNotEmpty)
-                    ...accounts
-                        .map((account) => _buildAccountCard(context, account)),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 480),
+                      child: DialogComponents.itemList(
+                        context: context,
+                        items: accounts
+                            .map((account) =>
+                                _buildAccountCard(context, account))
+                            .toList(),
+                        showDividers: true,
+                        maxVisibleItems: 4,
+                        expandText: 'Ver más cuentas',
+                        collapseText: 'Ver menos',
+                        borderRadius: 16,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withValues(alpha: 0.5),
+                      ),
+                    ),
                   const SizedBox(height: 30),
                   // Botón para cerrar sesión del usuario
                   if (authProvider.user?.email != null)

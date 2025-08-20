@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/services/thermal_printer_http_service.dart';
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
@@ -422,15 +422,6 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
       // Mostrar resultados
       if (mounted) {
         Navigator.of(context).pop();
-
-        if (successMessages.isNotEmpty) {
-          showInfoDialog(
-            context: context,
-            title: '¡Procesamiento Exitoso!',
-            message: successMessages.join('\n'),
-            icon: Icons.check_circle_outline_rounded,
-          );
-        }
 
         if (errorMessages.isNotEmpty) {
           showErrorDialog(

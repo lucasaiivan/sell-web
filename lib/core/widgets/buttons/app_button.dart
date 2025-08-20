@@ -24,6 +24,7 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final Color? loadingColor;
   final double loadingSize;
+  final double borderRadius;
 
   const AppButton({
     super.key,
@@ -34,9 +35,9 @@ class AppButton extends StatelessWidget {
     this.foregroundColor,
     this.fontSize = 14,
     this.iconSize,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+    this.padding = const EdgeInsets.symmetric(horizontal: 20 , vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width = double.infinity,
+    this.width,
     this.elevation = 0,
     this.disable = false,
     this.defaultStyle = false,
@@ -44,6 +45,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
+    this.borderRadius = 20,
   });
 
   /// Constructor factory para botón primario (compatibilidad con PrimaryButton)
@@ -54,6 +56,7 @@ class AppButton extends StatelessWidget {
     bool isLoading = false,
     Color? backgroundColor,
     Color? textColor,
+    double borderRadius = 16,
   }) {
     return AppButton(
       key: key,
@@ -63,6 +66,7 @@ class AppButton extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: textColor,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      borderRadius: borderRadius,
     );
   }
 
@@ -71,19 +75,9 @@ class AppButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: Padding(
-        key: ValueKey('$disable-$isLoading'),
-        padding: margin!,
-        child: SizedBox(
-          width: width,
-          child: _buildButton(colorScheme),
-        ),
-      ),
+    return SizedBox(
+      width: width,
+      child: _buildButton(colorScheme),
     );
   }
 
@@ -146,7 +140,6 @@ class AppButton extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        color: foregroundColor,
         fontSize: fontSize,
       ),
       textAlign: TextAlign.center,
@@ -156,7 +149,7 @@ class AppButton extends StatelessWidget {
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return ElevatedButton.styleFrom(
       elevation: defaultStyle ? 0 : elevation,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
@@ -189,6 +182,7 @@ class AppOutlinedButton extends StatelessWidget {
   final bool isLoading;
   final Color? loadingColor;
   final double loadingSize;
+  final double borderRadius;
 
   const AppOutlinedButton({
     super.key,
@@ -202,12 +196,13 @@ class AppOutlinedButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width = double.infinity,
+    this.width,
     this.disable = false,
     this.minimumSize,
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
+    this.borderRadius = 20,
   });
 
   @override
@@ -215,19 +210,9 @@ class AppOutlinedButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: Padding(
-        key: ValueKey('$disable-$isLoading'),
-        padding: margin!,
-        child: SizedBox(
-          width: width,
-          child: _buildButton(colorScheme),
-        ),
-      ),
+    return SizedBox(
+      width: width,
+      child: _buildButton(colorScheme),
     );
   }
 
@@ -297,7 +282,8 @@ class AppOutlinedButton extends StatelessWidget {
 
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return OutlinedButton.styleFrom(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor ?? colorScheme.primary,
@@ -328,6 +314,7 @@ class AppFilledButton extends StatelessWidget {
   final bool isLoading;
   final Color? loadingColor;
   final double loadingSize;
+  final double borderRadius;
 
   const AppFilledButton({
     super.key,
@@ -340,12 +327,13 @@ class AppFilledButton extends StatelessWidget {
     this.iconSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
     this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    this.width = double.infinity,
+    this.width,
     this.disable = false,
     this.minimumSize,
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
+    this.borderRadius = 20,
   });
 
   @override
@@ -353,19 +341,9 @@ class AppFilledButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: Padding(
-        key: ValueKey('$disable-$isLoading'),
-        padding: margin!,
-        child: SizedBox(
-          width: width,
-          child: _buildButton(colorScheme),
-        ),
-      ),
+    return SizedBox(
+      width: width,
+      child: _buildButton(colorScheme),
     );
   }
 
@@ -435,7 +413,8 @@ class AppFilledButton extends StatelessWidget {
 
   ButtonStyle _buildButtonStyle(ColorScheme colorScheme) {
     return FilledButton.styleFrom(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius)),
       padding: padding,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,

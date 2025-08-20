@@ -29,13 +29,31 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color effectiveBackground =
-        backgroundColor ?? Theme.of(context).colorScheme.surfaceContainer;
 
+    // Si se especifica un size, usar SizedBox con AspectRatio 1:1
+    if (size != null) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            decoration: BoxDecoration(
+              color: backgroundColor ?? Colors.white,
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            child: _buildImageContent(),
+          ),
+        ),
+      );
+    }
+
+    // Si no se especifica size, permitir que se expanda completamente
     return Container(
-      color: effectiveBackground.withValues(alpha: 0.2),
-      width: size,
-      height: size,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
       child: _buildImageContent(),
     );
   }
@@ -45,27 +63,29 @@ class ProductImage extends StatelessWidget {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       // Utiliza CachedNetworkImage para optimizar la carga y caché
       return Builder(
-        builder: (context) => CachedNetworkImage(
-          imageUrl: imageUrl!,
-          fit: fit,
-          width: size,
-          height: size,
-          // Configuraciones optimizadas para carga rápida
-          fadeInDuration: enableFadeIn ? fadeInDuration : Duration.zero,
-          placeholderFadeInDuration: placeholderFadeInDuration,
-          // Configuración de caché para mejor rendimiento
-          memCacheWidth: size != null ? (size! * 2).round() : null,
-          memCacheHeight: size != null ? (size! * 2).round() : null,
-          maxWidthDiskCache: size != null ? (size! * 3).round() : null,
-          maxHeightDiskCache: size != null ? (size! * 3).round() : null,
-          // Manejo de errores y placeholder optimizado
-          errorWidget: (context, url, error) =>
-              _buildDefaultImageWithAnimation(context),
-          placeholder: (context, url) =>
-              _buildDefaultImageWithAnimation(context),
-          // Configuración adicional para mejor UX
-          useOldImageOnUrlChange: true,
-          filterQuality: FilterQuality.medium,
+        builder: (context) => Center(
+          child: CachedNetworkImage(
+            imageUrl: imageUrl!,
+            fit: fit,
+            width: size,
+            height: size,
+            // Configuraciones optimizadas para carga rápida
+            fadeInDuration: enableFadeIn ? fadeInDuration : Duration.zero,
+            placeholderFadeInDuration: placeholderFadeInDuration,
+            // Configuración de caché para mejor rendimiento
+            memCacheWidth: size != null ? (size! * 2).round() : null,
+            memCacheHeight: size != null ? (size! * 2).round() : null,
+            maxWidthDiskCache: size != null ? (size! * 3).round() : null,
+            maxHeightDiskCache: size != null ? (size! * 3).round() : null,
+            // Manejo de errores y placeholder optimizado
+            errorWidget: (context, url, error) =>
+                _buildDefaultImageWithAnimation(context),
+            placeholder: (context, url) =>
+                _buildDefaultImageWithAnimation(context),
+            // Configuración adicional para mejor UX
+            useOldImageOnUrlChange: true,
+            filterQuality: FilterQuality.medium,
+          ),
         ),
       );
     }
@@ -78,21 +98,18 @@ class ProductImage extends StatelessWidget {
 
   /// Construye la imagen por defecto con animación suave
   Widget _buildDefaultImageWithAnimation(BuildContext context) {
-    // Determinar si el tema es claro u oscuro
-    final bool isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    // Colores discretos basados en el brillo del tema
-    final Color iconColor = isDarkTheme
-        ? Colors.grey.shade400 // Gris claro discreto para tema oscuro
-        : Colors.grey.shade200; // Gris medio discreto para tema claro
-
-    final Color backgroundOverlay = isDarkTheme
-        ? Colors.grey.shade500 // Overlay sutil para tema oscuro
-        : Colors.grey.shade100; // Overlay sutil para tema claro
+    // Colores adaptativos basados en el tema actual
+    final Color iconColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+    final Color backgroundOverlay =
+        colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundOverlay,
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: Center(
         child: Image.asset(

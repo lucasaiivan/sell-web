@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/services/app_data_persistence_service.dart';
+import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../core/services/theme_service.dart';
 
 /// Proveedor para manejar el tema (brillo) de la app usando ThemeService

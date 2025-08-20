@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/entities/user.dart';
 import '../domain/repositories/account_repository.dart';
-import '../core/services/app_data_persistence_service.dart';
+import '../core/services/storage/app_data_persistence_service.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   final AppDataPersistenceService _persistenceService =

@@ -52,6 +52,7 @@ class BaseDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
+
       child: Container(
         width: width,
         constraints: BoxConstraints(
@@ -162,9 +163,9 @@ class BaseDialog extends StatelessWidget {
         // Contenido scrollable
         SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            24,
+            12,
             16,
-            24,
+            12,
             hasActions
                 ? 48
                 : 16, // Más padding inferior si hay acciones para el gradiente
@@ -178,6 +179,7 @@ class BaseDialog extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
+            // IgnorePointer : para que el gradiente no interfiera con los botones
             child: IgnorePointer(
               child: Container(
                 height: 56, // Altura del gradiente más amplia para efecto suave
@@ -238,7 +240,7 @@ Future<T?> showBaseDialog<T>({
   Color? headerColor,
   bool showCloseButton = true,
   bool scrollable = true,
-  bool barrierDismissible = true,
+  bool barrierDismissible = false, // Por defecto no se cierra al hacer click fuera
 }) {
   return showDialog<T>(
     context: context,

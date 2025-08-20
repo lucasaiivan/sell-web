@@ -1,53 +1,256 @@
-# Configuración de OAuth - README
+# 🔧 Config - Configuraciones de la Aplicación
 
-## 📋 Descripción
+El directorio `config` contiene todas las **configuraciones centralizadas** de la aplicación, incluyendo configuraciones de servicios externos, credenciales y parámetros de inicialización.
 
-Este archivo maneja la configuración centralizada de OAuth para la aplicación Flutter Web Sell, específicamente para Google Sign-In, obteniendo las credenciales desde `firebase_options.dart` para mantener una única fuente de verdad.
+## 🎯 Propósito
 
-## 🔧 Archivos
+Centralizar todas las configuraciones de la aplicación siguiendo el principio de **Single Source of Truth** y facilitando el mantenimiento y despliegue en diferentes entornos.
 
-### `/core/config/oauth_config.dart`
-**Propósito**: Configuración específica de OAuth y autenticación externa.
-**Contexto**: Actúa como proxy hacia `firebase_options.dart` para obtener credenciales OAuth.
-**Uso**: Importar `OAuthConfig` donde se necesite configurar Google Sign-In.
+## 📁 Archivos y Responsabilidades
 
-### `/core/config/firebase_options.dart`
-**Propósito**: Configuración generada por FlutterFire CLI + Google Sign-In Client ID.
-**Contexto**: Fuente única de verdad para todas las configuraciones de Firebase y OAuth.
-**Uso**: Automáticamente usado por `OAuthConfig` y `Firebase.initializeApp()`.
+### `app_config.dart`
+**Configuraciones generales de la aplicación**
+- Variables de entorno
+- Configuraciones por ambiente (dev, staging, prod)
+- Feature flags
+- Configuraciones globales de UI/UX
 
-## 🚀 Implementación
-
-### Antes (Duplicado)
 ```dart
-// Client ID duplicado en múltiples archivos
-// firebase_options.dart
-static const String googleSignInClientId = '232181553323-...';
-
-// oauth_config.dart  
-static const String googleSignInClientId = '232181553323-...'; // ❌ Duplicado
+class AppConfig {
+  static const String environment = String.fromEnvironment('ENV', defaultValue: 'dev');
+  static const bool enableDebugFeatures = true;
+  static const String appTitle = 'Sell Web';
+}
 ```
 
-### Después (Centralizado)
+### `oauth_config.dart`
+**Configuración específica de OAuth y autenticación externa**
+- Configuración de Google Sign-In
+- Client IDs y secrets
+- Scopes de autenticación
+- Configuraciones específicas de OAuth
+
 ```dart
-// oauth_config.dart - Obtiene desde firebase_options.dart
-static String get googleSignInClientId => 
-    DefaultFirebaseOptions.googleSignInClientId; // ✅ Fuente única
+class OAuthConfig {
+  static String get googleSignInClientId => 
+      DefaultFirebaseOptions.currentPlatform.googleSignInClientId;
+  
+  static const List<String> scopes = ['email', 'profile'];
+}
 ```
 
-## 🔒 Beneficios de Seguridad
+### `firebase_options.dart`
+**Configuración generada por FlutterFire CLI**
+- Configuraciones de Firebase por plataforma
+- API Keys y Project IDs
+- Client IDs para diferentes plataformas
+- Configuraciones de servicios Firebase
 
-1. **Fuente única de verdad**: Client ID definido solo en `firebase_options.dart`
-2. **Eliminación de duplicación**: No hay credenciales duplicadas en múltiples archivos
-3. **Centralización**: Todas las configuraciones Firebase en un solo lugar
-4. **Mantenibilidad**: Un solo lugar para actualizar configuraciones OAuth
-5. **Consistencia**: Garantiza que el mismo Client ID se use en toda la aplicación
-6. **Separación de responsabilidades**: OAuth config actúa como proxy hacia Firebase options
+```dart
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.web:
+        return web;
+      // ... otras plataformas
+    }
+  }
+}
+```
 
-## 🔧 Configuración Adicional
+## 🏗️ Arquitectura de Configuración
 
-### Verificar web/index.html
-Asegúrate de que el `client_id` en `web/index.html` coincida:
+### Jerarquía de Configuraciones
+```
+app_config.dart           # Configuraciones generales de app
+    ↓
+oauth_config.dart         # Configuraciones específicas de OAuth
+    ↓                     # (obtiene datos de firebase_options.dart)
+firebase_options.dart     # Configuraciones base de Firebase
+```
+
+### Patrón de Proxy Configuration
+```dart
+// ✅ Correcto - OAuthConfig actúa como proxy
+class OAuthConfig {
+  static String get googleSignInClientId => 
+      DefaultFirebaseOptions.currentPlatform.googleSignInClientId;
+}
+
+// ❌ Evitar - Duplicación de configuraciones
+class OAuthConfig {
+  static const String googleSignInClientId = '123456789...'; // Duplicado
+}
+```
+
+## 🔧 Convenciones de Uso
+
+### Variables de Entorno
+```dart
+// ✅ Usar const constructor para variables de build-time
+class AppConfig {
+  static const String apiUrl = String.fromEnvironment(
+    'API_URL', 
+    defaultValue: 'https://api.sellweb.dev'
+  );
+}
+
+// Uso en comandos de build
+// flutter build web --dart-define=API_URL=https://api.sellweb.prod
+```
+
+### Configuraciones por Ambiente
+```dart
+enum Environment { dev, staging, prod }
+
+class AppConfig {
+  static Environment get currentEnvironment {
+    switch (const String.fromEnvironment('ENV')) {
+      case 'staging':
+        return Environment.staging;
+      case 'prod':
+        return Environment.prod;
+      default:
+        return Environment.dev;
+    }
+  }
+  
+  static bool get isProduction => currentEnvironment == Environment.prod;
+  static bool get enableLogging => !isProduction;
+}
+```
+
+### Feature Flags
+```dart
+class FeatureFlags {
+  static const bool enableNewCheckout = bool.fromEnvironment(
+    'ENABLE_NEW_CHECKOUT', 
+    defaultValue: false
+  );
+  
+  static const bool enableDarkMode = bool.fromEnvironment(
+    'ENABLE_DARK_MODE', 
+    defaultValue: true
+  );
+}
+```
+
+## 🔒 Seguridad y Mejores Prácticas
+
+### Manejo de Credenciales
+```dart
+// ✅ Correcto - Credenciales desde variables de entorno
+class ApiConfig {
+  static const String apiKey = String.fromEnvironment('API_KEY');
+  
+  static String get authHeader {
+    assert(apiKey.isNotEmpty, 'API_KEY debe estar configurada');
+    return 'Bearer $apiKey';
+  }
+}
+
+// ❌ Evitar - Credenciales hardcodeadas
+class ApiConfig {
+  static const String apiKey = 'sk_live_123456789'; // ¡Nunca!
+}
+```
+
+### Validación de Configuraciones
+```dart
+class ConfigValidator {
+  static void validateConfig() {
+    assert(AppConfig.apiUrl.isNotEmpty, 'API URL no configurada');
+    assert(OAuthConfig.googleSignInClientId.isNotEmpty, 'Google Client ID no configurado');
+    
+    if (AppConfig.isProduction) {
+      assert(!AppConfig.enableDebugFeatures, 'Debug features habilitadas en producción');
+    }
+  }
+}
+```
+
+## 📚 Inicialización y Setup
+
+### Orden de Inicialización
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 1. Validar configuraciones
+  ConfigValidator.validateConfig();
+  
+  // 2. Inicializar Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // 3. Configurar servicios OAuth
+  await GoogleSignIn.standard(
+    clientId: OAuthConfig.googleSignInClientId,
+  );
+  
+  // 4. Ejecutar app
+  runApp(MyApp());
+}
+```
+
+### Configuración Web Específica
+```html
+<!-- web/index.html -->
+<meta name="google-signin-client_id" content="{{GOOGLE_CLIENT_ID}}">
+<script>
+  window.firebaseConfig = {
+    // Configuraciones inyectadas en build time
+  };
+</script>
+```
+
+## ✅ Buenas Prácticas
+
+1. **Single Source of Truth**: Una sola fuente para cada configuración
+2. **Variables de Entorno**: Usar variables de entorno para configuraciones sensibles
+3. **Validación Temprana**: Validar configuraciones al inicio de la app
+4. **Documentación**: Documentar cada configuración y su propósito
+5. **Separación por Contexto**: Agrupar configuraciones relacionadas
+6. **Immutabilidad**: Usar `const` y `static` para configuraciones inmutables
+
+## 🚫 Anti-patterns a Evitar
+
+```dart
+// ❌ Configuraciones mutables
+class BadConfig {
+  static String apiUrl = 'https://api.dev'; // Puede cambiar en runtime
+}
+
+// ❌ Configuraciones hardcodeadas sensibles
+class BadConfig {
+  static const String password = 'super_secret'; // ¡Nunca!
+}
+
+// ❌ Configuraciones dispersas
+// Diferentes archivos con configuraciones no relacionadas entre sí
+```
+
+## 🔧 Comandos de Build
+
+### Desarrollo
+```bash
+flutter run -d chrome --dart-define=ENV=dev
+```
+
+### Staging
+```bash
+flutter build web --dart-define=ENV=staging --dart-define=API_URL=https://api.staging.sellweb.com
+```
+
+### Producción
+```bash
+flutter build web --dart-define=ENV=prod --dart-define=API_URL=https://api.sellweb.com --dart-define=ENABLE_DEBUG_FEATURES=false
+```
+
+---
+
+💡 **Tip**: Nunca commitear credenciales reales en el repositorio. Usar variables de entorno y archivos de configuración locales para desarrollo.
 ```html
 <meta name="google-signin-client_id" content="232181553323-eilihkps148nu7dp45cole4mlr7pkf1d.apps.googleusercontent.com">
 ```

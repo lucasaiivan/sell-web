@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/services/thermal_printer_http_service.dart';
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 
 /// Provider para manejar el estado de la impresora térmica
 class PrinterProvider extends ChangeNotifier {

@@ -1,0 +1,70 @@
+// ==========================================
+// CORE EXPORTS - Punto de entrada principal
+// ==========================================
+
+// Configuraciones
+export 'config/app_config.dart';
+export 'config/oauth_config.dart';
+export 'config/firebase_options.dart';
+
+// Constantes
+export 'constants/app_constants.dart';
+export 'constants/shared_prefs_keys.dart';
+export 'constants/responsive_breakpoints.dart';
+
+// Servicios
+export 'services/theme_service.dart';
+export 'services/database/database_cloud.dart';
+
+// Utilidades - Formatters
+export 'utils/formatters/currency_formatter.dart';
+export 'utils/formatters/date_formatter.dart';
+export 'utils/formatters/text_formatter.dart';
+
+// Utilidades - Validators
+export 'utils/validators/form_validators.dart';
+export 'utils/validators/business_validators.dart';
+
+// Utilidades - Helpers
+export 'utils/helpers/pdf_helper.dart';
+export 'utils/helpers/share_helper.dart';
+
+// Utilidades - Otros
+export 'utils/catalogue_filter.dart';
+
+/// Core del proyecto - Exports centralizados
+/// Proporciona acceso a todos los componentes core de la aplicación
+
+// Configuración y constantes
+// export 'config/config.dart';  // TODO: Implementar sistema de configuración
+// export 'constants/constants.dart';  // TODO: Implementar constantes centralizadas
+
+// Extensiones
+// export 'extensions/extensions.dart';  // TODO: Implementar extensiones centralizadas
+
+// Mixins
+// export 'mixins/mixins.dart';  // TODO: Implementar mixins centralizados
+
+// Servicios
+// export 'services/services.dart';  // TODO: Implementar servicios centralizados
+
+// Utilidades
+// export 'utils/utils.dart';  // TODO: Implementar utilidades centralizadas
+
+// Widgets reutilizables
+export 'widgets/core_widgets.dart';
+
+// Sistema de excepciones
+export 'exceptions/exceptions.dart' hide DatabaseException;
+
+// Mantener compatibilidad con servicios existentes que usan DatabaseException
+export 'services/database/database_cloud.dart' show DatabaseException;
+
+
+// Mixins
+export 'mixins/loading_mixin.dart';
+export 'mixins/validation_mixin.dart';
+export 'mixins/responsive_mixin.dart';
+
+// Exceptions (cuando las creemos)
+// export 'exceptions/app_exceptions.dart';

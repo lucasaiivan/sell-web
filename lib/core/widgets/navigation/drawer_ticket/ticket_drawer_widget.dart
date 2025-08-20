@@ -679,6 +679,7 @@ class _TicketContent extends StatelessWidget {
         const Spacer(),
         if (showCloseButton && onCloseTicket != null) ...[
           AppFloatingActionButton(
+            heroTag: "close_ticket_nav_fab", // Hero tag único para navigation
             onTap: onCloseTicket,
             icon: Icons.close_rounded,
             buttonColor: Colors.grey.withValues(alpha: 0.8),
@@ -686,6 +687,7 @@ class _TicketContent extends StatelessWidget {
           const SizedBox(width: 8),
         ],
         AppFloatingActionButton(
+          heroTag: "confirm_sale_nav_fab", // Hero tag único para navigation
           onTap: onConfirmSale,
           icon: Icons.check_circle_outline_rounded,
           text: confirmarText,

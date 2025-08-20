@@ -1,265 +1,392 @@
-# Core Widgets - Arquitectura Reorganizada
+# Core Widgets - Estructura Reorganizada
 
-Esta carpeta contiene todos los widgets reutilizables de la aplicación, organizados por categorías según las mejores prácticas de Flutter y Material 3.
+Esta carpeta contiene todos los widgets reutilizables de la aplicación, organizados siguiendo los principios de Clean Architecture y las mejores prácticas de Flutter/Material Design 3.
 
-## ✅ **MIGRACIÓN COMPLETADA** 
+## 📁 Estructura Reorganizada
 
-Todos los widgets de `ComponentApp` legacy han sido migrados exitosamente a la nueva estructura organizada. El archivo legacy ha sido eliminado y todas las referencias actualizadas.
+```
+/core/widgets/
+├── README.md                    # Este archivo - Documentación principal
+├── core_widgets.dart           # Exportaciones centralizadas
+├── buttons/                    # Botones y controles de acción
+│   ├── README.md               # Documentación de botones
+│   ├── buttons.dart            # Exportaciones de botones
+│   ├── app_button.dart         # Botón principal unificado
+│   ├── app_bar_button.dart     # Botón para AppBar
+│   ├── app_floating_action_button.dart # FAB personalizado
+│   ├── app_text_button.dart    # Botón de texto
+│   ├── search_button.dart      # Botón de búsqueda
+│   └── theme_control_buttons.dart # Controles de tema
+├── inputs/                     # Campos de entrada y formularios
+│   ├── README.md               # Documentación de inputs
+│   ├── inputs.dart             # Exportaciones de inputs
+│   ├── input_text_field.dart   # Campo de texto base
+│   └── money_input_text_field.dart # Campo para montos
+├── dialogs/                    # Sistema completo de diálogos
+│   ├── README.md               # Documentación de diálogos
+│   ├── dialogs.dart            # Exportaciones principales
+│   ├── base/                   # Componentes base para diálogos
+│   ├── catalogue/              # Diálogos del catálogo
+│   ├── components/             # Componentes reutilizables
+│   ├── configuration/          # Diálogos de configuración
+│   ├── examples/               # Ejemplos y plantillas
+│   ├── feedback/               # Diálogos de feedback
+│   ├── sales/                  # Diálogos de ventas
+│   └── tickets/                # Diálogos de tickets
+├── component/                  # Componentes básicos de UI
+│   ├── README.md               # Documentación de componentes
+│   ├── ui.dart                 # Exportaciones de UI
+│   ├── user_avatar.dart        # Avatar de usuario
+│   ├── avatar_product.dart     # Avatar de producto
+│   ├── image.dart              # Widgets de imagen
+│   ├── dividers.dart           # Divisores y separadores
+│   └── progress_indicators.dart # Indicadores de progreso
+├── feedback/                   # Sistema de feedback
+│   ├── README.md               # Documentación de feedback
+│   └── feedback.dart           # Widgets de feedback
+├── media/                      # Widgets multimedia
+│   ├── README.md               # Documentación de media
+│   └── media_widgets.dart      # Reexportaciones
+├── responsive/                 # Widgets responsive (legacy - migrar)
+│   └── responsive_widgets.dart
+└── drawer/                     # Navegación lateral (legacy - migrar)
+    └── drawer_widgets.dart
+```
+## 🎯 Propósito y Filosofía
 
-**📋 Estado de Migración:**
-- ✅ 10/10 widgets migrados y mejorados
-- ✅ Material Design 3 implementado
-- ✅ Clean Architecture aplicada
-- ✅ Documentación completa de migración disponible
-- ✅ Archivo legacy eliminado completamente
-- ✅ Referencias actualizadas en todos los archivos
+### Clean Architecture Compliance
+Los widgets siguen estrictamente los principios de Clean Architecture:
 
-**🔗 Ver guía completa:** `component_app_migration_guide.dart`
+- **Independencia**: No dependen de lógica de negocio específica
+- **Reutilización**: Pueden usarse en cualquier parte de la aplicación
+- **Responsabilidad única**: Cada widget tiene un propósito claro
+- **Extensibilidad**: Fáciles de extender sin modificar código existente
+- **Testabilidad**: Completamente testeable de forma unitaria
 
-## 📁 Estructura de Carpetasuitectura Reorganizada
+### Material Design 3
+Todos los widgets implementan las especificaciones de Material Design 3:
 
-Esta carpeta contiene todos los widgets reutilizables de la aplicación, organizados por categorías según las mejores prácticas de Flutter y Material 3.
+- **Color schemes**: Uso del theme system de Material 3
+- **Typography**: Escalas de texto consistentes
+- **Components**: Componentes modernos y accesibles
+- **Interactions**: Estados hover, focus, pressed
+- **Accessibility**: Soporte completo para lectores de pantalla
 
-## ✅ **MIGRACIÓN COMPLETADA** 
+## � Categorías de Widgets
 
-Todos los widgets de `ComponentApp` legacy han sido migrados exitosamente a la nueva estructura organizada. 
+### 🔘 Buttons (`/buttons/`)
 
-**📋 Estado de Migración:**
-- ✅ 10/10 widgets migrados y mejorados
-- ✅ Material Design 3 implementado
-- ✅ Clean Architecture aplicada
-- ✅ Documentación completa de migración disponible
-- ✅ Archivo legacy marcado como deprecado
+Botones especializados para diferentes contextos de la aplicación.
 
-**🔗 Ver guía completa:** `component_app_migration_guide.dart`
+**Widgets principales:**
+- `AppButton`: Botón principal unificado con todas las funcionalidades
+- `AppBarButton`: Botón optimizado para barras de aplicación
+- `AppFloatingActionButton`: FAB con animaciones y estados
+- `AppTextButton`: Botón de texto con estilos consistentes
+- `SearchButton`: Botón especializado para búsquedas
 
-## 📁 Estructura de Carpetas
+**Características:**
+- Estados de loading integrados
+- Soporte para iconos
+- Animaciones suaves
+- Responsive design
+- Accesibilidad completa
 
-### 🔘 `buttons/`
-Contiene todos los botones y controles de acción:
-- `app_button.dart` - Botón principal de la aplicación
-- `app_bar_button.dart` - Botón especializado para AppBar
-- `search_button.dart` - Botón de búsqueda con diseño adaptativo
-- `app_floating_action_button.dart` - FloatingActionButton personalizado
+### 📝 Inputs (`/inputs/`)
 
-### 📝 `inputs/`
-Campos de entrada y formularios:
-- `input_text_field.dart` - TextField base con Material 3
-- `money_input_text_field.dart` - Campo especializado para montos
+Campos de entrada optimizados para formularios y captura de datos.
 
-### 💬 `dialogs/`
-Diálogos y modales especializados:
-- `product_edit_dialog.dart` - Editar productos en el ticket
-- `add_product_dialog.dart` - Agregar productos al catálogo
-- `quick_sale_dialog.dart` - Diálogo de venta rápida
-- `printer_config_dialog.dart` - Configuración de impresora
-- `ticket_options_dialog.dart` - Opciones del ticket
+**Widgets principales:**
+- `InputTextField`: Campo de texto base con validación
+- `MoneyInputTextField`: Campo especializado para montos y precios
 
-### 🎨 `ui/`
-Componentes básicos de interfaz:
-- `dividers.dart` - Divisores y separadores
-- `user_avatar.dart` - Avatar circular de usuario
-- `image_widget.dart` - Componente de imagen de producto
-- `progress_indicators.dart` - Indicadores de progreso
+**Características:**
+- Validación integrada
+- Formateo automático
+- Estados de error claros
+- Teclados específicos
+- Compatibilidad con forms
 
-### 🖼️ `media/`
-Componentes multimedia (reexporta UI relacionados):
-- `media_widgets.dart` - Exportaciones de widgets multimedia
+### 💬 Dialogs (`/dialogs/`)
 
-### 📢 `feedback/`
-Sistema de feedback y notificaciones:
-- `app_feedback.dart` - SnackBars y mensajes del sistema
+Sistema completo y modular de diálogos organizados por dominio.
 
-## 🚀 Uso Recomendado
+**Estructura modular:**
+- **Base**: Componentes fundamentales reutilizables
+- **Catalogue**: Diálogos específicos del catálogo
+- **Sales**: Diálogos relacionados con ventas
+- **Tickets**: Diálogos de tickets y recibos
+- **Configuration**: Diálogos de configuración
+- **Feedback**: Diálogos de confirmación y notificación
 
-### Importación por Categoría
+**Características:**
+- Design system consistente
+- Responsive y adaptativo
+- Navegación intuitiva
+- Estados de loading integrados
+- Validación automática
+
+### 🎨 Component (`/component/`)
+
+Componentes básicos de interfaz de usuario reutilizables.
+
+**Widgets principales:**
+- `UserAvatar`: Avatar circular de usuario con estados
+- `AvatarProduct`: Avatar para productos del catálogo
+- `ImageWidget`: Widget de imagen con fallbacks y loading
+- `Dividers`: Separadores y divisores con estilos
+- `ProgressIndicators`: Indicadores de progreso personalizados
+
+**Características:**
+- Estados de loading/error
+- Fallbacks inteligentes
+- Responsive sizing
+- Animaciones suaves
+- Optimización de rendimiento
+
+### 📢 Feedback (`/feedback/`)
+
+Sistema de notificaciones y feedback al usuario.
+
+**Funcionalidades:**
+- SnackBars personalizados
+- Mensajes de estado
+- Confirmaciones
+- Alertas y warnings
+- Feedback de éxito/error
+
+### 🖼️ Media (`/media/`)
+
+Widgets especializados en manejo de contenido multimedia.
+
+**Características:**
+- Optimización de imágenes
+- Lazy loading
+- Gestión de memoria
+- Formatos múltiples
+- Responsive images
+
+## � Uso y Integración
+
+### Importación Recomendada
+
+#### Importación completa (recomendada para desarrollo)
 ```dart
-// Importar una categoría completa
-import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/inputs/inputs.dart';
-
-// Importar widget específico
-import 'package:sellweb/core/widgets/buttons/app_button.dart';
-import 'package:sellweb/core/widgets/ui/user_avatar.dart';
+import 'package:sell_web/core/core.dart';
+// Incluye todos los widgets, extensions, mixins, etc.
 ```
 
-### Importación Completa
+#### Importación por categoría (recomendada para producción)
 ```dart
-// Importar todos los widgets core
-import 'package:sellweb/core/widgets/core_widgets.dart';
+// Botones específicos
+import 'package:sell_web/core/widgets/buttons/buttons.dart';
+
+// Campos de entrada
+import 'package:sell_web/core/widgets/inputs/inputs.dart';
+
+// Componentes UI básicos
+import 'package:sell_web/core/widgets/component/ui.dart';
 ```
 
-### Ejemplos de Uso
-
-#### Botón Principal (Unificado)
+#### Importación específica
 ```dart
-// Botón básico
+// Widget individual
+import 'package:sell_web/core/widgets/buttons/app_button.dart';
+import 'package:sell_web/core/widgets/component/user_avatar.dart';
+```
+
+### Ejemplos Prácticos
+
+#### Botón Principal
+```dart
 AppButton(
-  text: 'Guardar',
-  onPressed: () => _save(),
-  backgroundColor: Colors.blue,
-  icon: Icon(Icons.save),
-)
-
-// Botón con estado de carga
-AppButton(
-  text: 'Procesar',
-  onPressed: () => _process(),
-  isLoading: isProcessing,
-  backgroundColor: Colors.green,
-)
-
-// Botón primario (factory constructor)
-AppButton.primary(
-  text: 'Confirmar',
-  onPressed: () => _confirm(),
-  isLoading: isConfirming,
-  backgroundColor: Colors.blue,
+  text: 'Guardar Producto',
+  onPressed: () => _saveProduct(),
+  isLoading: _isSaving,
+  icon: const Icon(Icons.save),
+  backgroundColor: context.primaryColor,
 )
 ```
 
-#### Campo de Texto
+#### Campo de Entrada con Validación
 ```dart
 InputTextField(
-  controller: _controller,
-  labelText: 'Nombre',
-  hintText: 'Ingrese su nombre',
+  controller: _nameController,
+  labelText: 'Nombre del Producto',
+  hintText: 'Ingrese el nombre',
+  validator: (value) => value?.isEmpty == true ? 'Campo requerido' : null,
+  prefixIcon: const Icon(Icons.shopping_bag),
 )
 ```
 
-#### Avatar de Usuario
+#### Avatar con Estados
 ```dart
 UserAvatar(
-  imageUrl: user.profilePicture,
-  text: user.name,
+  imageUrl: user.profileImage,
+  name: user.displayName,
   radius: 24,
-)
-```
-
-#### Mostrar Diálogo
-```dart
-showProductEditDialog(
-  context,
-  producto: selectedProduct,
-  onProductUpdated: () => _refreshList(),
+  showOnlineStatus: true,
+  onTap: () => _showUserProfile(),
 )
 ```
 
 #### Feedback al Usuario
 ```dart
+// Usando extensions
+context.showSuccessSnackBar('Producto guardado exitosamente');
+
+// Usando widget específico
 AppFeedback.showSuccess(
   context,
   title: 'Éxito',
-  message: 'Producto guardado correctamente',
+  message: 'Operación completada',
 )
 ```
 
-## 🔄 Compatibilidad
+## 🚀 Beneficios de la Arquitectura
 
-### Archivo Legacy
-Se mantiene `component_app_legacy.dart` para compatibilidad hacia atrás con código existente, pero se recomienda migrar a los nuevos widgets específicos.
+### 1. **Mantenibilidad**
+- Código organizado por responsabilidades
+- Fácil localización de componentes
+- Modificaciones centralizadas
 
-### Migración Gradual
-1. Usar `core_widgets.dart` para importar todo
-2. Gradualmente reemplazar `ComponentApp()` con widgets específicos
-3. Actualizar imports para usar categorías específicas
+### 2. **Reutilización**
+- Widgets independientes del contexto
+- API consistente entre componentes
+- Composición flexible
 
-## ✅ Beneficios de la Nueva Estructura
+### 3. **Escalabilidad**
+- Estructura modular extensible
+- Nuevos widgets fáciles de agregar
+- Sin dependencias circulares
 
-- **Mejor organización**: Widgets agrupados por funcionalidad
-- **Imports más limpios**: Solo importar lo necesario
-- **Mantenibilidad**: Easier to find and update widgets
-- **Escalabilidad**: Fácil agregar nuevos widgets en categorías
-- **Tree-shaking**: Mejor optimización del bundle
-- **Clean Architecture**: Separación clara de responsabilidades
+### 4. **Performance**
+- Tree-shaking automático
+- Imports específicos reducen bundle
+- Widgets optimizados
 
-## 📋 Checklist de Migración
+### 5. **Desarrollo**
+- IntelliSense mejorado
+- Auto-complete preciso
+- Documentación integrada
 
-- [x] Crear estructura de carpetas por categorías
-- [x] Separar widgets por responsabilidad
-- [x] Mantener compatibilidad legacy
-- [x] Crear archivos de exportación
-- [x] Documentar nueva estructura
-- [ ] Actualizar imports en archivos existentes
-- [ ] Migrar ComponentApp() calls gradualmente
-- [ ] Agregar tests unitarios por categoría
+## 🔄 Migración y Compatibilidad
 
-## 🛠️ Convenciones
+### Estado Actual
+- ✅ Estructura base reorganizada
+- ✅ Exports configurados correctamente
+- ✅ Documentación actualizada
+- ✅ Compatibilidad mantenida
+- 🔄 Widgets legacy en proceso de migración
+
+### Plan de Migración
+1. **Fase 1**: Reorganización de estructura ✅
+2. **Fase 2**: Actualización de widgets existentes
+3. **Fase 3**: Migración de código legacy
+4. **Fase 4**: Optimización y cleanup
+
+### Widgets a Migrar
+- `/responsive/` → Integrar con `/component/`
+- `/drawer/` → Crear nueva categoría `/navigation/`
+- `/ui/` → Reorganizar en categorías específicas
+
+## � Convenciones y Estándares
 
 ### Nomenclatura
-- Archivos: `snake_case.dart`
-- Clases: `PascalCase`
-- Widgets: Prefijo `App` para widgets principales
+- **Archivos**: `snake_case.dart`
+- **Clases**: `PascalCase` con prefijo `App` para widgets principales
+- **Parámetros**: `camelCase`
+- **Constantes**: `UPPER_SNAKE_CASE`
 
-### Estructura de Archivo
+### Estructura de Widget
 ```dart
-// Imports de Flutter primero
 import 'package:flutter/material.dart';
 
-// Imports de paquetes externos
-import 'package:provider/provider.dart';
-
-// Imports internos (relativos)
-import '../ui/user_avatar.dart';
-
-// Imports del dominio/presentación
-import 'package:sellweb/domain/entities/user.dart';
-
-/// Documentación del widget
+/// Descripción del widget y su propósito
+/// 
+/// Ejemplo de uso:
+/// ```dart
+/// AppWidget(
+///   title: 'Mi Título',
+///   onTap: () => print('Tapped'),
+/// )
+/// ```
 class AppWidget extends StatelessWidget {
-  // Constructor y parámetros
-  // Build method
-  // Helper methods privados
+  /// Título del widget
+  final String title;
+  
+  /// Callback cuando se toca el widget
+  final VoidCallback? onTap;
+  
+  /// Crea una instancia de [AppWidget]
+  const AppWidget({
+    super.key,
+    required this.title,
+    this.onTap,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // Implementación
+    );
+  }
 }
 ```
 
-### Material 3
-- Usar `ColorScheme` del theme
-- Preferir `withValues(alpha:)` sobre `withOpacity()`
-- Implementar estados interactivos con `WidgetStateProperty`
-- Seguir guías de espaciado y tipografía de Material 3
+### Material 3 Guidelines
+- Usar `context.colorScheme` en lugar de colores hardcoded
+- Implementar estados interactivos cuando corresponda
+- Seguir guías de spacing y typography
+- Soporte para temas claro/oscuro
 
-## 🔄 **BOTÓN UNIFICADO** - Nueva Funcionalidad
+## 🧪 Testing y Calidad
 
-### ✅ Unificación de AppButton y PrimaryButton
+### Estrategia de Testing
+- **Unit Tests**: Cada widget individualmente
+- **Widget Tests**: Interacciones y estados
+- **Integration Tests**: Flujos completos
+- **Golden Tests**: Regresión visual
 
-Se ha realizado una unificación completa de los componentes de botón para simplificar el uso y mantener consistencia:
+### Quality Assurance
+- Linting automático con reglas estrictas
+- Code coverage > 90%
+- Performance benchmarks
+- Accessibility compliance
 
-#### 📋 **Antes** (Múltiples componentes)
-```dart
-// Tres componentes separados
-AppButton(text: 'Botón básico', onPressed: () {});
-PrimaryButton(text: 'Botón primario', onPressed: () {}, isLoading: true);
-```
+## � Métricas y Optimización
 
-#### ✅ **Ahora** (Componente unificado)
-```dart
-// Un solo componente con todas las funcionalidades
-AppButton(
-  text: 'Botón completo',
-  onPressed: () {},
-  isLoading: true,
-  icon: Icon(Icons.save),
-  backgroundColor: Colors.blue,
-);
+### Performance
+- Widget rebuilds minimizados
+- Memory leaks prevenidos
+- Efficient asset loading
+- Smooth animations (60fps)
 
-// Constructor factory para compatibilidad
-AppButton.primary(
-  text: 'Botón primario',
-  onPressed: () {},
-  isLoading: true,
-);
-```
+### Bundle Size
+- Tree-shaking efectivo
+- Imports optimizados
+- Unused code elimination
+- Asset optimization
 
-#### 🎯 **Características del Botón Unificado**
-- ✅ **Estado de carga** con indicador visual
-- ✅ **Soporte para iconos** con tamaño personalizable
-- ✅ **Material Design 3** completo
-- ✅ **Animaciones suaves** entre estados
-- ✅ **Compatibilidad total** con el código existente
-- ✅ **Factory constructor** para migración sin breaking changes
+## 🔮 Roadmap Futuro
 
-#### 🔧 **Migración Automática**
-- El código existente funciona sin cambios
-- `PrimaryButton` está marcado como `@Deprecated`
-- Se recomienda migrar a `AppButton.primary()` gradualmente
+### Próximas Mejoras
+1. **Animated Widgets**: Sistema de animaciones consistente
+2. **Theme Widgets**: Componentes específicos de theming
+3. **Accessibility**: Mejoras adicionales de accesibilidad
+4. **Performance**: Optimizaciones específicas por plataforma
+5. **Customization**: Sistema de personalización avanzado
+
+### Tecnologías Futuras
+- **Flutter 3.x**: Nuevas funcionalidades
+- **Material Design Updates**: Versiones futuras
+- **Web/Desktop**: Optimizaciones específicas
+- **Performance**: Impeller engine optimizations
+
+## 📖 Referencias
+
+- [Flutter Widget Catalog](https://docs.flutter.dev/ui/widgets)
+- [Material Design 3](https://m3.material.io/)
+- [Flutter Architecture Samples](https://github.com/brianegan/flutter_architecture_samples)
+- [Clean Architecture Flutter](https://resocoder.com/flutter-clean-architecture/)
+- [Widget Testing](https://docs.flutter.dev/testing/widget-tests)

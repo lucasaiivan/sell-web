@@ -390,6 +390,7 @@ class _ProductCatalogueFullScreenViewState
           opacity: 1.0, // Siempre visible
           duration: const Duration(milliseconds: 300),
           child: FloatingActionButton.extended(
+            heroTag: "product_catalogue_fab", // Hero tag único para evitar conflictos
             onPressed: () => Navigator.of(context).pop(),
             backgroundColor: colorScheme.primary,
             foregroundColor: colorScheme.onPrimary,

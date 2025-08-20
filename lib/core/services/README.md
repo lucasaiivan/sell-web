@@ -1,53 +1,331 @@
-# Core Services - README
+# 🔧 Services - Servicios de Infraestructura
 
-Esta carpeta contiene los servicios fundamentales de la aplicación que proporcionan funcionalidades compartidas y configuraciones centralizadas.
+El directorio `services` contiene todos los **servicios de infraestructura** que proporcionan funcionalidades transversales para la aplicación, siguiendo el patrón de Clean Architecture.
 
-## 📁 Servicios Disponibles
+## 🎯 Propósito
 
-### `theme_service.dart`
-**Propósito**: Servicio centralizado para gestión de temas y estilos de la aplicación.
+Centralizar servicios que:
+- **Abstraigan dependencias externas** (Firebase, APIs, hardware)
+- **Proporcionen interfaces consistentes** para diferentes capas
+- **Manejen configuraciones** y estado global
+- **Faciliten testing** mediante abstracciones
 
-**Características**:
-- **Gestión de ThemeMode**: Control dinámico entre modo claro, oscuro y sistema
-- **Configuración centralizada**: Todos los estilos de componentes en un solo lugar
-- **Material Design 3**: Implementación completa con ColorScheme.fromSeed()
-- **Estilos personalizados**: Configuración específica para todos los tipos de botones
-- **Componentes adicionales**: AppBar, Cards, InputFields con estilos consistentes
+## 📁 Estructura y Responsabilidades
 
-**Uso**:
-```dart
-// En main.dart
-theme: ThemeService.lightTheme,
-darkTheme: ThemeService.darkTheme,
-
-// Cambiar color semilla
-ThemeService.seedColor = Colors.green; // Requiere restart
+```
+services/
+├── database/           # Servicios de base de datos
+├── storage/           # Servicios de persistencia local
+├── external/          # Servicios externos (impresoras, APIs)
+├── theme_service.dart # Servicio de temas y estilos
+└── README.md         # Este archivo
 ```
 
-**Componentes configurados**:
-- `ElevatedButton`, `FilledButton`, `OutlinedButton`, `TextButton`
-- `FloatingActionButton`
-- `AppBar` con estilos diferenciados
-- `Card` con bordes redondeados
-- `InputDecoration` con focus states
+## 📖 Servicios por Categoría
 
-### `database_cloud.dart`
-**Propósito**: Servicio para interacciones con Firebase Firestore.
+### 🗄️ `/database` - Servicios de Base de Datos
 
-**Uso**: Manejo de operaciones CRUD con la base de datos en la nube.
+#### `database_cloud.dart`
+**Servicio para interacciones con Firebase Firestore**
+- Operaciones CRUD centralizadas
+- Manejo de errores consistente
+- Abstracción de consultas complejas
+- Cache y sincronización
 
-### `app_data_persistence_service.dart`
-**Propósito**: Servicio centralizado para gestionar la persistencia local de todos los datos de configuración de la aplicación.
+```dart
+class DatabaseCloudService {
+  Future<List<T>> getCollection<T>(String path);
+  Future<void> create<T>(String path, T data);
+  Future<void> update<T>(String path, String id, T data);
+  Future<void> delete(String path, String id);
+}
+```
 
-**Características**:
-- **Gestión de cuentas**: Persistencia de cuenta seleccionada
-- **Gestión de cajas registradoras**: Persistencia de caja registradora seleccionada
-- **Gestión de tema**: Persistencia del modo de tema (claro/oscuro)
-- **Gestión de tickets**: Persistencia de ticket actual y último vendido
-- **Configuraciones de impresión**: Persistencia de configuraciones de impresora
-- **Operaciones generales**: Limpieza de datos, verificación de claves, etc.
+#### `firestore_service.dart` (Nuevo)
+**Abstracción específica de Firestore**
+- Wrappers type-safe para operaciones
+- Manejo de transacciones
+- Subscripciones reactivas
+- Manejo de offline/online
 
-**Uso**:
+### 💾 `/storage` - Servicios de Persistencia Local
+
+#### `storage_service.dart` (Nuevo)
+**Abstracción general de storage local**
+- Interface común para diferentes backends
+- Operaciones async/sync
+- Manejo de tipos complejos
+- Migración de datos
+
+```dart
+abstract class StorageService {
+  Future<void> set<T>(String key, T value);
+  Future<T?> get<T>(String key);
+  Future<void> remove(String key);
+  Future<void> clear();
+}
+```
+
+#### `shared_prefs_service.dart` (Refactorizado)
+**Implementación específica con SharedPreferences**
+- Migrado desde `app_data_persistence_service.dart`
+- Tipado fuerte con genéricos
+- Validación de datos
+- Cache en memoria
+
+### 🔌 `/external` - Servicios Externos
+
+#### `thermal_printer_service.dart` (Refactorizado)
+**Servicio para impresoras térmicas**
+- Migrado desde `thermal_printer_http_service.dart`
+- Abstracción de diferentes tipos de impresoras
+- Cola de impresión
+- Manejo de errores de conexión
+
+```dart
+class ThermalPrinterService {
+  Future<bool> isConnected();
+  Future<void> print(String content);
+  Future<void> configure(PrinterConfig config);
+}
+```
+
+#### `auth_service.dart` (Nuevo)
+**Servicio de autenticación**
+- Abstracción de Firebase Auth
+- Manejo de diferentes providers
+- State management de sesión
+- Renovación automática de tokens
+
+### 🎨 `theme_service.dart`
+**Servicio centralizado para gestión de temas**
+
+**Características actuales**:
+- Gestión de ThemeMode (claro/oscuro/sistema)
+- Material Design 3 con ColorScheme.fromSeed()
+- Estilos personalizados para todos los componentes
+- Configuración centralizada de colores y tipografía
+
+**Mejoras propuestas**:
+```dart
+class ThemeService {
+  // Gestión dinámica de colores
+  static Future<void> updateSeedColor(Color color);
+  static Future<void> saveThemePreferences();
+  
+  // Temas personalizados
+  static ThemeData customTheme({required Color seedColor});
+  static Map<String, Color> getColorPalette();
+  
+  // Responsive theming
+  static ThemeData getResponsiveTheme(BuildContext context);
+}
+```
+
+## 🏗️ Patrones de Diseño Aplicados
+
+### Service Locator Pattern
+```dart
+// core/services/service_locator.dart (Nuevo)
+class ServiceLocator {
+  static final _instance = ServiceLocator._internal();
+  static ServiceLocator get instance => _instance;
+  
+  final Map<Type, dynamic> _services = {};
+  
+  void register<T>(T service) => _services[T] = service;
+  T get<T>() => _services[T] as T;
+}
+
+// Uso
+ServiceLocator.instance.register<DatabaseService>(DatabaseCloudService());
+final db = ServiceLocator.instance.get<DatabaseService>();
+```
+
+### Repository Pattern Integration
+```dart
+// Los servicios actúan como implementaciones de repositorios
+class ProductRepositoryImpl implements ProductRepository {
+  final DatabaseService _db;
+  final StorageService _cache;
+  
+  ProductRepositoryImpl(this._db, this._cache);
+  
+  @override
+  Future<List<Product>> getProducts() async {
+    // Lógica que usa servicios core
+  }
+}
+```
+
+### Factory Pattern
+```dart
+class ServiceFactory {
+  static DatabaseService createDatabaseService() {
+    if (kIsWeb) {
+      return FirestoreWebService();
+    } else {
+      return FirestoreMobileService();
+    }
+  }
+}
+```
+
+## ⚡ Inicialización y Lifecycle
+
+### Orden de Inicialización
+```dart
+class CoreServices {
+  static Future<void> initialize() async {
+    // 1. Configuraciones básicas
+    await _initializeConfig();
+    
+    // 2. Servicios de storage
+    await _initializeStorage();
+    
+    // 3. Servicios de base de datos
+    await _initializeDatabase();
+    
+    // 4. Servicios externos
+    await _initializeExternalServices();
+    
+    // 5. Registrar en service locator
+    _registerServices();
+  }
+}
+```
+
+### Dependency Injection
+```dart
+// main.dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar servicios core
+  await CoreServices.initialize();
+  
+  runApp(MyApp());
+}
+```
+
+## 🔧 Convenciones y Estándares
+
+### Naming Conventions
+```dart
+// ✅ Correcto
+class DatabaseCloudService implements DatabaseService
+class ThemeService // Singleton service
+class PrinterServiceFactory // Factory pattern
+
+// ❌ Evitar
+class FirebaseService // Demasiado genérico
+class Helper // No específico
+class Utils // No específico
+```
+
+### Error Handling
+```dart
+class ServiceException implements Exception {
+  final String message;
+  final String service;
+  final dynamic originalError;
+  
+  ServiceException(this.message, this.service, [this.originalError]);
+}
+
+// En servicios
+try {
+  // Operación
+} catch (e) {
+  throw ServiceException('Error en operación', 'DatabaseService', e);
+}
+```
+
+### Logging
+```dart
+class ServiceLogger {
+  static void logServiceCall(String service, String method, [dynamic params]) {
+    if (kDebugMode) {
+      print('[$service.$method] ${params?.toString() ?? ''}');
+    }
+  }
+}
+```
+
+## ✅ Buenas Prácticas
+
+1. **Single Responsibility**: Cada servicio tiene una responsabilidad específica
+2. **Interface Segregation**: Interfaces pequeñas y específicas
+3. **Dependency Inversion**: Depender de abstracciones, no de implementaciones
+4. **Error Handling**: Manejo consistente de errores en todos los servicios
+5. **Testing**: Todos los servicios deben ser testables unitariamente
+6. **Documentation**: Documentar interfaces y métodos públicos
+
+## 🚫 Anti-patterns a Evitar
+
+```dart
+// ❌ Servicios que hacen demasiado
+class MegaService {
+  void saveData() {}
+  void printTicket() {}
+  void sendEmail() {}
+  void calculateTax() {} // Demasiadas responsabilidades
+}
+
+// ❌ Dependencias directas de Flutter en lógica de negocio
+class BadService {
+  void saveTheme(BuildContext context) { // No debería necesitar context
+    // ...
+  }
+}
+
+// ❌ Estado mutable global
+class BadService {
+  static String currentUser = ''; // Estado global mutable
+}
+```
+
+## 📊 Métricas y Monitoreo
+
+### Performance Tracking
+```dart
+class ServiceMetrics {
+  static final Map<String, Duration> _averageCallTimes = {};
+  
+  static Future<T> trackCall<T>(
+    String serviceName,
+    String method,
+    Future<T> Function() call,
+  ) async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      return await call();
+    } finally {
+      stopwatch.stop();
+      _recordCallTime('$serviceName.$method', stopwatch.elapsed);
+    }
+  }
+}
+```
+
+### Health Checks
+```dart
+abstract class HealthCheckable {
+  Future<HealthStatus> checkHealth();
+}
+
+class HealthStatus {
+  final bool isHealthy;
+  final String message;
+  final DateTime timestamp;
+  
+  HealthStatus(this.isHealthy, this.message) : timestamp = DateTime.now();
+}
+```
+
+---
+
+💡 **Tip**: Antes de crear un nuevo servicio, verificar si la funcionalidad puede agregarse a un servicio existente o si realmente justifica un servicio separado.
 ```dart
 final persistenceService = AppDataPersistenceService.instance;
 

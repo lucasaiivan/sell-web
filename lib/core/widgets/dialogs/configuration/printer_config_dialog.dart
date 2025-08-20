@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
+import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
-import 'package:web/web.dart' as html;
-import 'package:sellweb/core/services/thermal_printer_http_service.dart';
 
 /// Diálogo modernizado para configurar impresora térmica siguiendo Material Design 3
 class PrinterConfigDialog extends StatefulWidget {
@@ -21,6 +20,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   final _printerService = ThermalPrinterHttpService();
   final _serverHostController = TextEditingController();
   final _serverPortController = TextEditingController();
+  final _devicePathController = TextEditingController();
 
   bool _isConnecting = false;
   bool _isConnected = false;
@@ -37,6 +37,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   void dispose() {
     _serverHostController.dispose();
     _serverPortController.dispose();
+    _devicePathController.dispose();
     super.dispose();
   }
 
@@ -76,8 +77,8 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
             DialogComponents.sectionSpacing,
 
-            // Configuración para Windows
-            _buildWindowsConfiguration(),
+            // Configuración avanzada (opcional)
+            _buildAdvancedConfiguration(),
 
             // Mostrar error si existe
             if (_errorMessage != null) ...[
@@ -165,6 +166,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
 
   Widget _buildServerConfiguration() {
     final theme = Theme.of(context);
+    final mobile = isMobile(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,205 +178,112 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
           ),
         ),
         DialogComponents.itemSpacing,
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: DialogComponents.textField(
-                context: context,
-                controller: _serverHostController,
-                label: 'Dirección del Servidor',
-                hint: 'localhost',
-                prefixIcon: Icons.computer_rounded,
-                validator: (value) {
-                  if (value?.trim().isEmpty == true) {
-                    return 'La dirección es requerida';
-                  }
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: DialogComponents.textField(
-                context: context,
-                controller: _serverPortController,
-                label: 'Puerto',
-                hint: '3000',
-                prefixIcon: Icons.settings_ethernet_rounded,
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value?.trim().isEmpty == true) {
-                    return 'Puerto requerido';
-                  }
-                  final port = int.tryParse(value!);
-                  if (port == null || port < 1 || port > 65535) {
-                    return 'Puerto inválido';
-                  }
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
-  Widget _buildWindowsConfiguration() {
-    final theme = Theme.of(context);
-
-    return ExpansionTile(
-      title: const Text('Configurar impresora en Windows'),
-      subtitle: const Text('Descarga y configura el programa para Windows'),
-      tilePadding: EdgeInsets.zero,
-      leading: Icon(
-        Icons.desktop_windows_rounded,
-        color: theme.colorScheme.primary,
-      ),
-      children: [
-        const SizedBox(height: 12),
-
-        // Información explicativa
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        // Layout responsive: Column en móvil, Row en desktop
+        mobile
+            ? Column(
                 children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: theme.colorScheme.primary,
-                    size: 20,
+                  DialogComponents.textField(
+                    context: context,
+                    controller: _serverHostController,
+                    label: 'Dirección del Servidor',
+                    hint: 'localhost',
+                    prefixIcon: Icons.computer_rounded,
+                    validator: (value) {
+                      if (value?.trim().isEmpty == true) {
+                        return 'La dirección es requerida';
+                      }
+                      return null;
+                    },
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Programa requerido para Windows',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
+                  DialogComponents.itemSpacing,
+                  DialogComponents.textField(
+                    context: context,
+                    controller: _serverPortController,
+                    label: 'Puerto',
+                    hint: '3000',
+                    prefixIcon: Icons.settings_ethernet_rounded,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value?.trim().isEmpty == true) {
+                        return 'Puerto requerido';
+                      }
+                      final port = int.tryParse(value!);
+                      if (port == null || port < 1 || port > 65535) {
+                        return 'Puerto inválido';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: DialogComponents.textField(
+                      context: context,
+                      controller: _serverHostController,
+                      label: 'Dirección del Servidor',
+                      hint: 'localhost',
+                      prefixIcon: Icons.computer_rounded,
+                      validator: (value) {
+                        if (value?.trim().isEmpty == true) {
+                          return 'La dirección es requerida';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
+                    child: DialogComponents.textField(
+                      context: context,
+                      controller: _serverPortController,
+                      label: 'Puerto',
+                      hint: '3000',
+                      prefixIcon: Icons.settings_ethernet_rounded,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value?.trim().isEmpty == true) {
+                          return 'Puerto requerido';
+                        }
+                        final port = int.tryParse(value!);
+                        if (port == null || port < 1 || port > 65535) {
+                          return 'Puerto inválido';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Para usar impresoras térmicas en Windows, necesitas descargar e instalar el programa SellPOS Desktop que actúa como servidor local.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 12),
+      ],
+    );
+  }
 
-              // Lista de pasos
-              ...[
-                '1. Descarga el programa SellPOS Desktop para Windows',
-                '2. Instala y ejecuta la aplicación',
-                '3. Configura tu impresora térmica en el programa',
-                '4. El servidor se iniciará automáticamente en puerto 8080',
-                '5. Regresa aquí y conecta usando localhost:8080'
-              ].map(
-                (step) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.check_circle_outline_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          step,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Botón de descarga
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Reemplazar con la URL real de descarga
-                    const downloadUrl =
-                        'https://github.com/lucasaiivan/sellpos/releases/latest';
-
-                    // Abrir URL en una nueva pestaña
-                    if (kIsWeb) {
-                      html.window.open(downloadUrl, '_blank');
-                    }
-                  },
-                  icon: Icon(
-                    Icons.download_rounded,
-                    color: theme.colorScheme.onPrimary,
-                  ),
-                  label: Text(
-                    'Descargar SellPOS Desktop',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Enlace alternativo
-              Center(
-                child: TextButton.icon(
-                  onPressed: () {
-                    const repoUrl = 'https://github.com/lucasaiivan/sellpos';
-                    if (kIsWeb) {
-                      html.window.open(repoUrl, '_blank');
-                    }
-                  },
-                  icon: Icon(
-                    Icons.code_rounded,
-                    size: 16,
-                    color: theme.colorScheme.primary,
-                  ),
-                  label: Text(
-                    'Ver código fuente en GitHub',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
+  Widget _buildAdvancedConfiguration() {
+    return ExpansionTile(
+      title: const Text('Configuración Avanzada'),
+      subtitle: const Text('Configuración opcional del dispositivo'),
+      tilePadding: EdgeInsets.zero,
+      children: [
         const SizedBox(height: 8),
+        DialogComponents.textField(
+          context: context,
+          controller: _devicePathController,
+          label: 'Ruta del Dispositivo (Opcional)',
+          hint: '/dev/usb/lp0',
+          prefixIcon: Icons.usb_rounded,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'La ruta del dispositivo es opcional. Si no se especifica, el servidor detectará automáticamente la impresora disponible.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
       ],
     );
   }
@@ -467,6 +376,9 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
       final success = await _printerService.configurePrinter(
         serverHost: _serverHostController.text.trim(),
         serverPort: int.parse(_serverPortController.text.trim()),
+        devicePath: _devicePathController.text.trim().isNotEmpty
+            ? _devicePathController.text.trim()
+            : null,
       );
 
       if (success) {

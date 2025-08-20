@@ -17,5 +17,10 @@ export 'component/ui.dart';
 export 'media/media_widgets.dart';
 
 // 📢 Feedback y notificaciones
-export 'dialogs/feedback/feedback.dart';
 export 'feedback/feedback.dart';
+
+// 📱 Vistas completas y pantallas especializadas
+export 'views/views.dart';
+
+// 🧭 Widgets de navegación
+export 'navigation/navigation.dart';

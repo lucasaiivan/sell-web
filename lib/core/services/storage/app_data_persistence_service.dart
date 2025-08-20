@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/shared_prefs_keys.dart';
+import '../../utils/shared_prefs_keys.dart';
 
 /// Servicio centralizado para gestionar la persistencia local de datos de configuración de la aplicación
 ///

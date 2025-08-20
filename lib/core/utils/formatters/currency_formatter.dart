@@ -15,7 +15,7 @@ class CurrencyFormatter {
     );
   }
 
-  /// Formateador para valores simplificados
+  /// Formateador para valores simplificados hjj
   static NumberFormat get _compactFormatter {
     return _simplifiedFormatter ??= NumberFormat.compact(
       locale: AppConstants.defaultLocale,

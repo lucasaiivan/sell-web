@@ -44,9 +44,6 @@ Esta carpeta contiene todos los widgets reutilizables de la aplicación, organiz
 ├── feedback/                   # Sistema de feedback
 │   ├── README.md               # Documentación de feedback
 │   └── feedback.dart           # Widgets de feedback
-├── media/                      # Widgets multimedia
-│   ├── README.md               # Documentación de media
-│   └── media_widgets.dart      # Reexportaciones
 ├── responsive/                 # Widgets responsive (legacy - migrar)
 │   └── responsive_widgets.dart
 └── drawer/                     # Navegación lateral (legacy - migrar)

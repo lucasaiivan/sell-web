@@ -14,12 +14,63 @@ Ofrecer funciones puras, helpers y utilidades que:
 
 ```
 utils/
-├── formatters/         # Formateo de datos (moneda, fecha, texto)
-├── validators/         # Validaciones de formularios y datos
-├── helpers/           # Helpers específicos (PDF, imágenes, etc.)
-├── catalogue_filter.dart  # Filtrado específico de catálogo
-└── responsive_helper.dart # Helper para lógica responsive
+├── formatters/                 # Formateo de datos (moneda, fecha, texto)
+├── validators/                 # Validaciones de formularios y datos
+├── helpers/                   # Helpers específicos (PDF, imágenes, etc.)
+├── product_search_service.dart # Servicio unificado de búsqueda de productos
+├── fuctions.dart              # Funciones generales de la aplicación
+└── responsive.dart            # Utilidades para diseño responsive
 ```
+
+## 📖 Archivos Principales
+
+### 🔍 `product_search_service.dart` - Búsqueda de Productos
+**Servicio unificado** que centraliza toda la lógica de búsqueda y filtrado de productos del catálogo.
+
+**Características principales:**
+- Búsqueda textual avanzada con normalización y tolerancia a errores
+- Filtrado por categorías, marcas y códigos exactos
+- Ordenamiento por relevancia y ventas
+- Sugerencias de búsqueda inteligentes
+- Algoritmo de puntuación por relevancia
+
+**Métodos principales:**
+```dart
+// Búsqueda principal con algoritmo avanzado
+static List<ProductCatalogue> searchProducts({
+  required List<ProductCatalogue> products,
+  required String query,
+  int? maxResults,
+});
+
+// Búsquedas específicas
+static List<ProductCatalogue> searchByExactCode({...});
+static List<ProductCatalogue> searchByCategory({...});
+static List<ProductCatalogue> searchByBrand({...});
+
+// Filtros y ordenamiento
+static List<ProductCatalogue> getTopSellingProducts({...});
+static List<ProductCatalogue> getFavoriteProducts({...});
+
+// Sugerencias
+static List<String> getSearchSuggestions({...});
+```
+
+**Uso en providers:**
+```dart
+// En CatalogueProvider
+final results = ProductSearchService.searchProducts(
+  products: _state.products,
+  query: searchQuery,
+  maxResults: 50,
+);
+```
+
+### 📱 `responsive.dart` - Utilidades Responsive
+Utilidades para manejo de diseño responsive y detección de dispositivos.
+
+### 🛠️ `fuctions.dart` - Funciones Generales
+Funciones helper generales utilizadas en toda la aplicación.
 
 ## 📖 Subdirectorios
 
@@ -48,6 +99,7 @@ String? validatePassword(String? password);
 
 // business_validators.dart
 bool isValidPrice(double price);
+```
 bool isValidStock(int stock);
 ```
 

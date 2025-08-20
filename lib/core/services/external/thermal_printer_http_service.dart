@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/utils/shared_prefs_keys.dart';
+import 'package:sellweb/core/constants/shared_prefs_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 

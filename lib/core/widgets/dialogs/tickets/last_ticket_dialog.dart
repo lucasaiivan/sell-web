@@ -233,7 +233,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
         ),
         DialogComponents.primaryActionButton(
           context: context,
-          text: 'Imprimir Ticket',
+          text: 'Imprimir',
           icon: Icons.print_rounded,
           onPressed: () => _showTicketOptions(),
         ),

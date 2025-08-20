@@ -13,8 +13,9 @@ export 'dialogs/dialogs.dart';
 // 🎨 Componentes de interfaz básicos
 export 'component/ui.dart';
 
-// 🖼️ Componentes multimedia
-export 'media/media_widgets.dart';
+// 🖼️ Componentes multimedia - Exportaciones directas
+export 'component/image.dart';
+export 'component/user_avatar.dart';
 
 // 📢 Feedback y notificaciones
 export 'feedback/feedback.dart';

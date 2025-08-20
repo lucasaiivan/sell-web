@@ -129,18 +129,19 @@ class CashRegisterManagementDialog extends StatelessWidget {
       BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
-    return [
-      DialogComponents.secondaryActionButton(
-        context: context,
-        text: 'Deseleccionar',
-        icon: Icons.clear_rounded,
-        onPressed: () => provider.clearSelectedCashRegister(),
-      ),
+    return [ 
+      // button : cierre de caja
       DialogComponents.primaryActionButton(
         context: context,
         text: 'Cerrar Caja',
         icon: Icons.output_rounded,
         onPressed: () => _showCloseDialog(context, cashRegister),
+      ),
+      // button : cancelar el dialog
+      DialogComponents.secondaryActionButton(
+        context: context,
+        text: 'Cancelar', 
+        onPressed: () => Navigator.of(context).pop(),
       ),
     ];
   }

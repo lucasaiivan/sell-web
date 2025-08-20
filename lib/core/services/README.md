@@ -14,11 +14,52 @@ Centralizar servicios que:
 
 ```
 services/
-├── database/           # Servicios de base de datos
-├── storage/           # Servicios de persistencia local
-├── external/          # Servicios externos (impresoras, APIs)
-├── theme_service.dart # Servicio de temas y estilos
-└── README.md         # Este archivo
+├── database/                    # Servicios de base de datos
+├── storage/                     # Servicios de persistencia local
+├── external/                    # Servicios externos (impresoras, APIs)
+├── product_search_service.dart  # Servicio de búsqueda de productos
+├── theme_service.dart           # Servicio de temas y estilos
+└── README.md                   # Este archivo
+```
+
+## 📖 Servicios Principales
+
+### 🔍 `product_search_service.dart` - Búsqueda de Productos
+**Servicio unificado para búsqueda y filtrado de productos del catálogo**
+
+**Características:**
+- Búsqueda textual avanzada con normalización y tolerancia a errores
+- Filtrado por categorías, marcas y códigos exactos
+- Algoritmo de puntuación por relevancia
+- Ordenamiento por ventas con prioridad a favoritos
+- Sugerencias de búsqueda inteligentes
+
+**Métodos principales:**
+```dart
+// Búsqueda principal
+ProductSearchService.searchProducts(products: products, query: 'termo');
+
+// Búsquedas específicas
+ProductSearchService.searchByExactCode(products: products, code: 'ABC123');
+ProductSearchService.searchByCategory(products: products, category: 'bebidas');
+ProductSearchService.searchByBrand(products: products, brand: 'coca cola');
+
+// Filtros y ordenamiento
+ProductSearchService.getTopSellingProducts(products: products, limit: 10);
+ProductSearchService.getFavoriteProducts(products: products);
+
+// Sugerencias
+ProductSearchService.getSearchSuggestions(products: products, query: 'ter');
+```
+
+**Uso típico:**
+```dart
+// En CatalogueProvider
+final results = ProductSearchService.searchProducts(
+  products: _state.products,
+  query: searchQuery,
+  maxResults: 50,
+);
 ```
 
 ## 📖 Servicios por Categoría

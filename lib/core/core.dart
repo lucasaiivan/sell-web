@@ -32,10 +32,3 @@ export 'utils/helpers/share_helper.dart';
 // Widgets reutilizables
 export 'widgets/core_widgets.dart';
 
-// Sistema de excepciones
-export 'exceptions/exceptions.dart' hide DatabaseException;
-
-// Mixins
-export 'mixins/loading_mixin.dart';
-export 'mixins/validation_mixin.dart';
-export 'mixins/responsive_mixin.dart';

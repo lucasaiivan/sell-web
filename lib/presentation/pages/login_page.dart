@@ -5,8 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/feedback/auth_feedback_widget.dart';
+import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
+import 'package:sellweb/presentation/widgets/feedback/auth_feedback_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/auth_provider.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/widgets/inputs/inputs.dart';
+import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
 import '../../../../core/utils/fuctions.dart';
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';

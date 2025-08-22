@@ -7,6 +7,7 @@ import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/presentation/widgets/views/welcome_selected_account_page.dart';
 import 'core/config/firebase_options.dart';
 import 'core/config/oauth_config.dart';
 import 'data/auth_repository_impl.dart';
@@ -20,8 +21,7 @@ import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';
-import 'presentation/pages/sell_page.dart';
-import 'core/widgets/views/welcome_selected_account_page.dart';
+import 'presentation/pages/sell_page.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

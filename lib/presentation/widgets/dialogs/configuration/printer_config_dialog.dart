@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/base/standard_dialogs.dart';
-import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
+import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 
 /// Diálogo modernizado para configurar impresora térmica siguiendo Material Design 3
 class PrinterConfigDialog extends StatefulWidget {

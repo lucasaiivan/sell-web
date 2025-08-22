@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/presentation/widgets/dialogs/tickets/ticket_options_dialog.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
 

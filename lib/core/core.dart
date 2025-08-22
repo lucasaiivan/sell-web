@@ -30,5 +30,5 @@ export 'utils/helpers/pdf_helper.dart';
 export 'utils/helpers/share_helper.dart';
 
 // Widgets reutilizables
-export 'widgets/core_widgets.dart';
+export '../presentation/widgets/core_widgets.dart';
 

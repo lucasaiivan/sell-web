@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/widgets/buttons/buttons.dart';
+import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';
 import '../providers/auth_provider.dart';

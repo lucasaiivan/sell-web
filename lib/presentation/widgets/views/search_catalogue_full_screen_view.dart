@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 // Core imports
 import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/services/catalogue_search_service.dart';
-import 'package:sellweb/core/widgets/inputs/product_search_field.dart';
-import 'package:sellweb/core/widgets/component/image.dart';
-import 'package:sellweb/core/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/presentation/widgets/inputs/product_search_field.dart';
+import 'package:sellweb/presentation/widgets/component/image.dart';
+import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 
 // Domain imports
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;

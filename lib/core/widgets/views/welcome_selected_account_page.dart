@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/widgets/core_widgets.dart';
-import '../../domain/entities/user.dart';
-import '../providers/auth_provider.dart';
-import '../providers/theme_data_app_provider.dart';
+import '../core_widgets.dart';
+import '../../../domain/entities/user.dart';
+import '../../../presentation/providers/auth_provider.dart';
+import '../../../presentation/providers/theme_data_app_provider.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomeSelectedAccountPage extends StatelessWidget {
   final Future<void> Function(ProfileAccountModel) onSelectAccount;
 
-  const WelcomePage({super.key, required this.onSelectAccount});
+  const WelcomeSelectedAccountPage({super.key, required this.onSelectAccount});
 
   /// Obtiene la ubicación prioritaria de la cuenta
   String _getAccountLocation(ProfileAccountModel account) {

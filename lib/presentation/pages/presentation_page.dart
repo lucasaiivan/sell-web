@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../presentation/pages/login_page.dart';
-import '../../../presentation/providers/auth_provider.dart';
+import 'login_page.dart';
+import '../providers/auth_provider.dart';
 import 'dart:ui';
 
-import '../../../presentation/providers/theme_data_app_provider.dart';
+import '../providers/theme_data_app_provider.dart';
 
 /// Clase helper para colores del AppBar optimizada
 class _AppBarColors {

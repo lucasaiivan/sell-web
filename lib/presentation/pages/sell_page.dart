@@ -29,7 +29,7 @@ import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/cash_register_provider.dart';
-import 'welcome_page.dart';
+import '../../core/widgets/views/welcome_selected_account_page.dart';
 
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
@@ -81,7 +81,7 @@ class _SellPageState extends State<SellPage> {
           final catalogueProvider =
               Provider.of<CatalogueProvider>(context, listen: false);
 
-          return WelcomePage(
+          return WelcomeSelectedAccountPage(
             onSelectAccount: (account) async {
               // Selecciona la cuenta y recarga el catálogo
               await sellProvider.initAccount(

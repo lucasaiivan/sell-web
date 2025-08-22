@@ -4,7 +4,6 @@ import '../../../core/constants/app_constants.dart';
 /// Utilidades para formateo de valores monetarios
 class CurrencyFormatter {
   static NumberFormat? _currencyFormatter;
-  static NumberFormat? _simplifiedFormatter;
 
   /// Formateador de moneda estándar (lazy initialization)
   static NumberFormat get _standardFormatter {
@@ -15,12 +14,6 @@ class CurrencyFormatter {
     );
   }
 
-  /// Formateador para valores simplificados hjj
-  static NumberFormat get _compactFormatter {
-    return _simplifiedFormatter ??= NumberFormat.compact(
-      locale: AppConstants.defaultLocale,
-    );
-  }
 
   /// Formatea un valor monetario según la configuración regional.
   ///
@@ -139,6 +132,5 @@ class CurrencyFormatter {
   /// Resetea los formatters (útil para tests o cambios de configuración)
   static void reset() {
     _currencyFormatter = null;
-    _simplifiedFormatter = null;
   }
 }

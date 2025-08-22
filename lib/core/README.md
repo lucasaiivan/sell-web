@@ -2,126 +2,165 @@
 
 El directorio `core` contiene toda la **infraestructura transversal** de la aplicación que es **independiente del dominio de negocio**. Esta capa proporciona servicios, utilidades y componentes reutilizables que pueden ser utilizados por todas las demás capas del proyecto.
 
-## 📋 Principios de Diseño
-
-### Clean Architecture Compliance
-- **Independencia de Frameworks**: Los componentes core no dependen de Flutter específicamente
-- **Testabilidad**: Todos los servicios son testables unitariamente
-- **Separación de Responsabilidades**: Cada subdirectorio tiene una responsabilidad específica
-- **Inversión de Dependencias**: Los contratos están definidos antes que las implementaciones
-
-### Patrones Aplicados
-- **Repository Pattern**: Para abstraer el acceso a datos
-- **Service Locator**: Para inyección de dependencias
-- **Factory Pattern**: Para creación de objetos complejos
-- **Observer Pattern**: Para notificaciones reactivas
-
-## 🗂️ Estructura del Directorio
+## 📁 Estructura del Directorio
 
 ```
-lib/core/
-├── constants/          # Constantes y configuraciones estáticas
-├── config/            # Configuraciones de la aplicación
-├── services/          # Servicios transversales de infraestructura
-├── utils/             # Utilidades y helpers reutilizables
-├── widgets/           # Componentes UI reutilizables
-├── extensions/        # Extensions de Dart/Flutter
-├── mixins/           # Mixins reutilizables
-└── exceptions/       # Manejo centralizado de errores
+core/
+├── config/                    # Configuraciones de la aplicación
+│   ├── app_config.dart        # Configuración general de la app
+│   ├── firebase_options.dart  # Configuración de Firebase
+│   └── oauth_config.dart      # Configuración de OAuth (Google Sign-In)
+├── constants/                 # Constantes globales
+│   ├── app_constants.dart     # Constantes generales de la aplicación
+│   └── shared_prefs_keys.dart # Claves para SharedPreferences
+├── mixins/                    # Mixins reutilizables
+├── services/                  # Servicios transversales
+│   ├── database/              # Servicios de base de datos
+│   ├── external/              # Servicios externos (APIs, impresión)
+│   ├── storage/               # Servicios de almacenamiento
+│   ├── catalogue_search_service.dart # Servicio de búsqueda de catálogo
+│   └── theme_service.dart     # Servicio de gestión de temas
+├── utils/                     # Utilidades y helpers
+│   ├── formaters/             # Formateadores de datos
+│   ├── helpers/               # Funciones helper específicas
+│   ├── fuctions.dart          # Funciones utilitarias generales
+│   └── responsive_breakpoints.dart # Breakpoints para diseño responsive
+└── core.dart                  # Archivo de exportación principal
 ```
 
-## 🎯 Propósito y Responsabilidades
+## 🔧 Componentes Principales
 
-### ✅ Lo que SÍ pertenece aquí
-- Servicios de infraestructura (base de datos, HTTP, storage)
-- Widgets UI reutilizables entre diferentes features
-- Utilidades de formateo, validación y transformación
-- Configuraciones globales de la aplicación
-- Extensiones que mejoran tipos base de Dart/Flutter
-- Manejo centralizado de errores y excepciones
+### 📋 Config
+**Propósito**: Configuraciones centralizadas de la aplicación
+- **app_config.dart**: Variables de configuración global, URLs de API, configuraciones de entorno
+- **firebase_options.dart**: Configuración de Firebase generada automáticamente
+- **oauth_config.dart**: Configuración para autenticación con Google y otros proveedores OAuth
 
-### ❌ Lo que NO pertenece aquí
-- Lógica de negocio específica
-- Entidades de dominio
-- Casos de uso específicos
-- Providers específicos de features
-- Páginas o screens completas
+### 🔢 Constants
+**Propósito**: Constantes inmutables utilizadas en toda la aplicación
+- **app_constants.dart**: Constantes generales como versiones, límites, URLs, etc.
+- **shared_prefs_keys.dart**: Claves estandarizadas para SharedPreferences
 
-## 📖 Guías de Uso
+### 🛠️ Services
+**Propósito**: Servicios transversales independientes del dominio de negocio
 
-### Para Desarrolladores
-1. **Antes de crear algo nuevo**: Verificar si ya existe algo similar en core
-2. **Reutilización**: Priorizar uso de componentes existentes antes de crear nuevos
-3. **Documentación**: Cada archivo debe estar documentado con su propósito
-4. **Testing**: Todo servicio/utilidad debe tener pruebas unitarias
+#### Servicios Principales:
+- **theme_service.dart**: Gestión de temas claro/oscuro con persistencia
+- **catalogue_search_service.dart**: Lógica de búsqueda y filtrado de productos
+- **database/**: Servicios de conexión y operaciones con Firebase Firestore
+- **external/**: Servicios para integraciones externas (impresoras térmicas, APIs)
+- **storage/**: Servicios de almacenamiento local y en la nube
 
-### Convenciones de Nomenclatura
-- **Archivos**: `snake_case.dart`
-- **Clases**: `PascalCase`
-- **Constantes**: `UPPER_SNAKE_CASE`
-- **Métodos/Variables**: `camelCase`
+### 🔧 Utils
+**Propósito**: Utilidades y funciones helper reutilizables
 
-### Import Strategy
+#### Utilidades Principales:
+- **responsive_breakpoints.dart**: Definición de breakpoints para diseño responsive
+- **fuctions.dart**: Funciones utilitarias generales (formateo, validaciones, etc.)
+- **formaters/**: Formateadores específicos para moneda, fechas, texto, etc.
+- **helpers/**: Funciones helper especializadas para casos de uso específicos
+
+### 🎭 Mixins
+**Propósito**: Mixins reutilizables para compartir funcionalidad entre clases
+- Validaciones comunes
+- Manejo de estados de carga
+- Funcionalidades de UI reutilizables
+
+## 🎯 Principios de Diseño
+
+### ✅ Responsabilidades del Core
+- **Configuración**: Manejo centralizado de configuraciones
+- **Servicios transversales**: Servicios que no pertenecen a un dominio específico
+- **Utilidades**: Funciones helper y utilidades generales
+- **Constantes**: Valores inmutables utilizados globalmente
+- **Infraestructura**: Clases base y mixins reutilizables
+
+### ❌ Lo que NO pertenece al Core
+- **Lógica de negocio**: Debe estar en el domain layer
+- **Modelos de dominio**: Pertenecen a domain/entities
+- **UI específica**: Los widgets específicos van en presentation/widgets
+- **Casos de uso**: Deben estar en domain/usecases
+
+## 📚 Patrones de Uso
+
+### Importación desde Core
 ```dart
-// ✅ Correcto - Import específico
-import 'package:sell_web/core/utils/formatters/currency_formatter.dart';
-
-// ❌ Evitar - Import general que expone todo
+// ✅ Forma correcta - usar el archivo principal
 import 'package:sell_web/core/core.dart';
+
+// ❌ Evitar importaciones directas
+import 'package:sell_web/core/utils/functions.dart';
 ```
 
-## 🔧 Configuración y Setup
-
-### Dependencias Clave
-- **firebase_core**: Configuración de Firebase
-- **shared_preferences**: Persistencia local
-- **http**: Cliente HTTP para servicios externos
-- **intl**: Internacionalización y formateo
-
-### Inicialización
-Los servicios core se inicializan en `main.dart` antes que cualquier otra capa:
-
+### Servicios Singleton
 ```dart
-void main() async {
-  // 1. Inicializar servicios core
-  await CoreServices.initialize();
-  
-  // 2. Configurar providers
-  // 3. Ejecutar app
+// Los servicios core típicamente siguen el patrón singleton
+class ThemeService {
+  static final ThemeService _instance = ThemeService._internal();
+  factory ThemeService() => _instance;
+  ThemeService._internal();
 }
 ```
 
-## 📊 Métricas de Calidad
+### Utilidades Estáticas
+```dart
+// Las utilidades se implementan como clases con métodos estáticos
+class ResponsiveBreakpoints {
+  static const double mobile = 600;
+  static const double tablet = 840;
+  static const double desktop = 1200;
+  
+  static bool isMobile(BuildContext context) {
+    return MediaQuery.of(context).size.width < mobile;
+  }
+}
+```
 
-### Objetivos
-- **Coverage**: > 80% en servicios core
-- **Complexity**: Funciones con complejidad ciclomática < 10
-- **Dependencies**: Máximo 3 niveles de dependencia
-- **Performance**: Widgets core con rebuild < 16ms
+## 🔄 Integración con Otras Capas
 
-### Monitoreo
-- Usar `flutter analyze` para verificar calidad de código
-- Ejecutar tests unitarios: `flutter test test/core/`
-- Verificar performance: Flutter Inspector
+### Con Presentation
+- Provee servicios de tema y configuración
+- Suministra utilidades para responsive design
+- Ofrece constantes para la UI
 
-## 🚀 Roadmap y Evolución
+### Con Domain
+- Proporciona servicios de infraestructura
+- Suministra utilidades para validaciones
+- No debe contener lógica de negocio
 
-### ✅ Implementaciones Completadas
-1. **Sistema de Excepciones** - Manejo centralizado de errores con logging multi-destino
-2. **Widgets Reorganizados** - Categorización por responsabilidad (buttons, inputs, dialogs, etc.)
-3. **Arquitectura Clean** - Separación clara de capas y responsabilidades
+### Con Data
+- Ofrece servicios de base de datos y almacenamiento
+- Provee configuraciones para APIs externas
+- Suministra utilidades para transformación de datos
 
-### Próximas Mejoras
-1. Implementar cache inteligente en servicios
-2. Sistema de configuración centralizado
-3. Extensiones útiles para tipos base
-4. Utilidades centralizadas (formatters, validators, etc.)
-5. Optimizar performance de widgets complejos
+## 🚀 Mejores Prácticas
 
-### Deprecaciones
-- Consultar `CHANGELOG.md` para componentes deprecados
-- Migrar gradualmente componentes legacy
+### Desarrollo
+1. **Inmutabilidad**: Usar `const` para constantes y valores inmutables
+2. **Singleton responsable**: Aplicar singleton solo cuando sea necesario
+3. **Documentación**: Documentar servicios y utilidades complejas
+4. **Testing**: Crear tests unitarios para utilidades críticas
+
+### Organización
+1. **Separación clara**: Mantener separación entre configuración, servicios y utilidades
+2. **Naming consistente**: Usar convenciones de nomenclatura consistentes
+3. **Exportaciones centralizadas**: Usar `core.dart` como punto único de exportación
+4. **README por subdirectorio**: Mantener documentación actualizada en cada subdirectorio
+
+### Performance
+1. **Lazy loading**: Inicializar servicios solo cuando se necesiten
+2. **Cache inteligente**: Implementar cache en servicios que lo requieran
+3. **Optimización de imports**: Evitar importaciones circulares y excesivas
+
+## 📖 Documentación Adicional
+
+Para más información sobre cada subdirectorio, consulta:
+- [📋 Config README](./config/README.md)
+- [🔢 Constants README](./constants/README.md)
+- [🛠️ Services README](./services/README.md)
+- [🔧 Utils README](./utils/README.md)
+- [🎭 Mixins README](./mixins/README.md)
 
 ---
 
-📚 **Para más detalles**, revisar el README específico de cada subdirectorio.
+> **Nota**: Esta capa es fundamental para mantener la **separación de responsabilidades** y la **reutilización de código** en toda la aplicación. Cualquier funcionalidad que sea utilizada por múltiples capas debe considerarse para inclusión en `core`.

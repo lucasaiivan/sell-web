@@ -15,7 +15,8 @@ class DialogComponents {
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
-    final effectiveAccentColor = accentColor ?? theme.colorScheme.onSurfaceVariant;
+    final effectiveAccentColor =
+        accentColor ?? theme.colorScheme.onSurfaceVariant;
 
     return Container(
       width: double.infinity,
@@ -384,7 +385,6 @@ class DialogComponents {
       expands: maxLines > 1,
       readOnly: readOnly,
       decoration: InputDecoration(
-        
         labelText: label,
         hintText: hint,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,

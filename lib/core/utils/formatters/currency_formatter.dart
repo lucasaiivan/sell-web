@@ -27,9 +27,9 @@ class CurrencyFormatter {
   /// [value] El valor numérico a formatear
   /// [symbol] El símbolo de moneda (por defecto '\$')
   /// [simplified] Si debe usar notación abreviada (K, M)
-  /// 
+  ///
   /// Retorna el valor formateado como String.
-  /// 
+  ///
   /// Ejemplo:
   /// ```dart
   /// formatCurrency(1234.56) // "\$1,234.56"
@@ -43,7 +43,8 @@ class CurrencyFormatter {
     final currencySymbol = symbol ?? AppConstants.defaultCurrency;
 
     // Determinar cantidad de decimales basado en si el valor es entero
-    int decimalDigits = (value % 1) == 0 ? 0 : AppConstants.defaultDecimalPlaces;
+    int decimalDigits =
+        (value % 1) == 0 ? 0 : AppConstants.defaultDecimalPlaces;
 
     if (simplified) {
       return _formatSimplifiedCurrency(value, currencySymbol);
@@ -112,10 +113,9 @@ class CurrencyFormatter {
   static double? parseCurrency(String formattedValue) {
     try {
       // Remover símbolos de moneda y separadores
-      String cleaned = formattedValue
-          .replaceAll(RegExp(r'[^\d.,]'), '')
-          .replaceAll(',', '');
-      
+      String cleaned =
+          formattedValue.replaceAll(RegExp(r'[^\d.,]'), '').replaceAll(',', '');
+
       return double.tryParse(cleaned);
     } catch (e) {
       return null;
@@ -131,7 +131,8 @@ class CurrencyFormatter {
   ///
   /// Útil para campos de entrada donde el usuario ingresa solo números
   static String formatForInput(double value) {
-    int decimalDigits = (value % 1) == 0 ? 0 : AppConstants.defaultDecimalPlaces;
+    int decimalDigits =
+        (value % 1) == 0 ? 0 : AppConstants.defaultDecimalPlaces;
     return value.toStringAsFixed(decimalDigits);
   }
 

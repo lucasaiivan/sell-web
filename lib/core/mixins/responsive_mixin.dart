@@ -3,47 +3,47 @@ import 'package:flutter/material.dart';
 /// Mixin que proporciona utilidades para diseño responsive
 /// Simplifica la creación de layouts adaptativos
 mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
-  
   // ==========================================
   // CONSTANTES DE BREAKPOINTS
   // ==========================================
-  
+
   static const double _mobileBreakpoint = 600;
   static const double _tabletBreakpoint = 840;
   static const double _desktopBreakpoint = 1200;
   static const double _largeDesktopBreakpoint = 1600;
-  
+
   // ==========================================
   // GETTERS DE INFORMACIÓN DEL DISPOSITIVO
   // ==========================================
-  
+
   /// Obtiene el ancho de la pantalla
   double get screenWidth => MediaQuery.of(context).size.width;
-  
+
   /// Obtiene el alto de la pantalla
   double get screenHeight => MediaQuery.of(context).size.height;
-  
+
   /// Verifica si es una pantalla móvil
   bool get isMobile => screenWidth < _mobileBreakpoint;
-  
+
   /// Verifica si es una tablet
-  bool get isTablet => screenWidth >= _mobileBreakpoint && screenWidth < _desktopBreakpoint;
-  
+  bool get isTablet =>
+      screenWidth >= _mobileBreakpoint && screenWidth < _desktopBreakpoint;
+
   /// Verifica si es desktop
   bool get isDesktop => screenWidth >= _desktopBreakpoint;
-  
+
   /// Verifica si es desktop grande
   bool get isLargeDesktop => screenWidth >= _largeDesktopBreakpoint;
-  
+
   /// Verifica si es una pantalla pequeña (móvil)
   bool get isSmallScreen => isMobile;
-  
+
   /// Verifica si es una pantalla mediana (tablet)
   bool get isMediumScreen => isTablet;
-  
+
   /// Verifica si es una pantalla grande (desktop+)
   bool get isLargeScreen => isDesktop;
-  
+
   /// Obtiene el tipo de dispositivo
   DeviceType get deviceType {
     if (isMobile) return DeviceType.mobile;
@@ -51,20 +51,22 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
     if (isLargeDesktop) return DeviceType.largeDesktop;
     return DeviceType.desktop;
   }
-  
+
   /// Verifica si está en modo landscape
-  bool get isLandscape => MediaQuery.of(context).orientation == Orientation.landscape;
-  
+  bool get isLandscape =>
+      MediaQuery.of(context).orientation == Orientation.landscape;
+
   /// Verifica si está en modo portrait
-  bool get isPortrait => MediaQuery.of(context).orientation == Orientation.portrait;
-  
+  bool get isPortrait =>
+      MediaQuery.of(context).orientation == Orientation.portrait;
+
   /// Obtiene la densidad de píxeles
   double get pixelRatio => MediaQuery.of(context).devicePixelRatio;
-  
+
   // ==========================================
   // MÉTODOS DE VALORES RESPONSIVE
   // ==========================================
-  
+
   /// Obtiene un valor basado en el tipo de dispositivo
   T responsive<T>({
     required T mobile,
@@ -83,7 +85,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
         return largeDesktop ?? desktop ?? tablet ?? mobile;
     }
   }
-  
+
   /// Obtiene un valor basado en breakpoints personalizados
   T responsiveValue<T>({
     required T defaultValue,
@@ -97,7 +99,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
     final mobileBreak = mobileBreakpoint ?? _mobileBreakpoint;
     final tabletBreak = tabletBreakpoint ?? _tabletBreakpoint;
     final desktopBreak = desktopBreakpoint ?? _desktopBreakpoint;
-    
+
     if (screenWidth < mobileBreak && mobile != null) {
       return mobile;
     } else if (screenWidth < tabletBreak && tablet != null) {
@@ -105,10 +107,10 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
     } else if (screenWidth < desktopBreak && desktop != null) {
       return desktop;
     }
-    
+
     return defaultValue;
   }
-  
+
   /// Obtiene un padding responsive
   EdgeInsets responsivePadding({
     EdgeInsets? mobile,
@@ -123,7 +125,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? const EdgeInsets.all(40),
     );
   }
-  
+
   /// Obtiene un margin responsive
   EdgeInsets responsiveMargin({
     EdgeInsets? mobile,
@@ -138,7 +140,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? const EdgeInsets.all(20),
     );
   }
-  
+
   /// Obtiene un font size responsive
   double responsiveFontSize({
     double? mobile,
@@ -154,7 +156,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? baseFontSize * 1.3,
     );
   }
-  
+
   /// Obtiene un spacing responsive
   double responsiveSpacing({
     double? mobile,
@@ -169,11 +171,11 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? 20,
     );
   }
-  
+
   // ==========================================
   // MÉTODOS DE LAYOUT RESPONSIVE
   // ==========================================
-  
+
   /// Obtiene el número de columnas para un grid responsive
   int responsiveColumns({
     int? mobile,
@@ -188,7 +190,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? 4,
     );
   }
-  
+
   /// Obtiene el cross axis count para un GridView
   int responsiveCrossAxisCount({
     int? mobile,
@@ -200,14 +202,16 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
     if (itemWidth != null) {
       // Calcula automáticamente basado en el ancho del item
       final columns = (screenWidth / itemWidth).floor();
-      return columns.clamp(1, responsive(
-        mobile: mobile ?? 2,
-        tablet: tablet ?? 4,
-        desktop: desktop ?? 6,
-        largeDesktop: largeDesktop ?? 8,
-      ));
+      return columns.clamp(
+          1,
+          responsive(
+            mobile: mobile ?? 2,
+            tablet: tablet ?? 4,
+            desktop: desktop ?? 6,
+            largeDesktop: largeDesktop ?? 8,
+          ));
     }
-    
+
     return responsiveColumns(
       mobile: mobile,
       tablet: tablet,
@@ -215,7 +219,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop,
     );
   }
-  
+
   /// Obtiene un aspect ratio responsive
   double responsiveAspectRatio({
     double? mobile,
@@ -230,7 +234,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? 1.6,
     );
   }
-  
+
   /// Obtiene un ancho máximo responsive
   double responsiveMaxWidth({
     double? mobile,
@@ -245,14 +249,15 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       largeDesktop: largeDesktop ?? 1200,
     );
   }
-  
+
   // ==========================================
   // WIDGETS RESPONSIVE
   // ==========================================
-  
+
   /// Widget que se adapta automáticamente al tamaño de pantalla
   Widget responsiveBuilder({
-    required Widget Function(BuildContext context, DeviceType deviceType) builder,
+    required Widget Function(BuildContext context, DeviceType deviceType)
+        builder,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -260,7 +265,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       },
     );
   }
-  
+
   /// Widget que muestra diferentes layouts según el dispositivo
   Widget responsiveLayout({
     required Widget mobile,
@@ -283,7 +288,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       },
     );
   }
-  
+
   /// Widget wrapper que aplica padding responsive
   Widget responsiveContainer({
     required Widget child,
@@ -296,9 +301,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
   }) {
     return Container(
       width: double.infinity,
-      constraints: maxWidth != null 
-          ? BoxConstraints(maxWidth: maxWidth)
-          : null,
+      constraints: maxWidth != null ? BoxConstraints(maxWidth: maxWidth) : null,
       padding: responsivePadding(
         mobile: mobilePadding,
         tablet: tabletPadding,
@@ -311,7 +314,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       child: child,
     );
   }
-  
+
   /// Widget que crea un grid responsive
   Widget responsiveGrid({
     required List<Widget> children,
@@ -329,7 +332,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       desktop: desktopColumns,
       largeDesktop: largeDesktopColumns,
     );
-    
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -343,7 +346,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       itemBuilder: (context, index) => children[index],
     );
   }
-  
+
   /// Widget que crea una lista responsive (vertical u horizontal)
   Widget responsiveList({
     required List<Widget> children,
@@ -354,7 +357,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
   }) {
     final shouldBeVertical = forceMobileVertical == true && isMobile;
     final actualSpacing = spacing ?? responsiveSpacing();
-    
+
     if (shouldBeVertical || isPortrait) {
       return Column(
         mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
@@ -388,17 +391,17 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       );
     }
   }
-  
+
   // ==========================================
   // UTILIDADES DE CÁLCULO
   // ==========================================
-  
+
   /// Calcula el ancho disponible considerando padding
   double get availableWidth {
     final padding = responsivePadding();
     return screenWidth - padding.horizontal;
   }
-  
+
   /// Calcula el alto disponible considerando padding y safe area
   double get availableHeight {
     final padding = responsivePadding();
@@ -406,28 +409,28 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
     final safeAreaHeight = mediaQuery.padding.top + mediaQuery.padding.bottom;
     return screenHeight - padding.vertical - safeAreaHeight;
   }
-  
+
   /// Calcula si un ancho es suficiente para mostrar elementos
   bool hasEnoughWidth(double requiredWidth) {
     return availableWidth >= requiredWidth;
   }
-  
+
   /// Calcula el número óptimo de columnas basado en ancho mínimo de item
   int calculateOptimalColumns(double minItemWidth, {int maxColumns = 6}) {
     final columns = (availableWidth / minItemWidth).floor();
     return columns.clamp(1, maxColumns);
   }
-  
+
   /// Calcula si debe mostrar sidebar basado en el ancho disponible
   bool get shouldShowSidebar => isDesktop && availableWidth > 1000;
-  
+
   /// Calcula si debe usar layout compacto
   bool get shouldUseCompactLayout => isMobile || (isTablet && isPortrait);
-  
+
   // ==========================================
   // MÉTODOS DE ANIMACIÓN RESPONSIVE
   // ==========================================
-  
+
   /// Duración de animación basada en el dispositivo
   Duration get responsiveAnimationDuration {
     return responsive(
@@ -436,7 +439,7 @@ mixin ResponsiveMixin<T extends StatefulWidget> on State<T> {
       desktop: const Duration(milliseconds: 300),
     );
   }
-  
+
   /// Curva de animación basada en el dispositivo
   Curve get responsiveAnimationCurve {
     return responsive(
@@ -457,7 +460,6 @@ enum DeviceType {
 
 /// Extension para obtener información del DeviceType
 extension DeviceTypeExtension on DeviceType {
-  
   /// Nombre legible del tipo de dispositivo
   String get displayName {
     switch (this) {
@@ -471,40 +473,40 @@ extension DeviceTypeExtension on DeviceType {
         return 'Escritorio Grande';
     }
   }
-  
+
   /// Verifica si es móvil
   bool get isMobile => this == DeviceType.mobile;
-  
+
   /// Verifica si es tablet
   bool get isTablet => this == DeviceType.tablet;
-  
+
   /// Verifica si es desktop (cualquier tamaño)
-  bool get isDesktop => this == DeviceType.desktop || this == DeviceType.largeDesktop;
-  
+  bool get isDesktop =>
+      this == DeviceType.desktop || this == DeviceType.largeDesktop;
+
   /// Verifica si es desktop pequeño
   bool get isSmallDesktop => this == DeviceType.desktop;
-  
+
   /// Verifica si es desktop grande
   bool get isLargeDesktop => this == DeviceType.largeDesktop;
-  
+
   /// Verifica si soporta hover
   bool get supportsHover => isDesktop;
-  
+
   /// Verifica si debe mostrar tooltips
   bool get shouldShowTooltips => isDesktop;
-  
+
   /// Verifica si debe usar gestos touch
   bool get supportsTouchGestures => isMobile || isTablet;
 }
 
 /// Mixin para detección de orientación
 mixin OrientationMixin<T extends StatefulWidget> on State<T> {
-  
   /// Callback que se ejecuta cuando cambia la orientación
   void onOrientationChanged(Orientation orientation) {
     // Override en la clase que usa el mixin
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -515,23 +517,22 @@ mixin OrientationMixin<T extends StatefulWidget> on State<T> {
 
 /// Mixin para detección de cambios de tamaño
 mixin SizeChangeMixin<T extends StatefulWidget> on State<T> {
-  
   Size? _previousSize;
-  
+
   /// Callback que se ejecuta cuando cambia el tamaño
   void onSizeChanged(Size oldSize, Size newSize) {
     // Override en la clase que usa el mixin
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final currentSize = MediaQuery.of(context).size;
-    
+
     if (_previousSize != null && _previousSize != currentSize) {
       onSizeChanged(_previousSize!, currentSize);
     }
-    
+
     _previousSize = currentSize;
     super.didChangeDependencies();
   }
@@ -539,7 +540,6 @@ mixin SizeChangeMixin<T extends StatefulWidget> on State<T> {
 
 /// Utilidades estáticas para responsive design
 class ResponsiveUtils {
-  
   /// Calcula el ancho óptimo para un item en un grid
   static double calculateItemWidth(
     double screenWidth,
@@ -551,16 +551,16 @@ class ResponsiveUtils {
     final totalSpacing = spacing * (columns - 1);
     return (availableWidth - totalSpacing) / columns;
   }
-  
+
   /// Determina si una pantalla es considerada pequeña
   static bool isSmallScreen(double width) => width < 600;
-  
+
   /// Determina si una pantalla es considerada mediana
   static bool isMediumScreen(double width) => width >= 600 && width < 1200;
-  
+
   /// Determina si una pantalla es considerada grande
   static bool isLargeScreen(double width) => width >= 1200;
-  
+
   /// Obtiene el DeviceType basado en el ancho
   static DeviceType getDeviceType(double width) {
     if (width < 600) return DeviceType.mobile;
@@ -568,7 +568,7 @@ class ResponsiveUtils {
     if (width < 1600) return DeviceType.desktop;
     return DeviceType.largeDesktop;
   }
-  
+
   /// Calcula el número de columnas recomendado para un ancho dado
   static int getRecommendedColumns(double width) {
     if (width < 600) return 1;

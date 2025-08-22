@@ -5,16 +5,17 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../providers/auth_provider.dart';
-import '../providers/theme_data_app_provider.dart';
-import 'login_page.dart';
+import '../../../presentation/pages/login_page.dart';
+import '../../../presentation/providers/auth_provider.dart';
 import 'dart:ui';
+
+import '../../../presentation/providers/theme_data_app_provider.dart';
 
 /// Clase helper para colores del AppBar optimizada
 class _AppBarColors {
   final Color background;
   final Color accent;
-  
+
   const _AppBarColors({required this.background, required this.accent});
 }
 
@@ -27,18 +28,17 @@ class AppPresentationPage extends StatefulWidget {
   State<AppPresentationPage> createState() => _AppPresentationPageState();
 }
 
-class _AppPresentationPageState extends State<AppPresentationPage> 
+class _AppPresentationPageState extends State<AppPresentationPage>
     with TickerProviderStateMixin {
-  
   // Controllers optimizados con inicialización diferida
   late final ScrollController _scrollController;
-  
+
   // Variables de estado con tipos explícitos para mejor performance
   bool _isScrolled = false;
-  
+
   // Colores calculados una sola vez y cacheados
   late Color _backgroundContainerColor;
-  
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +65,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
       setState(() => _isScrolled = isScrolled);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -72,11 +73,11 @@ class _AppPresentationPageState extends State<AppPresentationPage>
     final isDark = theme.brightness == Brightness.dark;
     final mediaQuery = MediaQuery.of(context);
     final screenSize = mediaQuery.size;
-    
+
     // Cálculo optimizado de colores con cache
     _backgroundContainerColor = _getBackgroundColor(isDark);
     final appBarColors = _calculateAppBarColors(colorScheme, isDark);
-    
+
     return Title(
       title: 'Bienvenido - Sell Web',
       color: colorScheme.primary,
@@ -89,7 +90,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           colorScheme: colorScheme,
           appbarColor: appBarColors.background,
           accentAppbarColor: appBarColors.accent,
-          onLoginTap: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)),
+          onLoginTap: () => _navigateToLogin(
+              context, Provider.of<AuthProvider>(context, listen: false)),
         ),
         body: _buildBody(context, screenSize, theme),
       ),
@@ -98,23 +100,19 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
   /// Método optimizado para obtener color de fondo con cache
   Color _getBackgroundColor(bool isDark) {
-    return isDark 
-        ? const Color.fromARGB(255, 24, 24, 24)
-        : Colors.white;
+    return isDark ? const Color.fromARGB(255, 24, 24, 24) : Colors.white;
   }
 
   /// Cálculo optimizado de colores del AppBar
   _AppBarColors _calculateAppBarColors(ColorScheme colorScheme, bool isDark) {
     final accent = _isScrolled
-        ? (isDark 
+        ? (isDark
             ? colorScheme.primary.withValues(alpha: 0.9)
             : colorScheme.primary.withValues(alpha: 0.85))
-        : (isDark 
-            ? Colors.white.withValues(alpha: 0.95)
-            : Colors.white);
-            
+        : (isDark ? Colors.white.withValues(alpha: 0.95) : Colors.white);
+
     final background = _isScrolled
-        ? (isDark 
+        ? (isDark
             ? colorScheme.surface.withValues(alpha: 0.85)
             : Colors.white.withValues(alpha: 0.9))
         : Colors.transparent;
@@ -133,7 +131,9 @@ class _AppPresentationPageState extends State<AppPresentationPage>
             child: RepaintBoundary(
               child: CustomPaint(
                 painter: _DynamicBackgroundPainter(
-                  scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0.0,
+                  scrollOffset: _scrollController.hasClients
+                      ? _scrollController.offset
+                      : 0.0,
                   primaryColor: theme.colorScheme.primary,
                   isDark: theme.brightness == Brightness.dark,
                   isMobile: screenSize.width < ResponsiveBreakpoints.mobile,
@@ -160,7 +160,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   Widget _buildMobileLayout(BuildContext context) {
     return Column(
       children: [
-        _buildHeroSection(context), 
+        _buildHeroSection(context),
         const SizedBox(height: 100),
         _buildFeaturesSection(context, axis: Axis.vertical),
         const SizedBox(height: 50),
@@ -174,7 +174,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   Widget _buildLargeScreenLayout(BuildContext context, double width) {
     // Espaciado dinámico basado en el tamaño de pantalla
     final bool isDesktop = width >= ResponsiveBreakpoints.desktop;
-    
+
     return Column(
       children: [
         _buildHeroSection(context),
@@ -198,18 +198,21 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
     // Constantes para alineación perfecta entre clipper y dispositivo
     final deviceImageTopPadding = isMobile ? 40.0 : 60.0;
-    final waveClipperOffset = deviceImageTopPadding; // Mismo valor para perfecta alineación 
-    double spaceAdictional = isMobile? 200 : 300; // Espacio adicional para evitar desbordamiento en pantallas grandes
+    final waveClipperOffset =
+        deviceImageTopPadding; // Mismo valor para perfecta alineación
+    double spaceAdictional = isMobile
+        ? 200
+        : 300; // Espacio adicional para evitar desbordamiento en pantallas grandes
 
     return SizedBox(
       width: double.infinity,
-      height: screenHeight + spaceAdictional ,
+      height: screenHeight + spaceAdictional,
       child: Stack(
         fit: StackFit.expand,
-        children: [ 
+        children: [
           // view : fondo con clipper y gradiente
           Padding(
-            padding: EdgeInsets.only(bottom:spaceAdictional),
+            padding: EdgeInsets.only(bottom: spaceAdictional),
             child: ClipPath(
               clipper: WaveClipper(
                 isMobile: isMobile,
@@ -244,7 +247,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                                 : [
                                     // Modo claro - mantener los amarillos pero más suaves
                                     Colors.amber.shade300,
-                                    Colors.amber.shade400.withValues(alpha: 0.9),
+                                    Colors.amber.shade400
+                                        .withValues(alpha: 0.9),
                                     Colors.amber.shade300,
                                     Colors.amber,
                                   ],
@@ -281,8 +285,10 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                                   ]
                                 : [
                                     // Modo claro - gradiente amarillo suave
-                                    Colors.amber.shade200.withValues(alpha: 0.8),
-                                    Colors.amber.shade300.withValues(alpha: 0.4),
+                                    Colors.amber.shade200
+                                        .withValues(alpha: 0.8),
+                                    Colors.amber.shade300
+                                        .withValues(alpha: 0.4),
                                     Colors.amber.shade300,
                                     Colors.amber.shade300,
                                   ],
@@ -301,7 +307,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                               ? 22
                               : 180, // Más espacio para acomodar las imágenes con texto
                         ),
-                        child: _buildHeroContentOnly(context, theme, colorScheme),
+                        child:
+                            _buildHeroContentOnly(context, theme, colorScheme),
                       ),
                     ),
                   ],
@@ -313,15 +320,19 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           Positioned(
             bottom: 0, // Posicionar exactamente en el fondo
             left: 0,
-            right: 0, 
+            right: 0,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               height: isMobile ? screenHeight * 0.40 : screenHeight * 0.60,
-              alignment: Alignment.bottomCenter, // Alinear al fondo del contenedor
+              alignment:
+                  Alignment.bottomCenter, // Alinear al fondo del contenedor
               child: Padding(
                 padding: EdgeInsets.only(
-                  bottom: isMobile ? 20 : 30, // Solo padding inferior para separar del borde
-                  right: isMobile ? 33 : 0, // Padding derecho en pantallas grandes
+                  bottom: isMobile
+                      ? 20
+                      : 30, // Solo padding inferior para separar del borde
+                  right:
+                      isMobile ? 33 : 0, // Padding derecho en pantallas grandes
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -332,11 +343,13 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                       deviceId: 'mobile_device',
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot00.png',
-                      zoomFactor: 1.6, // Zoom más moderado para móvil 
-                      onTap: _launchPlayStore, // Abrir Play Store al tocar el dispositivo móvil
+                      zoomFactor: 1.6, // Zoom más moderado para móvil
+                      onTap:
+                          _launchPlayStore, // Abrir Play Store al tocar el dispositivo móvil
                       actionWidget: Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
@@ -361,15 +374,26 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                       deviceId: 'web_device',
                       screenWidth: screenWidth,
                       assetPath: 'assets/screenshot06.png',
-                      zoomFactor: 2.0, // Zoom más pronunciado para desktop 
-                      onTap: () => _navigateToLogin(context, Provider.of<AuthProvider>(context, listen: false)), // Navegar al login al tocar el dispositivo web
+                      zoomFactor: 2.0, // Zoom más pronunciado para desktop
+                      onTap: () => _navigateToLogin(
+                          context,
+                          Provider.of<AuthProvider>(context,
+                              listen:
+                                  false)), // Navegar al login al tocar el dispositivo web
                       actionWidget: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -400,7 +424,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   Widget _buildHeroContentOnly(
       BuildContext context, ThemeData theme, ColorScheme colorScheme) {
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -412,7 +436,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           style: theme.textTheme.displayLarge?.copyWith(
             fontWeight: FontWeight.w800,
             fontSize: 40,
-            letterSpacing: -0.5, 
+            letterSpacing: -0.5,
           ),
         ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 16),
@@ -433,7 +457,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           textAlign: TextAlign.center,
           typingSpeed: const Duration(milliseconds: 100),
           pauseDuration: const Duration(milliseconds: 2500),
-          backspacingSpeed: const Duration(milliseconds: 25), // Más rápido: de 50ms a 25ms
+          backspacingSpeed:
+              const Duration(milliseconds: 25), // Más rápido: de 50ms a 25ms
           showCursor: true,
         ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 20),
@@ -441,13 +466,13 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           'Tu negocio necesita un cambio, agilizá tu proceso de ventas fácil, rápido y controla tu inventario desde cualquier lugar',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: isDark 
+            color: isDark
                 ? colorScheme.onSurface.withValues(alpha: 0.85)
                 : colorScheme.onSurface.withValues(alpha: 0.9),
             fontWeight: FontWeight.w500,
             height: 1.6,
             fontSize: 18,
-            shadows: isDark 
+            shadows: isDark
                 ? null
                 : [
                     Shadow(
@@ -457,7 +482,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                     ),
                   ],
           ),
-        ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3), 
+        ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideX(begin: -0.3),
         const SizedBox(height: 50),
         // buttons : acciones principales
         Wrap(
@@ -466,7 +491,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           runSpacing: 16,
           children: [
             AppButton(
-              borderRadius:5,
+              borderRadius: 5,
               text: 'Play Store',
               icon: Image.asset('assets/playstore.png', width: 20, height: 20),
               backgroundColor: Colors.black,
@@ -474,7 +499,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
             ),
             const SizedBox(height: 16),
             AppButton(
-              borderRadius:5,
+              borderRadius: 5,
               text: 'Comenzar Ahora',
               icon: Icon(Icons.auto_fix_high_outlined),
               backgroundColor: Colors.white,
@@ -483,7 +508,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                   context, Provider.of<AuthProvider>(context, listen: false)),
             ).animate(delay: 600.ms).fadeIn(duration: 600.ms),
           ],
-        ), 
+        ),
       ],
     );
   }
@@ -497,19 +522,21 @@ class _AppPresentationPageState extends State<AppPresentationPage>
     final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
 
     return SizedBox(
-      width: double.infinity, 
+      width: double.infinity,
       child: Column(
         children: [
           _buildFeaturesHeader(theme, colorScheme, isMobile),
           SizedBox(height: isMobile ? 48 : 80),
-          _buildFeaturesGrid(_getFeatureData(), theme, colorScheme, isDark, isMobile, axis),
+          _buildFeaturesGrid(
+              _getFeatureData(), theme, colorScheme, isDark, isMobile, axis),
         ],
       ),
     );
   }
 
   /// Header optimizado de características con widgets const donde sea posible
-  Widget _buildFeaturesHeader(ThemeData theme, ColorScheme colorScheme, bool isMobile) {
+  Widget _buildFeaturesHeader(
+      ThemeData theme, ColorScheme colorScheme, bool isMobile) {
     return Column(
       children: [
         Container(
@@ -547,10 +574,11 @@ class _AppPresentationPageState extends State<AppPresentationPage>
               const SizedBox(width: 20),
             ],
           ),
-        ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
-        
+        )
+            .animate()
+            .fadeIn(duration: 600.ms)
+            .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
         SizedBox(height: isMobile ? 24 : 32),
-        
         Text(
           'Todo lo que necesitas para\nhacer crecer tu negocio',
           style: theme.textTheme.headlineLarge?.copyWith(
@@ -560,10 +588,11 @@ class _AppPresentationPageState extends State<AppPresentationPage>
             fontSize: isMobile ? 28 : 48,
           ),
           textAlign: TextAlign.center,
-        ).animate(delay: 200.ms).fadeIn(duration: 800.ms).slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
-        
+        )
+            .animate(delay: 200.ms)
+            .fadeIn(duration: 800.ms)
+            .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
         SizedBox(height: isMobile ? 16 : 20),
-        
         Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 600,
@@ -578,7 +607,10 @@ class _AppPresentationPageState extends State<AppPresentationPage>
             ),
             textAlign: TextAlign.center,
           ),
-        ).animate(delay: 400.ms).fadeIn(duration: 800.ms).slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
+        )
+            .animate(delay: 400.ms)
+            .fadeIn(duration: 800.ms)
+            .slideY(begin: 0.3, end: 0.0, curve: Curves.easeOut),
       ],
     );
   }
@@ -588,20 +620,21 @@ class _AppPresentationPageState extends State<AppPresentationPage>
     _FeatureData(
       icon: Icons.point_of_sale_outlined,
       title: 'Punto de venta fácil de usar',
-      description: 'Sistema de ventas que combina escritorio y móvil, convirtiendo cualquier ubicación en tu punto de venta principal',
+      description:
+          'Sistema de ventas que combina escritorio y móvil, convirtiendo cualquier ubicación en tu punto de venta principal',
       checkItems: [
         'Interfaz intuitiva',
-        'Gestión del flujo de caja', 
+        'Gestión del flujo de caja',
         'Tickets digitales o impresos',
-        'Aplica descuentos y promociones', 
+        'Aplica descuentos y promociones',
         'Reportes y analytics en tiempo real',
       ],
-      benefit: 'Aumenta la velocidad de ventas 78%', 
+      benefit: 'Aumenta la velocidad de ventas 78%',
       color: Colors.amber,
       imageAsset: 'assets/screenshot00.png',
       imageOnRight: false,
       category: 'Punto de Venta',
-      ctaText: 'Probar Demo de Ventas', 
+      ctaText: 'Probar Demo de Ventas',
     ),
     _FeatureData(
       icon: Icons.inventory_2_outlined,
@@ -613,28 +646,29 @@ class _AppPresentationPageState extends State<AppPresentationPage>
         'Alertas de stock mínimo o agotado',
         'Gestión de categorías',
       ],
-      benefit: 'Reduce pérdidas por stock en 68%', 
+      benefit: 'Reduce pérdidas por stock en 68%',
       color: const Color(0xFF059669),
       imageAsset: 'assets/screenshot02.png',
       imageOnRight: true,
       category: 'Control de Stock',
-      ctaText: 'Explorar Inventario', 
+      ctaText: 'Explorar Inventario',
     ),
     _FeatureData(
       icon: Icons.analytics_outlined,
       title: 'Reportes y analíticas',
-      description: 'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura desde cualquier lugar',
+      description:
+          'Accede en donde sea, cuando sea a tus analíticas y reportes guardados de forma segura desde cualquier lugar',
       checkItems: [
         'Productos populares',
         'Sigue tendencias de ventas',
-        'Ventas por empleado',  
+        'Ventas por empleado',
       ],
-      benefit: 'Mejora decisiones estratégicas en 83%', 
+      benefit: 'Mejora decisiones estratégicas en 83%',
       color: Colors.indigo,
       imageAsset: 'assets/screenshot04.png',
       imageOnRight: false,
       category: 'Business Intelligence',
-      ctaText: 'Ver Reportes Avanzados', 
+      ctaText: 'Ver Reportes Avanzados',
     ),
   ];
 
@@ -651,7 +685,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   ) {
     // Determinar si usar layout horizontal basado en el eje y tamaño de pantalla
     final bool useHorizontalLayout = axis == Axis.horizontal && !isMobile;
-    
+
     return Column(
       children: features
           .asMap()
@@ -659,7 +693,9 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           .expand((entry) => [
                 _ModernFeatureCard(
                   feature: entry.value,
-                  delay: Duration(milliseconds: entry.key * (useHorizontalLayout ? 300 : 200)),
+                  delay: Duration(
+                      milliseconds:
+                          entry.key * (useHorizontalLayout ? 300 : 200)),
                   isFullWidth: useHorizontalLayout,
                   featureIndex: entry.key,
                 ),
@@ -1015,7 +1051,6 @@ class _AppPresentationPageState extends State<AppPresentationPage>
       debugPrint('Error al abrir Play Store: $e');
     }
   }
- 
 }
 
 // TypewriterText : Widget para texto de máquina de escribir con cursor animado
@@ -1045,6 +1080,7 @@ class TypewriterText extends StatefulWidget {
   @override
   State<TypewriterText> createState() => _TypewriterTextState();
 }
+
 class _TypewriterTextState extends State<TypewriterText>
     with TickerProviderStateMixin {
   // Variables de estado para el efecto de máquina de escribir
@@ -1098,19 +1134,19 @@ class _TypewriterTextState extends State<TypewriterText>
     final current = widget.texts[_textIndex];
     final visible = current.substring(0, _charCount);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     // Calcular el tamaño del cursor basado en el tamaño del texto
     final textStyle = widget.style ?? Theme.of(context).textTheme.bodyMedium!;
     final fontSize = textStyle.fontSize ?? 14.0;
     final cursorSize = fontSize * 0.6; // Ajustado para mejor visibilidad
-    
+
     // Obtener color del texto del estilo
     final textColor = textStyle.color ?? colorScheme.onSurface;
     final cursorColor = widget.cursorColor ?? textColor;
-    
+
     // Calcular altura máxima necesaria para evitar movimiento de widgets
     final maxHeight = _calculateMaxHeight(context, textStyle);
-    
+
     // Crear TextSpan con el cursor integrado
     final textSpan = TextSpan(
       children: [
@@ -1123,7 +1159,8 @@ class _TypewriterTextState extends State<TypewriterText>
         if (widget.showCursor)
           WidgetSpan(
             child: Container(
-              margin: const EdgeInsets.only(left: 2, bottom: 2), // Margen mínimo para separación
+              margin: const EdgeInsets.only(
+                  left: 2, bottom: 2), // Margen mínimo para separación
               width: cursorSize,
               height: cursorSize,
               decoration: BoxDecoration(
@@ -1136,7 +1173,7 @@ class _TypewriterTextState extends State<TypewriterText>
           ),
       ],
     );
-    
+
     // Contenedor con altura fija para evitar movimiento de widgets
     return SizedBox(
       height: maxHeight,
@@ -1156,7 +1193,7 @@ class _TypewriterTextState extends State<TypewriterText>
   double _calculateMaxHeight(BuildContext context, TextStyle textStyle) {
     final screenWidth = MediaQuery.of(context).size.width;
     double maxHeight = 0.0;
-    
+
     // Calcular altura para cada texto en la lista
     for (final text in widget.texts) {
       final textPainter = TextPainter(
@@ -1164,16 +1201,17 @@ class _TypewriterTextState extends State<TypewriterText>
         textDirection: TextDirection.ltr,
         textAlign: widget.textAlign ?? TextAlign.start,
       );
-      
+
       // Usar un ancho máximo basado en el contexto disponible
-      final maxWidth = screenWidth * 0.9; // 90% del ancho de pantalla como máximo
+      final maxWidth =
+          screenWidth * 0.9; // 90% del ancho de pantalla como máximo
       textPainter.layout(maxWidth: maxWidth);
-      
+
       if (textPainter.height > maxHeight) {
         maxHeight = textPainter.height;
       }
     }
-    
+
     // Agregar padding adicional para el cursor y márgenes
     return maxHeight + 20; // 20px de padding adicional
   }
@@ -1195,7 +1233,7 @@ class _DeviceScrollWidget extends StatefulWidget {
     required this.screenWidth,
     required this.scrollController,
     required this.assetPath,
-    required this.actionWidget, 
+    required this.actionWidget,
     this.zoomFactor = 1.8, // Factor de zoom por defecto
     this.onTap, // Callback opcional para manejar taps
   });
@@ -1203,6 +1241,7 @@ class _DeviceScrollWidget extends StatefulWidget {
   @override
   State<_DeviceScrollWidget> createState() => _DeviceScrollWidgetState();
 }
+
 class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
   // Variables de estado para animaciones de visibilidad y zoom
   bool isVisible = false;
@@ -1230,24 +1269,26 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
       final position = renderBox.localToGlobal(Offset.zero);
       final size = renderBox.size;
       final screenHeight = MediaQuery.of(context).size.height;
-      
+
       // Verificar si el widget está visible en el viewport
       final visibilityMargin = screenHeight * 0.1;
-      final isCurrentlyVisible = position.dy < (screenHeight + visibilityMargin) && 
-          (position.dy + size.height) > -visibilityMargin;
+      final isCurrentlyVisible =
+          position.dy < (screenHeight + visibilityMargin) &&
+              (position.dy + size.height) > -visibilityMargin;
 
       // Zona de zoom simplificada
       // Zona de zoom más simple y efectiva
       final centerY = screenHeight / 2;
       final widgetCenterY = position.dy + (size.height / 2);
-      
+
       // Zona de zoom centrada en el viewport
       final zoomZoneHeight = screenHeight * 0.6; // 60% de la pantalla
       final zoomZoneTop = centerY - (zoomZoneHeight / 2);
       final zoomZoneBottom = centerY + (zoomZoneHeight / 2);
-      
+
       // Verificar si el centro del widget está en la zona de zoom
-      final isInZoomZone = widgetCenterY >= zoomZoneTop && widgetCenterY <= zoomZoneBottom;
+      final isInZoomZone =
+          widgetCenterY >= zoomZoneTop && widgetCenterY <= zoomZoneBottom;
 
       if (isCurrentlyVisible != isVisible || isInZoomZone != isZoomed) {
         setState(() {
@@ -1259,19 +1300,19 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
       debugPrint('Error en _onScroll: $e');
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
-    final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile; 
-    
+    final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile;
+
     // Calcular dimensiones basadas solo en screenWidth
     final widgetWidth = _calculateWidth(widget.screenWidth, isMobile);
     final widgetHeight = _calculateHeight(widget.screenWidth, isMobile);
-    
+
     // Altura para el actionWidget
     final actionWidgetHeight = isMobile ? 32.0 : 40.0;
     final imageContainerHeight = widgetHeight - actionWidgetHeight - 8;
-    
+
     // Aplicar zoom cuando está en la zona de zoom
     final scale = isZoomed ? widget.zoomFactor : 1.0;
 
@@ -1311,9 +1352,9 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // ActionWidget
             Container(
               height: actionWidgetHeight,
@@ -1419,24 +1460,24 @@ class _FeatureData {
   final String title;
   final String description;
   final List<String>? checkItems;
-  final String? benefit; 
+  final String? benefit;
   final Color? color;
   final String? imageAsset;
   final bool imageOnRight;
   final String? category; // Nueva: categoría para agrupación
-  final String? ctaText; // Nueva: texto de call to action 
+  final String? ctaText; // Nueva: texto de call to action
 
   _FeatureData({
     required this.icon,
     required this.title,
     required this.description,
     this.checkItems,
-    this.benefit, 
+    this.benefit,
     this.color,
     this.imageAsset,
     this.imageOnRight = true,
     this.category,
-    this.ctaText, 
+    this.ctaText,
   });
 }
 
@@ -1482,14 +1523,15 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
     return _buildDesktopLayout(theme, colorScheme, isDark);
   }
 
-  Widget _buildMobileLayout(ThemeData theme, ColorScheme colorScheme, bool isDark) {
+  Widget _buildMobileLayout(
+      ThemeData theme, ColorScheme colorScheme, bool isDark) {
     // Colores de fondo diferenciados para cada feature
     final backgroundColors = [
-      widget.feature.color?.withValues(alpha: isDark ? 0.08 : 0.05) ?? 
+      widget.feature.color?.withValues(alpha: isDark ? 0.08 : 0.05) ??
           colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
-      widget.feature.color?.withValues(alpha: isDark ? 0.06 : 0.04) ?? 
+      widget.feature.color?.withValues(alpha: isDark ? 0.06 : 0.04) ??
           colorScheme.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
-      widget.feature.color?.withValues(alpha: isDark ? 0.07 : 0.045) ?? 
+      widget.feature.color?.withValues(alpha: isDark ? 0.07 : 0.045) ??
           colorScheme.tertiary.withValues(alpha: isDark ? 0.07 : 0.045),
     ];
 
@@ -1498,18 +1540,18 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        transform: Matrix4.identity()
-          ..translate(0.0, _isHovered ? -4.0 : 0.0),
+        transform: Matrix4.identity()..translate(0.0, _isHovered ? -4.0 : 0.0),
         decoration: BoxDecoration(
-          color: backgroundColors[widget.featureIndex % backgroundColors.length], 
-        ),  
+          color:
+              backgroundColors[widget.featureIndex % backgroundColors.length],
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 50),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Contenido de características
             _buildFeatureContent(theme, colorScheme, isDark),
-            
+
             // Imagen abajo en móvil
             if (widget.feature.imageAsset != null) ...[
               const SizedBox(height: 32),
@@ -1521,14 +1563,15 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
     ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
   }
 
-  Widget _buildDesktopLayout(ThemeData theme, ColorScheme colorScheme, bool isDark) {
+  Widget _buildDesktopLayout(
+      ThemeData theme, ColorScheme colorScheme, bool isDark) {
     // Colores de fondo diferenciados para cada feature
     final backgroundColors = [
-      widget.feature.color?.withValues(alpha: isDark ? 0.08 : 0.05) ?? 
+      widget.feature.color?.withValues(alpha: isDark ? 0.08 : 0.05) ??
           colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
-      widget.feature.color?.withValues(alpha: isDark ? 0.06 : 0.04) ?? 
+      widget.feature.color?.withValues(alpha: isDark ? 0.06 : 0.04) ??
           colorScheme.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
-      widget.feature.color?.withValues(alpha: isDark ? 0.07 : 0.045) ?? 
+      widget.feature.color?.withValues(alpha: isDark ? 0.07 : 0.045) ??
           colorScheme.tertiary.withValues(alpha: isDark ? 0.07 : 0.045),
     ];
 
@@ -1537,10 +1580,10 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        transform: Matrix4.identity()
-          ..translate(0.0, _isHovered ? -6.0 : 0.0),
+        transform: Matrix4.identity()..translate(0.0, _isHovered ? -6.0 : 0.0),
         decoration: BoxDecoration(
-          color: backgroundColors[widget.featureIndex % backgroundColors.length], 
+          color:
+              backgroundColors[widget.featureIndex % backgroundColors.length],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 30),
         child: Row(
@@ -1579,7 +1622,8 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
     ).animate(delay: widget.delay).fadeIn(duration: 600.ms).slideY(begin: 0.3);
   }
 
-  Widget _buildFeatureContent(ThemeData theme, ColorScheme colorScheme, bool isDark) {
+  Widget _buildFeatureContent(
+      ThemeData theme, ColorScheme colorScheme, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1642,58 +1686,56 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
         if (widget.feature.checkItems != null &&
             widget.feature.checkItems!.isNotEmpty) ...[
           const SizedBox(height: 24),
-          ...widget.feature.checkItems!
-              .map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          margin: const EdgeInsets.only(top: 2),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                (widget.feature.color ?? const Color(0xFF4F46E5))
-                                    .withValues(alpha: 0.2),
-                                (widget.feature.color ?? const Color(0xFF4F46E5))
-                                    .withValues(alpha: 0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: (widget.feature.color ?? const Color(0xFF4F46E5))
+          ...widget.feature.checkItems!.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            (widget.feature.color ?? const Color(0xFF4F46E5))
+                                .withValues(alpha: 0.2),
+                            (widget.feature.color ?? const Color(0xFF4F46E5))
+                                .withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color:
+                              (widget.feature.color ?? const Color(0xFF4F46E5))
                                   .withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.check_rounded,
-                            size: 16,
-                            color: widget.feature.color ?? const Color(0xFF4F46E5),
-                          ),
+                          width: 1,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            item,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface
-                                  .withValues(alpha: 0.8),
-                              fontWeight: FontWeight.w500,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                      child: Icon(
+                        Icons.check_rounded,
+                        size: 16,
+                        color: widget.feature.color ?? const Color(0xFF4F46E5),
+                      ),
                     ),
-                  ))
-              ,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
         ],
 
         // Estadísticas y beneficios
-        if ( widget.feature.benefit != null) ...[
+        if (widget.feature.benefit != null) ...[
           const SizedBox(height: 32),
           Wrap(
             spacing: 16,
@@ -1701,7 +1743,8 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
             children: [
               if (widget.feature.benefit != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -1724,10 +1767,10 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                       Text(
                         widget.feature.benefit!,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: widget.feature.color ?? const Color(0xFF4F46E5),
-                          fontWeight: FontWeight.w900, 
-                          fontSize: 14
-                        ),
+                            color:
+                                widget.feature.color ?? const Color(0xFF4F46E5),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14),
                       ),
                       const SizedBox(width: 8),
                       Icon(
@@ -1737,10 +1780,9 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
                       ),
                     ],
                   ),
-                ), 
+                ),
             ],
           ),
-          
         ],
       ],
     );
@@ -1749,11 +1791,11 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
   Widget _buildFeatureImage({bool isMobile = false}) {
     // Dimensiones optimizadas para mostrar dispositivos móviles completos
     // Móvil: 280x160 - Desktop: 380x220 para mantener proporciones de dispositivo
-    final containerHeight = isMobile ? 350.0 : 450.0; 
-    
+    final containerHeight = isMobile ? 350.0 : 450.0;
+
     return Container(
-      height: containerHeight, 
-      padding: const EdgeInsets.all(8), 
+      height: containerHeight,
+      padding: const EdgeInsets.all(8),
       child: Image.asset(
         widget.feature.imageAsset!,
         // BoxFit.contain asegura que todo el dispositivo se muestre sin recortes
@@ -1863,12 +1905,8 @@ class WaveClipper extends CustomClipper<Path> {
       );
 
       // Primera onda
-      path.quadraticBezierTo(
-        size.width - (waveLength * 2.5),
-        (size.height - waveOffset) + waveHeight,
-        0,
-        size.height - waveOffset
-      );
+      path.quadraticBezierTo(size.width - (waveLength * 2.5),
+          (size.height - waveOffset) + waveHeight, 0, size.height - waveOffset);
     }
 
     // Línea izquierda de vuelta al inicio
@@ -1886,7 +1924,8 @@ class WaveClipper extends CustomClipper<Path> {
 
 // _PresentationAppBar : AppBar personalizado con efectos de blur y transparencia según el scroll
 // Incluye animaciones de logo, botones y cambio de tema
-class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget {
+class _PresentationAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final bool isScrolled;
   final bool isDark;
   final ColorScheme colorScheme;
@@ -1915,10 +1954,10 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
           child: Container(
             decoration: BoxDecoration(
               color: appbarColor,
-              border: isScrolled 
+              border: isScrolled
                   ? Border(
                       bottom: BorderSide(
-                        color: isDark 
+                        color: isDark
                             ? colorScheme.outline.withValues(alpha: 0.3)
                             : colorScheme.outline.withValues(alpha: 0.2),
                         width: 0.5,
@@ -1932,7 +1971,7 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
                   // Logo con animación mejorada
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    transform: isScrolled 
+                    transform: isScrolled
                         ? (Matrix4.identity()..scale(1.05))
                         : Matrix4.identity(),
                     child: Container(
@@ -1941,7 +1980,8 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
                         boxShadow: isScrolled
                             ? [
                                 BoxShadow(
-                                  color: colorScheme.primary.withValues(alpha: 0.3),
+                                  color: colorScheme.primary
+                                      .withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1967,10 +2007,10 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
                       'Sell',
                       style: TextStyle(
                         color: isScrolled
-                          ? accentAppbarColor
-                          : (isDark 
-                            ? Colors.white.withValues(alpha: 0.9)
-                            : Colors.white),
+                            ? accentAppbarColor
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : Colors.white),
                       ),
                     ),
                   ),
@@ -1998,7 +2038,8 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
                       ? AppBarButton(
                           text: const Text('Iniciar Sesión'),
                           onTap: onLoginTap,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                         )
                       : const SizedBox(key: ValueKey('placeholder')),
                 ),
@@ -2008,7 +2049,12 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
                   builder: (context, themeProvider, _) {
                     return ThemeBrightnessButton(
                       themeProvider: themeProvider,
-                      iconColor: isScrolled ? themeProvider.darkTheme.brightness == Brightness.dark ? Colors.white : Colors.black : Colors.white,
+                      iconColor: isScrolled
+                          ? themeProvider.darkTheme.brightness ==
+                                  Brightness.dark
+                              ? Colors.white
+                              : Colors.black
+                          : Colors.white,
                     );
                   },
                 ),
@@ -2029,10 +2075,12 @@ class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget
 // Genera círculos, gradientes y efectos parallax que responden al scroll del usuario
 class _DynamicBackgroundPainter extends CustomPainter {
   final double scrollOffset;
-  final Color primaryColor; // Reservado por si se desea tematizar colores en el futuro
-  final bool isDark;        // Reservado para variantes de tema
-  final bool isMobile;      // Reservado para ajustar curvas/escala si se necesita
-  final double screenHeight; // Reservado para cálculos dependientes de altura visible
+  final Color
+      primaryColor; // Reservado por si se desea tematizar colores en el futuro
+  final bool isDark; // Reservado para variantes de tema
+  final bool isMobile; // Reservado para ajustar curvas/escala si se necesita
+  final double
+      screenHeight; // Reservado para cálculos dependientes de altura visible
 
   _DynamicBackgroundPainter({
     required this.scrollOffset,
@@ -2045,59 +2093,75 @@ class _DynamicBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
-    
+
     // Paint específico para elementos difuminados
     final blurredPaint = Paint()
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0); // Blur suave
-    
+
     // Paint para elementos muy difuminados (fondo)
     final heavyBlurPaint = Paint()
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15.0); // Blur fuerte
-    
+      ..maskFilter =
+          const MaskFilter.blur(BlurStyle.normal, 15.0); // Blur fuerte
+
     // Paint para elementos con blur sutil
     final subtleBlurPaint = Paint()
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0); // Blur sutil
 
     // Colores adaptativos según el tema con transparencia optimizada para legibilidad
-    final baseColors = isDark 
+    final baseColors = isDark
         ? [
-            const Color(0xFF2A3D5C).withValues(alpha: 0.15), // Azul oscuro - reducido para legibilidad
-            const Color(0xFF3A5F4C).withValues(alpha: 0.12), // Verde oscuro - reducido para legibilidad
-            const Color(0xFF5C4A3A).withValues(alpha: 0.10), // Marrón oscuro - reducido para legibilidad
-            const Color(0xFF4C3A5C).withValues(alpha: 0.13), // Púrpura oscuro - reducido para legibilidad
-            const Color(0xFF5C3A3A).withValues(alpha: 0.11), // Rojo oscuro - reducido para legibilidad
-            const Color(0xFF3A5C5C).withValues(alpha: 0.08), // Teal oscuro - reducido para legibilidad
+            const Color(0xFF2A3D5C).withValues(
+                alpha: 0.15), // Azul oscuro - reducido para legibilidad
+            const Color(0xFF3A5F4C).withValues(
+                alpha: 0.12), // Verde oscuro - reducido para legibilidad
+            const Color(0xFF5C4A3A).withValues(
+                alpha: 0.10), // Marrón oscuro - reducido para legibilidad
+            const Color(0xFF4C3A5C).withValues(
+                alpha: 0.13), // Púrpura oscuro - reducido para legibilidad
+            const Color(0xFF5C3A3A).withValues(
+                alpha: 0.11), // Rojo oscuro - reducido para legibilidad
+            const Color(0xFF3A5C5C).withValues(
+                alpha: 0.08), // Teal oscuro - reducido para legibilidad
           ]
         : [
-            const Color(0xFFA3D8D1).withValues(alpha: 0.12), // Verde agua - reducido para legibilidad
-            const Color(0xFFFAD86A).withValues(alpha: 0.10), // Amarillo - reducido para legibilidad
-            const Color(0xFFA7C6ED).withValues(alpha: 0.13), // Azul - reducido para legibilidad
-            const Color(0xFFFFB3D1).withValues(alpha: 0.11), // Rosa suave - reducido para legibilidad
-            const Color(0xFFD1A3FF).withValues(alpha: 0.09), // Púrpura suave - reducido para legibilidad
-            const Color(0xFFFFA3B3).withValues(alpha: 0.08), // Coral suave - reducido para legibilidad
+            const Color(0xFFA3D8D1).withValues(
+                alpha: 0.12), // Verde agua - reducido para legibilidad
+            const Color(0xFFFAD86A).withValues(
+                alpha: 0.10), // Amarillo - reducido para legibilidad
+            const Color(0xFFA7C6ED)
+                .withValues(alpha: 0.13), // Azul - reducido para legibilidad
+            const Color(0xFFFFB3D1).withValues(
+                alpha: 0.11), // Rosa suave - reducido para legibilidad
+            const Color(0xFFD1A3FF).withValues(
+                alpha: 0.09), // Púrpura suave - reducido para legibilidad
+            const Color(0xFFFFA3B3).withValues(
+                alpha: 0.08), // Coral suave - reducido para legibilidad
           ];
 
     // --- CÍRCULOS GIGANTES CON DIFUMINADO (fondo) ---
-    
+
     // Círculo gigante izquierdo (solo se ve la mitad derecha) - AUMENTADO
     final leftGiantRadius = size.width * (isMobile ? 0.8 : 0.7);
     final leftGiantPaint = Paint()..style = PaintingStyle.fill;
-    
+
     // Gradiente radial para el círculo izquierdo con difuminado - transparencia optimizada
     leftGiantPaint.shader = RadialGradient(
       center: Alignment.centerLeft,
       radius: 1.2,
       colors: [
-        baseColors[0].withValues(alpha: isDark ? 0.06 : 0.03), // Reducido para mejor legibilidad
-        baseColors[1].withValues(alpha: isDark ? 0.03 : 0.015), // Reducido para mejor legibilidad
+        baseColors[0].withValues(
+            alpha: isDark ? 0.06 : 0.03), // Reducido para mejor legibilidad
+        baseColors[1].withValues(
+            alpha: isDark ? 0.03 : 0.015), // Reducido para mejor legibilidad
         Colors.transparent,
       ],
       stops: const [0.0, 0.6, 1.0],
     ).createShader(Rect.fromCircle(
-      center: Offset(-leftGiantRadius * 0.5 + scrollOffset * 0.01, size.height * 0.5),
+      center: Offset(
+          -leftGiantRadius * 0.5 + scrollOffset * 0.01, size.height * 0.5),
       radius: leftGiantRadius,
     ));
 
@@ -2110,24 +2174,28 @@ class _DynamicBackgroundPainter extends CustomPainter {
     // Círculo gigante derecho (solo se ve la mitad izquierda) - AUMENTADO
     final rightGiantRadius = size.width * (isMobile ? 0.75 : 0.65);
     final rightGiantPaint = Paint()..style = PaintingStyle.fill;
-    
+
     // Gradiente radial para el círculo derecho con difuminado - transparencia optimizada
     rightGiantPaint.shader = RadialGradient(
       center: Alignment.centerRight,
       radius: 1.1,
       colors: [
-        baseColors[2].withValues(alpha: isDark ? 0.05 : 0.025), // Reducido para mejor legibilidad
-        baseColors[3].withValues(alpha: isDark ? 0.025 : 0.012), // Reducido para mejor legibilidad
+        baseColors[2].withValues(
+            alpha: isDark ? 0.05 : 0.025), // Reducido para mejor legibilidad
+        baseColors[3].withValues(
+            alpha: isDark ? 0.025 : 0.012), // Reducido para mejor legibilidad
         Colors.transparent,
       ],
       stops: const [0.0, 0.7, 1.0],
     ).createShader(Rect.fromCircle(
-      center: Offset(size.width + rightGiantRadius * 0.5 + scrollOffset * 0.008, size.height * 0.3),
+      center: Offset(size.width + rightGiantRadius * 0.5 + scrollOffset * 0.008,
+          size.height * 0.3),
       radius: rightGiantRadius,
     ));
 
     canvas.drawCircle(
-      Offset(size.width + rightGiantRadius * 0.5 + scrollOffset * 0.008, size.height * 0.3),
+      Offset(size.width + rightGiantRadius * 0.5 + scrollOffset * 0.008,
+          size.height * 0.3),
       rightGiantRadius,
       rightGiantPaint,
     );
@@ -2135,7 +2203,7 @@ class _DynamicBackgroundPainter extends CustomPainter {
     // Círculo gigante superior central - NUEVO
     final topGiantRadius = size.width * (isMobile ? 0.6 : 0.5);
     final topGiantPaint = Paint()..style = PaintingStyle.fill;
-    
+
     topGiantPaint.shader = RadialGradient(
       center: Alignment.topCenter,
       radius: 1.0,
@@ -2146,7 +2214,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
       ],
       stops: const [0.0, 0.6, 1.0],
     ).createShader(Rect.fromCircle(
-      center: Offset(size.width * 0.5 + scrollOffset * 0.005, -topGiantRadius * 0.3),
+      center: Offset(
+          size.width * 0.5 + scrollOffset * 0.005, -topGiantRadius * 0.3),
       radius: topGiantRadius,
     ));
 
@@ -2225,7 +2294,7 @@ class _DynamicBackgroundPainter extends CustomPainter {
     );
 
     // --- CÍRCULOS ADICIONALES PARA DESKTOP Y MÓVIL - AUMENTADOS ---
-    
+
     // Círculo 7: Grande flotante centro - CON BLUR MEDIO
     blurredPaint.color = baseColors[5];
     canvas.drawCircle(
@@ -2249,7 +2318,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
     );
 
     // Círculo 9: Grande inferior centro-derecha - CON BLUR FUERTE
-    heavyBlurPaint.color = baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06);
+    heavyBlurPaint.color =
+        baseColors[1].withValues(alpha: isDark ? 0.10 : 0.06);
     canvas.drawCircle(
       Offset(
         size.width * 0.75 + scrollOffset * 0.03,
@@ -2260,7 +2330,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
     );
 
     // Círculo 10: Nuevo círculo grande superior derecha - CON BLUR SUTIL
-    subtleBlurPaint.color = baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05);
+    subtleBlurPaint.color =
+        baseColors[2].withValues(alpha: isDark ? 0.08 : 0.05);
     canvas.drawCircle(
       Offset(
         size.width * 0.8 + scrollOffset * 0.04,
@@ -2329,12 +2400,14 @@ class _DynamicBackgroundPainter extends CustomPainter {
 
     // --- CÍRCULO CON GRADIENTE CENTRAL (con efecto de profundidad) - AUMENTADO ---
     final gradientPaint = Paint()..style = PaintingStyle.fill;
-    
+
     // Gradiente radial para círculo principal - transparencia optimizada y AUMENTADO
     gradientPaint.shader = RadialGradient(
       colors: [
-        primaryColor.withValues(alpha: isDark ? 0.08 : 0.12), // Reducido para mejor legibilidad
-        primaryColor.withValues(alpha: isDark ? 0.04 : 0.06), // Reducido para mejor legibilidad
+        primaryColor.withValues(
+            alpha: isDark ? 0.08 : 0.12), // Reducido para mejor legibilidad
+        primaryColor.withValues(
+            alpha: isDark ? 0.04 : 0.06), // Reducido para mejor legibilidad
         Colors.transparent,
       ],
       stops: const [0.0, 0.7, 1.0],
@@ -2357,24 +2430,96 @@ class _DynamicBackgroundPainter extends CustomPainter {
 
     // --- CÍRCULOS FLOTANTES MEDIANOS CON DIFERENTES VELOCIDADES Y BLUR SELECTIVO - AUMENTADOS ---
     final mediumCircles = [
-      {'x': 0.25, 'y': 0.25, 'radius': 0.04, 'speed': 0.08, 'color': 0, 'blur': 'heavy'},
-      {'x': 0.65, 'y': 0.35, 'radius': 0.045, 'speed': 0.05, 'color': 1, 'blur': 'none'},
-      {'x': 0.8, 'y': 0.45, 'radius': 0.035, 'speed': 0.12, 'color': 2, 'blur': 'subtle'},
-      {'x': 0.35, 'y': 0.65, 'radius': 0.05, 'speed': 0.06, 'color': 3, 'blur': 'medium'},
-      {'x': 0.15, 'y': 0.55, 'radius': 0.038, 'speed': 0.1, 'color': 4, 'blur': 'none'},
-      {'x': 0.95, 'y': 0.3, 'radius': 0.042, 'speed': 0.07, 'color': 5, 'blur': 'subtle'},
-      {'x': 0.05, 'y': 0.15, 'radius': 0.032, 'speed': 0.15, 'color': 0, 'blur': 'heavy'},
-      {'x': 0.55, 'y': 0.05, 'radius': 0.036, 'speed': 0.09, 'color': 1, 'blur': 'medium'},
-      {'x': 0.75, 'y': 0.25, 'radius': 0.04, 'speed': 0.11, 'color': 2, 'blur': 'none'},
-      {'x': 0.4, 'y': 0.8, 'radius': 0.047, 'speed': 0.04, 'color': 3, 'blur': 'subtle'},
+      {
+        'x': 0.25,
+        'y': 0.25,
+        'radius': 0.04,
+        'speed': 0.08,
+        'color': 0,
+        'blur': 'heavy'
+      },
+      {
+        'x': 0.65,
+        'y': 0.35,
+        'radius': 0.045,
+        'speed': 0.05,
+        'color': 1,
+        'blur': 'none'
+      },
+      {
+        'x': 0.8,
+        'y': 0.45,
+        'radius': 0.035,
+        'speed': 0.12,
+        'color': 2,
+        'blur': 'subtle'
+      },
+      {
+        'x': 0.35,
+        'y': 0.65,
+        'radius': 0.05,
+        'speed': 0.06,
+        'color': 3,
+        'blur': 'medium'
+      },
+      {
+        'x': 0.15,
+        'y': 0.55,
+        'radius': 0.038,
+        'speed': 0.1,
+        'color': 4,
+        'blur': 'none'
+      },
+      {
+        'x': 0.95,
+        'y': 0.3,
+        'radius': 0.042,
+        'speed': 0.07,
+        'color': 5,
+        'blur': 'subtle'
+      },
+      {
+        'x': 0.05,
+        'y': 0.15,
+        'radius': 0.032,
+        'speed': 0.15,
+        'color': 0,
+        'blur': 'heavy'
+      },
+      {
+        'x': 0.55,
+        'y': 0.05,
+        'radius': 0.036,
+        'speed': 0.09,
+        'color': 1,
+        'blur': 'medium'
+      },
+      {
+        'x': 0.75,
+        'y': 0.25,
+        'radius': 0.04,
+        'speed': 0.11,
+        'color': 2,
+        'blur': 'none'
+      },
+      {
+        'x': 0.4,
+        'y': 0.8,
+        'radius': 0.047,
+        'speed': 0.04,
+        'color': 3,
+        'blur': 'subtle'
+      },
     ];
 
     for (final circle in mediumCircles) {
       final colorIndex = circle['color'] as int;
       final blurType = circle['blur'] as String;
-      final circleColor = baseColors[colorIndex % baseColors.length]
-          .withValues(alpha: isDark ? 0.08 : 0.12); // Transparencia uniforme optimizada para legibilidad
-      
+      final circleColor = baseColors[colorIndex % baseColors.length].withValues(
+          alpha: isDark
+              ? 0.08
+              : 0.12); // Transparencia uniforme optimizada para legibilidad
+
       // Seleccionar el paint según el tipo de blur
       Paint circlePaint;
       switch (blurType) {
@@ -2392,11 +2537,13 @@ class _DynamicBackgroundPainter extends CustomPainter {
           circlePaint = paint..color = circleColor;
           break;
       }
-      
+
       canvas.drawCircle(
         Offset(
-          size.width * (circle['x'] as double) + scrollOffset * (circle['speed'] as double),
-          size.height * (circle['y'] as double) + scrollOffset * (circle['speed'] as double) * 0.3,
+          size.width * (circle['x'] as double) +
+              scrollOffset * (circle['speed'] as double),
+          size.height * (circle['y'] as double) +
+              scrollOffset * (circle['speed'] as double) * 0.3,
         ),
         size.width * (circle['radius'] as double),
         circlePaint,
@@ -2406,7 +2553,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
     // --- ANILLOS DECORATIVOS GRANDES (círculos con solo borde) - AUMENTADOS ---
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isDark ? 2.0 : 2.5 // Líneas más gruesas para círculos más grandes
+      ..strokeWidth =
+          isDark ? 2.0 : 2.5 // Líneas más gruesas para círculos más grandes
       ..strokeCap = StrokeCap.round;
 
     final rings = [
@@ -2420,13 +2568,15 @@ class _DynamicBackgroundPainter extends CustomPainter {
     if (!isMobile) {
       for (int i = 0; i < rings.length; i++) {
         final ring = rings[i];
-        ringPaint.color = baseColors[i % baseColors.length]
-            .withValues(alpha: isDark ? 0.06 : 0.10); // Reducido para mejor legibilidad
-        
+        ringPaint.color = baseColors[i % baseColors.length].withValues(
+            alpha: isDark ? 0.06 : 0.10); // Reducido para mejor legibilidad
+
         canvas.drawCircle(
           Offset(
-            size.width * (ring['x'] as double) + scrollOffset * (ring['speed'] as double),
-            size.height * (ring['y'] as double) + scrollOffset * (ring['speed'] as double) * 0.2,
+            size.width * (ring['x'] as double) +
+                scrollOffset * (ring['speed'] as double),
+            size.height * (ring['y'] as double) +
+                scrollOffset * (ring['speed'] as double) * 0.2,
           ),
           size.width * (ring['radius'] as double),
           ringPaint,
@@ -2438,13 +2588,17 @@ class _DynamicBackgroundPainter extends CustomPainter {
         final ring = rings[i];
         ringPaint.color = baseColors[i % baseColors.length]
             .withValues(alpha: isDark ? 0.05 : 0.08);
-        
+
         canvas.drawCircle(
           Offset(
-            size.width * (ring['x'] as double) + scrollOffset * (ring['speed'] as double),
-            size.height * (ring['y'] as double) + scrollOffset * (ring['speed'] as double) * 0.2,
+            size.width * (ring['x'] as double) +
+                scrollOffset * (ring['speed'] as double),
+            size.height * (ring['y'] as double) +
+                scrollOffset * (ring['speed'] as double) * 0.2,
           ),
-          size.width * ((ring['radius'] as double) * 0.8), // Ligeramente más pequeños en móvil
+          size.width *
+              ((ring['radius'] as double) *
+                  0.8), // Ligeramente más pequeños en móvil
           ringPaint,
         );
       }
@@ -2452,19 +2606,24 @@ class _DynamicBackgroundPainter extends CustomPainter {
 
     // --- PUNTOS MICRO DECORATIVOS - transparencia optimizada ---
     final microDotPaint = Paint()..style = PaintingStyle.fill;
-    final microDots = List.generate(15, (index) => {
-      'x': 0.1 + (index * 0.06) % 0.8,
-      'y': 0.1 + (index * 0.07) % 0.8,
-      'size': 1.0 + (index % 3),
-      'speed': 0.02 + (index % 5) * 0.01,
-    });
+    final microDots = List.generate(
+        15,
+        (index) => {
+              'x': 0.1 + (index * 0.06) % 0.8,
+              'y': 0.1 + (index * 0.07) % 0.8,
+              'size': 1.0 + (index % 3),
+              'speed': 0.02 + (index % 5) * 0.01,
+            });
 
     for (final dot in microDots) {
-      microDotPaint.color = primaryColor.withValues(alpha: isDark ? 0.04 : 0.08); // Reducido para mejor legibilidad
+      microDotPaint.color = primaryColor.withValues(
+          alpha: isDark ? 0.04 : 0.08); // Reducido para mejor legibilidad
       canvas.drawCircle(
         Offset(
-          size.width * (dot['x'] as double) + scrollOffset * (dot['speed'] as double),
-          size.height * (dot['y'] as double) + scrollOffset * (dot['speed'] as double) * 0.1,
+          size.width * (dot['x'] as double) +
+              scrollOffset * (dot['speed'] as double),
+          size.height * (dot['y'] as double) +
+              scrollOffset * (dot['speed'] as double) * 0.1,
         ),
         dot['size'] as double,
         microDotPaint,
@@ -2472,13 +2631,14 @@ class _DynamicBackgroundPainter extends CustomPainter {
     }
 
     // --- EFECTOS DE DIFUMINADO ADICIONALES - transparencia optimizada ---
-    
+
     // Círculo de difuminado superior izquierdo
     if (!isMobile) {
       final topLeftBlurPaint = Paint()..style = PaintingStyle.fill;
       topLeftBlurPaint.shader = RadialGradient(
         colors: [
-          baseColors[4].withValues(alpha: isDark ? 0.02 : 0.015), // Reducido para mejor legibilidad
+          baseColors[4].withValues(
+              alpha: isDark ? 0.02 : 0.015), // Reducido para mejor legibilidad
           Colors.transparent,
         ],
         stops: const [0.0, 1.0],
@@ -2503,7 +2663,8 @@ class _DynamicBackgroundPainter extends CustomPainter {
       final bottomRightBlurPaint = Paint()..style = PaintingStyle.fill;
       bottomRightBlurPaint.shader = RadialGradient(
         colors: [
-          baseColors[5].withValues(alpha: isDark ? 0.018 : 0.012), // Reducido para mejor legibilidad
+          baseColors[5].withValues(
+              alpha: isDark ? 0.018 : 0.012), // Reducido para mejor legibilidad
           Colors.transparent,
         ],
         stops: const [0.0, 1.0],

@@ -125,8 +125,8 @@ class CatalogueProvider extends ChangeNotifier {
   /// Obtiene los productos más vendidos ordenados por cantidad de ventas
   /// [limit] Número máximo de productos a retornar (por defecto 8)
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
-  List<ProductCatalogue> getTopFilterProducts({int limit = 50, int minimumSales = 1}) {
-    
+  List<ProductCatalogue> getTopFilterProducts(
+      {int limit = 50, int minimumSales = 1}) {
     return CatalogueSearchService.getTopSellingProducts(
       products: _state.products,
       limit: limit,
@@ -228,8 +228,10 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos usando el algoritmo avanzado de búsqueda
   /// Permite buscar sin importar el orden de las palabras
-  List<ProductCatalogue> searchProducts({required String query,int? maxResults,}) {
-
+  List<ProductCatalogue> searchProducts({
+    required String query,
+    int? maxResults,
+  }) {
     print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
     print('📦 Productos disponibles en state: ${_state.products.length}');
 
@@ -420,7 +422,8 @@ class CatalogueProvider extends ChangeNotifier {
   /// [accountProfile] El perfil de la cuenta para registrar el precio (opcional)
   /// Retorna un [Future<void>] que se completa cuando la operación termina
   Future<void> addAndUpdateProductToCatalogue(
-      ProductCatalogue product, String accountId, {ProfileAccountModel? accountProfile}) async {
+      ProductCatalogue product, String accountId,
+      {ProfileAccountModel? accountProfile}) async {
     // Validar parámetros requeridos
     if (accountId.isEmpty) {
       throw Exception(
@@ -471,7 +474,8 @@ class CatalogueProvider extends ChangeNotifier {
           );
 
           await registerProductPriceUseCase(productPrice, product.code);
-          print('✅ Precio registrado en base pública para producto: ${product.code}');
+          print(
+              '✅ Precio registrado en base pública para producto: ${product.code}');
         } catch (e) {
           print('⚠️ Error al registrar precio en base pública: $e');
           // No lanzamos error aquí para no interrumpir el flujo principal
@@ -521,7 +525,7 @@ class CatalogueProvider extends ChangeNotifier {
           IncrementProductSalesUseCase(catalogueRepository);
 
       // Ejecutar el incremento de ventas
-      await incrementSalesUseCase(accountId, productId, quantity: quantity); 
+      await incrementSalesUseCase(accountId, productId, quantity: quantity);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -592,7 +596,8 @@ class CatalogueProvider extends ChangeNotifier {
       // Ejecutar la actualización de favorito
       await updateProductFavoriteUseCase!(accountId, productId, isFavorite);
 
-      print('✅ Favorito actualizado: Producto $productId, Favorito: $isFavorite');
+      print(
+          '✅ Favorito actualizado: Producto $productId, Favorito: $isFavorite');
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que actualizamos el timestamp de modificación

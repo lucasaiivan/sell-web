@@ -19,7 +19,7 @@ import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
-import 'presentation/pages/presentation_page.dart';
+import 'core/widgets/views/presentation_page.dart';
 import 'presentation/pages/sell_page.dart';
 import 'presentation/pages/welcome_page.dart';
 

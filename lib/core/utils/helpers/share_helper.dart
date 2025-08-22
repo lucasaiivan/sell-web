@@ -25,7 +25,7 @@ class ShareHelper {
   }) async {
     try {
       final screenshotController = ScreenshotController();
-      
+
       // Capturar el widget
       final imageBytes = await screenshotController.captureFromWidget(
         Material(
@@ -59,10 +59,10 @@ class ShareHelper {
     try {
       final directory = await getTemporaryDirectory();
       final imagePath = File('${directory.path}/$filename.png');
-      
+
       // Escribir la imagen al archivo temporal
       await imagePath.writeAsBytes(imageBytes);
-      
+
       // Compartir el archivo
       await Share.shareXFiles(
         [XFile(imagePath.path)],
@@ -101,7 +101,7 @@ class ShareHelper {
   }) async {
     try {
       final screenshotController = ScreenshotController();
-      
+
       // Capturar el widget
       final imageBytes = await screenshotController.captureFromWidget(
         Material(
@@ -155,7 +155,7 @@ class ShareHelper {
   }) async {
     try {
       final xFiles = filePaths.map((path) => XFile(path)).toList();
-      
+
       await Share.shareXFiles(
         xFiles,
         text: text,
@@ -173,7 +173,7 @@ class ShareHelper {
     required TicketModel ticket,
   }) async {
     final textContent = _buildTicketText(ticket);
-    
+
     await shareText(
       text: textContent,
       subject: 'Ticket de Venta #${ticket.id}',
@@ -183,41 +183,43 @@ class ShareHelper {
   /// Construye el contenido de texto para un ticket
   static String _buildTicketText(TicketModel ticket) {
     final buffer = StringBuffer();
-    
+
     buffer.writeln('=== TICKET DE VENTA ===');
     buffer.writeln('Ticket #: ${ticket.id}');
     buffer.writeln('Fecha: ${_formatDate(ticket.creation.toDate())}');
-    
+
     if (ticket.cashRegisterName.isNotEmpty) {
       buffer.writeln('Caja: ${ticket.cashRegisterName}');
     }
-    
+
     if (ticket.sellerName.isNotEmpty) {
       buffer.writeln('Vendedor: ${ticket.sellerName}');
     }
-    
+
     buffer.writeln('');
     buffer.writeln('=== PRODUCTOS ===');
-    
+
     for (final product in ticket.products) {
       final quantity = product.quantity;
       final price = product.salePrice;
       final total = quantity * price;
-      
-      buffer.writeln('${product.id}'); // Usamos el ID ya que no vi el campo 'name'
-      buffer.writeln('  ${quantity}x \$${price.toStringAsFixed(2)} = \$${total.toStringAsFixed(2)}');
+
+      buffer.writeln(
+          '${product.id}'); // Usamos el ID ya que no vi el campo 'name'
+      buffer.writeln(
+          '  ${quantity}x \$${price.toStringAsFixed(2)} = \$${total.toStringAsFixed(2)}');
     }
-    
+
     buffer.writeln('');
     buffer.writeln('=== TOTALES ===');
-    
+
     if (ticket.discount > 0) {
       buffer.writeln('Descuento: -\$${ticket.discount.toStringAsFixed(2)}');
     }
-    
+
     buffer.writeln('TOTAL: \$${ticket.priceTotal.toStringAsFixed(2)}');
     buffer.writeln('Método de pago: ${ticket.payMode}');
-    
+
     if (ticket.valueReceived > 0) {
       final change = ticket.valueReceived - ticket.priceTotal;
       buffer.writeln('Recibido: \$${ticket.valueReceived.toStringAsFixed(2)}');
@@ -225,20 +227,20 @@ class ShareHelper {
         buffer.writeln('Cambio: \$${change.toStringAsFixed(2)}');
       }
     }
-    
+
     buffer.writeln('');
     buffer.writeln('¡Gracias por su compra!');
-    
+
     return buffer.toString();
   }
 
   /// Formatea una fecha para texto
   static String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
-           '${date.month.toString().padLeft(2, '0')}/'
-           '${date.year} '
-           '${date.hour.toString().padLeft(2, '0')}:'
-           '${date.minute.toString().padLeft(2, '0')}';
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year} '
+        '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')}';
   }
 
   /// Comparte un widget con opciones múltiples

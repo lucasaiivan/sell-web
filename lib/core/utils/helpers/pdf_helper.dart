@@ -23,7 +23,7 @@ class PdfHelper {
     String title = 'Compartir PDF',
   }) async {
     final pdf = pw.Document();
-    
+
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) => pw.Center(
@@ -46,7 +46,7 @@ class PdfHelper {
       final bytes = await pdf.save();
       final url = 'data:application/pdf;base64,${base64Encode(bytes)}';
       final uri = Uri.parse(url);
-      
+
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       } else {
@@ -67,7 +67,7 @@ class PdfHelper {
       final output = await getTemporaryDirectory();
       final file = File('${output.path}/$filename.pdf');
       await file.writeAsBytes(await pdf.save());
-      
+
       await Share.shareXFiles(
         [XFile(file.path)],
         text: title,
@@ -99,7 +99,7 @@ class PdfHelper {
     required TicketModel ticket,
   }) async {
     final pdf = pw.Document();
-    
+
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) => _buildTicketContent(ticket),
@@ -132,7 +132,7 @@ class PdfHelper {
             ),
           ),
           pw.SizedBox(height: 20),
-          
+
           // Información del ticket
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -142,17 +142,17 @@ class PdfHelper {
             ],
           ),
           pw.SizedBox(height: 10),
-          
+
           // Información de la caja y vendedor
           if (ticket.cashRegisterName.isNotEmpty)
             pw.Text('Caja: ${ticket.cashRegisterName}'),
           if (ticket.sellerName.isNotEmpty)
             pw.Text('Vendedor: ${ticket.sellerName}'),
           pw.SizedBox(height: 20),
-          
+
           // Línea separadora
           pw.Divider(),
-          
+
           // Productos
           pw.Text(
             'PRODUCTOS',
@@ -162,13 +162,14 @@ class PdfHelper {
             ),
           ),
           pw.SizedBox(height: 10),
-          
+
           // Lista de productos
-          ...ticket.products.map((product) => _buildProductRowFromCatalogue(product)),
-          
+          ...ticket.products
+              .map((product) => _buildProductRowFromCatalogue(product)),
+
           pw.SizedBox(height: 20),
           pw.Divider(),
-          
+
           // Totales
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.end,
@@ -177,7 +178,8 @@ class PdfHelper {
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
                   if (ticket.discount > 0)
-                    pw.Text('Descuento: -\$${ticket.discount.toStringAsFixed(2)}'),
+                    pw.Text(
+                        'Descuento: -\$${ticket.discount.toStringAsFixed(2)}'),
                   pw.Text(
                     'TOTAL: \$${ticket.priceTotal.toStringAsFixed(2)}',
                     style: pw.TextStyle(
@@ -189,14 +191,14 @@ class PdfHelper {
               ),
             ],
           ),
-          
+
           pw.SizedBox(height: 20),
-          
+
           // Método de pago
           pw.Text('Método de pago: ${ticket.payMode}'),
-          
+
           pw.Spacer(),
-          
+
           // Footer
           pw.Center(
             child: pw.Text(
@@ -249,10 +251,10 @@ class PdfHelper {
   static String _formatDate(DateTime? date) {
     if (date == null) return '';
     return '${date.day.toString().padLeft(2, '0')}/'
-           '${date.month.toString().padLeft(2, '0')}/'
-           '${date.year} '
-           '${date.hour.toString().padLeft(2, '0')}:'
-           '${date.minute.toString().padLeft(2, '0')}';
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year} '
+        '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')}';
   }
 
   /// Crea un PDF personalizado con contenido libre
@@ -267,7 +269,7 @@ class PdfHelper {
     String title = 'Documento PDF',
   }) async {
     final pdf = pw.Document();
-    
+
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) => content,

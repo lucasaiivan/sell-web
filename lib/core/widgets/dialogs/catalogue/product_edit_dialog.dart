@@ -56,16 +56,14 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     return widget.product.code.isNotEmpty ? widget.product.code : 'Sin código';
   }
 
-
   double get _totalPrice {
     return widget.product.salePrice * _quantity;
   }
 
   @override
-  Widget build(BuildContext context) { 
-
+  Widget build(BuildContext context) {
     return BaseDialog(
-      title:  'Editar cantidad',
+      title: 'Editar cantidad',
       icon: Icons.edit,
       width: 450,
       content: Column(
@@ -99,7 +97,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
   Widget _buildProductInfo() {
     return DialogComponents.infoSection(
-      context: context, 
+      context: context,
       title: '',
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,9 +114,9 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
               ),
             ),
           ),
-      
+
           const SizedBox(width: 16),
-      
+
           // Información del producto
           Expanded(
             child: Column(
@@ -140,7 +138,10 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     Expanded(
                       child: Text(
                         _productName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600,color: widget.product.verified ? Colors.blue : null,fontSize: 16),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: widget.product.verified ? Colors.blue : null,
+                            fontSize: 16),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -149,34 +150,30 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
-                      
                       icon: Icon(
                         widget.product.favorite
                             ? Icons.star
                             : Icons.star_border,
-                        color: widget.product.favorite
-                            ? Colors.amber
-                            : null,
+                        color: widget.product.favorite ? Colors.amber : null,
                       ),
-                      onPressed: _isProcessing
-                          ? null
-                          : _toggleFavorite,
+                      onPressed: _isProcessing ? null : _toggleFavorite,
                     ),
                   ],
                 ),
-      
+
                 const SizedBox(height: 4),
-      
+
                 // Descripción
                 Text(
                   _productDescription,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-      
+
                 const SizedBox(height: 8),
-      
+
                 // badge : informacion adicional y accion de editar el precio
                 Row(
                   children: [
@@ -201,15 +198,16 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     const SizedBox(width: 8),
                     // textbutton : editar producto
                     TextButton(
-                      onPressed: _isProcessing ? null 
-                        :(){
-                          Navigator.of(context).pop();
-                          _editProductPrices();  
-                          },
+                      onPressed: _isProcessing
+                          ? null
+                          : () {
+                              Navigator.of(context).pop();
+                              _editProductPrices();
+                            },
                       child: const Text('Editar'),
                     ),
                   ],
-                ), 
+                ),
               ],
             ),
           ),
@@ -239,12 +237,12 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                       : null,
                   isEnabled: _quantity > 1,
                 ),
-        
+
                 // Cantidad actual
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
@@ -257,7 +255,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     ),
                   ),
                 ),
-        
+
                 // Botón incrementar
                 _buildQuantityButton(
                   icon: Icons.add_rounded,
@@ -276,11 +274,10 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
             const Spacer(),
             // Contenedor destacado para el total
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer
-                    .withValues(alpha: 0.1),
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -363,11 +360,12 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
     try {
       // Obtener el SellProvider
-      final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
-      
+      final sellProvider =
+          provider_package.Provider.of<SellProvider>(context, listen: false);
+
       // Obtener el ID de la cuenta
       final accountId = sellProvider.profileAccountSelected.id;
-      
+
       if (accountId.isEmpty) {
         throw Exception('No se pudo obtener el ID de la cuenta');
       }
@@ -380,24 +378,24 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
       // Actualizar en Firebase a través del provider pasado como parámetro
       await widget.catalogueProvider.updateProductFavorite(
-        accountId, 
-        widget.product.id, 
+        accountId,
+        widget.product.id,
         newFavoriteState,
       );
 
       // Llamar al callback si existe
       widget.onProductUpdated?.call();
 
-      print('✅ Favorito actualizado: ${widget.product.description} - Favorito: $newFavoriteState');
-
+      print(
+          '✅ Favorito actualizado: ${widget.product.description} - Favorito: $newFavoriteState');
     } catch (e) {
       // Si hay error, revertir el cambio local
       setState(() {
         widget.product.favorite = !widget.product.favorite;
       });
-      
+
       print('❌ Error al actualizar favorito: $e');
-      
+
       // Mostrar mensaje de error al usuario
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -464,8 +462,9 @@ Future<void> showProductEditDialog(
   required ProductCatalogue producto,
   VoidCallback? onProductUpdated,
 }) {
-  final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
-  
+  final catalogueProvider =
+      provider_package.Provider.of<CatalogueProvider>(context, listen: false);
+
   return showDialog(
     context: context,
     barrierDismissible: true, // Permitir cerrar al hacer click fuera

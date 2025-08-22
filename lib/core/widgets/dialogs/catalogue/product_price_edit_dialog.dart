@@ -37,7 +37,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     super.initState();
     _salePriceController = AppMoneyTextEditingController();
     _salePriceController.updateValue(widget.product.salePrice);
-    
+
     _purchasePriceController = AppMoneyTextEditingController();
     _purchasePriceController.updateValue(widget.product.purchasePrice);
   }
@@ -59,7 +59,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
   bool get _hasChanges {
     return _newSalePrice != widget.product.salePrice ||
-           _newPurchasePrice != widget.product.purchasePrice;
+        _newPurchasePrice != widget.product.purchasePrice;
   }
 
   @override
@@ -72,11 +72,11 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [   
-            DialogComponents.sectionSpacing, 
+          children: [
+            DialogComponents.sectionSpacing,
             // Campos de precios
             _buildPriceFields(),
-            DialogComponents.sectionSpacing, 
+            DialogComponents.sectionSpacing,
             // Resumen de información siempre visible
             _buildChangesSummary(),
             DialogComponents.sectionSpacing,
@@ -86,7 +86,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       actions: [
         DialogComponents.secondaryActionButton(
           context: context,
-          text: 'Cancelar', 
+          text: 'Cancelar',
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
         ),
         DialogComponents.primaryActionButton(
@@ -112,13 +112,15 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
             if (value != null && value.isNotEmpty) {
               final purchasePrice = _purchasePriceController.doubleValue;
               final salePrice = _salePriceController.doubleValue;
-              
+
               if (purchasePrice < 0) {
                 return 'El precio no puede ser negativo';
               }
-              
+
               // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
-              if (purchasePrice > 0 && salePrice > 0 && purchasePrice > salePrice) {
+              if (purchasePrice > 0 &&
+                  salePrice > 0 &&
+                  purchasePrice > salePrice) {
                 return 'El precio de compra no puede ser mayor al de venta';
               }
             }
@@ -139,16 +141,18 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
             }
             final salePrice = _salePriceController.doubleValue;
             final purchasePrice = _purchasePriceController.doubleValue;
-            
+
             if (salePrice <= 0) {
               return 'El precio debe ser mayor a 0';
             }
-            
+
             // Validar que el precio de venta no sea menor al de compra si ambos están definidos
-            if (purchasePrice > 0 && salePrice > 0 && salePrice < purchasePrice) {
+            if (purchasePrice > 0 &&
+                salePrice > 0 &&
+                salePrice < purchasePrice) {
               return 'El precio de venta no puede ser menor al de compra';
             }
-            
+
             return null;
           },
           onTextChanged: (value) {
@@ -161,12 +165,14 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
   Widget _buildChangesSummary() {
     final theme = Theme.of(context);
-    
+
     // Calcular porcentajes de ganancia
-    final oldProfitMargin = _calculateProfitMargin(widget.product.salePrice, widget.product.purchasePrice);
-    final newProfitMargin = _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
+    final oldProfitMargin = _calculateProfitMargin(
+        widget.product.salePrice, widget.product.purchasePrice);
+    final newProfitMargin =
+        _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
     final hasProfitMarginChange = oldProfitMargin != newProfitMargin;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -187,7 +193,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
             ),
           ),
           const SizedBox(height: 8),
-          
+
           // Mostrar precios siempre
           if (_hasChanges) ...[
             // Modo cambios: mostrar valores antiguos y nuevos
@@ -197,32 +203,41 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                 Publications.getFormatoPrecio(value: widget.product.salePrice),
                 Publications.getFormatoPrecio(value: _newSalePrice),
               ),
-            
+
             if (_newPurchasePrice != widget.product.purchasePrice)
               _buildChangeRow(
                 'Compra',
-                Publications.getFormatoPrecio(value: widget.product.purchasePrice),
+                Publications.getFormatoPrecio(
+                    value: widget.product.purchasePrice),
                 Publications.getFormatoPrecio(value: _newPurchasePrice),
               ),
-              
+
             // Mostrar cambio en porcentaje de ganancia si es relevante
-            if (hasProfitMarginChange && (_newPurchasePrice > 0 || widget.product.purchasePrice > 0)) ...[
+            if (hasProfitMarginChange &&
+                (_newPurchasePrice > 0 ||
+                    widget.product.purchasePrice > 0)) ...[
               const SizedBox(height: 4),
               _buildProfitMarginRow(oldProfitMargin, newProfitMargin, theme),
             ],
           ] else ...[
             // Modo información: mostrar valores actuales
-            _buildInfoRow('Venta', Publications.getFormatoPrecio(value: widget.product.salePrice)),
+            _buildInfoRow('Venta',
+                Publications.getFormatoPrecio(value: widget.product.salePrice)),
             if (widget.product.purchasePrice > 0)
-              _buildInfoRow('Compra', Publications.getFormatoPrecio(value: widget.product.purchasePrice)),
-            
+              _buildInfoRow(
+                  'Compra',
+                  Publications.getFormatoPrecio(
+                      value: widget.product.purchasePrice)),
+
             // Mostrar porcentaje de ganancia actual si hay precio de compra
             if (widget.product.purchasePrice > 0) ...[
               const SizedBox(height: 4),
               _buildInfoRow(
                 'Ganancia',
                 '${oldProfitMargin.toStringAsFixed(1)}%',
-                valueColor: oldProfitMargin > 0 ? Colors.green : theme.colorScheme.error,
+                valueColor: oldProfitMargin > 0
+                    ? Colors.green
+                    : theme.colorScheme.error,
               ),
             ],
           ],
@@ -233,7 +248,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
   Widget _buildChangeRow(String label, String oldValue, String newValue) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -274,10 +289,13 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   }
 
   /// Construye la fila que muestra el cambio en el porcentaje de ganancia
-  Widget _buildProfitMarginRow(double oldMargin, double newMargin, ThemeData theme) {
-    final oldMarginText = oldMargin > 0 ? '${oldMargin.toStringAsFixed(1)}%' : 'N/A';
-    final newMarginText = newMargin > 0 ? '${newMargin.toStringAsFixed(1)}%' : 'N/A';
-    
+  Widget _buildProfitMarginRow(
+      double oldMargin, double newMargin, ThemeData theme) {
+    final oldMarginText =
+        oldMargin > 0 ? '${oldMargin.toStringAsFixed(1)}%' : 'N/A';
+    final newMarginText =
+        newMargin > 0 ? '${newMargin.toStringAsFixed(1)}%' : 'N/A';
+
     // Determinar el color basado en si la ganancia mejoró o empeoró
     Color? newValueColor;
     if (newMargin > oldMargin) {
@@ -287,7 +305,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     } else {
       newValueColor = theme.colorScheme.primary; // Sin cambio significativo
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -324,7 +342,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   /// Construye una fila de información simple para mostrar valores actuales
   Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -358,30 +376,33 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       // Validaciones adicionales antes de guardar
       final salePrice = _newSalePrice;
       final purchasePrice = _newPurchasePrice;
-      
+
       // Validación final: Precio de venta obligatorio
       if (salePrice <= 0) {
         throw Exception('El precio de venta debe ser mayor a 0');
       }
-      
+
       // Validación final: Precio de compra no puede ser negativo
       if (purchasePrice < 0) {
         throw Exception('El precio de compra no puede ser negativo');
       }
-      
+
       // Validación final: Precio de compra no puede ser mayor al de venta
       if (purchasePrice > 0 && purchasePrice > salePrice) {
-        throw Exception('El precio de compra (${Publications.getFormatoPrecio(value: purchasePrice)}) no puede ser mayor al precio de venta (${Publications.getFormatoPrecio(value: salePrice)})');
+        throw Exception(
+            'El precio de compra (${Publications.getFormatoPrecio(value: purchasePrice)}) no puede ser mayor al precio de venta (${Publications.getFormatoPrecio(value: salePrice)})');
       }
 
       // Obtener providers necesarios
-      final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
-      final catalogueProvider = widget.catalogueProvider; // Usar el provider pasado como parámetro
-      
+      final sellProvider =
+          provider_package.Provider.of<SellProvider>(context, listen: false);
+      final catalogueProvider =
+          widget.catalogueProvider; // Usar el provider pasado como parámetro
+
       // Obtener información de la cuenta
       final accountId = sellProvider.profileAccountSelected.id;
       final accountProfile = sellProvider.profileAccountSelected;
-      
+
       if (accountId.isEmpty) {
         throw Exception('No se pudo obtener el ID de la cuenta');
       }
@@ -389,9 +410,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       // Crear producto actualizado
       // Obtener la cantidad actual del producto en el ticket si existe
       final currentQuantity = sellProvider.ticket.products
-          .firstWhere((p) => p.id == widget.product.id, orElse: () => widget.product)
+          .firstWhere((p) => p.id == widget.product.id,
+              orElse: () => widget.product)
           .quantity;
-      
+
       final updatedProduct = widget.product.copyWith(
         salePrice: salePrice,
         purchasePrice: purchasePrice,
@@ -424,13 +446,12 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         widget.onProductUpdated?.call();
         Navigator.of(context).pop();
       }
-
     } catch (e) {
       // Log del error para debugging
       if (kDebugMode) {
         debugPrint('❌ Error al actualizar precios: $e');
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -29,7 +29,6 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {
       return SizedBox(

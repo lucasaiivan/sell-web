@@ -3,31 +3,30 @@ import 'package:flutter/material.dart';
 /// Mixin que proporciona funcionalidad de loading states
 /// para widgets que necesitan mostrar estados de carga
 mixin LoadingMixin<T extends StatefulWidget> on State<T> {
-  
   // ==========================================
   // PROPIEDADES PRIVADAS
   // ==========================================
-  
+
   bool _isLoading = false;
   String? _loadingMessage;
-  
+
   // ==========================================
   // GETTERS PÚBLICOS
   // ==========================================
-  
+
   /// Indica si actualmente se está cargando algo
   bool get isLoading => _isLoading;
-  
+
   /// Mensaje actual de loading
   String? get loadingMessage => _loadingMessage;
-  
+
   /// Indica si no se está cargando
   bool get isNotLoading => !_isLoading;
-  
+
   // ==========================================
   // MÉTODOS DE CONTROL DE LOADING
   // ==========================================
-  
+
   /// Inicia el estado de loading
   void startLoading([String? message]) {
     if (mounted) {
@@ -37,7 +36,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Detiene el estado de loading
   void stopLoading() {
     if (mounted) {
@@ -47,7 +46,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Actualiza el mensaje de loading sin cambiar el estado
   void updateLoadingMessage(String? message) {
     if (mounted && _isLoading) {
@@ -56,7 +55,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Alterna el estado de loading
   void toggleLoading([String? message]) {
     if (_isLoading) {
@@ -65,11 +64,11 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       startLoading(message);
     }
   }
-  
+
   // ==========================================
   // MÉTODOS DE EJECUCIÓN CON LOADING
   // ==========================================
-  
+
   /// Ejecuta una función asíncrona con loading automático
   Future<R> executeWithLoading<R>(
     Future<R> Function() action, {
@@ -91,7 +90,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       stopLoading();
     }
   }
-  
+
   /// Ejecuta múltiples acciones en secuencia con loading
   Future<void> executeSequentialActions(
     List<SequentialAction> actions, {
@@ -100,30 +99,31 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
   }) async {
     for (int i = 0; i < actions.length; i++) {
       final action = actions[i];
-      
+
       try {
         startLoading(action.loadingMessage ?? 'Ejecutando acción ${i + 1}...');
         await action.action();
-        
+
         if (action.successMessage != null && mounted) {
           _showSuccessSnackBar(action.successMessage!);
         }
       } catch (error) {
         if (showErrorSnackBar && mounted) {
-          final message = action.errorMessage ?? 'Error en acción ${i + 1}: $error';
+          final message =
+              action.errorMessage ?? 'Error en acción ${i + 1}: $error';
           _showErrorSnackBar(message);
         }
-        
+
         if (stopOnError) {
           stopLoading();
           rethrow;
         }
       }
     }
-    
+
     stopLoading();
   }
-  
+
   /// Ejecuta acciones en paralelo con loading
   Future<List<R>> executeParallelActions<R>(
     List<Future<R> Function()> actions, {
@@ -143,11 +143,11 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       stopLoading();
     }
   }
-  
+
   // ==========================================
   // WIDGETS DE LOADING
   // ==========================================
-  
+
   /// Widget que muestra el indicador de loading por defecto
   Widget buildLoadingIndicator({
     String? message,
@@ -171,8 +171,8 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
             Text(
               message ?? _loadingMessage!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: color ?? Theme.of(context).colorScheme.onSurface,
-              ),
+                    color: color ?? Theme.of(context).colorScheme.onSurface,
+                  ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -180,7 +180,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   /// Widget que muestra loading en línea (horizontal)
   Widget buildInlineLoadingIndicator({
     String? message,
@@ -203,14 +203,14 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
           Text(
             message ?? _loadingMessage!,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: color ?? Theme.of(context).colorScheme.onSurface,
-            ),
+                  color: color ?? Theme.of(context).colorScheme.onSurface,
+                ),
           ),
         ],
       ],
     );
   }
-  
+
   /// Widget overlay que muestra loading sobre el contenido existente
   Widget buildLoadingOverlay({
     required Widget child,
@@ -234,7 +234,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       ],
     );
   }
-  
+
   /// Widget que condicionalemente muestra loading o contenido
   Widget buildConditionalContent({
     required Widget content,
@@ -246,11 +246,11 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
     }
     return content;
   }
-  
+
   // ==========================================
   // MÉTODOS DE VALIDACIÓN
   // ==========================================
-  
+
   /// Verifica si se puede ejecutar una acción (no está loading)
   bool canExecuteAction() {
     if (_isLoading) {
@@ -259,7 +259,7 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
     }
     return true;
   }
-  
+
   /// Ejecuta una acción solo si no está loading
   Future<R?> executeIfNotLoading<R>(
     Future<R> Function() action, {
@@ -272,17 +272,17 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       }
       return null;
     }
-    
+
     return executeWithLoading(action, loadingMessage: loadingMessage);
   }
-  
+
   // ==========================================
   // MÉTODOS HELPER PRIVADOS
   // ==========================================
-  
+
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -298,10 +298,10 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   void _showSuccessSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -311,10 +311,10 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   void _showInfoSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -324,11 +324,11 @@ mixin LoadingMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   // ==========================================
   // LIFECYCLE OVERRIDES
   // ==========================================
-  
+
   @override
   void dispose() {
     // Limpiar estado de loading al destruir el widget
@@ -344,7 +344,7 @@ class SequentialAction {
   final String? loadingMessage;
   final String? successMessage;
   final String? errorMessage;
-  
+
   const SequentialAction({
     required this.action,
     this.loadingMessage,
@@ -355,12 +355,12 @@ class SequentialAction {
 
 /// Mixin especializado para loading en forms
 mixin FormLoadingMixin<T extends StatefulWidget> on State<T> {
-  
   final Map<String, bool> _fieldLoadingStates = {};
-  
+
   /// Verifica si un campo específico está loading
-  bool isFieldLoading(String fieldKey) => _fieldLoadingStates[fieldKey] ?? false;
-  
+  bool isFieldLoading(String fieldKey) =>
+      _fieldLoadingStates[fieldKey] ?? false;
+
   /// Inicia loading para un campo específico
   void startFieldLoading(String fieldKey) {
     if (mounted) {
@@ -369,7 +369,7 @@ mixin FormLoadingMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Detiene loading para un campo específico
   void stopFieldLoading(String fieldKey) {
     if (mounted) {
@@ -378,7 +378,7 @@ mixin FormLoadingMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Ejecuta una acción con loading para un campo específico
   Future<R> executeFieldAction<R>(
     String fieldKey,
@@ -391,10 +391,11 @@ mixin FormLoadingMixin<T extends StatefulWidget> on State<T> {
       stopFieldLoading(fieldKey);
     }
   }
-  
+
   /// Verifica si algún campo está loading
-  bool get hasAnyFieldLoading => _fieldLoadingStates.values.any((loading) => loading);
-  
+  bool get hasAnyFieldLoading =>
+      _fieldLoadingStates.values.any((loading) => loading);
+
   /// Detiene loading para todos los campos
   void stopAllFieldLoading() {
     if (mounted) {
@@ -403,7 +404,7 @@ mixin FormLoadingMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   @override
   void dispose() {
     _fieldLoadingStates.clear();
@@ -413,10 +414,9 @@ mixin FormLoadingMixin<T extends StatefulWidget> on State<T> {
 
 /// Mixin para loading con debounce (evita llamadas múltiples)
 mixin DebouncedLoadingMixin<T extends StatefulWidget> on State<T> {
-  
   final Map<String, DateTime> _lastExecutionTimes = {};
   final Duration _defaultDebounceTime = const Duration(milliseconds: 500);
-  
+
   /// Ejecuta una acción con debounce
   Future<R?> executeWithDebounce<R>(
     String actionKey,
@@ -427,13 +427,13 @@ mixin DebouncedLoadingMixin<T extends StatefulWidget> on State<T> {
     final now = DateTime.now();
     final lastExecution = _lastExecutionTimes[actionKey];
     final debounce = debounceTime ?? _defaultDebounceTime;
-    
+
     if (lastExecution != null && now.difference(lastExecution) < debounce) {
       return null; // Ignorar ejecución por debounce
     }
-    
+
     _lastExecutionTimes[actionKey] = now;
-    
+
     try {
       if (mounted) {
         setState(() {
@@ -445,7 +445,7 @@ mixin DebouncedLoadingMixin<T extends StatefulWidget> on State<T> {
       rethrow;
     }
   }
-  
+
   @override
   void dispose() {
     _lastExecutionTimes.clear();

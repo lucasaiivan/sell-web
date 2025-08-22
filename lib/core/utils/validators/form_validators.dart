@@ -51,7 +51,8 @@ class FormValidators {
       return 'La contraseña debe contener al menos un número';
     }
 
-    if (requireSpecialChars && !RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+    if (requireSpecialChars &&
+        !RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
       return 'La contraseña debe contener al menos un carácter especial';
     }
 
@@ -59,7 +60,8 @@ class FormValidators {
   }
 
   /// Valida que dos contraseñas coincidan
-  static String? validatePasswordConfirmation(String? password, String? confirmation) {
+  static String? validatePasswordConfirmation(
+      String? password, String? confirmation) {
     if (confirmation == null || confirmation.isEmpty) {
       return 'Confirme la contraseña';
     }
@@ -96,7 +98,8 @@ class FormValidators {
   }
 
   /// Valida longitud mínima de un campo
-  static String? validateMinLength(String? value, int minLength, {String fieldName = 'Campo'}) {
+  static String? validateMinLength(String? value, int minLength,
+      {String fieldName = 'Campo'}) {
     if (value == null || value.length < minLength) {
       return '$fieldName debe tener al menos $minLength caracteres';
     }
@@ -104,7 +107,8 @@ class FormValidators {
   }
 
   /// Valida longitud máxima de un campo
-  static String? validateMaxLength(String? value, int maxLength, {String fieldName = 'Campo'}) {
+  static String? validateMaxLength(String? value, int maxLength,
+      {String fieldName = 'Campo'}) {
     if (value != null && value.length > maxLength) {
       return '$fieldName no puede exceder $maxLength caracteres';
     }
@@ -112,7 +116,8 @@ class FormValidators {
   }
 
   /// Valida que un campo contenga solo letras
-  static String? validateOnlyLetters(String? value, {String fieldName = 'Campo'}) {
+  static String? validateOnlyLetters(String? value,
+      {String fieldName = 'Campo'}) {
     if (value == null || value.isEmpty) return null;
 
     if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$').hasMatch(value)) {
@@ -122,7 +127,8 @@ class FormValidators {
   }
 
   /// Valida que un campo contenga solo números
-  static String? validateOnlyNumbers(String? value, {String fieldName = 'Campo'}) {
+  static String? validateOnlyNumbers(String? value,
+      {String fieldName = 'Campo'}) {
     if (value == null || value.isEmpty) return null;
 
     if (!RegExp(r'^\d+$').hasMatch(value)) {
@@ -153,7 +159,8 @@ class FormValidators {
   }
 
   /// Valida un campo de precio/moneda
-  static String? validatePrice(String? value, {double? minValue, double? maxValue}) {
+  static String? validatePrice(String? value,
+      {double? minValue, double? maxValue}) {
     if (value == null || value.isEmpty) {
       return 'El precio es requerido';
     }
@@ -227,7 +234,8 @@ class FormValidators {
   /// Combina múltiples validadores
   ///
   /// Ejecuta cada validador y retorna el primer error encontrado
-  static String? combineValidators(String? value, List<String? Function(String?)> validators) {
+  static String? combineValidators(
+      String? value, List<String? Function(String?)> validators) {
     for (final validator in validators) {
       final error = validator(value);
       if (error != null) return error;
@@ -236,7 +244,8 @@ class FormValidators {
   }
 
   /// Valida una fecha en formato string
-  static String? validateDate(String? dateString, {String format = 'dd/MM/yyyy'}) {
+  static String? validateDate(String? dateString,
+      {String format = 'dd/MM/yyyy'}) {
     if (dateString == null || dateString.isEmpty) {
       return 'La fecha es requerida';
     }

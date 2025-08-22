@@ -27,7 +27,12 @@ class AppConstants {
   // ==========================================
   static const int maxImageSize = 5 * 1024 * 1024; // 5MB
   static const int maxPdfSize = 10 * 1024 * 1024; // 10MB
-  static const List<String> supportedImageFormats = ['jpg', 'jpeg', 'png', 'webp'];
+  static const List<String> supportedImageFormats = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp'
+  ];
   static const List<String> supportedDocumentFormats = ['pdf', 'doc', 'docx'];
 
   // ==========================================

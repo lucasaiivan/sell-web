@@ -21,7 +21,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
 import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/component/ui.dart'; 
+import 'package:sellweb/core/widgets/component/ui.dart';
 import '../../core/widgets/dialogs/tickets/last_ticket_dialog.dart';
 import '../../core/widgets/navigation/drawer_ticket/ticket_drawer_widget.dart';
 import '../providers/sell_provider.dart';
@@ -147,10 +147,13 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) &&
+                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                      (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      showConfirmedPurchase:
+                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
                       onEditCashAmount: () =>
                           dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
                       onConfirmSale: () =>
@@ -197,16 +200,20 @@ class _SellPageState extends State<SellPage> {
     final context = _focusNode.context;
     if (context == null) return;
 
-    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+    final catalogueProvider =
+        Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
-    if (product != null && product.id.isNotEmpty && product.description.isNotEmpty) {
+    if (product != null &&
+        product.id.isNotEmpty &&
+        product.description.isNotEmpty) {
       // - Si se encuentra el producto en el catálogo con datos válidos, agregarlo al ticket -
       homeProvider.addProductsticket(product.copyWith());
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
-      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
+      final publicProduct =
+          await catalogueProvider.getPublicProductByCode(code);
 
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
@@ -219,7 +226,7 @@ class _SellPageState extends State<SellPage> {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
           // ignore: use_build_context_synchronously
-         showAddProductDialog(context,
+          showAddProductDialog(context,
               isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }
@@ -496,9 +503,7 @@ class _SellPageState extends State<SellPage> {
                         backgroundColor: isConnected
                             ? Colors.green.withValues(alpha: 0.1)
                             : null,
-                        colorAccent: isConnected
-                            ? Colors.green.shade700
-                            : null,
+                        colorAccent: isConnected ? Colors.green.shade700 : null,
                       );
                     },
                   ),
@@ -508,20 +513,20 @@ class _SellPageState extends State<SellPage> {
                     builder: (context, sellProvider, __) {
                       final hasLastTicket = sellProvider.lastSoldTicket != null;
                       return AppBarButtonCircle(
-                        icon: Icons.receipt_long_rounded,
-                        tooltip: hasLastTicket
-                            ? 'Ver último ticket\nToca para ver detalles y reimprimir'
-                            : 'No hay tickets recientes',
-                        onPressed: hasLastTicket
-                            ? () => _showLastTicketDialog(
-                                buildContext, sellProvider)
-                            : null,
-                        backgroundColor:Theme.of(buildContext)
-                                .colorScheme
-                                .primaryContainer
-                                .withValues(alpha: 0.4),
-                        colorAccent: Theme.of(buildContext).colorScheme.primary
-                      );
+                          icon: Icons.receipt_long_rounded,
+                          tooltip: hasLastTicket
+                              ? 'Ver último ticket\nToca para ver detalles y reimprimir'
+                              : 'No hay tickets recientes',
+                          onPressed: hasLastTicket
+                              ? () => _showLastTicketDialog(
+                                  buildContext, sellProvider)
+                              : null,
+                          backgroundColor: Theme.of(buildContext)
+                              .colorScheme
+                              .primaryContainer
+                              .withValues(alpha: 0.4),
+                          colorAccent:
+                              Theme.of(buildContext).colorScheme.primary);
                     },
                   ),
 
@@ -533,8 +538,8 @@ class _SellPageState extends State<SellPage> {
                   (provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text: isMobile(buildContext) 
-                              ? null 
+                          text: isMobile(buildContext)
+                              ? null
                               : 'Descartar ticket',
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
@@ -1001,7 +1006,8 @@ class _SellPageState extends State<SellPage> {
             crossAxisCount = 6; // Ancho para pantallas grandes
           }
           // Usar los productos seleccionados del ticket
-          final List<ProductCatalogue> list = provider.ticket.products.toList().reversed.toList();
+          final List<ProductCatalogue> list =
+              provider.ticket.products.toList().reversed.toList();
           // Calcular cuántas filas caben en la vista
           final double itemHeight = (constraints.maxWidth / crossAxisCount) *
               1.1; // Ajusta el factor según el aspecto de los ítems
@@ -2080,12 +2086,11 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               _showStatusDialog(context);
             }
           },
-          backgroundColor: isActive
-              ? Colors.green.withValues(alpha: 0.1)
-              : null,
+          backgroundColor:
+              isActive ? Colors.green.withValues(alpha: 0.1) : null,
           colorAccent: isActive ? Colors.green.shade700 : null,
-          text: isMobile(context) 
-              ? null 
+          text: isMobile(context)
+              ? null
               : (isActive ? 'Caja abierta' : 'Abrir caja'),
         );
       },

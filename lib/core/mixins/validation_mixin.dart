@@ -4,49 +4,49 @@ import 'package:flutter/material.dart';
 /// Mixin que proporciona funcionalidad de validación
 /// para formularios y campos de entrada
 mixin ValidationMixin<T extends StatefulWidget> on State<T> {
-  
   // ==========================================
   // PROPIEDADES PRIVADAS
   // ==========================================
-  
+
   final Map<String, String?> _fieldErrors = {};
   final Map<String, dynamic> _fieldValues = {};
   final Map<String, List<ValidationRule>> _fieldRules = {};
   bool _showValidationErrors = false;
-  
+
   // ==========================================
   // GETTERS PÚBLICOS
   // ==========================================
-  
+
   /// Indica si hay errores de validación
-  bool get hasValidationErrors => _fieldErrors.values.any((error) => error != null);
-  
+  bool get hasValidationErrors =>
+      _fieldErrors.values.any((error) => error != null);
+
   /// Indica si el formulario es válido
   bool get isFormValid => !hasValidationErrors;
-  
+
   /// Obtiene todos los errores actuales
   Map<String, String?> get allErrors => Map.unmodifiable(_fieldErrors);
-  
+
   /// Obtiene todos los valores actuales
   Map<String, dynamic> get allValues => Map.unmodifiable(_fieldValues);
-  
+
   /// Indica si se deben mostrar los errores de validación
   bool get showValidationErrors => _showValidationErrors;
-  
+
   // ==========================================
   // MÉTODOS DE CONFIGURACIÓN
   // ==========================================
-  
+
   /// Registra las reglas de validación para un campo
   void setFieldRules(String fieldKey, List<ValidationRule> rules) {
     _fieldRules[fieldKey] = rules;
   }
-  
+
   /// Registra múltiples campos con sus reglas
   void setFormRules(Map<String, List<ValidationRule>> rulesMap) {
     _fieldRules.addAll(rulesMap);
   }
-  
+
   /// Configura si se deben mostrar errores automáticamente
   void setShowValidationErrors(bool show) {
     if (mounted) {
@@ -55,60 +55,61 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   // ==========================================
   // MÉTODOS DE VALIDACIÓN
   // ==========================================
-  
+
   /// Valida un campo específico
   String? validateField(String fieldKey, dynamic value) {
     final rules = _fieldRules[fieldKey] ?? [];
-    
+
     for (final rule in rules) {
       final error = rule.validate(value);
       if (error != null) {
         return error;
       }
     }
-    
+
     return null;
   }
-  
+
   /// Valida todos los campos registrados
   bool validateAllFields() {
     bool isValid = true;
-    
+
     for (final fieldKey in _fieldRules.keys) {
       final value = _fieldValues[fieldKey];
       final error = validateField(fieldKey, value);
-      
+
       if (mounted) {
         setState(() {
           _fieldErrors[fieldKey] = error;
         });
       }
-      
+
       if (error != null) {
         isValid = false;
       }
     }
-    
+
     return isValid;
   }
-  
+
   /// Actualiza el valor de un campo y lo valida
-  void updateFieldValue(String fieldKey, dynamic value, {bool validateImmediately = true}) {
+  void updateFieldValue(String fieldKey, dynamic value,
+      {bool validateImmediately = true}) {
     if (mounted) {
       setState(() {
         _fieldValues[fieldKey] = value;
-        
+
         if (validateImmediately) {
           _fieldErrors[fieldKey] = validateField(fieldKey, value);
         }
       });
     }
   }
-  
+
   /// Limpia el error de un campo específico
   void clearFieldError(String fieldKey) {
     if (mounted) {
@@ -117,7 +118,7 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Limpia todos los errores
   void clearAllErrors() {
     if (mounted) {
@@ -126,7 +127,7 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Establece un error personalizado para un campo
   void setFieldError(String fieldKey, String error) {
     if (mounted) {
@@ -135,37 +136,37 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   // ==========================================
   // MÉTODOS DE CONSULTA
   // ==========================================
-  
+
   /// Obtiene el error de un campo específico
   String? getFieldError(String fieldKey) {
     if (!_showValidationErrors) return null;
     return _fieldErrors[fieldKey];
   }
-  
+
   /// Obtiene el valor de un campo específico
   T? getFieldValue<T>(String fieldKey) {
     final value = _fieldValues[fieldKey];
     return value is T ? value : null;
   }
-  
+
   /// Verifica si un campo tiene error
   bool hasFieldError(String fieldKey) {
     return _fieldErrors[fieldKey] != null;
   }
-  
+
   /// Verifica si un campo está registrado
   bool isFieldRegistered(String fieldKey) {
     return _fieldRules.containsKey(fieldKey);
   }
-  
+
   // ==========================================
   // MÉTODOS DE RESET Y LIMPIEZA
   // ==========================================
-  
+
   /// Resetea un campo específico
   void resetField(String fieldKey) {
     if (mounted) {
@@ -175,7 +176,7 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Resetea todos los campos
   void resetAllFields() {
     if (mounted) {
@@ -186,7 +187,7 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   /// Resetea solo los valores manteniendo las reglas
   void resetValues() {
     if (mounted) {
@@ -196,11 +197,11 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       });
     }
   }
-  
+
   // ==========================================
   // MÉTODOS DE UTILIDAD PARA WIDGETS
   // ==========================================
-  
+
   /// Obtiene la decoración para un TextField
   InputDecoration getFieldDecoration(
     String fieldKey, {
@@ -212,7 +213,7 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
     bool showErrorText = true,
   }) {
     final error = showErrorText ? getFieldError(fieldKey) : null;
-    
+
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
@@ -254,18 +255,18 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   /// Widget que muestra un resumen de errores
   Widget buildErrorSummary({
     String title = 'Errores de validación:',
     bool showOnlyIfErrors = true,
   }) {
     final errors = _fieldErrors.values.where((error) => error != null).toList();
-    
+
     if (showOnlyIfErrors && errors.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Card(
       color: Theme.of(context).colorScheme.errorContainer,
       child: Padding(
@@ -276,43 +277,46 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onErrorContainer,
-                fontWeight: FontWeight.bold,
-              ),
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             ...errors.map((error) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onErrorContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      error!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 16,
                         color: Theme.of(context).colorScheme.onErrorContainer,
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          error!,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
+                                  ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
           ],
         ),
       ),
     );
   }
-  
+
   // ==========================================
   // MÉTODOS DE VALIDACIÓN AVANZADA
   // ==========================================
-  
+
   /// Valida el formulario y muestra errores si es necesario
   Future<bool> validateFormWithFeedback({
     bool showSnackBarOnError = true,
@@ -320,15 +324,16 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
   }) async {
     setShowValidationErrors(true);
     final isValid = validateAllFields();
-    
+
     if (!isValid && showSnackBarOnError && mounted) {
-      final message = errorMessage ?? 'Por favor corrige los errores en el formulario';
+      final message =
+          errorMessage ?? 'Por favor corrige los errores en el formulario';
       _showErrorSnackBar(message);
     }
-    
+
     return isValid;
   }
-  
+
   /// Ejecuta una acción solo si el formulario es válido
   Future<R?> executeIfValid<R>(
     Future<R> Function() action, {
@@ -338,19 +343,19 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
     if (showValidationErrors) {
       setShowValidationErrors(true);
     }
-    
+
     final isValid = validateAllFields();
-    
+
     if (!isValid) {
       if (validationErrorMessage != null && mounted) {
         _showErrorSnackBar(validationErrorMessage);
       }
       return null;
     }
-    
+
     return await action();
   }
-  
+
   /// Valida y ejecuta con loading automático
   Future<R?> validateAndExecute<R>(
     Future<R> Function() action, {
@@ -359,26 +364,26 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
   }) async {
     setShowValidationErrors(true);
     final isValid = validateAllFields();
-    
+
     if (!isValid) {
       if (validationErrorMessage != null && mounted) {
         _showErrorSnackBar(validationErrorMessage);
       }
       return null;
     }
-    
+
     // Ejecutar directamente sin loading automático
     // El widget puede usar LoadingMixin por separado si lo necesita
     return await action();
   }
-  
+
   // ==========================================
   // MÉTODOS HELPER PRIVADOS
   // ==========================================
-  
+
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -387,11 +392,11 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   // ==========================================
   // LIFECYCLE OVERRIDES
   // ==========================================
-  
+
   @override
   void dispose() {
     _fieldErrors.clear();
@@ -404,7 +409,7 @@ mixin ValidationMixin<T extends StatefulWidget> on State<T> {
 /// Clase base para reglas de validación
 abstract class ValidationRule {
   const ValidationRule();
-  
+
   /// Valida un valor y retorna un mensaje de error o null si es válido
   String? validate(dynamic value);
 }
@@ -412,12 +417,12 @@ abstract class ValidationRule {
 /// Regla que verifica que el campo no esté vacío
 class RequiredRule extends ValidationRule {
   final String message;
-  
+
   const RequiredRule({this.message = 'Este campo es requerido'});
-  
+
   @override
   String? validate(dynamic value) {
-    if (value == null || 
+    if (value == null ||
         (value is String && value.trim().isEmpty) ||
         (value is List && value.isEmpty)) {
       return message;
@@ -430,10 +435,10 @@ class RequiredRule extends ValidationRule {
 class MinLengthRule extends ValidationRule {
   final int minLength;
   final String message;
-  
-  const MinLengthRule(this.minLength, {String? message}) 
+
+  const MinLengthRule(this.minLength, {String? message})
       : message = message ?? 'Debe tener al menos $minLength caracteres';
-  
+
   @override
   String? validate(dynamic value) {
     final str = value?.toString() ?? '';
@@ -448,10 +453,10 @@ class MinLengthRule extends ValidationRule {
 class MaxLengthRule extends ValidationRule {
   final int maxLength;
   final String message;
-  
-  const MaxLengthRule(this.maxLength, {String? message}) 
+
+  const MaxLengthRule(this.maxLength, {String? message})
       : message = message ?? 'No debe exceder $maxLength caracteres';
-  
+
   @override
   String? validate(dynamic value) {
     final str = value?.toString() ?? '';
@@ -465,15 +470,17 @@ class MaxLengthRule extends ValidationRule {
 /// Regla que verifica formato de email
 class EmailRule extends ValidationRule {
   final String message;
-  
+
   const EmailRule({this.message = 'Ingresa un email válido'});
-  
+
   @override
   String? validate(dynamic value) {
     final str = value?.toString() ?? '';
-    if (str.isEmpty) return null; // Permite vacío, usar RequiredRule para requerir
-    
-    final emailRegExp = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    if (str.isEmpty)
+      return null; // Permite vacío, usar RequiredRule para requerir
+
+    final emailRegExp =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegExp.hasMatch(str)) {
       return message;
     }
@@ -485,17 +492,17 @@ class EmailRule extends ValidationRule {
 class NumericRule extends ValidationRule {
   final String message;
   final bool allowDecimals;
-  
+
   const NumericRule({
     this.message = 'Debe ser un número válido',
     this.allowDecimals = true,
   });
-  
+
   @override
   String? validate(dynamic value) {
     final str = value?.toString() ?? '';
     if (str.isEmpty) return null;
-    
+
     if (allowDecimals) {
       if (double.tryParse(str) == null) {
         return message;
@@ -514,15 +521,17 @@ class RangeRule extends ValidationRule {
   final num min;
   final num max;
   final String message;
-  
-  const RangeRule(this.min, this.max, {String? message}) 
+
+  const RangeRule(this.min, this.max, {String? message})
       : message = message ?? 'Debe estar entre $min y $max';
-  
+
   @override
   String? validate(dynamic value) {
-    final num? number = value is num ? value : num.tryParse(value?.toString() ?? '');
-    if (number == null) return null; // Permite no numérico, usar NumericRule para validar
-    
+    final num? number =
+        value is num ? value : num.tryParse(value?.toString() ?? '');
+    if (number == null)
+      return null; // Permite no numérico, usar NumericRule para validar
+
     if (number < min || number > max) {
       return message;
     }
@@ -533,9 +542,9 @@ class RangeRule extends ValidationRule {
 /// Regla personalizada con función
 class CustomRule extends ValidationRule {
   final String? Function(dynamic value) validator;
-  
+
   const CustomRule(this.validator);
-  
+
   @override
   String? validate(dynamic value) {
     return validator(value);
@@ -547,10 +556,10 @@ class MatchFieldRule extends ValidationRule {
   final String fieldKey;
   final Map<String, dynamic> fieldValues;
   final String message;
-  
-  const MatchFieldRule(this.fieldKey, this.fieldValues, {String? message}) 
+
+  const MatchFieldRule(this.fieldKey, this.fieldValues, {String? message})
       : message = message ?? 'Los campos no coinciden';
-  
+
   @override
   String? validate(dynamic value) {
     final otherValue = fieldValues[fieldKey];
@@ -565,14 +574,14 @@ class MatchFieldRule extends ValidationRule {
 class PatternRule extends ValidationRule {
   final String pattern;
   final String message;
-  
+
   const PatternRule(this.pattern, {required this.message});
-  
+
   @override
   String? validate(dynamic value) {
     final str = value?.toString() ?? '';
     if (str.isEmpty) return null;
-    
+
     final regExp = RegExp(pattern);
     if (!regExp.hasMatch(str)) {
       return message;
@@ -583,21 +592,21 @@ class PatternRule extends ValidationRule {
 
 /// Mixin especializado para validación en tiempo real
 mixin RealTimeValidationMixin<T extends StatefulWidget> on State<T> {
-  
   Timer? _validationTimer;
   final Duration _validationDelay = const Duration(milliseconds: 500);
-  
+
   /// Valida un campo con debounce
   void validateFieldWithDelay(String fieldKey, dynamic value) {
     _validationTimer?.cancel();
     _validationTimer = Timer(_validationDelay, () {
       if (this is ValidationMixin) {
         final validationMixin = this as ValidationMixin;
-        validationMixin.updateFieldValue(fieldKey, value, validateImmediately: true);
+        validationMixin.updateFieldValue(fieldKey, value,
+            validateImmediately: true);
       }
     });
   }
-  
+
   @override
   void dispose() {
     _validationTimer?.cancel();

@@ -52,7 +52,6 @@ class BaseDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
-
       child: Container(
         width: width,
         constraints: BoxConstraints(
@@ -240,7 +239,8 @@ Future<T?> showBaseDialog<T>({
   Color? headerColor,
   bool showCloseButton = true,
   bool scrollable = true,
-  bool barrierDismissible = false, // Por defecto no se cierra al hacer click fuera
+  bool barrierDismissible =
+      false, // Por defecto no se cierra al hacer click fuera
 }) {
   return showDialog<T>(
     context: context,

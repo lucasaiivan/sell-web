@@ -54,8 +54,7 @@ class AppBarButton extends StatelessWidget {
         label: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            
-            if (hasTrailingIcon) ...[ 
+            if (hasTrailingIcon) ...[
               Icon(iconTrailing, color: accentColor, size: 24),
             ],
             text,
@@ -76,7 +75,7 @@ class AppBarButton extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: accentColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-      elevation: 0, 
+      elevation: 0,
     );
   }
 }
@@ -108,16 +107,17 @@ class AppBarButtonCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool isDisabled = onPressed == null && !isLoading;
-    
+
     // Colores efectivos basados en el estado del botón
     final effectiveBackgroundColor = isDisabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
-        : (backgroundColor ?? theme.colorScheme.primaryContainer.withValues(alpha: 0.5));
-    
+        : (backgroundColor ??
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.5));
+
     final effectiveIconColor = isDisabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
         : (colorAccent ?? theme.colorScheme.primary);
-    
+
     final bool hasText = text != null && text!.isNotEmpty;
     final bool hasIcon = icon != null;
 

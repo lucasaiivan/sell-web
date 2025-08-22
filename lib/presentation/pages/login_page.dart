@@ -290,7 +290,7 @@ class _LoginFormState extends State<_LoginForm> {
               ],
             );
           }
-          
+
           // Estado por defecto - no debería llegar aquí
           return const SizedBox.shrink();
         },

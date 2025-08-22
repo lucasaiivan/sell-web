@@ -129,7 +129,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
-    return [ 
+    return [
       // button : cierre de caja
       DialogComponents.primaryActionButton(
         context: context,
@@ -140,7 +140,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       // button : cancelar el dialog
       DialogComponents.secondaryActionButton(
         context: context,
-        text: 'Cancelar', 
+        text: 'Cancelar',
         onPressed: () => Navigator.of(context).pop(),
       ),
     ];

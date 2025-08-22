@@ -270,7 +270,8 @@ class _ProductCatalogueFullScreenViewState
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOutCubic,
                       child: Container(
-                        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 2,top:20),
+                        padding: const EdgeInsets.only(
+                            left: 16, right: 16, bottom: 2, top: 20),
                         child: Row(
                           children: [
                             // text flexibleSpace : información del catálogo
@@ -390,7 +391,8 @@ class _ProductCatalogueFullScreenViewState
           opacity: 1.0, // Siempre visible
           duration: const Duration(milliseconds: 300),
           child: FloatingActionButton.extended(
-            heroTag: "product_catalogue_fab", // Hero tag único para evitar conflictos
+            heroTag:
+                "product_catalogue_fab", // Hero tag único para evitar conflictos
             onPressed: () => Navigator.of(context).pop(),
             backgroundColor: colorScheme.primary,
             foregroundColor: colorScheme.onPrimary,

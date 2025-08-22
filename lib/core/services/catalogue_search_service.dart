@@ -1,29 +1,28 @@
 import '../../domain/entities/catalogue.dart';
 
 /// Servicio unificado de búsqueda y filtrado de productos del catálogo.
-/// 
+///
 /// Proporciona algoritmos eficientes para:
 /// - Búsqueda textual avanzada con normalización y tolerancia a errores
 /// - Filtrado por categorías, marcas y códigos
 /// - Ordenamiento por relevancia y ventas
 /// - Sugerencias de búsqueda inteligentes
 class CatalogueSearchService {
-  
   // =================== BÚSQUEDA PRINCIPAL ===================
-  
+
   /// Búsqueda principal de productos con algoritmo avanzado.
-  /// 
+  ///
   /// Características:
   /// - Búsqueda por palabras sin importar el orden
   /// - Búsqueda en múltiples campos (descripción, marca, código)
   /// - Normalización de texto (sin tildes, minúsculas)
   /// - Tolerancia a espacios extra y errores de tipeo
   /// - Puntuación por relevancia
-  /// 
+  ///
   /// [products] Lista de productos donde buscar
   /// [query] Término de búsqueda
   /// [maxResults] Máximo número de resultados (opcional)
-  /// 
+  ///
   /// Retorna una lista ordenada por relevancia
   static List<ProductCatalogue> searchProducts({
     required List<ProductCatalogue> products,
@@ -36,10 +35,8 @@ class CatalogueSearchService {
 
     // Normalizar y dividir la consulta en palabras
     final normalizedQuery = _normalizeText(query);
-    final queryWords = normalizedQuery
-        .split(' ')
-        .where((word) => word.isNotEmpty)
-        .toList();
+    final queryWords =
+        normalizedQuery.split(' ').where((word) => word.isNotEmpty).toList();
 
     if (queryWords.isEmpty) {
       return products;
@@ -91,7 +88,8 @@ class CatalogueSearchService {
   }) {
     final normalizedCategory = _normalizeText(category);
     return products.where((product) {
-      return _normalizeText(product.nameCategory).contains(normalizedCategory) ||
+      return _normalizeText(product.nameCategory)
+              .contains(normalizedCategory) ||
           _normalizeText(product.category).contains(normalizedCategory);
     }).toList();
   }
@@ -110,11 +108,11 @@ class CatalogueSearchService {
   // =================== FILTROS Y ORDENAMIENTO ===================
 
   /// Obtiene productos más vendidos con prioridad para favoritos
-  /// 
+  ///
   /// [products] Lista de productos a filtrar
   /// [limit] Número máximo de productos a retornar (opcional)
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
-  /// 
+  ///
   /// Retorna una lista donde aparecen primero los productos favoritos
   /// ordenados por ventas (descendente), seguidos de los no favoritos
   static List<ProductCatalogue> getTopSellingProducts({
@@ -123,9 +121,8 @@ class CatalogueSearchService {
     int minimumSales = 1,
   }) {
     // Filtrar productos que tienen ventas >= minimumSales
-    final filteredProducts = products
-        .where((product) => product.sales >= minimumSales)
-        .toList();
+    final filteredProducts =
+        products.where((product) => product.sales >= minimumSales).toList();
 
     // Separar productos favoritos y no favoritos
     final favoriteProducts = filteredProducts
@@ -174,7 +171,7 @@ class CatalogueSearchService {
     for (final product in products) {
       // Sugerencias de descripción
       final description = _normalizeText(product.description);
-      if (description.contains(normalizedQuery) && 
+      if (description.contains(normalizedQuery) &&
           product.description.isNotEmpty) {
         suggestions.add(product.description);
       }
@@ -187,7 +184,7 @@ class CatalogueSearchService {
 
       // Sugerencias de categoría
       final category = _normalizeText(product.nameCategory);
-      if (category.contains(normalizedQuery) && 
+      if (category.contains(normalizedQuery) &&
           product.nameCategory.isNotEmpty) {
         suggestions.add(product.nameCategory);
       }

@@ -4,8 +4,8 @@ import '../../../core/constants/app_constants.dart';
 class BusinessValidators {
   /// Valida si un precio es válido para el negocio
   static bool isValidPrice(double price) {
-    return price >= AppConstants.minSaleAmount && 
-           price <= AppConstants.maxProductPrice;
+    return price >= AppConstants.minSaleAmount &&
+        price <= AppConstants.maxProductPrice;
   }
 
   /// Valida si un stock es válido
@@ -48,7 +48,8 @@ class BusinessValidators {
 
   /// Valida descripción de producto
   static String? validateProductDescription(String? description) {
-    if (description != null && description.length > AppConstants.maxProductDescriptionLength) {
+    if (description != null &&
+        description.length > AppConstants.maxProductDescriptionLength) {
       return 'La descripción no puede exceder ${AppConstants.maxProductDescriptionLength} caracteres';
     }
     return null;
@@ -97,9 +98,7 @@ class BusinessValidators {
     }
 
     // Verificar longitud (códigos comunes: EAN-8, EAN-13, UPC-A)
-    if (barcode.length != 8 && 
-        barcode.length != 12 && 
-        barcode.length != 13) {
+    if (barcode.length != 8 && barcode.length != 12 && barcode.length != 13) {
       return 'Código de barras debe tener 8, 12 o 13 dígitos';
     }
 
@@ -157,7 +156,8 @@ class BusinessValidators {
       return 'La cantidad debe ser mayor a 0';
     }
 
-    if (quantity > 999) { // Límite razonable por item
+    if (quantity > 999) {
+      // Límite razonable por item
       return 'Cantidad máxima por producto: 999';
     }
 
@@ -167,7 +167,8 @@ class BusinessValidators {
   /// Valida método de pago
   static bool isValidPaymentMethod(String? paymentMethod) {
     const validMethods = ['efectivo', 'tarjeta', 'transferencia', 'credito'];
-    return paymentMethod != null && validMethods.contains(paymentMethod.toLowerCase());
+    return paymentMethod != null &&
+        validMethods.contains(paymentMethod.toLowerCase());
   }
 
   /// Valida nombre de caja registradora
@@ -258,16 +259,16 @@ class BusinessValidators {
       case 'edit_product':
       case 'delete_product':
         return userPermissions['manage_products'] == true;
-        
+
       case 'process_sale':
         return userPermissions['process_sales'] == true;
-        
+
       case 'manage_cash_register':
         return userPermissions['manage_cash_registers'] == true;
-        
+
       case 'view_reports':
         return userPermissions['view_reports'] == true;
-        
+
       default:
         return false;
     }

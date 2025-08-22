@@ -140,7 +140,8 @@ class TicketModel {
 
   /// Getter de solo lectura para acceso controlado a la lista interna
   /// Solo para depuración y casos especiales - NO modificar directamente
-  List<Map<String, dynamic>> get internalProductList => List.unmodifiable(_listPoduct);
+  List<Map<String, dynamic>> get internalProductList =>
+      List.unmodifiable(_listPoduct);
 
   /// Valida que todos los elementos en _listPoduct tengan la estructura de ProductCatalogue
   bool _validateInternalProductStructure() {
@@ -165,8 +166,6 @@ class TicketModel {
     }
     return true;
   }
-
-
 
   // ==========================================
   // MÉTODOS EXISTENTES
@@ -249,22 +248,31 @@ class TicketModel {
         "transactionType": transactionType,
         // Serializar productos con Timestamp convertidos a milliseconds para SharedPreferences
         "listPoduct": _listPoduct.map((productMap) {
-          Map<String, dynamic> serializedProduct = Map<String, dynamic>.from(productMap);
-          
+          Map<String, dynamic> serializedProduct =
+              Map<String, dynamic>.from(productMap);
+
           // Convertir campos Timestamp a milliseconds para JSON
           if (serializedProduct['creation'] is Timestamp) {
-            serializedProduct['creation'] = (serializedProduct['creation'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['creation'] =
+                (serializedProduct['creation'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
           if (serializedProduct['upgrade'] is Timestamp) {
-            serializedProduct['upgrade'] = (serializedProduct['upgrade'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['upgrade'] =
+                (serializedProduct['upgrade'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
           if (serializedProduct['documentCreation'] is Timestamp) {
-            serializedProduct['documentCreation'] = (serializedProduct['documentCreation'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['documentCreation'] =
+                (serializedProduct['documentCreation'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
           if (serializedProduct['documentUpgrade'] is Timestamp) {
-            serializedProduct['documentUpgrade'] = (serializedProduct['documentUpgrade'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['documentUpgrade'] =
+                (serializedProduct['documentUpgrade'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
-          
+
           return serializedProduct;
         }).toList(),
         // Serializamos creation como int (milisegundos desde época)
@@ -292,24 +300,28 @@ class TicketModel {
     if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
       final productList = data['listPoduct'] as List;
       processedProducts = productList.map((item) {
-        Map<String, dynamic> productMap = item is Map<String, dynamic> 
-            ? Map<String, dynamic>.from(item) 
+        Map<String, dynamic> productMap = item is Map<String, dynamic>
+            ? Map<String, dynamic>.from(item)
             : Map<String, dynamic>.from(item as Map);
-        
+
         // Convertir campos de milliseconds de vuelta a Timestamp
         if (productMap['creation'] is int) {
-          productMap['creation'] = Timestamp.fromMillisecondsSinceEpoch(productMap['creation']);
+          productMap['creation'] =
+              Timestamp.fromMillisecondsSinceEpoch(productMap['creation']);
         }
         if (productMap['upgrade'] is int) {
-          productMap['upgrade'] = Timestamp.fromMillisecondsSinceEpoch(productMap['upgrade']);
+          productMap['upgrade'] =
+              Timestamp.fromMillisecondsSinceEpoch(productMap['upgrade']);
         }
         if (productMap['documentCreation'] is int) {
-          productMap['documentCreation'] = Timestamp.fromMillisecondsSinceEpoch(productMap['documentCreation']);
+          productMap['documentCreation'] = Timestamp.fromMillisecondsSinceEpoch(
+              productMap['documentCreation']);
         }
         if (productMap['documentUpgrade'] is int) {
-          productMap['documentUpgrade'] = Timestamp.fromMillisecondsSinceEpoch(productMap['documentUpgrade']);
+          productMap['documentUpgrade'] = Timestamp.fromMillisecondsSinceEpoch(
+              productMap['documentUpgrade']);
         }
-        
+
         return productMap;
       }).toList();
     }
@@ -389,8 +401,8 @@ class TicketModel {
 
     return ticket;
   }
-  TicketModel.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
-
+  TicketModel.fromDocumentSnapshot(
+      {required DocumentSnapshot documentSnapshot}) {
     Map data = documentSnapshot.data() as Map;
     id = data['id'] ?? '';
     payMode = data['payMode'] ?? '';
@@ -404,12 +416,11 @@ class TicketModel {
     discountIsPercentage = data['discountIsPercentage'] ?? false;
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
-    _listPoduct = data['listPoduct'] != null 
-        ? List<Map<String, dynamic>>.from(
-            (data['listPoduct'] as List).map((item) => 
-              item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map)
-            )
-          )
+    _listPoduct = data['listPoduct'] != null
+        ? List<Map<String, dynamic>>.from((data['listPoduct'] as List).map(
+            (item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map)))
         : [];
     creation = data['creation'];
   }
@@ -666,5 +677,3 @@ class TicketModel {
     priceTotal = calculatedTotal;
   }
 }
-
-

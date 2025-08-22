@@ -23,7 +23,7 @@ class TextFormatter {
   /// ```
   static String capitalizeWords(String text) {
     if (text.isEmpty) return text;
-    
+
     return text.split(' ').map((word) {
       if (word.isEmpty) return word;
       return word[0].toUpperCase() + word.substring(1).toLowerCase();
@@ -41,7 +41,7 @@ class TextFormatter {
   static String formatPhoneNumber(String phone) {
     // Remover todos los caracteres no numéricos
     final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
-    
+
     if (cleaned.length == 10) {
       // Formato estadounidense: (XXX) XXX-XXXX
       return '(${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6)}';
@@ -55,7 +55,7 @@ class TextFormatter {
       final secondPart = cleaned.substring(9);
       return '+54 9 ($areaCode) $firstPart-$secondPart';
     }
-    
+
     // Si no coincide con ningún formato conocido, devolver con espacios
     return _addSpacesToNumber(cleaned);
   }
@@ -63,7 +63,7 @@ class TextFormatter {
   /// Agrega espacios a un número largo para mejor legibilidad
   static String _addSpacesToNumber(String number) {
     if (number.length <= 4) return number;
-    
+
     String formatted = '';
     for (int i = 0; i < number.length; i += 3) {
       if (formatted.isNotEmpty) formatted += ' ';
@@ -83,13 +83,14 @@ class TextFormatter {
   /// ```dart
   /// truncateText('This is a very long text', 10) // "This is a..."
   /// ```
-  static String truncateText(String text, int maxLength, {String ellipsis = '...'}) {
+  static String truncateText(String text, int maxLength,
+      {String ellipsis = '...'}) {
     if (text.length <= maxLength) return text;
-    
+
     // Buscar el último espacio antes del límite para no cortar palabras
     int cutPoint = maxLength - ellipsis.length;
     int lastSpace = text.lastIndexOf(' ', cutPoint);
-    
+
     if (lastSpace > maxLength * 0.6) {
       // Si el último espacio está razonablemente cerca del límite, usarlo
       return '${text.substring(0, lastSpace)}$ellipsis';
@@ -110,7 +111,7 @@ class TextFormatter {
   static String removeAccents(String text) {
     const withAccents = 'áàäâéèëêíìïîóòöôúùüûñç';
     const withoutAccents = 'aaaaeeeeiiiioooouuuunc';
-    
+
     String result = text.toLowerCase();
     for (int i = 0; i < withAccents.length; i++) {
       result = result.replaceAll(withAccents[i], withoutAccents[i]);
@@ -146,14 +147,14 @@ class TextFormatter {
   /// ```
   static String getInitials(String name, {int maxInitials = 2}) {
     if (name.isEmpty) return '';
-    
+
     final words = name.trim().split(RegExp(r'\s+'));
     final initials = words
         .take(maxInitials)
         .map((word) => word.isNotEmpty ? word[0].toUpperCase() : '')
         .where((initial) => initial.isNotEmpty)
         .join();
-    
+
     return initials;
   }
 
@@ -183,18 +184,51 @@ class TextFormatter {
   /// Capitaliza la primera letra de cada palabra excepto artículos, preposiciones, etc.
   static String formatAsTitle(String text) {
     if (text.isEmpty) return text;
-    
+
     // Palabras que normalmente no se capitalizan en títulos (en español)
     const lowerCaseWords = {
-      'a', 'al', 'ante', 'bajo', 'con', 'contra', 'de', 'del', 'desde', 'durante',
-      'en', 'entre', 'hacia', 'hasta', 'para', 'por', 'según', 'sin', 'sobre',
-      'tras', 'y', 'e', 'ni', 'o', 'u', 'pero', 'mas', 'sino', 'que', 'la', 'las',
-      'el', 'los', 'un', 'una', 'unos', 'unas'
+      'a',
+      'al',
+      'ante',
+      'bajo',
+      'con',
+      'contra',
+      'de',
+      'del',
+      'desde',
+      'durante',
+      'en',
+      'entre',
+      'hacia',
+      'hasta',
+      'para',
+      'por',
+      'según',
+      'sin',
+      'sobre',
+      'tras',
+      'y',
+      'e',
+      'ni',
+      'o',
+      'u',
+      'pero',
+      'mas',
+      'sino',
+      'que',
+      'la',
+      'las',
+      'el',
+      'los',
+      'un',
+      'una',
+      'unos',
+      'unas'
     };
-    
+
     final words = text.toLowerCase().split(' ');
     final formattedWords = <String>[];
-    
+
     for (int i = 0; i < words.length; i++) {
       final word = words[i];
       if (i == 0 || i == words.length - 1 || !lowerCaseWords.contains(word)) {
@@ -205,7 +239,7 @@ class TextFormatter {
         formattedWords.add(word);
       }
     }
-    
+
     return formattedWords.join(' ');
   }
 
@@ -224,7 +258,7 @@ class TextFormatter {
     String endTag = '</mark>',
   }) {
     if (query.isEmpty) return text;
-    
+
     final pattern = RegExp(RegExp.escape(query), caseSensitive: false);
     return text.replaceAllMapped(pattern, (match) {
       return '$startTag${match.group(0)}$endTag';

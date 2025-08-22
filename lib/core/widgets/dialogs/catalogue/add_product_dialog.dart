@@ -40,20 +40,21 @@ class _AddProductDialogState extends State<AddProductDialog> {
   late final TextEditingController _descriptionController;
   bool _checkAddCatalogue = true;
   bool _isLoading = false;
-  bool _isEditingDescription = false; 
+  bool _isEditingDescription = false;
 
   @override
   void initState() {
     super.initState();
     _priceController = AppMoneyTextEditingController();
     _purchasePriceController = AppMoneyTextEditingController();
-    _descriptionController = TextEditingController(text: widget.product.description);
-    
+    _descriptionController =
+        TextEditingController(text: widget.product.description);
+
     // Si es un producto existente y tiene precio, establecerlo en el controlador
     if (!widget.isNew && widget.product.salePrice > 0) {
       _priceController.updateValue(widget.product.salePrice);
     }
-    
+
     // Si es un producto existente y tiene precio de compra, establecerlo en el controlador
     if (!widget.isNew && widget.product.purchasePrice > 0) {
       _purchasePriceController.updateValue(widget.product.purchasePrice);
@@ -84,14 +85,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                // Información del producto (código y detalles)
-                if (!widget.isNew) ...[
-                  _buildExistingProductInfoSection(),
-                ] else ...[
+              // Información del producto (código y detalles)
+              if (!widget.isNew) ...[
+                _buildExistingProductInfoSection(),
+              ] else ...[
                 // Solo mostrar código para productos nuevos
                 DialogComponents.infoSection(
                   context: context,
-                  title: 'Código:',  
+                  title: 'Código:',
                   content: Column(
                     children: [
                       Row(
@@ -104,8 +105,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
                           Expanded(
                             child: Text(
                               widget.product.code.isNotEmpty
-                                ? widget.product.code
-                                : 'Sin código asignado',
+                                  ? widget.product.code
+                                  : 'Sin código asignado',
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -117,17 +118,16 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     ],
                   ),
                 ),
-                ],
-              
-          
+              ],
+
               // Campo de descripción para productos nuevos
-              if (widget.isNew) ...[ 
+              if (widget.isNew) ...[
                 DialogComponents.itemSpacing,
                 DialogComponents.textField(
                   context: context,
                   controller: _descriptionController,
                   label: 'Descripción',
-                  hint: 'Ingrese una descripción descriptiva', 
+                  hint: 'Ingrese una descripción descriptiva',
                   validator: (value) {
                     if (value?.trim().isEmpty == true) {
                       return 'La descripción es requerida';
@@ -148,13 +148,15 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   if (value != null && value.trim().isNotEmpty) {
                     final purchasePrice = _purchasePriceController.doubleValue;
                     final salePrice = _priceController.doubleValue;
-                    
+
                     if (purchasePrice < 0) {
                       return 'El precio no puede ser negativo';
                     }
-                    
+
                     // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
-                    if (purchasePrice > 0 && salePrice > 0 && purchasePrice > salePrice) {
+                    if (purchasePrice > 0 &&
+                        salePrice > 0 &&
+                        purchasePrice > salePrice) {
                       return 'El precio de compra no puede ser mayor al de venta';
                     }
                   }
@@ -167,19 +169,19 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 context: context,
                 controller: _priceController,
                 label: 'Precio de venta al público',
-                hint: '\$0.00', 
+                hint: '\$0.00',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'El precio es requerido';
                   }
-                  
+
                   // Usar el método doubleValue del controlador para validación consistente
                   final price = _priceController.doubleValue;
-                  
+
                   if (price <= 0) {
                     return 'El precio debe ser mayor a cero';
                   }
-                  
+
                   return null;
                 },
               ),
@@ -187,7 +189,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
               DialogComponents.itemSpacing,
               // Checkbox para agregar al catálogo
               _buildCatalogueOption(),
-            
             ],
           ),
         ),
@@ -224,14 +225,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   Widget _buildExistingProductInfo() {
     final theme = Theme.of(context);
-    
+
     return DialogComponents.infoSection(
       context: context,
       title: widget.product.code,
-      icon: widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
-      accentColor: widget.product.verified 
-          ? Colors.blue
-          : theme.colorScheme.tertiary,
+      icon:
+          widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
+      accentColor:
+          widget.product.verified ? Colors.blue : theme.colorScheme.tertiary,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -251,7 +252,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     context: context,
                     controller: _descriptionController,
                     label: 'Descripción del Producto',
-                    hint: 'Ingrese una descripción descriptiva', 
+                    hint: 'Ingrese una descripción descriptiva',
                     validator: (value) {
                       if (value?.trim().isEmpty == true) {
                         return 'La descripción es requerida';
@@ -264,20 +265,20 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   Text(
                     widget.product.description,
                     style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Badges de información
                 if (widget.product.nameMark.isNotEmpty) ...[
                   DialogComponents.infoBadge(
                     context: context,
-                    text: widget.product.nameMark, 
+                    text: widget.product.nameMark,
                   ),
                 ],
               ],
@@ -290,7 +291,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   Widget _buildEditButton() {
     final theme = Theme.of(context);
-    
+
     if (_isEditingDescription) {
       // Mostrar botón de cancelar cuando está editando
       return Align(
@@ -310,7 +311,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         ),
       );
     }
-    
+
     // Botón de editar normal
     return Align(
       alignment: Alignment.centerRight,
@@ -376,7 +377,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _isLoading = true; 
+      _isLoading = true;
     });
 
     try {
@@ -388,16 +389,19 @@ class _AddProductDialogState extends State<AddProductDialog> {
       // Usar el método doubleValue del AppMoneyTextEditingController que maneja correctamente el formateo
       final price = _priceController.doubleValue;
       final purchasePrice = _purchasePriceController.doubleValue;
-      
+
       if (price <= 0) {
         throw Exception('El precio debe ser un número válido mayor a cero');
       }
 
       print('🔄 Procesando producto: ${widget.isNew ? "nuevo" : "existente"}');
-      print('💰 Texto del controlador precio venta: "${_priceController.text}"');
+      print(
+          '💰 Texto del controlador precio venta: "${_priceController.text}"');
       print('💰 Precio de venta parseado: \$${price.toStringAsFixed(2)}');
-      print('💰 Texto del controlador precio compra: "${_purchasePriceController.text}"');
-      print('💰 Precio de compra parseado: \$${purchasePrice.toStringAsFixed(2)}');
+      print(
+          '💰 Texto del controlador precio compra: "${_purchasePriceController.text}"');
+      print(
+          '💰 Precio de compra parseado: \$${purchasePrice.toStringAsFixed(2)}');
 
       // Usar los providers pasados como parámetros
       final sellProvider = widget.sellProvider;
@@ -417,14 +421,16 @@ class _AddProductDialogState extends State<AddProductDialog> {
         purchasePrice: purchasePrice,
       );
 
-      print('📦 Producto actualizado: ${updatedProduct.description} - Venta: \$${updatedProduct.salePrice} - Compra: \$${updatedProduct.purchasePrice}');
+      print(
+          '📦 Producto actualizado: ${updatedProduct.description} - Venta: \$${updatedProduct.salePrice} - Compra: \$${updatedProduct.purchasePrice}');
 
       // Agregar al ticket
       sellProvider.addProductsticket(updatedProduct);
       print('✅ Producto agregado al ticket');
 
       // Si el producto no está verificado y la descripción cambió, actualizar la base de datos pública
-      if (!widget.product.verified && !widget.isNew && 
+      if (!widget.product.verified &&
+          !widget.isNew &&
           _descriptionController.text.trim() != widget.product.description) {
         print('🔄 Actualizando descripción en producto público...');
         await _updatePublicProductDescription(updatedProduct);
@@ -433,10 +439,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
       // Procesar según el tipo
       if (widget.isNew) {
         print('🆕 Creando nuevo producto...');
-        await _createNewProduct(updatedProduct, catalogueProvider, authProvider, sellProvider);
+        await _createNewProduct(
+            updatedProduct, catalogueProvider, authProvider, sellProvider);
       } else if (_checkAddCatalogue && updatedProduct.id.isNotEmpty) {
         print('📁 Agregando producto existente al catálogo...');
-        await _addExistingProduct(updatedProduct, catalogueProvider, sellProvider, authProvider);
+        await _addExistingProduct(
+            updatedProduct, catalogueProvider, sellProvider, authProvider);
       }
 
       // Cerrar diálogo si todo fue exitoso
@@ -447,15 +455,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
         Navigator.of(context).pop();
         print('✅ Proceso completado exitosamente');
       }
-
     } catch (e) {
       print('❌ Error en _processAddProduct: $e');
-      
+
       if (mounted) {
-        setState(() { 
+        setState(() {
           _isLoading = false;
         });
-        
+
         // Mostrar error al usuario
         showErrorDialog(
           context: context,
@@ -467,7 +474,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
     }
   }
 
-  Future<void> _updatePublicProductDescription(ProductCatalogue updatedProduct) async {
+  Future<void> _updatePublicProductDescription(
+      ProductCatalogue updatedProduct) async {
     try {
       // Crear producto actualizado para la base de datos pública
       final updatedPublicProduct = Product(
@@ -487,10 +495,9 @@ class _AddProductDialogState extends State<AddProductDialog> {
         favorite: updatedProduct.outstanding,
         followers: updatedProduct.followers,
       );
-      
+
       // Actualizar el producto público
       await widget.catalogueProvider.createPublicProduct(updatedPublicProduct);
-      
     } catch (e) {
       print('❌ Error al actualizar descripción del producto público: $e');
       // No lanzamos el error para no interrumpir el flujo principal
@@ -504,7 +511,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
     SellProvider sellProvider,
   ) async {
     try {
-      
       final publicProduct = Product(
         id: updatedProduct.id.isEmpty
             ? 'prod_${DateTime.now().millisecondsSinceEpoch}'
@@ -530,11 +536,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (_checkAddCatalogue) {
         // Obtener perfil de la cuenta para registrar precio
-        final accountProfile = authProvider.getProfileAccountById(sellProvider.profileAccountSelected.id);
-        
+        final accountProfile = authProvider
+            .getProfileAccountById(sellProvider.profileAccountSelected.id);
+
         final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
         await catalogueProvider.addAndUpdateProductToCatalogue(
-          finalProduct, 
+          finalProduct,
           sellProvider.profileAccountSelected.id,
           accountProfile: accountProfile,
         );
@@ -561,12 +568,12 @@ class _AddProductDialogState extends State<AddProductDialog> {
     AuthProvider authProvider,
   ) async {
     try {
-      
       // Obtener perfil de la cuenta para registrar precio
-      final accountProfile = authProvider.getProfileAccountById(sellProvider.profileAccountSelected.id);
-      
+      final accountProfile = authProvider
+          .getProfileAccountById(sellProvider.profileAccountSelected.id);
+
       await catalogueProvider.addAndUpdateProductToCatalogue(
-        updatedProduct, 
+        updatedProduct,
         sellProvider.profileAccountSelected.id,
         accountProfile: accountProfile,
       );
@@ -595,9 +602,12 @@ Future<void> showAddProductDialog(
 }) {
   try {
     // Obtener los providers del contexto antes de mostrar el diálogo
-    final sellProvider = provider_package.Provider.of<SellProvider>(context, listen: false);
-    final catalogueProvider = provider_package.Provider.of<CatalogueProvider>(context, listen: false);
-    final authProvider = provider_package.Provider.of<AuthProvider>(context, listen: false);
+    final sellProvider =
+        provider_package.Provider.of<SellProvider>(context, listen: false);
+    final catalogueProvider =
+        provider_package.Provider.of<CatalogueProvider>(context, listen: false);
+    final authProvider =
+        provider_package.Provider.of<AuthProvider>(context, listen: false);
 
     // Validar que los providers estén disponibles
     if (sellProvider.profileAccountSelected.id.isEmpty) {
@@ -618,7 +628,7 @@ Future<void> showAddProductDialog(
     );
   } catch (e) {
     print('❌ Error al mostrar AddProductDialog: $e');
-    
+
     // Mostrar error al usuario si falla la obtención de providers
     showErrorDialog(
       context: context,
@@ -626,7 +636,7 @@ Future<void> showAddProductDialog(
       message: 'No se pudo abrir el diálogo de productos.',
       details: e.toString(),
     );
-    
+
     return Future.value(); // Retornar un Future completado
   }
 }

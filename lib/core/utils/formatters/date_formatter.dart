@@ -73,7 +73,7 @@ class DateFormatter {
   ///
   /// Retorna:
   /// - "Hoy" si es el mismo día
-  /// - "Ayer" si es el día anterior  
+  /// - "Ayer" si es el día anterior
   /// - "dd MMM." para fechas del mismo año
   /// - "dd MMM. yyyy" para fechas de años diferentes
   static String getRelativeDate({
@@ -96,7 +96,7 @@ class DateFormatter {
           postDate.day == yesterday.day) {
         return 'Ayer';
       }
-      
+
       // Fecha del mismo año pero diferente día
       return formatDate(postDate, pattern: 'dd MMM.');
     }
@@ -122,7 +122,6 @@ class DateFormatter {
     // Si no es del mismo día
     if (fechaPublicacion.month != actual.month ||
         fechaPublicacion.day != actual.day) {
-      
       // Si es del día anterior, incluir hora
       final yesterday = actual.subtract(const Duration(days: 1));
       if (fechaPublicacion.year == yesterday.year &&
@@ -130,7 +129,7 @@ class DateFormatter {
           fechaPublicacion.day == yesterday.day) {
         return 'Ayer ${formatTime(fechaPublicacion)}';
       }
-      
+
       // Fecha diferente del mismo año
       return formatDate(fechaPublicacion, pattern: 'dd MMM.');
     }
@@ -208,7 +207,8 @@ class DateFormatter {
   /// [pattern] Patrón esperado del string
   ///
   /// Retorna DateTime o null si no es válido
-  static DateTime? parseDate(String dateString, {String pattern = 'dd/MM/yyyy'}) {
+  static DateTime? parseDate(String dateString,
+      {String pattern = 'dd/MM/yyyy'}) {
     try {
       return _getFormatter(pattern).parse(dateString);
     } catch (e) {
@@ -226,7 +226,7 @@ class DateFormatter {
     return DateTime(date.year, date.month, date.day);
   }
 
-  /// Obtiene el final del día para una fecha  
+  /// Obtiene el final del día para una fecha
   static DateTime endOfDay(DateTime date) {
     return DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
   }

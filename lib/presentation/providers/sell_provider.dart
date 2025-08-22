@@ -122,7 +122,8 @@ class SellProvider extends ChangeNotifier {
   // Getters que no causan rebuild
   bool get ticketView => _state.ticketView;
   bool get shouldPrintTicket => _state.shouldPrintTicket;
-  ProfileAccountModel get profileAccountSelected => _state.profileAccountSelected;
+  ProfileAccountModel get profileAccountSelected =>
+      _state.profileAccountSelected;
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
@@ -139,7 +140,7 @@ class SellProvider extends ChangeNotifier {
     ]);
   }
 
-  void cleanData() { 
+  void cleanData() {
     _state = _state.copyWith(
       profileAccountSelected: ProfileAccountModel(),
       ticket: _createEmptyTicketStatic(),
@@ -209,11 +210,13 @@ class SellProvider extends ChangeNotifier {
 
   Future<void> _saveTicket() async {
     try {
-      await _persistenceService.saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
+      await _persistenceService
+          .saveCurrentTicket(jsonEncode(_state.ticket.toJson()));
     } catch (e) {
       // Log del error para debugging
       if (kDebugMode) {
-        print('❌ SellProvider (_saveTicket) : Error al guardar ticket en persistencia: $e');
+        print(
+            '❌ SellProvider (_saveTicket) : Error al guardar ticket en persistencia: $e');
       }
       rethrow;
     }
@@ -223,14 +226,16 @@ class SellProvider extends ChangeNotifier {
     final ticketJson = await _persistenceService.getCurrentTicket();
     if (ticketJson != null) {
       try {
-        final newTicket = TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
+        final newTicket =
+            TicketModel.sahredPreferencefromMap(_decodeJson(ticketJson));
         _state = _state.copyWith(ticket: newTicket);
-        
+
         notifyListeners();
       } catch (e) {
         // Log del error para debugging
         if (kDebugMode) {
-          print('❌ SellProvider: Error al cargar ticket desde persistencia: $e');
+          print(
+              '❌ SellProvider: Error al cargar ticket desde persistencia: $e');
         }
       }
     } else {
@@ -241,21 +246,26 @@ class SellProvider extends ChangeNotifier {
     }
   }
 
-  Map<String, dynamic> _decodeJson(String source) => const JsonDecoder().convert(source) as Map<String, dynamic>;
+  Map<String, dynamic> _decodeJson(String source) =>
+      const JsonDecoder().convert(source) as Map<String, dynamic>;
 
-  void addProductsticket(ProductCatalogue product,{bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,
+      {bool replaceQuantity = false}) {
     // Agrega un producto al ticket actual, reemplazando la cantidad si es necesario
 
     // var
     final currentTicket = _state.ticket;
     bool exist = false;
-    final List<ProductCatalogue> updatedProducts = List.from(currentTicket.products);
+    final List<ProductCatalogue> updatedProducts =
+        List.from(currentTicket.products);
 
     for (var i = 0; i < updatedProducts.length; i++) {
       if (updatedProducts[i].id == product.id) {
         if (replaceQuantity) {
           // Reemplazar el producto completo pero preservar la cantidad original si el producto nuevo tiene cantidad 0
-          final quantityToUse = product.quantity > 0 ? product.quantity : updatedProducts[i].quantity;
+          final quantityToUse = product.quantity > 0
+              ? product.quantity
+              : updatedProducts[i].quantity;
           updatedProducts[i] = product.copyWith(quantity: quantityToUse);
         } else {
           updatedProducts[i].quantity +=
@@ -330,9 +340,9 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void discartTicket() { 
-    
-    _state = _state.copyWith(ticket: _createEmptyTicketStatic(),ticketView: false);
+  void discartTicket() {
+    _state =
+        _state.copyWith(ticket: _createEmptyTicketStatic(), ticketView: false);
     _saveTicket();
     notifyListeners();
   }

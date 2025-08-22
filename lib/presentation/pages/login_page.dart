@@ -4,10 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/feedback/auth_feedback_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/responsive_breakpoints.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends StatelessWidget {

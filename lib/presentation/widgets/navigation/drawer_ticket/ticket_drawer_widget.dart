@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/utils/responsive.dart';
+import 'package:sellweb/core/utils/fuctions.dart'; 
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/presentation/providers/sell_provider.dart';
+
+import '../../../../core/utils/responsive_breakpoints.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación

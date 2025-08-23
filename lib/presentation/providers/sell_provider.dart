@@ -350,7 +350,7 @@ class SellProvider extends ChangeNotifier {
   void addQuickProduct(
       {required String description, required double salePrice}) {
     final product = ProductCatalogue(
-      id: UidGenerator.generateUid(),
+      id: UidHelper.generateUid(),
       description: description,
       salePrice: salePrice,
     );

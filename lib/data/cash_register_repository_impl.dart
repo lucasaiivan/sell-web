@@ -229,7 +229,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String cashierId,
   }) async {
     try {
-      final cashRegisterId = UidGenerator.generateUid();
+      final cashRegisterId = UidHelper.generateUid();
       final now = DateTime.now();
 
       final cashRegister = CashRegister(

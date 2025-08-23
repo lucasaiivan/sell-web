@@ -21,11 +21,9 @@ utils/
 │   ├── money_input_formatter.dart # Formateadores para inputs de dinero
 │   └── formatters.dart           # Exportaciones centralizadas
 ├── helpers/                       # 🛠️ Helpers especializados
-│   ├── responsive_helper.dart     # Utilidades responsive (existente)
+│   ├── responsive_helper.dart     # Utilidades responsive
+│   ├── uid_helper.dart           # Generación de IDs únicos (migrado)
 │   └── helpers.dart              # Exportaciones centralizadas
-├── generators/                    # 🆔 Generadores
-│   ├── uid_generator.dart         # Generación de IDs únicos
-│   └── generators.dart           # Exportaciones centralizadas
 ├── utils.dart                    # 📦 Exportaciones principales
 └── fuctions.dart                 # ⚠️ ARCHIVO ORIGINAL (a eliminar)
 ```

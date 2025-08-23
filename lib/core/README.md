@@ -22,9 +22,7 @@ core/
 │   └── theme_service.dart     # Servicio de gestión de temas
 ├── utils/                     # Utilidades y helpers
 │   ├── formaters/             # Formateadores de datos
-│   ├── helpers/               # Funciones helper específicas
-│   ├── fuctions.dart          # Funciones utilitarias generales
-│   └── responsive_breakpoints.dart # Breakpoints para diseño responsive
+│   ├── helpers/               # Funciones helper específicas  
 └── core.dart                  # Archivo de exportación principal
 ```
 

@@ -25,9 +25,7 @@ lib/
 │   │   └── theme_service.dart
 │   ├── utils/                      # Utilidades y helpers
 │   │   ├── formatters/             # Formateadores (fecha, moneda)
-│   │   ├── helpers/                # Helpers especializados
-│   │   ├── fuctions.dart           # Funciones utilitarias
-│   │   └── responsive_breakpoints.dart
+│   │   ├── helpers/                # Helpers especializados 
 │   └── core.dart                   # Exportaciones centralizadas
 │
 ├── data/                           # Implementaciones de repositorios

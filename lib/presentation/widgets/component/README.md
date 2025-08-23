@@ -1,18 +1,17 @@
-# Responsive Helper
+## Descripción
+Componentes auxiliares y elementos de interfaz de usuario para avatares, divisores, imágenes y otros elementos visuales.
 
-## 📋 Propósito
-Clase de utilidad para manejo de diseño responsivo que implementa breakpoints estándar y helpers para adaptación de UI en diferentes tamaños de pantalla.
-
-## 🎯 Características
-
-### Breakpoints Estándar
-```dart
-static const double mobile = 600;   // < 600px
-static const double tablet = 1024;  // 600px - 1024px  
-static const double desktop = 1440; // > 1024px
+## Contenido
 ```
-
-### Métodos de Detección
+component/
+├── ui.dart - Archivo de barril que exporta todos los componentes
+├── avatar_product.dart - Avatar para productos
+├── dividers.dart - Divisores y separadores
+├── image.dart - Componente de imagen
+├── progress_indicators.dart - Indicadores de progreso
+├── responsive_helper.dart - Helper para diseño responsivo
+└── user_avatar.dart - Avatar de usuario
+```
 - `isMobile(context)` - Detecta dispositivos móviles
 - `isTablet(context)` - Detecta tablets
 - `isDesktop(context)` - Detecta dispositivos desktop

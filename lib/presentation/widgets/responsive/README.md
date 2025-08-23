@@ -1,13 +1,11 @@
-# Responsive Helper
+## Descripción
+Utilidades para diseño responsivo que ayudan a adaptar la interfaz a diferentes tamaños de pantalla.
 
-## 📋 Propósito
-Clase de utilidad para manejo de diseño responsivo que implementa breakpoints estándar y helpers para adaptación de UI en diferentes tamaños de pantalla.
-
-## 🎯 Características
-
-### Breakpoints Estándar
-```dart
-static const double mobile = 600;   // < 600px
+## Contenido
+```
+responsive/
+└── responsive_helper.dart - Helper para detectar tipos de dispositivo y breakpoints
+```
 static const double tablet = 1024;  // 600px - 1024px  
 static const double desktop = 1440; // > 1024px
 ```

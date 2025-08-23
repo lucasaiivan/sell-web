@@ -1,13 +1,11 @@
-# Core Mixins
+## Descripción
+Mixins reutilizables que proporcionan funcionalidades compartidas entre diferentes clases.
 
-
-Los **Mixins** son una característica poderosa de Dart que permite compartir código entre múltiples clases sin usar herencia tradicional. En esta carpeta se almacenan mixins reutilizables que proporcionan funcionalidades específicas que pueden ser "mezcladas" en diferentes widgets y clases.
-
-## 🎯 Propósito
-
-Los mixins en este proyecto permiten:
-- **Reutilización de código**: Compartir lógica común entre múltiples clases
-- **Composición**: Combinar múltiples comportamientos sin herencia compleja
+## Contenido
+```
+mixins/
+└── (vacío actualmente)
+```
 - **Separación de responsabilidades**: Aislar funcionalidades específicas en componentes modulares
 - **Mantenibilidad**: Centralizar lógica común para facilitar actualizaciones
 

@@ -1,23 +1,19 @@
-# Core Widgets - Estructura Reorganizada
+## Descripción
+Widgets reutilizables y componentes de interfaz de usuario organizados por categorías funcionales.
 
-Esta carpeta contiene todos los widgets reutilizables de la aplicación, organizados siguiendo los principios de Clean Architecture y las mejores prácticas de Flutter/Material Design 3.
-
-## 📁 Estructura Reorganizada
-
+## Contenido
 ```
-/core/widgets/
-├── README.md                    # Este archivo - Documentación principal
-├── core_widgets.dart           # Exportaciones centralizadas
-├── buttons/                    # Botones y controles de acción
-│   ├── README.md               # Documentación de botones
-│   ├── buttons.dart            # Exportaciones de botones
-│   ├── app_button.dart         # Botón principal unificado
-│   ├── app_bar_button.dart     # Botón para AppBar
-│   ├── app_floating_action_button.dart # FAB personalizado
-│   ├── app_text_button.dart    # Botón de texto
-│   ├── search_button.dart      # Botón de búsqueda
-│   └── theme_control_buttons.dart # Controles de tema
-├── inputs/                     # Campos de entrada y formularios
+widgets/
+├── core_widgets.dart - Archivo de barril que exporta widgets principales
+├── buttons/ - Componentes de botones
+├── component/ - Componentes auxiliares y de UI
+├── dialogs/ - Diálogos y modales
+├── feedback/ - Widgets de retroalimentación
+├── inputs/ - Campos de entrada y formularios
+├── navigation/ - Componentes de navegación
+├── responsive/ - Utilities para diseño responsivo
+└── views/ - Vistas especializadas
+```
 │   ├── README.md               # Documentación de inputs
 │   ├── inputs.dart             # Exportaciones de inputs
 │   ├── input_text_field.dart   # Campo de texto base

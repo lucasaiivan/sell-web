@@ -1,53 +1,16 @@
-# 🏗️ Core - Arquitectura Transversal
+## Descripción
+Funcionalidades compartidas del núcleo de la aplicación incluyendo configuraciones, constantes, servicios y utilidades comunes.
 
-El directorio `core` contiene toda la **infraestructura transversal** de la aplicación que es **independiente del dominio de negocio**. Esta capa proporciona servicios, utilidades y componentes reutilizables que pueden ser utilizados por todas las demás capas del proyecto.
-
-## 📁 Estructura del Directorio
-
+## Contenido
 ```
 core/
-├── config/                    # Configuraciones de la aplicación
-│   ├── app_config.dart        # Configuración general de la app
-│   ├── firebase_options.dart  # Configuración de Firebase
-│   └── oauth_config.dart      # Configuración de OAuth (Google Sign-In)
-├── constants/                 # Constantes globales
-│   ├── app_constants.dart     # Constantes generales de la aplicación
-│   └── shared_prefs_keys.dart # Claves para SharedPreferences
-├── mixins/                    # Mixins reutilizables
-├── services/                  # Servicios transversales
-│   ├── database/              # Servicios de base de datos
-│   ├── external/              # Servicios externos (APIs, impresión)
-│   ├── storage/               # Servicios de almacenamiento
-│   ├── search_catalogue_service.dart # Servicio de búsqueda de catálogo
-│   └── theme_service.dart     # Servicio de gestión de temas
-├── utils/                     # Utilidades y helpers
-│   ├── formaters/             # Formateadores de datos
-│   ├── helpers/               # Funciones helper específicas  
-└── core.dart                  # Archivo de exportación principal
+├── core.dart - Archivo de barril que exporta todas las funcionalidades del núcleo
+├── config/ - Configuraciones de la aplicación
+├── constants/ - Constantes globales de la aplicación
+├── mixins/ - Mixins reutilizables
+├── services/ - Servicios de infraestructura
+└── utils/ - Utilidades y helpers
 ```
-
-## 🔧 Componentes Principales
-
-### 📋 Config
-**Propósito**: Configuraciones centralizadas de la aplicación
-- **app_config.dart**: Variables de configuración global, URLs de API, configuraciones de entorno
-- **firebase_options.dart**: Configuración de Firebase generada automáticamente
-- **oauth_config.dart**: Configuración para autenticación con Google y otros proveedores OAuth
-
-### 🔢 Constants
-**Propósito**: Constantes inmutables utilizadas en toda la aplicación
-- **app_constants.dart**: Constantes generales como versiones, límites, URLs, etc.
-- **shared_prefs_keys.dart**: Claves estandarizadas para SharedPreferences
-
-### 🛠️ Services
-**Propósito**: Servicios transversales independientes del dominio de negocio
-
-#### Servicios Principales:
-- **theme_service.dart**: Gestión de temas claro/oscuro con persistencia
-- **search_catalogue_service.dart**: Lógica de búsqueda y filtrado de productos
-- **database/**: Servicios de conexión y operaciones con Firebase Firestore
-- **external/**: Servicios para integraciones externas (impresoras térmicas, APIs)
-- **storage/**: Servicios de almacenamiento local y en la nube
 
 ### 🔧 Utils
 **Propósito**: Utilidades y funciones helper reutilizables

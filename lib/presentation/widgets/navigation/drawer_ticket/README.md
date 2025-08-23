@@ -1,13 +1,12 @@
-# Drawer Ticket Widget - Consolidado
+## Descripción
+Drawer especializado para gestión y visualización de tickets de venta.
 
-## 📁 Estructura Simplificada
-
-Después de la reorganización para priorizar simplicidad:
-
+## Contenido
 ```
 drawer_ticket/
-├── ticket_drawer_widget.dart    # Widget principal consolidado (TODO)
-├── ticket_utils.dart            # Utilidades compartidas 
+├── ticket_drawer_widget.dart - Widget principal del drawer de tickets
+└── ticket_utils.dart - Utilidades para manejo de tickets
+``` 
 ```
 
 ## 🎯 Cambios Implementados

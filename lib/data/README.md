@@ -1,13 +1,14 @@
-# Data
+## Descripción
+Implementaciones de repositorios que manejan el acceso a datos y la comunicación con fuentes externas.
 
-## 📋 Descripción
-Capa de datos que implementa las interfaces de repositorio definidas en el dominio. Gestiona toda la persistencia y comunicación con servicios externos como Firebase Firestore y Firebase Auth.
-
-## 📁 Contenido
-
+## Contenido
 ```
 data/
-├── account_repository_impl.dart    # Gestión de cuentas de usuario y perfiles de negocio
+├── account_repository_impl.dart - Implementación del repositorio de cuentas
+├── auth_repository_impl.dart - Implementación del repositorio de autenticación
+├── cash_register_repository_impl.dart - Implementación del repositorio de caja registradora
+└── catalogue_repository_impl.dart - Implementación del repositorio de catálogo
+```
 ├── auth_repository_impl.dart       # Autenticación y gestión de sesiones 
 ├── cash_register_repository_impl.dart # Operaciones completas de caja registradora
 └── catalogue_repository_impl.dart  # Gestión del catálogo de productos

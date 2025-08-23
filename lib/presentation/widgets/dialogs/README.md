@@ -1,23 +1,20 @@
-# Diálogos - Material Design 3 UI System
+## Descripción
+Diálogos y modales organizados por categorías funcionales para diferentes aspectos de la aplicación.
 
-## 📋 Propósito
-Sistema completo de diálogos que implementa Material Design 3 con componentes reutilizables y consistencia visual en toda la aplicación. Sigue los principios de Clean Architecture y proporciona una experiencia de usuario cohesiva.
-
-## 🏗️ Estructura Organizada por Función
-
-### **📁 base/**
-Componentes fundamentales del sistema de diálogos
-- `base_dialog.dart` - Diálogo base con estructura estándar MD3
-- `standard_dialogs.dart` - Diálogos predefinidos (confirmación, error, info, carga)
-
-### **📁 components/**
-Componentes UI reutilizables para construir diálogos complejos
-- `dialog_components.dart` - Biblioteca de componentes estandarizados
-
-### **📁 catalogue/**
-Diálogos relacionados con gestión del catálogo de productos
-- `add_product_dialog.dart` - Agregar productos al catálogo
-- `add_product_dialog_new.dart` - Versión modernizada
+## Contenido
+```
+dialogs/
+├── dialogs.dart - Archivo de barril que exporta todos los diálogos
+├── DIALOG_DESIGN_GUIDE.md - Guía de diseño para diálogos
+├── base/ - Diálogos base y plantillas
+├── catalogue/ - Diálogos relacionados con catálogo
+├── components/ - Componentes de diálogos reutilizables
+├── configuration/ - Diálogos de configuración
+├── examples/ - Ejemplos de implementación
+├── feedback/ - Diálogos de retroalimentación
+├── sales/ - Diálogos relacionados con ventas
+└── tickets/ - Diálogos de tickets y recibos
+```
 - `product_edit_dialog.dart` - Editar productos existentes
 - `product_edit_dialog_new.dart` - Versión modernizada
 

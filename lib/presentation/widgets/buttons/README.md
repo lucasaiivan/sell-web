@@ -1,18 +1,17 @@
-# Theme Control Buttons
+## Descripción
+Componentes de botones reutilizables para diferentes acciones y contextos de la aplicación.
 
-Este directorio contiene widgets reutilizables para el control del tema dinámico de la aplicación.
-
-## 📋 Widgets Disponibles
-
-### `ThemeControlButtons`
-Widget principal que proporciona controles completos de tema (color y brillo).
-
-```dart
-ThemeControlButtons(
-  showColorButton: true,        // Mostrar botón de color
-  showBrightnessButton: true,   // Mostrar botón de brillo  
-  spacing: 8.0,                // Espacio entre botones
-  iconSize: 24,                // Tamaño de iconos
+## Contenido
+```
+buttons/
+├── buttons.dart - Archivo de barril que exporta todos los botones
+├── app_bar_button.dart - Botón para barra de aplicación
+├── app_button.dart - Botón principal de la aplicación
+├── app_floating_action_button.dart - Botón de acción flotante personalizado
+├── app_text_button.dart - Botón de texto
+├── search_button.dart - Botón de búsqueda
+└── theme_control_buttons.dart - Botones de control de tema
+```
   buttonColor: Colors.blue,     // Color personalizado
   mainAxisSize: MainAxisSize.min, // Tamaño del contenedor
 )

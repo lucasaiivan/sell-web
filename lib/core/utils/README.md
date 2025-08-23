@@ -1,17 +1,12 @@
-# 🔧 Utils - Utilidades y Helpers
+## Descripción
+Utilidades y helpers que proporcionan funciones comunes y herramientas de apoyo para toda la aplicación.
 
-El directorio `utils` contiene **utilidades reutilizables** que proporcionan funcionalidades comunes y transformaciones de datos utilizadas en toda la aplicación.
-
-## 🎯 Propósito
-
-Ofrecer funciones puras, helpers y utilidades que:
-- **No dependan del contexto de Flutter** (excepto helpers específicos de UI)
-- **Sean altamente reutilizables** entre diferentes features
-- **Faciliten transformaciones** de datos comunes
-- **Mantengan lógica compleja** en un lugar centralizado
-
-## 📁 Nueva Estructura Reorganizada
-
+## Contenido
+```
+utils/
+├── utils.dart - Archivo de barril que exporta todas las utilidades
+├── formatters/ - Formateadores de datos
+└── helpers/ - Funciones helper específicas
 ```
 utils/
 ├── formatters/                    # 💱 Formateo de datos
@@ -24,6 +19,5 @@ utils/
 │   ├── responsive_helper.dart     # Utilidades responsive
 │   ├── uid_helper.dart           # Generación de IDs únicos (migrado)
 │   └── helpers.dart              # Exportaciones centralizadas
-├── utils.dart                    # 📦 Exportaciones principales
-└── fuctions.dart                 # ⚠️ ARCHIVO ORIGINAL (a eliminar)
+├── utils.dart                    # 📦 Exportaciones principales 
 ```

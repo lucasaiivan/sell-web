@@ -1,7 +1,6 @@
-import '../../../../core/core.dart' hide ResponsiveHelper;
+import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
-import 'package:sellweb/presentation/widgets/responsive/responsive_helper.dart'; 
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
@@ -31,7 +30,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // render : Responsive design
-        final isMobile = ResponsiveHelper.isMobile(context);
+        final isMobileDevice = isMobile(context);
         // dialog : base dialog
         return BaseDialog(
           title: sTitle,
@@ -40,14 +39,14 @@ class CashRegisterManagementDialog extends StatelessWidget {
               .colorScheme
               .secondaryContainer
               .withValues(alpha: 0.85),
-          width: ResponsiveHelper.responsive(
-            context: context,
+          width: getResponsiveValue(
+            context,
             mobile: null,
             tablet: 600,
             desktop: 700,
           ),
-          maxHeight: ResponsiveHelper.responsive(
-            context: context,
+          maxHeight: getResponsiveValue(
+            context,
             mobile: constraints.maxHeight * 0.9,
             tablet: 700,
             desktop: 800,
@@ -57,22 +56,22 @@ class CashRegisterManagementDialog extends StatelessWidget {
               // Si está cargando, mostrar indicador de progreso
               if (cashRegisterProvider.isLoadingActive) {
                 return SizedBox(
-                  height: ResponsiveHelper.responsive(
-                      context: context, mobile: 100, desktop: 120),
+                  height: getResponsiveValue(
+                      context, mobile: 100, desktop: 120),
                   width: double.infinity,
                   child: const Center(child: CircularProgressIndicator()),
                 );
               }
               // view : Construir contenido responsivo de la  información de caja
               return _buildResponsiveContent(
-                  context, cashRegisterProvider, isMobile);
+                  context, cashRegisterProvider, isMobileDevice);
             },
           ),
           actions: [
             // Botones de acción de caja (Deseleccionar/Cerrar) - Solo si hay caja activa
             if (cashRegisterProvider.hasActiveCashRegister)
               ..._buildCashRegisterActionButtons(
-                  context, cashRegisterProvider, isMobile),
+                  context, cashRegisterProvider, isMobileDevice),
           ],
         );
       },
@@ -86,7 +85,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(height: ResponsiveHelper.getSpacing(context, scale: 0.5)),
+        SizedBox(height: getResponsiveSpacing(context, scale: 0.5)),
         if (provider.hasActiveCashRegister)
           // view : Mostrar información de caja activa
           _buildActiveCashRegister(context, provider, isMobile)
@@ -376,7 +375,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       children: [
         // view : muestra información de flujo de caja
         _cashFlowInformation(context, cashRegister),
-        SizedBox(height: ResponsiveHelper.getSpacing(context, scale: 1.5)),
+        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
         // buttons : Botones de ingreso y egreso
         Row(
           children: [
@@ -431,7 +430,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         // Lista de movimientos de caja
         if (cashRegister.cashInFlowList.isNotEmpty ||
             cashRegister.cashOutFlowList.isNotEmpty) ...[
-          SizedBox(height: ResponsiveHelper.getSpacing(context, scale: 1.5)),
+          SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
           _buildCashFlowMovements(context, cashRegister, isMobile),
         ],
       ],

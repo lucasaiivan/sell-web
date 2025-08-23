@@ -35,10 +35,6 @@ export 'configuration/printer_config_dialog.dart';
 export 'configuration/theme_color_selector_dialog.dart';
 // export 'configuration/printer_config_dialog_new.dart'; // Conflicto de nombres
 
-// Examples (for development/testing)
-export 'examples/example_modern_dialog.dart';
-export 'examples/dialog_showcase.dart';
-
 // Re-exportar funciones helper principales
 export 'base/base_dialog.dart' show showBaseDialog;
 export 'base/standard_dialogs.dart'
@@ -47,7 +43,6 @@ export 'base/standard_dialogs.dart'
         showInfoDialog,
         showErrorDialog,
         showLoadingDialog;
-export 'examples/example_modern_dialog.dart' show showExampleModernDialog;
 
 // Re-exportar funciones helper específicas
 export 'catalogue/product_edit_dialog.dart' show showProductEditDialog;

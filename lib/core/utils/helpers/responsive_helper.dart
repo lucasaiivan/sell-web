@@ -155,3 +155,16 @@ EdgeInsets getResponsivePadding(
     desktop: desktop ?? const EdgeInsets.all(32.0),
   );
 }
+
+/// Retorna el espaciado apropiado según el tipo de dispositivo.
+double getResponsiveSpacing(
+  BuildContext context, {
+  double scale = 1.0,
+}) {
+  return getResponsiveValue(
+    context,
+    mobile: 8.0 * scale,
+    tablet: 12.0 * scale,
+    desktop: 16.0 * scale,
+  );
+}

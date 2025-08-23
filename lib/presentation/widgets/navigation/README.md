@@ -5,6 +5,6 @@ Componentes de navegación que facilitan el movimiento entre diferentes seccione
 ```
 navigation/
 ├── navigation.dart - Archivo de barril que exporta componentes de navegación
-├── ticket_drawer_unified.dart - Componente unificado del drawer para la gestión de tickets
+├── drawer_ticket.dart - Componente unificado del drawer para la gestión de tickets
 └── README.md - Documentación del módulo
 ```

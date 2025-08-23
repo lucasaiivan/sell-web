@@ -1,2 +1,2 @@
 // Exportaciones de widgets de navegación
-export 'ticket_drawer_unified.dart'; // Drawer unificado para tickets
+export 'drawer_ticket.dart'; // Drawer unificado para tickets

@@ -148,6 +148,9 @@ lib/
 
 ## 📁 Dónde Crear Qué
 
+### README (obligatorio): archivo de documentación para cada carpeta
+actualizar o crear en cada carpeta debe contener un archivo README.md con y solo el formato (Descripcion,Contenido(lista en arbol con descripcion)) , crear un documentacion mas extensa si es realmente necesario que se tenga que explicar algun archivo .dart implementado
+
 ### 🔍 PRIMERO: Componentes Existentes Disponibles
 
 | Tipo | Componentes Disponibles | Ubicación |

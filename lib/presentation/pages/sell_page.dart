@@ -22,7 +22,7 @@ import 'package:sellweb/presentation/widgets/inputs/money_input_text_field.dart'
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/component/ui.dart';
 import '../widgets/dialogs/tickets/last_ticket_dialog.dart';
-import '../widgets/navigation/drawer/ticket_drawer_widget.dart';
+import '../widgets/navigation/ticket_drawer_unified.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';

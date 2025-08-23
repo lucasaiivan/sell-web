@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
-import '../../buttons/app_button.dart';
+import '../../buttons/button_app.dart';
 
 /// Diálogo para abrir una nueva caja registradora
 class CashRegisterOpenDialog extends StatefulWidget {
@@ -102,7 +102,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         ),
         Consumer<SellProvider>(
           builder: (context, sellProvider, child) {
-            return AppButton.primary(
+            return ButtonApp.primary(
               onPressed: cashRegisterProvider.isProcessing
                   ? null
                   : () => _handleOpenCashRegister(

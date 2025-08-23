@@ -380,48 +380,52 @@ class CashRegisterManagementDialog extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: AppOutlinedButton(
-                icon: const Icon(Icons.arrow_downward_rounded),
-                text: 'Ingreso',
-                onPressed: provider.hasActiveCashRegister
-                    ? () => _showCashFlowDialog(context, true)
-                    : null,
-                backgroundColor: provider.hasActiveCashRegister
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : null,
-                foregroundColor:
-                    provider.hasActiveCashRegister ? Colors.green : null,
-                borderColor: provider.hasActiveCashRegister
-                    ? Colors.green.withValues(alpha: 0.3)
-                    : null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+              child: Container(
                 margin: EdgeInsets.zero,
+                child: ButtonApp.outlined(
+                  icon: const Icon(Icons.arrow_downward_rounded),
+                  text: 'Ingreso',
+                  onPressed: provider.hasActiveCashRegister
+                      ? () => _showCashFlowDialog(context, true)
+                      : null,
+                  backgroundColor: provider.hasActiveCashRegister
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : null,
+                  foregroundColor:
+                      provider.hasActiveCashRegister ? Colors.green : null,
+                  borderColor: provider.hasActiveCashRegister
+                      ? Colors.green.withValues(alpha: 0.3)
+                      : null,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: AppOutlinedButton(
-                icon: const Icon(Icons.arrow_outward_rounded),
-                text: 'Egreso',
-                onPressed: provider.hasActiveCashRegister
-                    ? () => _showCashFlowDialog(context, false)
-                    : null,
-                backgroundColor: provider.hasActiveCashRegister
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : null,
-                foregroundColor:
-                    provider.hasActiveCashRegister ? Colors.red : null,
-                borderColor: provider.hasActiveCashRegister
-                    ? Colors.red.withValues(alpha: 0.3)
-                    : null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+              child: Container(
                 margin: EdgeInsets.zero,
+                child: ButtonApp.outlined(
+                  icon: const Icon(Icons.arrow_outward_rounded),
+                  text: 'Egreso',
+                  onPressed: provider.hasActiveCashRegister
+                      ? () => _showCashFlowDialog(context, false)
+                      : null,
+                  backgroundColor: provider.hasActiveCashRegister
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : null,
+                  foregroundColor:
+                      provider.hasActiveCashRegister ? Colors.red : null,
+                  borderColor: provider.hasActiveCashRegister
+                      ? Colors.red.withValues(alpha: 0.3)
+                      : null,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
               ),
             ),
           ],

@@ -168,14 +168,14 @@ class _DiscountDialogState extends State<DiscountDialog> {
             ),
           ),
           actions: [
-            AppTextButton(
+            ButtonApp.text(
               text: 'Cancelar',
               onPressed: () => Navigator.of(context).pop(),
             ),
 
             // Botón para limpiar descuento si ya existe uno
             if (sellProvider.ticket.discount > 0)
-              AppTextButton(
+              ButtonApp.text(
                 text: 'Quitar descuento',
                 onPressed: () {
                   sellProvider.setDiscount(discount: 0.0, isPercentage: false);
@@ -184,16 +184,16 @@ class _DiscountDialogState extends State<DiscountDialog> {
                 foregroundColor: colorScheme.error,
               ),
 
-            AppButton(
-              text: 'Aplicar descuento',
-
-              onPressed: _canApplyDiscount(totalTicket)
-                  ? () => _applyDiscount(context, sellProvider, totalTicket)
-                  : null, // Deshabilitar si no es válido
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
+            Container(
               margin: EdgeInsets.zero,
-              width: null,
+              child: ButtonApp.primary(
+                text: 'Aplicar descuento',
+                onPressed: _canApplyDiscount(totalTicket)
+                    ? () => _applyDiscount(context, sellProvider, totalTicket)
+                    : null, // Deshabilitar si no es válido
+                backgroundColor: colorScheme.primary,
+                textColor: colorScheme.onPrimary,
+              ),
             ),
           ],
         );

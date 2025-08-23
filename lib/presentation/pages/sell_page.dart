@@ -22,7 +22,7 @@ import 'package:sellweb/presentation/widgets/inputs/money_input_text_field.dart'
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/component/ui.dart';
 import '../widgets/dialogs/tickets/last_ticket_dialog.dart';
-import '../widgets/navigation/drawer_ticket/ticket_drawer_widget.dart';
+import '../widgets/navigation/drawer/ticket_drawer_widget.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
@@ -287,7 +287,7 @@ class _SellPageState extends State<SellPage> {
               children: [
                 const Spacer(),
                 // button : cancelar
-                AppOutlinedButton(
+                ButtonApp.outlined(
                   text: 'Cancelar',
                   onPressed: () {
                     accionRealizada = true;
@@ -296,7 +296,7 @@ class _SellPageState extends State<SellPage> {
                 ),
                 const SizedBox(width: 12),
                 // button : Agregar producto
-                AppButton(
+                ButtonApp.primary(
                   text: 'Crear producto',
                   onPressed: () {
                     accionRealizada = true;
@@ -617,7 +617,7 @@ class _SellPageState extends State<SellPage> {
                   const SizedBox(height: 8),
                   SizedBox(
                       width: double.infinity,
-                      child: AppButton(
+                      child: ButtonApp.primary(
                         text: 'Descargar App',
                         onPressed: () {
                           // Abre la URL de descarga de la app
@@ -947,18 +947,18 @@ class _SellPageState extends State<SellPage> {
   Widget floatingActionButtonBody({required SellProvider sellProvider}) {
     return Row(
       children: [
-        AppFloatingActionButton(
+        ButtonApp.fab(
           heroTag: "quick_sale_fab", // Hero tag único
-          onTap: () => showQuickSaleDialog(context, provider: sellProvider),
+          onPressed: () => showQuickSaleDialog(context, provider: sellProvider),
           icon: Icons.flash_on_rounded,
-          buttonColor: Colors.amber,
+          backgroundColor: Colors.amber,
         ).animate(delay: const Duration(milliseconds: 0)).fade(),
         const SizedBox(width: 8),
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
-            ? AppFloatingActionButton(
+            ? ButtonApp.fab(
                 heroTag: "charge_fab", // Hero tag único
-                onTap: () {
+                onPressed: () {
                   if (sellProvider.ticket.getTotalPrice == 0) {
                     return;
                   }
@@ -966,7 +966,7 @@ class _SellPageState extends State<SellPage> {
                 },
                 text:
                     'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : CurrencyFormatter.formatPrice(value: sellProvider.ticket.getTotalPrice)}',
-                buttonColor:
+                backgroundColor:
                     sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
                 extended: true,
               )

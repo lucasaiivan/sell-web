@@ -7,7 +7,7 @@ import 'package:sellweb/presentation/widgets/dialogs/sales/discount_dialog.dart'
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 
-import '../../../../core/utils/responsive_breakpoints.dart';
+import '../../../../core/utils/helpers/responsive_helper.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación

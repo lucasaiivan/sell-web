@@ -7,7 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/feedback/auth_feedback_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/utils/responsive_breakpoints.dart';
+import '../../core/utils/helpers/responsive_helper.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends StatelessWidget {

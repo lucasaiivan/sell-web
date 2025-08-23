@@ -10,7 +10,7 @@ export 'config/firebase_options.dart';
 // Constantes
 export 'constants/app_constants.dart';
 export 'constants/shared_prefs_keys.dart';
-export 'utils/responsive_breakpoints.dart';
+export 'utils/helpers/responsive_helper.dart';
 
 // Servicios
 export 'services/theme_service.dart';

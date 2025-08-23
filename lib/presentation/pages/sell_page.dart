@@ -16,7 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/utils/fuctions.dart';
-import '../../core/utils/responsive_breakpoints.dart';
+import '../../core/utils/helpers/responsive_helper.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/presentation/widgets/inputs/money_input_text_field.dart';

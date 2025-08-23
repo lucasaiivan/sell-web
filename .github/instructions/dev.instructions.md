@@ -36,8 +36,8 @@ bool isMobile(BuildContext context) {
 }
 ```
 ### Responsive Design
-- **Responsive Layout**: Adaptación automática mobile/tablet/desktop siempre y cuando sea necerio
-Usar `ResponsiveBreakpoints.dart`. (lib/core/utils) 
+- **Responsive Layout**: Adaptación automática mobile/tablet/desktop siempre y cuando sea necesario
+Usar `responsive_breakpoints.dart` (lib/core/utils) 
 ```dart 
 // Layout adaptativo
 Widget buildResponsiveLayout(BuildContext context) {
@@ -129,14 +129,16 @@ Widget buildResponsiveLayout(BuildContext context) {
 
 #### Arquitectura de Widgets
 ```dart
-lib/core/widgets/
-├── buttons/           # Botones especializados (AppButton, FAB, etc.)
+lib/presentation/widgets/
+├── buttons/           # Botones especializados para la presentación
+├── component/         # Componentes básicos reutilizables
 ├── dialogs/           # Sistema modular de diálogos por dominio
-├── inputs/            # Campos de entrada optimizados
-├── ui/                # Componentes básicos reutilizables
 ├── feedback/          # Estados de carga, errores y confirmaciones
+├── inputs/            # Campos de entrada optimizados
+├── navigation/        # Componentes de navegación (drawer, tabs, etc.)
 ├── responsive/        # Helpers para diseño adaptativo
-└── media/             # Manejo de imágenes y media
+├── views/             # Vistas complejas reutilizables
+└── core_widgets.dart  # Exportaciones centralizadas de widgets
 ```
 
 #### UX Considerations
@@ -179,51 +181,25 @@ MultiProvider(
 - Implementar `copyWith()` en clases de estado
 - Persistir estado crítico con `SharedPreferences`
 
-### Estructura proyect
+### Estructura del Proyecto
 ```
 lib/
-├── core/                           # Widgets reutilizables, servicios y utilidades
+├── core/                           # Núcleo de la aplicación - Servicios y utilidades compartidas
+│   ├── config/                     # Configuraciones globales de la aplicación
+│   ├── constants/                  # Constantes y valores estáticos
+│   ├── mixins/                     # Mixins reutilizables para funcionalidades comunes
 │   ├── services/                   # Servicios compartidos de la aplicación
-│   │   ├── cash_register_persistence_service.dart
-│   │   ├── database_cloud.dart
-│   │   ├── theme_service.dart
-│   │   └── thermal_printer_http_service.dart
+│   │   ├── database/               # Servicios de base de datos
+│   │   ├── external/               # Servicios externos (APIs, etc.)
+│   │   ├── storage/                # Servicios de almacenamiento local
+│   │   ├── catalogue_search_service.dart  # Servicio de búsqueda en catálogo
+│   │   └── theme_service.dart      # Servicio de gestión de temas
 │   ├── utils/                      # Utilidades y helpers generales
-│   │   ├── fuctions.dart
-│   │   ├── responsive.dart
-│   │   └── shared_prefs_keys.dart
-│   └── widgets/                    # Componentes UI reutilizables
-│       ├── buttons/                # Botones especializados
-│       │   ├── app_bar_button.dart
-│       │   ├── app_button.dart
-│       │   ├── app_floating_action_button.dart
-│       │   ├── buttons.dart
-│       │   └── search_button.dart
-│       ├── dialogs/                # Diálogos modales especializados
-│       │   ├── base/               # Componentes base para diálogos
-│       │   ├── catalogue/          # Diálogos específicos del catálogo
-│       │   ├── components/         # Componentes reutilizables de diálogos
-│       │   ├── configuration/      # Diálogos de configuración
-│       │   ├── examples/           # Ejemplos y plantillas
-│       │   ├── legacy/             # Diálogos legacy (deprecados)
-│       │   ├── sales/              # Diálogos relacionados con ventas
-│       │   ├── tickets/            # Diálogos de tickets y recibos
-│       │   └── dialogs.dart
-│       ├── drawer/                 # Componentes de navegación lateral
-│       ├── feedback/               # Widgets de feedback (loading, error, etc.)
-│       ├── inputs/                 # Campos de entrada especializados
-│       │   ├── input_text_field.dart
-│       │   ├── inputs.dart
-│       │   └── money_input_text_field.dart
-│       ├── media/                  # Widgets para manejo de media
-│       ├── responsive/             # Componentes responsive
-│       ├── ui/                     # Componentes básicos de UI
-│       │   ├── dividers.dart
-│       │   ├── image_widget.dart
-│       │   ├── progress_indicators.dart
-│       │   ├── ui.dart
-│       │   └── user_avatar.dart
-│       └── core_widgets.dart
+│   │   ├── formatters/             # Formateadores de datos (fecha, moneda, etc.)
+│   │   ├── helpers/                # Funciones helper especializadas
+│   │   ├── fuctions.dart           # Funciones utilitarias generales
+│   │   └── responsive_breakpoints.dart # Breakpoints para diseño responsive
+│   └── core.dart                   # Exportaciones centralizadas del core
 │
 ├── data/                           # Implementaciones de repositorios (Firebase)
 │   ├── account_repository_impl.dart    # Implementación repositorio de cuentas
@@ -233,40 +209,35 @@ lib/
 │
 ├── domain/                         # Entidades, repositorios abstractos y casos de uso
 │   ├── entities/                   # Modelos de dominio
-│   │   ├── cash_register_model.dart    # Modelo de caja registradora
-│   │   ├── catalogue.dart              # Modelo de catálogo y productos
-│   │   ├── ticket_model.dart           # Modelo de ticket de venta
-│   │   └── user.dart                   # Modelo de usuario
-│   ├── repositories/               # Contratos de repositorios
-│   │   ├── account_repository.dart     # Contrato repositorio de cuentas
-│   │   ├── auth_repository.dart        # Contrato repositorio de autenticación
-│   │   ├── cash_register_repository.dart # Contrato repositorio de cajas
-│   │   └── catalogue_repository.dart   # Contrato repositorio de catálogo
+│   ├── repositories/               # Contratos de repositorios (interfaces)
 │   └── usecases/                   # Casos de uso de negocio
-│       ├── account_usecase.dart        # Casos de uso de cuentas
-│       ├── auth_usecases.dart          # Casos de uso de autenticación
-│       ├── cash_register_usecases.dart # Casos de uso de cajas registradoras
-│       ├── catalogue_usecases.dart     # Casos de uso de catálogo
-│       └── sell_usecases.dart          # Casos de uso de ventas
 │
-├── presentation/                   # UI, páginas y providers
-│   ├── dialogs/                    # Diálogos específicos de páginas
-│   │   └── cash_register_management_dialog.dart
+├── presentation/                   # Capa de presentación - UI, páginas y providers
 │   ├── pages/                      # Páginas de la aplicación
-│   │   ├── login_page.dart             # Página de inicio de sesión
-│   │   ├── sell_page.dart              # Página principal de ventas
-│   │   └── welcome_page.dart           # Página de bienvenida
-│   └── providers/                  # Providers para gestión de estado
-│       ├── auth_provider.dart          # Provider de autenticación
-│       ├── cash_register_provider.dart # Provider de cajas registradoras
-│       ├── catalogue_provider.dart     # Provider de catálogo
-│       ├── printer_provider.dart       # Provider de impresión
-│       ├── sell_provider.dart          # Provider de ventas
-│       └── theme_data_app_provider.dart # Provider de tema
+│   │   ├── login_page.dart         # Página de inicio de sesión
+│   │   ├── presentation_page.dart  # Página de presentación/bienvenida
+│   │   └── sell_page.dart          # Página principal de ventas
+│   ├── providers/                  # Providers para gestión de estado
+│   │   ├── auth_provider.dart      # Provider de autenticación
+│   │   ├── cash_register_provider.dart # Provider de cajas registradoras
+│   │   ├── catalogue_provider.dart # Provider de catálogo
+│   │   ├── printer_provider.dart   # Provider de impresión
+│   │   ├── sell_provider.dart      # Provider de ventas
+│   │   └── theme_data_app_provider.dart # Provider de tema
+│   └── widgets/                    # Componentes UI especializados para presentación
+│       ├── buttons/                # Botones especializados
+│       ├── component/              # Componentes básicos reutilizables
+│       ├── dialogs/                # Diálogos modales especializados
+│       ├── feedback/               # Widgets de feedback (loading, error, etc.)
+│       ├── inputs/                 # Campos de entrada especializados
+│       ├── navigation/             # Componentes de navegación
+│       ├── responsive/             # Componentes responsive
+│       ├── views/                  # Vistas complejas reutilizables
+│       └── core_widgets.dart       # Exportaciones centralizadas de widgets
 │
 └── main.dart                       # Punto de entrada de la aplicación
 ```
-**IMPORTANTE**: (Evitar duplicación de código) Usar siempre los componentes y funciones de `core/` en lugar de crear nuevos y si no existe crearlo y actualizar la [Estructura proyect] de [dev-instructions.md]
+**IMPORTANTE**: (Evitar duplicación de código) Usar siempre los componentes de `core/` y `presentation/widgets/` en lugar de crear nuevos. Si no existe un componente necesario, crearlo en la ubicación apropiada y actualizar la [Estructura del Proyecto] en este archivo [dev-instructions.md]
 
 ## � Business Logic Key
 

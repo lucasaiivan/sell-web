@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:provider/provider.dart';
-import '../../core/utils/responsive_breakpoints.dart';
+import '../../core/utils/helpers/responsive_helper.dart';
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';

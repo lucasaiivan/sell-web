@@ -11,7 +11,7 @@ Los mixins en este proyecto permiten:
 - **Separación de responsabilidades**: Aislar funcionalidades específicas en componentes modulares
 - **Mantenibilidad**: Centralizar lógica común para facilitar actualizaciones
 
-## 📂 Estructura
+## 📂 Estructura y nomeclatura de ejemplo
 
 ```dart
 lib/core/mixins/
@@ -22,7 +22,7 @@ lib/core/mixins/
 └── mixins.dart               # Exportaciones centralizadas
 ```
 
-## 🛠️ Uso Típico
+## 🛠️ Uso Típico de ejempo
 
 ```dart
 // Ejemplo de mixin para funcionalidad responsive

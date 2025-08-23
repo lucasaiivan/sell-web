@@ -17,7 +17,7 @@ services/
 ├── database/                    # Servicios de base de datos
 ├── storage/                     # Servicios de persistencia local
 ├── external/                    # Servicios externos (impresoras, APIs)
-├── product_search_service.dart  # Servicio de búsqueda de productos
+├── search_catalogue_service.dart  # Servicio de búsqueda de productos de catalogo
 ├── theme_service.dart           # Servicio de temas y estilos
 └── README.md                   # Este archivo
 ```

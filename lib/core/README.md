@@ -57,13 +57,7 @@ core/
 - **fuctions.dart**: Funciones utilitarias generales (formateo, validaciones, etc.)
 - **formaters/**: Formateadores específicos para moneda, fechas, texto, etc.
 - **helpers/**: Funciones helper especializadas para casos de uso específicos
-
-### 🎭 Mixins
-**Propósito**: Mixins reutilizables para compartir funcionalidad entre clases
-- Validaciones comunes
-- Manejo de estados de carga
-- Funcionalidades de UI reutilizables
-
+ 
 ## 🎯 Principios de Diseño
 
 ### ✅ Responsabilidades del Core

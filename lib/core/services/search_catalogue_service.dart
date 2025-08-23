@@ -7,7 +7,7 @@ import '../../domain/entities/catalogue.dart';
 /// - Filtrado por categorías, marcas y códigos
 /// - Ordenamiento por relevancia y ventas
 /// - Sugerencias de búsqueda inteligentes
-class CatalogueSearchService {
+class SearchCatalogueService {
   // =================== BÚSQUEDA PRINCIPAL ===================
 
   /// Búsqueda principal de productos con algoritmo avanzado.

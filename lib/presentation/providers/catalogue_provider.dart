@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/core.dart';
-import 'package:sellweb/core/services/catalogue_search_service.dart';
+import 'package:sellweb/core/services/search_catalogue_service.dart';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
 import '../../domain/entities/user.dart';
@@ -127,7 +127,7 @@ class CatalogueProvider extends ChangeNotifier {
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
   List<ProductCatalogue> getTopFilterProducts(
       {int limit = 50, int minimumSales = 1}) {
-    return CatalogueSearchService.getTopSellingProducts(
+    return SearchCatalogueService.getTopSellingProducts(
       products: _state.products,
       limit: limit,
       minimumSales: minimumSales,
@@ -235,7 +235,7 @@ class CatalogueProvider extends ChangeNotifier {
     print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
     print('📦 Productos disponibles en state: ${_state.products.length}');
 
-    final results = CatalogueSearchService.searchProducts(
+    final results = SearchCatalogueService.searchProducts(
       products: _state.products,
       query: query,
       maxResults: maxResults,
@@ -277,7 +277,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por código exacto
   List<ProductCatalogue> searchByExactCode(String code) {
-    return CatalogueSearchService.searchByExactCode(
+    return SearchCatalogueService.searchByExactCode(
       products: _state.products,
       code: code,
     );
@@ -285,7 +285,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por categoría
   List<ProductCatalogue> searchByCategory(String category) {
-    return CatalogueSearchService.searchByCategory(
+    return SearchCatalogueService.searchByCategory(
       products: _state.products,
       category: category,
     );
@@ -317,7 +317,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por marca
   List<ProductCatalogue> searchByBrand(String brand) {
-    return CatalogueSearchService.searchByBrand(
+    return SearchCatalogueService.searchByBrand(
       products: _state.products,
       brand: brand,
     );
@@ -328,7 +328,7 @@ class CatalogueProvider extends ChangeNotifier {
     required String query,
     int maxSuggestions = 5,
   }) {
-    final suggestions = CatalogueSearchService.getSearchSuggestions(
+    final suggestions = SearchCatalogueService.getSearchSuggestions(
       products: _state.products,
       query: query,
       maxSuggestions: maxSuggestions,

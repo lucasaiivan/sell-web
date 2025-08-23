@@ -18,7 +18,7 @@ core/
 │   ├── database/              # Servicios de base de datos
 │   ├── external/              # Servicios externos (APIs, impresión)
 │   ├── storage/               # Servicios de almacenamiento
-│   ├── catalogue_search_service.dart # Servicio de búsqueda de catálogo
+│   ├── search_catalogue_service.dart # Servicio de búsqueda de catálogo
 │   └── theme_service.dart     # Servicio de gestión de temas
 ├── utils/                     # Utilidades y helpers
 │   ├── formaters/             # Formateadores de datos
@@ -44,7 +44,7 @@ core/
 
 #### Servicios Principales:
 - **theme_service.dart**: Gestión de temas claro/oscuro con persistencia
-- **catalogue_search_service.dart**: Lógica de búsqueda y filtrado de productos
+- **search_catalogue_service.dart**: Lógica de búsqueda y filtrado de productos
 - **database/**: Servicios de conexión y operaciones con Firebase Firestore
 - **external/**: Servicios para integraciones externas (impresoras térmicas, APIs)
 - **storage/**: Servicios de almacenamiento local y en la nube

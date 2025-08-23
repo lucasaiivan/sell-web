@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Core imports
-import 'package:sellweb/core/services/catalogue_search_service.dart';
+import 'package:sellweb/core/services/search_catalogue_service.dart';
 import 'package:sellweb/presentation/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/presentation/widgets/component/image.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
@@ -93,7 +93,7 @@ class _ProductCatalogueFullScreenViewState
           if (_filteredProducts.isEmpty &&
               catalogueProvider.products.isEmpty &&
               widget.products.isNotEmpty) {
-            _filteredProducts = CatalogueSearchService.searchProducts(
+            _filteredProducts = SearchCatalogueService.searchProducts(
               products: widget.products,
               query: query,
               maxResults: 50,

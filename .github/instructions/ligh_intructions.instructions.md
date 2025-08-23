@@ -21,7 +21,7 @@ lib/
 │   │   │   └── thermal_printer_http_service.dart
 │   │   ├── storage/                # Almacenamiento local
 │   │   │   └── app_data_persistence_service.dart
-│   │   ├── catalogue_search_service.dart
+│   │   ├── search_catalogue_service.dart
 │   │   └── theme_service.dart
 │   ├── utils/                      # Utilidades y helpers
 │   │   ├── formatters/             # Formateadores (fecha, moneda)

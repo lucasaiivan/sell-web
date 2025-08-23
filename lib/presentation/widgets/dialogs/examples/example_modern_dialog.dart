@@ -1,8 +1,8 @@
+import '../../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
-import '../../../../core/utils/fuctions.dart';
 
 /// Ejemplo de diálogo modernizado usando los nuevos componentes estándar
 ///
@@ -70,7 +70,7 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
                   DialogComponents.infoRow(
                     context: context,
                     label: 'Precio Actual',
-                    value: Publications.getFormatoPrecio(
+                    value: CurrencyFormatter.formatPrice(
                         value: widget.currentPrice),
                     icon: Icons.monetization_on_outlined,
                   ),
@@ -124,7 +124,7 @@ class _ExampleModernDialogState extends State<ExampleModernDialog> {
                 context: context,
                 label: 'Nuevo Precio',
                 value:
-                    Publications.getFormatoPrecio(value: _getNewPrice() ?? 0.0),
+                    CurrencyFormatter.formatPrice(value: _getNewPrice() ?? 0.0),
                 icon: Icons.trending_up_rounded,
               ),
           ],

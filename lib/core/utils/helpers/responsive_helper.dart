@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Breakpoints para diferentes tamaños de pantalla siguiendo Material Design 3
-class ResponsiveBreakpoints {
+class ResponsiveHelper {
   static const double mobile = 600;
   static const double tablet = 840;
   static const double desktop = 1200;
@@ -26,7 +26,7 @@ bool isMobile(BuildContext context) {
   final height = size.height;
 
   // Factor 1: Ancho menor al breakpoint móvil estándar
-  if (width < ResponsiveBreakpoints.mobile) {
+  if (width < ResponsiveHelper.mobile) {
     return true;
   }
 
@@ -35,9 +35,9 @@ bool isMobile(BuildContext context) {
   final isPortrait = height > width;
 
   if (isPortrait &&
-      width < ResponsiveBreakpoints.tablet &&
-      aspectRatio >= ResponsiveBreakpoints.minMobileAspectRatio &&
-      aspectRatio <= ResponsiveBreakpoints.maxMobileAspectRatio) {
+      width < ResponsiveHelper.tablet &&
+      aspectRatio >= ResponsiveHelper.minMobileAspectRatio &&
+      aspectRatio <= ResponsiveHelper.maxMobileAspectRatio) {
     return true;
   }
 
@@ -74,8 +74,8 @@ bool isTablet(BuildContext context) {
   }
 
   // Rango típico de tablets
-  if (width >= ResponsiveBreakpoints.mobile &&
-      width < ResponsiveBreakpoints.desktop) {
+  if (width >= ResponsiveHelper.mobile &&
+      width < ResponsiveHelper.desktop) {
     return true;
   }
 
@@ -84,7 +84,7 @@ bool isTablet(BuildContext context) {
   final aspectRatio = width / height;
 
   if (isLandscape &&
-      width < ResponsiveBreakpoints.desktop &&
+      width < ResponsiveHelper.desktop &&
       aspectRatio <= 2.0) {
     // No demasiado ancho
     return true;

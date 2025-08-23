@@ -1,6 +1,6 @@
+import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/presentation/widgets/inputs/money_input_text_field.dart';
@@ -200,16 +200,16 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
             if (_newSalePrice != widget.product.salePrice)
               _buildChangeRow(
                 'Venta',
-                Publications.getFormatoPrecio(value: widget.product.salePrice),
-                Publications.getFormatoPrecio(value: _newSalePrice),
+                CurrencyFormatter.formatPrice(value: widget.product.salePrice),
+                CurrencyFormatter.formatPrice(value: _newSalePrice),
               ),
 
             if (_newPurchasePrice != widget.product.purchasePrice)
               _buildChangeRow(
                 'Compra',
-                Publications.getFormatoPrecio(
+                CurrencyFormatter.formatPrice(
                     value: widget.product.purchasePrice),
-                Publications.getFormatoPrecio(value: _newPurchasePrice),
+                CurrencyFormatter.formatPrice(value: _newPurchasePrice),
               ),
 
             // Mostrar cambio en porcentaje de ganancia si es relevante
@@ -222,11 +222,11 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
           ] else ...[
             // Modo información: mostrar valores actuales
             _buildInfoRow('Venta',
-                Publications.getFormatoPrecio(value: widget.product.salePrice)),
+                CurrencyFormatter.formatPrice(value: widget.product.salePrice)),
             if (widget.product.purchasePrice > 0)
               _buildInfoRow(
                   'Compra',
-                  Publications.getFormatoPrecio(
+                  CurrencyFormatter.formatPrice(
                       value: widget.product.purchasePrice)),
 
             // Mostrar porcentaje de ganancia actual si hay precio de compra
@@ -390,7 +390,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       // Validación final: Precio de compra no puede ser mayor al de venta
       if (purchasePrice > 0 && purchasePrice > salePrice) {
         throw Exception(
-            'El precio de compra (${Publications.getFormatoPrecio(value: purchasePrice)}) no puede ser mayor al precio de venta (${Publications.getFormatoPrecio(value: salePrice)})');
+            'El precio de compra (${CurrencyFormatter.formatPrice(value: purchasePrice)}) no puede ser mayor al precio de venta (${CurrencyFormatter.formatPrice(value: salePrice)})');
       }
 
       // Obtener providers necesarios
@@ -418,7 +418,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         salePrice: salePrice,
         purchasePrice: purchasePrice,
         quantity: currentQuantity, // Preservar la cantidad del ticket
-        upgrade: Utils().getTimestampNow(),
+        upgrade: DateFormatter.getCurrentTimestamp(),
         documentIdUpgrade: accountId,
       );
 

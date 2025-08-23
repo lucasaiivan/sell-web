@@ -1,8 +1,8 @@
+import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Core imports
-import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/core/services/catalogue_search_service.dart';
 import 'package:sellweb/presentation/widgets/inputs/product_search_field.dart';
 import 'package:sellweb/presentation/widgets/component/image.dart';
@@ -277,7 +277,7 @@ class _ProductCatalogueFullScreenViewState
                             // text flexibleSpace : información del catálogo
                             Expanded(
                               child: Text(
-                                'Catálogo • ${Publications.getFormatAmount(value: _filteredProducts.length)} resultados',
+                                'Catálogo • ${CurrencyFormatter.formatAmount(value: _filteredProducts.length)} resultados',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: colorScheme.onSurface,
@@ -630,7 +630,7 @@ class _ProductCatalogueFullScreenViewState
           children: [
             // text : Precio de venta
             Text(
-              Publications.getFormatoPrecio(value: product.salePrice),
+              CurrencyFormatter.formatPrice(value: product.salePrice),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,

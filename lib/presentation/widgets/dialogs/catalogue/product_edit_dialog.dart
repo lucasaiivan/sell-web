@@ -1,5 +1,5 @@
+import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
@@ -188,7 +188,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     // text : precio del producto
                     DialogComponents.infoBadge(
                       context: context,
-                      text: Publications.getFormatoPrecio(
+                      text: CurrencyFormatter.formatPrice(
                           value: widget.product.salePrice),
                       backgroundColor:
                           Theme.of(context).colorScheme.primaryContainer,
@@ -284,7 +284,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                 ),
               ),
               child: Text(
-                'Total: ${Publications.getFormatoPrecio(value: _totalPrice)}',
+                'Total: ${CurrencyFormatter.formatPrice(value: _totalPrice)}',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onPrimaryContainer,

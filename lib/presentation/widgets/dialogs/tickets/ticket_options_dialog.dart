@@ -1,10 +1,10 @@
+import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
-import '../../../../core/utils/fuctions.dart';
 
 /// Diálogo modernizado para opciones del ticket siguiendo Material Design 3
 class TicketOptionsDialog extends StatefulWidget {
@@ -329,7 +329,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         return {
           'quantity': item.quantity,
           'description': item.description,
-          'price': Publications.getFormatoPrecio(value: item.salePrice),
+          'price': CurrencyFormatter.formatPrice(value: item.salePrice),
         };
       }).toList();
 

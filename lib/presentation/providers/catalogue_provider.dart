@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
+import '../../core/core.dart';
 import 'package:sellweb/core/services/catalogue_search_service.dart';
 import '../../data/catalogue_repository_impl.dart';
 import '../../domain/entities/catalogue.dart';
@@ -392,8 +392,8 @@ class CatalogueProvider extends ChangeNotifier {
         favorite: product.favorite,
         verified: product.verified,
         reviewed: product.reviewed,
-        creation: Utils().getTimestampNow(),
-        upgrade: Utils().getTimestampNow(),
+        creation: DateFormatter.getCurrentTimestamp(),
+        upgrade: DateFormatter.getCurrentTimestamp(),
         idUserCreation: product.idUserCreation,
         idUserUpgrade: product.idUserUpgrade,
       );
@@ -443,15 +443,15 @@ class CatalogueProvider extends ChangeNotifier {
       if (existingProduct != null && existingProduct.id.isNotEmpty) {
         // Actualizar producto existente
         final updatedProduct = product.copyWith(
-          upgrade: Utils().getTimestampNow(),
+          upgrade: DateFormatter.getCurrentTimestamp(),
           documentIdUpgrade: accountId,
         );
         await addProductToCatalogueUseCase(updatedProduct, accountId);
       } else {
         // Agregar nuevo producto
         final newProduct = product.copyWith(
-          creation: Utils().getTimestampNow(),
-          upgrade: Utils().getTimestampNow(),
+          creation: DateFormatter.getCurrentTimestamp(),
+          upgrade: DateFormatter.getCurrentTimestamp(),
           documentIdCreation: accountId,
           documentIdUpgrade: accountId,
         );
@@ -467,7 +467,7 @@ class CatalogueProvider extends ChangeNotifier {
             imageAccount: accountProfile.image,
             nameAccount: accountProfile.name,
             price: product.salePrice,
-            time: Utils().getTimestampNow(),
+            time: DateFormatter.getCurrentTimestamp(),
             currencySign: accountProfile.currencySign,
             province: accountProfile.province,
             town: accountProfile.town,

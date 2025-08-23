@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
+import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart';
@@ -350,7 +350,7 @@ class SellProvider extends ChangeNotifier {
   void addQuickProduct(
       {required String description, required double salePrice}) {
     final product = ProductCatalogue(
-      id: Publications.generateUid(),
+      id: UidGenerator.generateUid(),
       description: description,
       salePrice: salePrice,
     );

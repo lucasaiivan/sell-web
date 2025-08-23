@@ -1,9 +1,9 @@
+import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/presentation/widgets/dialogs/tickets/ticket_options_dialog.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
 
 /// Diálogo modernizado para mostrar el último ticket siguiendo Material Design 3
 class LastTicketDialog extends StatefulWidget {
@@ -145,7 +145,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            Publications.getFormatoPrecio(value: unitPrice),
+                            CurrencyFormatter.formatPrice(value: unitPrice),
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Theme.of(context)
@@ -159,7 +159,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                     const SizedBox(width: 8),
                     // Precio total
                     Text(
-                      Publications.getFormatoPrecio(value: totalPrice),
+                      CurrencyFormatter.formatPrice(value: totalPrice),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.primary,
@@ -191,7 +191,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                   DialogComponents.infoRow(
                     context: context,
                     label: 'Recibido',
-                    value: Publications.getFormatoPrecio(
+                    value: CurrencyFormatter.formatPrice(
                         value: widget.ticket.valueReceived),
                     icon: Icons.monetization_on_rounded,
                   ),
@@ -201,7 +201,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                     DialogComponents.infoRow(
                       context: context,
                       label: 'Cambio',
-                      value: Publications.getFormatoPrecio(
+                      value: CurrencyFormatter.formatPrice(
                         value: widget.ticket.valueReceived -
                             widget.ticket.getTotalPrice,
                       ),
@@ -219,7 +219,7 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
           DialogComponents.summaryContainer(
             context: context,
             label: 'Total del Ticket',
-            value: Publications.getFormatoPrecio(
+            value: CurrencyFormatter.formatPrice(
                 value: widget.ticket.getTotalPrice),
             icon: Icons.receipt_rounded,
           ),

@@ -136,7 +136,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                       : 0.0,
                   primaryColor: theme.colorScheme.primary,
                   isDark: theme.brightness == Brightness.dark,
-                  isMobile: screenSize.width < ResponsiveBreakpoints.mobile,
+                  isMobile: screenSize.width < ResponsiveHelper.mobile,
                   screenHeight: screenSize.height,
                 ),
               ),
@@ -150,7 +150,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   }
 
   Widget _buildResponsiveContent(BuildContext context, double width) {
-    if (width < ResponsiveBreakpoints.mobile) {
+    if (width < ResponsiveHelper.mobile) {
       return _buildMobileLayout(context);
     } else {
       return _buildLargeScreenLayout(context, width);
@@ -173,7 +173,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
   Widget _buildLargeScreenLayout(BuildContext context, double width) {
     // Espaciado dinámico basado en el tamaño de pantalla
-    final bool isDesktop = width >= ResponsiveBreakpoints.desktop;
+    final bool isDesktop = width >= ResponsiveHelper.desktop;
 
     return Column(
       children: [
@@ -194,7 +194,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
     final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
+    final isMobile = screenWidth < ResponsiveHelper.mobile;
 
     // Constantes para alineación perfecta entre clipper y dispositivo
     final deviceImageTopPadding = isMobile ? 40.0 : 60.0;
@@ -519,7 +519,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
+    final isMobile = screenWidth < ResponsiveHelper.mobile;
 
     return SizedBox(
       width: double.infinity,
@@ -1303,7 +1303,7 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = widget.screenWidth < ResponsiveBreakpoints.mobile;
+    final isMobile = widget.screenWidth < ResponsiveHelper.mobile;
 
     // Calcular dimensiones basadas solo en screenWidth
     final widgetWidth = _calculateWidth(widget.screenWidth, isMobile);
@@ -1376,13 +1376,13 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
     if (isMobile) {
       // Móvil: tamaño más grande para mejor visibilidad del zoom
       return (screenWidth * 0.35).clamp(90.0, 160.0);
-    } else if (screenWidth < ResponsiveBreakpoints.tablet) {
+    } else if (screenWidth < ResponsiveHelper.tablet) {
       // Tablet: tamaño moderado
       return (screenWidth * 0.28).clamp(140.0, 220.0);
-    } else if (screenWidth < ResponsiveBreakpoints.desktop) {
+    } else if (screenWidth < ResponsiveHelper.desktop) {
       // Desktop pequeño: tamaño estándar
       return (screenWidth * 0.24).clamp(180.0, 280.0);
-    } else if (screenWidth < ResponsiveBreakpoints.largeDesktop) {
+    } else if (screenWidth < ResponsiveHelper.largeDesktop) {
       // Desktop estándar: tamaño optimizado para zoom
       return (screenWidth * 0.22).clamp(220.0, 320.0);
     } else {
@@ -1396,13 +1396,13 @@ class _DeviceScrollWidgetState extends State<_DeviceScrollWidget> {
     if (isMobile) {
       // Móvil: altura proporcionalmente mayor para el zoom
       return (screenWidth * 0.55).clamp(160.0, 240.0);
-    } else if (screenWidth < ResponsiveBreakpoints.tablet) {
+    } else if (screenWidth < ResponsiveHelper.tablet) {
       // Tablet: altura moderada
       return (screenWidth * 0.40).clamp(200.0, 300.0);
-    } else if (screenWidth < ResponsiveBreakpoints.desktop) {
+    } else if (screenWidth < ResponsiveHelper.desktop) {
       // Desktop pequeño: altura estándar
       return (screenWidth * 0.32).clamp(240.0, 350.0);
-    } else if (screenWidth < ResponsiveBreakpoints.largeDesktop) {
+    } else if (screenWidth < ResponsiveHelper.largeDesktop) {
       // Desktop estándar: altura optimizada para zoom
       return (screenWidth * 0.28).clamp(280.0, 400.0);
     } else {
@@ -1512,7 +1512,7 @@ class _ModernFeatureCardState extends State<_ModernFeatureCard>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < ResponsiveBreakpoints.mobile;
+    final isMobile = screenWidth < ResponsiveHelper.mobile;
 
     // En móvil o cuando se especifica, siempre mostrar en columna
     if (isMobile || !widget.isFullWidth) {

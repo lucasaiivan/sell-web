@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
+import '../../core/core.dart';
 import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
@@ -743,7 +743,7 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // Asegurar que el ticket tenga un ID único
       final ticketId =
-          ticket.id.isEmpty ? Publications.generateUid() : ticket.id;
+          ticket.id.isEmpty ? UidGenerator.generateUid() : ticket.id;
 
       // Asegurar que tenga información del vendedor
       final finalSellerName = ticket.sellerName.isEmpty

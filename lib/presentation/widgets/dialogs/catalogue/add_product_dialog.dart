@@ -1,9 +1,5 @@
+import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
-import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/presentation/widgets/component/ui.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
@@ -394,15 +390,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
         throw Exception('El precio debe ser un número válido mayor a cero');
       }
 
-      print('🔄 Procesando producto: ${widget.isNew ? "nuevo" : "existente"}');
-      print(
-          '💰 Texto del controlador precio venta: "${_priceController.text}"');
-      print('💰 Precio de venta parseado: \$${price.toStringAsFixed(2)}');
-      print(
-          '💰 Texto del controlador precio compra: "${_purchasePriceController.text}"');
-      print(
-          '💰 Precio de compra parseado: \$${purchasePrice.toStringAsFixed(2)}');
-
       // Usar los providers pasados como parámetros
       final sellProvider = widget.sellProvider;
       final catalogueProvider = widget.catalogueProvider;
@@ -421,28 +408,21 @@ class _AddProductDialogState extends State<AddProductDialog> {
         purchasePrice: purchasePrice,
       );
 
-      print(
-          '📦 Producto actualizado: ${updatedProduct.description} - Venta: \$${updatedProduct.salePrice} - Compra: \$${updatedProduct.purchasePrice}');
-
       // Agregar al ticket
       sellProvider.addProductsticket(updatedProduct);
-      print('✅ Producto agregado al ticket');
 
       // Si el producto no está verificado y la descripción cambió, actualizar la base de datos pública
       if (!widget.product.verified &&
           !widget.isNew &&
           _descriptionController.text.trim() != widget.product.description) {
-        print('🔄 Actualizando descripción en producto público...');
         await _updatePublicProductDescription(updatedProduct);
       }
 
       // Procesar según el tipo
       if (widget.isNew) {
-        print('🆕 Creando nuevo producto...');
         await _createNewProduct(
             updatedProduct, catalogueProvider, authProvider, sellProvider);
       } else if (_checkAddCatalogue && updatedProduct.id.isNotEmpty) {
-        print('📁 Agregando producto existente al catálogo...');
         await _addExistingProduct(
             updatedProduct, catalogueProvider, sellProvider, authProvider);
       }
@@ -453,7 +433,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
           _isLoading = false;
         });
         Navigator.of(context).pop();
-        print('✅ Proceso completado exitosamente');
       }
     } catch (e) {
       print('❌ Error en _processAddProduct: $e');
@@ -487,7 +466,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         nameMark: updatedProduct.nameMark,
         imageMark: updatedProduct.imageMark,
         creation: updatedProduct.documentCreation,
-        upgrade: Utils().getTimestampNow(),
+        upgrade: DateFormatter.getCurrentTimestamp(),
         idUserCreation: updatedProduct.documentIdCreation,
         idUserUpgrade: widget.authProvider.user?.email ?? '',
         verified: updatedProduct.verified,
@@ -521,8 +500,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
         idMark: updatedProduct.idMark,
         nameMark: updatedProduct.nameMark,
         imageMark: updatedProduct.imageMark,
-        creation: Utils().getTimestampNow(),
-        upgrade: Utils().getTimestampNow(),
+        creation: DateFormatter.getCurrentTimestamp(),
+        upgrade: DateFormatter.getCurrentTimestamp(),
         idUserCreation: authProvider.user?.email ?? '',
         idUserUpgrade: authProvider.user?.email ?? '',
         verified: false,

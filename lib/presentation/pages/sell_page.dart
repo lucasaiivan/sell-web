@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:sellweb/core/core.dart' show ProductCatalogueFullScreenView;
+import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/presentation/widgets/dialogs/configuration/printer_config_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/catalogue/add_product_dialog.dart';
@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
 import '../../core/utils/helpers/responsive_helper.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
@@ -966,7 +965,7 @@ class _SellPageState extends State<SellPage> {
                   sellProvider.setTicketView(true);
                 },
                 text:
-                    'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.ticket.getTotalPrice)}',
+                    'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : CurrencyFormatter.formatPrice(value: sellProvider.ticket.getTotalPrice)}',
                 buttonColor:
                     sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
                 extended: true,
@@ -1231,7 +1230,7 @@ class _SellPageState extends State<SellPage> {
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                           label: Text(
-                            Publications.getFormatoPrecio(
+                            CurrencyFormatter.formatPrice(
                                 value: amount.toDouble()),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w500,
@@ -1262,7 +1261,7 @@ class _SellPageState extends State<SellPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total:', style: theme.textTheme.bodyLarge),
-                      Text(Publications.getFormatoPrecio(value: total),
+                      Text(CurrencyFormatter.formatPrice(value: total),
                           style: theme.textTheme.bodyLarge
                               ?.copyWith(fontWeight: FontWeight.bold)),
                     ],
@@ -1291,7 +1290,7 @@ class _SellPageState extends State<SellPage> {
                             fontWeight: FontWeight.bold,
                           ),
                           child: Text(
-                              Publications.getFormatoPrecio(
+                              CurrencyFormatter.formatPrice(
                                   value: vuelto < 0 ? 0 : vuelto),
                               style: theme.textTheme.bodyLarge?.copyWith(
                                   fontWeight: FontWeight.bold, fontSize: 24)),
@@ -1496,7 +1495,7 @@ class _SellPageState extends State<SellPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                Publications.getFormatoPrecio(value: product.salePrice),
+                CurrencyFormatter.formatPrice(value: product.salePrice),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.primary,
@@ -1624,7 +1623,7 @@ class _ProductoItemState extends State<ProductoItem> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            Publications.getFormatoPrecio(value: widget.producto.salePrice),
+            CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 22, // Precio más grande
@@ -1687,7 +1686,7 @@ class _ProductoItemState extends State<ProductoItem> {
                         overflow: TextOverflow.ellipsis),
                     maxLines: 1),
                 Text(
-                    Publications.getFormatoPrecio(
+                    CurrencyFormatter.formatPrice(
                         value: widget.producto.salePrice),
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -1906,7 +1905,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               ),
               const SizedBox(height: 4),
               Text(
-                Publications.getFormatoPrecio(value: balance),
+                CurrencyFormatter.formatPrice(value: balance),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.primary,

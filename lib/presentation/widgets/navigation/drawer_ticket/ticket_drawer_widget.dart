@@ -1,7 +1,7 @@
+import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/utils/fuctions.dart'; 
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
@@ -304,7 +304,7 @@ class _TicketContent extends StatelessWidget {
                 _buildEditableChip(
                   context: context,
                   text:
-                      'Vuelto ${Publications.getFormatoPrecio(value: ticket.valueReceived - ticket.getTotalPrice)}',
+                      'Vuelto ${CurrencyFormatter.formatPrice(value: ticket.valueReceived - ticket.getTotalPrice)}',
                   onTap: onEditCashAmount,
                   backgroundColor: Colors.blue.withValues(alpha: 0.15),
                   borderColor: Colors.blue.withValues(alpha: 0.3),
@@ -475,7 +475,7 @@ class _TicketContent extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        Publications.getFormatoPrecio(
+                        CurrencyFormatter.formatPrice(
                             value: ticket.getTotalPriceWithoutDiscount),
                         style: textDescriptionStyle.copyWith(
                           fontSize: 16,
@@ -502,7 +502,7 @@ class _TicketContent extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        '- ${Publications.getFormatoPrecio(value: ticket.getDiscountAmount)}',
+                        '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
                         style: textDescriptionStyle.copyWith(
                           fontSize: 14,
                           color: Colors.white.withValues(alpha: 0.8),
@@ -527,7 +527,7 @@ class _TicketContent extends StatelessWidget {
                       Text('TOTAL', style: textTotalStyle),
                       const Spacer(),
                       Text(
-                        Publications.getFormatoPrecio(
+                        CurrencyFormatter.formatPrice(
                             value: ticket.getTotalPrice),
                         style: textTotalStyle,
                         textAlign: TextAlign.right,
@@ -541,7 +541,7 @@ class _TicketContent extends StatelessWidget {
                   Text('TOTAL', style: textTotalStyle),
                   const Spacer(),
                   Text(
-                    Publications.getFormatoPrecio(value: ticket.getTotalPrice),
+                    CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
                     style: textTotalStyle,
                     textAlign: TextAlign.right,
                   ),
@@ -705,10 +705,10 @@ class _TicketContent extends StatelessWidget {
     if (ticket.discountIsPercentage) {
       // Mostrar el porcentaje y el monto calculado dinámicamente
       final discountAmount = ticket.getDiscountAmount;
-      return 'Descuento ${ticket.discount.toStringAsFixed(0)}% (${Publications.getFormatoPrecio(value: discountAmount)})';
+      return 'Descuento ${ticket.discount.toStringAsFixed(0)}% (${CurrencyFormatter.formatPrice(value: discountAmount)})';
     } else {
       // Solo mostrar el monto fijo
-      return 'Descuento ${Publications.getFormatoPrecio(value: ticket.discount)}';
+      return 'Descuento ${CurrencyFormatter.formatPrice(value: ticket.discount)}';
     }
   }
 }
@@ -759,7 +759,7 @@ class _TicketProductListState extends State<_TicketProductList> {
             ),
             Expanded(
               child: Text(
-                Publications.getFormatoPrecio(
+                CurrencyFormatter.formatPrice(
                   value: product.salePrice * product.quantity,
                 ),
                 style: widget.textValuesStyle,
@@ -941,7 +941,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          Publications.getFormatoPrecio(
+                          CurrencyFormatter.formatPrice(
                               value: ticket.getTotalPriceWithoutDiscount),
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
@@ -966,7 +966,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '- ${Publications.getFormatoPrecio(value: ticket.getDiscountAmount)}',
+                          '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontFamily: 'RobotoMono',
@@ -997,7 +997,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        Publications.getFormatoPrecio(
+                        CurrencyFormatter.formatPrice(
                             value: ticket.getTotalPrice),
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
@@ -1097,7 +1097,7 @@ class _TicketConfirmedPurchase extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            Publications.getFormatoPrecio(
+                            CurrencyFormatter.formatPrice(
                               value:
                                   ticket.valueReceived - ticket.getTotalPrice,
                             ),

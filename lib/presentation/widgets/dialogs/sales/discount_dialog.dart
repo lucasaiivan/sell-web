@@ -1,7 +1,7 @@
+import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
@@ -305,7 +305,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
                 style: theme.textTheme.bodyMedium,
               ),
               Text(
-                Publications.getFormatoPrecio(value: totalTicket),
+                CurrencyFormatter.formatPrice(value: totalTicket),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
@@ -326,8 +326,8 @@ class _DiscountDialogState extends State<DiscountDialog> {
               ),
               Text(
                 discountAmount > 0
-                    ? '- ${Publications.getFormatoPrecio(value: discountAmount)}'
-                    : Publications.getFormatoPrecio(value: 0),
+                    ? '- ${CurrencyFormatter.formatPrice(value: discountAmount)}'
+                    : CurrencyFormatter.formatPrice(value: 0),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: discountAmount > 0
@@ -348,7 +348,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
                 ),
               ),
               Text(
-                Publications.getFormatoPrecio(value: finalTotal),
+                CurrencyFormatter.formatPrice(value: finalTotal),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: discountAmount > 0
@@ -468,7 +468,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Descuento de ${Publications.getFormatoPrecio(value: discountAmount)} aplicado',
+                'Descuento de ${CurrencyFormatter.formatPrice(value: discountAmount)} aplicado',
                 style: const TextStyle(color: Colors.white),
               ),
             ),

@@ -1,15 +1,11 @@
+import '../../../../core/core.dart' hide ResponsiveHelper;
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/presentation/widgets/responsive/responsive_helper.dart';
-import 'package:sellweb/presentation/widgets/component/dividers.dart';
-import '../../../../core/utils/fuctions.dart';
+import 'package:provider/provider.dart'; 
+import 'package:sellweb/presentation/widgets/responsive/responsive_helper.dart'; 
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
-import '../../../../presentation/providers/sell_provider.dart';
-import '../../buttons/buttons.dart';
+import '../../../../presentation/providers/sell_provider.dart'; 
 import 'cash_flow_dialog.dart';
 import 'cash_register_close_dialog.dart';
 import 'cash_register_open_dialog.dart';
@@ -113,7 +109,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         DialogComponents.summaryContainer(
           context: context,
           label: 'Balance total',
-          value: Publications.getFormatoPrecio(
+          value: CurrencyFormatter.formatPrice(
               value: cashRegister.getExpectedBalance),
           icon: Icons.monetization_on_rounded,
           backgroundColor:
@@ -156,20 +152,20 @@ class CashRegisterManagementDialog extends StatelessWidget {
       },
       {
         'label': 'Facturación',
-        'value': Publications.getFormatoPrecio(value: cashRegister.billing),
+        'value': CurrencyFormatter.formatPrice(value: cashRegister.billing),
       },
       {
         'label': 'Descuentos',
-        'value': Publications.getFormatoPrecio(value: cashRegister.discount),
+        'value': CurrencyFormatter.formatPrice(value: cashRegister.discount),
       },
       {
         'label': 'Fecha de creación',
-        'value': Publications.getFechaPublicacionFormating(
+        'value': DateFormatter.formatPublicationDate(
             dateTime: cashRegister.opening),
       },
       {
         'label': 'Tiempo transcurrido',
-        'value': Publications.getTiempoTranscurrido(
+        'value': DateFormatter.getElapsedTime(
             fechaInicio: cashRegister.opening),
       },
     ];
@@ -538,7 +534,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${isIngreso ? '+' : '-'}${Publications.getFormatoPrecio(value: cashFlow.amount)}',
+              '${isIngreso ? '+' : '-'}${CurrencyFormatter.formatPrice(value: cashFlow.amount)}',
               style: (isMobile
                       ? theme.textTheme.bodySmall
                       : theme.textTheme.bodyMedium)
@@ -577,7 +573,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
     } else if (messageDate == today.subtract(const Duration(days: 1))) {
       return 'Ayer $timeString';
     } else {
-      return Publications.getFechaPublicacionFormating(dateTime: dateTime);
+      return DateFormatter.formatPublicationDate(dateTime: dateTime);
     }
   }
 

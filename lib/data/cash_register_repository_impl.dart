@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../core/services/database/database_cloud.dart';
-import '../../core/utils/fuctions.dart';
-import '../../domain/entities/cash_register_model.dart';
-import '../../domain/repositories/cash_register_repository.dart';
+import '../core/core.dart';
+import '../domain/entities/cash_register_model.dart';
+import '../domain/repositories/cash_register_repository.dart';
 
 /// Implementación del repositorio de caja registradora usando Firebase
 ///
@@ -230,7 +229,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String cashierId,
   }) async {
     try {
-      final cashRegisterId = Publications.generateUid();
+      final cashRegisterId = UidGenerator.generateUid();
       final now = DateTime.now();
 
       final cashRegister = CashRegister(

@@ -596,7 +596,7 @@ class DialogComponents {
   static const Widget sectionSpacing = SizedBox(height: 24);
 
   /// Espaciado pequeño entre elementos
-  static const Widget itemSpacing = SizedBox(height: 12);
+  static const Widget itemSpacing = SizedBox(height: 16);
 
   /// Espaciado mínimo entre elementos relacionados
   static const Widget minSpacing = SizedBox(height: 8);

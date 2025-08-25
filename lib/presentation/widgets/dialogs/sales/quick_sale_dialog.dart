@@ -54,16 +54,6 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DialogComponents.sectionSpacing,
-
-            // Campo de precio
-            Text(
-              'Precio del Producto',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            DialogComponents.itemSpacing,
-
             DialogComponents.moneyField(
               autofocus: true,
               context: context,
@@ -86,16 +76,6 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
                   });
                 }
               },
-            ),
-
-            DialogComponents.sectionSpacing,
-
-            // Campo de descripción
-            Text(
-              'Descripción',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
             ),
             DialogComponents.itemSpacing,
 
@@ -125,7 +105,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         ),
         DialogComponents.primaryActionButton(
           context: context,
-          text: 'Agregar Producto',
+          text: 'Agregar',
           onPressed: _processQuickSale,
           isLoading: _isProcessing,
         ),

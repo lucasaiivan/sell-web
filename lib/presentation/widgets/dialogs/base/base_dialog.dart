@@ -82,7 +82,10 @@ class BaseDialog extends StatelessWidget {
 
             // Contenido principal con gradiente difuminado
             Flexible(
-              child: _buildContentWithGradient(context, theme),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                child: _buildContentWithGradient(context, theme),
+              ),
             ),
 
             // Acciones/botones

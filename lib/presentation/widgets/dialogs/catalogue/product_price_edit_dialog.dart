@@ -65,7 +65,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   @override
   Widget build(BuildContext context) {
     return BaseDialog(
-      title: 'Editar Precios',
+      title: 'Editar precios',
       icon: Icons.edit_rounded,
       width: 400,
       content: Form(
@@ -167,202 +167,201 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     final theme = Theme.of(context);
 
     // Calcular porcentajes de ganancia
-    final oldProfitMargin = _calculateProfitMargin(
-        widget.product.salePrice, widget.product.purchasePrice);
-    final newProfitMargin =
-        _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
-    final hasProfitMarginChange = oldProfitMargin != newProfitMargin;
+    final oldProfitMargin = _calculateProfitMargin(widget.product.salePrice, widget.product.purchasePrice);
+    final newProfitMargin = _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _hasChanges ? 'Resumen de cambios:' : 'Información actual:',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onPrimaryContainer,
-            ),
+          // Título compacto
+          Row(
+            children: [
+              Icon(
+                _hasChanges ? Icons.compare_arrows : Icons.info_outline,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _hasChanges ? 'Cambios' : 'Actual',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
-          // Mostrar precios siempre
+          // Información horizontal
           if (_hasChanges) ...[
-            // Modo cambios: mostrar valores antiguos y nuevos
-            if (_newSalePrice != widget.product.salePrice)
-              _buildChangeRow(
-                'Venta',
-                CurrencyFormatter.formatPrice(value: widget.product.salePrice),
-                CurrencyFormatter.formatPrice(value: _newSalePrice),
-              ),
-
-            if (_newPurchasePrice != widget.product.purchasePrice)
-              _buildChangeRow(
-                'Compra',
-                CurrencyFormatter.formatPrice(
-                    value: widget.product.purchasePrice),
-                CurrencyFormatter.formatPrice(value: _newPurchasePrice),
-              ),
-
-            // Mostrar cambio en porcentaje de ganancia si es relevante
-            if (hasProfitMarginChange &&
-                (_newPurchasePrice > 0 ||
-                    widget.product.purchasePrice > 0)) ...[
-              const SizedBox(height: 4),
-              _buildProfitMarginRow(oldProfitMargin, newProfitMargin, theme),
-            ],
+            _buildHorizontalChanges(theme, oldProfitMargin, newProfitMargin),
           ] else ...[
-            // Modo información: mostrar valores actuales
-            _buildInfoRow('Venta',
-                CurrencyFormatter.formatPrice(value: widget.product.salePrice)),
-            if (widget.product.purchasePrice > 0)
-              _buildInfoRow(
-                  'Compra',
-                  CurrencyFormatter.formatPrice(
-                      value: widget.product.purchasePrice)),
-
-            // Mostrar porcentaje de ganancia actual si hay precio de compra
-            if (widget.product.purchasePrice > 0) ...[
-              const SizedBox(height: 4),
-              _buildInfoRow(
-                'Ganancia',
-                '${oldProfitMargin.toStringAsFixed(1)}%',
-                valueColor: oldProfitMargin > 0
-                    ? Colors.green
-                    : theme.colorScheme.error,
-              ),
-            ],
+            _buildHorizontalCurrent(theme, oldProfitMargin),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildChangeRow(String label, String oldValue, String newValue) {
-    final theme = Theme.of(context);
+  Widget _buildHorizontalChanges(ThemeData theme, double oldProfitMargin, double newProfitMargin) {
+    final items = <Widget>[];
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Text(
-            '$label: ',
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
+    // Precio de venta
+    if (_newSalePrice != widget.product.salePrice) {
+      items.add(_buildCompactChangeItem(
+        'Venta',
+        CurrencyFormatter.formatPrice(value: widget.product.salePrice),
+        CurrencyFormatter.formatPrice(value: _newSalePrice),
+        theme,
+      ));
+    }
+
+    // Precio de compra
+    if (_newPurchasePrice != widget.product.purchasePrice) {
+      items.add(_buildCompactChangeItem(
+        'Compra',
+        CurrencyFormatter.formatPrice(value: widget.product.purchasePrice),
+        CurrencyFormatter.formatPrice(value: _newPurchasePrice),
+        theme,
+      ));
+    }
+
+    // Ganancia
+    if (oldProfitMargin != newProfitMargin && (_newPurchasePrice > 0 || widget.product.purchasePrice > 0)) {
+      final oldMarginText = oldProfitMargin > 0 ? '${oldProfitMargin.toStringAsFixed(1)}%' : 'N/A';
+      final newMarginText = newProfitMargin > 0 ? '${newProfitMargin.toStringAsFixed(1)}%' : 'N/A';
+      
+      items.add(_buildCompactChangeItem(
+        'Ganancia',
+        oldMarginText,
+        newMarginText,
+        theme,
+        newValueColor: newProfitMargin > oldProfitMargin ? Colors.green : 
+                      newProfitMargin < oldProfitMargin ? theme.colorScheme.error : null,
+      ));
+    }
+
+    return Wrap(
+      spacing: 24,
+      runSpacing: 8,
+      children: items,
+    );
+  }
+
+  Widget _buildHorizontalCurrent(ThemeData theme, double profitMargin) {
+    final items = <Widget>[
+      _buildCompactCurrentItem('Venta', CurrencyFormatter.formatPrice(value: widget.product.salePrice), theme),
+    ];
+
+    if (widget.product.purchasePrice > 0) {
+      items.add(_buildCompactCurrentItem('Compra', CurrencyFormatter.formatPrice(value: widget.product.purchasePrice), theme));
+      items.add(_buildCompactCurrentItem(
+        'Ganancia', 
+        '${profitMargin.toStringAsFixed(1)}%', 
+        theme,
+        valueColor: profitMargin > 0 ? Colors.green : theme.colorScheme.error,
+      ));
+    }
+
+    return Wrap(
+      spacing: 24,
+      runSpacing: 8,
+      children: items,
+    );
+  }
+
+  Widget _buildCompactChangeItem(
+    String label, 
+    String oldValue, 
+    String newValue, 
+    ThemeData theme, {
+    Color? newValueColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              oldValue,
+              style: theme.textTheme.bodySmall?.copyWith(
+                decoration: TextDecoration.lineThrough,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          Text(
-            oldValue,
-            style: theme.textTheme.bodySmall?.copyWith(
-              decoration: TextDecoration.lineThrough,
-              color: theme.colorScheme.error,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(
+                Icons.arrow_forward,
+                size: 12,
+                color: theme.colorScheme.primary,
+              ),
             ),
-          ),
-          Text(
-            ' → ',
-            style: theme.textTheme.bodySmall,
-          ),
-          Text(
-            newValue,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.primary,
+            Text(
+              newValue,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: newValueColor ?? theme.colorScheme.primary,
+              ),
             ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactCurrentItem(String label, String value, ThemeData theme, {Color? valueColor}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? theme.colorScheme.onSurface,
+          ),
+        ),
+      ],
     );
   }
 
   /// Calcula el porcentaje de ganancia basado en el precio de venta y compra
+  /// Retorna el margen de ganancia: ((venta - compra) / venta) * 100
   double _calculateProfitMargin(double salePrice, double purchasePrice) {
     if (purchasePrice <= 0 || salePrice <= 0) return 0;
-    return ((salePrice - purchasePrice) / purchasePrice) * 100;
-  }
-
-  /// Construye la fila que muestra el cambio en el porcentaje de ganancia
-  Widget _buildProfitMarginRow(
-      double oldMargin, double newMargin, ThemeData theme) {
-    final oldMarginText =
-        oldMargin > 0 ? '${oldMargin.toStringAsFixed(1)}%' : 'N/A';
-    final newMarginText =
-        newMargin > 0 ? '${newMargin.toStringAsFixed(1)}%' : 'N/A';
-
-    // Determinar el color basado en si la ganancia mejoró o empeoró
-    Color? newValueColor;
-    if (newMargin > oldMargin) {
-      newValueColor = Colors.green; // Ganancia mejoró
-    } else if (newMargin < oldMargin) {
-      newValueColor = theme.colorScheme.error; // Ganancia empeoró
-    } else {
-      newValueColor = theme.colorScheme.primary; // Sin cambio significativo
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Text(
-            'Ganancia: ',
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            oldMarginText,
-            style: theme.textTheme.bodySmall?.copyWith(
-              decoration: TextDecoration.lineThrough,
-              color: theme.colorScheme.error,
-            ),
-          ),
-          Text(
-            ' → ',
-            style: theme.textTheme.bodySmall,
-          ),
-          Text(
-            newMarginText,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: newValueColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Construye una fila de información simple para mostrar valores actuales
-  Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Text(
-            '$label: ',
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: valueColor ?? theme.colorScheme.onPrimaryContainer,
-            ),
-          ),
-        ],
-      ),
-    );
+    
+    // Validación adicional: el precio de compra no puede ser mayor al de venta
+    if (purchasePrice >= salePrice) return 0;
+    
+    // Calcular margen de ganancia: (ganancia / precio_venta) * 100
+    return ((salePrice - purchasePrice) / salePrice) * 100;
   }
 
   Future<void> _saveChanges() async {

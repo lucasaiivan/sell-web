@@ -78,7 +78,6 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               },
             ),
             DialogComponents.itemSpacing,
-
             DialogComponents.textField(
               context: context,
               controller: _descriptionController,
@@ -92,7 +91,6 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               },
               onSuffixPressed: () => _showPriceError = false,
             ),
-
             DialogComponents.sectionSpacing,
           ],
         ),

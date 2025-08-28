@@ -1,10 +1,10 @@
 import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
-import 'package:sellweb/presentation/providers/sell_provider.dart'; 
+import 'package:sellweb/presentation/providers/sell_provider.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación
@@ -154,8 +154,7 @@ class _TicketContent extends StatelessWidget {
           },
           blendMode: BlendMode.dstIn,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-                12, 12, 12, 120), // Espacio inferior para botones y gradiente
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 120), // Espacio inferior para botones y gradiente
             child: Column(
               children: [
                 // Encabezado del ticket
@@ -178,7 +177,7 @@ class _TicketContent extends StatelessWidget {
                 _buildDividerLine(colorScheme),
                 const SizedBox(height: 5),
                 // Total del ticket
-                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
+                _buildTotalSection(ticket, colorScheme.secondary, textTotalStyle,
                     textDescriptionStyle),
                 // view : Sección unificada de vuelto y descuento con chips editables
                 _buildEditableChipsSection(
@@ -195,12 +194,7 @@ class _TicketContent extends StatelessWidget {
           ),
         ),
         // buttons : botones posicionados en la parte inferior
-        Positioned(
-            left: 0,
-            right: 12,
-            bottom: 12,
-            child: _buildActionButtons(
-                onConfirmSale, onCloseTicket, isMobile(context))),
+        Positioned(left: 0,right: 12,bottom: 12,child: _buildActionButtons(onConfirmSale, onCloseTicket, isMobile(context))),
       ],
     );
   }
@@ -494,7 +488,7 @@ class _TicketContent extends StatelessWidget {
                             : 'DESCUENTO',
                         style: textDescriptionStyle.copyWith(
                           fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
                       const Spacer(),

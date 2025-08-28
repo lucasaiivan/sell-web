@@ -5,5 +5,4 @@ class AppConstants {
   // INFORMACIÓN DE LA APP
   // ==========================================
   static const String appName = 'Sell Web';
-
 }

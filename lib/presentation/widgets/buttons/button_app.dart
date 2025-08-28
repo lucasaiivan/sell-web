@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 /// Enumeración para definir tipos de botones unificados
 enum ButtonAppType {
-  elevated,   // ElevatedButton - botón primario con elevación
-  filled,     // FilledButton - botón secundario relleno  
-  outlined,   // OutlinedButton - botón con borde
-  text,       // TextButton - botón de texto
-  fab,        // FloatingActionButton - botón flotante
+  elevated, // ElevatedButton - botón primario con elevación
+  filled, // FilledButton - botón secundario relleno
+  outlined, // OutlinedButton - botón con borde
+  text, // TextButton - botón de texto
+  fab, // FloatingActionButton - botón flotante
 }
 
 /// Botón unificado de la aplicación con diseño Material 3
 /// Combina todas las funcionalidades de botones en un solo widget:
 /// - ButtonApp (elevated)
-/// - ButtonAppText (text)  
+/// - ButtonAppText (text)
 /// - ButtonAppFab (fab)
 /// - ButtonAppOutlined (outlined)
 /// - ButtonAppFilled (filled)
@@ -120,7 +120,8 @@ class ButtonApp extends StatelessWidget {
       backgroundColor: backgroundColor,
       fontSize: fontSize,
       fontWeight: fontWeight,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       customBorderRadius: borderRadius,
       isLoading: isLoading,
       loadingSize: loadingSize,
@@ -151,7 +152,8 @@ class ButtonApp extends StatelessWidget {
       foregroundColor: foregroundColor,
       borderColor: borderColor,
       fontSize: fontSize,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       isLoading: isLoading,
       borderRadius: borderRadius,
     );
@@ -179,7 +181,8 @@ class ButtonApp extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       fontSize: fontSize,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       isLoading: isLoading,
       borderRadius: borderRadius,
     );
@@ -303,7 +306,8 @@ class ButtonApp extends StatelessWidget {
     final buttonStyle = TextButton.styleFrom(
       foregroundColor: effectiveForegroundColor,
       backgroundColor: effectiveBackgroundColor,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
       ),
@@ -360,10 +364,12 @@ class ButtonApp extends StatelessWidget {
         onPressed: onPressed,
         backgroundColor: effectiveButtonColor,
         foregroundColor: effectiveForegroundColor,
-        icon: hasIcon ? IconTheme(
-          data: IconThemeData(size: buttonSize * 0.45),
-          child: icon!,
-        ) : null,
+        icon: hasIcon
+            ? IconTheme(
+                data: IconThemeData(size: buttonSize * 0.45),
+                child: icon!,
+              )
+            : null,
         label: Text(
           text,
           style: TextStyle(
@@ -442,7 +448,8 @@ class ButtonApp extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
       ),
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       textStyle: TextStyle(
@@ -458,7 +465,8 @@ class ButtonApp extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
       ),
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       textStyle: TextStyle(
@@ -473,7 +481,8 @@ class ButtonApp extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
       ),
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor ?? colorScheme.primary,
       side: BorderSide(

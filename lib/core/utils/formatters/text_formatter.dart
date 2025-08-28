@@ -1,7 +1,7 @@
 /// Utilidades para formatear y manipular texto
 class TextFormatter {
   /// Capitaliza la primera letra de cada palabra
-  /// 
+  ///
   /// [input] - Texto a capitalizar
   /// @return Texto con cada palabra capitalizada
   static String capitalizeString(String input) {
@@ -20,7 +20,7 @@ class TextFormatter {
   }
 
   /// Normaliza el texto quitando espacios, acentos y convirtiendo a minúsculas
-  /// 
+  ///
   /// [text] - Texto a normalizar
   /// @return Texto normalizado
   static String normalizeText(String text) {

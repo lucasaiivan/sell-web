@@ -257,8 +257,8 @@ class _LoginFormState extends State<_LoginForm> {
                 SizedBox(
                   width: double.infinity,
                   child: ButtonApp(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
                     backgroundColor: Colors.blue.shade700,
                     text: "CONTINUAR CON GOOGLE",
                     icon: const Icon(Icons.login_rounded, size: 20),
@@ -277,8 +277,8 @@ class _LoginFormState extends State<_LoginForm> {
                 SizedBox(
                   width: double.infinity,
                   child: ButtonApp(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
                     icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
                     backgroundColor: Colors.blueGrey,
                     text: "CONTINUAR COMO INVITADO",

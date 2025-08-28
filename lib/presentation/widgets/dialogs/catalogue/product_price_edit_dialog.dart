@@ -167,8 +167,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     final theme = Theme.of(context);
 
     // Calcular porcentajes de ganancia
-    final oldProfitMargin = _calculateProfitMargin(widget.product.salePrice, widget.product.purchasePrice);
-    final newProfitMargin = _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
+    final oldProfitMargin = _calculateProfitMargin(
+        widget.product.salePrice, widget.product.purchasePrice);
+    final newProfitMargin =
+        _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -213,7 +215,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     );
   }
 
-  Widget _buildHorizontalChanges(ThemeData theme, double oldProfitMargin, double newProfitMargin) {
+  Widget _buildHorizontalChanges(
+      ThemeData theme, double oldProfitMargin, double newProfitMargin) {
     final items = <Widget>[];
 
     // Precio de venta
@@ -237,17 +240,25 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     }
 
     // Ganancia
-    if (oldProfitMargin != newProfitMargin && (_newPurchasePrice > 0 || widget.product.purchasePrice > 0)) {
-      final oldMarginText = oldProfitMargin > 0 ? '${oldProfitMargin.toStringAsFixed(1)}%' : 'N/A';
-      final newMarginText = newProfitMargin > 0 ? '${newProfitMargin.toStringAsFixed(1)}%' : 'N/A';
-      
+    if (oldProfitMargin != newProfitMargin &&
+        (_newPurchasePrice > 0 || widget.product.purchasePrice > 0)) {
+      final oldMarginText = oldProfitMargin > 0
+          ? '${oldProfitMargin.toStringAsFixed(1)}%'
+          : 'N/A';
+      final newMarginText = newProfitMargin > 0
+          ? '${newProfitMargin.toStringAsFixed(1)}%'
+          : 'N/A';
+
       items.add(_buildCompactChangeItem(
         'Ganancia',
         oldMarginText,
         newMarginText,
         theme,
-        newValueColor: newProfitMargin > oldProfitMargin ? Colors.green : 
-                      newProfitMargin < oldProfitMargin ? theme.colorScheme.error : null,
+        newValueColor: newProfitMargin > oldProfitMargin
+            ? Colors.green
+            : newProfitMargin < oldProfitMargin
+                ? theme.colorScheme.error
+                : null,
       ));
     }
 
@@ -260,14 +271,20 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
   Widget _buildHorizontalCurrent(ThemeData theme, double profitMargin) {
     final items = <Widget>[
-      _buildCompactCurrentItem('Venta', CurrencyFormatter.formatPrice(value: widget.product.salePrice), theme),
+      _buildCompactCurrentItem(
+          'Venta',
+          CurrencyFormatter.formatPrice(value: widget.product.salePrice),
+          theme),
     ];
 
     if (widget.product.purchasePrice > 0) {
-      items.add(_buildCompactCurrentItem('Compra', CurrencyFormatter.formatPrice(value: widget.product.purchasePrice), theme));
       items.add(_buildCompactCurrentItem(
-        'Ganancia', 
-        '${profitMargin.toStringAsFixed(1)}%', 
+          'Compra',
+          CurrencyFormatter.formatPrice(value: widget.product.purchasePrice),
+          theme));
+      items.add(_buildCompactCurrentItem(
+        'Ganancia',
+        '${profitMargin.toStringAsFixed(1)}%',
         theme,
         valueColor: profitMargin > 0 ? Colors.green : theme.colorScheme.error,
       ));
@@ -281,9 +298,9 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   }
 
   Widget _buildCompactChangeItem(
-    String label, 
-    String oldValue, 
-    String newValue, 
+    String label,
+    String oldValue,
+    String newValue,
     ThemeData theme, {
     Color? newValueColor,
   }) {
@@ -329,7 +346,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     );
   }
 
-  Widget _buildCompactCurrentItem(String label, String value, ThemeData theme, {Color? valueColor}) {
+  Widget _buildCompactCurrentItem(String label, String value, ThemeData theme,
+      {Color? valueColor}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -356,10 +374,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   /// Retorna el margen de ganancia: ((venta - compra) / venta) * 100
   double _calculateProfitMargin(double salePrice, double purchasePrice) {
     if (purchasePrice <= 0 || salePrice <= 0) return 0;
-    
+
     // Validación adicional: el precio de compra no puede ser mayor al de venta
     if (purchasePrice >= salePrice) return 0;
-    
+
     // Calcular margen de ganancia: (ganancia / precio_venta) * 100
     return ((salePrice - purchasePrice) / salePrice) * 100;
   }

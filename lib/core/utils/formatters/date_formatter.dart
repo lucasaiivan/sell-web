@@ -8,11 +8,12 @@ class DateFormatter {
       DateFormat('dd/MM/yyyy HH:mm').format(dateTime).toString();
 
   /// Obtiene la fecha de publicación en formato legible simple
-  /// 
+  ///
   /// [postDate] La fecha de publicación del contenido
   /// [currentDate] La fecha actual del sistema
   /// @return La fecha en formato legible para el usuario
-  static String getSimplePublicationDate(DateTime postDate, DateTime currentDate) {
+  static String getSimplePublicationDate(
+      DateTime postDate, DateTime currentDate) {
     if (postDate.year != currentDate.year) {
       // Si la publicación es de un año diferente, muestra la fecha completa
       return DateFormat('dd MMM. yyyy').format(postDate);
@@ -35,7 +36,7 @@ class DateFormatter {
   }
 
   /// Obtiene la fecha de publicación en formato legible detallado
-  /// 
+  ///
   /// [fechaPublicacion] La fecha de publicación del contenido
   /// [fechaActual] La fecha actual del sistema
   /// @return La fecha en formato legible para el usuario
@@ -79,7 +80,7 @@ class DateFormatter {
   }
 
   /// Calcula el tiempo transcurrido desde una fecha dada hasta ahora con mayor precisión
-  /// 
+  ///
   /// [fechaInicio] La fecha desde la cual se quiere calcular el tiempo transcurrido
   /// [showMinutes] Si se deben mostrar los minutos por defecto (true por defecto)
   /// @return String con el tiempo transcurrido en formato específico (ej: "2d 3h", "5h 30m", "1d 12h 45m")

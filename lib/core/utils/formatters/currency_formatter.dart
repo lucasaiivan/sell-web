@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 /// Utilidades para formatear valores monetarios
 class CurrencyFormatter {
   /// Obtiene un double y devuelve un monto formateado
-  /// 
+  ///
   /// [moneda] - Símbolo de moneda (por defecto "$")
   /// [value] - Valor a formatear
   /// [simplified] - Si true, usa abreviaciones K y M para números grandes
@@ -14,7 +14,7 @@ class CurrencyFormatter {
   }) {
     // cantidad de decimales
     int decimalDigits = (value % 1) == 0 ? 0 : 2;
-    
+
     // formater : formato de moneda
     var formatter = NumberFormat.currency(
       locale: 'es_AR',
@@ -23,7 +23,7 @@ class CurrencyFormatter {
           value >= 0 ? '\u00a4###,###,##0.0' : '-\u00a4###,###,##0.0',
       decimalDigits: decimalDigits,
     );
-    
+
     if (simplified) {
       return _formatSimplified(value, formatter);
     }
@@ -32,7 +32,7 @@ class CurrencyFormatter {
   }
 
   /// Formatea un número entero con abreviaciones 'K' y 'M'
-  /// 
+  ///
   /// Si el número es menor que 10,000, se devuelve como está.
   /// Si el número es 10,000 o más, pero menos que 1,000,000, se divide por 1,000 y se agrega 'K'.
   /// Si el número es 1,000,000 o más, se divide por 1,000,000 y se agrega 'M'.

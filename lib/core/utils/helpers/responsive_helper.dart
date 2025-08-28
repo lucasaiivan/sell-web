@@ -74,8 +74,7 @@ bool isTablet(BuildContext context) {
   }
 
   // Rango típico de tablets
-  if (width >= ResponsiveHelper.mobile &&
-      width < ResponsiveHelper.desktop) {
+  if (width >= ResponsiveHelper.mobile && width < ResponsiveHelper.desktop) {
     return true;
   }
 
@@ -83,9 +82,7 @@ bool isTablet(BuildContext context) {
   final isLandscape = width > height;
   final aspectRatio = width / height;
 
-  if (isLandscape &&
-      width < ResponsiveHelper.desktop &&
-      aspectRatio <= 2.0) {
+  if (isLandscape && width < ResponsiveHelper.desktop && aspectRatio <= 2.0) {
     // No demasiado ancho
     return true;
   }

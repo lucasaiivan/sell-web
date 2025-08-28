@@ -21,7 +21,7 @@ import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';
-import 'presentation/pages/sell_page.dart'; 
+import 'presentation/pages/sell_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

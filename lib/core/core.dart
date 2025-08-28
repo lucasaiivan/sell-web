@@ -20,4 +20,3 @@ export 'services/database/database_cloud.dart';
 
 // Widgets reutilizables
 export '../presentation/widgets/core_widgets.dart';
-

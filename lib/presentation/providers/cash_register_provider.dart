@@ -742,8 +742,7 @@ class CashRegisterProvider extends ChangeNotifier {
   }) async {
     try {
       // Asegurar que el ticket tenga un ID único
-      final ticketId =
-          ticket.id.isEmpty ? UidHelper.generateUid() : ticket.id;
+      final ticketId = ticket.id.isEmpty ? UidHelper.generateUid() : ticket.id;
 
       // Asegurar que tenga información del vendedor
       final finalSellerName = ticket.sellerName.isEmpty

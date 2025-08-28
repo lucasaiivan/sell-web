@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'currency_formatter.dart';
 
 /// Formateador de texto para campos de dinero
-/// 
-/// Este formateador se encarga de formatear el texto de un campo de texto 
+///
+/// Este formateador se encarga de formatear el texto de un campo de texto
 /// para que se vea como un monto de dinero
 class AppMoneyInputFormatter extends TextInputFormatter {
   final String symbol;
-  
+
   AppMoneyInputFormatter({this.symbol = ''});
 
   @override
@@ -16,7 +16,7 @@ class AppMoneyInputFormatter extends TextInputFormatter {
       TextEditingValue oldValue, TextEditingValue newValue) {
     // Eliminar cualquier cosa que no sea un número o una coma
     var newText = newValue.text.replaceAll(RegExp(r'[^0-9,]'), '');
-    
+
     // Elimina el 0 si existe al principio de la primera posición
     if (newText.length > 1 && newText[0] == '0') {
       newText = newText.substring(1);
@@ -60,8 +60,8 @@ class AppMoneyInputFormatter extends TextInputFormatter {
 }
 
 /// Controlador de texto para campos de dinero
-/// 
-/// Este controlador se encarga de manejar el valor de un campo de texto 
+///
+/// Este controlador se encarga de manejar el valor de un campo de texto
 /// para que se vea como un monto de dinero
 class AppMoneyTextEditingController extends TextEditingController {
   AppMoneyTextEditingController({String? value}) : super(text: value);
@@ -79,7 +79,7 @@ class AppMoneyTextEditingController extends TextEditingController {
   }
 
   /// Actualiza el valor del controlador
-  /// 
+  ///
   /// [value] - Nuevo valor a establecer
   void updateValue(double value) {
     // Actualiza el nuevo valor teniendo en cuenta si tiene o no decimales

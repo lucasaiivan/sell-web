@@ -138,25 +138,27 @@ class _TicketContent extends StatelessWidget {
 
     return Stack(
       children: [
-        // view : contenido principal del ticket con máscara de gradiente
+        // view : contenido principal del ticket con máscara de gradiente superior e inferior
         ShaderMask(
           shaderCallback: (Rect rect) {
             return LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
+                Colors.transparent,
                 Colors.white,
                 Colors.white,
                 Colors.transparent,
               ],
-              stops: [0.0, 0.8, 1.0], // 90% opaco, 10% de fade-out
+              stops: [0.0, 0.1, 0.8, 1.0], // fade-in arriba, contenido opaco, fade-out abajo
             ).createShader(rect);
           },
           blendMode: BlendMode.dstIn,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 120), // Espacio inferior para botones y gradiente
             child: Column(
-              children: [
+              children: [ 
+                const SizedBox(height: 20),
                 // Encabezado del ticket
                 _buildTicketHeader(
                     provider.profileAccountSelected.name.isNotEmpty
@@ -177,8 +179,7 @@ class _TicketContent extends StatelessWidget {
                 _buildDividerLine(colorScheme),
                 const SizedBox(height: 5),
                 // Total del ticket
-                _buildTotalSection(ticket, colorScheme.secondary, textTotalStyle,
-                    textDescriptionStyle),
+                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
                 // view : Sección unificada de vuelto y descuento con chips editables
                 _buildEditableChipsSection(
                     ticket, onEditCashAmount, colorScheme),
@@ -460,9 +461,7 @@ class _TicketContent extends StatelessWidget {
                       Text(
                         'SUBTOTAL',
                         style: textDescriptionStyle.copyWith(
-                          fontSize: 16,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
+                          fontSize: 16),
                       ),
                       const Spacer(),
                       Text(
@@ -470,7 +469,6 @@ class _TicketContent extends StatelessWidget {
                             value: ticket.getTotalPriceWithoutDiscount),
                         style: textDescriptionStyle.copyWith(
                           fontSize: 16,
-                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                         textAlign: TextAlign.right,
                       ),

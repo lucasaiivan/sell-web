@@ -24,6 +24,8 @@ class ButtonApp extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
   final Color? borderColor;
+  final Color? accentColor; // Color principal para texto e icono
+  final Color? iconColor; // Color específico para icono (opcional)
   final double? fontSize;
   final FontWeight? fontWeight;
   final double? iconSize;
@@ -51,6 +53,8 @@ class ButtonApp extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.borderColor,
+    this.accentColor,
+    this.iconColor,
     this.fontSize = 14,
     this.fontWeight,
     this.iconSize,
@@ -78,6 +82,8 @@ class ButtonApp extends StatelessWidget {
     bool isLoading = false,
     Color? backgroundColor,
     Color? textColor,
+    Color? accentColor,
+    Color? iconColor,
     double borderRadius = 16,
     Widget? icon,
   }) {
@@ -88,6 +94,8 @@ class ButtonApp extends StatelessWidget {
       isLoading: isLoading,
       backgroundColor: backgroundColor,
       foregroundColor: textColor,
+      accentColor: accentColor,
+      iconColor: iconColor,
       type: ButtonAppType.elevated,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       borderRadius: borderRadius,
@@ -103,6 +111,8 @@ class ButtonApp extends StatelessWidget {
     Widget? icon,
     Color? foregroundColor,
     Color? backgroundColor,
+    Color? accentColor,
+    Color? iconColor,
     double? fontSize,
     FontWeight? fontWeight,
     EdgeInsets? padding,
@@ -118,6 +128,8 @@ class ButtonApp extends StatelessWidget {
       type: ButtonAppType.text,
       foregroundColor: foregroundColor,
       backgroundColor: backgroundColor,
+      accentColor: accentColor,
+      iconColor: iconColor,
       fontSize: fontSize,
       fontWeight: fontWeight,
       padding:
@@ -137,6 +149,8 @@ class ButtonApp extends StatelessWidget {
     Color? backgroundColor,
     Color? foregroundColor,
     Color? borderColor,
+    Color? accentColor,
+    Color? iconColor,
     double? fontSize,
     EdgeInsets? padding,
     bool isLoading = false,
@@ -151,6 +165,8 @@ class ButtonApp extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       borderColor: borderColor,
+      accentColor: accentColor,
+      iconColor: iconColor,
       fontSize: fontSize,
       padding:
           padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
@@ -167,6 +183,8 @@ class ButtonApp extends StatelessWidget {
     Widget? icon,
     Color? backgroundColor,
     Color? foregroundColor,
+    Color? accentColor,
+    Color? iconColor,
     double? fontSize,
     EdgeInsets? padding,
     bool isLoading = false,
@@ -180,6 +198,8 @@ class ButtonApp extends StatelessWidget {
       type: ButtonAppType.filled,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
+      accentColor: accentColor,
+      iconColor: iconColor,
       fontSize: fontSize,
       padding:
           padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
@@ -196,6 +216,8 @@ class ButtonApp extends StatelessWidget {
     VoidCallback? onPressed,
     Color? backgroundColor,
     Color? foregroundColor,
+    Color? accentColor,
+    Color? iconColor,
     double? size,
     bool extended = false,
     Object? heroTag,
@@ -208,10 +230,22 @@ class ButtonApp extends StatelessWidget {
       type: ButtonAppType.fab,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
+      accentColor: accentColor,
+      iconColor: iconColor,
       width: size,
       extended: extended,
       heroTag: heroTag,
     );
+  }
+
+  /// Obtiene el color efectivo para el texto del botón
+  Color? _getEffectiveTextColor(ColorScheme colorScheme) {
+    return foregroundColor ?? accentColor;
+  }
+
+  /// Obtiene el color efectivo para el icono del botón
+  Color? _getEffectiveIconColor(ColorScheme colorScheme) {
+    return iconColor ?? accentColor ?? foregroundColor;
   }
 
   @override
@@ -300,7 +334,8 @@ class ButtonApp extends StatelessWidget {
 
   Widget _buildTextButton(BuildContext context, ColorScheme colorScheme) {
     final theme = Theme.of(context);
-    final effectiveForegroundColor = foregroundColor ?? colorScheme.primary;
+    final effectiveForegroundColor = _getEffectiveTextColor(colorScheme) ?? colorScheme.primary;
+    final effectiveIconColor = _getEffectiveIconColor(colorScheme) ?? effectiveForegroundColor;
     final effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
 
     final buttonStyle = TextButton.styleFrom(
@@ -331,7 +366,10 @@ class ButtonApp extends StatelessWidget {
       buttonChild = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          icon!,
+          IconTheme(
+            data: IconThemeData(color: effectiveIconColor),
+            child: icon!,
+          ),
           const SizedBox(width: 8),
           Text(text),
         ],
@@ -355,7 +393,9 @@ class ButtonApp extends StatelessWidget {
     // Colores efectivos con fallback a Material 3
     final Color effectiveButtonColor = backgroundColor ?? colorScheme.primary;
     final Color effectiveForegroundColor =
-        foregroundColor ?? colorScheme.onPrimary;
+        _getEffectiveTextColor(colorScheme) ?? foregroundColor ?? colorScheme.onPrimary;
+    final Color effectiveIconColor = 
+        _getEffectiveIconColor(colorScheme) ?? effectiveForegroundColor;
 
     if (hasText && (extended || hasIcon)) {
       // FloatingActionButton.extended para texto o icono+texto
@@ -366,7 +406,10 @@ class ButtonApp extends StatelessWidget {
         foregroundColor: effectiveForegroundColor,
         icon: hasIcon
             ? IconTheme(
-                data: IconThemeData(size: buttonSize * 0.45),
+                data: IconThemeData(
+                  size: buttonSize * 0.45,
+                  color: effectiveIconColor,
+                ),
                 child: icon!,
               )
             : null,
@@ -375,6 +418,7 @@ class ButtonApp extends StatelessWidget {
           style: TextStyle(
             fontSize: fontSize ?? buttonSize * 0.28,
             fontWeight: fontWeight ?? FontWeight.w600,
+            color: effectiveForegroundColor,
           ),
         ),
       );
@@ -386,7 +430,10 @@ class ButtonApp extends StatelessWidget {
         backgroundColor: effectiveButtonColor,
         foregroundColor: effectiveForegroundColor,
         child: IconTheme(
-          data: IconThemeData(size: buttonSize * 0.5),
+          data: IconThemeData(
+            size: buttonSize * 0.5,
+            color: effectiveIconColor,
+          ),
           child: icon!,
         ),
       );
@@ -404,18 +451,28 @@ class ButtonApp extends StatelessWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2,
           valueColor: AlwaysStoppedAnimation<Color>(
-            loadingColor ?? foregroundColor ?? Colors.white,
+            loadingColor ?? iconColor ?? accentColor ?? foregroundColor ?? Colors.white,
           ),
         ),
       );
     }
 
+    final effectiveIconColor = iconColor ?? accentColor ?? foregroundColor;
+
     return iconSize != null
         ? IconTheme(
-            data: IconThemeData(size: iconSize),
+            data: IconThemeData(
+              size: iconSize,
+              color: effectiveIconColor,
+            ),
             child: icon!,
           )
-        : icon!;
+        : effectiveIconColor != null
+            ? IconTheme(
+                data: IconThemeData(color: effectiveIconColor),
+                child: icon!,
+              )
+            : icon!;
   }
 
   Widget _buildButtonContent() {
@@ -426,23 +483,28 @@ class ButtonApp extends StatelessWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2,
           valueColor: AlwaysStoppedAnimation<Color>(
-            loadingColor ?? foregroundColor ?? Colors.white,
+            loadingColor ?? accentColor ?? foregroundColor ?? Colors.white,
           ),
         ),
       );
     }
+
+    final effectiveTextColor = accentColor ?? foregroundColor;
 
     return Text(
       text,
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: fontWeight,
+        color: effectiveTextColor,
       ),
       textAlign: TextAlign.center,
     );
   }
 
   ButtonStyle _buildElevatedButtonStyle(ColorScheme colorScheme) {
+    final effectiveTextColor = accentColor ?? foregroundColor;
+    
     return ElevatedButton.styleFrom(
       elevation: defaultStyle ? 0 : elevation,
       shape: RoundedRectangleBorder(
@@ -451,9 +513,9 @@ class ButtonApp extends StatelessWidget {
       padding:
           padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       backgroundColor: backgroundColor,
-      foregroundColor: foregroundColor,
+      foregroundColor: effectiveTextColor ?? foregroundColor,
       textStyle: TextStyle(
-        color: foregroundColor,
+        color: effectiveTextColor ?? foregroundColor,
         fontWeight: fontWeight ?? FontWeight.w700,
       ),
       minimumSize: minimumSize,
@@ -461,6 +523,8 @@ class ButtonApp extends StatelessWidget {
   }
 
   ButtonStyle _buildFilledButtonStyle(ColorScheme colorScheme) {
+    final effectiveTextColor = accentColor ?? foregroundColor;
+    
     return FilledButton.styleFrom(
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
@@ -468,7 +532,7 @@ class ButtonApp extends StatelessWidget {
       padding:
           padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       backgroundColor: backgroundColor,
-      foregroundColor: foregroundColor,
+      foregroundColor: effectiveTextColor ?? foregroundColor,
       textStyle: TextStyle(
         fontWeight: fontWeight ?? FontWeight.w600,
       ),
@@ -477,6 +541,9 @@ class ButtonApp extends StatelessWidget {
   }
 
   ButtonStyle _buildOutlinedButtonStyle(ColorScheme colorScheme) {
+    final effectiveTextColor = accentColor ?? foregroundColor ?? colorScheme.primary;
+    final effectiveBorderColor = borderColor ?? accentColor ?? foregroundColor ?? colorScheme.primary;
+    
     return OutlinedButton.styleFrom(
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
@@ -484,9 +551,9 @@ class ButtonApp extends StatelessWidget {
       padding:
           padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       backgroundColor: backgroundColor,
-      foregroundColor: foregroundColor ?? colorScheme.primary,
+      foregroundColor: effectiveTextColor,
       side: BorderSide(
-        color: borderColor ?? foregroundColor ?? colorScheme.primary,
+        color: effectiveBorderColor,
       ),
       textStyle: TextStyle(
         fontWeight: fontWeight ?? FontWeight.w600,

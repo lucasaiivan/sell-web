@@ -98,7 +98,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   Widget _buildProductInfo() {
     return DialogComponents.infoSection(
       context: context,
-      title: '',
+      title: _productCode,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -176,15 +176,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
                 // badge : informacion adicional y accion de editar el precio
                 Row(
-                  children: [
-                    // text : código del producto
-                    DialogComponents.infoBadge(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      text: _productCode,
-                      icon: Icons.qr_code_rounded,
-                    ),
-                    const SizedBox(width: 8),
+                  children: [ 
                     // text : precio del producto
                     DialogComponents.infoBadge(
                       context: context,

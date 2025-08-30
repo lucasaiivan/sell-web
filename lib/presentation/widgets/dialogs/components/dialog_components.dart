@@ -95,8 +95,7 @@ class DialogComponents {
 
     if (useFillStyle) {
       // Estilo fill: contenedor con background sólido y sin borde
-      effectiveBackgroundColor =
-          backgroundColor ?? theme.colorScheme.surfaceContainer;
+      effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surfaceContainer.withValues(alpha: 0.5);
       dividerColor = theme.colorScheme.outline.withValues(alpha: 0.1);
       decoration = BoxDecoration(
         color: effectiveBackgroundColor,
@@ -104,7 +103,7 @@ class DialogComponents {
       );
     } else {
       // Estilo outlined: contenedor transparente con borde
-      effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
+      effectiveBackgroundColor = backgroundColor?.withValues(alpha: 0.8) ?? Colors.transparent;
       dividerColor = lineColor;
       decoration = BoxDecoration(
         color: effectiveBackgroundColor,
@@ -117,7 +116,7 @@ class DialogComponents {
     return Container(
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
-      padding: padding,
+      padding: padding, 
       child: SingleChildScrollView(
         child: ExpandableListContainer<Widget>(
           items: items,
@@ -458,60 +457,56 @@ class DialogComponents {
   }) {
     final theme = Theme.of(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: theme.colorScheme.primary,
-                    size: 24,
-                  ),
+    return Column(
+      children: [
+        Row(
+          children: [
+            if (icon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 16),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: icon == null
-                      ? CrossAxisAlignment.center
-                      : CrossAxisAlignment.start,
-                  children: [
-                    label == null
-                        ? const SizedBox.shrink()
-                        : Text(
-                            label,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                    const SizedBox(height: 4),
-                    Text(
-                      value,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                child: Icon(
+                  icon,
+                  color: theme.colorScheme.primary,
+                  size: 24,
                 ),
               ),
+              const SizedBox(width: 16),
             ],
-          ),
-          // Botones de acción
-          child == null ? const SizedBox.shrink() : SizedBox(height: 16),
-          child ?? const SizedBox.shrink(),
-        ],
-      ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: icon == null
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
+                children: [
+                  label == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          label,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        // Botones de acción
+        child == null ? const SizedBox.shrink() : SizedBox(height: 16),
+        child ?? const SizedBox.shrink(),
+      ],
     );
   }
 

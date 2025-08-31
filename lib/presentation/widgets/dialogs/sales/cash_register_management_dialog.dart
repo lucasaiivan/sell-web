@@ -232,9 +232,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
             expandText:
                 'Ver más cajas (${provider.activeCashRegisters.length > 4 ? provider.activeCashRegisters.length - 4 : 0})',
             collapseText: 'Ver menos',
-            backgroundColor:
-                theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-            borderColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.04),
+            borderColor: theme.colorScheme.primary.withValues(alpha: 0.01),
             items: provider.activeCashRegisters.map((cashRegister) {
               return _buildCashRegisterTile(
                   context, cashRegister, provider, isMobile);
@@ -315,6 +314,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => provider.selectCashRegister(cashRegister),
+                borderRadius: BorderRadius.circular(8),
                 hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),

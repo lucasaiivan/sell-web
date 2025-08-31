@@ -11,12 +11,13 @@ class DialogComponents {
     required Widget content,
     IconData? icon,
     Color? backgroundColor,
-    Color? accentColor,
+    Color? accentColor, 
+    Widget? rightIcon,
     required BuildContext context,
   }) {
+
     final theme = Theme.of(context);
-    final effectiveAccentColor =
-        accentColor ?? theme.colorScheme.onSurfaceVariant;
+    final effectiveAccentColor = accentColor ?? theme.colorScheme.onSurfaceVariant;
 
     return Container(
       width: double.infinity,
@@ -33,6 +34,7 @@ class DialogComponents {
         children: [
           Row(
             children: [
+              // icon : ícono de la sección
               if (icon != null) ...[
                 Icon(
                   icon,
@@ -41,6 +43,7 @@ class DialogComponents {
                 ),
                 const SizedBox(width: 8),
               ],
+              // text : título de la sección
               title.isEmpty
                   ? const SizedBox.shrink()
                   : Text(
@@ -50,6 +53,9 @@ class DialogComponents {
                         color: effectiveAccentColor,
                       ),
                     ),
+              const Spacer(),
+              // iconbutton : botones personalizados de accion
+              if (rightIcon != null) rightIcon,
             ],
           ),
           const SizedBox(height: 8),
@@ -79,7 +85,7 @@ class DialogComponents {
     Color? borderColor,
     double borderRadius = 12,
     bool useFillStyle = false, // Nueva opción para estilo fill
-    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? padding = const EdgeInsets.all(12),
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
@@ -88,24 +94,21 @@ class DialogComponents {
     final isMobile = screenWidth < 600;
 
     // Configuración de estilo basada en useFillStyle
-    final BoxDecoration decoration;
-    final Color effectiveBackgroundColor;
+    final BoxDecoration decoration; 
     final Color dividerColor;
 
     if (useFillStyle) {
-      // Estilo fill: contenedor con background sólido y sin borde
-      effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surfaceContainer.withValues(alpha: 0.5);
+      // Estilo fill: contenedor con background sólido y sin borde 
       dividerColor = theme.colorScheme.outline.withValues(alpha: 0.1);
       decoration = BoxDecoration(
-        color: effectiveBackgroundColor,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
       );
     } else {
       // Estilo outlined: contenedor transparente con borde
-      effectiveBackgroundColor = backgroundColor?.withValues(alpha: 0.8) ?? Colors.transparent;
       dividerColor = lineColor;
       decoration = BoxDecoration(
-        color: effectiveBackgroundColor,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: borderColor ?? lineColor, width: 1),
       );
@@ -126,7 +129,7 @@ class DialogComponents {
           expandText: expandText,
           collapseText: collapseText,
           showDividers: showDividers,
-          backgroundColor: effectiveBackgroundColor,
+          backgroundColor: backgroundColor,
           borderColor: borderColor ?? lineColor,
           borderRadius: borderRadius,
           useFillStyle: useFillStyle,

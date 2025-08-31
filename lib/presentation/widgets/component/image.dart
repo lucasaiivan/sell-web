@@ -102,12 +102,11 @@ class ProductImage extends StatelessWidget {
 
     // Colores adaptativos basados en el tema actual
     final Color iconColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
-    final Color backgroundOverlay =
-        colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
+    final Color backgroundOverlay = colorScheme.onSurfaceVariant.withValues(alpha: 0.04);
 
     return Container(
       decoration: BoxDecoration(
-        color: backgroundOverlay,
+        color: backgroundOverlay ,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: Center(

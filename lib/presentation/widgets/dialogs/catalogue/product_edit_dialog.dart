@@ -1,9 +1,5 @@
 import 'package:sellweb/core/core.dart';
-import 'package:flutter/material.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
-import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/presentation/widgets/component/image.dart';
+import 'package:flutter/material.dart'; 
 import 'package:sellweb/presentation/widgets/dialogs/catalogue/product_price_edit_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
@@ -99,6 +95,18 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     return DialogComponents.infoSection(
       context: context,
       title: _productCode,
+      // iconbutton : botones personalizados de accion
+      rightIcon: IconButton(
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        widget.product.favorite
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: widget.product.favorite ? Colors.amber : null,
+                      ),
+                      onPressed: _isProcessing ? null : _toggleFavorite,
+                    ),
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -106,13 +114,23 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
           SizedBox(
             width: 80,
             height: 80,
-            child: ClipRRect(
+            child: Container(
+              decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                width: 2,
+              ),
+              ),
+              child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: ProductImage(
                 imageUrl: widget.product.image,
                 size: 80,
               ),
+              ),
             ),
+            
           ),
 
           const SizedBox(width: 16),
@@ -145,19 +163,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    // button : agregar/quitar de favorito
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(
-                        widget.product.favorite
-                            ? Icons.star
-                            : Icons.star_border,
-                        color: widget.product.favorite ? Colors.amber : null,
-                      ),
-                      onPressed: _isProcessing ? null : _toggleFavorite,
-                    ),
+                    ), 
                   ],
                 ),
 

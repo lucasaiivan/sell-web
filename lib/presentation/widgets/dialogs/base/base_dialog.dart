@@ -156,7 +156,7 @@ class BaseDialog extends StatelessWidget {
     if (!scrollable) {
       // Si no es scrollable, solo agregar padding normal
       return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
         child: content,
       );
     }

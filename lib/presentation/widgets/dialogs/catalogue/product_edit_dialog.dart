@@ -96,7 +96,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       context: context,
       title: _productCode,
       // iconbutton : botones personalizados de accion
-      rightIcon: IconButton(
+      rightIcon: widget.product.local?null: IconButton(
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
@@ -383,9 +383,6 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
       // Llamar al callback si existe
       widget.onProductUpdated?.call();
-
-      print(
-          '✅ Favorito actualizado: ${widget.product.description} - Favorito: $newFavoriteState');
     } catch (e) {
       // Si hay error, revertir el cambio local
       setState(() {

@@ -197,7 +197,7 @@ class ProductCatalogue {
   int followers = 0; // seguidores
 
   // variables del catalogo de la cuenta
-  bool local = false; //
+  bool local = false; 
   Timestamp creation = Timestamp
       .now(); // Marca de tiempo ( hora en que se creo el documento en el catalogo de la cuenta  )
   Timestamp upgrade = Timestamp

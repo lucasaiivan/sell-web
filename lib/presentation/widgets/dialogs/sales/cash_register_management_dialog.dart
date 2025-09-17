@@ -104,9 +104,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // view : balance total y botones de flujo de caja
+        // view : balance total y botones de flujo de caja 
         DialogComponents.summaryContainer(
-          context: context,
+          context: context, 
           label: 'Balance total',
           value: CurrencyFormatter.formatPrice(value: cashRegister.getExpectedBalance),
           icon: Icons.monetization_on_rounded,
@@ -114,8 +114,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
           child: Column(
             children: [
               // view : información de flujo de caja
-              _buildCashFlowView(context, provider, isMobile), 
-              SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
+              _buildCashFlowView(context, provider, isMobile),   
+              DialogComponents.divider(context: context),
+              DialogComponents.itemSpacing,
               // view : lista de las ultimas ventas
               _buildRecentTicketsView(context, provider, isMobile),
             ],
@@ -382,6 +383,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
     return FutureBuilder<List<Map<String, dynamic>>?>(
       future: provider.getTodayTickets(accountId),
       builder: (context, snapshot) {
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -432,8 +434,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
         }
 
         return DialogComponents.itemList(
-          context: context,
+          context: context, 
           useFillStyle: true,
+          padding: EdgeInsets.zero,
           showDividers: true,
           title: 'Últimas Ventas',
           maxVisibleItems: 5,
@@ -604,7 +607,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
         // view : muestra información de flujo de caja
         _cashFlowInformation(context, cashRegister),
         SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
-        // buttons : Botones de ingreso y egreso
+        
         Row(
           children: [
             Expanded(
@@ -661,7 +664,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
         // Lista de movimientos de caja
         if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[
-          SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
+          SizedBox(height: getResponsiveSpacing(context, scale: 1)), 
           _buildCashFlowMovements(context, cashRegister, isMobile),
         ],
       ],
@@ -706,8 +709,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
       showDividers: true,
       title: 'Movimientos de caja',
       maxVisibleItems: 5,
-      expandText:
-          'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
+      expandText: 'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
       collapseText: 'Ver menos',
       items: allMovements.map((movement) {
         return _buildCashFlowMovementTile(context, movement, isMobile);

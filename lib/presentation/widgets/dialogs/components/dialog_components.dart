@@ -85,7 +85,7 @@ class DialogComponents {
     Color? borderColor,
     double borderRadius = 12,
     bool useFillStyle = false, // Nueva opción para estilo fill
-    EdgeInsetsGeometry? padding = const EdgeInsets.all(12),
+    EdgeInsetsGeometry? padding,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
@@ -118,50 +118,46 @@ class DialogComponents {
     return Container(
       decoration: decoration,
       clipBehavior: Clip.antiAlias,
-      padding: padding, 
-      child: SingleChildScrollView(
-        child: ExpandableListContainer<Widget>(
-          items: items,
-          isMobile: isMobile,
-          theme: theme,
-          title: title,
-          maxVisibleItems: maxVisibleItems,
-          expandText: expandText,
-          collapseText: collapseText,
-          showDividers: showDividers,
-          backgroundColor: backgroundColor,
-          borderColor: borderColor ?? lineColor,
-          borderRadius: borderRadius,
-          useFillStyle: useFillStyle,
-          itemBuilder: (context, item, index, isLast) {
-            // Para el estilo fill, agregar padding interno a cada item
-            final Widget wrappedItem = useFillStyle
-                ? Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 12 : 16,
-                      vertical: isMobile ? 8 : 10,
-                    ),
-                    child: item,
-                  )
-                : item;
-
-            return Column(
-              children: [
-                wrappedItem,
-                if (showDividers && !isLast)
-                  Divider(
-                    thickness: useFillStyle ? 0.5 : 1,
-                    color: dividerColor,
-                    height: useFillStyle ? 1 : 0,
-                    indent:
-                        useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
-                    endIndent:
-                        useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+      padding: padding, // Solo se aplicará si se proporciona explícitamente
+      child: ExpandableListContainer<Widget>(
+        items: items,
+        isMobile: isMobile,
+        theme: theme,
+        title: title,
+        maxVisibleItems: maxVisibleItems,
+        expandText: expandText,
+        collapseText: collapseText,
+        showDividers: showDividers,
+        backgroundColor: backgroundColor,
+        borderColor: borderColor ?? lineColor,
+        borderRadius: borderRadius,
+        useFillStyle: useFillStyle,
+        itemBuilder: (context, item, index, isLast) {
+          // Para el estilo fill, agregar padding interno a cada item
+          final Widget wrappedItem = useFillStyle
+              ? Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 12 : 16,
+                    vertical: isMobile ? 8 : 10,
                   ),
-              ],
-            );
-          },
-        ),
+                  child: item,
+                )
+              : item;
+
+          return Column(
+            children: [
+              wrappedItem,
+              if (showDividers && !isLast)
+                Divider(
+                  thickness: useFillStyle ? 0.5 : 1,
+                  color: dividerColor,
+                  height: useFillStyle ? 1 : 0,
+                  indent:useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  endIndent:useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -589,6 +585,41 @@ class DialogComponents {
     );
   }
 
+  /// Divisor estilizado para diálogos siguiendo Material Design 3
+  static Widget divider({
+    double? thickness,
+    Color? color,
+    double? height,
+    double? indent,
+    double? endIndent,
+    bool useFillStyle = false,
+    required BuildContext context,
+  }) {
+    final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    final effectiveThickness = thickness ?? (useFillStyle ? 0.5 : 1.0);
+    final effectiveHeight = height ?? (useFillStyle ? 1.0 : 0.0);
+    final effectiveColor = color ??
+        (useFillStyle
+            ? theme.colorScheme.outline.withValues(alpha: 0.1)
+            : theme.colorScheme.outline.withValues(alpha: 0.2));
+
+    final effectiveIndent = indent ??
+        (useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0));
+    final effectiveEndIndent = endIndent ??
+        (useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0));
+
+    return Divider(
+      thickness: effectiveThickness,
+      height: effectiveHeight,
+      color: effectiveColor,
+      indent: effectiveIndent,
+      endIndent: effectiveEndIndent,
+    );
+  }
+
   /// Espaciado estándar entre secciones
   static const Widget sectionSpacing = SizedBox(height: 24);
 
@@ -695,17 +726,14 @@ class _ExpandableListContainerState<T>
       children: [
         // Título de la sección (si se proporciona)
         if (widget.title != null) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 5, left: 12),
-            child: Text(
-              widget.title!,
-              style: (widget.isMobile
-                      ? widget.theme.textTheme.bodyMedium
-                      : widget.theme.textTheme.bodyLarge)
-                  ?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: widget.theme.colorScheme.onSurfaceVariant,
-              ),
+          Text(
+            widget.title!,
+            style: (widget.isMobile
+                    ? widget.theme.textTheme.bodyMedium
+                    : widget.theme.textTheme.bodyLarge)
+                ?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: widget.theme.colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(height: widget.isMobile ? 8 : 12),
@@ -742,9 +770,7 @@ class _ExpandableListContainerState<T>
               InkWell(
                 onTap: () => setState(() => showAllItems = true),
                 child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMobile ? 12 : 16,
-                      vertical: widget.isMobile ? 8 : 12),
+                  padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 12 : 16,vertical: widget.isMobile ? 8 : 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -783,6 +809,10 @@ class _ExpandableListContainerState<T>
                 ),
               InkWell(
                 onTap: () => setState(() => showAllItems = false),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(widget.borderRadius),
+                  bottomRight: Radius.circular(widget.borderRadius),
+                ),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                       horizontal: widget.isMobile ? 12 : 16,

@@ -2034,8 +2034,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   // - Muestra el diálogo completo de administración de caja registradora -
   void _showCashRegisterManagementDialog(BuildContext context) {
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -2043,8 +2042,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
@@ -2067,15 +2065,14 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
           onPressed: () {
             // Si no hay caja activa, abrir directamente el administrador de caja
-            if (!isActive) {
+            if (!isActive) { 
               _showCashRegisterManagementDialog(context);
             } else {
-              // Si hay caja activa, mostrar el popup menu
-              _showStatusDialog(context);
+              // Si hay caja activa, mostrar el diálogo de estado
+              isMobile(context) ? _showStatusDialog(context) : _showCashRegisterManagementDialog(context);
             }
           },
-          backgroundColor:
-              isActive ? Colors.green.withValues(alpha: 0.1) : null,
+          backgroundColor:isActive ? Colors.green.withValues(alpha: 0.1) : null,
           colorAccent: isActive ? Colors.green.shade700 : null,
           text: isMobile(context)
               ? null

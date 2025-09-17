@@ -51,7 +51,7 @@ class BaseDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
       child: Container(
         width: width,
         constraints: BoxConstraints(
@@ -84,7 +84,7 @@ class BaseDialog extends StatelessWidget {
             Flexible(
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 child: _buildContentWithGradient(context, theme),
               ),
             ),

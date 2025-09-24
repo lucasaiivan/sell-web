@@ -597,8 +597,8 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildCashFlowView(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+   
     final cashRegister = provider.currentActiveCashRegister!;
 
     return Column(
@@ -661,10 +661,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
             ),
           ],
         ),
-
+        SizedBox(height: getResponsiveSpacing(context, scale: 1)), 
         // Lista de movimientos de caja
-        if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[
-          SizedBox(height: getResponsiveSpacing(context, scale: 1)), 
+        if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[ 
           _buildCashFlowMovements(context, cashRegister, isMobile),
         ],
       ],

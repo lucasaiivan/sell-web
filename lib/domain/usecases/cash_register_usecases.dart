@@ -350,6 +350,7 @@ class CashRegisterUsecases {
   /// Obtiene las transacciones del día actual
   Future<List<Map<String, dynamic>>> getTodayTransactions(
       String accountId) async {
+        
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));

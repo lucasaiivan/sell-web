@@ -61,7 +61,10 @@ class _SellPageState extends State<SellPage> {
     // consumer : escucha los cambios en ventas (SellProvider) y el catalogo (CatalogueProvider)
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
-        // --- Si no hay cuenta seleccionada, mostrar la página de bienvenida ---
+        
+        // - - -
+        // - - Si no hay cuenta seleccionada, mostrar la página de bienvenida
+        // - - -
         if (sellProvider.profileAccountSelected.id == '') {
           // provider : authProvider y catalogueProvider
           final authProvider =
@@ -1998,8 +2001,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
@@ -2023,8 +2025,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
         ],
         child: CashRegisterCloseDialog(cashRegister: currentCashRegister),

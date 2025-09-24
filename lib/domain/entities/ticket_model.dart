@@ -5,8 +5,7 @@ class TicketModel {
   String id = ''; // id unic
   String sellerName = ''; // nombre del vendedor
   String sellerId = ''; // id del vendedor
-  String cashRegisterName =
-      '1'; // nombre o numero de caja que se efectuo la venta
+  String cashRegisterName = '1'; // nombre o numero de caja que se efectuo la venta
   String cashRegisterId = ''; // id de la caja que se efectuo la venta
   String payMode =
       ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
@@ -33,8 +32,7 @@ class TicketModel {
   /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
   List<Map<String, dynamic>> _listPoduct = [];
-  late Timestamp
-      creation; // Marca de tiempo ( hora en que se reporto el producto )
+  late Timestamp creation; // Marca de tiempo ( hora en que se reporto el producto )
 
   TicketModel({
     this.id = "",

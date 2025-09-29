@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/core.dart';
 import '../domain/entities/cash_register_model.dart';
@@ -403,24 +404,23 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String accountId,
     required DateTime startDate,
     required DateTime endDate,
+    String cashRegisterId = '', // filtrado opcional por caja
   }) async {
     try {
+      
       final startTimestamp = Timestamp.fromDate(startDate);
       final endTimestamp = Timestamp.fromDate(endDate);
 
-      final querySnapshot =
-          await DatabaseCloudService.getTransactionsByDateRange(
+      // Pasar el cashRegisterId al servicio si es válido (no vacío)
+      final querySnapshot = await DatabaseCloudService.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startTimestamp,
-        endDate: endTimestamp,
+        endDate: endTimestamp, 
       );
 
-      return querySnapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
-          .toList();
+      final result = querySnapshot.docs.map((doc) => {'id': doc.id,...doc.data(),}).toList();
+      
+      return result;
     } catch (e) {
       throw Exception('Error al obtener transacciones por rango de fechas: $e');
     }

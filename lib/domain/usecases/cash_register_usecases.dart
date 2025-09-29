@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
@@ -333,7 +334,7 @@ class CashRegisterUsecases {
   Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
     required String accountId,
     required DateTime startDate,
-    required DateTime endDate,
+    required DateTime endDate, 
   }) async {
     if (startDate.isAfter(endDate)) {
       throw Exception(
@@ -343,23 +344,29 @@ class CashRegisterUsecases {
     return await _repository.getTransactionsByDateRange(
       accountId: accountId,
       startDate: startDate,
-      endDate: endDate,
+      endDate: endDate, 
     );
   }
 
   /// Obtiene las transacciones del día actual
-  Future<List<Map<String, dynamic>>> getTodayTransactions(
-      String accountId) async {
+  Future<List<Map<String, dynamic>>> getTodayTransactions({required String accountId,String cashRegisterId=''}) async { 
         
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final endOfDay = startOfDay.add(const Duration(days: 1)); 
 
-    return await getTransactionsByDateRange(
+    final result = await getTransactionsByDateRange(
       accountId: accountId,
       startDate: startOfDay,
-      endDate: endOfDay,
+      endDate: endOfDay, 
     );
+
+    // filtrar por cashRegisterId si se proporciona
+    if (cashRegisterId.isNotEmpty) {
+      return result.where((doc) => doc['cashRegisterId'] == cashRegisterId).toList();
+    }
+     
+    return result;
   }
 
   /// Stream de transacciones de ventas con actualizaciones en tiempo real

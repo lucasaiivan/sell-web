@@ -13,7 +13,7 @@ import '../providers/cash_register_provider.dart';
 
 class _SellProviderState {
   final bool ticketView;
-  final bool shouldPrintTicket;
+  final bool shouldPrintTicket; // si se debe imprimir el ticket
   final ProfileAccountModel profileAccountSelected;
   final TicketModel ticket;
   final TicketModel? lastSoldTicket;

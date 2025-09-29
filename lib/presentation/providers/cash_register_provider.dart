@@ -752,21 +752,19 @@ class CashRegisterProvider extends ChangeNotifier {
           ? (sellerId ?? 'default_seller')
           : ticket.sellerId;
 
-      // Si hay una caja activa, asignar su información; si no, usar valores por defecto
+      // Usar la información de caja que ya tiene el ticket, solo como fallback usar la caja activa
       String finalCashRegisterName = ticket.cashRegisterName;
       String finalCashRegisterId = ticket.cashRegisterId;
 
-      if (hasActiveCashRegister) {
+      // Solo usar la caja activa como fallback si el ticket no tiene información de caja
+      if (finalCashRegisterId.isEmpty && hasActiveCashRegister) {
         finalCashRegisterName = currentActiveCashRegister!.description;
-        finalCashRegisterId = currentActiveCashRegister!.id;
-      } else {
-        // Si no hay caja activa, usar información por defecto
-        finalCashRegisterName = finalCashRegisterName.isEmpty
-            ? 'Sin caja asignada'
-            : finalCashRegisterName;
-        finalCashRegisterId = finalCashRegisterId.isEmpty
-            ? 'no_cash_register'
-            : finalCashRegisterId;
+        finalCashRegisterId = currentActiveCashRegister!.id; 
+      } else if (finalCashRegisterId.isEmpty) {
+        // Si no hay caja activa y el ticket tampoco tiene información, usar valores por defecto
+        finalCashRegisterName = 'Sin caja asignada';
+        finalCashRegisterId = ''; 
+      } else { 
       }
 
       // Crear ticket actualizado con toda la información necesaria
@@ -804,9 +802,12 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Obtiene los tickets del día actual como objetos TicketModel
   /// Nota: Por ahora devuelve Map hasta implementar conversión completa
-  Future<List<Map<String, dynamic>>?> getTodayTickets(String accountId) async {
+  Future<List<Map<String, dynamic>>?> getTodayTickets({required String accountId,String cashRegisterId=''}) async {
     try {
-      return await _cashRegisterUsecases.getTodayTransactions(accountId);
+      
+      final result = await _cashRegisterUsecases.getTodayTransactions(accountId: accountId,cashRegisterId: cashRegisterId);
+      
+      return result;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
@@ -814,18 +815,18 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// Obtiene los tickets por rango de fechas como objetos TicketModel
-  /// Nota: Por ahora devuelve Map hasta implementar conversión completa
+  /// Obtiene los tickets filtrados el día actual y si se proporciona cashRegisterId se filtra por esa caja
   Future<List<Map<String, dynamic>>?> getTicketsByDateRange({
     required String accountId,
     required DateTime startDate,
     required DateTime endDate,
+    String cashRegisterId = '',
   }) async {
     try {
       return await _cashRegisterUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
-        endDate: endDate,
+        endDate: endDate, 
       );
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -833,18 +834,7 @@ class CashRegisterProvider extends ChangeNotifier {
       return null;
     }
   }
-
-  /// Obtiene las transacciones del día actual
-  Future<List<Map<String, dynamic>>?> getTodayTransactions(
-      String accountId) async {
-    try {
-      return await _cashRegisterUsecases.getTodayTransactions(accountId);
-    } catch (e) {
-      _state = _state.copyWith(errorMessage: e.toString());
-      notifyListeners();
-      return null;
-    }
-  }
+ 
 
   /// Obtiene las transacciones por rango de fechas
   Future<List<Map<String, dynamic>>?> getTransactionsByDateRange({

@@ -1,8 +1,7 @@
 import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../widgets/dialogs/tickets/last_ticket_dialog.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../domain/entities/ticket_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
@@ -152,6 +151,14 @@ class CashRegisterManagementDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     final items = [
+      {
+        'label': 'id',
+        'value': cashRegister.id,
+      },
+      {
+        'label': 'Descripción',
+        'value': cashRegister.description,
+      },
       {
         'label': 'Ventas',
         'value': cashRegister.sales.toString(),
@@ -373,80 +380,10 @@ class CashRegisterManagementDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentTicketsView(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
-    final sellProvider = context.watch<SellProvider>();
-    final accountId = sellProvider.profileAccountSelected.id;
-
-    if (accountId.isEmpty) return const SizedBox();
-
-    return FutureBuilder<List<Map<String, dynamic>>?>(
-      future: provider.getTodayTickets(accountId),
-      builder: (context, snapshot) {
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return _buildEmptyTicketsView(context, isMobile);
-        }
-
-        final allTickets = snapshot.data!;
-        // Convertir a TicketModel y ordenar por fecha (más recientes primero)
-        final tickets = allTickets.map((ticketData) {
-          try {
-            // Crear TicketModel desde Map usando los datos directamente
-            return TicketModel(
-              id: ticketData['id'] ?? '',
-              payMode: ticketData['payMode'] ?? '',
-              sellerName: ticketData['sellerName'] ?? '',
-              sellerId: ticketData['sellerId'] ?? '',
-              currencySymbol: ticketData['currencySymbol'] ?? '\$',
-              cashRegisterName: ticketData['cashRegisterName'] ?? ticketData['cashRegister'] ?? '',
-              cashRegisterId: ticketData['cashRegisterId'] ?? '',
-              priceTotal: (ticketData['priceTotal'] ?? 0).toDouble(),
-              valueReceived: (ticketData['valueReceived'] ?? 0).toDouble(),
-              discount: (ticketData['discount'] ?? 0).toDouble(),
-              discountIsPercentage: ticketData['discountIsPercentage'] ?? false,
-              transactionType: ticketData['transactionType'] ?? 'sale',
-              listPoduct: ticketData['listPoduct'] != null
-                  ? List<Map<String, dynamic>>.from((ticketData['listPoduct'] as List).map(
-                      (item) => item is Map<String, dynamic>
-                          ? item
-                          : Map<String, dynamic>.from(item as Map)))
-                  : [],
-              creation: ticketData['creation'] ?? Timestamp.now(),
-            );
-          } catch (e) {
-            return null;
-          }
-        }).where((ticket) => ticket != null).cast<TicketModel>().toList();
-
-        // Ordenar por fecha de creación (más recientes primero)
-        tickets.sort((a, b) => b.creation.compareTo(a.creation));
-
-        // Tomar solo los últimos 5
-        final recentTickets = tickets.take(5).toList();
-
-        if (recentTickets.isEmpty) {
-          return _buildEmptyTicketsView(context, isMobile);
-        }
-
-        return DialogComponents.itemList(
-          context: context, 
-          useFillStyle: true,
-          padding: EdgeInsets.zero,
-          showDividers: true,
-          title: 'Últimas Ventas',
-          maxVisibleItems: 5,
-          expandText: '',
-          collapseText: '',
-          items: recentTickets.map((ticket) {
-            return _buildTicketTile(context, ticket, isMobile);
-          }).toList(),
-        );
-      },
+  Widget _buildRecentTicketsView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+    return RecentTicketsWidget(
+      cashRegisterProvider: provider,
+      isMobile: isMobile,
     );
   }
 
@@ -874,5 +811,308 @@ class CashRegisterManagementDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Widget separado para manejar la lista de tickets recientes de manera eficiente
+/// Evita rebuilds innecesarios del FutureBuilder
+class RecentTicketsWidget extends StatefulWidget {
+  final CashRegisterProvider cashRegisterProvider;
+  final bool isMobile;
+
+  const RecentTicketsWidget({
+    super.key,
+    required this.cashRegisterProvider,
+    required this.isMobile,
+  });
+
+  @override
+  State<RecentTicketsWidget> createState() => _RecentTicketsWidgetState();
+}
+
+class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
+  Future<List<Map<String, dynamic>>?>? _ticketsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTickets();
+  }
+
+  @override
+  void didUpdateWidget(RecentTicketsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Solo recargar si el cashRegisterId cambió
+    final oldCashRegisterId = oldWidget.cashRegisterProvider.currentActiveCashRegister?.id;
+    final newCashRegisterId = widget.cashRegisterProvider.currentActiveCashRegister?.id;
+    
+    if (oldCashRegisterId != newCashRegisterId) {
+      _loadTickets();
+    }
+  }
+
+  void _loadTickets() {
+    final sellProvider = context.read<SellProvider>();
+    final accountId = sellProvider.profileAccountSelected.id;
+    
+    if (accountId.isNotEmpty) {
+      setState(() {
+        _ticketsFuture = widget.cashRegisterProvider.getTodayTickets(
+          accountId: accountId,
+          cashRegisterId: widget.cashRegisterProvider.currentActiveCashRegister?.id ?? '',
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sellProvider = context.watch<SellProvider>();
+    final accountId = sellProvider.profileAccountSelected.id;
+
+    if (accountId.isEmpty) return const SizedBox();
+
+    if (_ticketsFuture == null) {
+      return _buildEmptyTicketsView(context, widget.isMobile);
+    }
+
+    return FutureBuilder<List<Map<String, dynamic>>?>(
+      future: _ticketsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          // Log del error para debug
+          debugPrint('Error loading tickets: ${snapshot.error}');
+          return _buildEmptyTicketsView(context, widget.isMobile);
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildEmptyTicketsView(context, widget.isMobile);
+        }
+
+        final allTickets = snapshot.data!;
+        // Convertir a TicketModel y ordenar por fecha (más recientes primero)
+        final tickets = allTickets.map((ticketData) {
+          try {
+            // Crear TicketModel desde Map usando los datos directamente
+            return TicketModel(
+              id: ticketData['id'] ?? '',
+              payMode: ticketData['payMode'] ?? '',
+              sellerName: ticketData['sellerName'] ?? '',
+              sellerId: ticketData['sellerId'] ?? '',
+              currencySymbol: ticketData['currencySymbol'] ?? '\$',
+              cashRegisterName: ticketData['cashRegisterName'] ?? ticketData['cashRegister'] ?? '',
+              cashRegisterId: ticketData['cashRegisterId'] ?? '',
+              priceTotal: (ticketData['priceTotal'] ?? 0).toDouble(),
+              valueReceived: (ticketData['valueReceived'] ?? 0).toDouble(),
+              discount: (ticketData['discount'] ?? 0).toDouble(),
+              discountIsPercentage: ticketData['discountIsPercentage'] ?? false,
+              transactionType: ticketData['transactionType'] ?? 'sale',
+              listPoduct: ticketData['listPoduct'] != null
+                  ? List<Map<String, dynamic>>.from((ticketData['listPoduct'] as List).map(
+                      (item) => item is Map<String, dynamic>
+                          ? item
+                          : Map<String, dynamic>.from(item as Map)))
+                  : [],
+              creation: ticketData['creation'] ?? Timestamp.now(),
+            );
+          } catch (e) {
+            debugPrint('Error converting ticket data: $e');
+            return null;
+          }
+        }).where((ticket) => ticket != null).cast<TicketModel>().toList();
+
+        // Ordenar por fecha de creación (más recientes primero)
+        tickets.sort((a, b) => b.creation.compareTo(a.creation));
+
+        // Tomar solo los últimos 5
+        final recentTickets = tickets.take(5).toList();
+
+        if (recentTickets.isEmpty) {
+          return _buildEmptyTicketsView(context, widget.isMobile);
+        }
+
+        return DialogComponents.itemList(
+          context: context, 
+          useFillStyle: true,
+          padding: EdgeInsets.zero,
+          showDividers: true,
+          title: 'Últimas Ventas',
+          maxVisibleItems: 5,
+          expandText: '',
+          collapseText: '',
+          items: recentTickets.map((ticket) {
+            return _buildTicketTile(context, ticket, widget.isMobile);
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyTicketsView(BuildContext context, bool isMobile) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: isMobile ? 20 : 24,
+        horizontal: isMobile ? 16 : 20,
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(isMobile ? 8 : 12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+            ),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: isMobile ? 24 : 32,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: isMobile ? 8 : 12),
+          Text(
+            'No hay ventas recientes',
+            style: (isMobile
+                    ? theme.textTheme.bodyMedium
+                    : theme.textTheme.bodyLarge)
+                ?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTicketTile(BuildContext context, TicketModel ticket, bool isMobile) {
+    final theme = Theme.of(context);
+    final sellProvider = context.read<SellProvider>();
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showLastTicketDialog(context, ticket, sellProvider.profileAccountSelected.name),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          child: Row(
+            children: [
+              // Icono del ticket
+              Container(
+                padding: EdgeInsets.all(isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
+                ),
+                child: Icon(
+                  Icons.receipt_rounded,
+                  size: isMobile ? 14 : 16,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              SizedBox(width: isMobile ? 8 : 12),
+
+              // Información del ticket
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ticket ${ticket.id.length > 8 ? ticket.id.substring(ticket.id.length - 8) : ticket.id}',
+                      style: (isMobile
+                              ? theme.textTheme.bodySmall
+                              : theme.textTheme.bodyMedium)
+                          ?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: isMobile ? 2 : 4),
+                    Text(
+                      '${ticket.getProductsQuantity()} ${ticket.getProductsQuantity() == 1 ? 'producto' : 'productos'}',
+                      style: (isMobile
+                              ? theme.textTheme.labelSmall
+                              : theme.textTheme.labelMedium)
+                          ?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Monto y fecha del ticket
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
+                    style: (isMobile
+                            ? theme.textTheme.bodySmall
+                            : theme.textTheme.bodyMedium)
+                        ?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  SizedBox(height: isMobile ? 2 : 4),
+                  Text(
+                    _formatDateTime(ticket.creation.toDate()),
+                    style: (isMobile
+                            ? theme.textTheme.labelSmall
+                            : theme.textTheme.labelMedium)
+                        ?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Icono indicador de que es clickeable
+              SizedBox(width: isMobile ? 4 : 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: isMobile ? 12 : 16,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Muestra el diálogo del ticket seleccionado
+  void _showLastTicketDialog(BuildContext context, TicketModel ticket, String businessName) {
+    showLastTicketDialog(
+      context: context,
+      ticket: ticket,
+      businessName: businessName.isNotEmpty ? businessName : 'PUNTO DE VENTA',
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    final timeString =
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+
+    if (messageDate == today) {
+      return 'Hoy $timeString';
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      return 'Ayer $timeString';
+    } else {
+      return DateFormatter.formatPublicationDate(dateTime: dateTime);
+    }
   }
 }

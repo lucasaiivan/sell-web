@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// Servicio para operaciones CRUD de Firestore
 ///
@@ -72,9 +73,7 @@ class DatabaseCloudService {
       _firestore.collection('/ACCOUNTS/$accountId/PROVIDER/');
 
   /// Transacciones/ventas de una cuenta
-  static CollectionReference<Map<String, dynamic>> accountTransactions(
-          String accountId) =>
-      _firestore.collection('/ACCOUNTS/$accountId/TRANSACTIONS/');
+  static CollectionReference<Map<String, dynamic>> accountTransactions( String accountId) => _firestore.collection('/ACCOUNTS/$accountId/TRANSACTIONS/');
 
   /// Administradores y usuarios de una cuenta
   static CollectionReference<Map<String, dynamic>> accountUsers(
@@ -316,17 +315,25 @@ class DatabaseCloudService {
               .snapshots();
 
   /// Future de transacciones filtradas por rango de fechas
+  /// Opcionalmente puede filtrar por cashRegisterId si se proporciona
   static Future<QuerySnapshot<Map<String, dynamic>>>
       getTransactionsByDateRange({
     required String accountId,
     required Timestamp startDate,
-    required Timestamp endDate,
-  }) =>
-          accountTransactions(accountId)
-              .orderBy('creation', descending: true)
-              .where('creation', isGreaterThan: startDate)
-              .where('creation', isLessThan: endDate)
-              .get();
+    required Timestamp endDate, 
+  }) async { 
+    
+    Query<Map<String, dynamic>> query = accountTransactions(accountId)
+        .orderBy('creation', descending: true)
+        .where('creation', isGreaterThan: startDate)
+        .where('creation', isLessThan: endDate);
+        
+     
+     
+    final result = await query.get(); 
+    
+    return result;
+  }
 
   // ==========================================
   // PRODUCTOS MÁS VENDIDOS

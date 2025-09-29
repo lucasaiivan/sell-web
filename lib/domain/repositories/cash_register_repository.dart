@@ -127,7 +127,7 @@ abstract class CashRegisterRepository {
   Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
     required String accountId,
     required DateTime startDate,
-    required DateTime endDate,
+    required DateTime endDate, 
   });
 
   /// Stream de transacciones de ventas con actualizaciones en tiempo real

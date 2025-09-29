@@ -138,8 +138,7 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 ||
                       (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
@@ -630,32 +629,33 @@ class _SellPageState extends State<SellPage> {
 
   /// Lógica para confirmar la venta y procesar el ticket
   Future<void> _confirmSale(SellProvider provider) async {
-    setState(() {
-      _showConfirmedPurchase =
+    setState(() {_showConfirmedPurchase =
           true; // para mostrar el mensaje de compra confirmada
     });
 
     // Si el checkbox está activo, procesar la impresión/generación de tickets
     if (provider.shouldPrintTicket) {
+      // guardar venta con impresión de ticket
       await _processSaveAndPrintTicket(provider);
     } else {
+      // guardar venta sin impresión
       await _processSimpleSaveSale(provider);
     }
   }
 
-  /// Procesa la venta con impresión de ticket
+  // === Procesa la venta con impresión o generación de ticket ===
   Future<void> _processSaveAndPrintTicket(SellProvider provider) async {
-    // Obtener el provider de caja registradora
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
 
-    // Si hay una caja activa, registrar la venta
+    // Obtener el provider de caja registradora
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false); 
+    // Si hay una caja activa, registrar los datos de la caja en el ticket y registrar la venta en la caja
     if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
+      // Obtener la caja activa y asignar los datos al ticket
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
       provider.ticket.cashRegisterName = activeCashRegister.description;
       provider.ticket.cashRegisterId = activeCashRegister.id;
 
+      // Registrar la venta en la caja activa
       await cashRegisterProvider.registerSale(
         accountId: provider.profileAccountSelected.id,
         saleAmount: provider.ticket.getTotalPrice,
@@ -808,14 +808,15 @@ class _SellPageState extends State<SellPage> {
   /// === Procesa la venta simple sin impresión de ticket ===
   Future<void> _processSimpleSaveSale(SellProvider provider) async {
     // Obtener el provider de caja registradora
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    // nos aseguramos de asignar valores importantes al ticket
+    provider.ticket.cashRegisterId = cashRegisterProvider.currentActiveCashRegister?.id ?? '';
+    provider.ticket.id = UidHelper.generateUid();
 
     // Si hay una caja activa, registrar la venta en la caja
     if (cashRegisterProvider.hasActiveCashRegister) {
       // Obtener la caja activa y asignar los datos al ticket
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
       provider.ticket.cashRegisterName = activeCashRegister.description;
       provider.ticket.cashRegisterId = activeCashRegister.id;
       // Registrar la venta en la caja

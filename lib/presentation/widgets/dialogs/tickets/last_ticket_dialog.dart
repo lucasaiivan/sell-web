@@ -1,8 +1,5 @@
 import 'package:sellweb/core/core.dart';
-import 'package:flutter/material.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/presentation/widgets/dialogs/tickets/ticket_options_dialog.dart';
+import 'package:flutter/material.dart'; 
 import 'package:sellweb/domain/entities/ticket_model.dart';
 
 /// Diálogo modernizado para mostrar el último ticket siguiendo Material Design 3
@@ -74,8 +71,8 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                   context: context,
                   label: 'ID Ticket',
                   value: widget.ticket.id.length > 8
-                      ? '...${widget.ticket.id.substring(widget.ticket.id.length - 8)}'
-                      : widget.ticket.id,
+                      ? '...${widget.ticket.cashRegisterId.substring(widget.ticket.cashRegisterId.length - 8)}'
+                      : widget.ticket.cashRegisterId,
                   icon: Icons.confirmation_number_rounded,
                 ),
               ],

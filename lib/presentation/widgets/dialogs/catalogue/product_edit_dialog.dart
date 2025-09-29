@@ -195,14 +195,15 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                     ),
                     const SizedBox(width: 8),
                     // textbutton : editar producto
-                    TextButton(
+                    TextButton.icon(
                       onPressed: _isProcessing
                           ? null
                           : () {
                               Navigator.of(context).pop();
                               _editProductPrices();
                             },
-                      child: const Text('Editar'),
+                      icon: const Icon(Icons.security_rounded, size: 16),
+                      label: const Text('Editar'),
                     ),
                   ],
                 ),

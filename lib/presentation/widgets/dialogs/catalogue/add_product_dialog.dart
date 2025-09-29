@@ -46,6 +46,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
     _descriptionController =
         TextEditingController(text: widget.product.description);
 
+    // Agregar listeners para actualizar el porcentaje de ganancia en tiempo real
+    _priceController.addListener(_updateProfitPercentage);
+    _purchasePriceController.addListener(_updateProfitPercentage);
+
     // Si es un producto existente y tiene precio, establecerlo en el controlador
     if (!widget.isNew && widget.product.salePrice > 0) {
       _priceController.updateValue(widget.product.salePrice);
@@ -65,6 +69,13 @@ class _AddProductDialogState extends State<AddProductDialog> {
     super.dispose();
   }
 
+  /// Actualiza la UI cuando cambian los precios para mostrar el porcentaje de ganancia en tiempo real
+  void _updateProfitPercentage() {
+    setState(() {
+      // Solo trigger del rebuild para actualizar el porcentaje de ganancia
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -78,42 +89,42 @@ class _AddProductDialogState extends State<AddProductDialog> {
         key: _formKey,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Información del producto (código y detalles)
               if (!widget.isNew) ...[
-                _buildExistingProductInfoSection(),
+              _buildExistingProductInfoSection(),
               ] else ...[
-                // Solo mostrar código para productos nuevos
-                DialogComponents.infoSection(
-                  context: context,
-                  title: 'Código:',
-                  content: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.qr_code_rounded,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              widget.product.code.isNotEmpty
-                                  ? widget.product.code
-                                  : 'Sin código asignado',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+              // Solo mostrar código para productos nuevos
+              DialogComponents.infoSection(
+                context: context,
+                title: 'Código',
+                content: Column(
+                children: [
+                  Row(
+                  children: [
+                    Expanded(
+                    child: widget.product.code.isEmpty
+                      ? Text(
+                        'Sin código asignado',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w400,
+                        ),
+                        )
+                      : Text(
+                        widget.product.code,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                        )),
+                    ),
+                  ],
                   ),
+                  const SizedBox(height: 8),
+                ],
                 ),
+              ),
               ],
 
               // Campo de descripción para productos nuevos
@@ -159,6 +170,35 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   return null;
                 },
               ),
+
+              // text :  Mostrar porcentaje de ganancia si ambos precios están definidos
+              if (_priceController.doubleValue > 0 && _purchasePriceController.doubleValue > 0) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.trending_up_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Ganancia: ',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '${((_priceController.doubleValue - _purchasePriceController.doubleValue) / _purchasePriceController.doubleValue * 100).round()}%',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               DialogComponents.itemSpacing,
               // DialogComponents.moneyField : entrada de monto de precio de venta
               DialogComponents.moneyField(
@@ -220,15 +260,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Widget _buildExistingProductInfo() {
+
     final theme = Theme.of(context);
 
     return DialogComponents.infoSection(
       context: context,
       title: widget.product.code,
-      icon:
-          widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
-      accentColor:
-          widget.product.verified ? Colors.blue : theme.colorScheme.tertiary,
+      icon:widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
+      accentColor:widget.product.verified ? Colors.blue : theme.colorScheme.tertiary,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

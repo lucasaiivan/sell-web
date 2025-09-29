@@ -7,7 +7,7 @@ class DialogComponents {
 
   /// Sección de información con contenedor estilizado
   static Widget infoSection({
-    required String title,
+    String title = '',
     required Widget content,
     IconData? icon,
     Color? backgroundColor,

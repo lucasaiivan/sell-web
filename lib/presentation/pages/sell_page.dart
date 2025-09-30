@@ -1383,16 +1383,13 @@ class _SellPageState extends State<SellPage> {
 
   /// Muestra una vista de pantalla completa con el listado de productos para agregar a seleccionados, con buscador dinámico.
   void showModalBottomSheetSelectProducts(BuildContext context) {
-    final catalogueProvider =
-        Provider.of<CatalogueProvider>(context, listen: false);
+    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final products = catalogueProvider.products;
 
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ProductCatalogueFullScreenView(
-                products: products, sellProvider: sellProvider),
+        pageBuilder: (context, animation, secondaryAnimation) => ProductCatalogueFullScreenView(products: products, sellProvider: sellProvider),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;

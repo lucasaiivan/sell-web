@@ -222,7 +222,7 @@ class _ProductCatalogueFullScreenViewState
       itemBuilder: (context, index) {
         final product = _filteredProducts[index];
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: _buildProductListItem(product),
         );
       },
@@ -232,7 +232,7 @@ class _ProductCatalogueFullScreenViewState
   /// Construye la vista de cuadrícula con SliverGrid
   Widget _buildProductGridAsSliver() {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       sliver: SliverGrid(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: _getCrossAxisCount(),
@@ -469,15 +469,13 @@ class _ProductCatalogueFullScreenViewState
             return [
               SliverOverlapAbsorber(
                 // Absorber el overlap para evitar problemas de posicionamiento
-                handle:
-                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
                   // Configuración optimizada del SliverAppBar para NestedScrollView
                   floating: true,
                   pinned: true,
                   snap: true,
-                  expandedHeight:
-                      210, // Altura fija para siempre mostrar búsqueda y chips
+                  expandedHeight: 210, // Altura fija para siempre mostrar búsqueda y chips
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surface,
                   elevation: 0,
@@ -888,7 +886,7 @@ class _ProductCatalogueFullScreenViewState
                   product.nameMark,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: colorScheme.primary,
+                    color: product.verified?Colors.blue:null,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

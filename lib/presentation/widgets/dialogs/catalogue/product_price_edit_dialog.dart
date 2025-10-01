@@ -29,6 +29,9 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
+  /// Determina si el producto es un item de venta rápida (code vacío)
+  bool get _isQuickItem => widget.product.code.isEmpty;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +58,11 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   }
 
   bool get _hasChanges {
+    if (_isQuickItem) {
+      // Para items rápidos, solo verificar cambios en precio de venta
+      return _newSalePrice != widget.product.salePrice;
+    }
+    // Para productos registrados, verificar ambos precios
     return _newSalePrice != widget.product.salePrice ||
         _newPurchasePrice != widget.product.purchasePrice;
   }
@@ -69,6 +77,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
           children: [
             DialogComponents.sectionSpacing,
             // Campos de precios
@@ -101,61 +110,86 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Precio de Compra
-        MoneyInputTextField(
-          controller: _purchasePriceController,
-          labelText: 'Precio de Compra (Opcional)',
-          validator: (value) {
-            if (value != null && value.isNotEmpty) {
-              final purchasePrice = _purchasePriceController.doubleValue;
+        // Para items rápidos: solo mostrar precio de venta
+        if (_isQuickItem) ...[
+          // Solo Precio de Venta para items rápidos
+          MoneyInputTextField(
+            controller: _salePriceController,
+            labelText: 'Precio de Venta al Público *',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'El precio de venta es requerido';
+              }
               final salePrice = _salePriceController.doubleValue;
 
-              if (purchasePrice < 0) {
-                return 'El precio no puede ser negativo';
+              if (salePrice <= 0) {
+                return 'El precio debe ser mayor a 0';
               }
 
-              // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
+              return null;
+            },
+            onTextChanged: (value) {
+              setState(() {}); // Para actualizar el estado de los cambios
+            },
+          ),
+        ] else ...[
+          // Para productos registrados: mostrar ambos precios
+          // Precio de Compra
+          MoneyInputTextField(
+            controller: _purchasePriceController,
+            labelText: 'Precio de Compra (Opcional)',
+            validator: (value) {
+              if (value != null && value.isNotEmpty) {
+                final purchasePrice = _purchasePriceController.doubleValue;
+                final salePrice = _salePriceController.doubleValue;
+
+                if (purchasePrice < 0) {
+                  return 'El precio no puede ser negativo';
+                }
+
+                // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
+                if (purchasePrice > 0 &&
+                    salePrice > 0 &&
+                    purchasePrice > salePrice) {
+                  return 'El precio de compra no puede ser mayor al de venta';
+                }
+              }
+              return null;
+            },
+            onTextChanged: (value) {
+              setState(() {}); // Para actualizar el estado de los cambios
+            },
+          ),
+          const SizedBox(height: 16),
+          // Precio de Venta
+          MoneyInputTextField(
+            controller: _salePriceController,
+            labelText: 'Precio de Venta al Público *',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'El precio de venta es requerido';
+              }
+              final salePrice = _salePriceController.doubleValue;
+              final purchasePrice = _purchasePriceController.doubleValue;
+
+              if (salePrice <= 0) {
+                return 'El precio debe ser mayor a 0';
+              }
+
+              // Validar que el precio de venta no sea menor al de compra si ambos están definidos
               if (purchasePrice > 0 &&
                   salePrice > 0 &&
-                  purchasePrice > salePrice) {
-                return 'El precio de compra no puede ser mayor al de venta';
+                  salePrice < purchasePrice) {
+                return 'El precio de venta no puede ser menor al de compra';
               }
-            }
-            return null;
-          },
-          onTextChanged: (value) {
-            setState(() {}); // Para actualizar el estado de los cambios
-          },
-        ),
-        const SizedBox(height: 16),
-        // Precio de Venta
-        MoneyInputTextField(
-          controller: _salePriceController,
-          labelText: 'Precio de Venta al Público *',
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'El precio de venta es requerido';
-            }
-            final salePrice = _salePriceController.doubleValue;
-            final purchasePrice = _purchasePriceController.doubleValue;
 
-            if (salePrice <= 0) {
-              return 'El precio debe ser mayor a 0';
-            }
-
-            // Validar que el precio de venta no sea menor al de compra si ambos están definidos
-            if (purchasePrice > 0 &&
-                salePrice > 0 &&
-                salePrice < purchasePrice) {
-              return 'El precio de venta no puede ser menor al de compra';
-            }
-
-            return null;
-          },
-          onTextChanged: (value) {
-            setState(() {}); // Para actualizar el estado de los cambios
-          },
-        ),
+              return null;
+            },
+            onTextChanged: (value) {
+              setState(() {}); // Para actualizar el estado de los cambios
+            },
+          ),
+        ],
       ],
     );
   }
@@ -170,7 +204,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         _calculateProfitMargin(_newSalePrice, _newPurchasePrice);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -179,34 +214,62 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
-          // descripción del producto 
-          Text(
-            widget.product.description,
-            style: theme.textTheme.titleMedium,
-          ),
-          // Título compacto
-          Row(
+          // Header con descripción del producto y estado
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              Icon(
-                _hasChanges ? Icons.compare_arrows : Icons.info_outline,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _hasChanges ? 'Cambios' : 'Actual',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary,
+              // Icono y estado
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _hasChanges 
+                    ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
+                    : theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _hasChanges ? Icons.compare_arrows : Icons.info_outline,
+                      size: 14,
+                      color: _hasChanges 
+                        ? theme.colorScheme.primary 
+                        : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _hasChanges ? 'Cambios' : 'Actual',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: _hasChanges 
+                          ? theme.colorScheme.primary 
+                          : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6), 
+              // Descripción del producto
+              Text(
+                widget.product.description,
+                
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w500, 
+
+                ),
+                maxLines:1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // Información horizontal
+          // Información horizontal de precios
           if (_hasChanges) ...[
             _buildHorizontalChanges(theme, oldProfitMargin, newProfitMargin),
           ] else ...[
@@ -264,9 +327,23 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       ));
     }
 
+    // Si no hay items, mostrar mensaje informativo
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          'Sin cambios detectados',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+    }
+
     return Wrap(
-      spacing: 24,
-      runSpacing: 8,
+      spacing: 20,
+      runSpacing: 12,
       children: items,
     );
   }
@@ -293,8 +370,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     }
 
     return Wrap(
-      spacing: 24,
-      runSpacing: 8,
+      spacing: 20,
+      runSpacing: 12,
       children: items,
     );
   }
@@ -306,69 +383,96 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
     ThemeData theme, {
     Color? newValueColor,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              oldValue,
-              style: theme.textTheme.bodySmall?.copyWith(
-                decoration: TextDecoration.lineThrough,
-                color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                oldValue,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  fontSize: 12,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(
-                Icons.arrow_forward,
-                size: 12,
-                color: theme.colorScheme.primary,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 14,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
-            Text(
-              newValue,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: newValueColor ?? theme.colorScheme.primary,
+              Text(
+                newValue,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: newValueColor ?? theme.colorScheme.primary,
+                  fontSize: 13,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCompactCurrentItem(String label, String value, ThemeData theme,
       {Color? valueColor}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: valueColor ?? theme.colorScheme.onSurface,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? theme.colorScheme.onSurface,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -406,8 +510,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         throw Exception('El precio de compra no puede ser negativo');
       }
 
-      // Validación final: Precio de compra no puede ser mayor al de venta
-      if (purchasePrice > 0 && purchasePrice > salePrice) {
+      // Validación final: Precio de compra no puede ser mayor al de venta (solo para productos registrados)
+      if (!_isQuickItem && purchasePrice > 0 && purchasePrice > salePrice) {
         throw Exception(
             'El precio de compra (${CurrencyFormatter.formatPrice(value: purchasePrice)}) no puede ser mayor al precio de venta (${CurrencyFormatter.formatPrice(value: salePrice)})');
       }
@@ -415,41 +519,54 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       // Obtener providers necesarios
       final sellProvider =
           provider_package.Provider.of<SellProvider>(context, listen: false);
-      final catalogueProvider =
-          widget.catalogueProvider; // Usar el provider pasado como parámetro
 
-      // Obtener información de la cuenta
-      final accountId = sellProvider.profileAccountSelected.id;
-      final accountProfile = sellProvider.profileAccountSelected;
-
-      if (accountId.isEmpty) {
-        throw Exception('No se pudo obtener el ID de la cuenta');
-      }
-
-      // Crear producto actualizado
       // Obtener la cantidad actual del producto en el ticket si existe
       final currentQuantity = sellProvider.ticket.products
           .firstWhere((p) => p.id == widget.product.id,
               orElse: () => widget.product)
           .quantity;
 
-      final updatedProduct = widget.product.copyWith(
-        salePrice: salePrice,
-        purchasePrice: purchasePrice,
-        quantity: currentQuantity, // Preservar la cantidad del ticket
-        upgrade: DateFormatter.getCurrentTimestamp(),
-        documentIdUpgrade: accountId,
-      );
+      if (_isQuickItem) {
+        // Para items rápidos: solo actualizar en la lista de productos seleccionados
+        final updatedProduct = widget.product.copyWith(
+          salePrice: salePrice,
+          quantity: currentQuantity, // Preservar la cantidad del ticket
+        );
 
-      // Actualizar en el catálogo
-      await catalogueProvider.addAndUpdateProductToCatalogue(
-        updatedProduct,
-        accountId,
-        accountProfile: accountProfile,
-      );
+        // Solo actualizar en la lista de productos seleccionados
+        sellProvider.addProductsticket(updatedProduct, replaceQuantity: true);
+      } else {
+        // Para productos registrados: actualizar en catálogo y lista
+        final catalogueProvider =
+            widget.catalogueProvider; // Usar el provider pasado como parámetro
 
-      // Actualizar en la lista de productos seleccionados si el producto está en el ticket
-      sellProvider.addProductsticket(updatedProduct, replaceQuantity: true);
+        // Obtener información de la cuenta
+        final accountId = sellProvider.profileAccountSelected.id;
+        final accountProfile = sellProvider.profileAccountSelected;
+
+        if (accountId.isEmpty) {
+          throw Exception('No se pudo obtener el ID de la cuenta');
+        }
+
+        // Crear producto actualizado
+        final updatedProduct = widget.product.copyWith(
+          salePrice: salePrice,
+          purchasePrice: purchasePrice,
+          quantity: currentQuantity, // Preservar la cantidad del ticket
+          upgrade: DateFormatter.getCurrentTimestamp(),
+          documentIdUpgrade: accountId,
+        );
+
+        // Actualizar en el catálogo
+        await catalogueProvider.addAndUpdateProductToCatalogue(
+          updatedProduct,
+          accountId,
+          accountProfile: accountProfile,
+        );
+
+        // Actualizar en la lista de productos seleccionados si el producto está en el ticket
+        sellProvider.addProductsticket(updatedProduct, replaceQuantity: true);
+      }
 
       // Mostrar mensaje de éxito
       if (mounted) {

@@ -41,7 +41,10 @@ class ProductImage extends StatelessWidget {
               color: backgroundColor ?? Colors.white,
               borderRadius: BorderRadius.circular(borderRadius),
             ),
-            child: _buildImageContent(),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius),
+              child: _buildImageContent(),
+            ),
           ),
         ),
       );
@@ -53,7 +56,10 @@ class ProductImage extends StatelessWidget {
         color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: _buildImageContent(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: _buildImageContent(),
+      ),
     );
   }
 
@@ -106,19 +112,22 @@ class ProductImage extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: backgroundOverlay ,
+        color: backgroundOverlay,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: Center(
-        child: Image.asset(
-          defaultAsset,
-          fit: fit,
-          width: size != null
-              ? size! * 0.6
-              : null, // Reducir tamaño del icono para mejor proporción
-          height: size != null ? size! * 0.6 : null,
-          filterQuality: FilterQuality.medium,
-          color: iconColor,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Center(
+          child: Image.asset(
+            defaultAsset,
+            fit: fit,
+            width: size != null
+                ? size! * 0.6
+                : null, // Reducir tamaño del icono para mejor proporción
+            height: size != null ? size! * 0.6 : null,
+            filterQuality: FilterQuality.medium,
+            color: iconColor,
+          ),
         ),
       ),
     );

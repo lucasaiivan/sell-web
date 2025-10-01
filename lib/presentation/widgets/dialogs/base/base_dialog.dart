@@ -8,6 +8,7 @@ class BaseDialog extends StatelessWidget {
   const BaseDialog({
     super.key,
     required this.title,
+    this.subtitle,
     required this.content,
     this.icon,
     this.actions,
@@ -20,6 +21,9 @@ class BaseDialog extends StatelessWidget {
 
   /// Título del diálogo que aparece en el header
   final String title;
+
+  /// Subtítulo opcional que aparece debajo del título en el header
+  final String? subtitle;
 
   /// Contenido principal del diálogo
   final Widget content;
@@ -123,12 +127,28 @@ class BaseDialog extends StatelessWidget {
             const SizedBox(width: 12),
           ],
           Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: textColor.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           if (showCloseButton)
@@ -235,6 +255,7 @@ class BaseDialog extends StatelessWidget {
 Future<T?> showBaseDialog<T>({
   required BuildContext context,
   required String title,
+  String? subtitle,
   required Widget content,
   IconData? icon,
   List<Widget>? actions,
@@ -251,6 +272,7 @@ Future<T?> showBaseDialog<T>({
     barrierDismissible: barrierDismissible,
     builder: (context) => BaseDialog(
       title: title,
+      subtitle: subtitle,
       content: content,
       icon: icon,
       actions: actions,

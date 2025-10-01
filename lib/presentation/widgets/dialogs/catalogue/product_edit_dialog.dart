@@ -34,22 +34,17 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   }
 
   // Validaciones y propiedades calculadas
-  String get _productName {
-    if (widget.product.nameMark.isNotEmpty) return widget.product.nameMark;
-    if (widget.product.description.isNotEmpty) {
-      return widget.product.description.split(' ').take(2).join(' ');
-    }
+  String get _titleItem {
+    if (widget.product.nameMark.isNotEmpty) return widget.product.nameMark; 
     return '';
   }
 
-  String get _productDescription {
-    return widget.product.description.isNotEmpty
-        ? widget.product.description
-        : 'Sin descripción';
+  String get _itemDescription {
+    return widget.product.description.isNotEmpty ? widget.product.description : 'Sin descripción';
   }
 
-  String get _productCode {
-    return widget.product.code.isNotEmpty ? widget.product.code : 'Sin código';
+  String get _itemCode {
+    return widget.product.code.isNotEmpty ? widget.product.code : '';
   }
 
   double get _totalPrice {
@@ -58,6 +53,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+
     return BaseDialog(
       title: 'Editar cantidad',
       icon: Icons.edit,
@@ -94,9 +90,10 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   Widget _buildProductInfo() {
     return DialogComponents.infoSection(
       context: context,
-      title: _productCode,
+      icon: _itemCode.isNotEmpty ? null: Icons.flash_on_rounded,
+      title: _itemCode.isNotEmpty ? 'Código: $_itemCode' : 'Venta Rápida',
       // iconbutton : botones personalizados de accion
-      rightIcon: widget.product.local?null: IconButton(
+      rightIcon: widget.product.local || widget.product.code.isEmpty ? null : IconButton(
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
@@ -153,17 +150,18 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                       const SizedBox(width: 6),
                     ],
                     // Nombre del producto
-                    Expanded(
-                      child: Text(
-                        _productName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: widget.product.verified ? Colors.blue : null,
-                            fontSize: 16),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ), 
+                    _titleItem.isEmpty ? const SizedBox() :
+                      Expanded(
+                        child: Text(
+                          _titleItem,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: widget.product.verified ? Colors.blue : null,
+                              fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ), 
                   ],
                 ),
 
@@ -171,7 +169,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
                 // Descripción
                 Text(
-                  _productDescription,
+                  _itemDescription,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant),
                   maxLines: 2,
@@ -202,7 +200,9 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                               Navigator.of(context).pop();
                               _editProductPrices();
                             },
-                      icon: const Icon(Icons.security_rounded, size: 16),
+                      icon: widget.product.code.isNotEmpty
+                          ? const Icon(Icons.security, size: 18)
+                          : null,
                       label: const Text('Editar'),
                     ),
                   ],
@@ -275,18 +275,16 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
+                color:theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                ),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
               ),
               child: Text(
                 'Total: ${CurrencyFormatter.formatPrice(value: _totalPrice)}',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onPrimaryContainer,
+                  fontSize: 30,
                 ),
               ),
             ),

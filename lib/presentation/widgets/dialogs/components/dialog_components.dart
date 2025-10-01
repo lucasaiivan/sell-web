@@ -40,8 +40,7 @@ class DialogComponents {
                   icon,
                   size: 20,
                   color: effectiveAccentColor,
-                ),
-                const SizedBox(width: 8),
+                ), 
               ],
               // text : título de la sección
               title.isEmpty
@@ -356,6 +355,7 @@ class DialogComponents {
     required TextEditingController controller,
     required String label,
     String? hint,
+    String? helperText,
     IconData? prefixIcon,
     IconData? suffixIcon,
     VoidCallback? onSuffixPressed,
@@ -384,6 +384,7 @@ class DialogComponents {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        helperText: helperText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
         suffixIcon: suffixIcon != null
             ? IconButton(

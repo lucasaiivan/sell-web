@@ -1798,6 +1798,7 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
   showLastTicketDialog(
     context: context,
     ticket: provider.lastSoldTicket!,
+    title: 'Último ticket',
     businessName: provider.profileAccountSelected.name.isNotEmpty
         ? provider.profileAccountSelected.name
         : 'PUNTO DE VENTA',
@@ -2059,26 +2060,73 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;
+        final int salesCount = provider.currentActiveCashRegister?.sales ?? 0;
 
         // button : boton con el estado de la caja registradora
-        return AppBarButtonCircle(
-          isLoading: _isInitializing,
-          icon: Icons.point_of_sale_outlined,
-          tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
-          onPressed: () {
-            // Si no hay caja activa, abrir directamente el administrador de caja
-            if (!isActive) { 
-              _showCashRegisterManagementDialog(context);
-            } else {
-              // Si hay caja activa, mostrar el diálogo de estado
-              isMobile(context) ? _showStatusDialog(context) : _showCashRegisterManagementDialog(context);
-            }
-          },
-          backgroundColor:isActive ? Colors.green.withValues(alpha: 0.1) : null,
-          colorAccent: isActive ? Colors.green.shade700 : null,
-          text: isMobile(context)
-              ? null
-              : (isActive ? 'Caja abierta' : 'Abrir caja'),
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AppBarButtonCircle(
+              isLoading: _isInitializing,
+              icon: Icons.point_of_sale_outlined,
+              tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
+              onPressed: () {
+                // Si no hay caja activa, abrir directamente el administrador de caja
+                if (!isActive) { 
+                  _showCashRegisterManagementDialog(context);
+                } else {
+                  // Si hay caja activa, mostrar el diálogo de estado
+                  isMobile(context) ? _showStatusDialog(context) : _showCashRegisterManagementDialog(context);
+                }
+              },
+              backgroundColor:isActive ? Colors.green.withValues(alpha: 0.1) : null,
+              colorAccent: isActive ? Colors.green.shade700 : null,
+              text: isMobile(context)
+                  ? null
+                  : (isActive ? 'Caja abierta' : 'Abrir caja'),
+            ),
+            // contador : burbuja circular roja con contador de ventas
+            if (isActive && salesCount > 0)
+              Positioned(
+                right: -6,
+                top: -6,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: salesCount > 99 ? 6 : 4,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade600,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        offset: const Offset(0, 1),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    salesCount > 999 ? '999+' : salesCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      height: 1.0,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );

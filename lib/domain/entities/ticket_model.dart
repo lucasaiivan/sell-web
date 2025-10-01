@@ -28,6 +28,10 @@ class TicketModel {
   /// - 'adjustment': Ajuste de inventario
   String transactionType = 'sale';
 
+  /// Indica si el ticket ha sido anulado
+  /// true si el ticket está anulado, false si está activo
+  bool annulled = false;
+
   /// Lista de productos en el ticket almacenados como mapas de ProductCatalogue
   /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
@@ -47,6 +51,7 @@ class TicketModel {
     this.discount = 0.0,
     this.discountIsPercentage = false,
     this.transactionType = "sale",
+    this.annulled = false,
     required List<Map<String, dynamic>> listPoduct,
     required this.creation,
   }) : _listPoduct = listPoduct;
@@ -206,6 +211,7 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
+        "annulled": annulled,
         // Usar directamente los mapas de ProductCatalogue almacenados
         "listPoduct": _listPoduct,
         "creation": creation,
@@ -225,6 +231,7 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
+        "annulled": annulled,
         // Usar directamente el _listPoduct (que contiene mapas de ProductCatalogue)
         "listPoduct": _listPoduct,
         "creation": creation,
@@ -244,6 +251,7 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
+        "annulled": annulled,
         // Serializar productos con Timestamp convertidos a milliseconds para SharedPreferences
         "listPoduct": _listPoduct.map((productMap) {
           Map<String, dynamic> serializedProduct =
@@ -350,10 +358,50 @@ class TicketModel {
       transactionType: data.containsKey('transactionType')
           ? data['transactionType'] as String
           : 'sale',
+      annulled: data.containsKey('annulled')
+          ? (data['annulled'] ?? false) as bool
+          : false,
       listPoduct: processedProducts,
       creation: creationTimestamp,
     );
   }
+  // copyWith : crea una copia del ticket con modificaciones opcionales
+  TicketModel copyWith({ 
+    String? id,
+    String? payMode,
+    String? currencySymbol,
+    String? sellerName,
+    String? sellerId,
+    String? cashRegisterName,
+    String? cashRegisterId,
+    double? priceTotal,
+    double? valueReceived,
+    double? discount,
+    bool? discountIsPercentage,
+    String? transactionType,
+    bool? annulled,
+    List<Map<String, dynamic>>? listPoduct,
+    Timestamp? creation,
+  }) {
+    return TicketModel(
+      id: id ?? this.id,
+      payMode: payMode ?? this.payMode,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
+      sellerName: sellerName ?? this.sellerName,
+      sellerId: sellerId ?? this.sellerId,
+      cashRegisterName: cashRegisterName ?? this.cashRegisterName,
+      cashRegisterId: cashRegisterId ?? this.cashRegisterId,
+      priceTotal: priceTotal ?? this.priceTotal,
+      valueReceived: valueReceived ?? this.valueReceived,
+      discount: discount ?? this.discount,
+      discountIsPercentage: discountIsPercentage ?? this.discountIsPercentage,
+      transactionType: transactionType ?? this.transactionType,
+      annulled: annulled ?? this.annulled,
+      listPoduct: listPoduct ?? _listPoduct,
+      creation: creation ?? this.creation,
+    );
+  }
+  
 
   /// Factory constructor desde una lista de ProductCatalogue
   factory TicketModel.fromProductCatalogues({
@@ -370,6 +418,7 @@ class TicketModel {
     double discount = 0.0,
     bool discountIsPercentage = false,
     String transactionType = "sale",
+    bool annulled = false,
     Timestamp? creation,
   }) {
     final ticket = TicketModel(
@@ -385,6 +434,7 @@ class TicketModel {
       discount: discount,
       discountIsPercentage: discountIsPercentage,
       transactionType: transactionType,
+      annulled: annulled,
       listPoduct: [],
       creation: creation ?? Timestamp.now(),
     );
@@ -414,6 +464,7 @@ class TicketModel {
     discountIsPercentage = data['discountIsPercentage'] ?? false;
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
+    annulled = data['annulled'] ?? false;
     _listPoduct = data['listPoduct'] != null
         ? List<Map<String, dynamic>>.from((data['listPoduct'] as List).map(
             (item) => item is Map<String, dynamic>
@@ -638,25 +689,27 @@ class TicketModel {
       issues.add('Estructura interna de productos inconsistente');
     }
 
-    // Validar que el precio total coincida con el calculado
-    if ((priceTotal - calculatedPrice).abs() > 0.01) {
+    // Validar que el precio total coincida con el calculado (solo si no está anulado)
+    if (!isAnnulled && (priceTotal - calculatedPrice).abs() > 0.01) {
       issues.add(
           'Precio total inconsistente: $priceTotal vs calculado: $calculatedPrice');
     }
 
-    // Validar que hay productos
-    if (_listPoduct.isEmpty) {
+    // Validar que hay productos (solo si no está anulado)
+    if (!isAnnulled && _listPoduct.isEmpty) {
       issues.add('El ticket no tiene productos');
     }
 
-    // Validar productos individuales
-    for (var i = 0; i < _listPoduct.length; i++) {
-      final product = _listPoduct[i];
-      if (product['quantity'] == null || product['quantity'] <= 0) {
-        issues.add('Producto en posición $i tiene cantidad inválida');
-      }
-      if (product['salePrice'] == null || product['salePrice'] < 0) {
-        issues.add('Producto en posición $i tiene precio inválido');
+    // Validar productos individuales (solo si no está anulado)
+    if (!isAnnulled) {
+      for (var i = 0; i < _listPoduct.length; i++) {
+        final product = _listPoduct[i];
+        if (product['quantity'] == null || product['quantity'] <= 0) {
+          issues.add('Producto en posición $i tiene cantidad inválida');
+        }
+        if (product['salePrice'] == null || product['salePrice'] < 0) {
+          issues.add('Producto en posición $i tiene precio inválido');
+        }
       }
     }
 
@@ -667,6 +720,7 @@ class TicketModel {
       'reportedTotal': priceTotal,
       'productCount': _listPoduct.length,
       'totalQuantity': totalProductCount,
+      'isAnnulled': isAnnulled,
     };
   }
 
@@ -674,4 +728,21 @@ class TicketModel {
   void autoFixPriceTotal() {
     priceTotal = calculatedTotal;
   }
+
+  /// Anula el ticket marcándolo como anulado
+  /// Una vez anulado, el ticket no debe ser modificado
+  void annullTicket() {
+    annulled = true;
+  }
+
+  /// Reactiva un ticket anulado (solo para casos especiales como correcciones)
+  void reactivateTicket() {
+    annulled = false;
+  }
+
+  /// Verifica si el ticket está anulado
+  bool get isAnnulled => annulled;
+
+  /// Verifica si el ticket está activo (no anulado)
+  bool get isActive => !annulled;
 }

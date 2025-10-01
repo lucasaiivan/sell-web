@@ -179,8 +179,7 @@ class CashRegisterProvider extends ChangeNotifier {
       if (_state.activeCashRegisters.isEmpty) {
         // Intentar cargar directamente una vez más
         try {
-          final directCashRegisters =
-              await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+          final directCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
 
           if (directCashRegisters.isNotEmpty) {
             _state = _state.copyWith(

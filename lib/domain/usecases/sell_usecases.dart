@@ -47,4 +47,6 @@ class SellUseCases {
 
     return ticket;
   }
+
+ 
 }

@@ -117,7 +117,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
               DialogComponents.divider(context: context),
               DialogComponents.itemSpacing,
               // view : lista de las ultimas ventas
-              _buildRecentTicketsView(context, provider, isMobile),
+              RecentTicketsView(cashRegisterProvider: provider,isMobile: isMobile),
             ],
           ),
         ),
@@ -379,161 +379,9 @@ class CashRegisterManagementDialog extends StatelessWidget {
       },
     );
   }
+ 
 
-  Widget _buildRecentTicketsView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
-    return RecentTicketsWidget(
-      cashRegisterProvider: provider,
-      isMobile: isMobile,
-    );
-  }
-
-  Widget _buildEmptyTicketsView(BuildContext context, bool isMobile) {
-    final theme = Theme.of(context);
-    
-    return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 20 : 24,
-        horizontal: isMobile ? 16 : 20,
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(isMobile ? 8 : 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
-            ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              size: isMobile ? 24 : 32,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          SizedBox(height: isMobile ? 8 : 12),
-          Text(
-            'No hay ventas recientes',
-            style: (isMobile
-                    ? theme.textTheme.bodyMedium
-                    : theme.textTheme.bodyLarge)
-                ?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTicketTile(BuildContext context, TicketModel ticket, bool isMobile) {
-    final theme = Theme.of(context);
-    final sellProvider = context.read<SellProvider>();
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _showLastTicketDialog(context, ticket, sellProvider.profileAccountSelected.name),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          child: Row(
-            children: [
-              // Icono del ticket
-              Container(
-                padding: EdgeInsets.all(isMobile ? 6 : 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
-                ),
-                child: Icon(
-                  Icons.receipt_rounded,
-                  size: isMobile ? 14 : 16,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              SizedBox(width: isMobile ? 8 : 12),
-
-              // Información del ticket
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Ticket ${ticket.id.length > 8 ? ticket.id.substring(ticket.id.length - 8) : ticket.id}',
-                      style: (isMobile
-                              ? theme.textTheme.bodySmall
-                              : theme.textTheme.bodyMedium)
-                          ?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: isMobile ? 2 : 4),
-                    Text(
-                      '${ticket.getProductsQuantity()} ${ticket.getProductsQuantity() == 1 ? 'producto' : 'productos'}',
-                      style: (isMobile
-                              ? theme.textTheme.labelSmall
-                              : theme.textTheme.labelMedium)
-                          ?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Monto y fecha del ticket
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
-                    style: (isMobile
-                            ? theme.textTheme.bodySmall
-                            : theme.textTheme.bodyMedium)
-                        ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  SizedBox(height: isMobile ? 2 : 4),
-                  Text(
-                    _formatDateTime(ticket.creation.toDate()),
-                    style: (isMobile
-                            ? theme.textTheme.labelSmall
-                            : theme.textTheme.labelMedium)
-                        ?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ),
-              
-              // Icono indicador de que es clickeable
-              SizedBox(width: isMobile ? 4 : 8),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: isMobile ? 12 : 16,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Muestra el diálogo del ticket seleccionado
-  void _showLastTicketDialog(BuildContext context, TicketModel ticket, String businessName) {
-    showLastTicketDialog(
-      context: context,
-      ticket: ticket,
-      businessName: businessName.isNotEmpty ? businessName : 'PUNTO DE VENTA',
-    );
-  }
-
+ 
   Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
    
     final cashRegister = provider.currentActiveCashRegister!;
@@ -816,21 +664,21 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
 /// Widget separado para manejar la lista de tickets recientes de manera eficiente
 /// Evita rebuilds innecesarios del FutureBuilder
-class RecentTicketsWidget extends StatefulWidget {
+class RecentTicketsView extends StatefulWidget {
   final CashRegisterProvider cashRegisterProvider;
   final bool isMobile;
 
-  const RecentTicketsWidget({
+  const RecentTicketsView({
     super.key,
     required this.cashRegisterProvider,
     required this.isMobile,
   });
 
   @override
-  State<RecentTicketsWidget> createState() => _RecentTicketsWidgetState();
+  State<RecentTicketsView> createState() => _RecentTicketsViewState();
 }
 
-class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
+class _RecentTicketsViewState extends State<RecentTicketsView> {
   Future<List<Map<String, dynamic>>?>? _ticketsFuture;
 
   @override
@@ -840,7 +688,7 @@ class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
   }
 
   @override
-  void didUpdateWidget(RecentTicketsWidget oldWidget) {
+  void didUpdateWidget(RecentTicketsView oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Solo recargar si el cashRegisterId cambió
     final oldCashRegisterId = oldWidget.cashRegisterProvider.currentActiveCashRegister?.id;
@@ -998,7 +846,13 @@ class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => _showLastTicketDialog(context, ticket, sellProvider.profileAccountSelected.name),
+        onTap: () => showLastTicketDialog(
+          context: context,
+          ticket: ticket,
+          businessName: sellProvider.profileAccountSelected.name.isNotEmpty 
+            ? sellProvider.profileAccountSelected.name 
+            : 'PUNTO DE VENTA',
+        ),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -1024,6 +878,7 @@ class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // text : ID del ticket
                     Text(
                       'Ticket ${ticket.id.length > 8 ? ticket.id.substring(ticket.id.length - 8) : ticket.id}',
                       style: (isMobile
@@ -1036,6 +891,19 @@ class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: isMobile ? 2 : 4),
+                    // text : anulado
+                    if (ticket.annulled)
+                      Text(
+                        'Anulado',
+                        style: (isMobile
+                                ? theme.textTheme.labelSmall
+                                : theme.textTheme.labelMedium)
+                            ?.copyWith(
+                          color: Colors.red.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    // text : cantidad de productos
                     Text(
                       '${ticket.getProductsQuantity()} ${ticket.getProductsQuantity() == 1 ? 'producto' : 'productos'}',
                       style: (isMobile
@@ -1089,15 +957,7 @@ class _RecentTicketsWidgetState extends State<RecentTicketsWidget> {
       ),
     );
   }
-
-  /// Muestra el diálogo del ticket seleccionado
-  void _showLastTicketDialog(BuildContext context, TicketModel ticket, String businessName) {
-    showLastTicketDialog(
-      context: context,
-      ticket: ticket,
-      businessName: businessName.isNotEmpty ? businessName : 'PUNTO DE VENTA',
-    );
-  }
+ 
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();

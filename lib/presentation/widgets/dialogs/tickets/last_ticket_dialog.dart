@@ -1,23 +1,29 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart'; 
+import 'package:provider/provider.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
+import 'package:sellweb/domain/usecases/cash_register_usecases.dart';
+import 'package:sellweb/data/cash_register_repository_impl.dart';
+import 'package:sellweb/presentation/providers/sell_provider.dart';
 
-/// Diálogo modernizado para mostrar el último ticket siguiendo Material Design 3
-class LastTicketDialog extends StatefulWidget {
-  const LastTicketDialog({
+/// Diálogo modernizado para mostrar el  ticket siguiendo Material Design 3
+class TicketViewDialog extends StatefulWidget {
+  const TicketViewDialog({
     super.key,
     required this.ticket,
     required this.businessName,
+    this.title = 'Ticket',
   });
 
   final TicketModel ticket;
   final String businessName;
+  final String title;
 
   @override
-  State<LastTicketDialog> createState() => _LastTicketDialogState();
+  State<TicketViewDialog> createState() => _TicketViewDialogState();
 }
 
-class _LastTicketDialogState extends State<LastTicketDialog> {
+class _TicketViewDialogState extends State<TicketViewDialog> {
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
@@ -40,16 +46,21 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
   @override
   Widget build(BuildContext context) {
     return BaseDialog(
-      title: 'Último Ticket',
-      icon: Icons.receipt_long_rounded,
+      title: widget.ticket.isAnnulled ? '${widget.title} Anulado' : widget.title,
+      icon: widget.ticket.isAnnulled 
+          ? Icons.cancel_rounded 
+          : Icons.receipt_long_rounded,
       width: 450,
+      headerColor: widget.ticket.isAnnulled 
+          ? Theme.of(context).colorScheme.errorContainer
+          : null,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Información del negocio y fecha
           DialogComponents.infoSection(
             context: context,
-            title: 'Información del Ticket',
+            title: ' Información del Ticket',
             icon: Icons.business_rounded,
             content: Column(
               children: [
@@ -74,6 +85,21 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
                       ? '...${widget.ticket.cashRegisterId.substring(widget.ticket.cashRegisterId.length - 8)}'
                       : widget.ticket.cashRegisterId,
                   icon: Icons.confirmation_number_rounded,
+                ),
+                DialogComponents.minSpacing,
+                DialogComponents.infoRow(
+                  context: context,
+                  label: 'Estado',
+                  value: widget.ticket.isAnnulled ? 'ANULADO' : 'ACTIVO',
+                  icon: widget.ticket.isAnnulled 
+                      ? Icons.cancel_rounded 
+                      : Icons.check_circle_rounded,
+                  valueStyle: TextStyle(
+                    color: widget.ticket.isAnnulled 
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -228,12 +254,45 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
           text: 'Cerrar',
           onPressed: () => Navigator.of(context).pop(),
         ),
-        DialogComponents.primaryActionButton(
-          context: context,
-          text: 'Imprimir',
-          icon: Icons.print_rounded,
-          onPressed: () => _showTicketOptions(),
-        ),
+        if (!widget.ticket.isAnnulled) ...[
+          DialogComponents.secondaryActionButton(
+            context: context,
+            text: 'Anular',
+            onPressed: () => _showAnnullConfirmation(),
+          ),
+          DialogComponents.primaryActionButton(
+            context: context,
+            text: 'Imprimir',
+            icon: Icons.print_rounded,
+            onPressed: () => _showTicketOptions(),
+          ),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Ticket Anulado',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -250,6 +309,40 @@ class _LastTicketDialogState extends State<LastTicketDialog> {
       },
     );
   }
+
+  /// Muestra el diálogo de confirmación para anular el ticket
+  void _showAnnullConfirmation() {
+    showConfirmationDialog(
+      context: context,
+      title: 'Anular Ticket',
+      message: '¿Estás seguro de que deseas anular este ticket?\n\n'
+               'Esta acción marcará el ticket como anulado y no podrá ser revertida.',
+      confirmText: 'Anular Ticket',
+      cancelText: 'Cancelar',
+      icon: Icons.warning_rounded,
+      isDestructive: true,
+      onConfirm: () => _annullTicket(),
+    );
+  }
+
+  /// Anula el ticket usando el caso de uso
+  void _annullTicket() async {
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Ticket anulado exitosamente (TEST)'),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+  }
 }
 
 /// Helper function para mostrar el diálogo del último ticket
@@ -257,12 +350,14 @@ Future<void> showLastTicketDialog({
   required BuildContext context,
   required TicketModel ticket,
   required String businessName,
+  String title = 'Ticket',
 }) {
   return showDialog(
     context: context,
-    builder: (context) => LastTicketDialog(
+    builder: (context) => TicketViewDialog(
       ticket: ticket,
       businessName: businessName,
+      title: title,
     ),
   );
 }

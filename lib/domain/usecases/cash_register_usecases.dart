@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';

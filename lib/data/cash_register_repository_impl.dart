@@ -1,6 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-
 import '../core/core.dart';
 import '../domain/entities/cash_register_model.dart';
 import '../domain/repositories/cash_register_repository.dart';
@@ -393,7 +391,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     try {
       await DatabaseCloudService.accountTransactions(accountId)
           .doc(ticketId)
-          .set(transactionData);
+          .set(transactionData, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Error al guardar transacción: $e');
     }

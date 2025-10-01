@@ -2,6 +2,7 @@ import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:lottie/lottie.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/presentation/providers/sell_provider.dart';
@@ -27,7 +28,9 @@ class TicketDrawerWidget extends StatelessWidget {
     return showConfirmedPurchase
         ? _TicketConfirmedPurchase(
                 width:
-                    isMobile(context) ? MediaQuery.of(context).size.width : 400)
+                    isMobile(context) ? MediaQuery.of(context).size.width : 400,
+                onAnimationComplete: onCloseTicket, // Usar el callback del padre
+            )
             .animate()
             .scale(
               duration: 600.ms,
@@ -175,8 +178,7 @@ class _TicketContent extends StatelessWidget {
                     ticket: ticket, textValuesStyle: textValuesStyle),
                 _buildDividerLine(colorScheme),
                 // Cantidad total de artículos
-                _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
-                _buildDividerLine(colorScheme),
+                _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle), 
                 const SizedBox(height: 5),
                 // Total del ticket
                 _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
@@ -443,100 +445,250 @@ class _TicketContent extends StatelessWidget {
     TextStyle textDescriptionStyle,
   ) {
     final hasDiscount = ticket.discount > 0;
+    final hasChange = ticket.valueReceived > 0 && 
+        ticket.valueReceived > ticket.getTotalPrice;
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, top: 5, bottom: 4),
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: hasDiscount
-            ? Column(
-                children: [
-                  // Subtotal
-                  Row(
-                    children: [
-                      Text(
-                        'SUBTOTAL',
-                        style: textDescriptionStyle.copyWith(
-                          fontSize: 16),
-                      ),
-                      const Spacer(),
-                      Text(
-                        CurrencyFormatter.formatPrice(
-                            value: ticket.getTotalPriceWithoutDiscount),
-                        style: textDescriptionStyle.copyWith(
-                          fontSize: 16,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        
+        // Colores adaptativos para tema claro/oscuro
+        final primaryColor = colorScheme.primary;
+        final onPrimaryColor = colorScheme.onPrimary;
+        
+        // Estilos de texto adaptativos
+        final adaptiveTotalStyle = textTotalStyle.copyWith(
+          color: onPrimaryColor,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        );
 
-                  const SizedBox(height: 4),
+        final adaptiveSubtitleStyle = textDescriptionStyle.copyWith(
+          color: onPrimaryColor.withValues(alpha: 0.95),
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        );
 
-                  // Descuento
-                  Row(
-                    children: [
-                      Text(
-                        ticket.discountIsPercentage
-                            ? 'DESCUENTO (${ticket.discount.toStringAsFixed(0)}%)'
-                            : 'DESCUENTO',
-                        style: textDescriptionStyle.copyWith(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
-                        style: textDescriptionStyle.copyWith(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
+        final adaptiveDiscountStyle = textDescriptionStyle.copyWith(
+          color: onPrimaryColor.withValues(alpha: 0.85),
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        );
 
-                  const SizedBox(height: 8),
+        final adaptiveChangeStyle = textDescriptionStyle.copyWith(
+          color: onPrimaryColor.withValues(alpha: 0.9),
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        );
 
-                  Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Total final
-                  Row(
-                    children: [
-                      Text('TOTAL', style: textTotalStyle),
-                      const Spacer(),
-                      Text(
-                        CurrencyFormatter.formatPrice(
-                            value: ticket.getTotalPrice),
-                        style: textTotalStyle,
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            : Row(
-                children: [
-                  Text('TOTAL', style: textTotalStyle),
-                  const Spacer(),
-                  Text(
-                    CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
-                    style: textTotalStyle,
-                    textAlign: TextAlign.right,
-                  ),
-                ],
+        return Padding(
+          padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: onPrimaryColor.withValues(alpha: 0.1),
+                  width: 1,
+                ),
               ),
-      ),
+              child: hasDiscount
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Subtotal
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Subtotal',
+                              style: adaptiveSubtitleStyle,
+                            ),
+                            Text(
+                              CurrencyFormatter.formatPrice(
+                                  value: ticket.getTotalPriceWithoutDiscount),
+                              style: adaptiveSubtitleStyle.copyWith(
+                                fontFamily: 'RobotoMono',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // Descuento
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.local_offer_outlined,
+                                  size: 16,
+                                  color: onPrimaryColor.withValues(alpha: 0.8),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  ticket.discountIsPercentage
+                                      ? 'Descuento (${ticket.discount.toStringAsFixed(0)}%)'
+                                      : 'Descuento',
+                                  style: adaptiveDiscountStyle,
+                                ),
+                              ],
+                            ),
+                            Text(
+                              '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
+                              style: adaptiveDiscountStyle.copyWith(
+                                fontFamily: 'RobotoMono',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Separador elegante
+                        Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                onPrimaryColor.withValues(alpha: 0.0),
+                                onPrimaryColor.withValues(alpha: 0.3),
+                                onPrimaryColor.withValues(alpha: 0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Total final destacado
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'TOTAL',
+                                  style: adaptiveTotalStyle.copyWith(fontSize: 18),
+                                ),
+                                Text(
+                                  CurrencyFormatter.formatPrice(
+                                      value: ticket.getTotalPrice),
+                                  style: adaptiveTotalStyle.copyWith(
+                                    fontFamily: 'RobotoMono',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            // Vuelto (si aplica)
+                            if (hasChange) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Vuelto',
+                                    style: adaptiveChangeStyle,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: onPrimaryColor.withValues(alpha: 0.3),
+                                        width: 1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                      color: onPrimaryColor.withValues(alpha: 0.1),
+                                    ),
+                                    child: Text(
+                                      CurrencyFormatter.formatPrice(
+                                          value: ticket.valueReceived - ticket.getTotalPrice),
+                                      style: adaptiveChangeStyle.copyWith(
+                                        fontFamily: 'RobotoMono',
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'TOTAL',
+                              style: adaptiveTotalStyle.copyWith(fontSize: 20),
+                            ),
+                            Text(
+                              CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
+                              style: adaptiveTotalStyle.copyWith(
+                                fontFamily: 'RobotoMono',
+                                fontSize: 32,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        // Vuelto (si aplica)
+                        if (hasChange) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Vuelto',
+                                style: adaptiveChangeStyle,
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: onPrimaryColor.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: onPrimaryColor.withValues(alpha: 0.1),
+                                ),
+                                child: Text(
+                                  CurrencyFormatter.formatPrice(
+                                      value: ticket.valueReceived - ticket.getTotalPrice),
+                                  style: adaptiveChangeStyle.copyWith(
+                                    fontFamily: 'RobotoMono',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -820,12 +972,65 @@ class _TicketProductListState extends State<_TicketProductList> {
 }
 
 /// Widget que muestra la confirmación de venta exitosa
-class _TicketConfirmedPurchase extends StatelessWidget {
+class _TicketConfirmedPurchase extends StatefulWidget {
   final double width;
+  final VoidCallback? onAnimationComplete; // Callback para notificar cuando termina la animación
 
   const _TicketConfirmedPurchase({
     this.width = 400,
+    this.onAnimationComplete,
   });
+
+  @override
+  State<_TicketConfirmedPurchase> createState() => _TicketConfirmedPurchaseState();
+}
+
+class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase> 
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  bool _animationCompleted = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Controlador para fade-in del contenido
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    // Controlador para scale de entrada
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    // Iniciar animaciones
+    _scaleController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _fadeController.forward();
+      }
+    });
+
+    // Simular la duración típica de la animación Lottie (aproximadamente 2 segundos)
+    // y agregar 1 segundo adicional como solicita el usuario
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (mounted && !_animationCompleted) {
+        _animationCompleted = true;
+        widget.onAnimationComplete?.call();
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scaleController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -833,307 +1038,259 @@ class _TicketConfirmedPurchase extends StatelessWidget {
     final theme = Theme.of(context);
     final ticket = provider.ticket;
 
-    // Obtener información del método de pago
-    final paymentMethodText = _getPaymentMethodDisplayText(ticket.payMode);
-    final paymentIcon = _getPaymentMethodIcon(ticket.payMode);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      width: width - 24,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.green.shade400,
-            Colors.green.shade600,
+    return ScaleTransition(
+      scale: CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.elasticOut,
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        width: widget.width - 24,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.green.shade300,
+              Colors.green.shade500,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withValues(alpha: 0.4),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+              spreadRadius: 2,
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icono principal
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
-                size: 60,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Título principal
-            Text(
-              '¡Venta exitosa!',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 8),
-
-            // Subtítulo
-            Text(
-              'Transacción completada correctamente',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.9),
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 32),
-
-            // Card con detalles
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Animación Lottie prominente
+              Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+                child: Center(
+                  child: Lottie.asset(
+                    'assets/anim/success_check.json',
+                    width: 140,
+                    height: 140,
+                    fit: BoxFit.contain,
+                    repeat: false,
+                    animate: true,
+                    frameRate: FrameRate.max,
+                    options: LottieOptions(
+                      enableMergePaths: true,
+                    ),
+                    onLoaded: (composition) {
+                      // Cuando se carga la composición, podemos obtener la duración real
+                      final duration = composition.duration;
+                      if (mounted && !_animationCompleted) {
+                        // Programar el cierre automático basado en la duración real + 1 segundo
+                        Future.delayed(duration + const Duration(milliseconds: 1000), () {
+                          if (mounted && !_animationCompleted) {
+                            _animationCompleted = true;
+                            widget.onAnimationComplete?.call();
+                          }
+                        });
+                      }
+                    },
+                  ),
                 ),
               ),
-              child: Column(
-                children: [
-                  // Información del total con descuento si aplica
-                  if (ticket.discount > 0) ...[
-                    // Subtotal
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Subtotal:',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                        Text(
-                          CurrencyFormatter.formatPrice(
-                              value: ticket.getTotalPriceWithoutDiscount),
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontFamily: 'RobotoMono',
-                          ),
-                        ),
-                      ],
+
+              const SizedBox(height: 24),
+
+              // Título principal con animación
+              FadeTransition(
+                opacity: _fadeController,
+                child: Text(
+                  '¡Venta Exitosa!',
+                  style: theme.textTheme.headlineLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Total de la venta - información principal
+              FadeTransition(
+                opacity: _fadeController,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
                     ),
-
-                    const SizedBox(height: 8),
-
-                    // Descuento
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          ticket.discountIsPercentage
-                              ? 'Descuento (${ticket.discount.toStringAsFixed(0)}%):'
-                              : 'Descuento:',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                        Text(
-                          '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontFamily: 'RobotoMono',
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Container(
-                      height: 1,
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-
-                    const SizedBox(height: 12),
-                  ],
-
-                  // Total de la venta
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                  child: Column(
                     children: [
                       Text(
-                        'Total vendido:',
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        'Total',
+                        style: theme.textTheme.bodyLarge?.copyWith(
                           color: Colors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        CurrencyFormatter.formatPrice(
-                            value: ticket.getTotalPrice),
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
+                        style: theme.textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'RobotoMono',
+                          fontSize: 32,
                         ),
                       ),
                     ],
                   ),
+                ),
+              ),
 
-                  const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-                  Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Información adicional
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Cantidad de artículos
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Artículos',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${ticket.getProductsQuantity()}',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Método de pago
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Método de pago',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                paymentIcon,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                paymentMethodText,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  // Mostrar vuelto si aplica
-                  if (ticket.valueReceived > 0 &&
-                      ticket.valueReceived > ticket.getTotalPrice) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Vuelto a entregar',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            CurrencyFormatter.formatPrice(
-                              value:
-                                  ticket.valueReceived - ticket.getTotalPrice,
-                            ),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'RobotoMono',
-                            ),
-                          ),
-                        ],
-                      ),
+              // Información adicional minimalista
+              FadeTransition(
+                opacity: _fadeController,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Artículos
+                    _buildInfoChip(
+                      icon: Icons.shopping_bag_outlined,
+                      label: '${ticket.getProductsQuantity()} artículos',
+                      theme: theme,
+                    ),
+                    
+                    // Método de pago
+                    _buildInfoChip(
+                      icon: _getPaymentMethodIcon(ticket.payMode),
+                      label: _getPaymentMethodDisplayText(ticket.payMode),
+                      theme: theme,
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 24),
-
-            // Información de fecha y hora
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.access_time_rounded,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _getFormattedDateTime(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontFamily: 'RobotoMono',
+              // Mostrar descuento si aplica
+              if (ticket.discount > 0) ...[
+                const SizedBox(height: 16),
+                FadeTransition(
+                  opacity: _fadeController,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      ticket.discountIsPercentage
+                          ? 'Descuento aplicado: ${ticket.discount.toStringAsFixed(0)}%'
+                          : 'Descuento: ${CurrencyFormatter.formatPrice(value: ticket.discount)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+
+              // Mostrar vuelto si aplica
+              if (ticket.valueReceived > 0 && 
+                  ticket.valueReceived > ticket.getTotalPrice) ...[
+                const SizedBox(height: 16),
+                FadeTransition(
+                  opacity: _fadeController,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Vuelto a entregar',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          CurrencyFormatter.formatPrice(
+                            value: ticket.valueReceived - ticket.getTotalPrice,
+                          ),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'RobotoMono',
+                            fontSize: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  /// Construye un chip de información minimalista
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required ThemeData theme,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: Colors.white.withValues(alpha: 0.9),
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1164,12 +1321,6 @@ class _TicketConfirmedPurchase extends StatelessWidget {
       default:
         return Icons.help_outline_rounded;
     }
-  }
-
-  /// Obtiene la fecha y hora formateada
-  String _getFormattedDateTime() {
-    final now = DateTime.now();
-    return '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
 }
 

@@ -55,6 +55,8 @@ dependencies:
   firebase_storage: ^12.4.7
   # HTTP client for requests
   http: ^1.2.0
+  # Animation library
+  lottie: ^3.3.1
   # HTTP server dependencies
   shelf: ^1.4.0
   shelf_router: ^1.1.4
@@ -106,6 +108,7 @@ flutter:
       - assets/screenshot04.png
       - assets/screenshot05.png
       - assets/screenshot06.png
+      - assets/anim/success_check.json
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

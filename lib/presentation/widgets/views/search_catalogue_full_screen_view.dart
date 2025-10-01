@@ -304,24 +304,26 @@ class _ProductCatalogueFullScreenViewState
       selectedProduct = null;
     }
 
-    return Card(
-      color: selectedProduct != null
-          ? colorScheme.primary.withValues(alpha: 0.30)
-          : Colors.white,
-      elevation: selectedProduct != null ? 4 : 2,
-      shadowColor: selectedProduct != null 
-          ? colorScheme.primary.withValues(alpha: 0.3)
-          : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-        side: selectedProduct != null 
-            ? BorderSide(
-                color: colorScheme.primary.withValues(alpha: 0.5),
-                width: 2,
-              )
-            : BorderSide.none,
-      ),
-      clipBehavior: Clip.antiAlias,
+    return AnimatedScale(
+      scale: selectedProduct != null ? 0.95 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOutCubic,
+      child: Card(
+        color: Colors.white,
+        elevation: selectedProduct != null ? 4 : 2,
+        shadowColor: selectedProduct != null 
+            ? colorScheme.primary.withValues(alpha: 0.3)
+            : null,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          side: selectedProduct != null 
+              ? BorderSide(
+                  color: colorScheme.primary,
+                  width: 2,
+                )
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
           // Layout principal del producto
@@ -367,8 +369,8 @@ class _ProductCatalogueFullScreenViewState
                       selectedProduct.quantity.toString(),
                       style: const TextStyle(
                         color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontWeight: FontWeight.w700, 
+                        fontSize: 18,
                       ),
                     ),
                   ),
@@ -378,23 +380,23 @@ class _ProductCatalogueFullScreenViewState
           // Botón de disminuir cantidad cuando el producto está seleccionado
           if (selectedProduct != null)
             Positioned(
-              bottom: 5,
-              right: 5,
+              bottom: 8,
+              right: 8,
               child: GestureDetector(
                 onTap: () {
                   _decreaseProductQuantity(product);
                   setState(() {});
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: colorScheme.errorContainer.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.white, width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: Icon(
                     Icons.remove,
-                    size: 12,
+                    size: 16,
                     color: colorScheme.onErrorContainer,
                   ),
                 ),
@@ -402,13 +404,14 @@ class _ProductCatalogueFullScreenViewState
             ),
         ],
       ),
+      )
     );
   }
 
   /// Construye la información del producto (descripción, marca, precio)
   Widget _buildProductInfo(ProductCatalogue product, ThemeData theme, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.all(5.0),
+      padding: const EdgeInsets.all(6.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

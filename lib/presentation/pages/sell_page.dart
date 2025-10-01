@@ -148,8 +148,9 @@ class _SellPageState extends State<SellPage> {
                           dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
                       onConfirmSale: () =>
                           _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider
-                          .setTicketView(false), // para cerrar el ticket
+                      onCloseTicket: _showConfirmedPurchase 
+                          ? _onConfirmationComplete // Callback especial cuando está en modo confirmación
+                          : () => sellProvider.setTicketView(false), // para cerrar el ticket normalmente
                     ),
                 ],
               );
@@ -643,6 +644,18 @@ class _SellPageState extends State<SellPage> {
     }
   }
 
+  /// Callback que se ejecuta cuando la animación de confirmación se completa
+  void _onConfirmationComplete() {
+    if (mounted) {
+      setState(() {
+        _showConfirmedPurchase = false;
+      });
+      final provider = Provider.of<SellProvider>(context, listen: false);
+      provider.discartTicket();
+      provider.setTicketView(false);
+    }
+  }
+
   // === Procesa la venta con impresión o generación de ticket ===
   Future<void> _processSaveAndPrintTicket(SellProvider provider) async {
 
@@ -853,17 +866,7 @@ class _SellPageState extends State<SellPage> {
   /// Finaliza la venta guardando el último ticket y limpiando
   Future<void> _finalizeSale(SellProvider provider) async {
     // Guardar el último ticket vendido
-    await provider.saveLastSoldTicket();
-
-    // Limpiar ticket después del proceso
-    Future.delayed(const Duration(milliseconds: 1)).then((_) {
-      if (mounted) {
-        setState(() {
-          _showConfirmedPurchase = false;
-        });
-        provider.discartTicket();
-      }
-    });
+    await provider.saveLastSoldTicket(); 
   }
 
   /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo

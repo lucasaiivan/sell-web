@@ -1,10 +1,6 @@
 import 'package:sellweb/core/core.dart';
-import 'package:flutter/material.dart'; 
-import 'package:provider/provider.dart';
-import 'package:sellweb/domain/entities/ticket_model.dart';
-import 'package:sellweb/domain/usecases/cash_register_usecases.dart';
-import 'package:sellweb/data/cash_register_repository_impl.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:flutter/material.dart';  
+import 'package:sellweb/domain/entities/ticket_model.dart'; 
 
 /// Diálogo modernizado para mostrar el  ticket siguiendo Material Design 3
 class TicketViewDialog extends StatefulWidget {
@@ -249,11 +245,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
         ],
       ),
       actions: [
-        DialogComponents.secondaryActionButton(
-          context: context,
-          text: 'Cerrar',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        
         if (!widget.ticket.isAnnulled) ...[
           DialogComponents.secondaryActionButton(
             context: context,
@@ -293,6 +285,11 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
             ),
           ),
         ],
+        DialogComponents.secondaryActionButton(
+          context: context,
+          text: 'ok',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ],
     );
   }

@@ -323,8 +323,8 @@ class DialogComponents {
             ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
         padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 12,
+          horizontal:12,
+          vertical: 8,
         ),
       ),
     );

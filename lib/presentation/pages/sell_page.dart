@@ -826,7 +826,7 @@ class _SellPageState extends State<SellPage> {
     provider.ticket.cashRegisterId = cashRegisterProvider.currentActiveCashRegister?.id ?? '';
     provider.ticket.id = UidHelper.generateUid();
 
-    // Si hay una caja activa, registrar la venta en la caja
+    // === CASH REGISTER (SI HAY CAJA ACTIVA) ===
     if (cashRegisterProvider.hasActiveCashRegister) {
       // Obtener la caja activa y asignar los datos al ticket
       final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;

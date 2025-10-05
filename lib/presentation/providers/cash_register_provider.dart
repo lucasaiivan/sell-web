@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/presentation/providers/sell_provider.dart';
 import '../../core/core.dart';
 import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
@@ -584,21 +586,20 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Registra una venta en la caja activa
-  Future<bool> registerSale({
+  Future<bool> cashRegisterSale({
     required String accountId,
     required double saleAmount,
     required double discountAmount,
     int itemCount = 1,
   }) async {
     if (!hasActiveCashRegister) {
-      _state =
-          _state.copyWith(errorMessage: 'No hay una caja registradora activa');
+      _state = _state.copyWith(errorMessage: 'No hay una caja registradora activa');
       notifyListeners();
       return false;
     }
 
     try {
-      await _cashRegisterUsecases.registerSale(
+      await _cashRegisterUsecases.cashRegisterSale(
         accountId: accountId,
         cashRegisterId: currentActiveCashRegister!.id,
         saleAmount: saleAmount,
@@ -735,60 +736,52 @@ class CashRegisterProvider extends ChangeNotifier {
   /// La transacción se registra SIEMPRE, independientemente de si existe una caja registradora activa
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
-    required TicketModel ticket,
-    String? sellerName,
-    String? sellerId,
+    required TicketModel ticket, 
   }) async {
     try {
       // Asegurar que el ticket tenga un ID único
       final ticketId = ticket.id.isEmpty ? UidHelper.generateUid() : ticket.id;
-
-      // Asegurar que tenga información del vendedor
-      final finalSellerName = ticket.sellerName.isEmpty
-          ? (sellerName ?? 'Vendedor')
-          : ticket.sellerName;
-      final finalSellerId = ticket.sellerId.isEmpty
-          ? (sellerId ?? 'default_seller')
-          : ticket.sellerId;
-
-      // Usar la información de caja que ya tiene el ticket, solo como fallback usar la caja activa
-      String finalCashRegisterName = ticket.cashRegisterName;
-      String finalCashRegisterId = ticket.cashRegisterId;
+      final updatedTicket = ticket.copyWith(
+        id: ticketId,
+        priceTotal: ticket.priceTotal > 0 ? ticket.priceTotal : ticket.calculatedTotal, // Usar método optimizado
+      );
 
       // Solo usar la caja activa como fallback si el ticket no tiene información de caja
-      if (finalCashRegisterId.isEmpty && hasActiveCashRegister) {
-        finalCashRegisterName = currentActiveCashRegister!.description;
-        finalCashRegisterId = currentActiveCashRegister!.id; 
-      } else if (finalCashRegisterId.isEmpty) {
+      if (ticket.cashRegisterId.isEmpty) {
         // Si no hay caja activa y el ticket tampoco tiene información, usar valores por defecto
-        finalCashRegisterName = 'Sin caja asignada';
-        finalCashRegisterId = ''; 
-      } else { 
-      }
+        ticket.cashRegisterName = 'Sin caja asignada';
+        ticket.cashRegisterId = ''; 
+      }   
+      // === Guardar el ticket en el historial de transacciones ===
+      await _cashRegisterUsecases.saveTicketToTransactionHistory(accountId: accountId,ticket: updatedTicket);
 
-      // Crear ticket actualizado con toda la información necesaria
-      final updatedTicket = TicketModel(
-        id: ticketId,
-        payMode: ticket.payMode,
-        currencySymbol: ticket.currencySymbol,
-        sellerName: finalSellerName,
-        sellerId: finalSellerId,
-        cashRegisterName: finalCashRegisterName,
-        cashRegisterId: finalCashRegisterId,
-        priceTotal: ticket.priceTotal > 0
-            ? ticket.priceTotal
-            : _calculateTotalPriceOptimized(ticket), // Usar método optimizado
-        valueReceived: ticket.valueReceived,
-        discount: ticket.discount,
-        transactionType: ticket.transactionType,
-        listPoduct: ticket.products.map((product) => product.toMap()).toList(),
-        creation: ticket.creation,
-      );
-      updatedTicket.products = ticket.products;
+      return true;
 
-      await _cashRegisterUsecases.saveTicketToTransactionHistory(
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Actualiza un ticket existente en el historial de transacciones
+  /// Este método permite modificar tickets que ya fueron guardados previamente
+  Future<bool> updateTicketInTransactionHistory({
+    required String accountId,
+    required TicketModel ticket,
+  }) async {
+    try {
+      // Validar que el ticket tenga un ID
+      if (ticket.id.isEmpty) {
+        _state = _state.copyWith(errorMessage: 'El ID del ticket no puede estar vacío');
+        notifyListeners();
+        return false;
+      } 
+
+      // Llamar al caso de uso para actualizar el ticket
+      await _cashRegisterUsecases.updateTicketTransaction(
         accountId: accountId,
-        ticket: updatedTicket,
+        ticket: ticket,
       );
 
       return true;
@@ -799,14 +792,41 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// Obtiene los tickets del día actual como objetos TicketModel
-  /// Nota: Por ahora devuelve Map hasta implementar conversión completa
-  Future<List<Map<String, dynamic>>?> getTodayTickets({required String accountId,String cashRegisterId=''}) async {
+  /// Anula un ticket específico marcándolo como anulado
+  Future<bool> annullTicket({
+    required String accountId,
+    required TicketModel ticket,
+  }) async {
+    // providers : sell
     try {
-      
+      // Validar que el ticket no esté ya anulado
+      if (ticket.annulled) {
+        _state = _state.copyWith(errorMessage: 'El ticket ya está anulado');
+        notifyListeners();
+        return false;
+      }
+
+      // Crear una copia del ticket marcándolo como anulado
+      final annulledTicket = ticket.copyWith(annulled: true);
+      // Actualizar el ticket en el historial de transacciones
+      return await updateTicketInTransactionHistory(
+        accountId: accountId,
+        ticket: annulledTicket,
+      );
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Obtiene los tickets del día actual como objetos TicketModel 
+  Future<List<TicketModel>?> getTodayTickets({required String accountId,String cashRegisterId=''}) async {
+    try {  
       final result = await _cashRegisterUsecases.getTodayTransactions(accountId: accountId,cashRegisterId: cashRegisterId);
       
-      return result;
+      // Convertir los Map<String, dynamic> a objetos TicketModel
+      return result.map((ticketMap) => TicketModel.fromMap(ticketMap)).toList();
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
@@ -911,10 +931,7 @@ class CashRegisterProvider extends ChangeNotifier {
   // MÉTODOS PRIVADOS
   // ==========================================
 
-  /// Calcula el precio total usando ProductCatalogue almacenados como mapas
-  double _calculateTotalPriceOptimized(TicketModel ticket) {
-    return ticket.calculatedTotal;
-  }
+  
 
   void _clearOpenForm() {
     openDescriptionController.clear();

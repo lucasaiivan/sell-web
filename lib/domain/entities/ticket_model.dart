@@ -285,6 +285,53 @@ class TicketModel {
         "creation": creation.millisecondsSinceEpoch,
       };
 
+  /// Factory constructor para crear un TicketModel desde un Map (principalmente para Firestore)
+  factory TicketModel.fromMap(Map<String, dynamic> data) {
+    // Manejo robusto de la marca de tiempo para soportar Timestamp o int (milisegundos)
+    Timestamp creationTimestamp;
+    if (data.containsKey('creation')) {
+      if (data['creation'] is Timestamp) {
+        creationTimestamp = data['creation'];
+      } else if (data['creation'] is int) {
+        creationTimestamp = Timestamp.fromMillisecondsSinceEpoch(data['creation']);
+      } else {
+        creationTimestamp = Timestamp.now();
+      }
+    } else {
+      creationTimestamp = Timestamp.now();
+    }
+
+    // Procesar la lista de productos
+    List<Map<String, dynamic>> processedProducts = [];
+    if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
+      final productList = data['listPoduct'] as List;
+      processedProducts = productList.map((item) {
+        Map<String, dynamic> productMap = item is Map<String, dynamic>
+            ? Map<String, dynamic>.from(item)
+            : Map<String, dynamic>.from(item as Map);
+        return productMap;
+      }).toList();
+    }
+
+    return TicketModel(
+      id: data['id'] ?? '',
+      payMode: data['payMode'] ?? '',
+      sellerName: data['sellerName'] ?? '',
+      sellerId: data['sellerId'] ?? '',
+      currencySymbol: data['currencySymbol'] ?? '\$',
+      cashRegisterName: data['cashRegisterName'] ?? data['cashRegister'] ?? '', // Soporte para ambos nombres de campo
+      cashRegisterId: data['cashRegisterId'] ?? '',
+      priceTotal: (data['priceTotal'] ?? 0.0).toDouble(),
+      valueReceived: (data['valueReceived'] ?? 0.0).toDouble(),
+      discount: (data['discount'] ?? 0.0).toDouble(),
+      discountIsPercentage: data['discountIsPercentage'] ?? false,
+      transactionType: data['transactionType'] ?? 'sale',
+      annulled: data['annulled'] ?? false,
+      listPoduct: processedProducts,
+      creation: creationTimestamp,
+    );
+  }
+
   factory TicketModel.sahredPreferencefromMap(Map<dynamic, dynamic> data) {
     // Manejo robusto de la marca de tiempo para soportar int (milisegundos) o Timestamp obtenido de shared preferences
     Timestamp creationTimestamp;
@@ -690,18 +737,18 @@ class TicketModel {
     }
 
     // Validar que el precio total coincida con el calculado (solo si no está anulado)
-    if (!isAnnulled && (priceTotal - calculatedPrice).abs() > 0.01) {
+    if (!annulled && (priceTotal - calculatedPrice).abs() > 0.01) {
       issues.add(
           'Precio total inconsistente: $priceTotal vs calculado: $calculatedPrice');
     }
 
     // Validar que hay productos (solo si no está anulado)
-    if (!isAnnulled && _listPoduct.isEmpty) {
+    if (!annulled && _listPoduct.isEmpty) {
       issues.add('El ticket no tiene productos');
     }
 
     // Validar productos individuales (solo si no está anulado)
-    if (!isAnnulled) {
+    if (!annulled) {
       for (var i = 0; i < _listPoduct.length; i++) {
         final product = _listPoduct[i];
         if (product['quantity'] == null || product['quantity'] <= 0) {
@@ -720,7 +767,7 @@ class TicketModel {
       'reportedTotal': priceTotal,
       'productCount': _listPoduct.length,
       'totalQuantity': totalProductCount,
-      'isAnnulled': isAnnulled,
+      'isAnnulled': annulled,
     };
   }
 
@@ -728,21 +775,5 @@ class TicketModel {
   void autoFixPriceTotal() {
     priceTotal = calculatedTotal;
   }
-
-  /// Anula el ticket marcándolo como anulado
-  /// Una vez anulado, el ticket no debe ser modificado
-  void annullTicket() {
-    annulled = true;
-  }
-
-  /// Reactiva un ticket anulado (solo para casos especiales como correcciones)
-  void reactivateTicket() {
-    annulled = false;
-  }
-
-  /// Verifica si el ticket está anulado
-  bool get isAnnulled => annulled;
-
-  /// Verifica si el ticket está activo (no anulado)
-  bool get isActive => !annulled;
+ 
 }

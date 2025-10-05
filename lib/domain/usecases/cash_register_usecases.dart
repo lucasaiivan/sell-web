@@ -147,7 +147,7 @@ class CashRegisterUsecases {
   /// Registra una venta en la caja registradora
   ///
   /// Actualiza los totales de ventas, facturación y descuentos
-  Future<void> registerSale({
+  Future<void> cashRegisterSale({
     required String accountId,
     required String cashRegisterId,
     required double saleAmount,
@@ -323,6 +323,38 @@ class CashRegisterUsecases {
     final transactionData = ticket.toMap();
 
     // Guardar en Firestore
+    await _repository.saveTicketTransaction(accountId: accountId,ticketId: ticket.id,transactionData: transactionData);
+  }
+
+  /// Actualiza un ticket existente en el historial de transacciones
+  /// Este método permite modificar tickets que ya fueron guardados previamente
+  Future<void> updateTicketTransaction({
+    required String accountId,
+    required TicketModel ticket,
+  }) async {
+    // VALIDACIONES BÁSICAS
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta no puede estar vacío');
+    }
+
+    if (ticket.id.isEmpty) {
+      throw Exception('El ID del ticket no puede estar vacío');
+    }
+
+    // Verificar que el ticket existe primero
+    final existingTicket = await _repository.getTransactionDetail(
+      accountId: accountId,
+      transactionId: ticket.id,
+    );
+
+    if (existingTicket == null) {
+      throw Exception('El ticket con ID ${ticket.id} no existe en el historial');
+    }
+
+    // Usar directamente el toMap() del ticket actualizado
+    final transactionData = ticket.toMap();
+
+    // Actualizar en Firestore (merge: true permite actualización parcial)
     await _repository.saveTicketTransaction(
       accountId: accountId,
       ticketId: ticket.id,
@@ -337,8 +369,7 @@ class CashRegisterUsecases {
     required DateTime endDate, 
   }) async {
     if (startDate.isAfter(endDate)) {
-      throw Exception(
-          'La fecha de inicio no puede ser posterior a la fecha de fin');
+      throw Exception('La fecha de inicio no puede ser posterior a la fecha de fin');
     }
 
     return await _repository.getTransactionsByDateRange(
@@ -348,13 +379,13 @@ class CashRegisterUsecases {
     );
   }
 
-  /// Obtiene las transacciones del día actual
+  /// = Obtiene las transacciones del día actual =
   Future<List<Map<String, dynamic>>> getTodayTransactions({required String accountId,String cashRegisterId=''}) async { 
-        
+    // definir el rango de fechas para hoy
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final endOfDay = startOfDay.add(const Duration(days: 1)); 
-
+  // obtener todas las transacciones de hoy
     final result = await getTransactionsByDateRange(
       accountId: accountId,
       startDate: startOfDay,
@@ -364,8 +395,7 @@ class CashRegisterUsecases {
     // filtrar por cashRegisterId si se proporciona
     if (cashRegisterId.isNotEmpty) {
       return result.where((doc) => doc['cashRegisterId'] == cashRegisterId).toList();
-    }
-     
+    } 
     return result;
   }
 

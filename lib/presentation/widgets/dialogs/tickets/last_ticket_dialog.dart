@@ -1,5 +1,5 @@
 import 'package:sellweb/core/core.dart';
-import 'package:flutter/material.dart';  
+import 'package:flutter/material.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart'; 
 
 /// Diálogo modernizado para mostrar el  ticket siguiendo Material Design 3
@@ -9,11 +9,13 @@ class TicketViewDialog extends StatefulWidget {
     required this.ticket,
     required this.businessName,
     this.title = 'Ticket',
+    this.onTicketAnnulled,
   });
 
   final TicketModel ticket;
   final String businessName;
   final String title;
+  final VoidCallback? onTicketAnnulled;
 
   @override
   State<TicketViewDialog> createState() => _TicketViewDialogState();
@@ -42,12 +44,12 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
   @override
   Widget build(BuildContext context) {
     return BaseDialog(
-      title: widget.ticket.isAnnulled ? '${widget.title} Anulado' : widget.title,
-      icon: widget.ticket.isAnnulled 
+      title: widget.ticket.annulled ? '${widget.title} Anulado' : widget.title,
+      icon: widget.ticket.annulled 
           ? Icons.cancel_rounded 
           : Icons.receipt_long_rounded,
       width: 450,
-      headerColor: widget.ticket.isAnnulled 
+      headerColor: widget.ticket.annulled 
           ? Theme.of(context).colorScheme.errorContainer
           : null,
       content: Column(
@@ -86,12 +88,12 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                 DialogComponents.infoRow(
                   context: context,
                   label: 'Estado',
-                  value: widget.ticket.isAnnulled ? 'ANULADO' : 'ACTIVO',
-                  icon: widget.ticket.isAnnulled 
+                  value: widget.ticket.annulled ? 'ANULADO' : 'ACTIVO',
+                  icon: widget.ticket.annulled 
                       ? Icons.cancel_rounded 
                       : Icons.check_circle_rounded,
                   valueStyle: TextStyle(
-                    color: widget.ticket.isAnnulled 
+                    color: widget.ticket.annulled 
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -246,7 +248,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
       ),
       actions: [
         
-        if (!widget.ticket.isAnnulled) ...[
+        if (!widget.ticket.annulled) ...[
           DialogComponents.secondaryActionButton(
             context: context,
             text: 'Anular',
@@ -322,23 +324,16 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
     );
   }
 
-  /// Anula el ticket usando el caso de uso
-  void _annullTicket() async {
+  /// Ejecuta la anulación del ticket a través del callback
+  void _annullTicket() {
     
-    ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Ticket anulado exitosamente (TEST)'),
-              ],
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
+    // Ejecutar el callback de anulación si está disponible
+    if (widget.onTicketAnnulled != null) {
+      // Cerrar el diálogo actual
+      Navigator.of(context).pop();
+      // Llamar al callback
+      widget.onTicketAnnulled!();
+    }
   }
 }
 
@@ -348,6 +343,7 @@ Future<void> showLastTicketDialog({
   required TicketModel ticket,
   required String businessName,
   String title = 'Ticket',
+  VoidCallback? onTicketAnnulled,
 }) {
   return showDialog(
     context: context,
@@ -355,6 +351,7 @@ Future<void> showLastTicketDialog({
       ticket: ticket,
       businessName: businessName,
       title: title,
+      onTicketAnnulled: onTicketAnnulled,
     ),
   );
 }

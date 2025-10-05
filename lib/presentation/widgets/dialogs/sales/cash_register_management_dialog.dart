@@ -679,7 +679,8 @@ class RecentTicketsView extends StatefulWidget {
 }
 
 class _RecentTicketsViewState extends State<RecentTicketsView> {
-  Future<List<Map<String, dynamic>>?>? _ticketsFuture;
+
+  Future<List<TicketModel>?>? _ticketsFuture;
 
   @override
   void initState() {
@@ -698,23 +699,19 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
       _loadTickets();
     }
   }
-
   void _loadTickets() {
     final sellProvider = context.read<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
-    
     if (accountId.isNotEmpty) {
       setState(() {
-        _ticketsFuture = widget.cashRegisterProvider.getTodayTickets(
-          accountId: accountId,
-          cashRegisterId: widget.cashRegisterProvider.currentActiveCashRegister?.id ?? '',
-        );
+        _ticketsFuture = widget.cashRegisterProvider.getTodayTickets(accountId: accountId, cashRegisterId: widget.cashRegisterProvider.currentActiveCashRegister?.id ?? '' );
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+
     final sellProvider = context.watch<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
@@ -724,7 +721,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
       return _buildEmptyTicketsView(context, widget.isMobile);
     }
 
-    return FutureBuilder<List<Map<String, dynamic>>?>(
+    return FutureBuilder<List<TicketModel>?>(
       future: _ticketsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -746,27 +743,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
         final tickets = allTickets.map((ticketData) {
           try {
             // Crear TicketModel desde Map usando los datos directamente
-            return TicketModel(
-              id: ticketData['id'] ?? '',
-              payMode: ticketData['payMode'] ?? '',
-              sellerName: ticketData['sellerName'] ?? '',
-              sellerId: ticketData['sellerId'] ?? '',
-              currencySymbol: ticketData['currencySymbol'] ?? '\$',
-              cashRegisterName: ticketData['cashRegisterName'] ?? ticketData['cashRegister'] ?? '',
-              cashRegisterId: ticketData['cashRegisterId'] ?? '',
-              priceTotal: (ticketData['priceTotal'] ?? 0).toDouble(),
-              valueReceived: (ticketData['valueReceived'] ?? 0).toDouble(),
-              discount: (ticketData['discount'] ?? 0).toDouble(),
-              discountIsPercentage: ticketData['discountIsPercentage'] ?? false,
-              transactionType: ticketData['transactionType'] ?? 'sale',
-              listPoduct: ticketData['listPoduct'] != null
-                  ? List<Map<String, dynamic>>.from((ticketData['listPoduct'] as List).map(
-                      (item) => item is Map<String, dynamic>
-                          ? item
-                          : Map<String, dynamic>.from(item as Map)))
-                  : [],
-              creation: ticketData['creation'] ?? Timestamp.now(),
-            );
+            return TicketModel.fromMap(ticketData.toMap());
           } catch (e) {
             debugPrint('Error converting ticket data: $e');
             return null;
@@ -840,8 +817,12 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
   }
 
   Widget _buildTicketTile(BuildContext context, TicketModel ticket, bool isMobile) {
+
+    // styles
     final theme = Theme.of(context);
+    // providers
     final sellProvider = context.read<SellProvider>();
+    final cashRegisterProvider = context.read<CashRegisterProvider>();
     
     return Material(
       color: Colors.transparent,
@@ -852,6 +833,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
           businessName: sellProvider.profileAccountSelected.name.isNotEmpty 
             ? sellProvider.profileAccountSelected.name 
             : 'PUNTO DE VENTA',
+          onTicketAnnulled: ()=> cashRegisterProvider.annullTicket(accountId: sellProvider.profileAccountSelected.id, ticket: ticket),  
         ),
         borderRadius: BorderRadius.circular(8),
         child: Padding(

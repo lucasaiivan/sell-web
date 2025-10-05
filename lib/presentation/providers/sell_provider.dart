@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
@@ -10,6 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:provider/provider.dart' as provider;
 import '../providers/cash_register_provider.dart';
+import '../providers/catalogue_provider.dart';
 
 class _SellProviderState {
   final bool ticketView;
@@ -36,12 +38,9 @@ class _SellProviderState {
     return _SellProviderState(
       ticketView: ticketView ?? this.ticketView,
       shouldPrintTicket: shouldPrintTicket ?? this.shouldPrintTicket,
-      profileAccountSelected:
-          profileAccountSelected ?? this.profileAccountSelected,
+      profileAccountSelected: profileAccountSelected ?? this.profileAccountSelected,
       ticket: ticket ?? this.ticket,
-      lastSoldTicket: lastSoldTicket == const Object()
-          ? this.lastSoldTicket
-          : lastSoldTicket as TicketModel?,
+      lastSoldTicket: lastSoldTicket == const Object() ? this.lastSoldTicket : lastSoldTicket as TicketModel?,
     );
   }
 
@@ -81,15 +80,14 @@ class SellProvider extends ChangeNotifier {
 
   /// Crea un ticket vacío usando la API encapsulada (método estático)
   static TicketModel _createEmptyTicketStatic() {
-    return TicketModel(
-      listPoduct: [],
-      creation: Timestamp.now(),
-    );
+    return TicketModel(listPoduct: [],creation: Timestamp.now());
   }
 
   /// Crea un nuevo ticket preservando valores específicos pero con productos vacíos
   TicketModel _createTicketWithValues({
+    required String id,
     required Timestamp creation,
+    bool annulled = false,
     String payMode = '',
     double valueReceived = 0.0,
     String cashRegisterName = '',
@@ -100,9 +98,11 @@ class SellProvider extends ChangeNotifier {
     double discount = 0.0,
     bool discountIsPercentage = false,
     String transactionType = 'sale',
-    String currencySymbol = '\$',
+    String currencySymbol = '\$', 
   }) {
-    return TicketModel(
+    return TicketModel( 
+      id: id,
+      annulled: annulled,
       listPoduct: [],
       creation: creation,
       payMode: payMode,
@@ -278,12 +278,13 @@ class SellProvider extends ChangeNotifier {
 
     if (!exist) {
       // Si el producto no existe, lo agrega con la cantidad especificada
-      updatedProducts.add(product.copyWith(
-          quantity: product.quantity > 0 ? product.quantity : 1));
+      updatedProducts.add(product.copyWith( quantity: product.quantity > 0 ? product.quantity : 1));
     }
 
     // Crea un nuevo ticket con los productos actualizados
     final newTicket = _createTicketWithValues(
+      id: currentTicket.id,
+      annulled: currentTicket.annulled,
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: currentTicket.valueReceived,
@@ -315,6 +316,8 @@ class SellProvider extends ChangeNotifier {
         currentTicket.products.where((item) => item.id != product.id).toList();
 
     final newTicket = _createTicketWithValues(
+      id: currentTicket.id,
+      annulled: currentTicket.annulled,
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: currentTicket.valueReceived,
@@ -364,6 +367,8 @@ class SellProvider extends ChangeNotifier {
   void setPayMode({String payMode = 'effective'}) {
     final currentTicket = _state.ticket;
     final newTicket = _createTicketWithValues(
+      id: currentTicket.id,
+      annulled: currentTicket.annulled,
       creation: currentTicket.creation,
       payMode: payMode,
       valueReceived: payMode != 'effective' ? 0.0 : currentTicket.valueReceived,
@@ -391,6 +396,8 @@ class SellProvider extends ChangeNotifier {
 
     final currentTicket = _state.ticket;
     final newTicket = _createTicketWithValues(
+      id: currentTicket.id,
+      annulled: currentTicket.annulled,
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: currentTicket.valueReceived,
@@ -417,6 +424,8 @@ class SellProvider extends ChangeNotifier {
     // Actualiza el valor recibido en el ticket
     final currentTicket = _state.ticket;
     final newTicket = _createTicketWithValues(
+      id: currentTicket.id,
+      annulled: currentTicket.annulled,
       creation: currentTicket.creation,
       payMode: currentTicket.payMode,
       valueReceived: value,
@@ -455,26 +464,30 @@ class SellProvider extends ChangeNotifier {
     await _persistenceService.saveShouldPrintTicket(_state.shouldPrintTicket);
   }
 
-  Future<void> saveLastSoldTicket() async {
+  Future<void> saveLastSoldTicket([TicketModel? ticket]) async {
     // Guarda el último ticket vendido en SharedPreferences
-    final currentTicket = _state.ticket;
+    // Si no se proporciona un ticket, usa el ticket actual del estado
+    final ticketToSave = ticket ?? _state.ticket;
+    
     final newLastSoldTicket = _createTicketWithValues(
-      creation: currentTicket.creation,
-      payMode: currentTicket.payMode,
-      valueReceived: currentTicket.valueReceived,
-      cashRegisterName: currentTicket.cashRegisterName,
-      cashRegisterId: currentTicket.cashRegisterId,
-      sellerName: currentTicket.sellerName,
-      sellerId: currentTicket.sellerId,
-      priceTotal: currentTicket.priceTotal,
-      discount: currentTicket.discount,
-      discountIsPercentage: currentTicket.discountIsPercentage,
-      transactionType: currentTicket.transactionType,
-      currencySymbol: currentTicket.currencySymbol,
+      id: ticketToSave.id,
+      annulled: ticketToSave.annulled,
+      creation: ticketToSave.creation,
+      payMode: ticketToSave.payMode,
+      valueReceived: ticketToSave.valueReceived,
+      cashRegisterName: ticketToSave.cashRegisterName,
+      cashRegisterId: ticketToSave.cashRegisterId,
+      sellerName: ticketToSave.sellerName,
+      sellerId: ticketToSave.sellerId,
+      priceTotal: ticketToSave.priceTotal,
+      discount: ticketToSave.discount,
+      discountIsPercentage: ticketToSave.discountIsPercentage,
+      transactionType: ticketToSave.transactionType,
+      currencySymbol: ticketToSave.currencySymbol,
     );
 
     // Establecer los productos usando el setter
-    newLastSoldTicket.products = List.from(currentTicket.products);
+    newLastSoldTicket.products = List.from(ticketToSave.products);
 
     _state = _state.copyWith(lastSoldTicket: newLastSoldTicket);
     await _saveLastSoldTicket();
@@ -484,8 +497,7 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveLastSoldTicket() async {
     final lastTicket = _state.lastSoldTicket;
     if (lastTicket != null) {
-      await _persistenceService
-          .saveLastSoldTicket(jsonEncode(lastTicket.toJson()));
+      await _persistenceService.saveLastSoldTicket(jsonEncode(lastTicket.toJson()));
     } else {
       await _persistenceService.clearLastSoldTicket();
     }
@@ -515,6 +527,8 @@ class SellProvider extends ChangeNotifier {
           cashRegisterProvider.currentActiveCashRegister!;
       final currentTicket = _state.ticket;
       final newTicket = _createTicketWithValues(
+        id: currentTicket.id,
+        annulled: currentTicket.annulled,
         creation: currentTicket.creation,
         payMode: currentTicket.payMode,
         valueReceived: currentTicket.valueReceived,
@@ -545,4 +559,341 @@ class SellProvider extends ChangeNotifier {
     cleanData();
     notifyListeners();
   }
+
+  /// PROCESAMIENTO DE VENTA CONFIRMADA
+  Future<void> processSale(BuildContext context) async {
+    try {
+      // asignamos valores necesarios 
+      _state.ticket.sellerId = _state.profileAccountSelected.id;
+      _state.ticket.sellerName = _state.profileAccountSelected.name;
+      _state.ticket.priceTotal = _state.ticket.calculatedTotal;
+      // Preparar el ticket con ID único
+      _prepareTicketForSale();
+
+      // Procesar caja registradora si está activa
+      await _processCashRegister(context);
+
+      // Guardar en historial de transacciones
+      await _saveToTransactionHistory(context);
+
+      // Actualizar estadísticas de productos y stock
+      await _updateProductSalesAndStock(context);
+
+      // Manejar impresión o generación de ticket según configuración
+      if (_state.shouldPrintTicket) {
+        await _handleTicketPrintingOrGeneration(context);
+      }
+
+      // Finalizar la venta
+      await saveLastSoldTicket();
+
+    } catch (e) {
+      // Mostrar error al usuario
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Error al procesar la venta: $e',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Prepara el ticket para la venta asignando un ID único
+  void _prepareTicketForSale() {
+    final currentTicket = _state.ticket;
+    if (currentTicket.id.isEmpty) {
+      final newTicket = _createTicketWithValues(
+        id:  UidHelper.generateUid(), 
+        annulled: false,
+        creation: currentTicket.creation,
+        payMode: currentTicket.payMode,
+        valueReceived: currentTicket.valueReceived,
+        cashRegisterName: currentTicket.cashRegisterName,
+        cashRegisterId: currentTicket.cashRegisterId,
+        sellerName: currentTicket.sellerName,
+        sellerId: currentTicket.sellerId,
+        priceTotal: currentTicket.priceTotal,
+        discount: currentTicket.discount,
+        discountIsPercentage: currentTicket.discountIsPercentage,
+        transactionType: currentTicket.transactionType,
+        currencySymbol: currentTicket.currencySymbol, 
+      ); 
+      newTicket.products = currentTicket.products;
+      
+      _state = _state.copyWith(ticket: newTicket);
+    }
+  }
+
+  /// Procesa la caja registradora si hay una activa
+  Future<void> _processCashRegister(BuildContext context) async {
+    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
+    
+    if (cashRegisterProvider.hasActiveCashRegister) {
+      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
+      final currentTicket = _state.ticket;
+      
+      // Actualizar datos del ticket con información de la caja
+      final newTicket = _createTicketWithValues(
+        id: currentTicket.id,
+        annulled: currentTicket.annulled,
+        creation: currentTicket.creation,
+        payMode: currentTicket.payMode,
+        valueReceived: currentTicket.valueReceived,
+        cashRegisterName: activeCashRegister.description,
+        cashRegisterId: activeCashRegister.id,
+        sellerName: currentTicket.sellerName,
+        sellerId: currentTicket.sellerId,
+        priceTotal: currentTicket.priceTotal,
+        discount: currentTicket.discount,
+        discountIsPercentage: currentTicket.discountIsPercentage,
+        transactionType: currentTicket.transactionType,
+        currencySymbol: currentTicket.currencySymbol,
+      ); 
+      newTicket.products = currentTicket.products;
+      
+      _state = _state.copyWith(ticket: newTicket);
+
+      // Registrar la venta en la caja activa
+      await cashRegisterProvider.cashRegisterSale(
+        accountId: _state.profileAccountSelected.id,
+        saleAmount: _state.ticket.getTotalPrice,
+        discountAmount: _state.ticket.discount,
+        itemCount: _state.ticket.getProductsQuantity(),
+      );
+    }
+  }
+
+  /// Maneja la impresión o generación de ticket según la configuración
+  Future<void> _handleTicketPrintingOrGeneration(BuildContext context) async {
+    // Verificar si hay impresora conectada
+    final printerService = ThermalPrinterHttpService();
+    await printerService.initialize();
+
+    if (printerService.isConnected) {
+      // Si hay impresora conectada, imprimir directamente
+      await _printTicketDirectly(context, printerService);
+    } else {
+      // Si no hay impresora, mostrar diálogo de opciones
+      await _showTicketOptionsDialog(context);
+    }
+  }
+
+  /// Imprime el ticket directamente usando la impresora térmica
+  Future<void> _printTicketDirectly(BuildContext context, ThermalPrinterHttpService printerService) async {
+    try {
+      // Determinar método de pago
+      String paymentMethod = 'Efectivo';
+      switch (_state.ticket.payMode) {
+        case 'mercadopago':
+          paymentMethod = 'Mercado Pago';
+          break;
+        case 'card':
+          paymentMethod = 'Tarjeta Déb/Créd';
+          break;
+        default:
+          paymentMethod = 'Efectivo';
+      }
+
+      // Preparar datos del ticket
+      final products = _state.ticket.products.map((item) {
+        return {
+          'quantity': item.quantity.toString(),
+          'description': item.description,
+          'price': item.salePrice,
+        };
+      }).toList();
+
+      // Imprimir el ticket
+      final printSuccess = await printerService.printTicket(
+        businessName: _state.profileAccountSelected.name.isNotEmpty
+            ? _state.profileAccountSelected.name
+            : 'PUNTO DE VENTA',
+        products: products,
+        total: _state.ticket.getTotalPrice,
+        paymentMethod: paymentMethod,
+        cashReceived: _state.ticket.valueReceived > 0
+            ? _state.ticket.valueReceived
+            : null,
+        change: _state.ticket.valueReceived > _state.ticket.getTotalPrice
+            ? _state.ticket.valueReceived - _state.ticket.getTotalPrice
+            : null,
+      );
+
+      // Mostrar resultado
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  printSuccess ? Icons.check_circle : Icons.error,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    printSuccess
+                        ? 'Ticket impreso correctamente'
+                        : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: printSuccess ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Error al procesar impresión: $e',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Muestra el diálogo de opciones de ticket cuando no hay impresora
+  Future<void> _showTicketOptionsDialog(BuildContext context) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (context.mounted) {
+      await showTicketOptionsDialog(
+        context: context,
+        ticket: _state.ticket,
+        businessName: _state.profileAccountSelected.name.isNotEmpty
+            ? _state.profileAccountSelected.name
+            : 'PUNTO DE VENTA',
+        onComplete: () {
+          // Este callback se ejecuta solo cuando se completa exitosamente
+        },
+      );
+    }
+  }
+
+  /// Guarda el ticket en el historial de transacciones
+  Future<void> _saveToTransactionHistory(BuildContext context) async {
+    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
+    
+    await cashRegisterProvider.saveTicketToTransactionHistory(accountId: _state.profileAccountSelected.id, ticket: _state.ticket);
+  }
+
+  /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo
+  ///
+  /// Este método se ejecuta después de confirmar una venta para:
+  /// 1. Incrementar el contador de ventas de cada producto
+  /// 2. Decrementar el stock si el producto tiene habilitado el control de stock
+  Future<void> _updateProductSalesAndStock(BuildContext context) async {
+    try {
+      // Obtener el provider del catálogo
+      final catalogueProvider = provider.Provider.of<CatalogueProvider>(context, listen: false);
+      final accountId = _state.profileAccountSelected.id;
+
+      // Procesar cada producto del ticket
+      for (final product in _state.ticket.products) {
+        if (product.code.isEmpty) {
+          // Si el producto no tiene código, saltar (productos de venta rápida)
+          continue;
+        }
+
+        try {
+          // Incrementar ventas del producto en el catálogo
+          await catalogueProvider.incrementProductSales(
+            accountId,
+            product.id,
+            quantity: product.quantity,
+          );
+
+          // Si el producto tiene control de stock habilitado, decrementar stock
+          if (product.stock && product.quantityStock > 0) {
+            await catalogueProvider.decrementProductStock(
+              accountId,
+              product.id,
+              product.quantity,
+            );
+          }
+        } catch (productError) {
+          // Si falla la actualización de un producto específico, continuar con los demás
+          if (kDebugMode) {
+            print('Error actualizando producto ${product.id}: $productError');
+          }
+        }
+      }
+    } catch (e) {
+      // Registrar el error pero no fallar la venta
+      if (kDebugMode) {
+        print('Error general actualizando productos: $e');
+      }
+
+      // Opcionalmente mostrar una notificación al usuario
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.white),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Venta registrada correctamente. Hay un problema menor con la actualización de estadísticas.',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+ 
 }

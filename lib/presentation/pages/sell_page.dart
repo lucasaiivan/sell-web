@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/cash_flow_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/cash_register_close_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/sales/cash_register_management_dialog.dart';
@@ -509,8 +508,7 @@ class _SellPageState extends State<SellPage> {
                               ? 'Ver último ticket\nToca para ver detalles y reimprimir'
                               : 'No hay tickets recientes',
                           onPressed: hasLastTicket
-                              ? () => _showLastTicketDialog(
-                                  buildContext, sellProvider)
+                              ? () => _showLastTicketDialog(buildContext, sellProvider)
                               : null,
                           backgroundColor: Theme.of(buildContext)
                               .colorScheme
@@ -630,17 +628,20 @@ class _SellPageState extends State<SellPage> {
 
   /// Lógica para confirmar la venta y procesar el ticket
   Future<void> _confirmSale(SellProvider provider) async {
-    setState(() {_showConfirmedPurchase =
-          true; // para mostrar el mensaje de compra confirmada
+    setState(() {
+      _showConfirmedPurchase = true; // para mostrar el mensaje de compra confirmada
     });
 
-    // Si el checkbox está activo, procesar la impresión/generación de tickets
-    if (provider.shouldPrintTicket) {
-      // guardar venta con impresión de ticket
-      await _processSaveAndPrintTicket(provider);
-    } else {
-      // guardar venta sin impresión
-      await _processSimpleSaveSale(provider);
+    try {
+      // Usar el método unificado del provider
+      await provider.processSale(context);
+    } catch (e) {
+      // El error ya se maneja en el provider, solo necesitamos resetear el estado
+      if (mounted) {
+        setState(() {
+          _showConfirmedPurchase = false;
+        });
+      }
     }
   }
 
@@ -653,289 +654,6 @@ class _SellPageState extends State<SellPage> {
       final provider = Provider.of<SellProvider>(context, listen: false);
       provider.discartTicket();
       provider.setTicketView(false);
-    }
-  }
-
-  // === Procesa la venta con impresión o generación de ticket ===
-  Future<void> _processSaveAndPrintTicket(SellProvider provider) async {
-
-    // Obtener el provider de caja registradora
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false); 
-    // Si hay una caja activa, registrar los datos de la caja en el ticket y registrar la venta en la caja
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      // Obtener la caja activa y asignar los datos al ticket
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-      provider.ticket.cashRegisterName = activeCashRegister.description;
-      provider.ticket.cashRegisterId = activeCashRegister.id;
-
-      // Registrar la venta en la caja activa
-      await cashRegisterProvider.registerSale(
-        accountId: provider.profileAccountSelected.id,
-        saleAmount: provider.ticket.getTotalPrice,
-        discountAmount: provider.ticket.discount,
-        itemCount: provider.ticket.getProductsQuantity(),
-      );
-    }
-
-    // Verificar si hay impresora conectada
-    final printerService = ThermalPrinterHttpService();
-    await printerService.initialize();
-
-    if (printerService.isConnected) {
-      // Si hay impresora conectada, imprimir directamente el ticket real
-      try {
-        // Determinar método de pago primero
-        String paymentMethod = 'Efectivo';
-        switch (provider.ticket.payMode) {
-          case 'mercadopago':
-            paymentMethod = 'Mercado Pago';
-            break;
-          case 'card':
-            paymentMethod = 'Tarjeta Déb/Créd';
-            break;
-          default:
-            paymentMethod = 'Efectivo';
-        }
-
-        // Preparar datos del ticket
-        final products = provider.ticket.products.map((item) {
-          return {
-            'quantity': item.quantity.toString(),
-            'description': item.description,
-            'price': item.salePrice,
-          };
-        }).toList();
-
-        // Imprimir el ticket
-        final printSuccess = await printerService.printTicket(
-          businessName: provider.profileAccountSelected.name.isNotEmpty
-              ? provider.profileAccountSelected.name
-              : 'PUNTO DE VENTA',
-          products: products,
-          total: provider.ticket.getTotalPrice,
-          paymentMethod: paymentMethod,
-          cashReceived: provider.ticket.valueReceived > 0
-              ? provider.ticket.valueReceived
-              : null,
-          change: provider.ticket.valueReceived > provider.ticket.getTotalPrice
-              ? provider.ticket.valueReceived - provider.ticket.getTotalPrice
-              : null,
-        );
-
-        // Mostrar resultado
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(
-                    printSuccess ? Icons.check_circle : Icons.error,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      printSuccess
-                          ? 'Ticket impreso correctamente'
-                          : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: printSuccess ? Colors.green : Colors.red,
-              duration: const Duration(seconds: 3),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Error al procesar impresión: $e',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
-      }
-    } else {
-      // Si no hay impresora, mostrar diálogo de opciones
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      if (mounted) {
-        await showTicketOptionsDialog(
-          context: context,
-          ticket: provider.ticket,
-          businessName: provider.profileAccountSelected.name.isNotEmpty
-              ? provider.profileAccountSelected.name
-              : 'PUNTO DE VENTA',
-          onComplete: () {
-            // Este callback se ejecuta solo cuando se completa exitosamente
-          },
-        );
-      }
-    }
-
-    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
-
-    // Obtener información del usuario para asignar como vendedor
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userEmail = authProvider.user?.email ?? 'unknown@example.com';
-    final userName = authProvider.user?.displayName ?? 'Vendedor';
-
-    // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
-    await cashRegisterProvider.saveTicketToTransactionHistory(
-      accountId: provider.profileAccountSelected.id,
-      ticket: provider.ticket,
-      sellerName: userName,
-      sellerId: userEmail,
-    );
-
-    // ===== INCREMENTAR VENTAS DE PRODUCTOS EN EL CATÁLOGO =====
-    await _updateProductSalesAndStock(provider);
-
-    // Imprimir resultado del guardado
-    await _finalizeSale(provider);
-  }
-
-  /// === Procesa la venta simple sin impresión de ticket ===
-  Future<void> _processSimpleSaveSale(SellProvider provider) async {
-    // Obtener el provider de caja registradora
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
-    // nos aseguramos de asignar valores importantes al ticket
-    provider.ticket.cashRegisterId = cashRegisterProvider.currentActiveCashRegister?.id ?? '';
-    provider.ticket.id = UidHelper.generateUid();
-
-    // === CASH REGISTER (SI HAY CAJA ACTIVA) ===
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      // Obtener la caja activa y asignar los datos al ticket
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-      provider.ticket.cashRegisterName = activeCashRegister.description;
-      provider.ticket.cashRegisterId = activeCashRegister.id;
-      // Registrar la venta en la caja
-      await cashRegisterProvider.registerSale(
-        accountId: provider.profileAccountSelected.id,
-        saleAmount: provider.ticket.getTotalPrice,
-        discountAmount: provider.ticket.discount,
-        itemCount: provider.ticket.getProductsQuantity(),
-      );
-    }
-
-    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
-
-    // Obtener información del usuario para asignar como vendedor
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userEmail = authProvider.user?.email ?? 'unknown@example.com';
-    final userName = authProvider.user?.displayName ?? 'Vendedor';
-
-    // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
-    await cashRegisterProvider.saveTicketToTransactionHistory(
-      accountId: provider.profileAccountSelected.id,
-      ticket: provider.ticket,
-      sellerName: userName,
-      sellerId: userEmail,
-    );
-
-    // ===== INCREMENTAR VENTAS DE PRODUCTOS EN EL CATÁLOGO =====
-    await _updateProductSalesAndStock(provider);
-
-    // Imprimir resultado del guardado
-    await _finalizeSale(provider);
-  }
-
-  /// Finaliza la venta guardando el último ticket y limpiando
-  Future<void> _finalizeSale(SellProvider provider) async {
-    // Guardar el último ticket vendido
-    await provider.saveLastSoldTicket(); 
-  }
-
-  /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo
-  ///
-  /// Este método se ejecuta después de confirmar una venta para:
-  /// 1. Incrementar el contador de ventas de cada producto
-  /// 2. Decrementar el stock si el producto tiene habilitado el control de stock
-  Future<void> _updateProductSalesAndStock(SellProvider provider) async {
-    try {
-      // Obtener el provider del catálogo
-      final catalogueProvider =
-          Provider.of<CatalogueProvider>(context, listen: false);
-      final accountId = provider.profileAccountSelected.id;
-
-      // Procesar cada producto del ticket
-      for (final product in provider.ticket.products) {
-        if (product.code.isEmpty) {
-          // Si el producto no tiene código, saltar (productos de venta rápida)
-          continue;
-        }
-
-        try {
-          // Incrementar ventas del producto en el catálogo
-          await catalogueProvider.incrementProductSales(
-            accountId,
-            product.id,
-            quantity: product.quantity,
-          );
-
-          // Si el producto tiene control de stock habilitado, decrementar stock
-          if (product.stock && product.quantityStock > 0) {
-            await catalogueProvider.decrementProductStock(
-              accountId,
-              product.id,
-              product.quantity,
-            );
-          }
-        } catch (productError) {
-          // Si falla la actualización de un producto específico, continuar con los demás
-        }
-      }
-    } catch (e) {
-      // Registrar el error pero no fallar la venta
-
-      // Opcionalmente mostrar una notificación al usuario
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.warning, color: Colors.white),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Venta registrada correctamente. Hay un problema menor con la actualización de estadísticas.',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
     }
   }
 
@@ -1793,15 +1511,20 @@ void _showPrinterConfigDialog(BuildContext context) {
 
 /// Muestra el diálogo del último ticket vendido
 void _showLastTicketDialog(BuildContext context, SellProvider provider) {
-  if (provider.lastSoldTicket == null) return;
+
+  if (provider.lastSoldTicket == null) return; // No hay ticket para mostrar
+  final cashRegisterProvider =  Provider.of<CashRegisterProvider>(context, listen: false);
+  final ticket = provider.lastSoldTicket!;
 
   showLastTicketDialog(
     context: context,
-    ticket: provider.lastSoldTicket!,
+    ticket: provider.lastSoldTicket!, 
     title: 'Último ticket',
-    businessName: provider.profileAccountSelected.name.isNotEmpty
-        ? provider.profileAccountSelected.name
-        : 'PUNTO DE VENTA',
+    businessName: provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name: 'PUNTO DE VENTA',
+    onTicketAnnulled: (){
+      cashRegisterProvider.annullTicket(accountId: provider.profileAccountSelected.id, ticket: ticket);
+      provider.saveLastSoldTicket(ticket.copyWith(annulled: true));
+    }
   );
 }
 

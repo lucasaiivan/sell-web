@@ -8,7 +8,7 @@ import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
-import 'package:sellweb/domain/usecases/cash_register_usecases.dart';
+import 'package:sellweb/domain/usecases/sell_usecases.dart'; // Lógica de negocio de tickets
 import 'package:provider/provider.dart' as provider;
 import '../providers/cash_register_provider.dart';
 import '../providers/catalogue_provider.dart';
@@ -66,7 +66,7 @@ class _SellProviderState {
 
 class SellProvider extends ChangeNotifier {
   final GetUserAccountsUseCase getUserAccountsUseCase;
-  final CashRegisterUsecases _cashRegisterUsecases;
+  final SellUsecases _sellUsecases; // Operaciones de tickets
   final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
 
   // Estado encapsulado para optimizar notificaciones
@@ -74,7 +74,7 @@ class SellProvider extends ChangeNotifier {
     ticketView: false,
     shouldPrintTicket: false,
     profileAccountSelected: ProfileAccountModel(),
-    ticket: _cashRegisterUsecases.createEmptyTicket(),
+    ticket: _sellUsecases.createEmptyTicket(),
     lastSoldTicket: null,
   );
 
@@ -82,7 +82,7 @@ class SellProvider extends ChangeNotifier {
   /// 
   /// RESPONSABILIDAD: Solo coordinar llamada al UseCase
   TicketModel _createEmptyTicket() {
-    return _cashRegisterUsecases.createEmptyTicket();
+    return _sellUsecases.createEmptyTicket();
   }
 
   // Getters que no causan rebuild
@@ -95,8 +95,8 @@ class SellProvider extends ChangeNotifier {
 
   SellProvider({
     required this.getUserAccountsUseCase,
-    required CashRegisterUsecases cashRegisterUsecases,
-  }) : _cashRegisterUsecases = cashRegisterUsecases {
+    required SellUsecases sellUsecases,
+  }) : _sellUsecases = sellUsecases {
     _loadInitialState();
   }
 
@@ -220,12 +220,12 @@ class SellProvider extends ChangeNotifier {
   /// Agrega un producto al ticket
   /// 
   /// RESPONSABILIDAD: Coordinar UI y persistencia
-  /// La lógica de negocio (buscar, incrementar, agregar) está en CashRegisterUsecases
+  /// La lógica de negocio (buscar, incrementar, agregar) está en SellUsecases
   void addProductsticket(ProductCatalogue product,
       {bool replaceQuantity = false}) {
     try {
       // PASO 1: UseCase maneja toda la lógica de negocio
-      final updatedTicket = _cashRegisterUsecases.addProductToTicket(
+      final updatedTicket = _sellUsecases.addProductToTicket( // CAMBIADO
         _state.ticket,
         product,
         replaceQuantity: replaceQuantity,
@@ -246,11 +246,11 @@ class SellProvider extends ChangeNotifier {
   /// Elimina un producto del ticket
   /// 
   /// RESPONSABILIDAD: Coordinar UI y persistencia
-  /// La lógica de negocio (filtrar producto) está en CashRegisterUsecases
+  /// La lógica de negocio (filtrar producto) está en SellUsecases
   void removeProduct(ProductCatalogue product) {
     try {
       // PASO 1: UseCase maneja la lógica de eliminación
-      final updatedTicket = _cashRegisterUsecases.removeProductFromTicket(
+      final updatedTicket = _sellUsecases.removeProductFromTicket( // CAMBIADO
         _state.ticket,
         product,
       );
@@ -294,11 +294,11 @@ class SellProvider extends ChangeNotifier {
   /// Configura la forma de pago del ticket
   /// 
   /// RESPONSABILIDAD: Coordinar UI y persistencia
-  /// La lógica de negocio (validar, resetear valor recibido) está en CashRegisterUsecases
+  /// La lógica de negocio (validar, resetear valor recibido) está en SellUsecases
   void setPayMode({String payMode = 'effective'}) {
     try {
       // PASO 1: UseCase maneja validaciones y lógica
-      final updatedTicket = _cashRegisterUsecases.setTicketPaymentMode(
+      final updatedTicket = _sellUsecases.setTicketPaymentMode( // CAMBIADO
         _state.ticket,
         payMode,
       );
@@ -318,11 +318,11 @@ class SellProvider extends ChangeNotifier {
   /// Configura el descuento del ticket
   /// 
   /// RESPONSABILIDAD: Coordinar UI y persistencia
-  /// La lógica de negocio (validar descuento no negativo) está en CashRegisterUsecases
+  /// La lógica de negocio (validar descuento no negativo) está en SellUsecases
   void setDiscount({required double discount, bool isPercentage = false}) {
     try {
       // PASO 1: UseCase maneja validaciones y lógica
-      final updatedTicket = _cashRegisterUsecases.setTicketDiscount(
+      final updatedTicket = _sellUsecases.setTicketDiscount( // CAMBIADO
         _state.ticket,
         discount: discount,
         isPercentage: isPercentage,
@@ -343,11 +343,11 @@ class SellProvider extends ChangeNotifier {
   /// Configura el valor recibido en efectivo
   /// 
   /// RESPONSABILIDAD: Coordinar UI y persistencia
-  /// La lógica de negocio (validar valor no negativo) está en CashRegisterUsecases
+  /// La lógica de negocio (validar valor no negativo) está en SellUsecases
   void setReceivedCash(double value) {
     try {
       // PASO 1: UseCase maneja validaciones y lógica
-      final updatedTicket = _cashRegisterUsecases.setTicketReceivedCash(
+      final updatedTicket = _sellUsecases.setTicketReceivedCash( // CAMBIADO
         _state.ticket,
         value,
       );
@@ -383,7 +383,7 @@ class SellProvider extends ChangeNotifier {
   /// Guarda el último ticket vendido
   /// 
   /// RESPONSABILIDAD: Actualizar estado UI y coordinar llamada al UseCase
-  /// La lógica de persistencia está en CashRegisterUsecases
+  /// La lógica de persistencia está en SellUsecases
   /// 
   /// 🆕 Este método mantiene sincronizado el estado en memoria con SharedPreferences
   Future<void> saveLastSoldTicket([TicketModel? ticket]) async {
@@ -391,7 +391,7 @@ class SellProvider extends ChangeNotifier {
     
     try {
       // PASO 1: UseCase maneja validación y persistencia en SharedPreferences
-      await _cashRegisterUsecases.saveLastSoldTicket(ticketToSave);
+      await _sellUsecases.saveLastSoldTicket(ticketToSave); // CAMBIADO
       
       // PASO 2: Actualizar estado local UI para mantener sincronización
       _state = _state.copyWith(lastSoldTicket: ticketToSave);
@@ -461,7 +461,7 @@ class SellProvider extends ChangeNotifier {
   /// Útil cuando otro provider actualiza SharedPreferences directamente
   Future<void> _reloadLastSoldTicketFromPersistence() async {
     try {
-      final lastTicket = await _cashRegisterUsecases.getLastSoldTicket();
+      final lastTicket = await _sellUsecases.getLastSoldTicket(); // CAMBIADO
       _state = _state.copyWith(lastSoldTicket: lastTicket);
       notifyListeners();
       
@@ -480,7 +480,7 @@ class SellProvider extends ChangeNotifier {
   Future<void> _loadLastSoldTicket() async {
     try {
       // UseCase maneja la recuperación y deserialización
-      final lastTicket = await _cashRegisterUsecases.getLastSoldTicket();
+      final lastTicket = await _sellUsecases.getLastSoldTicket(); // CAMBIADO
       
       if (lastTicket != null) {
         _state = _state.copyWith(lastSoldTicket: lastTicket);
@@ -497,7 +497,7 @@ class SellProvider extends ChangeNotifier {
   /// Actualiza el ticket con la caja registradora activa
   /// 
   /// RESPONSABILIDAD: Coordinar UI con datos de caja activa
-  /// La lógica de asociación está en CashRegisterUsecases
+  /// La lógica de asociación está en SellUsecases
   void updateTicketWithCashRegister(BuildContext context) {
     try {
       // Obtener caja activa
@@ -509,7 +509,7 @@ class SellProvider extends ChangeNotifier {
             cashRegisterProvider.currentActiveCashRegister!;
         
         // PASO 1: UseCase asocia ticket con caja
-        final updatedTicket = _cashRegisterUsecases.associateTicketWithCashRegister(
+        final updatedTicket = _sellUsecases.associateTicketWithCashRegister( // CAMBIADO
           _state.ticket,
           activeCashRegister,
         );
@@ -591,7 +591,7 @@ class SellProvider extends ChangeNotifier {
   /// Prepara el ticket para la venta
   /// 
   /// RESPONSABILIDAD: Coordinar preparación con UseCase
-  /// La lógica de validación, transformación y generación de ID está en CashRegisterUsecases
+  /// La lógica de validación, transformación y generación de ID está en SellUsecases
   void _prepareTicketForSale(BuildContext context) {
     try {
       // Obtener caja activa si existe
@@ -601,7 +601,7 @@ class SellProvider extends ChangeNotifier {
           : null;
 
       // PASO 1: UseCase prepara ticket completo (validaciones, transformaciones, ID)
-      final preparedTicket = _cashRegisterUsecases.prepareSaleTicket(
+      final preparedTicket = _sellUsecases.prepareSaleTicket( // CAMBIADO
         _state.ticket,
         sellerId: _state.profileAccountSelected.id,
         sellerName: _state.profileAccountSelected.name,
@@ -786,7 +786,7 @@ class SellProvider extends ChangeNotifier {
     
     // 🆕 PASO 1: Preparar el ticket usando el UseCase antes de guardar
     // Esto asegura que el ticket tenga ID, validaciones, y transformaciones correctas
-    final preparedTicket = _cashRegisterUsecases.prepareTicketForTransaction(_state.ticket);
+    final preparedTicket = _sellUsecases.prepareTicketForTransaction(_state.ticket); // CAMBIADO
     
     // PASO 2: Actualizar el ticket actual con el preparado (tiene ID generado si estaba vacío)
     _state = _state.copyWith(ticket: preparedTicket);

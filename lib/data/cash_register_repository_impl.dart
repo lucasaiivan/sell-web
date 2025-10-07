@@ -356,6 +356,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required double discountIncrement, // incrementa el descuento
   }) async {
     // updateSalesAndBilling : actualiza los totales de ventas y facturación de una caja registradora
+    // ⚠️ IMPORTANTE: Este método SOLO debe usarse para VENTAS EFECTIVAS
+    // Para anulaciones, usar updateBillingOnAnnullment() que NO incrementa sales
     try {
       // Obtener la caja registradora actual
       final activeCashRegisters = await getActiveCashRegisters(accountId);
@@ -366,7 +368,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
       // Actualizar totales de ventas
       final updatedCashRegister = cashRegister.update(
-        sales: cashRegister.sales + 1, // Incrementa las ventas de la caja
+        sales: cashRegister.sales + 1, // ✅ Incrementa contador de ventas efectivas
         billing: cashRegister.billing +
             billingIncrement, // Incrementa la facturación
         discount: cashRegister.discount +
@@ -376,6 +378,42 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       await setCashRegister(accountId, updatedCashRegister);
     } catch (e) {
       throw Exception('Error al actualizar ventas y facturación: $e');
+    }
+  }
+
+  /// Actualiza billing y discount al anular un ticket (NO incrementa sales)
+  /// 
+  /// RESPONSABILIDAD: Restar montos de venta anulada sin modificar contador de ventas
+  /// - Decrementa billing (restar precio total del ticket)
+  /// - Decrementa discount (restar descuento del ticket)
+  /// - NO modifica sales (las ventas efectivas no incluyen anulaciones)
+  /// - Incrementar annulledTickets es responsabilidad del llamador
+  @override
+  Future<void> updateBillingOnAnnullment({
+    required String accountId,
+    required String cashRegisterId,
+    required double billingDecrement, // Monto a restar de billing (valor positivo)
+    required double discountDecrement, // Monto a restar de discount (valor positivo)
+  }) async {
+    try {
+      // Obtener la caja registradora actual
+      final activeCashRegisters = await getActiveCashRegisters(accountId);
+      final cashRegister = activeCashRegisters.firstWhere(
+        (cr) => cr.id == cashRegisterId,
+        orElse: () => throw Exception('Caja registradora no encontrada'),
+      );
+
+      // Actualizar solo billing y discount (sales NO se modifica)
+      final updatedCashRegister = cashRegister.update(
+        // NO modificar sales - las ventas efectivas no incluyen anulaciones
+        billing: cashRegister.billing - billingDecrement, // Restar facturación
+        discount: cashRegister.discount - discountDecrement, // Restar descuento
+        annulledTickets: cashRegister.annulledTickets + 1, // ✅ Incrementar contador de anulados
+      );
+
+      await setCashRegister(accountId, updatedCashRegister);
+    } catch (e) {
+      throw Exception('Error al actualizar billing por anulación: $e');
     }
   }
 

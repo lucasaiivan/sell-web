@@ -105,11 +105,27 @@ abstract class CashRegisterRepository {
   });
 
   /// Actualiza los totales de ventas y facturación
+  /// 
+  /// ⚠️ IMPORTANTE: Este método SOLO debe usarse para VENTAS EFECTIVAS
+  /// Incrementa: sales (+1), billing, discount
   Future<void> updateSalesAndBilling({
     required String accountId,
     required String cashRegisterId,
     required double billingIncrement,
     required double discountIncrement,
+  });
+
+  /// Actualiza billing y discount al anular un ticket (NO incrementa sales)
+  /// 
+  /// RESPONSABILIDAD: Restar montos de venta anulada sin modificar contador de ventas
+  /// - Decrementa billing y discount
+  /// - Incrementa annulledTickets (+1)
+  /// - NO modifica sales (las ventas efectivas no incluyen anulaciones)
+  Future<void> updateBillingOnAnnullment({
+    required String accountId,
+    required String cashRegisterId,
+    required double billingDecrement,
+    required double discountDecrement,
   });
 
   // ==========================================

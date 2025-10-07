@@ -2,7 +2,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart'; 
 
-/// Diálogo modernizado para mostrar el  ticket siguiendo Material Design 3
+/// Diálogo para mostrar el  ticket  
 class TicketViewDialog extends StatefulWidget {
   const TicketViewDialog({
     super.key,
@@ -80,14 +80,15 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                   context: context,
                   label: 'ID Ticket',
                   value: widget.ticket.id.length > 8
-                      ? '...${widget.ticket.cashRegisterId.substring(widget.ticket.cashRegisterId.length - 8)}'
-                      : widget.ticket.cashRegisterId,
+                      ? '...${widget.ticket.id.substring(widget.ticket.id.length - 8)}'
+                      : widget.ticket.id,
                   icon: Icons.confirmation_number_rounded,
                 ),
                 DialogComponents.minSpacing,
                 DialogComponents.infoRow(
                   context: context,
                   label: 'Estado',
+                  
                   value: widget.ticket.annulled ? 'ANULADO' : 'ACTIVO',
                   icon: widget.ticket.annulled 
                       ? Icons.cancel_rounded 
@@ -251,6 +252,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
         if (!widget.ticket.annulled) ...[
           DialogComponents.secondaryActionButton(
             context: context,
+            icon: Icons.security_rounded,
             text: 'Anular',
             onPressed: () => _showAnnullConfirmation(),
           ),

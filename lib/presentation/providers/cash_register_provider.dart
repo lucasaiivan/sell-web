@@ -6,6 +6,7 @@ import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
+import '../../domain/usecases/sell_usecases.dart'; // NUEVO: Lógica de negocio de tickets
 
 /// Extension helper para firstOrNull si no está disponible
 extension ListExtensions<T> on List<T> {
@@ -105,7 +106,8 @@ class _CashRegisterState {
 /// - Flujos de caja
 /// - Operaciones de apertura y cierre
 class CashRegisterProvider extends ChangeNotifier {
-  final CashRegisterUsecases _cashRegisterUsecases;
+  final CashRegisterUsecases _cashRegisterUsecases; // Operaciones de caja
+  final SellUsecases _sellUsecases; // NUEVO: Operaciones de tickets
 
   // Stream subscriptions para actualizaciones automáticas
   StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
@@ -141,7 +143,10 @@ class CashRegisterProvider extends ChangeNotifier {
   CashRegister? get currentActiveCashRegister =>
       _state.currentActiveCashRegister;
 
-  CashRegisterProvider(this._cashRegisterUsecases);
+  CashRegisterProvider(
+    this._cashRegisterUsecases,
+    this._sellUsecases, // NUEVO: Inyectar lógica de tickets
+  );
 
   @override
   void dispose() {
@@ -446,15 +451,86 @@ class CashRegisterProvider extends ChangeNotifier {
 
   /// Cierra una caja registradora
   /// 
-  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
-  /// Las validaciones y lógica de negocio están en CashRegisterUsecases
+  /// RESPONSABILIDAD: Coordinar UI, validar contadores reales y cerrar caja
+  /// 
+  /// ⚠️ NUEVA LÓGICA DE CONTADORES:
+  /// - sales: Representa SOLO ventas efectivas (NO incluye anulaciones)
+  /// - annulledTickets: Contador de tickets anulados
+  /// - totalTransactions = sales + annulledTickets
+  /// 
+  /// FLUJO:
+  /// 1. Obtener transacciones reales de hoy de esta caja
+  /// 2. Calcular contadores correctos (ventas efectivas, anulados)
+  /// 3. Validar/corregir contadores si hay desincronización
+  /// 4. Cerrar la caja (arqueo)
   Future<bool> closeCashRegister(
       String accountId, String cashRegisterId) async {
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
-      // UseCase maneja TODAS las validaciones
+      // 🎯 PASO 1: Obtener transacciones reales de hoy para validar contadores
+      final todayTickets = await _sellUsecases.getTodayTransactions(
+        accountId: accountId,
+        cashRegisterId: cashRegisterId,
+      );
+
+      // 🎯 PASO 2: Calcular contadores desde la fuente de verdad (para verificación)
+      final effectiveSales = todayTickets.where((ticket) => 
+        ticket['annulled'] != true
+      ).length;
+
+      final annulledCount = todayTickets.where((ticket) => 
+        ticket['annulled'] == true
+      ).length;
+
+      final totalTransactions = effectiveSales + annulledCount;
+
+      // 🎯 PASO 3: Verificar consistencia de contadores
+      // ⚠️ IMPORTANTE: 
+      // - sales debe coincidir con effectiveSales (ventas efectivas)
+      // - annulledTickets debe coincidir con annulledCount
+      // - Si hay desincronización, corregir antes de cerrar
+      if (_state.selectedCashRegister != null && totalTransactions > 0) {
+        final currentSales = _state.selectedCashRegister!.sales;
+        final currentAnnulled = _state.selectedCashRegister!.annulledTickets;
+        
+        // Verificar si los contadores necesitan corrección
+        final salesNeedsUpdate = currentSales != effectiveSales;
+        final annulledNeedsUpdate = currentAnnulled != annulledCount;
+        
+        if (salesNeedsUpdate || annulledNeedsUpdate) {
+          final updatedCashRegister = _state.selectedCashRegister!.update(
+            sales: effectiveSales, // Corregir si hay desincronización
+            annulledTickets: annulledCount, // Corregir si hay desincronización
+          );
+          
+          // Actualizar estado local
+          _state = _state.copyWith(selectedCashRegister: updatedCashRegister);
+          
+          if (kDebugMode) {
+            print('📊 Contadores corregidos antes de cerrar:');
+            if (salesNeedsUpdate) {
+              print('   - Ventas efectivas: $currentSales → $effectiveSales (corregido)');
+            } else {
+              print('   - Ventas efectivas: $currentSales ✅');
+            }
+            if (annulledNeedsUpdate) {
+              print('   - Anulados: $currentAnnulled → $annulledCount (corregido)');
+            } else {
+              print('   - Anulados: $currentAnnulled ✅');
+            }
+            print('   - Total transacciones: $totalTransactions');
+          }
+        } else if (kDebugMode) {
+          print('✅ Contadores correctos - No requieren actualización');
+          print('   - Ventas efectivas: $currentSales');
+          print('   - Anulados: $currentAnnulled');
+          print('   - Total transacciones: $totalTransactions');
+        }
+      }
+
+      // 🎯 PASO 4: Cerrar la caja con contadores validados
       await _cashRegisterUsecases.closeCashRegister(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
@@ -695,17 +771,17 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Guarda un ticket de venta confirmada en el historial de transacciones
   /// 
   /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
-  /// Las transformaciones y validaciones están en CashRegisterUsecases
+  /// Las transformaciones y validaciones están en SellUsecases
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket, 
   }) async {
     try {
       // UseCase maneja preparación, validaciones y transformaciones
-      final preparedTicket = _cashRegisterUsecases.prepareTicketForTransaction(ticket);
+      final preparedTicket = _sellUsecases.prepareTicketForTransaction(ticket); // CAMBIADO
       
       // Guardar el ticket preparado en el historial
-      await _cashRegisterUsecases.saveTicketToTransactionHistory(
+      await _sellUsecases.saveTicketToTransactionHistory( // CAMBIADO
         accountId: accountId,
         ticket: preparedTicket,
       );
@@ -728,7 +804,7 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Anula un ticket en el historial de transacciones
   /// 
   /// RESPONSABILIDAD: Coordinar anulación y actualizar estado UI
-  /// La lógica de negocio (Firebase + SharedPreferences) está en CashRegisterUsecases
+  /// La lógica de negocio (Firebase + SharedPreferences) está en SellUsecases
   /// 
   /// 🆕 Ahora usa processTicketAnnullmentWithLocalUpdate para actualizar automáticamente
   /// el último ticket vendido en SharedPreferences
@@ -740,19 +816,23 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // 🔧 PASO 1: UseCase maneja validaciones, transformaciones, Firebase Y SharedPreferences
       // Usar processTicketAnnullmentWithLocalUpdate para actualizar automáticamente el último ticket
-      await _cashRegisterUsecases.processTicketAnnullmentWithLocalUpdate(
+      await _sellUsecases.processTicketAnnullmentWithLocalUpdate( // CAMBIADO
         accountId: accountId,
         ticket: ticket,
         activeCashRegister: _state.selectedCashRegister,
         updateLastSold: true, // ✅ Actualizar automáticamente en SharedPreferences
       );
 
-      // PASO 2: Actualizar estado local si hay caja activa
+      // PASO 2: Recargar caja desde Firebase para obtener contadores actualizados
+      // Esto asegura que annulledTickets refleje el incremento automático del repository
       if (hasActiveCashRegister && ticket.cashRegisterId == _state.selectedCashRegister!.id) {
-        final currentCashRegister = _state.selectedCashRegister!;
-        final updatedCashRegister = currentCashRegister.update(
-          annulledTickets: currentCashRegister.annulledTickets + 1,
+        // Recargar caja desde Firebase para sincronizar contadores
+        final updatedCashRegisters = await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+        final updatedCashRegister = updatedCashRegisters.firstWhere(
+          (cr) => cr.id == _state.selectedCashRegister!.id,
+          orElse: () => _state.selectedCashRegister!,
         );
+        
         _state = _state.copyWith(selectedCashRegister: updatedCashRegister);
         notifyListeners();
       }
@@ -765,6 +845,9 @@ class CashRegisterProvider extends ChangeNotifier {
 
       if (kDebugMode) {
         print('✅ Ticket ${ticket.id} anulado en Firebase + SharedPreferences');
+        print('   - sales: NO modificado (solo ventas efectivas)');
+        print('   - annulledTickets: incrementado automáticamente');
+        print('   - billing/discount: decrementados automáticamente');
       }
 
       return true;
@@ -781,7 +864,7 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Obtiene los tickets del día actual como objetos TicketModel 
   Future<List<TicketModel>?> getTodayTickets({required String accountId,String cashRegisterId=''}) async {
     try {  
-      final result = await _cashRegisterUsecases.getTodayTransactions(accountId: accountId,cashRegisterId: cashRegisterId);
+      final result = await _sellUsecases.getTodayTransactions(accountId: accountId,cashRegisterId: cashRegisterId);
       
       // Convertir los Map<String, dynamic> a objetos TicketModel
       return result.map((ticketMap) => TicketModel.fromMap(ticketMap)).toList();
@@ -800,7 +883,7 @@ class CashRegisterProvider extends ChangeNotifier {
     String cashRegisterId = '',
   }) async {
     try {
-      return await _cashRegisterUsecases.getTransactionsByDateRange(
+      return await _sellUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate, 
@@ -820,7 +903,7 @@ class CashRegisterProvider extends ChangeNotifier {
     required DateTime endDate,
   }) async {
     try {
-      return await _cashRegisterUsecases.getTransactionsByDateRange(
+      return await _sellUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
@@ -842,7 +925,7 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // Por ahora devolver análisis básico usando los datos disponibles
       final transactions =
-          await _cashRegisterUsecases.getTransactionsByDateRange(
+          await _sellUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,

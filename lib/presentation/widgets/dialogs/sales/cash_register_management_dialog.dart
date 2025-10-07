@@ -146,8 +146,36 @@ class CashRegisterManagementDialog extends StatelessWidget {
     ];
   }
 
-  Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister) {
+  Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister, {List<TicketModel>? tickets}) {
     final theme = Theme.of(context);
+
+    // 🎯 CALCULAR CONTADORES EN TIEMPO REAL desde las transacciones reales
+    // 
+    // ⚠️ IMPORTANTE - LÓGICA DE CONTADORES:
+    // - cashRegister.sales: Se incrementa (+1) en cada VENTA EFECTIVA automáticamente
+    //   * NO se modifica al anular tickets
+    //   * Representa SOLO ventas efectivas (NO incluye anulaciones)
+    // - cashRegister.annulledTickets: Se incrementa (+1) al anular un ticket
+    //   * Se incrementa automáticamente en updateBillingOnAnnullment()
+    // - Total de Transacciones = sales + annulledTickets
+    // - Ventas Efectivas = sales (directo, ya no requiere resta)
+    // 
+    // FUENTE DE VERDAD: Las transacciones reales (tickets) para verificación
+    // - Se consultan para validar consistencia de contadores
+    int realEffectiveSales = 0;
+    int realAnnulledTickets = 0;
+    
+    if (tickets != null) {
+      // Contar desde transacciones reales (FUENTE DE VERDAD para verificación)
+      realEffectiveSales = tickets.where((t) => !t.annulled).length;
+      realAnnulledTickets = tickets.where((t) => t.annulled).length;
+    } else {
+      // Fallback: usar contadores del modelo directamente
+      realEffectiveSales = cashRegister.sales; // Ya representa ventas efectivas
+      realAnnulledTickets = cashRegister.annulledTickets;
+    }
+    
+    final totalTransactions = realEffectiveSales + realAnnulledTickets;
 
     final items = [
       {
@@ -159,12 +187,22 @@ class CashRegisterManagementDialog extends StatelessWidget {
         'value': cashRegister.description,
       },
       {
-        'label': 'Ventas',
-        'value': cashRegister.sales.toString(),
+        'label': 'Ventas Efectivas',
+        'value': '$realEffectiveSales',
+        'icon': Icons.check_circle_rounded,
+        'iconColor': Colors.green,
       },
       {
-        'label': 'Anulados',
-        'value': cashRegister.annulledTickets.toString(),
+        'label': 'Tickets Anulados',
+        'value': '$realAnnulledTickets',
+        'icon': Icons.cancel_rounded,
+        'iconColor': Colors.red,
+      },
+      {
+        'label': 'Total Transacciones',
+        'value': '$totalTransactions',
+        'icon': Icons.receipt_long_rounded,
+        'iconColor': theme.colorScheme.primary,
       },
       {
         'label': 'Facturación',
@@ -194,17 +232,29 @@ class CashRegisterManagementDialog extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  items[i]['label'] as String,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                Row(
+                  children: [
+                    if (items[i]['icon'] != null) ...[
+                      Icon(
+                        items[i]['icon'] as IconData,
+                        size: 18,
+                        color: items[i]['iconColor'] as Color?,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      items[i]['label'] as String,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
                   items[i]['value'] as String,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
+                    color: items[i]['iconColor'] as Color? ?? theme.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -388,13 +438,25 @@ class CashRegisterManagementDialog extends StatelessWidget {
   Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
    
     final cashRegister = provider.currentActiveCashRegister!;
+    final sellProvider = context.read<SellProvider>();
+    final accountId = sellProvider.profileAccountSelected.id;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // view : muestra información de flujo de caja
-        _cashFlowInformation(context, cashRegister),
-        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
+    return FutureBuilder<List<TicketModel>?>(
+      future: accountId.isNotEmpty 
+        ? provider.getTodayTickets(
+            accountId: accountId, 
+            cashRegisterId: cashRegister.id,
+          )
+        : Future.value(null),
+      builder: (context, snapshot) {
+        final tickets = snapshot.data;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // view : muestra información de flujo de caja con contadores en tiempo real
+            _cashFlowInformation(context, cashRegister, tickets: tickets),
+            SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
         
         Row(
           children: [
@@ -450,11 +512,13 @@ class CashRegisterManagementDialog extends StatelessWidget {
           ],
         ),
         SizedBox(height: getResponsiveSpacing(context, scale: 1)), 
-        // Lista de movimientos de caja
-        if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[ 
-          _buildCashFlowMovements(context, cashRegister, isMobile),
-        ],
-      ],
+            // Lista de movimientos de caja
+            if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[ 
+              _buildCashFlowMovements(context, cashRegister, isMobile),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -756,32 +820,149 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
         // Ordenar por fecha de creación (más recientes primero)
         tickets.sort((a, b) => b.creation.compareTo(a.creation));
 
-        // Tomar solo los últimos 5
-        final recentTickets = tickets.take(5).toList();
-
-        if (recentTickets.isEmpty) {
+        if (tickets.isEmpty) {
           return _buildEmptyTicketsView(context, widget.isMobile);
         }
 
-        return DialogComponents.itemList(
-          context: context, 
-          useFillStyle: true,
-          padding: EdgeInsets.zero,
-          showDividers: true,
-          title: 'Últimas Ventas',
-          maxVisibleItems: 5,
-          expandText: '',
-          collapseText: '',
-          items: recentTickets.map((ticket) {
-            return _buildTicketTile(
-              context, 
-              ticket, 
-              widget.isMobile, 
-              onTicketUpdated: _loadTickets,
-            );
-          }).toList(),
+        // Tomar solo los primeros 5 para mostrar
+        final recentTickets = tickets.take(5).toList();
+        final hasMoreTickets = tickets.length > 5;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Lista de últimos 5 tickets
+            DialogComponents.itemList(
+              context: context, 
+              useFillStyle: true,
+              padding: EdgeInsets.zero,
+              showDividers: true,
+              title: 'Últimas Ventas',
+              maxVisibleItems: 5,
+              expandText: '',
+              collapseText: '',
+              items: recentTickets.map((ticket) {
+                return _buildTicketTile(
+                  context, 
+                  ticket, 
+                  widget.isMobile, 
+                  onTicketUpdated: _loadTickets,
+                );
+              }).toList(),
+            ),
+            
+            // Botón "Ver más" si hay más de 5 tickets
+            if (hasMoreTickets) ...[
+              SizedBox(height: getResponsiveSpacing(context, scale: 0.5)),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => _showAllTicketsDialog(context, tickets),
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: Text('Ver más (${tickets.length - 5} tickets)'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ],
         );
       },
+    );
+  }
+
+  void _showAllTicketsDialog(BuildContext context, List<TicketModel> tickets) {
+    final theme = Theme.of(context);
+    final sellProvider = context.read<SellProvider>();
+    final cashRegisterProvider = context.read<CashRegisterProvider>();
+    final cashRegister = widget.cashRegisterProvider.currentActiveCashRegister;
+    
+    showDialog(
+      context: context,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+        ],
+        child: BaseDialog(
+          title: 'Todos los Tickets de Hoy',
+          icon: Icons.receipt_long_rounded,
+          headerColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.85),
+          width: getResponsiveValue(
+            context,
+            mobile: null,
+            tablet: 600,
+            desktop: 700,
+          ),
+          maxHeight: getResponsiveValue(
+            context,
+            mobile: MediaQuery.of(context).size.height * 0.85,
+            tablet: 700,
+            desktop: 800,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Información de la caja
+              if (cashRegister != null) ...[
+                DialogComponents.infoBadge(
+                  context: context,
+                  text: 'Caja: ${cashRegister.description}',
+                  icon: Icons.point_of_sale_rounded,
+                ),
+                SizedBox(height: getResponsiveSpacing(context, scale: 0.5)),
+              ],
+              
+              // Separar ventas efectivas y anulados
+              Text(
+                'Total: ${tickets.length} tickets',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              SizedBox(height: getResponsiveSpacing(context, scale: 0.5)),
+              
+              // Lista de todos los tickets con altura limitada
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: getResponsiveValue(
+                    context,
+                    mobile: MediaQuery.of(context).size.height * 0.5,
+                    tablet: 450,
+                    desktop: 500,
+                  ),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: tickets.length,
+                  separatorBuilder: (context, index) => const AppDivider(),
+                  itemBuilder: (context, index) {
+                    final ticket = tickets[index];
+                    return _buildTicketTile(
+                      context,
+                      ticket,
+                      isMobile(context),
+                      onTicketUpdated: () {
+                        // Recargar tickets y cerrar diálogo
+                        _loadTickets();
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            DialogComponents.secondaryActionButton(
+              context: context,
+              text: 'Cerrar',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

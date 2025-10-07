@@ -1,7 +1,6 @@
 import '../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; 
 import '../../../../domain/entities/cash_register_model.dart';
 import '../../../../domain/entities/ticket_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
@@ -162,6 +161,10 @@ class CashRegisterManagementDialog extends StatelessWidget {
       {
         'label': 'Ventas',
         'value': cashRegister.sales.toString(),
+      },
+      {
+        'label': 'Anulados',
+        'value': cashRegister.annulledTickets.toString(),
       },
       {
         'label': 'Facturación',
@@ -770,7 +773,12 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
           expandText: '',
           collapseText: '',
           items: recentTickets.map((ticket) {
-            return _buildTicketTile(context, ticket, widget.isMobile);
+            return _buildTicketTile(
+              context, 
+              ticket, 
+              widget.isMobile, 
+              onTicketUpdated: _loadTickets,
+            );
           }).toList(),
         );
       },
@@ -816,7 +824,12 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     );
   }
 
-  Widget _buildTicketTile(BuildContext context, TicketModel ticket, bool isMobile) {
+  Widget _buildTicketTile(
+    BuildContext context, 
+    TicketModel ticket, 
+    bool isMobile, {
+    VoidCallback? onTicketUpdated,
+  }) {
 
     // styles
     final theme = Theme.of(context);
@@ -833,7 +846,24 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
           businessName: sellProvider.profileAccountSelected.name.isNotEmpty 
             ? sellProvider.profileAccountSelected.name 
             : 'PUNTO DE VENTA',
-          onTicketAnnulled: ()=> cashRegisterProvider.annullTicket(accountId: sellProvider.profileAccountSelected.id, ticket: ticket),  
+          onTicketAnnulled: () async {
+            // Verificar si este ticket es el último ticket vendido
+            final isLastSoldTicket = sellProvider.lastSoldTicket?.id == ticket.id;
+            
+            if (isLastSoldTicket) {
+              // Si es el último ticket vendido, usar el método unificado
+              await sellProvider.annullLastSoldTicket(context: context, ticket: ticket);
+            } else {
+              // Si no es el último ticket, solo anular en la caja registradora
+              await cashRegisterProvider.annullTicket(
+                accountId: sellProvider.profileAccountSelected.id, 
+                ticket: ticket,
+              );
+            }
+            
+            // Forzar la recarga de la lista de tickets si hay callback
+            onTicketUpdated?.call();
+          },  
         ),
         borderRadius: BorderRadius.circular(8),
         child: Padding(

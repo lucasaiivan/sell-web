@@ -778,11 +778,8 @@ class CashRegisterProvider extends ChangeNotifier {
         return false;
       } 
 
-      // Llamar al caso de uso para actualizar el ticket
-      await _cashRegisterUsecases.updateTicketTransaction(
-        accountId: accountId,
-        ticket: ticket,
-      );
+      // case use : actualizar el ticket en el historial de transacciones
+      await _cashRegisterUsecases.updateTicketTransaction(accountId: accountId,ticket: ticket);
 
       return true;
     } catch (e) {
@@ -808,11 +805,23 @@ class CashRegisterProvider extends ChangeNotifier {
 
       // Crear una copia del ticket marcándolo como anulado
       final annulledTicket = ticket.copyWith(annulled: true);
+      
       // Actualizar el ticket en el historial de transacciones
-      return await updateTicketInTransactionHistory(
-        accountId: accountId,
-        ticket: annulledTicket,
-      );
+      final success = await updateTicketInTransactionHistory(accountId: accountId,ticket: annulledTicket);
+
+      if (success && hasActiveCashRegister) {
+        // Incrementar el contador de tickets anulados en la caja activa localmente
+        final currentCashRegister = _state.selectedCashRegister!;
+        final updatedCashRegister = currentCashRegister.update(
+          annulledTickets: currentCashRegister.annulledTickets + 1,
+        );
+
+        // Actualizar el estado local inmediatamente
+        _state = _state.copyWith(selectedCashRegister: updatedCashRegister);
+        notifyListeners();
+      }
+
+      return success;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();

@@ -1513,7 +1513,6 @@ void _showPrinterConfigDialog(BuildContext context) {
 void _showLastTicketDialog(BuildContext context, SellProvider provider) {
 
   if (provider.lastSoldTicket == null) return; // No hay ticket para mostrar
-  final cashRegisterProvider =  Provider.of<CashRegisterProvider>(context, listen: false);
   final ticket = provider.lastSoldTicket!;
 
   showLastTicketDialog(
@@ -1521,9 +1520,8 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
     ticket: provider.lastSoldTicket!, 
     title: 'Último ticket',
     businessName: provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name: 'PUNTO DE VENTA',
-    onTicketAnnulled: (){
-      cashRegisterProvider.annullTicket(accountId: provider.profileAccountSelected.id, ticket: ticket);
-      provider.saveLastSoldTicket(ticket.copyWith(annulled: true));
+    onTicketAnnulled: () async {
+      await provider.annullLastSoldTicket(context: context, ticket: ticket);
     }
   );
 }

@@ -341,11 +341,8 @@ class CashRegisterUsecases {
       throw Exception('El ID del ticket no puede estar vacío');
     }
 
-    // Verificar que el ticket existe primero
-    final existingTicket = await _repository.getTransactionDetail(
-      accountId: accountId,
-      transactionId: ticket.id,
-    );
+    // repository: verificar que el ticket exista antes de actualizar
+    final existingTicket = await _repository.getTransactionDetail(accountId: accountId,transactionId: ticket.id);
 
     if (existingTicket == null) {
       throw Exception('El ticket con ID ${ticket.id} no existe en el historial');

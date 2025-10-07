@@ -238,6 +238,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         opening: now,
         closure: now, // Se actualizará al cerrar
         sales: 0,
+        annulledTickets: 0,
         billing: 0.0,
         discount: 0.0,
         cashInFlow: 0.0,

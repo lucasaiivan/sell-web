@@ -7,6 +7,7 @@ class CashRegister {
   DateTime closure; // fecha de cierre
   double initialCash; // monto inicial
   int sales; // cantidad de ventas
+  int annulledTickets; // cantidad de tickets anulados
   double billing; // monto de facturación
   double discount; // monto de descuento
   double cashInFlow; // monto de ingresos
@@ -23,6 +24,7 @@ class CashRegister {
     required this.opening,
     required this.closure,
     required this.sales,
+    required this.annulledTickets,
     required this.billing,
     required this.discount,
     required this.cashInFlow,
@@ -57,6 +59,7 @@ class CashRegister {
       opening: DateTime.now(),
       closure: DateTime.now(),
       sales: 0,
+      annulledTickets: 0,
       billing: 0.0,
       discount: 0.0,
       cashInFlow: 0.0,
@@ -75,6 +78,7 @@ class CashRegister {
         "opening": opening,
         "closure": closure,
         "sales": sales,
+        "annulledTickets": annulledTickets,
         "billing": billing,
         "discount": discount,
         "cashInFlow": cashInFlow,
@@ -100,6 +104,7 @@ class CashRegister {
           ? data['closure'].toDate()
           : DateTime.now(),
       sales: data.containsKey('sales') ? data['sales'] ?? 0 : 0,
+      annulledTickets: data.containsKey('annulledTickets') ? data['annulledTickets'] ?? 0 : 0,
       billing: data.containsKey('billing')
           ? double.parse(data['billing'].toString())
           : 0.0,
@@ -136,6 +141,7 @@ class CashRegister {
     billing = documentSnapshot['billing'].toDouble();
     discount = documentSnapshot['discount'].toDouble();
     sales = documentSnapshot['sales'];
+    annulledTickets = documentSnapshot.data().toString().contains('annulledTickets') ? documentSnapshot['annulledTickets'] : 0;
     cashInFlow = documentSnapshot['cashInFlow'].toDouble();
     cashOutFlow = documentSnapshot['cashOutFlow'].toDouble();
     expectedBalance = documentSnapshot['expectedBalance'].toDouble();
@@ -152,6 +158,7 @@ class CashRegister {
     DateTime? opening,
     DateTime? closure,
     int? sales,
+    int? annulledTickets,
     double? billing,
     double? discount,
     double? cashInFlow,
@@ -168,6 +175,7 @@ class CashRegister {
       opening: opening ?? this.opening,
       closure: closure ?? this.closure,
       sales: sales ?? this.sales,
+      annulledTickets: annulledTickets ?? this.annulledTickets,
       billing: billing ?? this.billing,
       discount: discount ?? this.discount,
       cashInFlow: cashInFlow ?? this.cashInFlow,

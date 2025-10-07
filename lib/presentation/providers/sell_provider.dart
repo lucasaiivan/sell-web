@@ -503,6 +503,33 @@ class SellProvider extends ChangeNotifier {
     }
   }
 
+  /// Anula un ticket tanto en la caja registradora como en el último ticket vendido
+  Future<bool> annullLastSoldTicket({
+    required BuildContext context,
+    required TicketModel ticket,
+  }) async {
+    try {
+      // Obtener el provider de caja registradora
+      final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
+      
+      // Anular el ticket en la caja registradora
+      final success = await cashRegisterProvider.annullTicket(
+        accountId: profileAccountSelected.id, 
+        ticket: ticket,
+      );
+      
+      if (success) {
+        // Actualizar el último ticket vendido marcándolo como anulado
+        await saveLastSoldTicket(ticket.copyWith(annulled: true));
+      }
+      
+      return success;
+    } catch (e) {
+      // Manejar cualquier error que pueda ocurrir
+      return false;
+    }
+  }
+  // Carga el último ticket vendido desde SharedPreferences al inicializar el provider.
   Future<void> _loadLastSoldTicket() async {
     final lastTicketJson = await _persistenceService.getLastSoldTicket();
     if (lastTicketJson != null) {
@@ -516,7 +543,7 @@ class SellProvider extends ChangeNotifier {
       }
     }
   }
-
+  
   void updateTicketWithCashRegister(BuildContext context) {
     // Actualiza el ticket con la caja activa si existe
     final cashRegisterProvider =

@@ -1517,7 +1517,7 @@ void _showLastTicketDialog(BuildContext context, SellProvider provider) {
 
   showLastTicketDialog(
     context: context,
-    ticket: provider.lastSoldTicket!, 
+    ticket: ticket, 
     title: 'Último ticket',
     businessName: provider.profileAccountSelected.name.isNotEmpty? provider.profileAccountSelected.name: 'PUNTO DE VENTA',
     onTicketAnnulled: () async {

@@ -40,6 +40,10 @@ void main() async {
   );
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
+  
+  // Inicializar repositorio y usecase de cash register (compartido globalmente)
+  final cashRegisterRepository = CashRegisterRepositoryImpl();
+  final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
 
   runApp(
     MultiProvider(
@@ -61,11 +65,16 @@ void main() async {
 
         // SellProvider - creado una sola vez y reutilizado
         ChangeNotifierProxyProvider<AuthProvider, SellProvider>(
-          create: (_) =>
-              SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+          create: (_) => SellProvider(
+            getUserAccountsUseCase: getUserAccountsUseCase,
+            cashRegisterUsecases: cashRegisterUsecases,
+          ),
           update: (_, auth, previousSell) =>
               previousSell ??
-              SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+              SellProvider(
+                getUserAccountsUseCase: getUserAccountsUseCase,
+                cashRegisterUsecases: cashRegisterUsecases,
+              ),
         ),
       ],
       child: Consumer<ThemeDataAppProvider>(
@@ -117,7 +126,10 @@ Widget _buildAccountSpecificProviders({
 }) {
   // Crear repositorios específicos de la cuenta
   final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+  
+  // Reutilizar el repository de cash register (ya está inicializado globalmente)
   final cashRegisterRepository = CashRegisterRepositoryImpl();
+  final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
 
   return MultiProvider(
     key: ValueKey('account_providers_$accountId'),
@@ -142,9 +154,7 @@ Widget _buildAccountSpecificProviders({
         )..initCatalogue(accountId),
       ),
       ChangeNotifierProvider(
-        create: (_) => CashRegisterProvider(
-          CashRegisterUsecases(cashRegisterRepository),
-        ),
+        create: (_) => CashRegisterProvider(cashRegisterUsecases),
       ),
     ],
     child: const SellPage(),

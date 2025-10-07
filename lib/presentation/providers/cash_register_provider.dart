@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
 import '../../core/core.dart';
 import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
@@ -414,29 +412,19 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Abre una nueva caja registradora
+  /// 
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones y lógica de negocio están en CashRegisterUsecases
   Future<bool> openCashRegister(String accountId, String cashierId) async {
-    if (openDescriptionController.text.trim().isEmpty) {
-      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
-      notifyListeners();
-      return false;
-    }
-
-    final initialCash = initialCashController.doubleValue;
-    if (initialCash < 0) {
-      _state = _state.copyWith(
-          errorMessage: 'El monto inicial no puede ser negativo');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones y lógica de negocio
       final newCashRegister = await _cashRegisterUsecases.openCashRegister(
         accountId: accountId,
-        description: openDescriptionController.text.trim(),
-        initialCash: initialCash,
+        description: openDescriptionController.text,
+        initialCash: initialCashController.doubleValue,
         cashierId: cashierId,
       );
 
@@ -457,30 +445,24 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Cierra una caja registradora
+  /// 
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones y lógica de negocio están en CashRegisterUsecases
   Future<bool> closeCashRegister(
       String accountId, String cashRegisterId) async {
-    final finalBalance = finalBalanceController.doubleValue;
-    if (finalBalance < 0) {
-      _state = _state.copyWith(
-          errorMessage: 'El balance final no puede ser negativo');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones
       await _cashRegisterUsecases.closeCashRegister(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        finalBalance: finalBalance,
+        finalBalance: finalBalanceController.doubleValue,
       );
 
-      // Si se cierra la caja seleccionada, limpiar selección
-      if (_state.selectedCashRegister?.id == cashRegisterId) {
-        await clearSelectedCashRegister();
-      }
+      // Deseleccionar la caja cerrada
+      await clearSelectedCashRegister();
 
       // Limpiar formulario
       _clearCloseForm();
@@ -500,38 +482,27 @@ class CashRegisterProvider extends ChangeNotifier {
   // ==========================================
 
   /// Registra un ingreso de caja
+  /// 
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones están en CashRegisterUsecases
   Future<bool> addCashInflow(
       String accountId, String cashRegisterId, String userId) async {
-    if (movementDescriptionController.text.trim().isEmpty) {
-      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
-      notifyListeners();
-      return false;
-    }
-
-    final amount = movementAmountController.doubleValue;
-    if (amount <= 0) {
-      _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones
       await _cashRegisterUsecases.addCashInflow(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        description: movementDescriptionController.text.trim(),
-        amount: amount,
+        description: movementDescriptionController.text,
+        amount: movementAmountController.doubleValue,
         userId: userId,
       );
 
       // Limpiar formulario
       _clearMovementForm();
 
-      // Notificar cambios explícitamente
-      notifyListeners();
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -543,38 +514,27 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Registra un egreso de caja
+  /// 
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones están en CashRegisterUsecases
   Future<bool> addCashOutflow(
       String accountId, String cashRegisterId, String userId) async {
-    if (movementDescriptionController.text.trim().isEmpty) {
-      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
-      notifyListeners();
-      return false;
-    }
-
-    final amount = movementAmountController.doubleValue;
-    if (amount <= 0) {
-      _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones
       await _cashRegisterUsecases.addCashOutflow(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        description: movementDescriptionController.text.trim(),
-        amount: amount,
+        description: movementDescriptionController.text,
+        amount: movementAmountController.doubleValue,
         userId: userId,
       );
 
       // Limpiar formulario
       _clearMovementForm();
 
-      // Notificar cambios explícitamente
-      notifyListeners();
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -733,54 +693,23 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Guarda un ticket de venta confirmada en el historial de transacciones
-  /// La transacción se registra SIEMPRE, independientemente de si existe una caja registradora activa
+  /// 
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las transformaciones y validaciones están en CashRegisterUsecases
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket, 
   }) async {
     try {
-      // Asegurar que el ticket tenga un ID único
-      final ticketId = ticket.id.isEmpty ? UidHelper.generateUid() : ticket.id;
-      final updatedTicket = ticket.copyWith(
-        id: ticketId,
-        priceTotal: ticket.priceTotal > 0 ? ticket.priceTotal : ticket.calculatedTotal, // Usar método optimizado
+      // UseCase maneja preparación, validaciones y transformaciones
+      final preparedTicket = _cashRegisterUsecases.prepareTicketForTransaction(ticket);
+      
+      // Guardar el ticket preparado en el historial
+      await _cashRegisterUsecases.saveTicketToTransactionHistory(
+        accountId: accountId,
+        ticket: preparedTicket,
       );
 
-      // Solo usar la caja activa como fallback si el ticket no tiene información de caja
-      if (ticket.cashRegisterId.isEmpty) {
-        // Si no hay caja activa y el ticket tampoco tiene información, usar valores por defecto
-        ticket.cashRegisterName = 'Sin caja asignada';
-        ticket.cashRegisterId = ''; 
-      }   
-      // === Guardar el ticket en el historial de transacciones ===
-      await _cashRegisterUsecases.saveTicketToTransactionHistory(accountId: accountId,ticket: updatedTicket);
-
-      return true;
-
-    } catch (e) {
-      _state = _state.copyWith(errorMessage: e.toString());
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// Actualiza un ticket existente en el historial de transacciones
-  /// Este método permite modificar tickets que ya fueron guardados previamente
-  Future<bool> updateTicketInTransactionHistory({
-    required String accountId,
-    required TicketModel ticket,
-  }) async {
-    try {
-      // Validar que el ticket tenga un ID
-      if (ticket.id.isEmpty) {
-        _state = _state.copyWith(errorMessage: 'El ID del ticket no puede estar vacío');
-        notifyListeners();
-        return false;
-      } 
-
-      // case use : actualizar el ticket en el historial de transacciones
-      await _cashRegisterUsecases.updateTicketTransaction(accountId: accountId,ticket: ticket);
-
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -788,41 +717,61 @@ class CashRegisterProvider extends ChangeNotifier {
       return false;
     }
   }
-
+ 
   /// Anula un ticket específico marcándolo como anulado
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI y actualizar estado local
+  /// La lógica de negocio está en CashRegisterUsecases
+  /// 
+  /// 🆕 IMPORTANTE: Si el ticket anulado es el último vendido, debe actualizarse
+  /// en SellProvider también para mantener sincronización entre providers
+  /// Anula un ticket en el historial de transacciones
+  /// 
+  /// RESPONSABILIDAD: Coordinar anulación y actualizar estado UI
+  /// La lógica de negocio (Firebase + SharedPreferences) está en CashRegisterUsecases
+  /// 
+  /// 🆕 Ahora usa processTicketAnnullmentWithLocalUpdate para actualizar automáticamente
+  /// el último ticket vendido en SharedPreferences
   Future<bool> annullTicket({
     required String accountId,
     required TicketModel ticket,
+    VoidCallback? onLastSoldTicketUpdated, // 🆕 Callback opcional para notificar
   }) async {
-    // providers : sell
     try {
-      // Validar que el ticket no esté ya anulado
-      if (ticket.annulled) {
-        _state = _state.copyWith(errorMessage: 'El ticket ya está anulado');
-        notifyListeners();
-        return false;
-      }
+      // 🔧 PASO 1: UseCase maneja validaciones, transformaciones, Firebase Y SharedPreferences
+      // Usar processTicketAnnullmentWithLocalUpdate para actualizar automáticamente el último ticket
+      await _cashRegisterUsecases.processTicketAnnullmentWithLocalUpdate(
+        accountId: accountId,
+        ticket: ticket,
+        activeCashRegister: _state.selectedCashRegister,
+        updateLastSold: true, // ✅ Actualizar automáticamente en SharedPreferences
+      );
 
-      // Crear una copia del ticket marcándolo como anulado
-      final annulledTicket = ticket.copyWith(annulled: true);
-      
-      // Actualizar el ticket en el historial de transacciones
-      final success = await updateTicketInTransactionHistory(accountId: accountId,ticket: annulledTicket);
-
-      if (success && hasActiveCashRegister) {
-        // Incrementar el contador de tickets anulados en la caja activa localmente
+      // PASO 2: Actualizar estado local si hay caja activa
+      if (hasActiveCashRegister && ticket.cashRegisterId == _state.selectedCashRegister!.id) {
         final currentCashRegister = _state.selectedCashRegister!;
         final updatedCashRegister = currentCashRegister.update(
           annulledTickets: currentCashRegister.annulledTickets + 1,
         );
-
-        // Actualizar el estado local inmediatamente
         _state = _state.copyWith(selectedCashRegister: updatedCashRegister);
         notifyListeners();
       }
 
-      return success;
+      // PASO 3: 🆕 Notificar que el último ticket vendido fue actualizado en SharedPreferences
+      // Esto permite que SellProvider recargue su estado desde persistencia
+      if (onLastSoldTicketUpdated != null) {
+        onLastSoldTicketUpdated();
+      }
+
+      if (kDebugMode) {
+        print('✅ Ticket ${ticket.id} anulado en Firebase + SharedPreferences');
+      }
+
+      return true;
     } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error anulando ticket: $e');
+      }
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return false;

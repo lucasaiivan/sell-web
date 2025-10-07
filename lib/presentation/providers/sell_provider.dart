@@ -7,8 +7,8 @@ import 'package:sellweb/core/services/external/thermal_printer_http_service.dart
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
+import 'package:sellweb/domain/usecases/cash_register_usecases.dart';
 import 'package:provider/provider.dart' as provider;
 import '../providers/cash_register_provider.dart';
 import '../providers/catalogue_provider.dart';
@@ -66,57 +66,23 @@ class _SellProviderState {
 
 class SellProvider extends ChangeNotifier {
   final GetUserAccountsUseCase getUserAccountsUseCase;
-  final AppDataPersistenceService _persistenceService =
-      AppDataPersistenceService.instance;
+  final CashRegisterUsecases _cashRegisterUsecases;
+  final AppDataPersistenceService _persistenceService = AppDataPersistenceService.instance;
 
   // Estado encapsulado para optimizar notificaciones
-  var _state = _SellProviderState(
+  late var _state = _SellProviderState(
     ticketView: false,
     shouldPrintTicket: false,
     profileAccountSelected: ProfileAccountModel(),
-    ticket: _createEmptyTicketStatic(),
+    ticket: _cashRegisterUsecases.createEmptyTicket(),
     lastSoldTicket: null,
   );
 
-  /// Crea un ticket vacío usando la API encapsulada (método estático)
-  static TicketModel _createEmptyTicketStatic() {
-    return TicketModel(listPoduct: [],creation: Timestamp.now());
-  }
-
-  /// Crea un nuevo ticket preservando valores específicos pero con productos vacíos
-  TicketModel _createTicketWithValues({
-    required String id,
-    required Timestamp creation,
-    bool annulled = false,
-    String payMode = '',
-    double valueReceived = 0.0,
-    String cashRegisterName = '',
-    String cashRegisterId = '',
-    String sellerName = '',
-    String sellerId = '',
-    double priceTotal = 0.0,
-    double discount = 0.0,
-    bool discountIsPercentage = false,
-    String transactionType = 'sale',
-    String currencySymbol = '\$', 
-  }) {
-    return TicketModel( 
-      id: id,
-      annulled: annulled,
-      listPoduct: [],
-      creation: creation,
-      payMode: payMode,
-      valueReceived: valueReceived,
-      cashRegisterName: cashRegisterName,
-      cashRegisterId: cashRegisterId,
-      sellerName: sellerName,
-      sellerId: sellerId,
-      priceTotal: priceTotal,
-      discount: discount,
-      discountIsPercentage: discountIsPercentage,
-      transactionType: transactionType,
-      currencySymbol: currencySymbol,
-    );
+  /// Crea un ticket vacío delegando al UseCase
+  /// 
+  /// RESPONSABILIDAD: Solo coordinar llamada al UseCase
+  TicketModel _createEmptyTicket() {
+    return _cashRegisterUsecases.createEmptyTicket();
   }
 
   // Getters que no causan rebuild
@@ -127,7 +93,10 @@ class SellProvider extends ChangeNotifier {
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
-  SellProvider({required this.getUserAccountsUseCase}) {
+  SellProvider({
+    required this.getUserAccountsUseCase,
+    required CashRegisterUsecases cashRegisterUsecases,
+  }) : _cashRegisterUsecases = cashRegisterUsecases {
     _loadInitialState();
   }
 
@@ -143,7 +112,7 @@ class SellProvider extends ChangeNotifier {
   void cleanData() {
     _state = _state.copyWith(
       profileAccountSelected: ProfileAccountModel(),
-      ticket: _createEmptyTicketStatic(),
+      ticket: _createEmptyTicket(),
       ticketView: false,
       shouldPrintTicket: false,
       lastSoldTicket: null,
@@ -183,7 +152,6 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveAllState() async {
     await Future.wait([
       _saveTicket(),
-      _saveLastSoldTicket(),
       _saveShouldPrintTicket(),
     ]);
   }
@@ -249,103 +217,62 @@ class SellProvider extends ChangeNotifier {
   Map<String, dynamic> _decodeJson(String source) =>
       const JsonDecoder().convert(source) as Map<String, dynamic>;
 
+  /// Agrega un producto al ticket
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI y persistencia
+  /// La lógica de negocio (buscar, incrementar, agregar) está en CashRegisterUsecases
   void addProductsticket(ProductCatalogue product,
       {bool replaceQuantity = false}) {
-    // Agrega un producto al ticket actual, reemplazando la cantidad si es necesario
+    try {
+      // PASO 1: UseCase maneja toda la lógica de negocio
+      final updatedTicket = _cashRegisterUsecases.addProductToTicket(
+        _state.ticket,
+        product,
+        replaceQuantity: replaceQuantity,
+      );
 
-    // var
-    final currentTicket = _state.ticket;
-    bool exist = false;
-    final List<ProductCatalogue> updatedProducts =
-        List.from(currentTicket.products);
-
-    for (var i = 0; i < updatedProducts.length; i++) {
-      if (updatedProducts[i].id == product.id) {
-        if (replaceQuantity) {
-          // Reemplazar el producto completo pero preservar la cantidad original si el producto nuevo tiene cantidad 0
-          final quantityToUse = product.quantity > 0
-              ? product.quantity
-              : updatedProducts[i].quantity;
-          updatedProducts[i] = product.copyWith(quantity: quantityToUse);
-        } else {
-          updatedProducts[i].quantity +=
-              (product.quantity > 0 ? product.quantity : 1);
-        }
-        exist = true;
-        break;
+      // PASO 2: Actualizar estado UI
+      _state = _state.copyWith(ticket: updatedTicket);
+      _saveTicket();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error agregando producto: $e');
       }
+      rethrow;
     }
-
-    if (!exist) {
-      // Si el producto no existe, lo agrega con la cantidad especificada
-      updatedProducts.add(product.copyWith( quantity: product.quantity > 0 ? product.quantity : 1));
-    }
-
-    // Crea un nuevo ticket con los productos actualizados
-    final newTicket = _createTicketWithValues(
-      id: currentTicket.id,
-      annulled: currentTicket.annulled,
-      creation: currentTicket.creation,
-      payMode: currentTicket.payMode,
-      valueReceived: currentTicket.valueReceived,
-      cashRegisterName: currentTicket.cashRegisterName,
-      cashRegisterId: currentTicket.cashRegisterId,
-      sellerName: currentTicket.sellerName,
-      sellerId: currentTicket.sellerId,
-      priceTotal: currentTicket.priceTotal,
-      discount: currentTicket.discount,
-      discountIsPercentage: currentTicket.discountIsPercentage,
-      transactionType: currentTicket.transactionType,
-      currencySymbol: currentTicket.currencySymbol,
-    );
-
-    // Establecer los productos usando el setter que maneja la conversión
-    newTicket.products = updatedProducts;
-    // Actualiza el estado del provider con el nuevo ticket
-    _state = _state.copyWith(ticket: newTicket);
-    _saveTicket();
-    notifyListeners();
   }
 
+  /// Elimina un producto del ticket
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI y persistencia
+  /// La lógica de negocio (filtrar producto) está en CashRegisterUsecases
   void removeProduct(ProductCatalogue product) {
-    // Elimina un producto del ticket actual
+    try {
+      // PASO 1: UseCase maneja la lógica de eliminación
+      final updatedTicket = _cashRegisterUsecases.removeProductFromTicket(
+        _state.ticket,
+        product,
+      );
 
-    // var
-    final currentTicket = _state.ticket;
-    final updatedProducts =
-        currentTicket.products.where((item) => item.id != product.id).toList();
-
-    final newTicket = _createTicketWithValues(
-      id: currentTicket.id,
-      annulled: currentTicket.annulled,
-      creation: currentTicket.creation,
-      payMode: currentTicket.payMode,
-      valueReceived: currentTicket.valueReceived,
-      cashRegisterName: currentTicket.cashRegisterName,
-      cashRegisterId: currentTicket.cashRegisterId,
-      sellerName: currentTicket.sellerName,
-      sellerId: currentTicket.sellerId,
-      priceTotal: currentTicket.priceTotal,
-      discount: currentTicket.discount,
-      discountIsPercentage: currentTicket.discountIsPercentage,
-      transactionType: currentTicket.transactionType,
-      currencySymbol: currentTicket.currencySymbol,
-    );
-
-    // Establecer los productos usando el setter que maneja la conversión
-    newTicket.products = updatedProducts;
-
-    _state = _state.copyWith(
-      ticket: newTicket,
-      ticketView: updatedProducts.isNotEmpty,
-    );
-    _saveTicket();
-    notifyListeners();
+      // PASO 2: Actualizar estado UI (cerrar vista si no hay productos)
+      _state = _state.copyWith(
+        ticket: updatedTicket,
+        ticketView: updatedTicket.products.isNotEmpty,
+      );
+      _saveTicket();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error eliminando producto: $e');
+      }
+      rethrow;
+    }
   }
 
   void discartTicket() {
     _state =
-        _state.copyWith(ticket: _createEmptyTicketStatic(), ticketView: false);
+        _state.copyWith(ticket: _createEmptyTicket(), ticketView: false);
     _saveTicket();
     notifyListeners();
   }
@@ -364,88 +291,77 @@ class SellProvider extends ChangeNotifier {
     await _persistenceService.saveSelectedAccountId(id);
   }
 
+  /// Configura la forma de pago del ticket
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI y persistencia
+  /// La lógica de negocio (validar, resetear valor recibido) está en CashRegisterUsecases
   void setPayMode({String payMode = 'effective'}) {
-    final currentTicket = _state.ticket;
-    final newTicket = _createTicketWithValues(
-      id: currentTicket.id,
-      annulled: currentTicket.annulled,
-      creation: currentTicket.creation,
-      payMode: payMode,
-      valueReceived: payMode != 'effective' ? 0.0 : currentTicket.valueReceived,
-      cashRegisterName: currentTicket.cashRegisterName,
-      cashRegisterId: currentTicket.cashRegisterId,
-      sellerName: currentTicket.sellerName,
-      sellerId: currentTicket.sellerId,
-      priceTotal: currentTicket.priceTotal,
-      discount: currentTicket.discount,
-      discountIsPercentage: currentTicket.discountIsPercentage,
-      transactionType: currentTicket.transactionType,
-      currencySymbol: currentTicket.currencySymbol,
-    );
+    try {
+      // PASO 1: UseCase maneja validaciones y lógica
+      final updatedTicket = _cashRegisterUsecases.setTicketPaymentMode(
+        _state.ticket,
+        payMode,
+      );
 
-    // Establecer los productos usando el setter
-    newTicket.products = currentTicket.products;
-
-    _state = _state.copyWith(ticket: newTicket);
-    _saveTicket();
-    notifyListeners();
+      // PASO 2: Actualizar estado UI
+      _state = _state.copyWith(ticket: updatedTicket);
+      _saveTicket();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error configurando forma de pago: $e');
+      }
+      rethrow;
+    }
   }
 
+  /// Configura el descuento del ticket
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI y persistencia
+  /// La lógica de negocio (validar descuento no negativo) está en CashRegisterUsecases
   void setDiscount({required double discount, bool isPercentage = false}) {
-    if (discount < 0) return; // No permitir descuentos negativos
+    try {
+      // PASO 1: UseCase maneja validaciones y lógica
+      final updatedTicket = _cashRegisterUsecases.setTicketDiscount(
+        _state.ticket,
+        discount: discount,
+        isPercentage: isPercentage,
+      );
 
-    final currentTicket = _state.ticket;
-    final newTicket = _createTicketWithValues(
-      id: currentTicket.id,
-      annulled: currentTicket.annulled,
-      creation: currentTicket.creation,
-      payMode: currentTicket.payMode,
-      valueReceived: currentTicket.valueReceived,
-      cashRegisterName: currentTicket.cashRegisterName,
-      cashRegisterId: currentTicket.cashRegisterId,
-      sellerName: currentTicket.sellerName,
-      sellerId: currentTicket.sellerId,
-      priceTotal: currentTicket.priceTotal,
-      discount: discount,
-      discountIsPercentage: isPercentage,
-      transactionType: currentTicket.transactionType,
-      currencySymbol: currentTicket.currencySymbol,
-    );
-
-    // Establecer los productos usando el setter
-    newTicket.products = currentTicket.products;
-
-    _state = _state.copyWith(ticket: newTicket);
-    _saveTicket();
-    notifyListeners();
+      // PASO 2: Actualizar estado UI
+      _state = _state.copyWith(ticket: updatedTicket);
+      _saveTicket();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error configurando descuento: $e');
+      }
+      rethrow;
+    }
   }
 
+  /// Configura el valor recibido en efectivo
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI y persistencia
+  /// La lógica de negocio (validar valor no negativo) está en CashRegisterUsecases
   void setReceivedCash(double value) {
-    // Actualiza el valor recibido en el ticket
-    final currentTicket = _state.ticket;
-    final newTicket = _createTicketWithValues(
-      id: currentTicket.id,
-      annulled: currentTicket.annulled,
-      creation: currentTicket.creation,
-      payMode: currentTicket.payMode,
-      valueReceived: value,
-      cashRegisterName: currentTicket.cashRegisterName,
-      cashRegisterId: currentTicket.cashRegisterId,
-      sellerName: currentTicket.sellerName,
-      sellerId: currentTicket.sellerId,
-      priceTotal: currentTicket.priceTotal,
-      discount: currentTicket.discount,
-      discountIsPercentage: currentTicket.discountIsPercentage,
-      transactionType: currentTicket.transactionType,
-      currencySymbol: currentTicket.currencySymbol,
-    );
+    try {
+      // PASO 1: UseCase maneja validaciones y lógica
+      final updatedTicket = _cashRegisterUsecases.setTicketReceivedCash(
+        _state.ticket,
+        value,
+      );
 
-    // Establecer los productos usando el setter
-    newTicket.products = currentTicket.products;
-
-    _state = _state.copyWith(ticket: newTicket);
-    _saveTicket();
-    notifyListeners();
+      // PASO 2: Actualizar estado UI
+      _state = _state.copyWith(ticket: updatedTicket);
+      _saveTicket();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error configurando valor recibido: $e');
+      }
+      rethrow;
+    }
   }
 
   void addIncomeCash({double value = 0.0}) {
@@ -464,46 +380,42 @@ class SellProvider extends ChangeNotifier {
     await _persistenceService.saveShouldPrintTicket(_state.shouldPrintTicket);
   }
 
+  /// Guarda el último ticket vendido
+  /// 
+  /// RESPONSABILIDAD: Actualizar estado UI y coordinar llamada al UseCase
+  /// La lógica de persistencia está en CashRegisterUsecases
+  /// 
+  /// 🆕 Este método mantiene sincronizado el estado en memoria con SharedPreferences
   Future<void> saveLastSoldTicket([TicketModel? ticket]) async {
-    // Guarda el último ticket vendido en SharedPreferences
-    // Si no se proporciona un ticket, usa el ticket actual del estado
     final ticketToSave = ticket ?? _state.ticket;
     
-    final newLastSoldTicket = _createTicketWithValues(
-      id: ticketToSave.id,
-      annulled: ticketToSave.annulled,
-      creation: ticketToSave.creation,
-      payMode: ticketToSave.payMode,
-      valueReceived: ticketToSave.valueReceived,
-      cashRegisterName: ticketToSave.cashRegisterName,
-      cashRegisterId: ticketToSave.cashRegisterId,
-      sellerName: ticketToSave.sellerName,
-      sellerId: ticketToSave.sellerId,
-      priceTotal: ticketToSave.priceTotal,
-      discount: ticketToSave.discount,
-      discountIsPercentage: ticketToSave.discountIsPercentage,
-      transactionType: ticketToSave.transactionType,
-      currencySymbol: ticketToSave.currencySymbol,
-    );
-
-    // Establecer los productos usando el setter
-    newLastSoldTicket.products = List.from(ticketToSave.products);
-
-    _state = _state.copyWith(lastSoldTicket: newLastSoldTicket);
-    await _saveLastSoldTicket();
-    notifyListeners();
-  }
-
-  Future<void> _saveLastSoldTicket() async {
-    final lastTicket = _state.lastSoldTicket;
-    if (lastTicket != null) {
-      await _persistenceService.saveLastSoldTicket(jsonEncode(lastTicket.toJson()));
-    } else {
-      await _persistenceService.clearLastSoldTicket();
+    try {
+      // PASO 1: UseCase maneja validación y persistencia en SharedPreferences
+      await _cashRegisterUsecases.saveLastSoldTicket(ticketToSave);
+      
+      // PASO 2: Actualizar estado local UI para mantener sincronización
+      _state = _state.copyWith(lastSoldTicket: ticketToSave);
+      notifyListeners();
+      
+      if (kDebugMode) {
+        print('✅ Último ticket guardado y estado actualizado: ${ticketToSave.id}');
+      }
+    } catch (e) {
+      // Solo mostrar error, no fallar la operación
+      if (kDebugMode) {
+        print('❌ Error guardando último ticket: $e');
+      }
     }
   }
 
+
+
   /// Anula un ticket tanto en la caja registradora como en el último ticket vendido
+  /// 
+  /// 🆕 Ahora sincroniza correctamente el estado entre:
+  /// - Firebase (a través de CashRegisterProvider)
+  /// - SharedPreferences (a través de CashRegisterUsecases)
+  /// - Estado en memoria del SellProvider (UI)
   Future<bool> annullLastSoldTicket({
     required BuildContext context,
     required TicketModel ticket,
@@ -512,69 +424,105 @@ class SellProvider extends ChangeNotifier {
       // Obtener el provider de caja registradora
       final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
       
-      // Anular el ticket en la caja registradora
+      // PASO 1: Anular el ticket en la caja registradora (Firebase + SharedPreferences)
       final success = await cashRegisterProvider.annullTicket(
         accountId: profileAccountSelected.id, 
         ticket: ticket,
+        onLastSoldTicketUpdated: () async {
+          // 🆕 Callback: Recargar el último ticket desde SharedPreferences
+          // para sincronizar el estado después de que CashRegisterUsecases lo actualizó
+          await _reloadLastSoldTicketFromPersistence();
+        },
       );
       
       if (success) {
-        // Actualizar el último ticket vendido marcándolo como anulado
-        await saveLastSoldTicket(ticket.copyWith(annulled: true));
+        // PASO 2: Asegurar que el estado local esté sincronizado
+        // Esto es redundante pero asegura consistencia inmediata en la UI
+        _state = _state.copyWith(lastSoldTicket: ticket.copyWith(annulled: true));
+        notifyListeners();
+        
+        if (kDebugMode) {
+          print('✅ Ticket ${ticket.id} anulado y sincronizado en todos los niveles');
+        }
       }
       
       return success;
     } catch (e) {
-      // Manejar cualquier error que pueda ocurrir
+      if (kDebugMode) {
+        print('❌ Error al anular ticket: $e');
+      }
       return false;
     }
   }
-  // Carga el último ticket vendido desde SharedPreferences al inicializar el provider.
-  Future<void> _loadLastSoldTicket() async {
-    final lastTicketJson = await _persistenceService.getLastSoldTicket();
-    if (lastTicketJson != null) {
-      try {
-        final lastTicket =
-            TicketModel.sahredPreferencefromMap(_decodeJson(lastTicketJson));
-        _state = _state.copyWith(lastSoldTicket: lastTicket);
-        notifyListeners();
-      } catch (_) {
-        _state = _state.copyWith(lastSoldTicket: null);
+  
+  /// 🆕 Recarga el último ticket vendido desde SharedPreferences
+  /// 
+  /// RESPONSABILIDAD: Sincronizar estado en memoria con persistencia local
+  /// Útil cuando otro provider actualiza SharedPreferences directamente
+  Future<void> _reloadLastSoldTicketFromPersistence() async {
+    try {
+      final lastTicket = await _cashRegisterUsecases.getLastSoldTicket();
+      _state = _state.copyWith(lastSoldTicket: lastTicket);
+      notifyListeners();
+      
+      if (kDebugMode) {
+        print('✅ Estado lastSoldTicket recargado desde persistencia');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('⚠️ Error recargando lastSoldTicket: $e');
       }
     }
   }
-  
-  void updateTicketWithCashRegister(BuildContext context) {
-    // Actualiza el ticket con la caja activa si existe
-    final cashRegisterProvider =
-        provider.Provider.of<CashRegisterProvider>(context, listen: false);
-
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
-      final currentTicket = _state.ticket;
-      final newTicket = _createTicketWithValues(
-        id: currentTicket.id,
-        annulled: currentTicket.annulled,
-        creation: currentTicket.creation,
-        payMode: currentTicket.payMode,
-        valueReceived: currentTicket.valueReceived,
-        cashRegisterName: activeCashRegister.description,
-        cashRegisterId: activeCashRegister.id,
-        sellerName: currentTicket.sellerName,
-        sellerId: currentTicket.sellerId,
-        priceTotal: currentTicket.priceTotal,
-        discount: currentTicket.discount,
-        discountIsPercentage: currentTicket.discountIsPercentage,
-        transactionType: currentTicket.transactionType,
-        currencySymbol: currentTicket.currencySymbol,
-      );
-
-      // Establecer los productos usando el setter
-      newTicket.products = currentTicket.products;
-
-      _state = _state.copyWith(ticket: newTicket);
+  /// Carga el último ticket vendido desde almacenamiento local
+  /// 
+  /// RESPONSABILIDAD: Solo actualizar estado UI con datos del UseCase
+  Future<void> _loadLastSoldTicket() async {
+    try {
+      // UseCase maneja la recuperación y deserialización
+      final lastTicket = await _cashRegisterUsecases.getLastSoldTicket();
+      
+      if (lastTicket != null) {
+        _state = _state.copyWith(lastSoldTicket: lastTicket);
+      } else {
+        _state = _state.copyWith(lastSoldTicket: null);
+      }
       notifyListeners();
+    } catch (e) {
+      _state = _state.copyWith(lastSoldTicket: null);
+      notifyListeners();
+    }
+  }
+  
+  /// Actualiza el ticket con la caja registradora activa
+  /// 
+  /// RESPONSABILIDAD: Coordinar UI con datos de caja activa
+  /// La lógica de asociación está en CashRegisterUsecases
+  void updateTicketWithCashRegister(BuildContext context) {
+    try {
+      // Obtener caja activa
+      final cashRegisterProvider =
+          provider.Provider.of<CashRegisterProvider>(context, listen: false);
+
+      if (cashRegisterProvider.hasActiveCashRegister) {
+        final activeCashRegister =
+            cashRegisterProvider.currentActiveCashRegister!;
+        
+        // PASO 1: UseCase asocia ticket con caja
+        final updatedTicket = _cashRegisterUsecases.associateTicketWithCashRegister(
+          _state.ticket,
+          activeCashRegister,
+        );
+
+        // PASO 2: Actualizar estado UI
+        _state = _state.copyWith(ticket: updatedTicket);
+        notifyListeners();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error actualizando ticket con caja: $e');
+      }
+      rethrow;
     }
   }
 
@@ -590,17 +538,14 @@ class SellProvider extends ChangeNotifier {
   /// PROCESAMIENTO DE VENTA CONFIRMADA
   Future<void> processSale(BuildContext context) async {
     try {
-      // asignamos valores necesarios 
-      _state.ticket.sellerId = _state.profileAccountSelected.id;
-      _state.ticket.sellerName = _state.profileAccountSelected.name;
-      _state.ticket.priceTotal = _state.ticket.calculatedTotal;
-      // Preparar el ticket con ID único
-      _prepareTicketForSale();
+      // Preparar el ticket con toda la información necesaria (vendedor, caja, precio, ID)
+      _prepareTicketForSale(context);
 
       // Procesar caja registradora si está activa
       await _processCashRegister(context);
 
       // Guardar en historial de transacciones
+      // NOTA: El último ticket vendido se guarda automáticamente en saveTicketToTransactionHistory
       await _saveToTransactionHistory(context);
 
       // Actualizar estadísticas de productos y stock
@@ -611,8 +556,7 @@ class SellProvider extends ChangeNotifier {
         await _handleTicketPrintingOrGeneration(context);
       }
 
-      // Finalizar la venta
-      await saveLastSoldTicket();
+      // Finalizar la venta - el guardado local ya se realizó automáticamente
 
     } catch (e) {
       // Mostrar error al usuario
@@ -644,68 +588,57 @@ class SellProvider extends ChangeNotifier {
     }
   }
 
-  /// Prepara el ticket para la venta asignando un ID único
-  void _prepareTicketForSale() {
-    final currentTicket = _state.ticket;
-    if (currentTicket.id.isEmpty) {
-      final newTicket = _createTicketWithValues(
-        id:  UidHelper.generateUid(), 
-        annulled: false,
-        creation: currentTicket.creation,
-        payMode: currentTicket.payMode,
-        valueReceived: currentTicket.valueReceived,
-        cashRegisterName: currentTicket.cashRegisterName,
-        cashRegisterId: currentTicket.cashRegisterId,
-        sellerName: currentTicket.sellerName,
-        sellerId: currentTicket.sellerId,
-        priceTotal: currentTicket.priceTotal,
-        discount: currentTicket.discount,
-        discountIsPercentage: currentTicket.discountIsPercentage,
-        transactionType: currentTicket.transactionType,
-        currencySymbol: currentTicket.currencySymbol, 
-      ); 
-      newTicket.products = currentTicket.products;
-      
-      _state = _state.copyWith(ticket: newTicket);
+  /// Prepara el ticket para la venta
+  /// 
+  /// RESPONSABILIDAD: Coordinar preparación con UseCase
+  /// La lógica de validación, transformación y generación de ID está en CashRegisterUsecases
+  void _prepareTicketForSale(BuildContext context) {
+    try {
+      // Obtener caja activa si existe
+      final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
+      final activeCashRegister = cashRegisterProvider.hasActiveCashRegister 
+          ? cashRegisterProvider.currentActiveCashRegister 
+          : null;
+
+      // PASO 1: UseCase prepara ticket completo (validaciones, transformaciones, ID)
+      final preparedTicket = _cashRegisterUsecases.prepareSaleTicket(
+        _state.ticket,
+        sellerId: _state.profileAccountSelected.id,
+        sellerName: _state.profileAccountSelected.name,
+        activeCashRegister: activeCashRegister,
+      );
+
+      // PASO 2: Actualizar estado UI con ticket preparado
+      _state = _state.copyWith(ticket: preparedTicket);
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error preparando ticket para venta: $e');
+      }
+      rethrow;
     }
   }
 
   /// Procesa la caja registradora si hay una activa
+  /// 
+  /// RESPONSABILIDAD: Registrar venta en caja activa (no actualizar ticket, ya lo hizo _prepareTicketForSale)
   Future<void> _processCashRegister(BuildContext context) async {
-    final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
-    
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
-      final currentTicket = _state.ticket;
+    try {
+      final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
       
-      // Actualizar datos del ticket con información de la caja
-      final newTicket = _createTicketWithValues(
-        id: currentTicket.id,
-        annulled: currentTicket.annulled,
-        creation: currentTicket.creation,
-        payMode: currentTicket.payMode,
-        valueReceived: currentTicket.valueReceived,
-        cashRegisterName: activeCashRegister.description,
-        cashRegisterId: activeCashRegister.id,
-        sellerName: currentTicket.sellerName,
-        sellerId: currentTicket.sellerId,
-        priceTotal: currentTicket.priceTotal,
-        discount: currentTicket.discount,
-        discountIsPercentage: currentTicket.discountIsPercentage,
-        transactionType: currentTicket.transactionType,
-        currencySymbol: currentTicket.currencySymbol,
-      ); 
-      newTicket.products = currentTicket.products;
-      
-      _state = _state.copyWith(ticket: newTicket);
-
-      // Registrar la venta en la caja activa
-      await cashRegisterProvider.cashRegisterSale(
-        accountId: _state.profileAccountSelected.id,
-        saleAmount: _state.ticket.getTotalPrice,
-        discountAmount: _state.ticket.discount,
-        itemCount: _state.ticket.getProductsQuantity(),
-      );
+      if (cashRegisterProvider.hasActiveCashRegister) {
+        // Registrar la venta en la caja activa
+        await cashRegisterProvider.cashRegisterSale(
+          accountId: _state.profileAccountSelected.id,
+          saleAmount: _state.ticket.getTotalPrice,
+          discountAmount: _state.ticket.discount,
+          itemCount: _state.ticket.getProductsQuantity(),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error procesando caja registradora: $e');
+      }
+      rethrow;
     }
   }
 
@@ -842,10 +775,32 @@ class SellProvider extends ChangeNotifier {
   }
 
   /// Guarda el ticket en el historial de transacciones
+  /// 
+  /// RESPONSABILIDAD: Coordinar guardado y actualizar estado UI local
+  /// El UseCase se encarga automáticamente de:
+  /// - Preparar y validar el ticket (prepareTicketForTransaction)
+  /// - Guardar en Firebase (historial de transacciones)
+  /// - Guardar en SharedPreferences (último ticket vendido)
   Future<void> _saveToTransactionHistory(BuildContext context) async {
     final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
     
-    await cashRegisterProvider.saveTicketToTransactionHistory(accountId: _state.profileAccountSelected.id, ticket: _state.ticket);
+    // 🆕 PASO 1: Preparar el ticket usando el UseCase antes de guardar
+    // Esto asegura que el ticket tenga ID, validaciones, y transformaciones correctas
+    final preparedTicket = _cashRegisterUsecases.prepareTicketForTransaction(_state.ticket);
+    
+    // PASO 2: Actualizar el ticket actual con el preparado (tiene ID generado si estaba vacío)
+    _state = _state.copyWith(ticket: preparedTicket);
+    
+    // PASO 3: Guardar en historial (Firebase + SharedPreferences automático)
+    await cashRegisterProvider.saveTicketToTransactionHistory(
+      accountId: _state.profileAccountSelected.id, 
+      ticket: preparedTicket, // ← Usar ticket preparado
+    );
+    
+    // PASO 4: Actualizar estado local UI para reflejar el último ticket vendido
+    // Usar el ticket preparado para asegurar consistencia total
+    _state = _state.copyWith(lastSoldTicket: preparedTicket);
+    notifyListeners();
   }
 
   /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo

@@ -631,7 +631,7 @@ class SellUsecases {
         accountId: accountId,
         cashRegisterId: activeCashRegister.id,
         billingDecrement: ticket.priceTotal, // Pasar valor positivo
-        discountDecrement: ticket.discount, // Pasar valor positivo
+        discountDecrement: ticket.getDiscountAmount, // Usar el monto calculado del descuento
       );
     }
 

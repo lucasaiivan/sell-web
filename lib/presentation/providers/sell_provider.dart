@@ -647,7 +647,7 @@ class SellProvider extends ChangeNotifier {
         await cashRegisterProvider.cashRegisterSale(
           accountId: _state.profileAccountSelected.id,
           saleAmount: _state.ticket.getTotalPrice,
-          discountAmount: _state.ticket.discount,
+          discountAmount: _state.ticket.getDiscountAmount, // Usar el monto calculado del descuento
           itemCount: _state.ticket.getProductsQuantity(),
         );
       }

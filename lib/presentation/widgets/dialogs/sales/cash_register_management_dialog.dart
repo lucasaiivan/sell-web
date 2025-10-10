@@ -109,19 +109,7 @@ class CashRegisterManagementDialog extends StatelessWidget {
           value: CurrencyFormatter.formatPrice(value: cashRegister.getExpectedBalance), 
           backgroundColor:Theme.of(context).colorScheme.primary.withValues(alpha: 0.03),
           child: Column(
-            children: [
-              // row
-              Row(
-                children: [
-                  // info : cantidad de ventas
-                  DialogComponents.infoBadge(
-                    context: context,
-                    text: 'Ventas: ${cashRegister.sales}',
-                    icon: Icons.check_circle_rounded, 
-                    margin: EdgeInsets.only(bottom: isMobile ? 0 : 0, right: isMobile ? 8 : 12),
-                  ),
-                ],
-              ),
+            children: [ 
               // view : información de flujo de caja
                 Container(
                 padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -168,92 +156,292 @@ class CashRegisterManagementDialog extends StatelessWidget {
 
   Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister, {List<TicketModel>? tickets}) {
     final theme = Theme.of(context);
+    final isMobileDevice = isMobile(context);
 
-    final items = [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sección: Nombre/Descripción de la caja con información temporal
+        _buildCashRegisterHeader(context, cashRegister, theme, isMobileDevice),
+        
+        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
+        
+        // Sección: Estadísticas de ventas con cards destacadas
+        _buildStatsCards(context, cashRegister, isMobileDevice),
+        
+        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
+        
+        // Sección: Información financiera
+        _buildFinancialInfo(context, cashRegister, theme, isMobileDevice),
+      ],
+    );
+  }
+
+  // Stats Cards: Muestra estadísticas principales en formato de tarjetas
+  Widget _buildStatsCards(BuildContext context, CashRegister cashRegister, bool isMobile) {
+    final theme = Theme.of(context);
+    
+    final stats = [
       {
-        'label': 'id',
-        'value': cashRegister.id,
-      },
-      {
-        'label': 'Descripción',
-        'value': cashRegister.description,
-      },
-      {
-        'label': 'Ventas Efectivas',
-        'value': '${cashRegister.sales-cashRegister.annulledTickets}',
+        'label': 'Efectivas',
+        'value': '${cashRegister.sales - cashRegister.annulledTickets}',
         'icon': Icons.check_circle_rounded,
-        'iconColor': Colors.green,
+        'color': Colors.green,
       },
       {
-        'label': 'Tickets Anulados',
+        'label': 'Anulados',
         'value': '${cashRegister.annulledTickets}',
         'icon': Icons.cancel_rounded,
-        'iconColor': Colors.red,
+        'color': Colors.red,
       },
       {
-        'label': 'Total Transacciones',
+        'label': 'Transacciones',
         'value': '${cashRegister.sales}',
         'icon': Icons.receipt_long_rounded,
-        'iconColor': theme.colorScheme.primary,
-      },
-      {
-        'label': 'Facturación',
-        'value': CurrencyFormatter.formatPrice(value: cashRegister.billing),
-      },
-      {
-        'label': 'Descuentos',
-        'value': CurrencyFormatter.formatPrice(value: cashRegister.discount),
-      },
-      {
-        'label': 'Fecha de creación',
-        'value':
-            DateFormatter.formatPublicationDate(dateTime: cashRegister.opening),
-      },
-      {
-        'label': 'Tiempo transcurrido',
-        'value':
-            DateFormatter.getElapsedTime(fechaInicio: cashRegister.opening),
+        'color': theme.colorScheme.primary,
       },
     ];
 
-    return Column(
-      children: [
-        for (int i = 0; i < items.length; i++) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Row(
+      children: stats.map((stat) {
+        final color = stat['color'] as Color;
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(
+              right: stat == stats.last ? 0 : (isMobile ? 6 : 8),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 8 : 12,
+              vertical: isMobile ? 10 : 12,
+            ),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8), 
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (items[i]['icon'] != null) ...[
-                      Icon(
-                        items[i]['icon'] as IconData,
-                        size: 18,
-                        color: items[i]['iconColor'] as Color?,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
+                    Icon(
+                      stat['icon'] as IconData,
+                      size: isMobile ? 16 : 18,
+                      color: color,
+                    ),
                     Text(
-                      items[i]['label'] as String,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      stat['value'] as String,
+                      style: (isMobile 
+                        ? theme.textTheme.titleMedium 
+                        : theme.textTheme.titleLarge)?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: color,
                       ),
                     ),
                   ],
                 ),
+                SizedBox(height: isMobile ? 4 : 6),
                 Text(
-                  items[i]['value'] as String,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: items[i]['iconColor'] as Color? ?? theme.colorScheme.onSurface,
+                  stat['label'] as String,
+                  style: (isMobile 
+                    ? theme.textTheme.labelSmall 
+                    : theme.textTheme.labelMedium)?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          if (i < items.length - 1) const AppDivider(),
+        );
+      }).toList(),
+    );
+  }
+
+  // Cash Register Header: Muestra el nombre/descripción de la caja con información temporal
+  Widget _buildCashRegisterHeader(BuildContext context, CashRegister cashRegister, ThemeData theme, bool isMobile) {
+    final timeInfo = [
+      {
+        'icon': Icons.schedule_rounded,
+        'label': 'Apertura',
+        'value': DateFormatter.formatPublicationDate(dateTime: cashRegister.opening),
+      },
+      {
+        'icon': Icons.timelapse_rounded,
+        'label': 'Tiempo activo',
+        'value': DateFormatter.getElapsedTime(fechaInicio: cashRegister.opening),
+      },
+    ];
+
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 12 : 14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.5),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con nombre de caja y badge
+          Row(
+            children: [
+              Icon(
+                Icons.point_of_sale_rounded,
+                size: isMobile ? 18 : 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  cashRegister.description,
+                  style: (isMobile 
+                    ? theme.textTheme.titleMedium 
+                    : theme.textTheme.titleLarge)?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Badge minimalista
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'ACTIVA',
+                  style: (isMobile 
+                    ? theme.textTheme.labelSmall 
+                    : theme.textTheme.labelMedium)?.copyWith(
+                    color: Colors.green.shade700,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: isMobile ? 10 : 12),
+          
+          // Lista de información temporal
+          ...timeInfo.map((info) => Padding(
+            padding: EdgeInsets.only(bottom: isMobile ? 6 : 8),
+            child: Row(
+              children: [
+                Icon(
+                  info['icon'] as IconData,
+                  size: isMobile ? 14 : 16,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  info['label'] as String,
+                  style: (isMobile 
+                    ? theme.textTheme.bodySmall 
+                    : theme.textTheme.bodyMedium)?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  info['value'] as String,
+                  style: (isMobile 
+                    ? theme.textTheme.bodySmall 
+                    : theme.textTheme.bodyMedium)?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          )),
         ],
+      ),
+    );
+  }
+
+  // Financial Info: Información financiera detallada
+  Widget _buildFinancialInfo(BuildContext context, CashRegister cashRegister, ThemeData theme, bool isMobile) {
+    final financialItems = [
+      {
+        'label': 'Facturación',
+        'value': CurrencyFormatter.formatPrice(value: cashRegister.billing),
+        'icon': Icons.attach_money_rounded,
+        'color': theme.colorScheme.primary,
+      },
+      {
+        'label': 'Descuentos',
+        'value': CurrencyFormatter.formatPrice(value: cashRegister.discount),
+        'icon': Icons.discount_rounded,
+        'color': theme.colorScheme.secondary,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            'Información Financiera',
+            style: (isMobile 
+              ? theme.textTheme.labelLarge 
+              : theme.textTheme.titleSmall)?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+        ...financialItems.map((item) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: (item['color'] as Color).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  item['icon'] as IconData,
+                  size: isMobile ? 16 : 18,
+                  color: item['color'] as Color,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item['label'] as String,
+                  style: (isMobile 
+                    ? theme.textTheme.bodyMedium 
+                    : theme.textTheme.bodyLarge)?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              Text(
+                item['value'] as String,
+                style: (isMobile 
+                  ? theme.textTheme.titleSmall 
+                  : theme.textTheme.titleMedium)?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        )),
       ],
     );
   }
@@ -1013,6 +1201,12 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     final sellProvider = context.read<SellProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     
+    // Información adicional
+    final hasDiscount = ticket.discount > 0;
+    final hasProfit = ticket.getProfit > 0;
+    final paymentMethodIcon = _getPaymentMethodIcon(ticket.payMode);
+    final paymentMethodLabel = _getPaymentMethodLabel(ticket.payMode);
+    
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1043,107 +1237,307 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
         ),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          padding: EdgeInsets.symmetric(
+            vertical: isMobile ? 8 : 10,
+            horizontal: isMobile ? 8 : 10,
+          ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icono del ticket
+              // Icono del ticket con estado
               Container(
                 padding: EdgeInsets.all(isMobile ? 6 : 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  color: ticket.annulled
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
                 ),
                 child: Icon(
-                  Icons.receipt_rounded,
-                  size: isMobile ? 14 : 16,
-                  color: theme.colorScheme.primary,
+                  ticket.annulled ? Icons.receipt_long_rounded : Icons.receipt_rounded,
+                  size: isMobile ? 16 : 18,
+                  color: ticket.annulled ? Colors.red : theme.colorScheme.primary,
                 ),
               ),
-              SizedBox(width: isMobile ? 8 : 12),
+              SizedBox(width: isMobile ? 10 : 12),
 
-              // Información del ticket
+              // Información principal del ticket
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // text : ID del ticket
-                    Text(
-                      'Ticket ${ticket.id.length > 8 ? ticket.id.substring(ticket.id.length - 8) : ticket.id}',
-                      style: (isMobile
-                              ? theme.textTheme.bodySmall
-                              : theme.textTheme.bodyMedium)
-                          ?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: isMobile ? 2 : 4),
-                    // text : anulado
-                    if (ticket.annulled)
-                      Text(
-                        'Anulado',
-                        style: (isMobile
-                                ? theme.textTheme.labelSmall
-                                : theme.textTheme.labelMedium)
-                            ?.copyWith(
-                          color: Colors.red.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w600,
+                    // Header: ID y badges
+                    Row(
+                      children: [
+                        // ID del ticket
+                        Expanded(
+                          child: Text(
+                            'Ticket #${ticket.id.length > 8 ? ticket.id.substring(ticket.id.length - 8) : ticket.id}',
+                            style: (isMobile
+                                    ? theme.textTheme.bodySmall
+                                    : theme.textTheme.bodyMedium)
+                                ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    // text : cantidad de productos
-                    Text(
-                      '${ticket.getProductsQuantity()} ${ticket.getProductsQuantity() == 1 ? 'producto' : 'productos'}',
-                      style: (isMobile
-                              ? theme.textTheme.labelSmall
-                              : theme.textTheme.labelMedium)
-                          ?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                      ),
+                        
+                        // Badge de anulado
+                        if (ticket.annulled) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'ANULADO',
+                              style: (isMobile
+                                      ? theme.textTheme.labelSmall
+                                      : theme.textTheme.labelMedium)
+                                  ?.copyWith(
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w700,
+                                fontSize: isMobile ? 9 : 10,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    
+                    SizedBox(height: isMobile ? 4 : 6),
+                    
+                    // Info row: Productos, método de pago y descuento (si aplica)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        // Cantidad de productos
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.shopping_bag_outlined,
+                              size: isMobile ? 12 : 13,
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${ticket.getProductsQuantity()} ${ticket.getProductsQuantity() == 1 ? 'item' : 'items'}',
+                              style: (isMobile
+                                      ? theme.textTheme.labelSmall
+                                      : theme.textTheme.labelMedium)
+                                  ?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        // Separador
+                        Container(
+                          width: 3,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        
+                        // Método de pago
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              paymentMethodIcon,
+                              size: isMobile ? 12 : 13,
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              paymentMethodLabel,
+                              style: (isMobile
+                                      ? theme.textTheme.labelSmall
+                                      : theme.textTheme.labelMedium)
+                                  ?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        // Descuento (si aplica) - RESALTADO
+                        if (hasDiscount) ...[
+                          // Separador
+                          Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.discount_rounded,
+                                size: isMobile ? 12 : 13,
+                                color: Colors.orange.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Con descuento',
+                                style: (isMobile
+                                        ? theme.textTheme.labelSmall
+                                        : theme.textTheme.labelMedium)
+                                    ?.copyWith(
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ),
 
-              // Monto y fecha del ticket
+              SizedBox(width: isMobile ? 8 : 10),
+
+              // Columna derecha: Monto total, descuento, ganancia y fecha
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // Monto total
                   Text(
                     CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
-                    style: (isMobile
-                            ? theme.textTheme.bodySmall
-                            : theme.textTheme.bodyMedium)
+                    style: (theme.textTheme.titleLarge)
                         ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      color: ticket.annulled 
+                          ? theme.colorScheme.onSurfaceVariant
+                          : theme.colorScheme.primary,
+                      decoration: ticket.annulled 
+                          ? TextDecoration.lineThrough
+                          : null,
+                      decorationColor: ticket.annulled 
+                          ? theme.colorScheme.onSurfaceVariant
+                          : null,
+                      decorationThickness: ticket.annulled ? 2.0 : null,
                     ),
                   ),
-                  SizedBox(height: isMobile ? 2 : 4),
+
+                  // Ganancia (si existe)
+                  if (hasProfit) ...[
+                    SizedBox(height: isMobile ? 2 : 3),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.trending_up_rounded,
+                            size: isMobile ? 12 : 13,
+                            color: Colors.green.shade800,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(CurrencyFormatter.formatPrice(value: ticket.getProfit),
+                            style: (isMobile
+                                    ? theme.textTheme.labelSmall
+                                    : theme.textTheme.labelMedium)
+                                ?.copyWith(
+                              color: Colors.green.shade800,
+                              fontWeight: FontWeight.w700,
+                              fontSize: isMobile ? 10 : 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ], 
+                  SizedBox(height: isMobile ? 4 : 6),
+                  
+                  // Fecha y hora
                   Text(
                     _formatDateTime(ticket.creation.toDate()),
                     style: (isMobile
                             ? theme.textTheme.labelSmall
                             : theme.textTheme.labelMedium)
                         ?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      fontSize: isMobile ? 10 : 11,
                     ),
                   ),
+                  
+                  SizedBox(height: isMobile ? 4 : 6),
+                  
+                  // Icono indicador de que es clickeable
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: isMobile ? 11 : 12,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  ),
                 ],
-              ),
-              
-              // Icono indicador de que es clickeable
-              SizedBox(width: isMobile ? 4 : 8),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: isMobile ? 12 : 16,
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // Helper: Obtener icono del método de pago
+  IconData _getPaymentMethodIcon(String payMode) {
+    switch (payMode.toLowerCase()) {
+      case 'effective':
+      case 'efectivo':
+        return Icons.payments_rounded;
+      case 'card':
+      case 'tarjeta':
+        return Icons.credit_card_rounded;
+      case 'mercadopago':
+      case 'qr':
+        return Icons.qr_code_rounded;
+      case 'transfer':
+      case 'transferencia':
+        return Icons.account_balance_rounded;
+      default:
+        return Icons.attach_money_rounded;
+    }
+  }
+
+  // Helper: Obtener label del método de pago
+  String _getPaymentMethodLabel(String payMode) {
+    switch (payMode.toLowerCase()) {
+      case 'effective':
+      case 'efectivo':
+        return 'Efectivo';
+      case 'card':
+      case 'tarjeta':
+        return 'Tarjeta';
+      case 'mercadopago':
+        return 'MP';
+      case 'qr':
+        return 'QR';
+      case 'transfer':
+      case 'transferencia':
+        return 'Transfer.';
+      default:
+        return 'Otro';
+    }
   }
  
 

@@ -1821,7 +1821,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade600,
+                    color: Colors.green.shade600.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Theme.of(context).scaffoldBackgroundColor,
@@ -1839,7 +1839,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                     salesCount > 999 ? '999+' : salesCount.toString(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: 8,
                       fontWeight: FontWeight.bold,
                       height: 1.0,
                     ),

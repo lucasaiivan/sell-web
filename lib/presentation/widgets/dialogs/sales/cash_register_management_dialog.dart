@@ -106,14 +106,34 @@ class CashRegisterManagementDialog extends StatelessWidget {
         DialogComponents.summaryContainer(
           context: context, 
           label: 'Balance total',
-          value: CurrencyFormatter.formatPrice(value: cashRegister.getExpectedBalance),
-          icon: Icons.monetization_on_rounded,
+          value: CurrencyFormatter.formatPrice(value: cashRegister.getExpectedBalance), 
           backgroundColor:Theme.of(context).colorScheme.primary.withValues(alpha: 0.03),
           child: Column(
             children: [
+              // row
+              Row(
+                children: [
+                  // info : cantidad de ventas
+                  DialogComponents.infoBadge(
+                    context: context,
+                    text: 'Ventas: ${cashRegister.sales}',
+                    icon: Icons.check_circle_rounded, 
+                    margin: EdgeInsets.only(bottom: isMobile ? 0 : 0, right: isMobile ? 8 : 12),
+                  ),
+                ],
+              ),
               // view : información de flujo de caja
-              _buildCashFlowView(context, provider, isMobile),   
-              DialogComponents.divider(context: context),
+                Container(
+                padding: EdgeInsets.all(isMobile ? 12 : 16),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                  width:0.3,
+                  color: Theme.of(context).dividerColor,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: _buildCashFlowView(context, provider, isMobile),
+                ), 
               DialogComponents.itemSpacing,
               // view : lista de las ultimas ventas
               RecentTicketsView(cashRegisterProvider: provider,isMobile: isMobile),
@@ -149,34 +169,6 @@ class CashRegisterManagementDialog extends StatelessWidget {
   Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister, {List<TicketModel>? tickets}) {
     final theme = Theme.of(context);
 
-    // 🎯 CALCULAR CONTADORES EN TIEMPO REAL desde las transacciones reales
-    // 
-    // ⚠️ IMPORTANTE - LÓGICA DE CONTADORES:
-    // - cashRegister.sales: Se incrementa (+1) en cada VENTA EFECTIVA automáticamente
-    //   * NO se modifica al anular tickets
-    //   * Representa SOLO ventas efectivas (NO incluye anulaciones)
-    // - cashRegister.annulledTickets: Se incrementa (+1) al anular un ticket
-    //   * Se incrementa automáticamente en updateBillingOnAnnullment()
-    // - Total de Transacciones = sales + annulledTickets
-    // - Ventas Efectivas = sales (directo, ya no requiere resta)
-    // 
-    // FUENTE DE VERDAD: Las transacciones reales (tickets) para verificación
-    // - Se consultan para validar consistencia de contadores
-    int realEffectiveSales = 0;
-    int realAnnulledTickets = 0;
-    
-    if (tickets != null) {
-      // Contar desde transacciones reales (FUENTE DE VERDAD para verificación)
-      realEffectiveSales = tickets.where((t) => !t.annulled).length;
-      realAnnulledTickets = tickets.where((t) => t.annulled).length;
-    } else {
-      // Fallback: usar contadores del modelo directamente
-      realEffectiveSales = cashRegister.sales; // Ya representa ventas efectivas
-      realAnnulledTickets = cashRegister.annulledTickets;
-    }
-    
-    final totalTransactions = realEffectiveSales + realAnnulledTickets;
-
     final items = [
       {
         'label': 'id',
@@ -188,19 +180,19 @@ class CashRegisterManagementDialog extends StatelessWidget {
       },
       {
         'label': 'Ventas Efectivas',
-        'value': '$realEffectiveSales',
+        'value': '${cashRegister.sales-cashRegister.annulledTickets}',
         'icon': Icons.check_circle_rounded,
         'iconColor': Colors.green,
       },
       {
         'label': 'Tickets Anulados',
-        'value': '$realAnnulledTickets',
+        'value': '${cashRegister.annulledTickets}',
         'icon': Icons.cancel_rounded,
         'iconColor': Colors.red,
       },
       {
         'label': 'Total Transacciones',
-        'value': '$totalTransactions',
+        'value': '${cashRegister.sales}',
         'icon': Icons.receipt_long_rounded,
         'iconColor': theme.colorScheme.primary,
       },
@@ -747,7 +739,7 @@ class RecentTicketsView extends StatefulWidget {
 
 class _RecentTicketsViewState extends State<RecentTicketsView> {
 
-  Future<List<TicketModel>?>? _ticketsFuture;
+  Future<List<TicketModel>?>? _cashRegisterTickets;
 
   @override
   void initState() {
@@ -766,12 +758,15 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
       _loadTickets();
     }
   }
+
   void _loadTickets() {
+    // providers
     final sellProvider = context.read<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
     if (accountId.isNotEmpty) {
+      // Cargar tickets solo si hay una cuenta seleccionada
       setState(() {
-        _ticketsFuture = widget.cashRegisterProvider.getTodayTickets(accountId: accountId, cashRegisterId: widget.cashRegisterProvider.currentActiveCashRegister?.id ?? '' );
+        _cashRegisterTickets = widget.cashRegisterProvider.getTodayTickets(accountId: accountId, cashRegisterId: widget.cashRegisterProvider.currentActiveCashRegister?.id ?? '' );
       });
     }
   }
@@ -784,12 +779,12 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
     if (accountId.isEmpty) return const SizedBox();
 
-    if (_ticketsFuture == null) {
+    if (_cashRegisterTickets == null) {
       return _buildEmptyTicketsView(context, widget.isMobile);
     }
 
     return FutureBuilder<List<TicketModel>?>(
-      future: _ticketsFuture,
+      future: _cashRegisterTickets,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

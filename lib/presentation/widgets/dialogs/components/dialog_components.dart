@@ -84,7 +84,7 @@ class DialogComponents {
     Color? borderColor,
     double borderRadius = 12,
     bool useFillStyle = false, // Nueva opción para estilo fill
-    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(12),
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
@@ -483,18 +483,25 @@ class DialogComponents {
                 children: [
                   label == null
                       ? const SizedBox.shrink()
-                      : Text(
-                          label,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer,
+                      : Opacity(
+                        opacity: 0.7,
+                        child: Text(
+                            label,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.w500,
+                              
+                            ),
                           ),
-                        ),
+                      ),
                   const SizedBox(height: 4),
                   Text(
                     value,
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 30, 
+
                     ),
                   ),
                 ],

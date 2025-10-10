@@ -505,8 +505,7 @@ class SellProvider extends ChangeNotifier {
           provider.Provider.of<CashRegisterProvider>(context, listen: false);
 
       if (cashRegisterProvider.hasActiveCashRegister) {
-        final activeCashRegister =
-            cashRegisterProvider.currentActiveCashRegister!;
+        final activeCashRegister = cashRegisterProvider.currentActiveCashRegister!;
         
         // PASO 1: UseCase asocia ticket con caja
         final updatedTicket = _sellUsecases.associateTicketWithCashRegister( // CAMBIADO
@@ -536,19 +535,29 @@ class SellProvider extends ChangeNotifier {
   }
 
   /// PROCESAMIENTO DE VENTA CONFIRMADA
+  ///  
+  /// 1. Preparar ticket (vendedor, caja, precio, ID)
+  /// 2. Guardar ticket en Firebase (transacciones)
+  /// 3. Incrementar contador de ventas (SOLO si el guardado fue exitoso)
+  /// 4. Actualizar estadísticas de productos y stock
+  /// 
+  /// ⚠️ IMPORTANTE: El contador 'sales' se incrementa DESPUÉS de guardar el ticket
+  /// para garantizar que cashRegister.sales coincida con los tickets realmente guardados.
   Future<void> processSale(BuildContext context) async {
     try {
-      // Preparar el ticket con toda la información necesaria (vendedor, caja, precio, ID)
+      // PASO 1: Preparar el ticket con toda la información necesaria (vendedor, caja, precio, ID)
       _prepareTicketForSale(context);
 
-      // Procesar caja registradora si está activa
-      await _processCashRegister(context);
-
-      // Guardar en historial de transacciones
+      // PASO 2: Guardar en historial de transacciones (Firebase)
       // NOTA: El último ticket vendido se guarda automáticamente en saveTicketToTransactionHistory
+      // ⚠️ Si esto falla, no se incrementará el contador de ventas
       await _saveToTransactionHistory(context);
 
-      // Actualizar estadísticas de productos y stock
+      // PASO 3: Procesar caja registradora DESPUÉS de guardar exitosamente
+      // ✅ Garantiza consistencia: sales se incrementa SOLO si el ticket se guardó en Firebase
+      await _processCashRegister(context);
+
+      // PASO 4: Actualizar estadísticas de productos y stock
       await _updateProductSalesAndStock(context);
 
       // Manejar impresión o generación de ticket según configuración
@@ -620,7 +629,15 @@ class SellProvider extends ChangeNotifier {
 
   /// Procesa la caja registradora si hay una activa
   /// 
-  /// RESPONSABILIDAD: Registrar venta en caja activa (no actualizar ticket, ya lo hizo _prepareTicketForSale)
+  /// ⚠️ IMPORTANTE - ORDEN DE EJECUCIÓN:
+  /// Este método DEBE llamarse DESPUÉS de guardar el ticket en Firebase (_saveToTransactionHistory).
+  /// 
+  /// RESPONSABILIDAD:
+  /// - Incrementar contador de ventas efectivas (+1) SOLO si el ticket se guardó exitosamente
+  /// - Actualizar facturación y descuentos en la caja registradora
+  /// - Garantizar consistencia: cashRegister.sales coincide con tickets guardados en Firebase
+  /// 
+  /// NOTA: El ticket ya fue preparado por _prepareTicketForSale (vendedor, caja, precio, ID)
   Future<void> _processCashRegister(BuildContext context) async {
     try {
       final cashRegisterProvider = provider.Provider.of<CashRegisterProvider>(context, listen: false);
@@ -792,10 +809,16 @@ class SellProvider extends ChangeNotifier {
     _state = _state.copyWith(ticket: preparedTicket);
     
     // PASO 3: Guardar en historial (Firebase + SharedPreferences automático)
-    await cashRegisterProvider.saveTicketToTransactionHistory(
+    // ⚠️ IMPORTANTE: Verificar que el guardado fue exitoso antes de continuar
+    final success = await cashRegisterProvider.saveTicketToTransactionHistory(
       accountId: _state.profileAccountSelected.id, 
       ticket: preparedTicket, // ← Usar ticket preparado
     );
+    
+    // Si el guardado falló, lanzar excepción para detener el flujo
+    if (!success) {
+      throw Exception('Error al guardar el ticket en el historial de transacciones');
+    }
     
     // PASO 4: Actualizar estado local UI para reflejar el último ticket vendido
     // Usar el ticket preparado para asegurar consistencia total

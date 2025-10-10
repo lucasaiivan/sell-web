@@ -247,7 +247,33 @@ class CashRegisterUsecases {
 
   /// Registra una venta en la caja registradora
   ///
-  /// Actualiza los totales de ventas, facturación y descuentos
+  /// ⚠️ IMPORTANTE - ORDEN DE EJECUCIÓN:
+  /// Este método DEBE llamarse DESPUÉS de guardar el ticket en Firebase.
+  /// Garantiza consistencia: el contador 'sales' se incrementa SOLO si el ticket
+  /// se guardó exitosamente en la base de datos.
+  /// 
+  /// RESPONSABILIDAD:
+  /// - Incrementar contador de ventas efectivas (+1)
+  /// - Actualizar facturación total
+  /// - Actualizar descuentos totales
+  /// 
+  /// VALIDACIONES:
+  /// - saleAmount >= 0
+  /// - discountAmount >= 0
+  /// 
+  /// USO CORRECTO:
+  /// ```dart
+  /// // 1. Guardar ticket en Firebase
+  /// await saveTicketToTransactionHistory(ticket);
+  /// 
+  /// // 2. SOLO si el guardado fue exitoso, incrementar contador
+  /// await cashRegisterSale(
+  ///   accountId: accountId,
+  ///   cashRegisterId: cashRegisterId,
+  ///   saleAmount: ticket.getTotalPrice,
+  ///   discountAmount: ticket.discount,
+  /// );
+  /// ```
   Future<void> cashRegisterSale({
     required String accountId,
     required String cashRegisterId,

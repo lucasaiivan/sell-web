@@ -15,8 +15,7 @@ extension ListExtensions<T> on List<T> {
 
 class _CashRegisterState {
   final List<CashRegister> activeCashRegisters;
-  final CashRegister?
-      selectedCashRegister; // Puede ser null si no hay caja seleccionada
+  final CashRegister? selectedCashRegister; // Puede ser null si no hay caja seleccionada
   final bool isLoadingActive;
   final List<CashRegister> cashRegisterHistory;
   final bool isLoadingHistory;
@@ -140,8 +139,7 @@ class CashRegisterProvider extends ChangeNotifier {
   List<String> get fixedDescriptions => _state.fixedDescriptions;
   bool get hasActiveCashRegister => _state.hasActiveCashRegister;
   bool get hasAvailableCashRegisters => _state.hasAvailableCashRegisters;
-  CashRegister? get currentActiveCashRegister =>
-      _state.currentActiveCashRegister;
+  CashRegister? get currentActiveCashRegister => _state.currentActiveCashRegister;
 
   CashRegisterProvider(
     this._cashRegisterUsecases,

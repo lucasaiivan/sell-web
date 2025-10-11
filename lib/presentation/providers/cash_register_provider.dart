@@ -418,7 +418,11 @@ class CashRegisterProvider extends ChangeNotifier {
   /// 
   /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
   /// Las validaciones y lógica de negocio están en CashRegisterUsecases
-  Future<bool> openCashRegister(String accountId, String cashierId) async {
+  Future<bool> openCashRegister({
+    required String accountId, 
+    required String cashierId,
+    required String cashierName,
+  }) async {
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
@@ -429,6 +433,7 @@ class CashRegisterProvider extends ChangeNotifier {
         description: openDescriptionController.text,
         initialCash: initialCashController.doubleValue,
         cashierId: cashierId,
+        cashierName: cashierName,
       );
 
       // Seleccionar automáticamente la nueva caja (el stream se actualizará automáticamente)
@@ -859,18 +864,86 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// Obtiene los tickets del día actual como objetos TicketModel 
-  Future<List<TicketModel>?> getTodayTickets({required String accountId,String cashRegisterId=''}) async {
-    try {  
-      final result = await _sellUsecases.getTodayTransactions(accountId: accountId,cashRegisterId: cashRegisterId);
+  /// Obtiene tickets de una caja registradora específica
+  /// 
+  /// **Parámetros:**
+  /// - `accountId`: ID de la cuenta
+  /// - `cashRegisterId`: ID de la caja (requerido)
+  /// - `todayOnly`: true = solo tickets de hoy, false = todo el historial (default: true)
+  /// 
+  /// **Retorna:** Lista de TicketModel o null si hay error
+  /// 
+  /// **Uso:**
+  /// ```dart
+  /// // Solo tickets de hoy (default)
+  /// final todayTickets = await getCashRegisterTickets(
+  ///   accountId: accountId,
+  ///   cashRegisterId: cashRegisterId,
+  /// );
+  /// 
+  /// // Todo el historial de la caja
+  /// final allTickets = await getCashRegisterTickets(
+  ///   accountId: accountId,
+  ///   cashRegisterId: cashRegisterId,
+  ///   todayOnly: false,
+  /// );
+  /// ```
+  Future<List<TicketModel>?> getCashRegisterTickets({
+    required String accountId,
+    required String cashRegisterId,
+    bool todayOnly = false, // por defecto mostrar todos los tickets de la caja
+  }) async {
+    try {
+      // Validar cashRegisterId requerido
+      if (cashRegisterId.isEmpty) {
+        throw Exception('cashRegisterId es requerido');
+      }
       
-      // Convertir los Map<String, dynamic> a objetos TicketModel
+      List<Map<String, dynamic>> result;
+      
+      if (todayOnly) {
+        // Obtener solo tickets de hoy
+        result = await _sellUsecases.getTodayTransactions(
+          accountId: accountId,
+          cashRegisterId: cashRegisterId,
+        );
+      } else {
+        // Obtener todo el historial de la caja
+        // Usar rango de fechas desde hace 1 año hasta hoy
+        final now = DateTime.now();
+        final oneYearAgo = now.subtract(const Duration(days: 365));
+        
+        result = await _sellUsecases.getTransactionsByDateRange(
+          accountId: accountId,
+          startDate: oneYearAgo,
+          endDate: now,
+        );
+        
+        // Filtrar solo tickets de esta caja
+        result = result.where((ticket) => 
+          ticket['cashRegisterId'] == cashRegisterId
+        ).toList();
+      }
+      
+      // Convertir a TicketModel
       return result.map((ticketMap) => TicketModel.fromMap(ticketMap)).toList();
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
       return null;
     }
+  }
+  
+  /// ⚠️ DEPRECADO: Usar getCashRegisterTickets
+  @Deprecated('Usar getCashRegisterTickets con cashRegisterId requerido')
+  Future<List<TicketModel>?> getTodayTickets({
+    required String accountId,
+    String cashRegisterId = '',
+  }) async {
+    return getCashRegisterTickets(
+      accountId: accountId,
+      cashRegisterId: cashRegisterId,
+    );
   }
 
   /// Obtiene los tickets filtrados el día actual y si se proporciona cashRegisterId se filtra por esa caja

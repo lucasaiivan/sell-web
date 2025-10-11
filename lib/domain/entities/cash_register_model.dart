@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sellweb/domain/entities/ticket_model.dart';
 
 class CashRegister {
   String id; // id de la caja
   String description; // descripción de la caja
+  String idUser; // id del usuario que opera la caja
+  String nameUser; // nombre del usuario que opera la caja
   DateTime opening; // fecha de apertura
   DateTime closure; // fecha de cierre
   double initialCash; // monto inicial
   int sales; // cantidad de ventas
   int annulledTickets; // cantidad de tickets anulados
-  double billing; // monto de facturación
+  double billing; // monto de facturación de ventas
   double discount; // monto de descuento
   double cashInFlow; // monto de ingresos
   double cashOutFlow; // monto de egresos (numero negativo)
@@ -20,6 +23,8 @@ class CashRegister {
   CashRegister({
     required this.id,
     required this.description,
+    required this.idUser,
+    required this.nameUser,
     required this.initialCash,
     required this.opening,
     required this.closure,
@@ -36,6 +41,7 @@ class CashRegister {
   });
 
   // contructor
+  
 
   // difference : devuelve la diferencia entre el monto esperado y el monto de cierre
   double get getDifference {
@@ -50,11 +56,63 @@ class CashRegister {
     return (initialCash + cashInFlow + billing) + cashOutFlow;
   }
 
+  // totalIngresos : devuelve el total de ingresos en caja (getter semántico)
+  double get getTotalIngresos => cashInFlow;
+
+  // totalEgresos : devuelve el valor absoluto del total de egresos en caja
+  double get getTotalEgresos => cashOutFlow.abs();
+
+  // effectiveSales : devuelve el número de ventas efectivas (excluyendo anuladas)
+  int get getEffectiveSales => sales - annulledTickets;
+
+  /// Calcula las ganancias totales desde una lista de tickets
+  /// 
+  /// Recibe una lista de tickets (pueden ser TicketModel o Maps) y calcula
+  /// la suma total de ganancias considerando solo tickets activos (no anulados).
+  /// 
+  /// Este método espera que cada ticket tenga:
+  /// - Una propiedad `annulled` (bool)
+  /// - Un getter o propiedad `getProfit` (double)
+  /// 
+  /// [tickets] - Lista de tickets (TicketModel o Maps con estructura de TicketModel)
+  /// 
+  /// Returns: Total de ganancias calculadas, 0.0 si la lista está vacía
+  /// 
+  /// Ejemplo de uso:
+  /// ```dart
+  /// final profit = cashRegister.calculateTotalProfit(ticketsList);
+  /// ```
+  double calculateTotalProfit(List<TicketModel> tickets) {
+    if (tickets.isEmpty) return 0.0;
+    
+    double totalProfit = 0.0;
+    
+    for (var ticketData in tickets) {
+      try { 
+        // Verificar si el ticket está anulado
+        if (ticketData.annulled == true) continue;
+        
+        // Acceder al getter getProfit
+        final profit = ticketData.getProfit;
+        
+        // Asegurarse de que profit es un número válido
+        totalProfit += profit;
+            } catch (e) {
+        // Si hay error al acceder a las propiedades, continuar con el siguiente
+        continue;
+      }
+    }
+    
+    return totalProfit;
+  }
+
   // default values
   factory CashRegister.initialData() {
     return CashRegister(
       id: '',
       description: '',
+      idUser: '',
+      nameUser: '',
       initialCash: 0.0,
       opening: DateTime.now(),
       closure: DateTime.now(),
@@ -74,6 +132,8 @@ class CashRegister {
   Map<String, dynamic> toJson() => {
         "id": id,
         "description": description,
+        "idUser": idUser,
+        "nameUser": nameUser,
         "initialCash": initialCash,
         "opening": opening,
         "closure": closure,
@@ -94,6 +154,8 @@ class CashRegister {
     return CashRegister(
       id: data['id'],
       description: data.containsKey('description') ? data['description'] : '',
+      idUser: data.containsKey('idUser') ? data['idUser'] : '',
+      nameUser: data.containsKey('nameUser') ? data['nameUser'] : '',
       initialCash: data.containsKey('initialCash')
           ? double.parse(data['initialCash'].toString())
           : 0.0,
@@ -135,6 +197,8 @@ class CashRegister {
   fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
     id = documentSnapshot.id;
     description = documentSnapshot['description'];
+    idUser = documentSnapshot.data().toString().contains('idUser') ? documentSnapshot['idUser'] : '';
+    nameUser = documentSnapshot.data().toString().contains('nameUser') ? documentSnapshot['nameUser'] : '';
     initialCash = documentSnapshot['initialCash'].toDouble();
     opening = documentSnapshot['opening'].toDate();
     closure = documentSnapshot['closure'].toDate();
@@ -154,6 +218,8 @@ class CashRegister {
   CashRegister update({
     String? id,
     String? description,
+    String? idUser,
+    String? nameUser,
     double? initialCash,
     DateTime? opening,
     DateTime? closure,
@@ -171,6 +237,8 @@ class CashRegister {
     return CashRegister(
       id: id ?? this.id,
       description: description ?? this.description,
+      idUser: idUser ?? this.idUser,
+      nameUser: nameUser ?? this.nameUser,
       initialCash: initialCash ?? this.initialCash,
       opening: opening ?? this.opening,
       closure: closure ?? this.closure,

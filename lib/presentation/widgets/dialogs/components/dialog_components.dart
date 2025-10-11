@@ -73,10 +73,12 @@ class DialogComponents {
   /// - Divisores configurables entre elementos
   /// - Estilo consistente con Material Design 3
   /// - Opciones de UI: outlined (por defecto) o filled
+  /// - Widget trailing opcional para información adicional junto al título
   static Widget itemList({
     required List<Widget> items,
     bool showDividers = true,
     String? title,
+    Widget? trailing, // Widget opcional para mostrar al lado del título (ej: resumen, botones)
     int maxVisibleItems = 5,
     String? expandText,
     String? collapseText,
@@ -97,11 +99,15 @@ class DialogComponents {
     final Color dividerColor;
 
     if (useFillStyle) {
-      // Estilo fill: contenedor con background sólido y sin borde 
+      // Estilo fill: contenedor con background sólido y borde opcional
       dividerColor = theme.colorScheme.outline.withValues(alpha: 0.1);
       decoration = BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
+        // Agregar borde si se especifica borderColor
+        border: borderColor != null 
+          ? Border.all(color: borderColor, width: 1)
+          : null,
       );
     } else {
       // Estilo outlined: contenedor transparente con borde
@@ -123,6 +129,7 @@ class DialogComponents {
         isMobile: isMobile,
         theme: theme,
         title: title,
+        trailing: trailing,
         maxVisibleItems: maxVisibleItems,
         expandText: expandText,
         collapseText: collapseText,
@@ -168,6 +175,7 @@ class DialogComponents {
             BuildContext context, T item, int index, bool isLast)
         itemBuilder,
     String? title,
+    Widget? trailing, // Widget opcional para mostrar al lado del título
     int maxVisibleItems = 5,
     String? expandText,
     String? collapseText,
@@ -228,6 +236,7 @@ class DialogComponents {
         isMobile: isMobile,
         theme: theme,
         title: title,
+        trailing: trailing,
         maxVisibleItems: maxVisibleItems,
         expandText: expandText,
         collapseText: collapseText,
@@ -666,6 +675,9 @@ class ExpandableListContainer<T> extends StatefulWidget {
   /// Título de la sección (opcional)
   final String? title;
 
+  /// Widget trailing opcional para mostrar al lado del título (ej: resumen, botones)
+  final Widget? trailing;
+
   /// Número máximo de elementos visibles inicialmente
   final int maxVisibleItems;
 
@@ -703,6 +715,7 @@ class ExpandableListContainer<T> extends StatefulWidget {
     required this.isMobile,
     required this.theme,
     this.title,
+    this.trailing,
     this.maxVisibleItems = 5,
     this.expandText,
     this.collapseText,
@@ -733,16 +746,26 @@ class _ExpandableListContainerState<T>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Título de la sección (si se proporciona)
-        if (widget.title != null) ...[
-          Text(
-            widget.title!,
-            style: (widget.isMobile
-                    ? widget.theme.textTheme.bodyMedium
-                    : widget.theme.textTheme.bodyLarge)
-                ?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: widget.theme.colorScheme.onSurfaceVariant,
-            ),
+        if (widget.title != null || widget.trailing != null) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (widget.title != null)
+                Expanded(
+                  child: Text(
+                    widget.title!,
+                    style: (widget.isMobile
+                            ? widget.theme.textTheme.bodyMedium
+                            : widget.theme.textTheme.bodyLarge)
+                        ?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: widget.theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              if (widget.trailing != null) widget.trailing!,
+            ],
           ),
           SizedBox(height: widget.isMobile ? 8 : 12),
         ],

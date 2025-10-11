@@ -1809,23 +1809,23 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             // contador : burbuja circular roja con contador de ventas
             if (isActive && salesCount > 0)
               Positioned(
-                right: -6,
-                top: -6,
+                right: -5,
+                top: -5,
                 child: Container(
                   constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
+                    minWidth: 18,
+                    minHeight: 18,
                   ),
                   padding: EdgeInsets.symmetric(
                     horizontal: salesCount > 99 ? 6 : 4,
-                    vertical: 2,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade600.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Theme.of(context).scaffoldBackgroundColor,
-                      width: 2,
+                      width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -1835,15 +1835,18 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                       ),
                     ],
                   ),
-                  child: Text(
-                    salesCount > 999 ? '999+' : salesCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      height: 1.0,
+                  child: Center(
+                    child: Text(
+                      salesCount > 999 ? '999+' : salesCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        height: 1.0,
+                        letterSpacing: 0.0,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
               ),

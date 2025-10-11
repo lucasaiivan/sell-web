@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
+import '../../../../presentation/providers/auth_provider.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
 import '../../buttons/button_app.dart';
@@ -203,11 +204,16 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
     SellProvider sellProvider,
   ) async {
     final accountId = sellProvider.profileAccountSelected.id;
-    final userId = sellProvider.profileAccountSelected.id;
+    final authProvider = context.read<AuthProvider>();
+    
+    // Obtener datos del usuario actual
+    final userId = authProvider.user?.email ?? authProvider.user?.uid ?? '';
+    final userName = authProvider.user?.displayName ?? authProvider.user?.email ?? 'Usuario';
 
     final success = await cashRegisterProvider.openCashRegister(
-      accountId,
-      userId,
+      accountId: accountId,
+      cashierId: userId,
+      cashierName: userName,
     );
 
     if (success && context.mounted) {

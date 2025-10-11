@@ -79,9 +79,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                 DialogComponents.infoRow(
                   context: context,
                   label: 'ID Ticket',
-                  value: widget.ticket.id.length > 8
-                      ? '...${widget.ticket.id.substring(widget.ticket.id.length - 8)}'
-                      : widget.ticket.id,
+                  value: widget.ticket.id,
                   icon: Icons.confirmation_number_rounded,
                 ),
                 DialogComponents.minSpacing,
@@ -208,6 +206,23 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                   value: _getPaymentMethodName(widget.ticket.payMode),
                   icon: Icons.credit_card_rounded,
                 ),
+                // Mostrar descuento si existe
+                if (widget.ticket.discount > 0) ...[
+                  DialogComponents.minSpacing,
+                  DialogComponents.infoRow(
+                    context: context,
+                    label: 'Descuento',
+                    value: widget.ticket.discountIsPercentage
+                        ? '${widget.ticket.discount.toStringAsFixed(1)}% (${CurrencyFormatter.formatPrice(value: widget.ticket.getDiscountAmount)})'
+                        : CurrencyFormatter.formatPrice(
+                            value: widget.ticket.discount),
+                    icon: Icons.discount_rounded,
+                    valueStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 if (widget.ticket.valueReceived > 0) ...[
                   DialogComponents.minSpacing,
                   DialogComponents.infoRow(

@@ -81,6 +81,7 @@ abstract class CashRegisterRepository {
     required String description,
     required double initialCash,
     required String cashierId,
+    required String cashierName,
   });
 
   /// Cierra una caja registradora y la mueve al historial

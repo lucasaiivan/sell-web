@@ -11,13 +11,10 @@ class TicketModel {
       ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
   double priceTotal = 0.0; // precio total de la venta
   double valueReceived = 0.0; // valor recibido por la venta
-  double discount =
-      0.0; // descuento aplicado: valor original ingresado (porcentaje o monto)
-  String currencySymbol = '\$';
-
+  double discount = 0.0; // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
+  String currencySymbol = '\$'; // simbolo de la moneda utilizada en la venta
   /// Información del descuento aplicado
-  bool discountIsPercentage =
-      false; // true si el descuento es porcentual, false si es monto fijo
+  bool discountIsPercentage = false; // true si el descuento es porcentual, false si es monto fijo
 
   /// Tipo de transacción que representa este ticket
   ///
@@ -462,9 +459,9 @@ class TicketModel {
     String cashRegisterId = "",
     double priceTotal = 0.0,
     double valueReceived = 0.0,
-    double discount = 0.0,
-    bool discountIsPercentage = false,
-    String transactionType = "sale",
+    double discount = 0.0, // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
+    bool discountIsPercentage = false, // true si el descuento es porcentual, false si es monto fijo
+    String transactionType = "sale", // tipo de transacción que representa este ticket
     bool annulled = false,
     Timestamp? creation,
   }) {

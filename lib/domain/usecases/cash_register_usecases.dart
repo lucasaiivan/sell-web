@@ -32,6 +32,7 @@ class CashRegisterUsecases {
     required String description,
     required double initialCash,
     required String cashierId,
+    required String cashierName,
   }) async {
     // VALIDACIONES DE NEGOCIO
     if (description.trim().isEmpty) {
@@ -50,6 +51,10 @@ class CashRegisterUsecases {
       throw Exception('El ID del cajero no puede estar vacío');
     }
 
+    if (cashierName.trim().isEmpty) {
+      throw Exception('El nombre del cajero no puede estar vacío');
+    }
+
     // TRANSFORMACIÓN: Descripción por defecto si está vacía
     final finalDescription = description.trim().isEmpty
         ? 'Caja ${DateTime.now().day}/${DateTime.now().month}'
@@ -60,6 +65,7 @@ class CashRegisterUsecases {
       description: finalDescription,
       initialCash: initialCash,
       cashierId: cashierId,
+      cashierName: cashierName,
     );
   }
 

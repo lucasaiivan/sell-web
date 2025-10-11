@@ -226,6 +226,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String description,
     required double initialCash,
     required String cashierId,
+    required String cashierName,
   }) async {
     try {
       final cashRegisterId = UidHelper.generateUid();
@@ -234,6 +235,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       final cashRegister = CashRegister(
         id: cashRegisterId,
         description: description,
+        idUser: cashierId,
+        nameUser: cashierName,
         initialCash: initialCash,
         opening: now,
         closure: now, // Se actualizará al cerrar

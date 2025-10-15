@@ -169,8 +169,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // view : información de flujo de caja (usa _ticketsFuture compartido)
-        _buildCashFlowView(context, provider, isMobile), 
-        DialogComponents.sectionSpacing,
+        _buildCashFlowView(context, provider, isMobile),  
+        SizedBox(height: getResponsiveSpacing(context, scale:2)),
         // view : lista de las ultimas ventas (usa _ticketsFuture compartido)
         RecentTicketsView(
           ticketsFuture: _ticketsFuture,
@@ -479,7 +479,17 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
     final totalProfit = tickets != null && tickets.isNotEmpty ? cashRegister.calculateTotalProfit(tickets) : 0.0;
 
     final financialItems = [
-      // 1. Ingresos en caja
+      // Monto inicial
+      if (cashRegister.initialCash > 0)
+        {
+          'label': 'Monto Inicial',
+          'value': CurrencyFormatter.formatPrice(value: cashRegister.initialCash),
+          'rawValue': cashRegister.initialCash,
+          'icon': Icons.attach_money_rounded,
+          'color': theme.colorScheme.primary,
+          'highlight': false,
+        },
+      // Ingresos en caja
       if (totalIngresos > 0)
         {
           'label': 'Ingresos en caja',
@@ -489,7 +499,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           'color': Colors.green,
           'highlight': false,
         },
-      // 2. Egresos en caja
+      // Egresos en caja
       if (totalEgresos > 0)
         {
           'label': 'Egresos en caja',
@@ -499,7 +509,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           'color': Colors.red,
           'highlight': false,
         },
-      // 3. Descuentos
+      // Descuentos
       if (cashRegister.discount > 0)
         {
           'label': 'Descuentos',
@@ -509,7 +519,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           'color': theme.colorScheme.secondary,
           'highlight': false,
         },
-      // 4. Facturación total - RESALTADA
+      // Facturación total - RESALTADA
       {
         'label': 'Facturación de ventas',
         'value': CurrencyFormatter.formatPrice(value: cashRegister.billing),
@@ -555,7 +565,9 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
               ),
             ),
           ),
+          // Lista de items financieros
           ...financialItems.map((item) {
+
             final isHighlight = item['highlight'] as bool;
             final itemColor = item['color'] as Color;
             
@@ -807,7 +819,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           children: [
             // view : muestra información de flujo de caja con contadores en tiempo real
             _cashFlowInformation(context, cashRegister, tickets: tickets),
-            SizedBox(height: getResponsiveSpacing(context, scale: 3)),
+            SizedBox(height: getResponsiveSpacing(context, scale:2)),
             // buttons : botones de ingreso y egreso de caja
             Row(
               children: [
@@ -864,7 +876,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                 ),
               ],
             ),
-            SizedBox(height: getResponsiveSpacing(context, scale:3)), 
+            SizedBox(height: getResponsiveSpacing(context, scale:1)), 
             // Lista de movimientos de caja
             if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[ 
               _buildCashFlowMovements(context, cashRegister, isMobile),

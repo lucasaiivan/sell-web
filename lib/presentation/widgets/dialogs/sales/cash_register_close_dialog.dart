@@ -137,8 +137,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
             const SizedBox(height: 16),
             _buildSummaryRow(
                 'Monto Inicial:',
-                CurrencyFormatter.formatPrice(
-                    value: widget.cashRegister.initialCash)),
+                CurrencyFormatter.formatPrice(value: widget.cashRegister.initialCash)),
             _buildSummaryRow('Ventas:', widget.cashRegister.sales.toString()),
             _buildSummaryRow(
                 'Facturación:',

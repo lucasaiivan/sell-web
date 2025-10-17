@@ -9,6 +9,7 @@ widgets/
 ├── component/ - Componentes auxiliares y de UI
 ├── dialogs/ - Diálogos y modales
 ├── feedback/ - Widgets de retroalimentación
+├── graphics/ - Componentes gráficos y visualización de datos
 ├── inputs/ - Campos de entrada y formularios
 ├── navigation/ - Componentes de navegación
 ├── responsive/ - Utilities para diseño responsivo
@@ -29,6 +30,10 @@ widgets/
 │   ├── feedback/               # Diálogos de feedback
 │   ├── sales/                  # Diálogos de ventas
 │   └── tickets/                # Diálogos de tickets
+├── graphics/                   # Componentes gráficos y visualización
+│   ├── README.md               # Documentación de gráficos
+│   ├── graphics.dart           # Exportaciones de gráficos
+│   └── percentage_bar_chart.dart # Gráfico de barras con porcentajes
 ├── component/                  # Componentes básicos de UI
 │   ├── README.md               # Documentación de componentes
 │   ├── ui.dart                 # Exportaciones de UI

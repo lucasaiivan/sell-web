@@ -6,6 +6,7 @@ import '../../../../domain/entities/ticket_model.dart';
 import '../../../../presentation/providers/auth_provider.dart';
 import '../../../../presentation/providers/cash_register_provider.dart';
 import '../../../../presentation/providers/sell_provider.dart';
+import '../../graphics/graphics.dart';
 import 'cash_flow_dialog.dart';
 import 'cash_register_close_dialog.dart';
 import 'cash_register_open_dialog.dart';
@@ -171,6 +172,40 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
         // view : información de flujo de caja (usa _ticketsFuture compartido)
         _buildCashFlowView(context, provider, isMobile),  
         SizedBox(height: getResponsiveSpacing(context, scale:2)),
+        // view : resumen de métodos de pago
+        FutureBuilder<List<TicketModel>?>(
+          future: _ticketsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+              final tickets = snapshot.data!;
+              final activeTickets = tickets.where((ticket) => !ticket.annulled).toList();
+              
+              if (activeTickets.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              
+              final paymentMethodsRanking = TicketModel.getPaymentMethodsRanking(
+                tickets: activeTickets,
+                includeAnnulled: false,
+              );
+              final theme = Theme.of(context);
+              
+              return Column(
+                children: [
+                  // view : muestra resumen de métodos de pago
+                  _buildSalesSummaryInfo(
+                    context: context,
+                    theme: theme,
+                    paymentMethodsRanking: paymentMethodsRanking,
+                    isMobile: isMobile,
+                  ),
+                  SizedBox(height: getResponsiveSpacing(context, scale:2)),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
         // view : lista de las ultimas ventas (usa _ticketsFuture compartido)
         RecentTicketsView(
           ticketsFuture: _ticketsFuture,
@@ -804,8 +839,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   }
  
 
-  /// Construye la vista de flujo de caja con información financiera
-  /// ✅ OPTIMIZADO: Usa el Future compartido _ticketsFuture en lugar de crear uno nuevo
+  /// Construye la vista de flujo de caja con información financiera 
   Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
@@ -1214,6 +1248,113 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
       _reloadTickets();
     });
   }
+
+  /// Widget: Resumen visual de métodos de pago con gráfico de barras
+  Widget _buildSalesSummaryInfo({
+    required BuildContext context,
+    required ThemeData theme,
+    required List<Map<String, dynamic>> paymentMethodsRanking,
+    required bool isMobile,
+  }) {
+    if (paymentMethodsRanking.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // ✅ Reagrupar los métodos de pago: separar los 3 principales y agrupar el resto en "Otros"
+    final Map<String, double> groupedPayments = {};
+    
+    for (final payment in paymentMethodsRanking) {
+      final description = (payment['description'] as String).trim().toLowerCase();
+      final percentage = payment['percentage'] as double;
+      
+      // Identificar si es uno de los 3 métodos principales
+      String key;
+      if (description == 'efectivo') {
+        key = 'Efectivo';
+      } else if (description == 'mercado pago' || description == 'mercadopago') {
+        key = 'Mercado Pago';
+      } else if (description == 'tarjeta de crédito/débito' || 
+                 description == 'tarjeta' ||
+                 description == 'tarjeta de credito/debito') {
+        key = 'Tarjeta';
+      } else {
+        // Todo lo demás se agrupa como "Otros"
+        key = 'Otros';
+      }
+      
+      // Sumar porcentajes si ya existe la clave
+      groupedPayments[key] = (groupedPayments[key] ?? 0) + percentage;
+    }
+    
+    // ✅ Convertir a PercentageBarData usando el helper
+    final chartData = groupedPayments.entries.map((entry) {
+      final paymentData = _getPaymentMethodData(
+        description: entry.key,
+        percentage: entry.value,
+        theme: theme,
+      );
+      
+      return PercentageBarData(
+        label: paymentData['label'] as String,
+        percentage: paymentData['percentage'] as double,
+        color: paymentData['color'] as Color,
+        icon: paymentData['icon'] as IconData,
+      );
+    }).toList();
+
+    // ✅ Usar el componente reutilizable PercentageBarChart
+    return PercentageBarChart(
+      title: 'Métodos de pago',
+      data: chartData,
+      isMobile: isMobile,
+    );
+  }
+
+  /// Helper: Obtener datos de color, icono y etiqueta para un método de pago
+  /// Solo reconoce 3 métodos principales: Efectivo, Mercado Pago y Tarjeta
+  /// Todo lo demás se agrupa como "Otros"
+  Map<String, dynamic> _getPaymentMethodData({
+    required String description,
+    required double percentage,
+    required ThemeData theme,
+  }) {
+    Color paymentColor;
+    IconData paymentIcon;
+    String fullLabel;
+
+    // Trabajar con la descripción ya normalizada (viene de _buildSalesSummaryInfo)
+    switch (description) {
+      case 'Efectivo':
+        paymentColor = Colors.orange.shade700;
+        paymentIcon = Icons.payments_rounded;
+        fullLabel = 'Efectivo';
+        break;
+      case 'Mercado Pago':
+        paymentColor = Colors.blue.shade700;
+        paymentIcon = Icons.qr_code_rounded;
+        fullLabel = 'Mercado Pago';
+        break;
+      case 'Tarjeta':
+        paymentColor = Colors.purple.shade700;
+        paymentIcon = Icons.credit_card_rounded;
+        fullLabel = 'Tarjeta';
+        break;
+      case 'Otros':
+      default:
+        // Todos los demás métodos
+        paymentColor = Colors.grey.shade600;
+        paymentIcon = Icons.more_horiz_rounded;
+        fullLabel = 'Otros';
+        break;
+    }
+
+    return {
+      'color': paymentColor,
+      'icon': paymentIcon,
+      'label': fullLabel,
+      'percentage': percentage,
+    };
+  }
 }
 
 /// Widget separado para manejar la lista de tickets recientes de manera eficiente
@@ -1306,61 +1447,17 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                 // ✅ Usar el método del modelo para calcular ganancias
                 final cashRegister = widget.cashRegisterProvider.currentActiveCashRegister!;
                 final totalProfit = cashRegister.calculateTotalProfit(activeTickets);
-                
+
                 return DialogComponents.itemList(
                   context: context, 
                   useFillStyle: true,
                   padding: EdgeInsets.all(widget.isMobile ? 12 : 14),
                   showDividers: true,
-                  title: 'Últimas Ventas',
+                  title: 'Transacciones recientes',
                   borderColor: theme.dividerColor.withValues(alpha: 0.3), 
                   trailing: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Ganancia acumulada (si existe)
-                      if (totalProfit > 0) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                  '${totalBilling > 0 ? ((totalProfit / totalBilling) * 100).toStringAsFixed(1) : '0.0'}%',
-                                  style: (widget.isMobile
-                                          ? theme.textTheme.labelSmall
-                                          : theme.textTheme.labelMedium)
-                                      ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green.shade800, 
-                                  ),
-                                ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.trending_up_rounded,
-                                size: widget.isMobile ? 12 : 14,
-                                color: Colors.green.shade700,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                CurrencyFormatter.formatPrice(value: totalProfit),
-                                style: (widget.isMobile
-                                        ? theme.textTheme.bodySmall
-                                        : theme.textTheme.bodyMedium)
-                                    ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.green.shade700, 
-                                ),
-                              ), 
-                            ],
-                          ),
-                        ),
-                      const SizedBox(width: 4),
-                      ],
                       // Total de facturación
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1379,19 +1476,54 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                           ),
                         ),
                       ),
+                      // Ganancia total (si existe)
+                      if (totalProfit > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.trending_up_rounded,
+                                size: widget.isMobile ? 12 : 14,
+                                color: Colors.green.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                CurrencyFormatter.formatPrice(value: totalProfit),
+                                style: (widget.isMobile
+                                        ? theme.textTheme.bodySmall
+                                        : theme.textTheme.bodyMedium)
+                                    ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.green.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   maxVisibleItems: 5,
                   expandText: '',
                   collapseText: '',
-                  items: recentTickets.map((ticket) {
-                    return _buildTicketTile(
-                      context, 
-                      ticket, 
-                      widget.isMobile, 
-                      onTicketUpdated: widget.onTicketUpdated, // ✅ Usar callback compartido
-                    );
-                  }).toList(),
+                  items: [
+                    // view : listado de tickets recientes
+                    ...recentTickets.map((ticket) {
+                      return _buildTicketTile(
+                        context, 
+                        ticket, 
+                        widget.isMobile, 
+                        onTicketUpdated: widget.onTicketUpdated, // ✅ Usar callback compartido
+                      );
+                  }),
+                  ]
                 );
               },
             ),
@@ -1503,6 +1635,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     );
   }
 
+  //  Construcción del tile del ticket //
   Widget _buildTicketTile(
     BuildContext context, 
     TicketModel ticket, 
@@ -1520,7 +1653,6 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     final hasDiscount = ticket.discount > 0;
     final hasProfit = ticket.getProfit > 0;
     final paymentMethodIcon = _getPaymentMethodIcon(ticket.payMode);
-    final paymentMethodLabel = _getPaymentMethodLabel(ticket.payMode);
     
     return Material(
       color: Colors.transparent,
@@ -1561,16 +1693,16 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
             children: [
               // Icono del ticket con estado
               Container(
-                padding: EdgeInsets.all(isMobile ? 6 : 8),
+                padding: EdgeInsets.all(isMobile ? 7 : 9),
                 decoration: BoxDecoration(
                   color: ticket.annulled
                       ? Colors.red.withValues(alpha: 0.1)
                       : theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(
                   ticket.annulled ? Icons.receipt_long_rounded : Icons.receipt_rounded,
-                  size: isMobile ? 16 : 18,
+                  size: isMobile ? 14 : 18,
                   color: ticket.annulled ? Colors.red : theme.colorScheme.primary,
                 ),
               ),
@@ -1682,16 +1814,17 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                             Icon(
                               paymentMethodIcon,
                               size: isMobile ? 12 : 13,
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                              color: _getPaymentMethodColor(ticket.payMode),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              paymentMethodLabel,
+                              _getPaymentMethodFullLabel(ticket.payMode),
                               style: (isMobile
                                       ? theme.textTheme.labelSmall
                                       : theme.textTheme.labelMedium)
                                   ?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                color: _getPaymentMethodColor(ticket.payMode),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -1884,8 +2017,28 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     }
   }
 
-  // Helper: Obtener label del método de pago
-  String _getPaymentMethodLabel(String payMode) {
+  // Helper: Obtener color del método de pago
+  Color _getPaymentMethodColor(String payMode) {
+    switch (payMode.toLowerCase()) {
+      case 'effective':
+      case 'efectivo':
+        return Colors.orange.shade700;
+      case 'card':
+      case 'tarjeta':
+        return Colors.purple.shade700;
+      case 'mercadopago':
+      case 'qr':
+        return Colors.blue.shade700;
+      case 'transfer':
+      case 'transferencia':
+        return Colors.teal.shade700;
+      default:
+        return Colors.grey.shade600;
+    }
+  }
+
+  // Helper: Obtener label completo del método de pago
+  String _getPaymentMethodFullLabel(String payMode) {
     switch (payMode.toLowerCase()) {
       case 'effective':
       case 'efectivo':
@@ -1894,17 +2047,16 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
       case 'tarjeta':
         return 'Tarjeta';
       case 'mercadopago':
-        return 'MP';
+        return 'Mercado Pago';
       case 'qr':
         return 'QR';
       case 'transfer':
       case 'transferencia':
-        return 'Transfer.';
+        return 'Transferencia';
       default:
         return 'Otro';
     }
   }
- 
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();

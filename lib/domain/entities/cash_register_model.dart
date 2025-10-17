@@ -194,7 +194,7 @@ class CashRegister {
     );
   }
 
-  fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
+  void fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
     id = documentSnapshot.id;
     description = documentSnapshot['description'];
     idUser = documentSnapshot.data().toString().contains('idUser') ? documentSnapshot['idUser'] : '';

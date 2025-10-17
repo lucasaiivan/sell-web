@@ -168,90 +168,6 @@ class DialogComponents {
     );
   }
 
-  /// Lista tipada con funcionalidad expandible para datos específicos
-  static Widget expandableDataList<T>({
-    required List<T> items,
-    required Widget Function(
-            BuildContext context, T item, int index, bool isLast)
-        itemBuilder,
-    String? title,
-    Widget? trailing, // Widget opcional para mostrar al lado del título
-    int maxVisibleItems = 5,
-    String? expandText,
-    String? collapseText,
-    bool showDividers = true,
-    Color? backgroundColor,
-    Color? borderColor,
-    double borderRadius = 12,
-    bool useFillStyle = false, // Nueva opción para estilo fill
-    EdgeInsetsGeometry? padding,
-    required BuildContext context,
-  }) {
-    final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-
-    return Container(
-      padding: padding,
-      child: ExpandableListContainer<T>(
-        items: items,
-        itemBuilder: (context, item, index, isLast) {
-          final builtItem = itemBuilder(context, item, index, isLast);
-
-          // Para el estilo fill, agregar padding interno
-          final Widget wrappedItem = useFillStyle
-              ? Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 12 : 16,
-                    vertical: isMobile ? 8 : 10,
-                  ),
-                  child: builtItem,
-                )
-              : builtItem;
-
-          // Si no queremos divisores, devolver el item directamente
-          if (!showDividers) return wrappedItem;
-
-          // Si queremos divisores, envolverlo en un Column con Divider
-          final dividerColor = useFillStyle
-              ? theme.colorScheme.outline.withValues(alpha: 0.1)
-              : theme.colorScheme.outline.withValues(alpha: 0.2);
-
-          return Column(
-            children: [
-              wrappedItem,
-              if (!isLast)
-                Divider(
-                  height: useFillStyle ? 1 : 1,
-                  thickness: useFillStyle ? 0.5 : 1,
-                  color: dividerColor,
-                  indent:
-                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
-                  endIndent:
-                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
-                ),
-            ],
-          );
-        },
-        isMobile: isMobile,
-        theme: theme,
-        title: title,
-        trailing: trailing,
-        maxVisibleItems: maxVisibleItems,
-        expandText: expandText,
-        collapseText: collapseText,
-        showDividers: false, // Manejamos los divisores manualmente
-        backgroundColor: backgroundColor ??
-            (useFillStyle
-                ? theme.colorScheme.surfaceContainer
-                : theme.colorScheme.surface),
-        borderColor:
-            borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.2),
-        borderRadius: borderRadius,
-        useFillStyle: useFillStyle,
-      ),
-    );
-  }
 
   /// Fila de información con label y valor
   static Widget infoRow({
@@ -716,7 +632,7 @@ class ExpandableListContainer<T> extends StatefulWidget {
     required this.theme,
     this.title,
     this.trailing,
-    this.maxVisibleItems = 5,
+    this.maxVisibleItems = 4,
     this.expandText,
     this.collapseText,
     this.showDividers = true,
@@ -733,7 +649,8 @@ class ExpandableListContainer<T> extends StatefulWidget {
 
 class _ExpandableListContainerState<T>
     extends State<ExpandableListContainer<T>> {
-  bool showAllItems = false;
+
+  bool showAllItems = false; // Estado para controlar si se muestran todos los elementos
 
   @override
   Widget build(BuildContext context) {
@@ -825,6 +742,7 @@ class _ExpandableListContainerState<T>
             // Botón "Ver menos" si se están mostrando todos
             if (showAllItems && hasMoreItems) ...[
               if (widget.showDividers)
+              // muestra un botón "Ver menos"
                 Divider(
                   thickness: widget.useFillStyle ? 0.5 : 1,
                   color: widget.useFillStyle
@@ -851,7 +769,7 @@ class _ExpandableListContainerState<T>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Mostrando ${widget.items.length} elementos',
+                      Text('Ver menos',
                           style: widget.theme.textTheme.titleSmall),
                       SizedBox(width: 8),
                       Icon(

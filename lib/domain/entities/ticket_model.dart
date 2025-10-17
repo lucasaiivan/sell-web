@@ -194,6 +194,90 @@ class TicketModel {
     return 'Sin Especificar';
   }
 
+  /// Analiza una lista de tickets y devuelve los medios de pago ordenados por uso
+  /// 
+  /// Retorna una lista ordenada de mayor a menor uso con la siguiente estructura:
+  /// ```dart
+  /// [
+  ///   {
+  ///     'description': 'Efectivo',      // Nombre del medio de pago
+  ///     'amount': 15000.50,             // Monto total vendido con este medio
+  ///     'percentage': 45.5,             // Porcentaje del total de ventas
+  ///     'count': 120                    // Cantidad de tickets con este medio
+  ///   },
+  ///   ...
+  /// ]
+  /// ```
+  /// 
+  /// [tickets] - Lista de tickets a analizar
+  /// [includeAnnulled] - Si es true, incluye tickets anulados en el análisis (por defecto: false)
+  static List<Map<String, dynamic>> getPaymentMethodsRanking({
+    required List<TicketModel> tickets,
+    bool includeAnnulled = false, // por defecto no incluir anulados
+  }) {
+    // Filtrar tickets anulados si corresponde
+    final validTickets = includeAnnulled 
+        ? tickets 
+        : tickets.where((ticket) => !ticket.annulled).toList();
+
+    if (validTickets.isEmpty) {
+      return [];
+    }
+
+    // Agrupar por medio de pago (usando mapa dinámico para incluir no registrados)
+    final Map<String, Map<String, dynamic>> paymentStats = {};
+
+    double totalAmount = 0.0;
+
+    // Acumular estadísticas
+    for (var ticket in validTickets) {
+      final payMode = ticket.payMode;
+      final amount = ticket.getTotalPrice;
+
+      // Si el medio de pago no existe en el mapa, inicializarlo
+      if (!paymentStats.containsKey(payMode)) {
+        paymentStats[payMode] = {
+          'description': getFormatPayMode(id: payMode),
+          'amount': 0.0,
+          'count': 0,
+        };
+      }
+
+      // Acumular datos
+      paymentStats[payMode]!['amount'] = 
+          (paymentStats[payMode]!['amount'] as double) + amount;
+      paymentStats[payMode]!['count'] = 
+          (paymentStats[payMode]!['count'] as int) + 1;
+      totalAmount += amount;
+    }
+
+    // Convertir a lista y calcular porcentajes
+    final List<Map<String, dynamic>> result = [];
+    
+    paymentStats.forEach((key, stats) {
+      final amount = stats['amount'] as double;
+      final count = stats['count'] as int;
+      
+      // Solo incluir medios de pago que se han utilizado
+      if (count > 0) {
+        final percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0.0;
+        
+        result.add({
+          'description': stats['description'],
+          'amount': amount,
+          'percentage': double.parse(percentage.toStringAsFixed(2)),
+          'count': count,
+        });
+      }
+    });
+
+    // Ordenar por monto (de mayor a menor)
+    result.sort((a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+
+    // devuelve la lista de métodos de pago ordenados 
+    return result;
+  }
+
   // Map : serializa el objeto a un mapa con tipo de datos primitivos
   Map<String, dynamic> toMap() => {
         "id": id,

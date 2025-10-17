@@ -87,7 +87,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                   context: context,
                   label: 'Estado',
                   
-                  value: widget.ticket.annulled ? 'ANULADO' : 'ACTIVO',
+                  value: widget.ticket.annulled ? 'ANULADO' : 'TRANSACCIONADO',
                   icon: widget.ticket.annulled 
                       ? Icons.cancel_rounded 
                       : Icons.check_circle_rounded,
@@ -101,19 +101,77 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
               ],
             ),
           ),
+          DialogComponents.sectionSpacing,   
+          // Información de pago
+          DialogComponents.infoSection(
+            context: context,
+            title: 'Facturación y Pago',
+            icon: Icons.payment_rounded,
+            content: Column(
+              children: [
+                DialogComponents.infoRow(
+                  context: context,
+                  label: 'Método de Pago',
+                  value: _getPaymentMethodName(widget.ticket.payMode),
+                  icon: Icons.credit_card_rounded,
+                ),
+                // Mostrar descuento si existe
+                if (widget.ticket.discount > 0) ...[
+                  DialogComponents.minSpacing,
+                  DialogComponents.infoRow(
+                    context: context,
+                    label: 'Descuento',
+                    value: widget.ticket.discountIsPercentage
+                        ? '${widget.ticket.discount.toStringAsFixed(1)}% (${CurrencyFormatter.formatPrice(value: widget.ticket.getDiscountAmount)})'
+                        : CurrencyFormatter.formatPrice(
+                            value: widget.ticket.discount),
+                    icon: Icons.discount_rounded,
+                    valueStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.tertiary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (widget.ticket.valueReceived > 0) ...[
+                  DialogComponents.minSpacing,
+                  DialogComponents.infoRow(
+                    context: context,
+                    label: 'Recibido',
+                    value: CurrencyFormatter.formatPrice(
+                        value: widget.ticket.valueReceived),
+                    icon: Icons.monetization_on_rounded,
+                  ),
+                  if (widget.ticket.valueReceived >
+                      widget.ticket.getTotalPrice) ...[
+                    DialogComponents.minSpacing,
+                    DialogComponents.infoRow(
+                      context: context,
+                      label: 'Cambio',
+                      value: CurrencyFormatter.formatPrice(
+                        value: widget.ticket.valueReceived -
+                            widget.ticket.getTotalPrice,
+                      ),
+                      icon: Icons.change_circle_rounded,
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
 
           DialogComponents.sectionSpacing,
 
-          // Lista de productos
-          Text(
-            'Productos Vendidos',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+          // Total del ticket  
+          DialogComponents.summaryContainer(
+            context: context,
+            label: 'Total del Ticket',
+            value: CurrencyFormatter.formatPrice( value: widget.ticket.getTotalPrice),
+            icon: Icons.receipt_rounded,
           ),
-          DialogComponents.itemSpacing,
+          DialogComponents.sectionSpacing,
           // view : lista de productos
           DialogComponents.itemList(
+            title: 'Productos Vendidos',
             context: context,
             items: widget.ticket.products.map((product) {
               final quantity = product.quantity;
@@ -190,76 +248,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
               );
             }).toList(),
           ),
-
           DialogComponents.sectionSpacing,
-
-          // Información de pago
-          DialogComponents.infoSection(
-            context: context,
-            title: 'Información de Pago',
-            icon: Icons.payment_rounded,
-            content: Column(
-              children: [
-                DialogComponents.infoRow(
-                  context: context,
-                  label: 'Método de Pago',
-                  value: _getPaymentMethodName(widget.ticket.payMode),
-                  icon: Icons.credit_card_rounded,
-                ),
-                // Mostrar descuento si existe
-                if (widget.ticket.discount > 0) ...[
-                  DialogComponents.minSpacing,
-                  DialogComponents.infoRow(
-                    context: context,
-                    label: 'Descuento',
-                    value: widget.ticket.discountIsPercentage
-                        ? '${widget.ticket.discount.toStringAsFixed(1)}% (${CurrencyFormatter.formatPrice(value: widget.ticket.getDiscountAmount)})'
-                        : CurrencyFormatter.formatPrice(
-                            value: widget.ticket.discount),
-                    icon: Icons.discount_rounded,
-                    valueStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.tertiary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                if (widget.ticket.valueReceived > 0) ...[
-                  DialogComponents.minSpacing,
-                  DialogComponents.infoRow(
-                    context: context,
-                    label: 'Recibido',
-                    value: CurrencyFormatter.formatPrice(
-                        value: widget.ticket.valueReceived),
-                    icon: Icons.monetization_on_rounded,
-                  ),
-                  if (widget.ticket.valueReceived >
-                      widget.ticket.getTotalPrice) ...[
-                    DialogComponents.minSpacing,
-                    DialogComponents.infoRow(
-                      context: context,
-                      label: 'Cambio',
-                      value: CurrencyFormatter.formatPrice(
-                        value: widget.ticket.valueReceived -
-                            widget.ticket.getTotalPrice,
-                      ),
-                      icon: Icons.change_circle_rounded,
-                    ),
-                  ],
-                ],
-              ],
-            ),
-          ),
-
-          DialogComponents.sectionSpacing,
-
-          // Total del ticket
-          DialogComponents.summaryContainer(
-            context: context,
-            label: 'Total del Ticket',
-            value: CurrencyFormatter.formatPrice(
-                value: widget.ticket.getTotalPrice),
-            icon: Icons.receipt_rounded,
-          ),
         ],
       ),
       actions: [
@@ -274,7 +263,6 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
           DialogComponents.primaryActionButton(
             context: context,
             text: 'Imprimir',
-            icon: Icons.print_rounded,
             onPressed: () => _showTicketOptions(),
           ),
         ] else ...[

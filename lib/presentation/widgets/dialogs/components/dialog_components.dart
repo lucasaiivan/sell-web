@@ -41,6 +41,7 @@ class DialogComponents {
                   size: 20,
                   color: effectiveAccentColor,
                 ), 
+                const SizedBox(width: 4),
               ],
               // text : título de la sección
               title.isEmpty
@@ -248,7 +249,7 @@ class DialogComponents {
             ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
         padding: const EdgeInsets.symmetric(
-          horizontal:12,
+          horizontal:6,
           vertical: 8,
         ),
       ),
@@ -377,11 +378,13 @@ class DialogComponents {
     IconData? icon,
     Color? backgroundColor,
     Widget? child,
+    bool useFillStyle = true,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
 
-    return Column(
+    // Configuración de estilo basada en useFillStyle
+    final Widget content = Column(
       children: [
         Row(
           children: [
@@ -439,6 +442,25 @@ class DialogComponents {
         child ?? const SizedBox.shrink(),
       ],
     );
+
+    // Si useFillStyle es true, aplicar el estilo con fondo transparente y borde delineado
+    if (useFillStyle) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor ?? Colors.transparent,
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: content,
+      );
+    }
+
+    // Estilo por defecto (sin contenedor adicional)
+    return content;
   }
 
   /// Badge/chip informativo con responsividad mejorada

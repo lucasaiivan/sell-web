@@ -551,7 +551,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           'value': '-${CurrencyFormatter.formatPrice(value: cashRegister.discount)}',
           'rawValue': -cashRegister.discount,
           'icon': Icons.discount_rounded,
-          'color': theme.colorScheme.secondary,
+          'color': Colors.red,
           'highlight': false,
         },
       // Facturación total - RESALTADA
@@ -649,13 +649,14 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                         ),
                       ),
                     ),
+                    // text : monto
                     Text(
                       item['value'] as String,
                       style: (isMobile 
                         ? theme.textTheme.titleSmall 
                         : theme.textTheme.titleMedium)?.copyWith(
                         fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w700,
-                        color: isHighlight ? itemColor : theme.colorScheme.onSurface,
+                        color: itemColor,
                         fontSize: isHighlight 
                             ? (isMobile ? 15 : 17)
                             : null,

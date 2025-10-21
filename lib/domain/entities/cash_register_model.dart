@@ -41,7 +41,6 @@ class CashRegister {
   });
 
   // contructor
-  
 
   // difference : devuelve la diferencia entre el monto esperado y el monto de cierre
   double get getDifference {
@@ -66,43 +65,43 @@ class CashRegister {
   int get getEffectiveSales => sales - annulledTickets;
 
   /// Calcula las ganancias totales desde una lista de tickets
-  /// 
+  ///
   /// Recibe una lista de tickets (pueden ser TicketModel o Maps) y calcula
   /// la suma total de ganancias considerando solo tickets activos (no anulados).
-  /// 
+  ///
   /// Este método espera que cada ticket tenga:
   /// - Una propiedad `annulled` (bool)
   /// - Un getter o propiedad `getProfit` (double)
-  /// 
+  ///
   /// [tickets] - Lista de tickets (TicketModel o Maps con estructura de TicketModel)
-  /// 
+  ///
   /// Returns: Total de ganancias calculadas, 0.0 si la lista está vacía
-  /// 
+  ///
   /// Ejemplo de uso:
   /// ```dart
   /// final profit = cashRegister.calculateTotalProfit(ticketsList);
   /// ```
   double calculateTotalProfit(List<TicketModel> tickets) {
     if (tickets.isEmpty) return 0.0;
-    
+
     double totalProfit = 0.0;
-    
+
     for (var ticketData in tickets) {
-      try { 
+      try {
         // Verificar si el ticket está anulado
         if (ticketData.annulled == true) continue;
-        
+
         // Acceder al getter getProfit
         final profit = ticketData.getProfit;
-        
+
         // Asegurarse de que profit es un número válido
         totalProfit += profit;
-            } catch (e) {
+      } catch (e) {
         // Si hay error al acceder a las propiedades, continuar con el siguiente
         continue;
       }
     }
-    
+
     return totalProfit;
   }
 
@@ -166,7 +165,9 @@ class CashRegister {
           ? data['closure'].toDate()
           : DateTime.now(),
       sales: data.containsKey('sales') ? data['sales'] ?? 0 : 0,
-      annulledTickets: data.containsKey('annulledTickets') ? data['annulledTickets'] ?? 0 : 0,
+      annulledTickets: data.containsKey('annulledTickets')
+          ? data['annulledTickets'] ?? 0
+          : 0,
       billing: data.containsKey('billing')
           ? double.parse(data['billing'].toString())
           : 0.0,
@@ -197,15 +198,22 @@ class CashRegister {
   void fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
     id = documentSnapshot.id;
     description = documentSnapshot['description'];
-    idUser = documentSnapshot.data().toString().contains('idUser') ? documentSnapshot['idUser'] : '';
-    nameUser = documentSnapshot.data().toString().contains('nameUser') ? documentSnapshot['nameUser'] : '';
+    idUser = documentSnapshot.data().toString().contains('idUser')
+        ? documentSnapshot['idUser']
+        : '';
+    nameUser = documentSnapshot.data().toString().contains('nameUser')
+        ? documentSnapshot['nameUser']
+        : '';
     initialCash = documentSnapshot['initialCash'].toDouble();
     opening = documentSnapshot['opening'].toDate();
     closure = documentSnapshot['closure'].toDate();
     billing = documentSnapshot['billing'].toDouble();
     discount = documentSnapshot['discount'].toDouble();
     sales = documentSnapshot['sales'];
-    annulledTickets = documentSnapshot.data().toString().contains('annulledTickets') ? documentSnapshot['annulledTickets'] : 0;
+    annulledTickets =
+        documentSnapshot.data().toString().contains('annulledTickets')
+            ? documentSnapshot['annulledTickets']
+            : 0;
     cashInFlow = documentSnapshot['cashInFlow'].toDouble();
     cashOutFlow = documentSnapshot['cashOutFlow'].toDouble();
     expectedBalance = documentSnapshot['expectedBalance'].toDouble();

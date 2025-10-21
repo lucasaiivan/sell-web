@@ -1,8 +1,8 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/domain/entities/ticket_model.dart'; 
+import 'package:sellweb/domain/entities/ticket_model.dart';
 
-/// Diálogo para mostrar el  ticket  
+/// Diálogo para mostrar el  ticket
 class TicketViewDialog extends StatefulWidget {
   const TicketViewDialog({
     super.key,
@@ -45,11 +45,11 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
   Widget build(BuildContext context) {
     return BaseDialog(
       title: widget.ticket.annulled ? '${widget.title} Anulado' : widget.title,
-      icon: widget.ticket.annulled 
-          ? Icons.cancel_rounded 
+      icon: widget.ticket.annulled
+          ? Icons.cancel_rounded
           : Icons.receipt_long_rounded,
       width: 450,
-      headerColor: widget.ticket.annulled 
+      headerColor: widget.ticket.annulled
           ? Theme.of(context).colorScheme.errorContainer
           : null,
       content: Column(
@@ -86,13 +86,12 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                 DialogComponents.infoRow(
                   context: context,
                   label: 'Estado',
-                  
                   value: widget.ticket.annulled ? 'ANULADO' : 'TRANSACCIONADO',
-                  icon: widget.ticket.annulled 
-                      ? Icons.cancel_rounded 
+                  icon: widget.ticket.annulled
+                      ? Icons.cancel_rounded
                       : Icons.check_circle_rounded,
                   valueStyle: TextStyle(
-                    color: widget.ticket.annulled 
+                    color: widget.ticket.annulled
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -101,7 +100,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
               ],
             ),
           ),
-          DialogComponents.sectionSpacing,   
+          DialogComponents.sectionSpacing,
           // Información de pago
           DialogComponents.infoSection(
             context: context,
@@ -161,11 +160,12 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
 
           DialogComponents.sectionSpacing,
 
-          // Total del ticket  
+          // Total del ticket
           DialogComponents.summaryContainer(
             context: context,
             label: 'Total del Ticket',
-            value: CurrencyFormatter.formatPrice( value: widget.ticket.getTotalPrice),
+            value: CurrencyFormatter.formatPrice(
+                value: widget.ticket.getTotalPrice),
             icon: Icons.receipt_rounded,
           ),
           DialogComponents.sectionSpacing,
@@ -252,11 +252,9 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
         ],
       ),
       actions: [
-        
         if (!widget.ticket.annulled) ...[
           DialogComponents.secondaryActionButton(
             context: context,
-            icon: Icons.security_rounded,
             text: 'Anular',
             onPressed: () => _showAnnullConfirmation(),
           ),
@@ -284,9 +282,9 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
                 Text(
                   'Ticket Anulado',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onErrorContainer,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
               ],
             ),
@@ -320,7 +318,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
       context: context,
       title: 'Anular Ticket',
       message: '¿Estás seguro de que deseas anular este ticket?\n\n'
-               'Esta acción marcará el ticket como anulado y no podrá ser revertida.',
+          'Esta acción marcará el ticket como anulado y no podrá ser revertida.',
       confirmText: 'Anular Ticket',
       cancelText: 'Cancelar',
       icon: Icons.warning_rounded,
@@ -331,7 +329,6 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
 
   /// Ejecuta la anulación del ticket a través del callback
   void _annullTicket() {
-    
     // Ejecutar el callback de anulación si está disponible
     if (widget.onTicketAnnulled != null) {
       // Cerrar el diálogo actual

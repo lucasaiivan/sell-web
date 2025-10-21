@@ -11,17 +11,17 @@ class DialogComponents {
     required Widget content,
     IconData? icon,
     Color? backgroundColor,
-    Color? accentColor, 
+    Color? accentColor,
     Widget? rightIcon,
     required BuildContext context,
   }) {
-
     final theme = Theme.of(context);
-    final effectiveAccentColor = accentColor ?? theme.colorScheme.onSurfaceVariant;
+    final effectiveAccentColor =
+        accentColor ?? theme.colorScheme.onSurfaceVariant;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12), 
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
@@ -40,7 +40,7 @@ class DialogComponents {
                   icon,
                   size: 20,
                   color: effectiveAccentColor,
-                ), 
+                ),
                 const SizedBox(width: 4),
               ],
               // text : título de la sección
@@ -79,7 +79,8 @@ class DialogComponents {
     required List<Widget> items,
     bool showDividers = true,
     String? title,
-    Widget? trailing, // Widget opcional para mostrar al lado del título (ej: resumen, botones)
+    Widget?
+        trailing, // Widget opcional para mostrar al lado del título (ej: resumen, botones)
     int maxVisibleItems = 5,
     String? expandText,
     String? collapseText,
@@ -96,7 +97,7 @@ class DialogComponents {
     final isMobile = screenWidth < 600;
 
     // Configuración de estilo basada en useFillStyle
-    final BoxDecoration decoration; 
+    final BoxDecoration decoration;
     final Color dividerColor;
 
     if (useFillStyle) {
@@ -106,9 +107,9 @@ class DialogComponents {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
         // Agregar borde si se especifica borderColor
-        border: borderColor != null 
-          ? Border.all(color: borderColor, width: 1)
-          : null,
+        border: borderColor != null
+            ? Border.all(color: borderColor, width: 1)
+            : null,
       );
     } else {
       // Estilo outlined: contenedor transparente con borde
@@ -159,8 +160,10 @@ class DialogComponents {
                   thickness: useFillStyle ? 0.5 : 1,
                   color: dividerColor,
                   height: useFillStyle ? 1 : 0,
-                  indent:useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
-                  endIndent:useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  indent:
+                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
+                  endIndent:
+                      useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0),
                 ),
             ],
           );
@@ -168,7 +171,6 @@ class DialogComponents {
       ),
     );
   }
-
 
   /// Fila de información con label y valor
   static Widget infoRow({
@@ -248,10 +250,7 @@ class DialogComponents {
         foregroundColor: isDestructive
             ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
-        padding: const EdgeInsets.symmetric(
-          horizontal:6,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 8),
       ),
     );
   }
@@ -269,7 +268,7 @@ class DialogComponents {
       label: Text(text),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(
-          horizontal: 24,
+          horizontal: 12,
           vertical: 12,
         ),
       ),
@@ -412,24 +411,22 @@ class DialogComponents {
                   label == null
                       ? const SizedBox.shrink()
                       : Opacity(
-                        opacity: 0.7,
-                        child: Text(
+                          opacity: 0.7,
+                          child: Text(
                             label,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.w500,
-                              
                             ),
                           ),
-                      ),
+                        ),
                   const SizedBox(height: 4),
                   Text(
                     value,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w600,
-                      fontSize: 30, 
-
+                      fontSize: 30,
                     ),
                   ),
                 ],
@@ -561,10 +558,10 @@ class DialogComponents {
             ? theme.colorScheme.outline.withValues(alpha: 0.1)
             : theme.colorScheme.outline.withValues(alpha: 0.2));
 
-    final effectiveIndent = indent ??
-        (useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0));
-    final effectiveEndIndent = endIndent ??
-        (useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0));
+    final effectiveIndent =
+        indent ?? (useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0));
+    final effectiveEndIndent =
+        endIndent ?? (useFillStyle && isMobile ? 12 : (useFillStyle ? 16 : 0));
 
     return Divider(
       thickness: effectiveThickness,
@@ -671,8 +668,8 @@ class ExpandableListContainer<T> extends StatefulWidget {
 
 class _ExpandableListContainerState<T>
     extends State<ExpandableListContainer<T>> {
-
-  bool showAllItems = false; // Estado para controlar si se muestran todos los elementos
+  bool showAllItems =
+      false; // Estado para controlar si se muestran todos los elementos
 
   @override
   Widget build(BuildContext context) {
@@ -740,7 +737,9 @@ class _ExpandableListContainerState<T>
               InkWell(
                 onTap: () => setState(() => showAllItems = true),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 12 : 16,vertical: widget.isMobile ? 8 : 12),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: widget.isMobile ? 12 : 16,
+                      vertical: widget.isMobile ? 8 : 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -764,7 +763,7 @@ class _ExpandableListContainerState<T>
             // Botón "Ver menos" si se están mostrando todos
             if (showAllItems && hasMoreItems) ...[
               if (widget.showDividers)
-              // muestra un botón "Ver menos"
+                // muestra un botón "Ver menos"
                 Divider(
                   thickness: widget.useFillStyle ? 0.5 : 1,
                   color: widget.useFillStyle

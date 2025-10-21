@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Core imports
-import 'package:sellweb/core/services/search_catalogue_service.dart'; 
+import 'package:sellweb/core/services/search_catalogue_service.dart';
 
 // Domain imports
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
@@ -254,20 +254,20 @@ class _ProductCatalogueFullScreenViewState
   /// Determina el número de columnas basado en el ancho de pantalla y tamaño óptimo de items
   int _getCrossAxisCount() {
     final width = MediaQuery.of(context).size.width;
-    
+
     // Tamaño mínimo deseado para cada item (ancho)
     const double minItemWidth = 160.0;
-    
+
     // Padding horizontal total (16px cada lado) + espaciado entre items
     const double horizontalPadding = 32.0;
     const double itemSpacing = 12.0;
-    
+
     // Calcular el ancho disponible para items
     final availableWidth = width - horizontalPadding;
-    
+
     // Calcular número de columnas que caben con el tamaño mínimo
     int columns = (availableWidth / (minItemWidth + itemSpacing)).floor();
-    
+
     // Aplicar límites según el tipo de dispositivo
     if (width > 1200) {
       // Desktop grande: máximo 6 columnas, mínimo 4
@@ -285,7 +285,7 @@ class _ProductCatalogueFullScreenViewState
       // Móvil pequeño: máximo 3 columnas, mínimo 3
       columns = columns.clamp(3, 3);
     }
-    
+
     // Asegurar que nunca sea menor a 3
     return columns.clamp(3, 6);
   }
@@ -299,117 +299,119 @@ class _ProductCatalogueFullScreenViewState
     final ticketProducts = widget.sellProvider.ticket.products;
     ProductCatalogue? selectedProduct;
     try {
-      selectedProduct = ticketProducts.firstWhere((p) => p.id == product.id && p.quantity > 0);
+      selectedProduct = ticketProducts
+          .firstWhere((p) => p.id == product.id && p.quantity > 0);
     } catch (_) {
       selectedProduct = null;
     }
 
     return AnimatedScale(
-      scale: selectedProduct != null ? 0.95 : 1.0,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOutCubic,
-      child: Card(
-        color: Colors.white,
-        elevation: selectedProduct != null ? 4 : 2,
-        shadowColor: selectedProduct != null 
-            ? colorScheme.primary.withValues(alpha: 0.3)
-            : null,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          side: selectedProduct != null 
-              ? BorderSide(
-                  color: colorScheme.primary,
-                  width: 2,
-                )
-              : BorderSide.none,
-        ),
-        clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // Layout principal del producto
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        scale: selectedProduct != null ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOutCubic,
+        child: Card(
+          color: Colors.white,
+          elevation: selectedProduct != null ? 4 : 2,
+          shadowColor: selectedProduct != null
+              ? colorScheme.primary.withValues(alpha: 0.3)
+              : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            side: selectedProduct != null
+                ? BorderSide(
+                    color: colorScheme.primary,
+                    width: 2,
+                  )
+                : BorderSide.none,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
             children: [
-              // Imagen del producto que ocupa la mayor parte
-              Expanded(
-                flex: 2,
-                child: ProductImage(
-                  imageUrl: product.image,
-                  fit: BoxFit.cover,
+              // Layout principal del producto
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Imagen del producto que ocupa la mayor parte
+                  Expanded(
+                    flex: 2,
+                    child: ProductImage(
+                      imageUrl: product.image,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  // Información del producto
+                  _buildProductInfo(product, theme, colorScheme),
+                ],
+              ),
+              // Área táctil para seleccionar el producto
+              Positioned.fill(
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      widget.sellProvider.addProductsticket(product.copyWith());
+                      setState(() {}); // Actualizar la vista al seleccionar
+                    },
+                  ),
                 ),
               ),
-              // Información del producto
-              _buildProductInfo(product, theme, colorScheme),
-            ],
-          ),
-          // Área táctil para seleccionar el producto
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  widget.sellProvider.addProductsticket(product.copyWith());
-                  setState(() {}); // Actualizar la vista al seleccionar
-                },
-              ),
-            ),
-          ),
-          // Contador de cantidad en la esquina superior derecha
-          if (selectedProduct != null && selectedProduct.quantity > 1)
-            Positioned(
-              top: 5,
-              right: 5,
-              child: CircleAvatar(
-                backgroundColor: Colors.black87,
-                child: Padding(
-                  padding: const EdgeInsets.all(1.0),
+              // Contador de cantidad en la esquina superior derecha
+              if (selectedProduct != null && selectedProduct.quantity > 1)
+                Positioned(
+                  top: 5,
+                  right: 5,
                   child: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      selectedProduct.quantity.toString(),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w700, 
-                        fontSize: 18,
+                    backgroundColor: Colors.black87,
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.0),
+                      child: CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: Text(
+                          selectedProduct.quantity.toString(),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          // Botón de disminuir cantidad cuando el producto está seleccionado
-          if (selectedProduct != null)
-            Positioned(
-              bottom: 8,
-              right: 8,
-              child: GestureDetector(
-                onTap: () {
-                  _decreaseProductQuantity(product);
-                  setState(() {});
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Icon(
-                    Icons.remove,
-                    size: 16,
-                    color: colorScheme.onErrorContainer,
+              // Botón de disminuir cantidad cuando el producto está seleccionado
+              if (selectedProduct != null)
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () {
+                      _decreaseProductQuantity(product);
+                      setState(() {});
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color:
+                            colorScheme.errorContainer.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.remove,
+                        size: 16,
+                        color: colorScheme.onErrorContainer,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-        ],
-      ),
-      )
-    );
+            ],
+          ),
+        ));
   }
 
   /// Construye la información del producto (descripción, marca, precio)
-  Widget _buildProductInfo(ProductCatalogue product, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildProductInfo(
+      ProductCatalogue product, ThemeData theme, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.all(6.0),
       child: Column(
@@ -421,7 +423,7 @@ class _ProductCatalogueFullScreenViewState
             product.description,
             style: const TextStyle(
               color: Colors.black,
-              fontWeight: FontWeight.normal, 
+              fontWeight: FontWeight.normal,
               overflow: TextOverflow.ellipsis,
             ),
             maxLines: 1,
@@ -433,7 +435,7 @@ class _ProductCatalogueFullScreenViewState
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 10,
-                color: product.verified?Colors.blue:null,
+                color: product.verified ? Colors.blue : null,
                 overflow: TextOverflow.ellipsis,
               ),
               maxLines: 1,
@@ -472,13 +474,15 @@ class _ProductCatalogueFullScreenViewState
             return [
               SliverOverlapAbsorber(
                 // Absorber el overlap para evitar problemas de posicionamiento
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                handle:
+                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
                   // Configuración optimizada del SliverAppBar para NestedScrollView
                   floating: true,
                   pinned: true,
                   snap: true,
-                  expandedHeight: 210, // Altura fija para siempre mostrar búsqueda y chips
+                  expandedHeight:
+                      210, // Altura fija para siempre mostrar búsqueda y chips
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surface,
                   elevation: 0,
@@ -572,7 +576,8 @@ class _ProductCatalogueFullScreenViewState
                                 child: IconButton(
                                   icon: AnimatedSwitcher(
                                     duration: const Duration(milliseconds: 200),
-                                    transitionBuilder: (Widget child, Animation<double> animation) {
+                                    transitionBuilder: (Widget child,
+                                        Animation<double> animation) {
                                       return RotationTransition(
                                         turns: animation,
                                         child: FadeTransition(
@@ -582,7 +587,9 @@ class _ProductCatalogueFullScreenViewState
                                       );
                                     },
                                     child: Icon(
-                                      _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                                      _isGridView
+                                          ? Icons.view_list_rounded
+                                          : Icons.grid_view_rounded,
                                       key: ValueKey(_isGridView),
                                     ),
                                   ),
@@ -592,14 +599,16 @@ class _ProductCatalogueFullScreenViewState
                                     });
                                   },
                                   style: IconButton.styleFrom(
-                                    backgroundColor: _isGridView 
+                                    backgroundColor: _isGridView
                                         ? colorScheme.primaryContainer
                                         : colorScheme.surfaceContainerHighest,
-                                    foregroundColor: _isGridView 
+                                    foregroundColor: _isGridView
                                         ? colorScheme.onPrimaryContainer
                                         : colorScheme.onSurface,
                                   ),
-                                  tooltip: _isGridView ? 'Vista de lista' : 'Vista de cuadrícula',
+                                  tooltip: _isGridView
+                                      ? 'Vista de lista'
+                                      : 'Vista de cuadrícula',
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -847,11 +856,11 @@ class _ProductCatalogueFullScreenViewState
           : colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(12),
       elevation: selectedProduct != null ? 3 : 1,
-      shadowColor: selectedProduct != null 
+      shadowColor: selectedProduct != null
           ? colorScheme.primary.withValues(alpha: 0.2)
           : colorScheme.shadow.withValues(alpha: 0.1),
       child: Container(
-        decoration: selectedProduct != null 
+        decoration: selectedProduct != null
             ? BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -861,105 +870,105 @@ class _ProductCatalogueFullScreenViewState
               )
             : null,
         child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: ProductImage(
-          imageUrl: product.image,
-          size: 56,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              product.description,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (product.nameMark.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  product.nameMark,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: product.verified?Colors.blue:null,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          leading: ProductImage(
+            imageUrl: product.image,
+            size: 56,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.description,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            product.code,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.secondary,
+              if (product.nameMark.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    product.nameMark,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: product.verified ? Colors.blue : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              product.code,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.secondary,
+              ),
             ),
           ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // text : Precio de venta
-            Text(
-              CurrencyFormatter.formatPrice(value: product.salePrice),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(width: 12),
-            if (selectedProduct != null) ...[
-              // Botón para disminuir cantidad - con estilo similar al contador
-              CircleAvatar(
-                radius: 16,
-                backgroundColor:
-                    colorScheme.errorContainer.withValues(alpha: 0.8),
-                child: InkWell(
-                  onTap: () {
-                    // Disminuir cantidad del producto en el ticket
-                    _decreaseProductQuantity(product);
-                    setState(() {}); // Actualizar la vista
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Icon(
-                    Icons.remove,
-                    size: 16,
-                    color: colorScheme.onErrorContainer,
-                  ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // text : Precio de venta
+              Text(
+                CurrencyFormatter.formatPrice(value: product.salePrice),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(width: 8),
-              // Cantidad seleccionada como CircleAvatar
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: colorScheme.primary,
-                child: Text(
-                  selectedProduct.quantity.toString(),
-                  style: TextStyle(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+              const SizedBox(width: 12),
+              if (selectedProduct != null) ...[
+                // Botón para disminuir cantidad - con estilo similar al contador
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor:
+                      colorScheme.errorContainer.withValues(alpha: 0.8),
+                  child: InkWell(
+                    onTap: () {
+                      // Disminuir cantidad del producto en el ticket
+                      _decreaseProductQuantity(product);
+                      setState(() {}); // Actualizar la vista
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Icon(
+                      Icons.remove,
+                      size: 16,
+                      color: colorScheme.onErrorContainer,
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                // Cantidad seleccionada como CircleAvatar
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colorScheme.primary,
+                  child: Text(
+                    selectedProduct.quantity.toString(),
+                    style: TextStyle(
+                      color: colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-        onTap: () {
-          widget.sellProvider.addProductsticket(product.copyWith());
-          setState(() {}); // Actualizar la vista al seleccionar
-        },
+          ),
+          onTap: () {
+            widget.sellProvider.addProductsticket(product.copyWith());
+            setState(() {}); // Actualizar la vista al seleccionar
+          },
         ),
       ),
     );

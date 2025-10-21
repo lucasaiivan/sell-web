@@ -81,139 +81,139 @@ class _AddProductDialogState extends State<AddProductDialog> {
     final theme = Theme.of(context);
 
     return BaseDialog(
-      title: widget.isNew ? 'Crear nuevo producto' : 'Nuevo producto', 
+      title: widget.isNew ? 'Crear nuevo producto' : 'Nuevo producto',
       icon: widget.isNew ? Icons.public_rounded : Icons.inventory_2_rounded,
       width: 500,
       headerColor: widget.isNew ? theme.colorScheme.primaryContainer : null,
       content: Form(
         key: _formKey,
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Información del producto (código y detalles)
-          if (!widget.isNew) ...[
-          _buildExistingProductInfoSection(),
-          ] else ...[
-          // Solo mostrar código para productos nuevos
-          DialogComponents.infoSection(
-            context: context,
-            title: 'Código',
-            content: widget.product.code.isEmpty
-              ? Text(
-                'Sin código asignado',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w400,
-                ),
-                )
-              : Text(
-                widget.product.code,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 30,
-                )),
-          ),
-          ],
-        
-          // Campo de descripción para productos nuevos
-          if (widget.isNew) ...[
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Información del producto (código y detalles)
+            if (!widget.isNew) ...[
+              _buildExistingProductInfoSection(),
+            ] else ...[
+              // Solo mostrar código para productos nuevos
+              DialogComponents.infoSection(
+                context: context,
+                title: 'Código',
+                content: widget.product.code.isEmpty
+                    ? Text(
+                        'Sin código asignado',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w400,
+                        ),
+                      )
+                    : Text(widget.product.code,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 30,
+                        )),
+              ),
+            ],
+
+            // Campo de descripción para productos nuevos
+            if (widget.isNew) ...[
+              DialogComponents.itemSpacing,
+              DialogComponents.textField(
+                context: context,
+                controller: _descriptionController,
+                label: 'Descripción',
+                hint: 'Ingrese una descripción descriptiva',
+                validator: (value) {
+                  if (value?.trim().isEmpty == true) {
+                    return 'La descripción es requerida';
+                  }
+                  return null;
+                },
+              ),
+            ],
             DialogComponents.itemSpacing,
-            DialogComponents.textField(
+            // Campo de precio de compra (opcional)
+            DialogComponents.moneyField(
               context: context,
-              controller: _descriptionController,
-              label: 'Descripción',
-              hint: 'Ingrese una descripción descriptiva',
+              controller: _purchasePriceController,
+              label: 'Precio de compra (Opcional)',
+              hint: '\$0.00',
               validator: (value) {
-                if (value?.trim().isEmpty == true) {
-                  return 'La descripción es requerida';
+                // El precio de compra es opcional, pero si se ingresa debe ser válido
+                if (value != null && value.trim().isNotEmpty) {
+                  final purchasePrice = _purchasePriceController.doubleValue;
+                  final salePrice = _priceController.doubleValue;
+
+                  if (purchasePrice < 0) {
+                    return 'El precio no puede ser negativo';
+                  }
+
+                  // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
+                  if (purchasePrice > 0 &&
+                      salePrice > 0 &&
+                      purchasePrice > salePrice) {
+                    return 'El precio de compra no puede ser mayor al de venta';
+                  }
                 }
                 return null;
               },
             ),
-          ],
-          DialogComponents.itemSpacing,
-          // Campo de precio de compra (opcional)
-          DialogComponents.moneyField(
-            context: context,
-            controller: _purchasePriceController,
-            label: 'Precio de compra (Opcional)',
-            hint: '\$0.00',
-            validator: (value) {
-              // El precio de compra es opcional, pero si se ingresa debe ser válido
-              if (value != null && value.trim().isNotEmpty) {
-                final purchasePrice = _purchasePriceController.doubleValue;
-                final salePrice = _priceController.doubleValue;
-        
-                if (purchasePrice < 0) {
-                  return 'El precio no puede ser negativo';
-                }
-        
-                // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
-                if (purchasePrice > 0 &&
-                    salePrice > 0 &&
-                    purchasePrice > salePrice) {
-                  return 'El precio de compra no puede ser mayor al de venta';
-                }
-              }
-              return null;
-            },
-          ),
-        
-          // text :  Mostrar porcentaje de ganancia si ambos precios están definidos
-          if (_priceController.doubleValue > 0 && _purchasePriceController.doubleValue > 0) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.trending_up_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Ganancia: ',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  '${((_priceController.doubleValue - _purchasePriceController.doubleValue) / _purchasePriceController.doubleValue * 100).round()}%',
-                  style: theme.textTheme.bodyMedium?.copyWith(
+
+            // text :  Mostrar porcentaje de ganancia si ambos precios están definidos
+            if (_priceController.doubleValue > 0 &&
+                _purchasePriceController.doubleValue > 0) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.trending_up_rounded,
                     color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+                    size: 20,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    'Ganancia: ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '${((_priceController.doubleValue - _purchasePriceController.doubleValue) / _purchasePriceController.doubleValue * 100).round()}%',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            DialogComponents.itemSpacing,
+            // DialogComponents.moneyField : entrada de monto de precio de venta
+            DialogComponents.moneyField(
+              context: context,
+              controller: _priceController,
+              label: 'Precio de venta al público',
+              hint: '\$0.00',
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'El precio es requerido';
+                }
+
+                // Usar el método doubleValue del controlador para validación consistente
+                final price = _priceController.doubleValue;
+
+                if (price <= 0) {
+                  return 'El precio debe ser mayor a cero';
+                }
+
+                return null;
+              },
             ),
+            DialogComponents.itemSpacing,
+            DialogComponents.itemSpacing,
+            // Checkbox para agregar al catálogo
+            _buildCatalogueOption(),
           ],
-          DialogComponents.itemSpacing,
-          // DialogComponents.moneyField : entrada de monto de precio de venta
-          DialogComponents.moneyField(
-            context: context,
-            controller: _priceController,
-            label: 'Precio de venta al público',
-            hint: '\$0.00',
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'El precio es requerido';
-              }
-        
-              // Usar el método doubleValue del controlador para validación consistente
-              final price = _priceController.doubleValue;
-        
-              if (price <= 0) {
-                return 'El precio debe ser mayor a cero';
-              }
-        
-              return null;
-            },
-          ),
-          DialogComponents.itemSpacing,
-          DialogComponents.itemSpacing,
-          // Checkbox para agregar al catálogo
-          _buildCatalogueOption(),
-        ],
-                  ),
+        ),
       ),
       actions: [
         DialogComponents.secondaryActionButton(
@@ -246,7 +246,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Widget _buildExistingProductInfo() {
-
     final theme = Theme.of(context);
 
     return DialogComponents.infoSection(
@@ -255,14 +254,16 @@ class _AddProductDialogState extends State<AddProductDialog> {
           ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
           : theme.colorScheme.tertiaryContainer.withValues(alpha: 0.1),
       title: widget.product.code,
-      icon:widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
-      accentColor:widget.product.verified ? Colors.blue : theme.colorScheme.tertiary,
+      icon:
+          widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
+      accentColor:
+          widget.product.verified ? Colors.blue : theme.colorScheme.tertiary,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Imagen del producto
           ProductImage(
-            borderRadius:8,
+            borderRadius: 8,
             imageUrl: widget.product.image,
             size: 60,
           ),
@@ -482,7 +483,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
     }
   }
 
-  Future<void> _updatePublicProductDescription(ProductCatalogue updatedProduct) async {
+  Future<void> _updatePublicProductDescription(
+      ProductCatalogue updatedProduct) async {
     try {
       // Crear producto actualizado para la base de datos pública
       final updatedPublicProduct = Product(

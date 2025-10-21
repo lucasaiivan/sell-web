@@ -5,16 +5,19 @@ class TicketModel {
   String id = ''; // id unic
   String sellerName = ''; // nombre del vendedor
   String sellerId = ''; // id del vendedor
-  String cashRegisterName = '1'; // nombre o numero de caja que se efectuo la venta
+  String cashRegisterName =
+      '1'; // nombre o numero de caja que se efectuo la venta
   String cashRegisterId = ''; // id de la caja que se efectuo la venta
   String payMode =
       ''; // efective (Efectivo) - mercadopago (Mercado Pago) - card (Tarjeta De Crédito/Débito)
   double priceTotal = 0.0; // precio total de la venta
   double valueReceived = 0.0; // valor recibido por la venta
-  double discount = 0.0; // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
+  double discount =
+      0.0; // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
   String currencySymbol = '\$'; // simbolo de la moneda utilizada en la venta
   /// Información del descuento aplicado
-  bool discountIsPercentage = false; // true si el descuento es porcentual, false si es monto fijo
+  bool discountIsPercentage =
+      false; // true si el descuento es porcentual, false si es monto fijo
 
   /// Tipo de transacción que representa este ticket
   ///
@@ -33,7 +36,8 @@ class TicketModel {
   /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
   List<Map<String, dynamic>> _listPoduct = [];
-  late Timestamp creation; // Marca de tiempo ( hora en que se reporto el producto )
+  late Timestamp
+      creation; // Marca de tiempo ( hora en que se reporto el producto )
 
   TicketModel({
     this.id = "",
@@ -195,7 +199,7 @@ class TicketModel {
   }
 
   /// Analiza una lista de tickets y devuelve los medios de pago ordenados por uso
-  /// 
+  ///
   /// Retorna una lista ordenada de mayor a menor uso con la siguiente estructura:
   /// ```dart
   /// [
@@ -208,7 +212,7 @@ class TicketModel {
   ///   ...
   /// ]
   /// ```
-  /// 
+  ///
   /// [tickets] - Lista de tickets a analizar
   /// [includeAnnulled] - Si es true, incluye tickets anulados en el análisis (por defecto: false)
   static List<Map<String, dynamic>> getPaymentMethodsRanking({
@@ -216,8 +220,8 @@ class TicketModel {
     bool includeAnnulled = false, // por defecto no incluir anulados
   }) {
     // Filtrar tickets anulados si corresponde
-    final validTickets = includeAnnulled 
-        ? tickets 
+    final validTickets = includeAnnulled
+        ? tickets
         : tickets.where((ticket) => !ticket.annulled).toList();
 
     if (validTickets.isEmpty) {
@@ -244,24 +248,24 @@ class TicketModel {
       }
 
       // Acumular datos
-      paymentStats[payMode]!['amount'] = 
+      paymentStats[payMode]!['amount'] =
           (paymentStats[payMode]!['amount'] as double) + amount;
-      paymentStats[payMode]!['count'] = 
+      paymentStats[payMode]!['count'] =
           (paymentStats[payMode]!['count'] as int) + 1;
       totalAmount += amount;
     }
 
     // Convertir a lista y calcular porcentajes
     final List<Map<String, dynamic>> result = [];
-    
+
     paymentStats.forEach((key, stats) {
       final amount = stats['amount'] as double;
       final count = stats['count'] as int;
-      
+
       // Solo incluir medios de pago que se han utilizado
       if (count > 0) {
         final percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0.0;
-        
+
         result.add({
           'description': stats['description'],
           'amount': amount,
@@ -272,9 +276,10 @@ class TicketModel {
     });
 
     // Ordenar por monto (de mayor a menor)
-    result.sort((a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+    result.sort(
+        (a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
 
-    // devuelve la lista de métodos de pago ordenados 
+    // devuelve la lista de métodos de pago ordenados
     return result;
   }
 
@@ -374,7 +379,8 @@ class TicketModel {
       if (data['creation'] is Timestamp) {
         creationTimestamp = data['creation'];
       } else if (data['creation'] is int) {
-        creationTimestamp = Timestamp.fromMillisecondsSinceEpoch(data['creation']);
+        creationTimestamp =
+            Timestamp.fromMillisecondsSinceEpoch(data['creation']);
       } else {
         creationTimestamp = Timestamp.now();
       }
@@ -400,7 +406,9 @@ class TicketModel {
       sellerName: data['sellerName'] ?? '',
       sellerId: data['sellerId'] ?? '',
       currencySymbol: data['currencySymbol'] ?? '\$',
-      cashRegisterName: data['cashRegisterName'] ?? data['cashRegister'] ?? '', // Soporte para ambos nombres de campo
+      cashRegisterName: data['cashRegisterName'] ??
+          data['cashRegister'] ??
+          '', // Soporte para ambos nombres de campo
       cashRegisterId: data['cashRegisterId'] ?? '',
       priceTotal: (data['priceTotal'] ?? 0.0).toDouble(),
       valueReceived: (data['valueReceived'] ?? 0.0).toDouble(),
@@ -494,7 +502,7 @@ class TicketModel {
     );
   }
   // copyWith : crea una copia del ticket con modificaciones opcionales
-  TicketModel copyWith({ 
+  TicketModel copyWith({
     String? id,
     String? payMode,
     String? currencySymbol,
@@ -529,7 +537,6 @@ class TicketModel {
       creation: creation ?? this.creation,
     );
   }
-  
 
   /// Factory constructor desde una lista de ProductCatalogue
   factory TicketModel.fromProductCatalogues({
@@ -543,9 +550,12 @@ class TicketModel {
     String cashRegisterId = "",
     double priceTotal = 0.0,
     double valueReceived = 0.0,
-    double discount = 0.0, // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
-    bool discountIsPercentage = false, // true si el descuento es porcentual, false si es monto fijo
-    String transactionType = "sale", // tipo de transacción que representa este ticket
+    double discount =
+        0.0, // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
+    bool discountIsPercentage =
+        false, // true si el descuento es porcentual, false si es monto fijo
+    String transactionType =
+        "sale", // tipo de transacción que representa este ticket
     bool annulled = false,
     Timestamp? creation,
   }) {
@@ -856,5 +866,4 @@ class TicketModel {
   void autoFixPriceTotal() {
     priceTotal = calculatedTotal;
   }
- 
 }

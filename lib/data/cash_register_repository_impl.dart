@@ -371,7 +371,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
 
       // Actualizar totales de ventas
       final updatedCashRegister = cashRegister.update(
-        sales: cashRegister.sales + 1, // ✅ Incrementa contador de ventas efectivas
+        sales:
+            cashRegister.sales + 1, // ✅ Incrementa contador de ventas efectivas
         billing: cashRegister.billing +
             billingIncrement, // Incrementa la facturación
         discount: cashRegister.discount +
@@ -385,7 +386,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   /// Actualiza billing y discount al anular un ticket (NO incrementa sales)
-  /// 
+  ///
   /// RESPONSABILIDAD: Restar montos de venta anulada sin modificar contador de ventas
   /// - Decrementa billing (restar precio total del ticket)
   /// - Decrementa discount (restar descuento del ticket)
@@ -395,8 +396,10 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> updateBillingOnAnnullment({
     required String accountId,
     required String cashRegisterId,
-    required double billingDecrement, // Monto a restar de billing (valor positivo)
-    required double discountDecrement, // Monto a restar de discount (valor positivo)
+    required double
+        billingDecrement, // Monto a restar de billing (valor positivo)
+    required double
+        discountDecrement, // Monto a restar de discount (valor positivo)
   }) async {
     try {
       // Obtener la caja registradora actual
@@ -411,7 +414,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         // NO modificar sales - las ventas efectivas no incluyen anulaciones
         billing: cashRegister.billing - billingDecrement, // Restar facturación
         discount: cashRegister.discount - discountDecrement, // Restar descuento
-        annulledTickets: cashRegister.annulledTickets + 1, // ✅ Incrementar contador de anulados
+        annulledTickets: cashRegister.annulledTickets +
+            1, // ✅ Incrementar contador de anulados
       );
 
       await setCashRegister(accountId, updatedCashRegister);
@@ -447,19 +451,24 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     String cashRegisterId = '', // filtrado opcional por caja
   }) async {
     try {
-      
       final startTimestamp = Timestamp.fromDate(startDate);
       final endTimestamp = Timestamp.fromDate(endDate);
 
       // Pasar el cashRegisterId al servicio si es válido (no vacío)
-      final querySnapshot = await DatabaseCloudService.getTransactionsByDateRange(
+      final querySnapshot =
+          await DatabaseCloudService.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startTimestamp,
-        endDate: endTimestamp, 
+        endDate: endTimestamp,
       );
 
-      final result = querySnapshot.docs.map((doc) => {'id': doc.id,...doc.data(),}).toList();
-      
+      final result = querySnapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
+
       return result;
     } catch (e) {
       throw Exception('Error al obtener transacciones por rango de fechas: $e');

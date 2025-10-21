@@ -137,7 +137,8 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
                   // view notification : si no hay cuentas disponibles, muestra un mensaje informativo
                   if (authProvider.isLoadingAccounts)
                     const Center(child: CircularProgressIndicator()),
-                  if (accounts.isEmpty && authProvider.isLoadingAccounts == false)
+                  if (accounts.isEmpty &&
+                      authProvider.isLoadingAccounts == false)
                     // Si no hay cuentas disponibles, muestra un mensaje informativo
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -174,13 +175,19 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: DialogComponents.itemList(
                         context: context,
-                        items: accounts.map((account) =>_buildAccountCard(context, account)).toList(),
+                        items: accounts
+                            .map((account) =>
+                                _buildAccountCard(context, account))
+                            .toList(),
                         showDividers: true,
                         maxVisibleItems: 4,
                         expandText: 'Ver más cuentas',
                         collapseText: 'Ver menos',
                         borderRadius: 16,
-                        backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withValues(alpha: 0.5),
                       ),
                     ),
                   const SizedBox(height: 30),

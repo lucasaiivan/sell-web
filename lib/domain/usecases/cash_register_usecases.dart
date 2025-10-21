@@ -1,4 +1,3 @@
-
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
 
@@ -73,52 +72,52 @@ class CashRegisterUsecases {
   ///
   /// Calcula automáticamente la diferencia y mueve la caja al historial
   /// Cierra una caja registradora existente
-  /// 
+  ///
   /// RESPONSABILIDAD: Validar cierre y delegar a repositorio
-  /// 
+  ///
   /// ⚠️ IMPORTANTE - LÓGICA DE CONTADORES:
-  /// 
+  ///
   /// ## Contador `sales` (Ventas Efectivas) ✅
   /// - Se incrementa automáticamente (+1) en cada VENTA mediante `cashRegisterSale()`
   /// - Representa SOLO las ventas EFECTIVAS (NO incluye anulaciones)
   /// - **NO se modifica** al anular un ticket
   /// - **NO debe modificarse al cerrar caja** - ya está correcto
-  /// 
+  ///
   /// ## Contador `annulledTickets` (Tickets Anulados)
   /// - Se incrementa (+1) cada vez que se anula un ticket
   /// - Se incrementa automáticamente en `updateBillingOnAnnullment()`
   /// - Puede requerir verificación al cerrar para corregir desincronizaciones
-  /// 
+  ///
   /// ## Cálculo de Total de Transacciones
   /// ```dart
   /// totalTransacciones = sales + annulledTickets
   /// ventasEfectivas = sales // Directo, ya no requiere resta
   /// ```
-  /// 
+  ///
   /// ## FLUJO AL CERRAR CAJA (ARQUEO):
   /// 1. Obtener transacciones reales de hoy:
   ///    ```dart
   ///    final todayTickets = await sellUsecases.getTodayTransactions(
-  ///      accountId: accountId, 
+  ///      accountId: accountId,
   ///      cashRegisterId: cashRegisterId
   ///    );
   ///    ```
-  /// 
+  ///
   /// 2. Calcular contadores reales para VERIFICACIÓN:
   ///    ```dart
   ///    final realEffective = todayTickets.where((t) => t['annulled'] != true).length;
   ///    final realAnnulled = todayTickets.where((t) => t['annulled'] == true).length;
   ///    final realTotal = realEffective + realAnnulled;
   ///    ```
-  /// 
+  ///
   /// 3. VALIDAR consistencia (NO sobrescribir):
   ///    ```dart
   ///    final currentSales = cashRegister.sales; // Ya correcto (solo ventas efectivas)
   ///    final currentAnnulled = cashRegister.annulledTickets;
-  ///    
+  ///
   ///    // Verificar si requiere corrección
   ///    final needsUpdate = currentSales != realEffective || currentAnnulled != realAnnulled;
-  ///    
+  ///
   ///    if (needsUpdate) {
   ///      await repository.setCashRegister(
   ///        accountId,
@@ -129,22 +128,22 @@ class CashRegisterUsecases {
   ///      );
   ///    }
   ///    ```
-  /// 
+  ///
   /// 4. Cerrar la caja con contadores validados
-  /// 
+  ///
   /// ## ¿Por qué sales ahora es SOLO ventas efectivas?
   /// - **Claridad**: "ventas" no debería incluir anulaciones
   /// - **Simplicidad**: effectiveSales = sales (directo)
   /// - **Trazabilidad**: totalTransactions = sales + annulledTickets
   /// - **Consistencia**: Cada venta suma +1, cada anulación NO modifica sales
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
   /// - `cashRegisterId`: ID de la caja a cerrar
   /// - `finalBalance`: Balance final declarado en el arqueo
-  /// 
+  ///
   /// RETORNA: CashRegister cerrado
-  /// 
+  ///
   /// LANZA: Exception si validaciones fallan
   Future<CashRegister> closeCashRegister({
     required String accountId,
@@ -257,21 +256,21 @@ class CashRegisterUsecases {
   /// Este método DEBE llamarse DESPUÉS de guardar el ticket en Firebase.
   /// Garantiza consistencia: el contador 'sales' se incrementa SOLO si el ticket
   /// se guardó exitosamente en la base de datos.
-  /// 
+  ///
   /// RESPONSABILIDAD:
   /// - Incrementar contador de ventas efectivas (+1)
   /// - Actualizar facturación total
   /// - Actualizar descuentos totales
-  /// 
+  ///
   /// VALIDACIONES:
   /// - saleAmount >= 0
   /// - discountAmount >= 0
-  /// 
+  ///
   /// USO CORRECTO:
   /// ```dart
   /// // 1. Guardar ticket en Firebase
   /// await saveTicketToTransactionHistory(ticket);
-  /// 
+  ///
   /// // 2. SOLO si el guardado fue exitoso, incrementar contador
   /// await cashRegisterSale(
   ///   accountId: accountId,
@@ -429,13 +428,13 @@ class CashRegisterUsecases {
   // ==========================================
 
   /// Crea una nueva descripción fija para nombres de caja registradora
-  /// 
+  ///
   /// RESPONSABILIDAD: Agregar opciones predefinidas para nombrar cajas
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
   /// - `description`: Descripción/nombre a agregar
-  /// 
+  ///
   /// LANZA: Exception si la descripción está vacía
   Future<void> createCashRegisterFixedDescription({
     required String accountId,
@@ -450,12 +449,12 @@ class CashRegisterUsecases {
   }
 
   /// Obtiene las descripciones fijas disponibles para nombres de caja registradora
-  /// 
+  ///
   /// RESPONSABILIDAD: Consultar opciones predefinidas para nombrar cajas
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
-  /// 
+  ///
   /// RETORNA: Lista de descripciones como Strings
   Future<List<String>> getCashRegisterFixedDescriptions(
       String accountId) async {
@@ -468,9 +467,9 @@ class CashRegisterUsecases {
   }
 
   /// Elimina una descripción fija para nombres de caja registradora
-  /// 
+  ///
   /// RESPONSABILIDAD: Remover opciones predefinidas para nombrar cajas
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
   /// - `description`: Descripción/nombre a eliminar

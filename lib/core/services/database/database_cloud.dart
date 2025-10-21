@@ -72,7 +72,9 @@ class DatabaseCloudService {
       _firestore.collection('/ACCOUNTS/$accountId/PROVIDER/');
 
   /// Transacciones/ventas de una cuenta
-  static CollectionReference<Map<String, dynamic>> accountTransactions( String accountId) => _firestore.collection('/ACCOUNTS/$accountId/TRANSACTIONS/');
+  static CollectionReference<Map<String, dynamic>> accountTransactions(
+          String accountId) =>
+      _firestore.collection('/ACCOUNTS/$accountId/TRANSACTIONS/');
 
   /// Administradores y usuarios de una cuenta
   static CollectionReference<Map<String, dynamic>> accountUsers(
@@ -319,18 +321,15 @@ class DatabaseCloudService {
       getTransactionsByDateRange({
     required String accountId,
     required Timestamp startDate,
-    required Timestamp endDate, 
-  }) async { 
-    
+    required Timestamp endDate,
+  }) async {
     Query<Map<String, dynamic>> query = accountTransactions(accountId)
         .orderBy('creation', descending: true)
         .where('creation', isGreaterThan: startDate)
         .where('creation', isLessThan: endDate);
-        
-     
-     
-    final result = await query.get(); 
-    
+
+    final result = await query.get();
+
     return result;
   }
 

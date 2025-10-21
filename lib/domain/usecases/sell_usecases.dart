@@ -88,7 +88,7 @@ class SellUsecases {
   // ==========================================
 
   /// Crea un ticket vacío con valores predeterminados
-  /// 
+  ///
   /// RESPONSABILIDAD: Inicializar ticket con estado limpio
   /// - Timestamp actual
   /// - Lista de productos vacía
@@ -101,12 +101,12 @@ class SellUsecases {
   }
 
   /// Actualiza campos específicos de un ticket preservando el resto
-  /// 
+  ///
   /// RESPONSABILIDAD: Construcción inmutable de tickets
   /// - Preserva productos existentes
   /// - Actualiza solo campos especificados
   /// - Valida valores de entrada
-  /// 
+  ///
   /// Este método reemplaza _createTicketWithValues del Provider
   TicketModel updateTicketFields(
     TicketModel currentTicket, {
@@ -142,7 +142,9 @@ class SellUsecases {
     final newTicket = TicketModel(
       id: id ?? currentTicket.id,
       annulled: annulled ?? currentTicket.annulled,
-      listPoduct: currentTicket.internalProductList.map((p) => Map<String, dynamic>.from(p)).toList(), // Preservar productos
+      listPoduct: currentTicket.internalProductList
+          .map((p) => Map<String, dynamic>.from(p))
+          .toList(), // Preservar productos
       creation: creation ?? currentTicket.creation,
       payMode: payMode ?? currentTicket.payMode,
       valueReceived: valueReceived ?? currentTicket.valueReceived,
@@ -152,7 +154,8 @@ class SellUsecases {
       sellerId: sellerId ?? currentTicket.sellerId,
       priceTotal: priceTotal ?? currentTicket.priceTotal,
       discount: discount ?? currentTicket.discount,
-      discountIsPercentage: discountIsPercentage ?? currentTicket.discountIsPercentage,
+      discountIsPercentage:
+          discountIsPercentage ?? currentTicket.discountIsPercentage,
       transactionType: transactionType ?? currentTicket.transactionType,
       currencySymbol: currencySymbol ?? currentTicket.currencySymbol,
     );
@@ -165,7 +168,7 @@ class SellUsecases {
   // ==========================================
 
   /// Agrega un producto al ticket (incrementa cantidad si ya existe)
-  /// 
+  ///
   /// RESPONSABILIDAD: Lógica de negocio para agregar productos
   /// - Buscar si el producto ya existe en el ticket
   /// - Si existe: incrementar cantidad o reemplazar según parámetro
@@ -187,7 +190,8 @@ class SellUsecases {
 
     // LÓGICA DE NEGOCIO: Buscar producto existente
     bool productExists = false;
-    final List<ProductCatalogue> updatedProducts = List.from(currentTicket.products);
+    final List<ProductCatalogue> updatedProducts =
+        List.from(currentTicket.products);
 
     for (var i = 0; i < updatedProducts.length; i++) {
       if (updatedProducts[i].id == product.id) {
@@ -201,9 +205,10 @@ class SellUsecases {
           updatedProducts[i] = product.copyWith(quantity: quantityToUse);
         } else {
           // LÓGICA: Incrementar cantidad
-          final newQuantity = updatedProducts[i].quantity + 
+          final newQuantity = updatedProducts[i].quantity +
               (product.quantity > 0 ? product.quantity : 1);
-          updatedProducts[i] = updatedProducts[i].copyWith(quantity: newQuantity);
+          updatedProducts[i] =
+              updatedProducts[i].copyWith(quantity: newQuantity);
         }
         break;
       }
@@ -223,7 +228,7 @@ class SellUsecases {
   }
 
   /// Elimina un producto del ticket
-  /// 
+  ///
   /// RESPONSABILIDAD: Lógica de negocio para eliminar productos
   /// - Filtrar producto por ID
   /// - Preservar resto de productos
@@ -238,9 +243,8 @@ class SellUsecases {
     }
 
     // LÓGICA: Filtrar producto a eliminar
-    final updatedProducts = currentTicket.products
-        .where((item) => item.id != product.id)
-        .toList();
+    final updatedProducts =
+        currentTicket.products.where((item) => item.id != product.id).toList();
 
     // CONSTRUCCIÓN INMUTABLE: Crear nuevo ticket con productos actualizados
     final newTicket = updateTicketFields(currentTicket);
@@ -254,7 +258,7 @@ class SellUsecases {
   // ==========================================
 
   /// Configura la forma de pago del ticket
-  /// 
+  ///
   /// RESPONSABILIDAD: Lógica de negocio para método de pago
   /// - Validar forma de pago permitida
   /// - Si no es efectivo, resetear valor recibido a 0
@@ -270,7 +274,8 @@ class SellUsecases {
     }
 
     // LÓGICA: Si no es efectivo, resetear valor recibido
-    final valueReceived = payMode != 'effective' ? 0.0 : currentTicket.valueReceived;
+    final valueReceived =
+        payMode != 'effective' ? 0.0 : currentTicket.valueReceived;
 
     // ACTUALIZACIÓN INMUTABLE
     return updateTicketFields(
@@ -281,7 +286,7 @@ class SellUsecases {
   }
 
   /// Configura el descuento del ticket
-  /// 
+  ///
   /// RESPONSABILIDAD: Lógica de negocio para descuentos
   /// - Validar descuento no negativo
   /// - Actualizar ticket inmutablemente
@@ -304,7 +309,7 @@ class SellUsecases {
   }
 
   /// Configura el valor recibido en efectivo
-  /// 
+  ///
   /// RESPONSABILIDAD: Lógica de negocio para valor recibido
   /// - Validar valor no negativo
   /// - Actualizar ticket inmutablemente
@@ -329,7 +334,7 @@ class SellUsecases {
   // ==========================================
 
   /// Asocia un ticket con una caja registradora
-  /// 
+  ///
   /// RESPONSABILIDAD: Vincular ticket con caja activa
   /// - Validar datos de caja
   /// - Actualizar campos de caja en ticket
@@ -355,7 +360,7 @@ class SellUsecases {
   }
 
   /// Asigna un vendedor al ticket
-  /// 
+  ///
   /// RESPONSABILIDAD: Vincular ticket con vendedor
   /// - Validar datos del vendedor
   /// - Actualizar campos de vendedor en ticket
@@ -386,13 +391,13 @@ class SellUsecases {
   // ==========================================
 
   /// Prepara un ticket completo para venta
-  /// 
+  ///
   /// RESPONSABILIDAD: Validación y preparación final antes de guardar
   /// - Asignar vendedor
   /// - Calcular precio total
   /// - Validar ticket completo
   /// - Generar ID si no existe
-  /// 
+  ///
   /// Este método reemplaza _prepareTicketForSale del Provider
   TicketModel prepareSaleTicket(
     TicketModel currentTicket, {
@@ -436,7 +441,7 @@ class SellUsecases {
   }
 
   /// Prepara un ticket para ser guardado en el historial de transacciones
-  /// 
+  ///
   /// RESPONSABILIDAD: Validación y transformación antes de persistir
   /// - Generar ID si no existe
   /// - Calcular precio total
@@ -449,14 +454,12 @@ class SellUsecases {
     }
 
     // TRANSFORMACIÓN: Generar ID si no existe
-    final ticketId = ticket.id.trim().isEmpty 
-        ? UidHelper.generateUid() 
-        : ticket.id;
+    final ticketId =
+        ticket.id.trim().isEmpty ? UidHelper.generateUid() : ticket.id;
 
     // TRANSFORMACIÓN: Calcular precio total si no está definido
-    final priceTotal = ticket.priceTotal > 0 
-        ? ticket.priceTotal 
-        : ticket.calculatedTotal;
+    final priceTotal =
+        ticket.priceTotal > 0 ? ticket.priceTotal : ticket.calculatedTotal;
 
     // VALIDACIÓN: El precio total debe ser positivo
     if (priceTotal <= 0) {
@@ -468,9 +471,8 @@ class SellUsecases {
         ? 'Sin caja asignada'
         : ticket.cashRegisterName;
 
-    final cashRegisterId = ticket.cashRegisterId.trim().isEmpty
-        ? ''
-        : ticket.cashRegisterId;
+    final cashRegisterId =
+        ticket.cashRegisterId.trim().isEmpty ? '' : ticket.cashRegisterId;
 
     // VALIDACIÓN: Debe tener información del vendedor
     if (ticket.sellerId.trim().isEmpty) {
@@ -487,7 +489,7 @@ class SellUsecases {
   }
 
   /// Valida que un ticket esté listo para venta
-  /// 
+  ///
   /// RESPONSABILIDAD: Validación de reglas de negocio
   /// - Ticket tiene productos
   /// - Precio total válido
@@ -513,7 +515,8 @@ class SellUsecases {
     final calculatedTotal = ticket.calculatedTotal;
     if ((ticket.priceTotal - calculatedTotal).abs() > 0.01) {
       if (kDebugMode) {
-        print('⚠️ Advertencia: Precio total (${ticket.priceTotal}) no coincide con calculado ($calculatedTotal)');
+        print(
+            '⚠️ Advertencia: Precio total (${ticket.priceTotal}) no coincide con calculado ($calculatedTotal)');
       }
     }
   }
@@ -523,7 +526,7 @@ class SellUsecases {
   // ==========================================
 
   /// Guarda un ticket en el historial de transacciones de Firebase
-  /// 
+  ///
   /// RESPONSABILIDAD: Persistir ticket en Firestore
   /// - Validar datos mínimos
   /// - Guardar en historial (Firebase)
@@ -531,7 +534,8 @@ class SellUsecases {
   Future<void> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket,
-    bool saveAsLastSold = true, // Por defecto, guarda también como último vendido
+    bool saveAsLastSold =
+        true, // Por defecto, guarda también como último vendido
   }) async {
     // VALIDACIONES BÁSICAS
     if (accountId.isEmpty) {
@@ -578,7 +582,8 @@ class SellUsecases {
         // No fallar la operación si hay error en persistencia local
         // El ticket ya está guardado en Firebase
         if (kDebugMode) {
-          print('⚠️ Ticket guardado en Firebase pero error en persistencia local: $e');
+          print(
+              '⚠️ Ticket guardado en Firebase pero error en persistencia local: $e');
         }
       }
     }
@@ -589,7 +594,7 @@ class SellUsecases {
   // ==========================================
 
   /// Procesa la anulación de un ticket
-  /// 
+  ///
   /// RESPONSABILIDAD: Lógica de negocio para anular tickets
   /// - Validar ticket no anulado previamente
   /// - Marcar como anulado
@@ -621,17 +626,19 @@ class SellUsecases {
     );
 
     // LÓGICA DE NEGOCIO: Si hay caja activa, actualizar billing sin modificar sales
-    if (activeCashRegister != null && ticket.cashRegisterId == activeCashRegister.id) {
+    if (activeCashRegister != null &&
+        ticket.cashRegisterId == activeCashRegister.id) {
       // ✅ Usar método específico para anulaciones que NO incrementa sales
       // - Decrementa billing (restar precio del ticket)
-      // - Decrementa discount (restar descuento del ticket)  
+      // - Decrementa discount (restar descuento del ticket)
       // - Incrementa annulledTickets (+1)
       // - NO modifica sales (ventas efectivas no incluyen anulaciones)
       await _repository.updateBillingOnAnnullment(
         accountId: accountId,
         cashRegisterId: activeCashRegister.id,
         billingDecrement: ticket.priceTotal, // Pasar valor positivo
-        discountDecrement: ticket.getDiscountAmount, // Usar el monto calculado del descuento
+        discountDecrement:
+            ticket.getDiscountAmount, // Usar el monto calculado del descuento
       );
     }
 
@@ -639,7 +646,7 @@ class SellUsecases {
   }
 
   /// Procesa la anulación de un ticket Y actualiza el último ticket vendido si corresponde
-  /// 
+  ///
   /// RESPONSABILIDAD: Coordinar anulación en historial y persistencia local
   /// - Anula el ticket en el historial (Firebase)
   /// - Si es el último ticket vendido, actualiza en local
@@ -669,7 +676,7 @@ class SellUsecases {
   // ==========================================
 
   /// Guarda el último ticket vendido en almacenamiento local (SharedPreferences)
-  /// 
+  ///
   /// RESPONSABILIDAD: Persistir el último ticket para recuperarlo después
   /// - Valida que el ticket tenga datos mínimos
   /// - Serializa el ticket a JSON
@@ -693,7 +700,7 @@ class SellUsecases {
     try {
       // TRANSFORMACIÓN: Serializar ticket a JSON
       final ticketJson = jsonEncode(ticket.toJson());
-      
+
       // PERSISTENCIA: Guardar en SharedPreferences
       await _persistenceService.saveLastSoldTicket(ticketJson);
     } catch (e) {
@@ -702,7 +709,7 @@ class SellUsecases {
   }
 
   /// Obtiene el último ticket vendido desde almacenamiento local
-  /// 
+  ///
   /// RESPONSABILIDAD: Recuperar el último ticket guardado
   /// - Lee de SharedPreferences
   /// - Deserializa JSON a TicketModel
@@ -711,7 +718,7 @@ class SellUsecases {
     try {
       // RECUPERACIÓN: Leer de SharedPreferences
       final ticketJson = await _persistenceService.getLastSoldTicket();
-      
+
       if (ticketJson == null || ticketJson.isEmpty) {
         return null;
       }
@@ -731,7 +738,7 @@ class SellUsecases {
   }
 
   /// Actualiza el último ticket vendido (por ejemplo, para marcarlo como anulado)
-  /// 
+  ///
   /// RESPONSABILIDAD: Actualizar ticket existente en almacenamiento local
   /// - Valida que el ticket exista
   /// - Actualiza con el nuevo estado
@@ -741,7 +748,7 @@ class SellUsecases {
   }
 
   /// Elimina el último ticket vendido del almacenamiento local
-  /// 
+  ///
   /// RESPONSABILIDAD: Limpiar dato cuando ya no es necesario
   Future<void> clearLastSoldTicket() async {
     try {
@@ -752,7 +759,7 @@ class SellUsecases {
   }
 
   /// Verifica si existe un último ticket guardado
-  /// 
+  ///
   /// RESPONSABILIDAD: Validar existencia sin cargar datos
   Future<bool> hasLastSoldTicket() async {
     try {
@@ -768,51 +775,53 @@ class SellUsecases {
   // ==========================================
 
   /// Obtiene las transacciones del día actual
-  /// 
+  ///
   /// RESPONSABILIDAD: Consultar tickets vendidos hoy, con filtro opcional por caja
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
   /// - `cashRegisterId`: (Opcional) ID de caja para filtrar
-  /// 
+  ///
   /// RETORNA: Lista de tickets como Map (para flexibilidad en consultas)
   Future<List<Map<String, dynamic>>> getTodayTransactions({
     required String accountId,
     String cashRegisterId = '',
-  }) async { 
+  }) async {
     // Definir el rango de fechas para hoy
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1)); 
-    
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
     // Obtener todas las transacciones de hoy
     final result = await getTransactionsByDateRange(
       accountId: accountId,
       startDate: startOfDay,
-      endDate: endOfDay, 
+      endDate: endOfDay,
     );
 
     // Filtrar por cashRegisterId si se proporciona
     if (cashRegisterId.isNotEmpty) {
-      return result.where((doc) => doc['cashRegisterId'] == cashRegisterId).toList();
-    } 
+      return result
+          .where((doc) => doc['cashRegisterId'] == cashRegisterId)
+          .toList();
+    }
     return result;
   }
 
   /// Obtiene transacciones por rango de fechas
-  /// 
+  ///
   /// RESPONSABILIDAD: Consultar tickets vendidos en un período específico
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
   /// - `startDate`: Fecha de inicio del rango
   /// - `endDate`: Fecha de fin del rango
-  /// 
+  ///
   /// RETORNA: Lista de tickets como Map
   Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
     required String accountId,
     required DateTime startDate,
-    required DateTime endDate, 
+    required DateTime endDate,
   }) async {
     return await _repository.getTransactionsByDateRange(
       accountId: accountId,
@@ -822,12 +831,12 @@ class SellUsecases {
   }
 
   /// Stream de transacciones con actualizaciones en tiempo real
-  /// 
+  ///
   /// RESPONSABILIDAD: Escuchar cambios en tickets en tiempo real
-  /// 
+  ///
   /// PARÁMETROS:
   /// - `accountId`: ID de la cuenta
-  /// 
+  ///
   /// RETORNA: Stream con lista de tickets actualizados
   Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
     return _repository.getTransactionsStream(accountId);

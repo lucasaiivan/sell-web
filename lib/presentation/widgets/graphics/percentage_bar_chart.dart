@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Widget reutilizable que muestra un gráfico de barras horizontales divididas
 /// con porcentajes, ideal para visualizar distribuciones de datos.
-/// 
+///
 /// Características:
 /// - Barras divididas con esquinas redondeadas
 /// - Responsive (mobile y desktop)
 /// - Filtro automático de segmentos pequeños (<5%)
 /// - Etiquetas con puntos de color
 /// - Personalizable (altura, espaciado, colores, etc.)
-/// 
+///
 /// Ejemplo de uso:
 /// ```dart
 /// PercentageBarChart(
@@ -32,40 +32,40 @@ import 'package:flutter/material.dart';
 class PercentageBarChart extends StatelessWidget {
   /// Título del gráfico (opcional)
   final String? title;
-  
+
   /// Datos para las barras del gráfico
   final List<PercentageBarData> data;
-  
+
   /// Si está en modo móvil (afecta tamaños y espaciados)
   final bool isMobile;
-  
+
   /// Altura de la barra principal
   final double? barHeight;
-  
+
   /// Radio de las esquinas redondeadas de las barras
   final double? barBorderRadius;
-  
+
   /// Espaciado entre barras individuales
   final double? barSpacing;
-  
+
   /// Porcentaje mínimo para mostrar un segmento (por defecto 5%)
   final double minPercentageToShow;
-  
+
   /// Color de fondo del contenedor (opcional)
   final Color? backgroundColor;
-  
+
   /// Color del borde del contenedor (opcional)
   final Color? borderColor;
-  
+
   /// Ancho del borde del contenedor
   final double borderWidth;
-  
+
   /// Padding interno del contenedor
   final EdgeInsets? padding;
-  
+
   /// Mostrar etiquetas con puntos de color debajo de la barra
   final bool showLabels;
-  
+
   /// Espaciado entre la barra y las etiquetas
   final double? labelSpacing;
 
@@ -89,19 +89,20 @@ class PercentageBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Valores por defecto responsive
     final effectiveBarHeight = barHeight ?? (isMobile ? 14.0 : 16.0);
     final effectiveBarBorderRadius = barBorderRadius ?? 4.0;
     final effectiveBarSpacing = barSpacing ?? (isMobile ? 1.0 : 3.0);
     final effectivePadding = padding ?? EdgeInsets.all(12);
     final effectiveLabelSpacing = labelSpacing ?? (isMobile ? 8.0 : 10.0);
-    final effectiveBackgroundColor = backgroundColor ??  Colors.transparent;
-    final effectiveBorderColor = borderColor ?? 
-        theme.dividerColor.withValues(alpha: 0.3);
+    final effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
+    final effectiveBorderColor =
+        borderColor ?? theme.dividerColor.withValues(alpha: 0.3);
 
     // Filtrar datos por porcentaje mínimo
-    final visibleData = data.where((item) => item.percentage >= minPercentageToShow).toList();
+    final visibleData =
+        data.where((item) => item.percentage >= minPercentageToShow).toList();
 
     if (visibleData.isEmpty) {
       return const SizedBox.shrink();
@@ -136,7 +137,7 @@ class PercentageBarChart extends StatelessWidget {
               ),
             ),
           ],
-          
+
           // Barra de progreso horizontal con barras divididas
           _buildBarChart(
             visibleData: visibleData,
@@ -145,7 +146,7 @@ class PercentageBarChart extends StatelessWidget {
             effectiveBarSpacing: effectiveBarSpacing,
             theme: theme,
           ),
-          
+
           // Etiquetas con puntos de color
           if (showLabels) ...[
             SizedBox(height: effectiveLabelSpacing),
@@ -173,14 +174,12 @@ class PercentageBarChart extends StatelessWidget {
         children: visibleData.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
-          
+
           return Expanded(
             flex: (item.percentage * 100).toInt(),
             child: Padding(
               padding: EdgeInsets.only(
-                right: index < visibleData.length - 1 
-                  ? effectiveBarSpacing 
-                  : 0,
+                right: index < visibleData.length - 1 ? effectiveBarSpacing : 0,
               ),
               child: Container(
                 decoration: BoxDecoration(
@@ -257,19 +256,19 @@ class PercentageBarChart extends StatelessWidget {
 class PercentageBarData {
   /// Etiqueta descriptiva del segmento
   final String label;
-  
+
   /// Porcentaje del segmento (0-100)
   final double percentage;
-  
+
   /// Color de la barra
   final Color color;
-  
+
   /// Opacidad de la barra (opcional, por defecto 0.9)
   final double? opacity;
-  
+
   /// Color del texto del porcentaje (opcional, por defecto blanco)
   final Color? textColor;
-  
+
   /// Icono asociado al segmento (opcional, para uso externo)
   final IconData? icon;
 
@@ -304,23 +303,23 @@ class PercentageBarData {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
+
     return other is PercentageBarData &&
-      other.label == label &&
-      other.percentage == percentage &&
-      other.color == color &&
-      other.opacity == opacity &&
-      other.textColor == textColor &&
-      other.icon == icon;
+        other.label == label &&
+        other.percentage == percentage &&
+        other.color == color &&
+        other.opacity == opacity &&
+        other.textColor == textColor &&
+        other.icon == icon;
   }
 
   @override
   int get hashCode {
     return label.hashCode ^
-      percentage.hashCode ^
-      color.hashCode ^
-      opacity.hashCode ^
-      textColor.hashCode ^
-      icon.hashCode;
+        percentage.hashCode ^
+        color.hashCode ^
+        opacity.hashCode ^
+        textColor.hashCode ^
+        icon.hashCode;
   }
 }

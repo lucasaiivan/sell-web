@@ -205,10 +205,11 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   ) async {
     final accountId = sellProvider.profileAccountSelected.id;
     final authProvider = context.read<AuthProvider>();
-    
+
     // Obtener datos del usuario actual
     final userId = authProvider.user?.email ?? authProvider.user?.uid ?? '';
-    final userName = authProvider.user?.displayName ?? authProvider.user?.email ?? 'Usuario';
+    final userName =
+        authProvider.user?.displayName ?? authProvider.user?.email ?? 'Usuario';
 
     final success = await cashRegisterProvider.openCashRegister(
       accountId: accountId,

@@ -28,7 +28,7 @@ import 'presentation/pages/sell_page.dart';
 void main() {
   // CRITICAL: Initialize bindings FIRST in the main zone
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Run async initialization and app launch in the SAME zone
   _initializeAndRunApp();
 }
@@ -50,10 +50,10 @@ Future<void> _initializeAndRunApp() async {
   );
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
-  
+
   // Inicializar repositorio y usecases compartidos globalmente
   final cashRegisterRepository = CashRegisterRepositoryImpl();
-  
+
   // Inicializar SellUsecases (lógica de negocio de tickets - compartido globalmente)
   final persistenceService = AppDataPersistenceService.instance;
   final sellUsecases = SellUsecases(
@@ -89,7 +89,8 @@ Future<void> _initializeAndRunApp() async {
               previousSell ??
               SellProvider(
                 getUserAccountsUseCase: getUserAccountsUseCase,
-                sellUsecases: sellUsecases, // NUEVO: Solo SellUsecases para tickets
+                sellUsecases:
+                    sellUsecases, // NUEVO: Solo SellUsecases para tickets
               ),
         ),
       ],
@@ -142,7 +143,7 @@ Widget _buildAccountSpecificProviders({
 }) {
   // Crear repositorios específicos de la cuenta
   final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
-  
+
   // Reutilizar el repository de cash register (ya está inicializado globalmente)
   // Compartir el mismo cashRegisterRepository pero crear nuevos UseCases
   final cashRegisterRepository = CashRegisterRepositoryImpl();

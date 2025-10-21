@@ -1,6 +1,6 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; 
+import 'package:flutter/foundation.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
@@ -214,7 +214,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header con descripción del producto y estado
           Column(
@@ -225,9 +225,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _hasChanges 
-                    ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
-                    : theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                  color: _hasChanges
+                      ? theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.3)
+                      : theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -236,33 +237,31 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                     Icon(
                       _hasChanges ? Icons.compare_arrows : Icons.info_outline,
                       size: 14,
-                      color: _hasChanges 
-                        ? theme.colorScheme.primary 
-                        : theme.colorScheme.onSurfaceVariant,
+                      color: _hasChanges
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _hasChanges ? 'Cambios' : 'Actual',
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: _hasChanges 
-                          ? theme.colorScheme.primary 
-                          : theme.colorScheme.onSurfaceVariant,
+                        color: _hasChanges
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 6), 
+              const SizedBox(height: 6),
               // Descripción del producto
               Text(
                 widget.product.description,
-                
                 style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w500, 
-
+                  fontWeight: FontWeight.w500,
                 ),
-                maxLines:1,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -412,7 +411,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                 oldValue,
                 style: theme.textTheme.bodySmall?.copyWith(
                   decoration: TextDecoration.lineThrough,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color:
+                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   fontSize: 12,
                 ),
               ),

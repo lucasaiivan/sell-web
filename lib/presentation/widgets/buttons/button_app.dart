@@ -334,8 +334,10 @@ class ButtonApp extends StatelessWidget {
 
   Widget _buildTextButton(BuildContext context, ColorScheme colorScheme) {
     final theme = Theme.of(context);
-    final effectiveForegroundColor = _getEffectiveTextColor(colorScheme) ?? colorScheme.primary;
-    final effectiveIconColor = _getEffectiveIconColor(colorScheme) ?? effectiveForegroundColor;
+    final effectiveForegroundColor =
+        _getEffectiveTextColor(colorScheme) ?? colorScheme.primary;
+    final effectiveIconColor =
+        _getEffectiveIconColor(colorScheme) ?? effectiveForegroundColor;
     final effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
 
     final buttonStyle = TextButton.styleFrom(
@@ -393,8 +395,10 @@ class ButtonApp extends StatelessWidget {
     // Colores efectivos con fallback a Material 3
     final Color effectiveButtonColor = backgroundColor ?? colorScheme.primary;
     final Color effectiveForegroundColor =
-        _getEffectiveTextColor(colorScheme) ?? foregroundColor ?? colorScheme.onPrimary;
-    final Color effectiveIconColor = 
+        _getEffectiveTextColor(colorScheme) ??
+            foregroundColor ??
+            colorScheme.onPrimary;
+    final Color effectiveIconColor =
         _getEffectiveIconColor(colorScheme) ?? effectiveForegroundColor;
 
     if (hasText && (extended || hasIcon)) {
@@ -451,7 +455,11 @@ class ButtonApp extends StatelessWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2,
           valueColor: AlwaysStoppedAnimation<Color>(
-            loadingColor ?? iconColor ?? accentColor ?? foregroundColor ?? Colors.white,
+            loadingColor ??
+                iconColor ??
+                accentColor ??
+                foregroundColor ??
+                Colors.white,
           ),
         ),
       );
@@ -504,7 +512,7 @@ class ButtonApp extends StatelessWidget {
 
   ButtonStyle _buildElevatedButtonStyle(ColorScheme colorScheme) {
     final effectiveTextColor = accentColor ?? foregroundColor;
-    
+
     return ElevatedButton.styleFrom(
       elevation: defaultStyle ? 0 : elevation,
       shape: RoundedRectangleBorder(
@@ -524,7 +532,7 @@ class ButtonApp extends StatelessWidget {
 
   ButtonStyle _buildFilledButtonStyle(ColorScheme colorScheme) {
     final effectiveTextColor = accentColor ?? foregroundColor;
-    
+
     return FilledButton.styleFrom(
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),
@@ -541,9 +549,11 @@ class ButtonApp extends StatelessWidget {
   }
 
   ButtonStyle _buildOutlinedButtonStyle(ColorScheme colorScheme) {
-    final effectiveTextColor = accentColor ?? foregroundColor ?? colorScheme.primary;
-    final effectiveBorderColor = borderColor ?? accentColor ?? foregroundColor ?? colorScheme.primary;
-    
+    final effectiveTextColor =
+        accentColor ?? foregroundColor ?? colorScheme.primary;
+    final effectiveBorderColor =
+        borderColor ?? accentColor ?? foregroundColor ?? colorScheme.primary;
+
     return OutlinedButton.styleFrom(
       shape: RoundedRectangleBorder(
         borderRadius: customBorderRadius ?? BorderRadius.circular(borderRadius),

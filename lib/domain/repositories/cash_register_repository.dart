@@ -106,7 +106,7 @@ abstract class CashRegisterRepository {
   });
 
   /// Actualiza los totales de ventas y facturación
-  /// 
+  ///
   /// ⚠️ IMPORTANTE: Este método SOLO debe usarse para VENTAS EFECTIVAS
   /// Incrementa: sales (+1), billing, discount
   Future<void> updateSalesAndBilling({
@@ -117,7 +117,7 @@ abstract class CashRegisterRepository {
   });
 
   /// Actualiza billing y discount al anular un ticket (NO incrementa sales)
-  /// 
+  ///
   /// RESPONSABILIDAD: Restar montos de venta anulada sin modificar contador de ventas
   /// - Decrementa billing y discount
   /// - Incrementa annulledTickets (+1)
@@ -144,7 +144,7 @@ abstract class CashRegisterRepository {
   Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
     required String accountId,
     required DateTime startDate,
-    required DateTime endDate, 
+    required DateTime endDate,
   });
 
   /// Stream de transacciones de ventas con actualizaciones en tiempo real

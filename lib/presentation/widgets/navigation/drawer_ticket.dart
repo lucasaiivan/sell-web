@@ -27,12 +27,9 @@ class TicketDrawerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return showConfirmedPurchase
         ? _TicketConfirmedPurchase(
-                width:
-                    isMobile(context) ? MediaQuery.of(context).size.width : 400,
-                onAnimationComplete: onCloseTicket, // Usar el callback del padre
-            )
-            .animate()
-            .scale(
+            width: isMobile(context) ? MediaQuery.of(context).size.width : 400,
+            onAnimationComplete: onCloseTicket, // Usar el callback del padre
+          ).animate().scale(
               duration: 600.ms,
               curve: Curves.elasticOut,
               begin: const Offset(0.8, 0.8),
@@ -153,14 +150,20 @@ class _TicketContent extends StatelessWidget {
                 Colors.white,
                 Colors.transparent,
               ],
-              stops: [0.0, 0.1, 0.8, 1.0], // fade-in arriba, contenido opaco, fade-out abajo
+              stops: [
+                0.0,
+                0.1,
+                0.8,
+                1.0
+              ], // fade-in arriba, contenido opaco, fade-out abajo
             ).createShader(rect);
           },
           blendMode: BlendMode.dstIn,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 120), // Espacio inferior para botones y gradiente
+            padding: const EdgeInsets.fromLTRB(
+                12, 12, 12, 120), // Espacio inferior para botones y gradiente
             child: Column(
-              children: [ 
+              children: [
                 const SizedBox(height: 20),
                 // Encabezado del ticket
                 _buildTicketHeader(
@@ -178,10 +181,11 @@ class _TicketContent extends StatelessWidget {
                     ticket: ticket, textValuesStyle: textValuesStyle),
                 _buildDividerLine(colorScheme),
                 // Cantidad total de artículos
-                _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle), 
+                _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
                 const SizedBox(height: 5),
                 // Total del ticket
-                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,textDescriptionStyle),
+                _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
+                    textDescriptionStyle),
                 // view : Sección unificada de vuelto y descuento con chips editables
                 _buildEditableChipsSection(
                     ticket, onEditCashAmount, colorScheme),
@@ -197,7 +201,12 @@ class _TicketContent extends StatelessWidget {
           ),
         ),
         // buttons : botones posicionados en la parte inferior
-        Positioned(left: 0,right: 12,bottom: 12,child: _buildActionButtons(onConfirmSale, onCloseTicket, isMobile(context))),
+        Positioned(
+            left: 0,
+            right: 12,
+            bottom: 12,
+            child: _buildActionButtons(
+                onConfirmSale, onCloseTicket, isMobile(context))),
       ],
     );
   }
@@ -445,18 +454,18 @@ class _TicketContent extends StatelessWidget {
     TextStyle textDescriptionStyle,
   ) {
     final hasDiscount = ticket.discount > 0;
-    final hasChange = ticket.valueReceived > 0 && 
-        ticket.valueReceived > ticket.getTotalPrice;
+    final hasChange =
+        ticket.valueReceived > 0 && ticket.valueReceived > ticket.getTotalPrice;
 
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-        
+
         // Colores adaptativos para tema claro/oscuro
         final primaryColor = colorScheme.primary;
         final onPrimaryColor = colorScheme.onPrimary;
-        
+
         // Estilos de texto adaptativos
         final adaptiveTotalStyle = textTotalStyle.copyWith(
           color: onPrimaryColor,
@@ -484,7 +493,8 @@ class _TicketContent extends StatelessWidget {
         );
 
         return Padding(
-          padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 6),
+          padding:
+              const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 6),
           child: Container(
             decoration: BoxDecoration(
               color: primaryColor,
@@ -582,7 +592,8 @@ class _TicketContent extends StatelessWidget {
                               children: [
                                 Text(
                                   'TOTAL',
-                                  style: adaptiveTotalStyle.copyWith(fontSize: 18),
+                                  style:
+                                      adaptiveTotalStyle.copyWith(fontSize: 18),
                                 ),
                                 Text(
                                   CurrencyFormatter.formatPrice(
@@ -593,30 +604,35 @@ class _TicketContent extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            
+
                             // Vuelto (si aplica)
                             if (hasChange) ...[
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Vuelto',
                                     style: adaptiveChangeStyle,
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: onPrimaryColor.withValues(alpha: 0.3),
+                                        color: onPrimaryColor.withValues(
+                                            alpha: 0.3),
                                         width: 1,
                                       ),
                                       borderRadius: BorderRadius.circular(6),
-                                      color: onPrimaryColor.withValues(alpha: 0.1),
+                                      color:
+                                          onPrimaryColor.withValues(alpha: 0.1),
                                     ),
                                     child: Text(
                                       CurrencyFormatter.formatPrice(
-                                          value: ticket.valueReceived - ticket.getTotalPrice),
+                                          value: ticket.valueReceived -
+                                              ticket.getTotalPrice),
                                       style: adaptiveChangeStyle.copyWith(
                                         fontFamily: 'RobotoMono',
                                         fontWeight: FontWeight.w600,
@@ -642,7 +658,8 @@ class _TicketContent extends StatelessWidget {
                               style: adaptiveTotalStyle.copyWith(fontSize: 20),
                             ),
                             Text(
-                              CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
+                              CurrencyFormatter.formatPrice(
+                                  value: ticket.getTotalPrice),
                               style: adaptiveTotalStyle.copyWith(
                                 fontFamily: 'RobotoMono',
                                 fontSize: 32,
@@ -650,7 +667,7 @@ class _TicketContent extends StatelessWidget {
                             ),
                           ],
                         ),
-                        
+
                         // Vuelto (si aplica)
                         if (hasChange) ...[
                           const SizedBox(height: 8),
@@ -662,10 +679,12 @@ class _TicketContent extends StatelessWidget {
                                 style: adaptiveChangeStyle,
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   border: Border.all(
-                                    color: onPrimaryColor.withValues(alpha: 0.3),
+                                    color:
+                                        onPrimaryColor.withValues(alpha: 0.3),
                                     width: 1,
                                   ),
                                   borderRadius: BorderRadius.circular(6),
@@ -673,7 +692,8 @@ class _TicketContent extends StatelessWidget {
                                 ),
                                 child: Text(
                                   CurrencyFormatter.formatPrice(
-                                      value: ticket.valueReceived - ticket.getTotalPrice),
+                                      value: ticket.valueReceived -
+                                          ticket.getTotalPrice),
                                   style: adaptiveChangeStyle.copyWith(
                                     fontFamily: 'RobotoMono',
                                     fontWeight: FontWeight.w600,
@@ -974,7 +994,8 @@ class _TicketProductListState extends State<_TicketProductList> {
 /// Widget que muestra la confirmación de venta exitosa
 class _TicketConfirmedPurchase extends StatefulWidget {
   final double width;
-  final VoidCallback? onAnimationComplete; // Callback para notificar cuando termina la animación
+  final VoidCallback?
+      onAnimationComplete; // Callback para notificar cuando termina la animación
 
   const _TicketConfirmedPurchase({
     this.width = 400,
@@ -982,31 +1003,32 @@ class _TicketConfirmedPurchase extends StatefulWidget {
   });
 
   @override
-  State<_TicketConfirmedPurchase> createState() => _TicketConfirmedPurchaseState();
+  State<_TicketConfirmedPurchase> createState() =>
+      _TicketConfirmedPurchaseState();
 }
 
-class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase> 
+class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _scaleController;
   bool _animationCompleted = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Controlador para fade-in del contenido
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     // Controlador para scale de entrada
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     // Iniciar animaciones
     _scaleController.forward();
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -1024,7 +1046,7 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
       }
     });
   }
-  
+
   @override
   void dispose() {
     _fadeController.dispose();
@@ -1096,7 +1118,8 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
                       final duration = composition.duration;
                       if (mounted && !_animationCompleted) {
                         // Programar el cierre automático basado en la duración real + 1 segundo
-                        Future.delayed(duration + const Duration(milliseconds: 1000), () {
+                        Future.delayed(
+                            duration + const Duration(milliseconds: 1000), () {
                           if (mounted && !_animationCompleted) {
                             _animationCompleted = true;
                             widget.onAnimationComplete?.call();
@@ -1131,7 +1154,8 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
               FadeTransition(
                 opacity: _fadeController,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
@@ -1151,7 +1175,8 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
+                        CurrencyFormatter.formatPrice(
+                            value: ticket.getTotalPrice),
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -1178,7 +1203,7 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
                       label: '${ticket.getProductsQuantity()} artículos',
                       theme: theme,
                     ),
-                    
+
                     // Método de pago
                     _buildInfoChip(
                       icon: _getPaymentMethodIcon(ticket.payMode),
@@ -1195,7 +1220,8 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
                 FadeTransition(
                   opacity: _fadeController,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
@@ -1214,7 +1240,7 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
               ],
 
               // Mostrar vuelto si aplica
-              if (ticket.valueReceived > 0 && 
+              if (ticket.valueReceived > 0 &&
                   ticket.valueReceived > ticket.getTotalPrice) ...[
                 const SizedBox(height: 16),
                 FadeTransition(

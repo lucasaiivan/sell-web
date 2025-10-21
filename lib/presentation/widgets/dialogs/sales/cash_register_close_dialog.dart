@@ -20,6 +20,8 @@ class CashRegisterCloseDialog extends StatefulWidget {
 }
 
 class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
+  double _currentDifference = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -31,8 +33,33 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
 
         // Limpiar el campo de balance final para empezar con valor vacío
         provider.finalBalanceController.clear();
+
+        // Escuchar cambios en el balance final para calcular la diferencia en tiempo real
+        provider.finalBalanceController.addListener(_updateDifference);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    // Remover el listener cuando se destruya el widget
+    final provider = context.read<CashRegisterProvider>();
+    provider.finalBalanceController.removeListener(_updateDifference);
+    super.dispose();
+  }
+
+  void _updateDifference() {
+    if (mounted) {
+      setState(() {
+        final provider = context.read<CashRegisterProvider>();
+        final finalBalance = provider.finalBalanceController.doubleValue;
+        final expectedBalance = widget.cashRegister.getExpectedBalance;
+        
+        // Diferencia = Balance Final (lo que hay) - Balance Esperado (lo que debería haber)
+        // Positivo = sobrante (verde), Negativo = faltante (rojo)
+        _currentDifference = finalBalance - expectedBalance;
+      });
+    }
   }
 
   @override
@@ -65,20 +92,21 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
                 controller: cashRegisterProvider.finalBalanceController,
                 labelText: 'Balance Final',
               ),
-              const SizedBox(height: 16),
-              if (widget.cashRegister.getDifference != 0) ...[
+              // Mostrar diferencia en tiempo real mientras el usuario escribe
+              if (_currentDifference != 0) ...[
+                const SizedBox(height: 12),
                 Text(
-                  'Diferencia: ${CurrencyFormatter.formatPrice(value: widget.cashRegister.getDifference)}',
+                  'Diferencia: ${CurrencyFormatter.formatPrice(value: _currentDifference.abs())}',
                   style: TextStyle(
-                    color: widget.cashRegister.getDifference < 0
-                        ? Colors.red
-                        : Colors.green,
-                    fontWeight: FontWeight.bold,
+                    color: _currentDifference < 0 ? Colors.red : Colors.green,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
               ],
+              const SizedBox(height: 16),
               // text : Mensaje de error si existe
               if (cashRegisterProvider.errorMessage != null)
                 Text(
@@ -100,8 +128,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
                 return DialogComponents.primaryActionButton(
                     context: context,
                     text: 'Confirmar',
-                    isLoading: cashRegisterProvider.isProcessing,
-                    icon: Icons.exit_to_app_rounded,
+                    isLoading: cashRegisterProvider.isProcessing, 
                     onPressed: () {
                       if (cashRegisterProvider.isProcessing) return;
                       _handleCloseCashRegister(
@@ -125,6 +152,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
 
   Widget _buildSummaryCard(BuildContext context) {
     return Card(
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -137,7 +165,8 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
             const SizedBox(height: 16),
             _buildSummaryRow(
                 'Monto Inicial:',
-                CurrencyFormatter.formatPrice(value: widget.cashRegister.initialCash)),
+                CurrencyFormatter.formatPrice(
+                    value: widget.cashRegister.initialCash)),
             _buildSummaryRow('Ventas:', widget.cashRegister.sales.toString()),
             _buildSummaryRow(
                 'Facturación:',

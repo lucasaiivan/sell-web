@@ -13,21 +13,23 @@ import 'cash_register_open_dialog.dart';
 
 /// Diálogo principal para administrar cajas registradoras con diseño responsivo.
 /// Optimizado para experiencia móvil y desktop siguiendo Material Design 3.
-/// 
+///
 /// ✅ OPTIMIZADO: Carga los tickets UNA SOLA VEZ y los comparte entre todas las vistas
 /// para evitar llamadas duplicadas a la base de datos.
 class CashRegisterManagementDialog extends StatefulWidget {
   const CashRegisterManagementDialog({super.key});
 
   @override
-  State<CashRegisterManagementDialog> createState() => _CashRegisterManagementDialogState();
+  State<CashRegisterManagementDialog> createState() =>
+      _CashRegisterManagementDialogState();
 }
 
-class _CashRegisterManagementDialogState extends State<CashRegisterManagementDialog> {
+class _CashRegisterManagementDialogState
+    extends State<CashRegisterManagementDialog> {
   /// Future compartido para los tickets del día
   /// Se carga una sola vez y se comparte entre _buildCashFlowView y RecentTicketsView
   Future<List<TicketModel>?>? _ticketsFuture;
-  
+
   /// ID de la caja registradora actual para detectar cambios
   String? _currentCashRegisterId;
 
@@ -50,7 +52,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
     final sellProvider = context.watch<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
-    final cashRegisterId = cashRegisterProvider.currentActiveCashRegister?.id ?? '';
+    final cashRegisterId =
+        cashRegisterProvider.currentActiveCashRegister?.id ?? '';
 
     // Solo recargar si cambió la caja o no hay datos
     if (_ticketsFuture == null || _currentCashRegisterId != cashRegisterId) {
@@ -72,7 +75,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     final sellProvider = context.read<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
-    final cashRegisterId = cashRegisterProvider.currentActiveCashRegister?.id ?? '';
+    final cashRegisterId =
+        cashRegisterProvider.currentActiveCashRegister?.id ?? '';
 
     if (accountId.isNotEmpty && cashRegisterId.isNotEmpty) {
       setState(() {
@@ -127,13 +131,15 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
               // Si está cargando, mostrar indicador de progreso
               if (cashRegisterProvider.isLoadingActive) {
                 return SizedBox(
-                  height:getResponsiveValue(context, mobile: 100, desktop: 120),
+                  height:
+                      getResponsiveValue(context, mobile: 100, desktop: 120),
                   width: double.infinity,
                   child: const Center(child: CircularProgressIndicator()),
                 );
               }
               // view : Construir contenido responsivo de la  información de caja
-              return _buildResponsiveContent(context, cashRegisterProvider, isMobileDevice);
+              return _buildResponsiveContent(
+                  context, cashRegisterProvider, isMobileDevice);
             },
           ),
           actions: [
@@ -148,7 +154,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   }
 
   // view : Construir contenido responsivo de la información de caja existente o muestra mensaje de no caja activa
-  Widget _buildResponsiveContent(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildResponsiveContent(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -165,31 +172,36 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   }
 
   // view : información de caja activa
-  Widget _buildActiveCashRegister(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildActiveCashRegister(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // view : información de flujo de caja (usa _ticketsFuture compartido)
-        _buildCashFlowView(context, provider, isMobile),  
-        SizedBox(height: getResponsiveSpacing(context, scale:2)),
+        _buildCashFlowView(context, provider, isMobile),
+        SizedBox(height: getResponsiveSpacing(context, scale: 2)),
         // view : resumen de métodos de pago
         FutureBuilder<List<TicketModel>?>(
           future: _ticketsFuture,
           builder: (context, snapshot) {
-            if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+            if (snapshot.hasData &&
+                snapshot.data != null &&
+                snapshot.data!.isNotEmpty) {
               final tickets = snapshot.data!;
-              final activeTickets = tickets.where((ticket) => !ticket.annulled).toList();
-              
+              final activeTickets =
+                  tickets.where((ticket) => !ticket.annulled).toList();
+
               if (activeTickets.isEmpty) {
                 return const SizedBox.shrink();
               }
-              
-              final paymentMethodsRanking = TicketModel.getPaymentMethodsRanking(
+
+              final paymentMethodsRanking =
+                  TicketModel.getPaymentMethodsRanking(
                 tickets: activeTickets,
                 includeAnnulled: false,
               );
               final theme = Theme.of(context);
-              
+
               return Column(
                 children: [
                   // view : muestra resumen de métodos de pago
@@ -199,7 +211,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                     paymentMethodsRanking: paymentMethodsRanking,
                     isMobile: isMobile,
                   ),
-                  SizedBox(height: getResponsiveSpacing(context, scale:2)),
+                  SizedBox(height: getResponsiveSpacing(context, scale: 2)),
                 ],
               );
             }
@@ -212,7 +224,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           cashRegisterProvider: provider,
           isMobile: isMobile,
           onTicketUpdated: _reloadTickets,
-        ), 
+        ),
         DialogComponents.sectionSpacing,
       ],
     );
@@ -239,7 +251,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
     ];
   }
 
-  Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister, {List<TicketModel>? tickets}) {
+  Widget _cashFlowInformation(BuildContext context, CashRegister cashRegister,
+      {List<TicketModel>? tickets}) {
     final theme = Theme.of(context);
     final isMobileDevice = isMobile(context);
 
@@ -247,24 +260,26 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Sección: Nombre/Descripción de la caja con información temporal
-        _buildCashRegisterHeader(context, cashRegister, theme, isMobileDevice),  
-        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),    
+        _buildCashRegisterHeader(context, cashRegister, theme, isMobileDevice),
+        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
         // Sección: Estadísticas de ventas con cards destacadas
         _buildStatsCards(context, cashRegister, isMobileDevice),
-        SizedBox(height: getResponsiveSpacing(context, scale:1.5)),
+        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
         // view : texto de Balance total actual
         _buildCurrentBalance(context, cashRegister, isMobileDevice),
-        SizedBox(height: getResponsiveSpacing(context, scale:1.5)),
+        SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
         // Sección: Información financiera
-        _buildFinancialInfo(context, cashRegister, theme, isMobileDevice, tickets: tickets),
+        _buildFinancialInfo(context, cashRegister, theme, isMobileDevice,
+            tickets: tickets),
       ],
     );
   }
 
   // Stats Cards: Muestra estadísticas principales en formato de tarjetas
-  Widget _buildStatsCards(BuildContext context, CashRegister cashRegister, bool isMobile) {
+  Widget _buildStatsCards(
+      BuildContext context, CashRegister cashRegister, bool isMobile) {
     final theme = Theme.of(context);
-    
+
     final stats = [
       {
         'label': 'Transacciones',
@@ -284,7 +299,6 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
         'icon': Icons.cancel_rounded,
         'color': Colors.red,
       },
-      
     ];
 
     return Row(
@@ -301,7 +315,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
             ),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8), 
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,9 +330,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                     ),
                     Text(
                       stat['value'] as String,
-                      style: (isMobile 
-                        ? theme.textTheme.titleMedium 
-                        : theme.textTheme.titleLarge)?.copyWith(
+                      style: (isMobile
+                              ? theme.textTheme.titleMedium
+                              : theme.textTheme.titleLarge)
+                          ?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: color,
                       ),
@@ -328,9 +343,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                 SizedBox(height: isMobile ? 4 : 6),
                 Text(
                   stat['label'] as String,
-                  style: (isMobile 
-                    ? theme.textTheme.labelSmall 
-                    : theme.textTheme.labelMedium)?.copyWith(
+                  style: (isMobile
+                          ? theme.textTheme.labelSmall
+                          : theme.textTheme.labelMedium)
+                      ?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
@@ -346,9 +362,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   }
 
   // widget : devuelve  el balance total actual de la caja activa
-  Widget _buildCurrentBalance(BuildContext context, CashRegister cashRegister, bool isMobile){
+  Widget _buildCurrentBalance(
+      BuildContext context, CashRegister cashRegister, bool isMobile) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -364,19 +381,22 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
         children: [
           Text(
             'Balance Actual',
-            style: (isMobile 
-              ? theme.textTheme.labelLarge 
-              : theme.textTheme.titleSmall)?.copyWith(
+            style: (isMobile
+                    ? theme.textTheme.labelLarge
+                    : theme.textTheme.titleSmall)
+                ?.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
             ),
           ),
           SizedBox(height: isMobile ? 4 : 6),
           Text(
-            CurrencyFormatter.formatPrice(value: cashRegister.getExpectedBalance),
-            style: (isMobile 
-              ? theme.textTheme.titleMedium 
-              : theme.textTheme.titleLarge)?.copyWith(
+            CurrencyFormatter.formatPrice(
+                value: cashRegister.getExpectedBalance),
+            style: (isMobile
+                    ? theme.textTheme.titleMedium
+                    : theme.textTheme.titleLarge)
+                ?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.primary,
               fontSize: isMobile ? 24 : 28,
@@ -388,23 +408,28 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   }
 
   // Cash Register Header: Muestra el nombre/descripción de la caja con información temporal
-  Widget _buildCashRegisterHeader(BuildContext context, CashRegister cashRegister, ThemeData theme, bool isMobile) {
+  Widget _buildCashRegisterHeader(BuildContext context,
+      CashRegister cashRegister, ThemeData theme, bool isMobile) {
     final timeInfo = [
       {
         'icon': Icons.schedule_rounded,
         'label': 'Apertura',
-        'value': DateFormatter.formatPublicationDate(dateTime: cashRegister.opening),
+        'value':
+            DateFormatter.formatPublicationDate(dateTime: cashRegister.opening),
       },
       {
         'icon': Icons.timelapse_rounded,
         'label': 'Tiempo activo',
-        'value': DateFormatter.getElapsedTime(fechaInicio: cashRegister.opening),
-      },  
+        'value':
+            DateFormatter.getElapsedTime(fechaInicio: cashRegister.opening),
+      },
       // nombre del usuario que abrió la caja
       {
         'icon': Icons.person_rounded,
         'label': 'Cajero',
-        'value': cashRegister.nameUser.isNotEmpty ? cashRegister.idUser : 'Desconocido',
+        'value': cashRegister.nameUser.isNotEmpty
+            ? cashRegister.idUser
+            : 'Desconocido',
       },
     ];
 
@@ -433,9 +458,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
               Expanded(
                 child: Text(
                   cashRegister.description,
-                  style: (isMobile 
-                    ? theme.textTheme.titleMedium 
-                    : theme.textTheme.titleLarge)?.copyWith(
+                  style: (isMobile
+                          ? theme.textTheme.titleMedium
+                          : theme.textTheme.titleLarge)
+                      ?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSurface,
                   ),
@@ -453,9 +479,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                 ),
                 child: Text(
                   'ACTIVA',
-                  style: (isMobile 
-                    ? theme.textTheme.labelSmall 
-                    : theme.textTheme.labelMedium)?.copyWith(
+                  style: (isMobile
+                          ? theme.textTheme.labelSmall
+                          : theme.textTheme.labelMedium)
+                      ?.copyWith(
                     color: Colors.green.shade700,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
@@ -464,61 +491,69 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
               ),
             ],
           ),
-          
+
           SizedBox(height: isMobile ? 10 : 12),
-          
+
           // Lista de información temporal
           ...timeInfo.map((info) => Padding(
-            padding: EdgeInsets.only(bottom: isMobile ? 6 : 8),
-            child: Row(
-              children: [
-                Icon(
-                  info['icon'] as IconData,
-                  size: isMobile ? 14 : 16,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                padding: EdgeInsets.only(bottom: isMobile ? 6 : 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      info['icon'] as IconData,
+                      size: isMobile ? 14 : 16,
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      info['label'] as String,
+                      style: (isMobile
+                              ? theme.textTheme.bodySmall
+                              : theme.textTheme.bodyMedium)
+                          ?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      info['value'] as String,
+                      style: (isMobile
+                              ? theme.textTheme.bodySmall
+                              : theme.textTheme.bodyMedium)
+                          ?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  info['label'] as String,
-                  style: (isMobile 
-                    ? theme.textTheme.bodySmall 
-                    : theme.textTheme.bodyMedium)?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  info['value'] as String,
-                  style: (isMobile 
-                    ? theme.textTheme.bodySmall 
-                    : theme.textTheme.bodyMedium)?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
 
   // Financial Info: Información financiera detallada
-  Widget _buildFinancialInfo(BuildContext context, CashRegister cashRegister, ThemeData theme, bool isMobile, {List<TicketModel>? tickets}) {
+  Widget _buildFinancialInfo(BuildContext context, CashRegister cashRegister,
+      ThemeData theme, bool isMobile,
+      {List<TicketModel>? tickets}) {
     // ✅ Optimizado: Usar getters del modelo para mejor semántica y performance
     final totalIngresos = cashRegister.getTotalIngresos;
     final totalEgresos = cashRegister.getTotalEgresos;
 
     // ✅ Calcular ganancias totales usando el método del modelo
-    final totalProfit = tickets != null && tickets.isNotEmpty ? cashRegister.calculateTotalProfit(tickets) : 0.0;
+    final totalProfit = tickets != null && tickets.isNotEmpty
+        ? cashRegister.calculateTotalProfit(tickets)
+        : 0.0;
 
     final financialItems = [
       // Monto inicial
       if (cashRegister.initialCash > 0)
         {
           'label': 'Monto Inicial',
-          'value': CurrencyFormatter.formatPrice(value: cashRegister.initialCash),
+          'value':
+              CurrencyFormatter.formatPrice(value: cashRegister.initialCash),
           'rawValue': cashRegister.initialCash,
           'icon': Icons.attach_money_rounded,
           'color': theme.colorScheme.primary,
@@ -548,7 +583,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
       if (cashRegister.discount > 0)
         {
           'label': 'Descuentos',
-          'value': '-${CurrencyFormatter.formatPrice(value: cashRegister.discount)}',
+          'value':
+              '-${CurrencyFormatter.formatPrice(value: cashRegister.discount)}',
           'rawValue': -cashRegister.discount,
           'icon': Icons.discount_rounded,
           'color': Colors.red,
@@ -592,9 +628,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'Información Financiera',
-              style: (isMobile 
-                ? theme.textTheme.labelLarge 
-                : theme.textTheme.titleSmall)?.copyWith(
+              style: (isMobile
+                      ? theme.textTheme.labelLarge
+                      : theme.textTheme.titleSmall)
+                  ?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
               ),
@@ -602,23 +639,22 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           ),
           // Lista de items financieros
           ...financialItems.map((item) {
-
             final isHighlight = item['highlight'] as bool;
             final itemColor = item['color'] as Color;
-            
+
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Container(
-                padding: isHighlight 
+                padding: isHighlight
                     ? EdgeInsets.symmetric(
                         horizontal: isMobile ? 8 : 10,
                         vertical: isMobile ? 6 : 8,
                       )
                     : EdgeInsets.zero,
-                decoration: isHighlight 
+                decoration: isHighlight
                     ? BoxDecoration(
                         color: itemColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8), 
+                        borderRadius: BorderRadius.circular(8),
                       )
                     : null,
                 child: Row(
@@ -626,7 +662,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                     Container(
                       padding: EdgeInsets.all(isMobile ? 6 : 8),
                       decoration: BoxDecoration(
-                        color: itemColor.withValues(alpha: isHighlight ? 0.15 : 0.1),
+                        color: itemColor.withValues(
+                            alpha: isHighlight ? 0.15 : 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
@@ -639,27 +676,29 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                     Expanded(
                       child: Text(
                         item['label'] as String,
-                        style: (isMobile 
-                          ? theme.textTheme.bodyMedium 
-                          : theme.textTheme.bodyLarge)?.copyWith(
-                          color: isHighlight 
+                        style: (isMobile
+                                ? theme.textTheme.bodyMedium
+                                : theme.textTheme.bodyLarge)
+                            ?.copyWith(
+                          color: isHighlight
                               ? theme.colorScheme.onSurface
                               : theme.colorScheme.onSurfaceVariant,
-                          fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight:
+                              isHighlight ? FontWeight.w600 : FontWeight.normal,
                         ),
                       ),
                     ),
                     // text : monto
                     Text(
                       item['value'] as String,
-                      style: (isMobile 
-                        ? theme.textTheme.titleSmall 
-                        : theme.textTheme.titleMedium)?.copyWith(
-                        fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w700,
+                      style: (isMobile
+                              ? theme.textTheme.titleSmall
+                              : theme.textTheme.titleMedium)
+                          ?.copyWith(
+                        fontWeight:
+                            isHighlight ? FontWeight.w800 : FontWeight.w700,
                         color: itemColor,
-                        fontSize: isHighlight 
-                            ? (isMobile ? 15 : 17)
-                            : null,
+                        fontSize: isHighlight ? (isMobile ? 15 : 17) : null,
                       ),
                     ),
                   ],
@@ -838,23 +877,23 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
       },
     );
   }
- 
 
-  /// Construye la vista de flujo de caja con información financiera 
-  Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  /// Construye la vista de flujo de caja con información financiera
+  Widget _buildCashFlowView(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
     return FutureBuilder<List<TicketModel>?>(
-      future: _ticketsFuture, 
+      future: _ticketsFuture,
       builder: (context, snapshot) {
         final tickets = snapshot.data;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // view : muestra información de flujo de caja con contadores en tiempo real
             _cashFlowInformation(context, cashRegister, tickets: tickets),
-            SizedBox(height: getResponsiveSpacing(context, scale:2)),
+            SizedBox(height: getResponsiveSpacing(context, scale: 2)),
             // buttons : botones de ingreso y egreso de caja
             Row(
               children: [
@@ -911,9 +950,10 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                 ),
               ],
             ),
-            SizedBox(height: getResponsiveSpacing(context, scale:1)), 
+            SizedBox(height: getResponsiveSpacing(context, scale: 1)),
             // Lista de movimientos de caja
-            if (cashRegister.cashInFlowList.isNotEmpty || cashRegister.cashOutFlowList.isNotEmpty) ...[ 
+            if (cashRegister.cashInFlowList.isNotEmpty ||
+                cashRegister.cashOutFlowList.isNotEmpty) ...[
               _buildCashFlowMovements(context, cashRegister, isMobile),
             ],
           ],
@@ -925,7 +965,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   Widget _buildCashFlowMovements(
       BuildContext context, CashRegister cashRegister, bool isMobile) {
     final theme = Theme.of(context);
-    
+
     // Combinar y ordenar movimientos por fecha (más recientes primero)
     final allMovements = <Map<String, dynamic>>[];
 
@@ -968,7 +1008,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
     return DialogComponents.itemList(
       context: context,
       useFillStyle: true,
-      showDividers: true, 
+      showDividers: true,
       borderColor: theme.dividerColor.withValues(alpha: 0.3),
       title: 'Movimientos de caja',
       trailing: Row(
@@ -1044,7 +1084,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: balanceNeto >= 0 
+                color: balanceNeto >= 0
                     ? theme.colorScheme.primary.withValues(alpha: 0.1)
                     : Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
@@ -1053,9 +1093,11 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    balanceNeto >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                    balanceNeto >= 0
+                        ? Icons.trending_up_rounded
+                        : Icons.trending_down_rounded,
                     size: isMobile ? 12 : 14,
-                    color: balanceNeto >= 0 
+                    color: balanceNeto >= 0
                         ? theme.colorScheme.primary
                         : Colors.orange.shade700,
                   ),
@@ -1067,7 +1109,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                             : theme.textTheme.bodyMedium)
                         ?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: balanceNeto >= 0 
+                      color: balanceNeto >= 0
                           ? theme.colorScheme.primary
                           : Colors.orange.shade700,
                     ),
@@ -1079,7 +1121,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
         ],
       ),
       maxVisibleItems: 5,
-      expandText: 'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
+      expandText:
+          'Ver más (${allMovements.length > 5 ? allMovements.length - 5 : 0})',
       collapseText: 'Ver menos',
       items: allMovements.map((movement) {
         return _buildCashFlowMovementTile(context, movement, isMobile);
@@ -1263,30 +1306,32 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
 
     // ✅ Reagrupar los métodos de pago: separar los 3 principales y agrupar el resto en "Otros"
     final Map<String, double> groupedPayments = {};
-    
+
     for (final payment in paymentMethodsRanking) {
-      final description = (payment['description'] as String).trim().toLowerCase();
+      final description =
+          (payment['description'] as String).trim().toLowerCase();
       final percentage = payment['percentage'] as double;
-      
+
       // Identificar si es uno de los 3 métodos principales
       String key;
       if (description == 'efectivo') {
         key = 'Efectivo';
-      } else if (description == 'mercado pago' || description == 'mercadopago') {
+      } else if (description == 'mercado pago' ||
+          description == 'mercadopago') {
         key = 'Mercado Pago';
-      } else if (description == 'tarjeta de crédito/débito' || 
-                 description == 'tarjeta' ||
-                 description == 'tarjeta de credito/debito') {
+      } else if (description == 'tarjeta de crédito/débito' ||
+          description == 'tarjeta' ||
+          description == 'tarjeta de credito/debito') {
         key = 'Tarjeta';
       } else {
         // Todo lo demás se agrupa como "Otros"
         key = 'Otros';
       }
-      
+
       // Sumar porcentajes si ya existe la clave
       groupedPayments[key] = (groupedPayments[key] ?? 0) + percentage;
     }
-    
+
     // ✅ Convertir a PercentageBarData usando el helper
     final chartData = groupedPayments.entries.map((entry) {
       final paymentData = _getPaymentMethodData(
@@ -1294,7 +1339,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
         percentage: entry.value,
         theme: theme,
       );
-      
+
       return PercentageBarData(
         label: paymentData['label'] as String,
         percentage: paymentData['percentage'] as double,
@@ -1366,6 +1411,7 @@ class RecentTicketsView extends StatefulWidget {
   final Future<List<TicketModel>?>? ticketsFuture;
   final CashRegisterProvider cashRegisterProvider;
   final bool isMobile;
+
   /// Callback para recargar tickets después de acciones (anular, etc.)
   final VoidCallback? onTicketUpdated;
 
@@ -1382,10 +1428,8 @@ class RecentTicketsView extends StatefulWidget {
 }
 
 class _RecentTicketsViewState extends State<RecentTicketsView> {
-
   @override
   Widget build(BuildContext context) {
-
     final sellProvider = context.watch<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
@@ -1396,7 +1440,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     }
 
     return FutureBuilder<List<TicketModel>?>(
-      future: widget.ticketsFuture, // ✅ Usar Future compartido recibido como parámetro
+      future: widget
+          .ticketsFuture, // ✅ Usar Future compartido recibido como parámetro
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -1414,15 +1459,19 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
         final allTickets = snapshot.data!;
         // Convertir a TicketModel y ordenar por fecha (más recientes primero)
-        final tickets = allTickets.map((ticketData) {
-          try {
-            // Crear TicketModel desde Map usando los datos directamente
-            return TicketModel.fromMap(ticketData.toMap());
-          } catch (e) {
-            debugPrint('Error converting ticket data: $e');
-            return null;
-          }
-        }).where((ticket) => ticket != null).cast<TicketModel>().toList();
+        final tickets = allTickets
+            .map((ticketData) {
+              try {
+                // Crear TicketModel desde Map usando los datos directamente
+                return TicketModel.fromMap(ticketData.toMap());
+              } catch (e) {
+                debugPrint('Error converting ticket data: $e');
+                return null;
+              }
+            })
+            .where((ticket) => ticket != null)
+            .cast<TicketModel>()
+            .toList();
 
         // Ordenar por fecha de creación (más recientes primero)
         tickets.sort((a, b) => b.creation.compareTo(a.creation));
@@ -1443,92 +1492,100 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
             Builder(
               builder: (context) {
                 // Usar TODOS los tickets, no solo los recientes
-                final activeTickets = tickets.where((ticket) => !ticket.annulled).toList();
-                final totalBilling = activeTickets.fold<double>(0, (sum, ticket) => sum + ticket.getTotalPrice);
+                final activeTickets =
+                    tickets.where((ticket) => !ticket.annulled).toList();
+                final totalBilling = activeTickets.fold<double>(
+                    0, (sum, ticket) => sum + ticket.getTotalPrice);
                 // ✅ Usar el método del modelo para calcular ganancias
-                final cashRegister = widget.cashRegisterProvider.currentActiveCashRegister!;
-                final totalProfit = cashRegister.calculateTotalProfit(activeTickets);
+                final cashRegister =
+                    widget.cashRegisterProvider.currentActiveCashRegister!;
+                final totalProfit =
+                    cashRegister.calculateTotalProfit(activeTickets);
 
                 return DialogComponents.itemList(
-                  context: context, 
-                  useFillStyle: true,
-                  padding: EdgeInsets.all(widget.isMobile ? 12 : 14),
-                  showDividers: true,
-                  title: 'Transacciones recientes',
-                  borderColor: theme.dividerColor.withValues(alpha: 0.3), 
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Total de facturación
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'Total ${CurrencyFormatter.formatPrice(value: totalBilling)}',
-                          style: (widget.isMobile
-                                  ? theme.textTheme.bodySmall
-                                  : theme.textTheme.bodyMedium)
-                              ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      // Ganancia total (si existe)
-                      if (totalProfit > 0) ...[
-                        const SizedBox(width: 4),
+                    context: context,
+                    useFillStyle: true,
+                    padding: EdgeInsets.all(widget.isMobile ? 12 : 14),
+                    showDividers: true,
+                    title: 'Transacciones recientes',
+                    borderColor: theme.dividerColor.withValues(alpha: 0.3),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Total de facturación
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.trending_up_rounded,
-                                size: widget.isMobile ? 12 : 14,
-                                color: Colors.green.shade700,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                CurrencyFormatter.formatPrice(value: totalProfit),
-                                style: (widget.isMobile
-                                        ? theme.textTheme.bodySmall
-                                        : theme.textTheme.bodyMedium)
-                                    ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.green.shade700,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Total ${CurrencyFormatter.formatPrice(value: totalBilling)}',
+                            style: (widget.isMobile
+                                    ? theme.textTheme.bodySmall
+                                    : theme.textTheme.bodyMedium)
+                                ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
+                        // Ganancia total (si existe)
+                        if (totalProfit > 0) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.trending_up_rounded,
+                                  size: widget.isMobile ? 12 : 14,
+                                  color: Colors.green.shade700,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  CurrencyFormatter.formatPrice(
+                                      value: totalProfit),
+                                  style: (widget.isMobile
+                                          ? theme.textTheme.bodySmall
+                                          : theme.textTheme.bodyMedium)
+                                      ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.green.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                  maxVisibleItems: 5,
-                  expandText: '',
-                  collapseText: '',
-                  items: [
-                    // view : listado de tickets recientes
-                    ...recentTickets.map((ticket) {
-                      return _buildTicketTile(
-                        context, 
-                        ticket, 
-                        widget.isMobile, 
-                        onTicketUpdated: widget.onTicketUpdated, // ✅ Usar callback compartido
-                      );
-                  }),
-                  ]
-                );
+                    ),
+                    maxVisibleItems: 5,
+                    expandText: '',
+                    collapseText: '',
+                    items: [
+                      // view : listado de tickets recientes
+                      ...recentTickets.map((ticket) {
+                        return _buildTicketTile(
+                          context,
+                          ticket,
+                          widget.isMobile,
+                          onTicketUpdated: widget
+                              .onTicketUpdated, // ✅ Usar callback compartido
+                        );
+                      }),
+                    ]);
               },
             ),
-            
+
             // Botón "Ver más" si hay más de 5 tickets
             if (hasMoreTickets) ...[
               SizedBox(height: widget.isMobile ? 8 : 12),
@@ -1538,7 +1595,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                   icon: const Icon(Icons.security),
                   label: Text('Ver más (${tickets.length - 5} tickets)'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                 ),
               ),
@@ -1550,23 +1608,24 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     );
   }
 
-
   void _showAllTicketsDialog(BuildContext context, List<TicketModel> tickets) {
     final theme = Theme.of(context);
     final sellProvider = context.read<SellProvider>();
-    final cashRegisterProvider = context.read<CashRegisterProvider>(); 
-    
+    final cashRegisterProvider = context.read<CashRegisterProvider>();
+
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
           ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(
+              value: cashRegisterProvider),
         ],
         child: BaseDialog(
           title: 'Todos los Tickets de Hoy',
           icon: Icons.receipt_long_rounded,
-          headerColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.85), 
+          headerColor:
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.85),
           content: ListView.separated(
             shrinkWrap: true,
             itemCount: tickets.length,
@@ -1599,7 +1658,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
   Widget _buildEmptyTicketsView(BuildContext context, bool isMobile) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: EdgeInsets.symmetric(
         vertical: isMobile ? 20 : 24,
@@ -1638,50 +1697,51 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
   //  Construcción del tile del ticket //
   Widget _buildTicketTile(
-    BuildContext context, 
-    TicketModel ticket, 
+    BuildContext context,
+    TicketModel ticket,
     bool isMobile, {
     VoidCallback? onTicketUpdated,
   }) {
-
     // styles
     final theme = Theme.of(context);
     // providers
     final sellProvider = context.read<SellProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
-    
+
     // Información adicional
     final hasDiscount = ticket.discount > 0;
     final hasProfit = ticket.getProfit > 0;
     final paymentMethodIcon = _getPaymentMethodIcon(ticket.payMode);
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => showLastTicketDialog(
           context: context,
           ticket: ticket,
-          businessName: sellProvider.profileAccountSelected.name.isNotEmpty 
-            ? sellProvider.profileAccountSelected.name 
-            : 'PUNTO DE VENTA',
+          businessName: sellProvider.profileAccountSelected.name.isNotEmpty
+              ? sellProvider.profileAccountSelected.name
+              : 'PUNTO DE VENTA',
           onTicketAnnulled: () async {
             // Verificar si este ticket es el último ticket vendido
-            final isLastSoldTicket = sellProvider.lastSoldTicket?.id == ticket.id;
-            
+            final isLastSoldTicket =
+                sellProvider.lastSoldTicket?.id == ticket.id;
+
             if (isLastSoldTicket) {
               // Si es el último ticket vendido, usar el método unificado
-              await sellProvider.annullLastSoldTicket(context: context, ticket: ticket);
+              await sellProvider.annullLastSoldTicket(
+                  context: context, ticket: ticket);
             } else {
               // Si no es el último ticket, solo anular en la caja registradora
               await cashRegisterProvider.annullTicket(
-                accountId: sellProvider.profileAccountSelected.id, 
+                accountId: sellProvider.profileAccountSelected.id,
                 ticket: ticket,
               );
             }
-            
+
             // Forzar la recarga de la lista de tickets si hay callback
             onTicketUpdated?.call();
-          },  
+          },
         ),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
@@ -1702,9 +1762,12 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  ticket.annulled ? Icons.receipt_long_rounded : Icons.receipt_rounded,
+                  ticket.annulled
+                      ? Icons.receipt_long_rounded
+                      : Icons.receipt_rounded,
                   size: isMobile ? 14 : 18,
-                  color: ticket.annulled ? Colors.red : theme.colorScheme.primary,
+                  color:
+                      ticket.annulled ? Colors.red : theme.colorScheme.primary,
                 ),
               ),
               SizedBox(width: isMobile ? 10 : 12),
@@ -1726,13 +1789,13 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                                     : theme.textTheme.bodyMedium)
                                 ?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: ticket.annulled 
+                              color: ticket.annulled
                                   ? theme.colorScheme.onSurfaceVariant
                                   : theme.colorScheme.onSurface,
-                              decoration: ticket.annulled 
+                              decoration: ticket.annulled
                                   ? TextDecoration.lineThrough
                                   : null,
-                              decorationColor: ticket.annulled 
+                              decorationColor: ticket.annulled
                                   ? theme.colorScheme.onSurfaceVariant
                                   : null,
                               decorationThickness: ticket.annulled ? 2.0 : null,
@@ -1741,12 +1804,13 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        
+
                         // Badge de anulado
                         if (ticket.annulled) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.red.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
@@ -1767,9 +1831,9 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                         ],
                       ],
                     ),
-                    
+
                     SizedBox(height: isMobile ? 4 : 6),
-                    
+
                     // Info row: Productos, método de pago y descuento (si aplica)
                     Wrap(
                       spacing: 6,
@@ -1783,7 +1847,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                             Icon(
                               Icons.shopping_bag_outlined,
                               size: isMobile ? 12 : 13,
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.6),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1792,22 +1857,24 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                                       ? theme.textTheme.labelSmall
                                       : theme.textTheme.labelMedium)
                                   ?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.7),
                               ),
                             ),
                           ],
                         ),
-                        
+
                         // Separador
                         Container(
                           width: 3,
                           height: 3,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.3),
                             shape: BoxShape.circle,
                           ),
                         ),
-                        
+
                         // Método de pago
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1830,7 +1897,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                             ),
                           ],
                         ),
-                        
+
                         // Descuento (si aplica) - RESALTADO
                         if (hasDiscount) ...[
                           // Separador
@@ -1838,7 +1905,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                             width: 3,
                             height: 3,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.3),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -1867,16 +1935,17 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                       ],
                     ),
                     // Fecha y hora
-                  Text(
-                    _formatDateTime(ticket.creation.toDate()),
-                    style: (isMobile
-                            ? theme.textTheme.labelSmall
-                            : theme.textTheme.labelMedium)
-                        ?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                      fontSize: isMobile ? 10 : 11,
+                    Text(
+                      _formatDateTime(ticket.creation.toDate()),
+                      style: (isMobile
+                              ? theme.textTheme.labelSmall
+                              : theme.textTheme.labelMedium)
+                          ?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.6),
+                        fontSize: isMobile ? 10 : 11,
+                      ),
                     ),
-                  ),
                   ],
                 ),
               ),
@@ -1891,7 +1960,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                   if (hasDiscount) ...[
                     SizedBox(height: isMobile ? 2 : 3),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
@@ -1902,15 +1972,15 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                                 ? theme.textTheme.labelSmall
                                 : theme.textTheme.labelMedium)
                             ?.copyWith(
-                          color: ticket.annulled 
+                          color: ticket.annulled
                               ? theme.colorScheme.onSurfaceVariant
                               : Colors.orange.shade800,
                           fontWeight: FontWeight.w700,
                           fontSize: isMobile ? 10 : 11,
-                          decoration: ticket.annulled 
+                          decoration: ticket.annulled
                               ? TextDecoration.lineThrough
                               : null,
-                          decorationColor: ticket.annulled 
+                          decorationColor: ticket.annulled
                               ? theme.colorScheme.onSurfaceVariant
                               : null,
                           decorationThickness: ticket.annulled ? 2.0 : null,
@@ -1921,16 +1991,14 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                   // Monto total
                   Text(
                     CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
-                    style: (theme.textTheme.titleLarge)
-                        ?.copyWith(
+                    style: (theme.textTheme.titleLarge)?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: ticket.annulled 
+                      color: ticket.annulled
                           ? theme.colorScheme.onSurfaceVariant
                           : theme.colorScheme.primary,
-                      decoration: ticket.annulled 
-                          ? TextDecoration.lineThrough
-                          : null,
-                      decorationColor: ticket.annulled 
+                      decoration:
+                          ticket.annulled ? TextDecoration.lineThrough : null,
+                      decorationColor: ticket.annulled
                           ? theme.colorScheme.onSurfaceVariant
                           : null,
                       decorationThickness: ticket.annulled ? 2.0 : null,
@@ -1941,7 +2009,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                   if (hasProfit) ...[
                     SizedBox(height: isMobile ? 2 : 3),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.green.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
@@ -1951,25 +2020,27 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                           Icon(
                             Icons.trending_up_rounded,
                             size: isMobile ? 12 : 13,
-                            color: ticket.annulled 
+                            color: ticket.annulled
                                 ? theme.colorScheme.onSurfaceVariant
                                 : Colors.green.shade800,
                           ),
                           const SizedBox(width: 4),
-                          Text(CurrencyFormatter.formatPrice(value: ticket.getProfit),
+                          Text(
+                            CurrencyFormatter.formatPrice(
+                                value: ticket.getProfit),
                             style: (isMobile
                                     ? theme.textTheme.labelSmall
                                     : theme.textTheme.labelMedium)
                                 ?.copyWith(
-                              color: ticket.annulled 
+                              color: ticket.annulled
                                   ? theme.colorScheme.onSurfaceVariant
                                   : Colors.green.shade800,
                               fontWeight: FontWeight.w700,
                               fontSize: isMobile ? 10 : 11,
-                              decoration: ticket.annulled 
+                              decoration: ticket.annulled
                                   ? TextDecoration.lineThrough
                                   : null,
-                              decorationColor: ticket.annulled 
+                              decorationColor: ticket.annulled
                                   ? theme.colorScheme.onSurfaceVariant
                                   : null,
                               decorationThickness: ticket.annulled ? 2.0 : null,
@@ -1979,7 +2050,6 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                       ),
                     ),
                   ],
-                  
                 ],
               ),
               SizedBox(width: isMobile ? 4 : 6),
@@ -1988,7 +2058,8 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                 child: Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: isMobile ? 12 : 16,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color:
+                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 ),
               ),
             ],

@@ -59,6 +59,36 @@ class AppDataPersistenceService {
     return accountId != null && accountId.isNotEmpty;
   }
 
+  /// Guarda el AdminProfile actual en formato JSON
+  Future<void> saveCurrentAdminProfile(String adminProfileJson) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(SharedPrefsKeys.currentAdminProfile, adminProfileJson);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene el AdminProfile actual desde persistencia
+  Future<String?> getCurrentAdminProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(SharedPrefsKeys.currentAdminProfile);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Elimina el AdminProfile guardado
+  Future<void> clearCurrentAdminProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(SharedPrefsKeys.currentAdminProfile);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // ==========================================
   // GESTIÓN DE CAJAS REGISTRADORAS
   // ==========================================
@@ -346,6 +376,7 @@ class AppDataPersistenceService {
       final prefs = await SharedPreferences.getInstance();
       await Future.wait([
         prefs.remove(SharedPrefsKeys.selectedAccountId),
+        prefs.remove(SharedPrefsKeys.currentAdminProfile),
         prefs.remove(SharedPrefsKeys.selectedCashRegisterId),
         prefs.remove(SharedPrefsKeys.currentTicket),
         prefs.remove(SharedPrefsKeys.lastSoldTicket),

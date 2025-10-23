@@ -10,13 +10,15 @@ import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/domain/usecases/sell_usecases.dart'; // Lógica de negocio de tickets
 import 'package:provider/provider.dart' as provider;
+import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
 import '../providers/catalogue_provider.dart';
 
 class _SellProviderState {
   final bool ticketView;
   final bool shouldPrintTicket; // si se debe imprimir el ticket
-  final ProfileAccountModel profileAccountSelected;
+  final AccountProfile profileAccountSelected;
+  final AdminProfile? currentAdminProfile; // Perfil del administrador actual
   final TicketModel ticket;
   final TicketModel? lastSoldTicket;
 
@@ -24,6 +26,7 @@ class _SellProviderState {
     required this.ticketView,
     required this.shouldPrintTicket,
     required this.profileAccountSelected,
+    required this.currentAdminProfile,
     required this.ticket,
     required this.lastSoldTicket,
   });
@@ -31,7 +34,8 @@ class _SellProviderState {
   _SellProviderState copyWith({
     bool? ticketView,
     bool? shouldPrintTicket,
-    ProfileAccountModel? profileAccountSelected,
+    AccountProfile? profileAccountSelected,
+    AdminProfile? currentAdminProfile,
     TicketModel? ticket,
     Object? lastSoldTicket = const Object(),
   }) {
@@ -40,6 +44,7 @@ class _SellProviderState {
       shouldPrintTicket: shouldPrintTicket ?? this.shouldPrintTicket,
       profileAccountSelected:
           profileAccountSelected ?? this.profileAccountSelected,
+      currentAdminProfile: currentAdminProfile ?? this.currentAdminProfile,
       ticket: ticket ?? this.ticket,
       lastSoldTicket: lastSoldTicket == const Object()
           ? this.lastSoldTicket
@@ -55,6 +60,7 @@ class _SellProviderState {
           ticketView == other.ticketView &&
           shouldPrintTicket == other.shouldPrintTicket &&
           profileAccountSelected == other.profileAccountSelected &&
+          currentAdminProfile == other.currentAdminProfile &&
           ticket == other.ticket &&
           lastSoldTicket == other.lastSoldTicket;
 
@@ -63,6 +69,7 @@ class _SellProviderState {
       ticketView.hashCode ^
       shouldPrintTicket.hashCode ^
       profileAccountSelected.hashCode ^
+      currentAdminProfile.hashCode ^
       ticket.hashCode ^
       lastSoldTicket.hashCode;
 }
@@ -77,7 +84,8 @@ class SellProvider extends ChangeNotifier {
   late var _state = _SellProviderState(
     ticketView: false,
     shouldPrintTicket: false,
-    profileAccountSelected: ProfileAccountModel(),
+    profileAccountSelected: AccountProfile(),
+    currentAdminProfile: null,
     ticket: _sellUsecases.createEmptyTicket(),
     lastSoldTicket: null,
   );
@@ -92,8 +100,9 @@ class SellProvider extends ChangeNotifier {
   // Getters que no causan rebuild
   bool get ticketView => _state.ticketView;
   bool get shouldPrintTicket => _state.shouldPrintTicket;
-  ProfileAccountModel get profileAccountSelected =>
+  AccountProfile get profileAccountSelected =>
       _state.profileAccountSelected;
+  AdminProfile? get currentAdminProfile => _state.currentAdminProfile;
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
@@ -107,15 +116,30 @@ class SellProvider extends ChangeNotifier {
   Future<void> _loadInitialState() async {
     await Future.wait([
       _loadSelectedAccount(),
+      _loadAdminProfile(),
       _loadTicket(),
       _loadLastSoldTicket(),
       _loadShouldPrintTicket(),
     ]);
   }
 
+  /// Inicializa el AdminProfile cuando el usuario está autenticado
+  /// 
+  /// RESPONSABILIDAD: Obtener el perfil desde Firebase cuando hay usuario y cuenta
+  /// Este método debe llamarse después de que AuthProvider tenga un usuario autenticado
+  /// 
+  /// @param email Email del usuario autenticado
+  Future<void> initializeAdminProfile(String email) async {
+    // Solo actualizar si hay una cuenta seleccionada
+    if (_state.profileAccountSelected.id.isNotEmpty) {
+      await updateAdminProfileForSelectedAccount(email);
+    }
+  }
+
   void cleanData() {
     _state = _state.copyWith(
-      profileAccountSelected: ProfileAccountModel(),
+      profileAccountSelected: AccountProfile(),
+      currentAdminProfile: null,
       ticket: _createEmptyTicket(),
       ticketView: false,
       shouldPrintTicket: false,
@@ -127,13 +151,20 @@ class SellProvider extends ChangeNotifier {
 
   // Métodos optimizados para minimizar notificaciones
   Future<void> initAccount({
-    required ProfileAccountModel account,
+    required AccountProfile account,
     required BuildContext context,
   }) async {
     // Solo limpiar datos si la cuenta es diferente a la actual
     // Esto preserva el ticket en progreso cuando se reselecciona la misma cuenta
     _state = _state.copyWith(profileAccountSelected: account.copyWith());
     await _saveSelectedAccount(account.id);
+    
+    // Actualizar el AdminProfile para la cuenta seleccionada
+    final authProvider = provider.Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user?.email != null) {
+      await updateAdminProfileForSelectedAccount(authProvider.user!.email!);
+    }
+    
     notifyListeners();
   }
 
@@ -164,19 +195,197 @@ class SellProvider extends ChangeNotifier {
   Future<void> _loadSelectedAccount() async {
     final id = await _persistenceService.getSelectedAccountId();
     if (id != null && id.isNotEmpty) {
+      if (kDebugMode) {
+        print('📦 SellProvider: Cargando cuenta desde persistencia: $id');
+      }
+      
       final account = await fetchAccountById(id);
       if (account != null) {
         _state = _state.copyWith(profileAccountSelected: account);
         notifyListeners();
+        
+        if (kDebugMode) {
+          print('✅ SellProvider: Cuenta cargada exitosamente');
+          print('   - ID: ${account.id}');
+          print('   - Nombre: ${account.name}');
+        }
+      } else {
+        if (kDebugMode) {
+          print('⚠️ SellProvider: No se pudo obtener los datos de la cuenta $id');
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print('📦 SellProvider: No hay cuenta guardada en persistencia');
       }
     }
   }
 
-  Future<ProfileAccountModel?> fetchAccountById(String id) async {
+  Future<AccountProfile?> fetchAccountById(String id) async {
     try {
       return await getUserAccountsUseCase.getAccount(idAccount: id);
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Carga el AdminProfile desde SharedPreferences al inicializar el provider
+  Future<void> _loadAdminProfile() async {
+    final adminProfileJson = await _persistenceService.getCurrentAdminProfile();
+    if (adminProfileJson != null && adminProfileJson.isNotEmpty) {
+      try {
+        final adminProfile = AdminProfile.fromMap(_decodeJson(adminProfileJson));
+        _state = _state.copyWith(currentAdminProfile: adminProfile);
+        notifyListeners();
+        
+        if (kDebugMode) {
+          print('✅ SellProvider: AdminProfile cargado desde persistencia');
+          print('   - Email: ${adminProfile.email}');
+          print('   - Cuenta: ${adminProfile.account}');
+          print('   - Admin: ${adminProfile.admin}');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ SellProvider: Error al cargar AdminProfile desde persistencia: $e');
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print('📦 SellProvider: No hay AdminProfile guardado en persistencia');
+      }
+    }
+  }
+
+  /// Guarda el AdminProfile actual en SharedPreferences
+  Future<void> _saveAdminProfile() async {
+    try {
+      if (_state.currentAdminProfile != null) {
+        await _persistenceService.saveCurrentAdminProfile(
+          jsonEncode(_state.currentAdminProfile!.toJson()),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ SellProvider: Error al guardar AdminProfile en persistencia: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Configura el AdminProfile del usuario administrador actual
+  ///
+  /// RESPONSABILIDAD: Actualizar estado UI y persistencia local
+  /// Este método debe llamarse cuando:
+  /// - El usuario inicia sesión
+  /// - El usuario selecciona una cuenta (para obtener sus permisos específicos)
+  ///
+  /// @param adminProfile El perfil del administrador a configurar
+  void setAdminProfile(AdminProfile adminProfile) {
+    _state = _state.copyWith(currentAdminProfile: adminProfile);
+    _saveAdminProfile();
+    notifyListeners();
+    
+    if (kDebugMode) {
+      print('✅ SellProvider: AdminProfile configurado');
+      print('   - Email: ${adminProfile.email}');
+      print('   - Nombre: ${adminProfile.name}');
+      print('   - Cuenta: ${adminProfile.account}');
+      print('   - Super Admin: ${adminProfile.superAdmin}');
+      print('   - Admin: ${adminProfile.admin}');
+    }
+  }
+
+  /// Obtiene el AdminProfile del usuario actual desde Firebase
+  ///
+  /// RESPONSABILIDAD: Coordinar obtención y actualización del perfil admin
+  /// Este método busca el AdminProfile correspondiente a la cuenta seleccionada
+  ///
+  /// @param email Email del usuario autenticado
+  /// @return Future<AdminProfile?> El perfil encontrado o null
+  Future<AdminProfile?> fetchAdminProfile(String email) async {
+    try {
+      if (kDebugMode) {
+        print('🔍 SellProvider: Buscando AdminProfile para email: $email');
+      }
+
+      // Obtener todos los AdminProfile asociados al email
+      final adminProfiles = await getUserAccountsUseCase.getAccountAdmins(email);
+      
+      if (kDebugMode) {
+        print('📋 SellProvider: Se encontraron ${adminProfiles.length} perfiles de administrador');
+        for (var profile in adminProfiles) {
+          print('   - Perfil: ${profile.email} | Cuenta: ${profile.account} | Admin: ${profile.admin}');
+        }
+      }
+      
+      // Si no hay cuenta seleccionada, retornar el primero (o null si está vacío)
+      if (_state.profileAccountSelected.id.isEmpty) {
+        if (kDebugMode) {
+          print('⚠️ SellProvider: No hay cuenta seleccionada, retornando primer perfil');
+        }
+        return adminProfiles.isNotEmpty ? adminProfiles.first : null;
+      }
+      
+      if (kDebugMode) {
+        print('🔎 SellProvider: Buscando perfil para cuenta seleccionada: ${_state.profileAccountSelected.id}');
+      }
+      
+      // Buscar el AdminProfile que corresponde a la cuenta seleccionada
+      try {
+        final matchedProfile = adminProfiles.firstWhere(
+          (admin) => admin.account == _state.profileAccountSelected.id,
+        );
+        
+        if (kDebugMode) {
+          print('✅ SellProvider: AdminProfile encontrado para cuenta ${_state.profileAccountSelected.id}');
+          print('   - Email: ${matchedProfile.email}');
+          print('   - Nombre: ${matchedProfile.name}');
+          print('   - Super Admin: ${matchedProfile.superAdmin}');
+          print('   - Admin: ${matchedProfile.admin}');
+        }
+        
+        return matchedProfile;
+      } catch (_) {
+        // Si no se encuentra, retornar null
+        if (kDebugMode) {
+          print('❌ SellProvider: No se encontró AdminProfile para la cuenta ${_state.profileAccountSelected.id}');
+        }
+        return null;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ SellProvider: Error al obtener AdminProfile: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Actualiza el AdminProfile cuando cambia la cuenta seleccionada
+  ///
+  /// RESPONSABILIDAD: Sincronizar AdminProfile con la cuenta activa
+  /// Este método debe llamarse después de initAccount() para obtener
+  /// los permisos específicos del usuario en la cuenta seleccionada
+  ///
+  /// @param email Email del usuario autenticado
+  Future<void> updateAdminProfileForSelectedAccount(String email) async {
+    if (kDebugMode) {
+      print('🔄 SellProvider: Actualizando AdminProfile para cuenta seleccionada...');
+    }
+    
+    final adminProfile = await fetchAdminProfile(email);
+    if (adminProfile != null) {
+      setAdminProfile(adminProfile);
+    } else {
+      // Limpiar AdminProfile si no se encuentra
+      _state = _state.copyWith(currentAdminProfile: null);
+      await _persistenceService.clearCurrentAdminProfile();
+      notifyListeners();
+      
+      if (kDebugMode) {
+        print('⚠️ SellProvider: No se encontró AdminProfile para la cuenta seleccionada');
+        print('   - Cuenta: ${_state.profileAccountSelected.id}');
+        print('   - Email: $email');
+      }
     }
   }
 
@@ -542,6 +751,8 @@ class SellProvider extends ChangeNotifier {
   Future<void> removeSelectedAccount() async {
     // Eliminar el ID de la cuenta seleccionada de AppDataPersistenceService
     await _persistenceService.clearSelectedAccountId();
+    // Eliminar el AdminProfile guardado
+    await _persistenceService.clearCurrentAdminProfile();
     // Limpiar todos los datos y estado
     cleanData();
     notifyListeners();

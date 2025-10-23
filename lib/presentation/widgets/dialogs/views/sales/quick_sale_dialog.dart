@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/core.dart';
+import '../../../../../core/core.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';

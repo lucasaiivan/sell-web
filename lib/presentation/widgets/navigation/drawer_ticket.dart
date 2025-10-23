@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
-import 'package:sellweb/presentation/widgets/dialogs/sales/discount_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/views/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 

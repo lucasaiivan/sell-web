@@ -33,6 +33,10 @@ Diálogos de gestión y visualización de tickets
 Diálogos de configuración del sistema
 - `printer_config_dialog.dart` - Configuración de impresora térmica
 
+### **📁 account/**
+Diálogos de gestión de cuentas y usuarios
+- `admin_profile_info_dialog.dart` - Información detallada de AdminProfile
+
 ### **📁 examples/**
 Diálogos de ejemplo y demostración
 - `example_modern_dialog.dart` - Ejemplos de implementación y migración
@@ -65,6 +69,7 @@ dialogs/
 ├── sales/            # 💰 Proceso de ventas
 ├── tickets/          # 🧾 Gestión de tickets
 ├── configuration/    # ⚙️ Configuración del sistema
+├── account/          # 👤 Gestión de cuentas y usuarios
 └── examples/         # 💡 Ejemplos y testing
 ```
 

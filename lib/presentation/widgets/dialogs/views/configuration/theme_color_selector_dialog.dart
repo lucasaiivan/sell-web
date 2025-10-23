@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../base/base_dialog.dart';
-import '../../../../presentation/providers/theme_data_app_provider.dart';
+import '../../base/base_dialog.dart';
+import '../../../../providers/theme_data_app_provider.dart';
 
 /// Diálogo para personalizar el tema de la aplicación (color y brillo)
 class ThemeColorSelectorDialog extends StatefulWidget {

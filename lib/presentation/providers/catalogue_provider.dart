@@ -423,7 +423,7 @@ class CatalogueProvider extends ChangeNotifier {
   /// Retorna un [Future<void>] que se completa cuando la operación termina
   Future<void> addAndUpdateProductToCatalogue(
       ProductCatalogue product, String accountId,
-      {ProfileAccountModel? accountProfile}) async {
+      {AccountProfile? accountProfile}) async {
     // Validar parámetros requeridos
     if (accountId.isEmpty) {
       throw Exception(

@@ -1,11 +1,11 @@
 import '../entities/user.dart';
 
 abstract class AuthRepository {
-  Future<UserAuth?> signInWithGoogle();
-  Future<UserAuth?> signInSilently();
+  Future<AuthProfile?> signInWithGoogle();
+  Future<AuthProfile?> signInSilently();
   Future<void> signOut();
-  Stream<UserAuth?> get user;
+  Stream<AuthProfile?> get user;
 
   /// Inicia sesión anónima en Firebase
-  Future<UserAuth?> signInAnonymously();
+  Future<AuthProfile?> signInAnonymously();
 }

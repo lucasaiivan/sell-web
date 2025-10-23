@@ -1,8 +1,8 @@
 import '../entities/user.dart';
 
 abstract class AccountRepository {
-  Future<List<AdminModel>> getUserAccounts(String email);
-  Future<ProfileAccountModel?> getAccount(String accountId);
+  Future<List<AdminProfile>> getUserAccounts(String email);
+  Future<AccountProfile?> getAccount(String accountId);
 
   /// Guarda el ID de la cuenta seleccionada actualmente
   Future<void> saveSelectedAccountId(String accountId);

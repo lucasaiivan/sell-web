@@ -1,24 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-class UserAuth {
+// Modelo de usuario autenticado
+class AuthProfile {
   final String? uid;
   final String? email;
   final String? displayName;
   final bool? isAnonymous;
   final String? photoUrl;
 
-  UserAuth({
+  AuthProfile({
     this.uid,
     this.email,
     this.displayName,
     this.isAnonymous,
     this.photoUrl,
   });
-}
+} 
 
-class AdminModel {
-  AdminModel({
+// Modelo de usuario administrador
+class AdminProfile {
+  AdminProfile({
     this.id = "",
     this.inactivate = false,
     this.account = "",
@@ -67,9 +69,9 @@ class AdminModel {
   bool multiuser = false; // ver, editar y eliminar usuarios de la cuenta
   bool editAccount = false; // editar la cuenta
 
-  factory AdminModel.fromDocument(DocumentSnapshot doc) {
+  factory AdminProfile.fromDocument(DocumentSnapshot doc) {
     Map data = doc.data() as Map;
-    return AdminModel(
+    return AdminProfile(
       id: doc.id,
       inactivate: data.containsKey("inactivate") ? doc["inactivate"] : false,
       account: doc["account"],
@@ -106,8 +108,8 @@ class AdminModel {
         'name': name,
         "superAdmin": superAdmin,
         "admin": admin,
-        'creation': creation,
-        'lastUpdate': lastUpdate,
+        'creation': creation.toDate().toIso8601String(),
+        'lastUpdate': lastUpdate.toDate().toIso8601String(),
         'startTime': startTime,
         'endTime': endTime,
         'daysOfWeek': daysOfWeek,
@@ -121,8 +123,8 @@ class AdminModel {
         "editAccount": editAccount,
       };
 
-  factory AdminModel.fromMap(Map data) {
-    return AdminModel(
+  factory AdminProfile.fromMap(Map data) {
+    return AdminProfile(
       id: data['id'] ?? '',
       inactivate: data['inactivate'] ?? false,
       account: data['account'] ?? '',
@@ -131,8 +133,12 @@ class AdminModel {
       superAdmin: data['superAdmin'] ?? false,
       admin: data['admin'] ?? false,
       personalized: data['personalized'] ?? false,
-      creation: data['creation'] ?? Timestamp.now(),
-      lastUpdate: data['lastUpdate'] ?? Timestamp.now(),
+      creation: data['creation'] is String 
+          ? Timestamp.fromDate(DateTime.parse(data['creation']))
+          : data['creation'] ?? Timestamp.now(),
+      lastUpdate: data['lastUpdate'] is String 
+          ? Timestamp.fromDate(DateTime.parse(data['lastUpdate']))
+          : data['lastUpdate'] ?? Timestamp.now(),
       startTime: data['startTime'] ?? {},
       endTime: data['endTime'] ?? {},
       daysOfWeek: data['daysOfWeek'] ?? [],
@@ -146,7 +152,7 @@ class AdminModel {
     );
   }
 
-  AdminModel.fromDocumentSnapshot(
+  AdminProfile.fromDocumentSnapshot(
       {required DocumentSnapshot documentSnapshot}) {
     // get
     late Map data = {};
@@ -183,7 +189,7 @@ class AdminModel {
     editAccount = data.containsKey('editAccount') ? data['editAccount'] : false;
   }
 
-  AdminModel copyWith({
+  AdminProfile copyWith({
     bool? inactivate,
     String? id,
     String? account,
@@ -206,7 +212,7 @@ class AdminModel {
     bool? multiuser,
     bool? editAccount,
   }) {
-    return AdminModel(
+    return AdminProfile(
       inactivate: inactivate ?? this.inactivate,
       id: id ?? this.id,
       account: account ?? this.account,
@@ -280,7 +286,7 @@ class AdminModel {
 
   String translateDay({required String day}) {
     // devuelve el dia de la semana en español
-    switch (day) {
+    switch (day.toLowerCase()) {
       case 'monday':
         return 'Lunes';
       case 'tuesday':
@@ -299,9 +305,32 @@ class AdminModel {
         return '';
     }
   }
-}
 
-class ProfileAccountModel {
+  /// Formatea un mapa de tiempo a string legible (HH:MM)
+  String formatTime(Map<String, dynamic> timeMap) {
+    if (timeMap.isEmpty) return '';
+    
+    final hour = timeMap['hour'];
+    final minute = timeMap['minute'];
+    
+    if (hour == null || minute == null) return '';
+    
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  }
+
+  /// Formatea un Timestamp de Firestore a string legible (dd/MM/yyyy HH:mm)
+  String formatTimestamp(Timestamp timestamp) {
+    final dateTime = timestamp.toDate();
+    return DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
+  }
+
+  /// Verifica si hay configuración de horarios de acceso
+  bool get hasAccessTimeConfiguration {
+    return startTime.isNotEmpty || endTime.isNotEmpty;
+  }
+}
+// Modelo de perfil de cuenta del comercio
+class AccountProfile {
   // Informacion de la cuenta
   late Timestamp creation;
   String id = "";
@@ -321,7 +350,7 @@ class ProfileAccountModel {
   String province = ""; // provincia
   String town = ""; // ciudad
 
-  ProfileAccountModel({
+  AccountProfile({
     this.id = "",
     this.countrycode = "",
     this.username = '',
@@ -344,7 +373,7 @@ class ProfileAccountModel {
     this.trialStart = trialStart ?? Timestamp.now();
     this.trialEnd = trialEnd ?? Timestamp.now();
   }
-  ProfileAccountModel copyWith({
+  AccountProfile copyWith({
     // account info
     // informacion de cuenta
     // location
@@ -365,7 +394,7 @@ class ProfileAccountModel {
     String? town,
     Timestamp? creation,
   }) {
-    return ProfileAccountModel(
+    return AccountProfile(
       // account info
       // informacion de cuenta
       // location
@@ -390,7 +419,7 @@ class ProfileAccountModel {
     );
   }
 
-  ProfileAccountModel.fromMap(Map data) {
+  AccountProfile.fromMap(Map data) {
     id = data['id'];
     username = data['username'];
     image =
@@ -446,7 +475,7 @@ class ProfileAccountModel {
         "trialEnd": trialEnd,
       };
 
-  ProfileAccountModel.fromDocumentSnapshot(
+  AccountProfile.fromDocumentSnapshot(
       {required DocumentSnapshot documentSnapshot}) {
     // get
     late Map data = {};

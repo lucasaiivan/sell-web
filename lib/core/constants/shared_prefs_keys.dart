@@ -5,6 +5,7 @@ class SharedPrefsKeys {
   // GESTIÓN DE CUENTAS
   // ==========================================
   static const String selectedAccountId = 'selected_account_id';
+  static const String currentAdminProfile = 'current_admin_profile';
 
   // ==========================================
   // GESTIÓN DE CAJAS REGISTRADORAS

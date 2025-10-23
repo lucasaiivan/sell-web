@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/presentation/widgets/dialogs/sales/cash_flow_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/sales/cash_register_close_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/sales/cash_register_management_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_flow_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_close_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_management_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/views/account/admin_profile_info_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/views/account/account_selection_dialog.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,8 +67,7 @@ class _SellPageState extends State<SellPage> {
         // - - -
         if (sellProvider.profileAccountSelected.id == '') {
           // provider : authProvider y catalogueProvider
-          final authProvider =
-              Provider.of<AuthProvider>(context, listen: false);
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final catalogueProvider =
               Provider.of<CatalogueProvider>(context, listen: false);
 
@@ -316,91 +317,49 @@ class _SellPageState extends State<SellPage> {
     }
   }
 
-  void showModalBottomSheetSelectAccount() {
-    // provider
-    final SellProvider sellProvider =
-        Provider.of<SellProvider>(context, listen: false);
+  /// Muestra el diálogo de información del perfil del administrador
+  Future<void> _showAdminProfileInfo({required BuildContext context}) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    
+    // Validar que el usuario esté autenticado y no sea anónimo
+    if (authProvider.user == null || authProvider.user?.email == null) {
+      _showErrorSnackBar('No se puede obtener información del perfil sin iniciar sesión');
+      return;
+    }
+    
+    // Validar que haya una cuenta seleccionada
+    if (sellProvider.profileAccountSelected.id.isEmpty) {
+      _showErrorSnackBar('No hay una cuenta seleccionada');
+      return;
+    }
 
-    // dialog
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20), topRight: Radius.circular(20))),
-      builder: (contextBottomSheet) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        final accounts =
-            authProvider.getUserAccountsUseCase.getAccountsWithDemo(
-          authProvider.accountsAssociateds,
-          isAnonymous: authProvider.user?.isAnonymous == true,
+    try { 
+      // Mostrar el diálogo con la información del AdminProfile
+      if (mounted) {
+        await showAdminProfileInfoDialog(
+          context: context,
+          admin: sellProvider.currentAdminProfile!,
         );
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  children: [
-                    const Text('Seleccionar cuenta',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18)),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-              ),
-              if (accounts.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('No tienes cuentas asociadas'),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: accounts.length,
-                  itemBuilder: (_, index) {
-                    final account = accounts[index];
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error al cargar la información del perfil: ${e.toString()}');
+    }
+  }
 
-                    return buttonListTileItemCuenta(
-                      perfilNegocio: account,
-                      isSelected:
-                          sellProvider.profileAccountSelected.id == account.id,
-                      onTap: () {
-                        // Selecciona la cuenta y cierra el modal
-                        sellProvider.initAccount(
-                            account: account, context: context);
-                        Navigator.of(context).pop();
-                      },
-                    );
-                  },
-                ),
-              // Botón para salir de la cuenta si hay una seleccionada
-              if (sellProvider.profileAccountSelected.id.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0),
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.close),
-                    label: const Text('Salir de la cuenta'),
-                    onPressed: () async {
-                      // Remover la cuenta seleccionada y limpiar datos
-                      await sellProvider.removeSelectedAccount();
-                      // Cerrar el modal
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+  /// Muestra un SnackBar con un mensaje de error
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
+
+ 
 
   /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
   PreferredSizeWidget appbar(
@@ -568,7 +527,7 @@ class _SellPageState extends State<SellPage> {
                   // button : button personalizado que abre el modal de selección de cuenta administradas
                   accoutsAssociatedsButton(
                     context: context,
-                    onTap: showModalBottomSheetSelectAccount,
+                    onTap: () =>  showAccountSelectionDialog(context: context),
                   ),
                   const Spacer(),
                   // Controles de tema reutilizables
@@ -588,7 +547,10 @@ class _SellPageState extends State<SellPage> {
                   style: const TextStyle(fontSize: 18)),
               subtitle: Text(sellProvider.profileAccountSelected.province,
                   style: const TextStyle(fontSize: 14)),
-              onTap: () => showModalBottomSheetSelectAccount(),
+              onTap: () async {
+                // dialog : muestra el dialog de información del perfil del usuario administrador
+                await _showAdminProfileInfo(context: context);
+              },
             ),
             // view : Mas funciones en nuesta app
             Padding(
@@ -597,21 +559,21 @@ class _SellPageState extends State<SellPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Divider(thickness: 1, color: Colors.grey.shade300),
+                  Divider(thickness:0.2, color: Colors.grey.shade300),
                   const SizedBox(height: 8),
                   Text(
                     '¡Descubre todas las funciones en nuestra app móvil!',
                     style: TextStyle(
                       color: Colors.blueGrey.shade700,
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
                       width: double.infinity,
-                      child: ButtonApp.primary(
-                        text: 'Descargar App',
+                      child: ButtonApp.primary(borderRadius: 4,
+                        text: 'Descargar de Play Store',
                         onPressed: () {
                           // Abre la URL de descarga de la app
                           html.window.open(
@@ -1075,7 +1037,7 @@ class _SellPageState extends State<SellPage> {
 
   /// Muestra una cuenta con un icono check si está seleccionada.
   Widget buttonListTileItemCuenta({
-    required ProfileAccountModel perfilNegocio,
+    required AccountProfile perfilNegocio,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
@@ -1418,86 +1380,223 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 }
 
-/// Botón personalizado que muestra hasta 2 cuentas asociadas y un icono por defecto, con animación y superposición.
-Widget accoutsAssociatedsButton(
-    {required BuildContext context,
-    required VoidCallback onTap,
-    double iconSize = 30}) {
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-  final accounts = authProvider.accountsAssociateds;
-  // Tomar hasta 2 cuentas para mostrar
-  final visibleAccounts = accounts.take(2).toList();
-  final double avatarSize =
-      iconSize - 3; // Avatares 3dp más chicos que el icono principal
-  return InkWell(
-    borderRadius: BorderRadius.circular(32),
-    onTap: onTap,
-    child: SizedBox(
-      width: iconSize + (visibleAccounts.length * (avatarSize * 0.85)) + 8,
-      height: iconSize + 8,
-      child: Stack(
-        alignment: Alignment.centerLeft,
-        children: [
-          // Tercer avatar: segunda cuenta (si existe)
-          if (visibleAccounts.length > 1)
-            Positioned(
-              left: iconSize * 0.8,
-              child: CircleAvatar(
-                radius: avatarSize / 1.8,
-                backgroundColor: Colors.grey.shade400,
-                backgroundImage: (visibleAccounts[1].image.isNotEmpty &&
-                        visibleAccounts[1].image.contains('https://'))
-                    ? NetworkImage(visibleAccounts[1].image)
-                    : null,
-                child: (visibleAccounts[1].image.isEmpty)
-                    ? Text(
-                        visibleAccounts[1].name.isNotEmpty
-                            ? visibleAccounts[1].name[0]
-                            : '?',
-                        style: TextStyle(
-                            fontSize: avatarSize * 0.7,
-                            color: Colors.blueGrey,
-                            fontWeight: FontWeight.bold),
-                      )
-                    : null,
-              ).animate().slideX(begin: 0.5, end: 0, duration: 400.ms),
+/// Botón personalizado que muestra hasta 3 cuentas asociadas con superposición estilo Material 3
+/// Siempre muestra al menos un avatar o contador indicando la cantidad de cuentas disponibles
+Widget accoutsAssociatedsButton({
+  required BuildContext context,
+  required VoidCallback onTap,
+  double iconSize = 36,
+}) {
+  // Usar Consumer para escuchar cambios en AuthProvider y reconstruir automáticamente
+  return Consumer<AuthProvider>(
+    builder: (context, authProvider, child) {
+      final accounts = authProvider.accountsAssociateds;
+      final theme = Theme.of(context);
+      final colorScheme = theme.colorScheme;
+      
+      final int totalAccounts = accounts.length;
+      
+      // Calcular el ancho total basado en la cantidad de avatares
+      final double avatarSize = iconSize * 0.85;
+      final double overlap = avatarSize * 0.35; // Superposición del 35%
+      
+      // Siempre mostrar al menos el icono + 1 contador/avatar
+      final int minAvatars = totalAccounts > 0 ? 1 : 1;
+      final int displayAvatars = totalAccounts > 0 
+          ? (totalAccounts >= 3 ? 3 : totalAccounts)
+          : minAvatars;
+      
+      final double totalWidth = iconSize + (displayAvatars * (avatarSize - overlap)) + 12;
+      
+      // Tomar hasta 3 cuentas para mostrar
+      final visibleAccounts = accounts.take(3).toList();
+      
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(32),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: SizedBox(
+              width: totalWidth,
+              height: iconSize + 8,
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                clipBehavior: Clip.none,
+                children: [
+                  // Icono principal (siempre visible)
+                  Positioned(
+                    left: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            colorScheme.primaryContainer,
+                            colorScheme.primaryContainer.withValues(alpha: 0.7),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadow.withValues(alpha: 0.15),
+                            blurRadius: 1,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: iconSize / 2,
+                        backgroundColor: Colors.transparent,
+                        child: Icon(
+                          Icons.autorenew_rounded,
+                          color: colorScheme.onPrimaryContainer,
+                          size: iconSize * 0.6,
+                        ),
+                      ),
+                    ).animate().scale(duration: 300.ms).fade(),
+                  ),
+                  
+                  // Si no hay cuentas, mostrar contador "0"
+                  if (totalAccounts == 0)
+                    Positioned(
+                      left: iconSize - overlap,
+                      child: _buildCounterAvatar(
+                        count: 0,
+                        radius: avatarSize / 2,
+                        colorScheme: colorScheme,
+                        borderColor: theme.scaffoldBackgroundColor,
+                        showZero: true,
+                      ).animate().slideX(begin: 0.3, end: 0, duration: 350.ms).fade(),
+                    ),
+                  
+                  // Primer cuenta (si existe)
+                  if (visibleAccounts.isNotEmpty)
+                    Positioned(
+                      left: iconSize - overlap,
+                      child: _buildAccountAvatar(
+                        account: visibleAccounts[0],
+                        radius: avatarSize / 2,
+                        colorScheme: colorScheme,
+                        borderColor: theme.scaffoldBackgroundColor,
+                      ).animate().slideX(begin: 0.3, end: 0, duration: 350.ms).fade(),
+                    ),
+                  
+                  // Segunda cuenta (si existe)
+                  if (visibleAccounts.length > 1)
+                    Positioned(
+                      left: iconSize + (avatarSize - overlap) - overlap,
+                      child: _buildAccountAvatar(
+                        account: visibleAccounts[1],
+                        radius: avatarSize / 2,
+                        colorScheme: colorScheme,
+                        borderColor: theme.scaffoldBackgroundColor,
+                      ).animate().slideX(begin: 0.5, end: 0, duration: 400.ms).fade(),
+                    ),
+                  
+                  // Tercera cuenta o contador (si hay más de 2 cuentas)
+                  if (visibleAccounts.length > 2)
+                    Positioned(
+                      left: iconSize + (2 * (avatarSize - overlap)) - overlap,
+                      child: totalAccounts > 3
+                          ? _buildCounterAvatar(
+                              count: totalAccounts - 2,
+                              radius: avatarSize / 2,
+                              colorScheme: colorScheme,
+                              borderColor: theme.scaffoldBackgroundColor,
+                            ).animate().slideX(begin: 0.7, end: 0, duration: 450.ms).fade()
+                          : _buildAccountAvatar(
+                              account: visibleAccounts[2],
+                              radius: avatarSize / 2,
+                              colorScheme: colorScheme,
+                              borderColor: theme.scaffoldBackgroundColor,
+                            ).animate().slideX(begin: 0.7, end: 0, duration: 450.ms).fade(),
+                    ),
+                ],
+              ),
             ),
-          // Segundo avatar: primer cuenta (si existe)
-          if (visibleAccounts.isNotEmpty)
-            Positioned(
-              left: iconSize * 0.4,
-              child: CircleAvatar(
-                radius: avatarSize / 1.8,
-                backgroundColor: Colors.grey,
-                backgroundImage: (visibleAccounts[0].image.isNotEmpty &&
-                        visibleAccounts[0].image.contains('https://'))
-                    ? NetworkImage(visibleAccounts[0].image)
-                    : null,
-                child: (visibleAccounts[0].image.isEmpty)
-                    ? Text(
-                        visibleAccounts[0].name.isNotEmpty
-                            ? visibleAccounts[0].name[0]
-                            : '?',
-                        style: TextStyle(
-                            fontSize: avatarSize * 0.7,
-                            color: Colors.blueGrey,
-                            fontWeight: FontWeight.bold),
-                      )
-                    : null,
-              ).animate().slideX(begin: 0.3, end: 0, duration: 350.ms),
-            ),
-
-          // Primer avatar: icono por defecto
-          Positioned(
-            left: 0,
-            child: CircleAvatar(
-              radius: iconSize / 2,
-              backgroundColor: Colors.blueGrey.shade100,
-              child: Icon(Icons.autorenew_rounded,
-                  color: Colors.blueGrey, size: iconSize * 0.95),
-            ).animate().fade(duration: 300.ms),
           ),
-        ],
+        ),
+      );
+    },
+  );
+}
+
+/// Construye un avatar de cuenta con borde y sombra
+Widget _buildAccountAvatar({
+  required AccountProfile account,
+  required double radius,
+  required ColorScheme colorScheme,
+  required Color borderColor,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: borderColor, width: 2.5),
+      boxShadow: [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.2),
+          blurRadius: 1,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: CircleAvatar(
+      radius: radius,
+      backgroundColor: colorScheme.secondaryContainer,
+      backgroundImage: (account.image.isNotEmpty && account.image.contains('https://'))
+          ? NetworkImage(account.image)
+          : null,
+      child: (account.image.isEmpty)
+          ? Text(
+              account.name.isNotEmpty ? account.name[0].toUpperCase() : '?',
+              style: TextStyle(
+                fontSize: radius * 0.9,
+                color: colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
+    ),
+  );
+}
+
+/// Construye un avatar contador cuando hay más de 3 cuentas
+Widget _buildCounterAvatar({
+  required int count,
+  required double radius,
+  required ColorScheme colorScheme,
+  required Color borderColor,
+  bool showZero = false,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: borderColor, width: 2.5),
+      boxShadow: [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.2),
+          blurRadius: 4,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: CircleAvatar(
+      radius: radius,
+      backgroundColor: count == 0 && showZero
+          ? colorScheme.errorContainer
+          : colorScheme.tertiaryContainer,
+      child: Text(
+        count == 0 && showZero ? '0' : '+$count',
+        style: TextStyle(
+          fontSize: radius * 0.7,
+          color: count == 0 && showZero
+              ? colorScheme.onErrorContainer
+              : colorScheme.onTertiaryContainer,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     ),
   );

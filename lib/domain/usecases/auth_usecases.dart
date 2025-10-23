@@ -4,7 +4,7 @@ import '../entities/user.dart';
 class SignInWithGoogleUseCase {
   final AuthRepository repository;
   SignInWithGoogleUseCase(this.repository);
-  Future<UserAuth?> call() => repository.signInWithGoogle();
+  Future<AuthProfile?> call() => repository.signInWithGoogle();
 }
 
 class SignOutUseCase {
@@ -16,7 +16,7 @@ class SignOutUseCase {
 class GetUserStreamUseCase {
   final AuthRepository repository;
   GetUserStreamUseCase(this.repository);
-  Stream<UserAuth?> call() => repository.user;
+  Stream<AuthProfile?> call() => repository.user;
 }
 
 class SignInAnonymouslyUseCase {
@@ -24,11 +24,11 @@ class SignInAnonymouslyUseCase {
   SignInAnonymouslyUseCase(this.repository);
 
   /// Inicia sesión anónima en Firebase
-  Future<UserAuth?> call() => repository.signInAnonymously();
+  Future<AuthProfile?> call() => repository.signInAnonymously();
 }
 
 class SignInSilentlyUseCase {
   final AuthRepository repository;
   SignInSilentlyUseCase(this.repository);
-  Future<UserAuth?> call() => repository.signInSilently();
+  Future<AuthProfile?> call() => repository.signInSilently();
 }

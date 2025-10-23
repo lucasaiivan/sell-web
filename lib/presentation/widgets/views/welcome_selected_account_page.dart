@@ -6,12 +6,12 @@ import '../../../presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/theme_data_app_provider.dart';
 
 class WelcomeSelectedAccountPage extends StatelessWidget {
-  final Future<void> Function(ProfileAccountModel) onSelectAccount;
+  final Future<void> Function(AccountProfile) onSelectAccount;
 
   const WelcomeSelectedAccountPage({super.key, required this.onSelectAccount});
 
   /// Obtiene la ubicación prioritaria de la cuenta
-  String _getAccountLocation(ProfileAccountModel account) {
+  String _getAccountLocation(AccountProfile account) {
     if (account.town.isNotEmpty) return account.town;
     if (account.province.isNotEmpty) return account.province;
     if (account.country.isNotEmpty) return account.country;
@@ -20,7 +20,7 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
   }
 
   /// Construye una tarjeta de cuenta con avatar, nombre y ubicación mejorada
-  Widget _buildAccountCard(BuildContext context, ProfileAccountModel account) {
+  Widget _buildAccountCard(BuildContext context, AccountProfile account) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -104,7 +104,7 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // providers
     final authProvider = Provider.of<AuthProvider>(context);
-    List<ProfileAccountModel> accounts = authProvider.getUserAccountsUseCase
+    List<AccountProfile> accounts = authProvider.getUserAccountsUseCase
         .getAccountsWithDemo(authProvider.accountsAssociateds,
             isAnonymous: authProvider.user?.isAnonymous == true);
 

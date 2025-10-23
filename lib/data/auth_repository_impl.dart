@@ -10,7 +10,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._firebaseAuth, this._googleSignIn);
 
   @override
-  Future<UserAuth?> signInWithGoogle() async {
+  Future<AuthProfile?> signInWithGoogle() async {
     try {
       // Usar signInSilently primero para verificar si ya hay sesión activa
       GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
@@ -32,7 +32,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final fbUser = userCredential.user;
       if (fbUser == null) return null;
 
-      return UserAuth(
+      return AuthProfile(
         uid: fbUser.uid,
         displayName: fbUser.displayName,
         email: fbUser.email,
@@ -56,9 +56,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Stream<UserAuth?> get user => _firebaseAuth.authStateChanges().map((fbUser) {
+  Stream<AuthProfile?> get user => _firebaseAuth.authStateChanges().map((fbUser) {
         if (fbUser == null) return null;
-        return UserAuth(
+        return AuthProfile(
           uid: fbUser.uid,
           displayName: fbUser.displayName,
           email: fbUser.email,
@@ -68,11 +68,11 @@ class AuthRepositoryImpl implements AuthRepository {
       });
 
   @override
-  Future<UserAuth?> signInAnonymously() async {
+  Future<AuthProfile?> signInAnonymously() async {
     final userCredential = await _firebaseAuth.signInAnonymously();
     final fbUser = userCredential.user;
     if (fbUser == null) return null;
-    return UserAuth(
+    return AuthProfile(
       uid: fbUser.uid,
       displayName: 'Invitado',
       email: null,
@@ -82,7 +82,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserAuth?> signInSilently() async {
+  Future<AuthProfile?> signInSilently() async {
     try {
       final GoogleSignInAccount? googleUser =
           await _googleSignIn.signInSilently();
@@ -100,7 +100,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final fbUser = userCredential.user;
       if (fbUser == null) return null;
 
-      return UserAuth(
+      return AuthProfile(
         uid: fbUser.uid,
         displayName: fbUser.displayName,
         email: fbUser.email,

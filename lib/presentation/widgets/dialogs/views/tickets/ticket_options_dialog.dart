@@ -1,4 +1,4 @@
-import '../../../../core/core.dart';
+import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';

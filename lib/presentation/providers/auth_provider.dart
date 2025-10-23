@@ -12,10 +12,10 @@ class AuthProvider extends ChangeNotifier {
   final GetUserStreamUseCase getUserStreamUseCase;
   final GetUserAccountsUseCase getUserAccountsUseCase;
 
-  UserAuth? _user;
-  UserAuth? get user => _user;
-  List<ProfileAccountModel> _accountsAssociateds = [];
-  List<ProfileAccountModel> get accountsAssociateds => _accountsAssociateds;
+  AuthProfile? _user;
+  AuthProfile? get user => _user;
+  List<AccountProfile> _accountsAssociateds = [];
+  List<AccountProfile> get accountsAssociateds => _accountsAssociateds;
   bool _isLoadingAccounts = false;
   bool get isLoadingAccounts => _isLoadingAccounts;
 
@@ -105,8 +105,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _accountsAssociateds = await getUserAccountsUseCase
-        .getProfilesAccountsAsociateds(_user!.email!);
+    _accountsAssociateds = await getUserAccountsUseCase.getProfilesAccountsAsociateds(_user!.email!);
     _isLoadingAccounts = false;
     notifyListeners();
   }
@@ -147,10 +146,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ProfileAccountModel : devuelve los datos del perfil de la cuenta asociada del id pasado por parametro
-  ProfileAccountModel? getProfileAccountById(String id) {
+  AccountProfile? getProfileAccountById(String id) {
     return _accountsAssociateds.firstWhere(
       (account) => account.id == id,
-      orElse: () => ProfileAccountModel(),
+      orElse: () => AccountProfile(),
     );
   }
 }

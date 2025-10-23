@@ -25,17 +25,18 @@ import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';
 import 'presentation/pages/sell_page.dart';
 
-void main() {
-  // CRITICAL: Initialize bindings FIRST in the main zone
+void main() async {
+  // CRITICAL: Initialize bindings FIRST in the main zone, synchronously
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Run async initialization and app launch in the SAME zone
-  _initializeAndRunApp();
+  // Firebase initialization in the SAME zone as runApp
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Run app initialization
+  _runApp();
 }
 
-Future<void> _initializeAndRunApp() async {
-  // Firebase initialization in the same zone as runApp
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+void _runApp() {
 
   // Configuración de GoogleSignIn usando configuración centralizada y segura
   final googleSignIn = GoogleSignIn(
@@ -110,6 +111,17 @@ Future<void> _initializeAndRunApp() async {
 
                 return Consumer<SellProvider>(
                   builder: (context, sellProvider, _) {
+                    // 🆕 Inicializar AdminProfile cuando hay usuario autenticado y cuenta seleccionada
+                    // Esto maneja el caso cuando el usuario recarga la app con una sesión activa
+                    if (authProvider.user?.email != null &&
+                        sellProvider.profileAccountSelected.id.isNotEmpty &&
+                        sellProvider.currentAdminProfile == null) {
+                      // Ejecutar en el siguiente frame para evitar setState durante build
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        sellProvider.initializeAdminProfile(authProvider.user!.email!);
+                      });
+                    }
+
                     if (sellProvider.profileAccountSelected.id.isEmpty) {
                       return WelcomeSelectedAccountPage(
                         onSelectAccount: (account) => sellProvider.initAccount(

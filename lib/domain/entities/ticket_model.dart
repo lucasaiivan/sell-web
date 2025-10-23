@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 
@@ -172,7 +174,7 @@ class TicketModel {
   }
 
   // ==========================================
-  // MÉTODOS EXISTENTES
+  // MÉTODOS ADICIONALES DE CONVENIENCIA
   // ==========================================
 
   int getProductsQuantity() {
@@ -183,7 +185,14 @@ class TicketModel {
     return count;
   }
 
-  // format : formateo de texto
+  // get style : obtiene el color asociado al medio de pago
+  Color get getPayModeColor {
+    if (payMode == 'effective') return const Color(0xFF4CAF50); // Verde
+    if (payMode == 'mercadopago') return const Color(0xFF3B5998); // Azul
+    if (payMode == 'card') return const Color(0xFFFFC107); // Amarillo
+    return const Color(0xFF9E9E9E); // Gris para sin especificar
+  }
+  //  get : obtiene el nombre del medio de pago en formato legible
   String get getNamePayMode {
     if (payMode == 'effective') return 'Efectivo';
     if (payMode == 'mercadopago') return 'Mercado Pago';
@@ -191,6 +200,7 @@ class TicketModel {
     return 'Sin Especificar';
   }
 
+  // get : recibe un id de medio de pago y devuelve su nombre en formato legible
   static String getFormatPayMode({required String id}) {
     if (id == 'effective') return 'Efectivo';
     if (id == 'mercadopago') return 'Mercado Pago';

@@ -54,7 +54,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
         final provider = context.read<CashRegisterProvider>();
         final finalBalance = provider.finalBalanceController.doubleValue;
         final expectedBalance = widget.cashRegister.getExpectedBalance;
-        
+
         // Diferencia = Balance Final (lo que hay) - Balance Esperado (lo que debería haber)
         // Positivo = sobrante (verde), Negativo = faltante (rojo)
         _currentDifference = finalBalance - expectedBalance;
@@ -128,7 +128,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
                 return DialogComponents.primaryActionButton(
                     context: context,
                     text: 'Confirmar',
-                    isLoading: cashRegisterProvider.isProcessing, 
+                    isLoading: cashRegisterProvider.isProcessing,
                     onPressed: () {
                       if (cashRegisterProvider.isProcessing) return;
                       _handleCloseCashRegister(

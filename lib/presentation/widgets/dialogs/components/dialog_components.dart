@@ -178,11 +178,41 @@ class DialogComponents {
     required String value,
     IconData? icon,
     TextStyle? valueStyle,
+    bool fill = false,
+    bool valueFill = false,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
 
-    return Row(
+    // Preparar el widget del valor
+    Widget valueText = Text(
+      value,
+      style: valueStyle ??
+          theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+      textAlign: TextAlign.end,
+    );
+
+    // Aplicar relleno solo al valor si valueFill es true
+    Widget valueWidget;
+    if (valueFill) {
+      valueWidget = Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: valueText,
+        ),
+      );
+    } else {
+      valueWidget = valueText;
+    }
+
+    final rowContent = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) ...[
@@ -205,16 +235,23 @@ class DialogComponents {
         const SizedBox(width: 16),
         Expanded(
           flex: 3,
-          child: Text(
-            value,
-            style: valueStyle ??
-                theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-            textAlign: TextAlign.end,
-          ),
+          child: valueWidget,
         ),
       ],
+    );
+
+    if (!fill) {
+      return rowContent;
+    }
+
+    // Aplicar relleno con color translúcido y esquinas redondeadas
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: rowContent,
     );
   }
 
@@ -250,7 +287,7 @@ class DialogComponents {
         foregroundColor: isDestructive
             ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
-        padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       ),
     );
   }

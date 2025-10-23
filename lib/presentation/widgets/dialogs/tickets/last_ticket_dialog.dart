@@ -29,17 +29,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
         '${date.hour.toString().padLeft(2, '0')}:'
         '${date.minute.toString().padLeft(2, '0')}';
   }
-
-  String _getPaymentMethodName(String payMode) {
-    switch (payMode) {
-      case 'mercadopago':
-        return 'Mercado Pago';
-      case 'card':
-        return 'Tarjeta Déb/Créd';
-      default:
-        return 'Efectivo';
-    }
-  }
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +48,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
           // Información del negocio y fecha
           DialogComponents.infoSection(
             context: context,
-            title: ' Información del Ticket',
-            icon: Icons.business_rounded,
+            title: ' Información del Ticket', 
             content: Column(
               children: [
                 DialogComponents.infoRow(
@@ -104,15 +93,20 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
           // Información de pago
           DialogComponents.infoSection(
             context: context,
-            title: 'Facturación y Pago',
-            icon: Icons.payment_rounded,
+            title: 'Facturación', 
             content: Column(
               children: [
+                // Método de pago
                 DialogComponents.infoRow(
                   context: context,
                   label: 'Método de Pago',
-                  value: _getPaymentMethodName(widget.ticket.payMode),
+                  value: widget.ticket.getNamePayMode, 
                   icon: Icons.credit_card_rounded,
+                  valueFill: true,
+                  valueStyle: TextStyle(
+                    color: widget.ticket.getPayModeColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 // Mostrar descuento si existe
                 if (widget.ticket.discount > 0) ...[
@@ -163,7 +157,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
           // Total del ticket
           DialogComponents.summaryContainer(
             context: context,
-            label: 'Total del Ticket',
+            label: 'Total',
             value: CurrencyFormatter.formatPrice(
                 value: widget.ticket.getTotalPrice),
             icon: Icons.receipt_rounded,

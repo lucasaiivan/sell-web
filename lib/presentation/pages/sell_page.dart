@@ -487,6 +487,7 @@ class _SellPageState extends State<SellPage> {
                         icon: isConnected
                             ? Icons.print_outlined
                             : Icons.print_disabled_outlined,
+                        
                         tooltip: isConnected
                             ? 'Impresora conectada y lista\nToca para configurar'
                             : 'Impresora no disponible\nToca para configurar conexión',
@@ -504,7 +505,7 @@ class _SellPageState extends State<SellPage> {
                     builder: (context, sellProvider, __) {
                       final hasLastTicket = sellProvider.lastSoldTicket != null;
                       return AppBarButtonCircle(
-                          icon: Icons.receipt_long_rounded,
+                          icon: Icons.receipt_long_rounded, 
                           tooltip: hasLastTicket
                               ? 'Ver último ticket\nToca para ver detalles y reimprimir'
                               : 'No hay tickets recientes',
@@ -1822,7 +1823,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
             // contador : burbuja circular roja con contador de ventas
             if (isActive && salesCount > 0)
               Positioned(
-                right: -5,
+                right: -1,
                 top: -5,
                 child: Container(
                   constraints: const BoxConstraints(
@@ -1840,13 +1841,6 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                       color: Theme.of(context).scaffoldBackgroundColor,
                       width: 1,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        offset: const Offset(0, 1),
-                        blurRadius: 3,
-                      ),
-                    ],
                   ),
                   child: Center(
                     child: Text(

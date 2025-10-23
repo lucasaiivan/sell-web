@@ -118,7 +118,8 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
 
   // future : registra el precio de un producto en la base de datos pública
   @override
-  Future<void> registerProductPrice(ProductPrice productPrice, String productCode) async {
+  Future<void> registerProductPrice(
+      ProductPrice productPrice, String productCode) async {
     if (productCode.isEmpty) {
       throw ArgumentError('El código del producto es obligatorio');
     }

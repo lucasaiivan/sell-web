@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
+import '../../core/core.dart';
 import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
 import '../../domain/entities/ticket_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
+import '../../domain/usecases/sell_usecases.dart'; // NUEVO: Lógica de negocio de tickets
 
 /// Extension helper para firstOrNull si no está disponible
 extension ListExtensions<T> on List<T> {
@@ -105,7 +106,8 @@ class _CashRegisterState {
 /// - Flujos de caja
 /// - Operaciones de apertura y cierre
 class CashRegisterProvider extends ChangeNotifier {
-  final CashRegisterUsecases _cashRegisterUsecases;
+  final CashRegisterUsecases _cashRegisterUsecases; // Operaciones de caja
+  final SellUsecases _sellUsecases; // NUEVO: Operaciones de tickets
 
   // Stream subscriptions para actualizaciones automáticas
   StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
@@ -141,7 +143,10 @@ class CashRegisterProvider extends ChangeNotifier {
   CashRegister? get currentActiveCashRegister =>
       _state.currentActiveCashRegister;
 
-  CashRegisterProvider(this._cashRegisterUsecases);
+  CashRegisterProvider(
+    this._cashRegisterUsecases,
+    this._sellUsecases, // NUEVO: Inyectar lógica de tickets
+  );
 
   @override
   void dispose() {
@@ -413,30 +418,25 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Abre una nueva caja registradora
-  Future<bool> openCashRegister(String accountId, String cashierId) async {
-    if (openDescriptionController.text.trim().isEmpty) {
-      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
-      notifyListeners();
-      return false;
-    }
-
-    final initialCash = initialCashController.doubleValue;
-    if (initialCash < 0) {
-      _state = _state.copyWith(
-          errorMessage: 'El monto inicial no puede ser negativo');
-      notifyListeners();
-      return false;
-    }
-
+  ///
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones y lógica de negocio están en CashRegisterUsecases
+  Future<bool> openCashRegister({
+    required String accountId,
+    required String cashierId,
+    required String cashierName,
+  }) async {
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones y lógica de negocio
       final newCashRegister = await _cashRegisterUsecases.openCashRegister(
         accountId: accountId,
-        description: openDescriptionController.text.trim(),
-        initialCash: initialCash,
+        description: openDescriptionController.text,
+        initialCash: initialCashController.doubleValue,
         cashierId: cashierId,
+        cashierName: cashierName,
       );
 
       // Seleccionar automáticamente la nueva caja (el stream se actualizará automáticamente)
@@ -456,30 +456,95 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Cierra una caja registradora
+  ///
+  /// RESPONSABILIDAD: Coordinar UI, validar contadores reales y cerrar caja
+  ///
+  /// ⚠️ NUEVA LÓGICA DE CONTADORES:
+  /// - sales: Representa SOLO ventas efectivas (NO incluye anulaciones)
+  /// - annulledTickets: Contador de tickets anulados
+  /// - totalTransactions = sales + annulledTickets
+  ///
+  /// FLUJO:
+  /// 1. Obtener transacciones reales de hoy de esta caja
+  /// 2. Calcular contadores correctos (ventas efectivas, anulados)
+  /// 3. Validar/corregir contadores si hay desincronización
+  /// 4. Cerrar la caja (arqueo)
   Future<bool> closeCashRegister(
       String accountId, String cashRegisterId) async {
-    final finalBalance = finalBalanceController.doubleValue;
-    if (finalBalance < 0) {
-      _state = _state.copyWith(
-          errorMessage: 'El balance final no puede ser negativo');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // 🎯 PASO 1: Obtener transacciones reales de hoy para validar contadores
+      final todayTickets = await _sellUsecases.getTodayTransactions(
+        accountId: accountId,
+        cashRegisterId: cashRegisterId,
+      );
+
+      // 🎯 PASO 2: Calcular contadores desde la fuente de verdad (para verificación)
+      final effectiveSales =
+          todayTickets.where((ticket) => ticket['annulled'] != true).length;
+
+      final annulledCount =
+          todayTickets.where((ticket) => ticket['annulled'] == true).length;
+
+      final totalTransactions = effectiveSales + annulledCount;
+
+      // 🎯 PASO 3: Verificar consistencia de contadores
+      // ⚠️ IMPORTANTE:
+      // - sales debe coincidir con effectiveSales (ventas efectivas)
+      // - annulledTickets debe coincidir con annulledCount
+      // - Si hay desincronización, corregir antes de cerrar
+      if (_state.selectedCashRegister != null && totalTransactions > 0) {
+        final currentSales = _state.selectedCashRegister!.sales;
+        final currentAnnulled = _state.selectedCashRegister!.annulledTickets;
+
+        // Verificar si los contadores necesitan corrección
+        final salesNeedsUpdate = currentSales != effectiveSales;
+        final annulledNeedsUpdate = currentAnnulled != annulledCount;
+
+        if (salesNeedsUpdate || annulledNeedsUpdate) {
+          final updatedCashRegister = _state.selectedCashRegister!.update(
+            sales: effectiveSales, // Corregir si hay desincronización
+            annulledTickets: annulledCount, // Corregir si hay desincronización
+          );
+
+          // Actualizar estado local
+          _state = _state.copyWith(selectedCashRegister: updatedCashRegister);
+
+          if (kDebugMode) {
+            print('📊 Contadores corregidos antes de cerrar:');
+            if (salesNeedsUpdate) {
+              print(
+                  '   - Ventas efectivas: $currentSales → $effectiveSales (corregido)');
+            } else {
+              print('   - Ventas efectivas: $currentSales ✅');
+            }
+            if (annulledNeedsUpdate) {
+              print(
+                  '   - Anulados: $currentAnnulled → $annulledCount (corregido)');
+            } else {
+              print('   - Anulados: $currentAnnulled ✅');
+            }
+            print('   - Total transacciones: $totalTransactions');
+          }
+        } else if (kDebugMode) {
+          print('✅ Contadores correctos - No requieren actualización');
+          print('   - Ventas efectivas: $currentSales');
+          print('   - Anulados: $currentAnnulled');
+          print('   - Total transacciones: $totalTransactions');
+        }
+      }
+
+      // 🎯 PASO 4: Cerrar la caja con contadores validados
       await _cashRegisterUsecases.closeCashRegister(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        finalBalance: finalBalance,
+        finalBalance: finalBalanceController.doubleValue,
       );
 
-      // Si se cierra la caja seleccionada, limpiar selección
-      if (_state.selectedCashRegister?.id == cashRegisterId) {
-        await clearSelectedCashRegister();
-      }
+      // Deseleccionar la caja cerrada
+      await clearSelectedCashRegister();
 
       // Limpiar formulario
       _clearCloseForm();
@@ -499,38 +564,27 @@ class CashRegisterProvider extends ChangeNotifier {
   // ==========================================
 
   /// Registra un ingreso de caja
+  ///
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones están en CashRegisterUsecases
   Future<bool> addCashInflow(
       String accountId, String cashRegisterId, String userId) async {
-    if (movementDescriptionController.text.trim().isEmpty) {
-      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
-      notifyListeners();
-      return false;
-    }
-
-    final amount = movementAmountController.doubleValue;
-    if (amount <= 0) {
-      _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones
       await _cashRegisterUsecases.addCashInflow(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        description: movementDescriptionController.text.trim(),
-        amount: amount,
+        description: movementDescriptionController.text,
+        amount: movementAmountController.doubleValue,
         userId: userId,
       );
 
       // Limpiar formulario
       _clearMovementForm();
 
-      // Notificar cambios explícitamente
-      notifyListeners();
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -542,38 +596,27 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Registra un egreso de caja
+  ///
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las validaciones están en CashRegisterUsecases
   Future<bool> addCashOutflow(
       String accountId, String cashRegisterId, String userId) async {
-    if (movementDescriptionController.text.trim().isEmpty) {
-      _state = _state.copyWith(errorMessage: 'La descripción es obligatoria');
-      notifyListeners();
-      return false;
-    }
-
-    final amount = movementAmountController.doubleValue;
-    if (amount <= 0) {
-      _state = _state.copyWith(errorMessage: 'El monto debe ser mayor a cero');
-      notifyListeners();
-      return false;
-    }
-
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
+      // UseCase maneja TODAS las validaciones
       await _cashRegisterUsecases.addCashOutflow(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        description: movementDescriptionController.text.trim(),
-        amount: amount,
+        description: movementDescriptionController.text,
+        amount: movementAmountController.doubleValue,
         userId: userId,
       );
 
       // Limpiar formulario
       _clearMovementForm();
 
-      // Notificar cambios explícitamente
-      notifyListeners();
       return true;
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
@@ -585,7 +628,7 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Registra una venta en la caja activa
-  Future<bool> registerSale({
+  Future<bool> cashRegisterSale({
     required String accountId,
     required double saleAmount,
     required double discountAmount,
@@ -599,7 +642,7 @@ class CashRegisterProvider extends ChangeNotifier {
     }
 
     try {
-      await _cashRegisterUsecases.registerSale(
+      await _cashRegisterUsecases.cashRegisterSale(
         accountId: accountId,
         cashRegisterId: currentActiveCashRegister!.id,
         saleAmount: saleAmount,
@@ -733,66 +776,23 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Guarda un ticket de venta confirmada en el historial de transacciones
-  /// La transacción se registra SIEMPRE, independientemente de si existe una caja registradora activa
+  ///
+  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
+  /// Las transformaciones y validaciones están en SellUsecases
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket,
-    String? sellerName,
-    String? sellerId,
   }) async {
     try {
-      // Asegurar que el ticket tenga un ID único
-      final ticketId =
-          ticket.id.isEmpty ? Publications.generateUid() : ticket.id;
+      // UseCase maneja preparación, validaciones y transformaciones
+      final preparedTicket =
+          _sellUsecases.prepareTicketForTransaction(ticket); // CAMBIADO
 
-      // Asegurar que tenga información del vendedor
-      final finalSellerName = ticket.sellerName.isEmpty
-          ? (sellerName ?? 'Vendedor')
-          : ticket.sellerName;
-      final finalSellerId = ticket.sellerId.isEmpty
-          ? (sellerId ?? 'default_seller')
-          : ticket.sellerId;
-
-      // Si hay una caja activa, asignar su información; si no, usar valores por defecto
-      String finalCashRegisterName = ticket.cashRegisterName;
-      String finalCashRegisterId = ticket.cashRegisterId;
-
-      if (hasActiveCashRegister) {
-        finalCashRegisterName = currentActiveCashRegister!.description;
-        finalCashRegisterId = currentActiveCashRegister!.id;
-      } else {
-        // Si no hay caja activa, usar información por defecto
-        finalCashRegisterName = finalCashRegisterName.isEmpty
-            ? 'Sin caja asignada'
-            : finalCashRegisterName;
-        finalCashRegisterId = finalCashRegisterId.isEmpty
-            ? 'no_cash_register'
-            : finalCashRegisterId;
-      }
-
-      // Crear ticket actualizado con toda la información necesaria
-      final updatedTicket = TicketModel(
-        id: ticketId,
-        payMode: ticket.payMode,
-        currencySymbol: ticket.currencySymbol,
-        sellerName: finalSellerName,
-        sellerId: finalSellerId,
-        cashRegisterName: finalCashRegisterName,
-        cashRegisterId: finalCashRegisterId,
-        priceTotal: ticket.priceTotal > 0
-            ? ticket.priceTotal
-            : _calculateTotalPriceOptimized(ticket), // Usar método optimizado
-        valueReceived: ticket.valueReceived,
-        discount: ticket.discount,
-        transactionType: ticket.transactionType,
-        listPoduct: ticket.products.map((product) => product.toMap()).toList(),
-        creation: ticket.creation,
-      );
-      updatedTicket.products = ticket.products;
-
-      await _cashRegisterUsecases.saveTicketToTransactionHistory(
+      // Guardar el ticket preparado en el historial
+      await _sellUsecases.saveTicketToTransactionHistory(
+        // CAMBIADO
         accountId: accountId,
-        ticket: updatedTicket,
+        ticket: preparedTicket,
       );
 
       return true;
@@ -803,11 +803,141 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// Obtiene los tickets del día actual como objetos TicketModel
-  /// Nota: Por ahora devuelve Map hasta implementar conversión completa
-  Future<List<Map<String, dynamic>>?> getTodayTickets(String accountId) async {
+  /// Anula un ticket específico marcándolo como anulado
+  ///
+  /// RESPONSABILIDAD: Coordinar UI y actualizar estado local
+  /// La lógica de negocio está en CashRegisterUsecases
+  ///
+  /// 🆕 IMPORTANTE: Si el ticket anulado es el último vendido, debe actualizarse
+  /// en SellProvider también para mantener sincronización entre providers
+  /// Anula un ticket en el historial de transacciones
+  ///
+  /// RESPONSABILIDAD: Coordinar anulación y actualizar estado UI
+  /// La lógica de negocio (Firebase + SharedPreferences) está en SellUsecases
+  ///
+  /// 🆕 Ahora usa processTicketAnnullmentWithLocalUpdate para actualizar automáticamente
+  /// el último ticket vendido en SharedPreferences
+  Future<bool> annullTicket({
+    required String accountId,
+    required TicketModel ticket,
+    VoidCallback?
+        onLastSoldTicketUpdated, // 🆕 Callback opcional para notificar
+  }) async {
     try {
-      return await _cashRegisterUsecases.getTodayTransactions(accountId);
+      // 🔧 PASO 1: UseCase maneja validaciones, transformaciones, Firebase Y SharedPreferences
+      // Usar processTicketAnnullmentWithLocalUpdate para actualizar automáticamente el último ticket
+      await _sellUsecases.processTicketAnnullmentWithLocalUpdate(
+        // CAMBIADO
+        accountId: accountId,
+        ticket: ticket,
+        activeCashRegister: _state.selectedCashRegister,
+        updateLastSold:
+            true, // ✅ Actualizar automáticamente en SharedPreferences
+      );
+
+      // PASO 2: Recargar caja desde Firebase para obtener contadores actualizados
+      // Esto asegura que annulledTickets refleje el incremento automático del repository
+      if (hasActiveCashRegister &&
+          ticket.cashRegisterId == _state.selectedCashRegister!.id) {
+        // Recargar caja desde Firebase para sincronizar contadores
+        final updatedCashRegisters =
+            await _cashRegisterUsecases.getActiveCashRegisters(accountId);
+        final updatedCashRegister = updatedCashRegisters.firstWhere(
+          (cr) => cr.id == _state.selectedCashRegister!.id,
+          orElse: () => _state.selectedCashRegister!,
+        );
+
+        _state = _state.copyWith(selectedCashRegister: updatedCashRegister);
+        notifyListeners();
+      }
+
+      // PASO 3: 🆕 Notificar que el último ticket vendido fue actualizado en SharedPreferences
+      // Esto permite que SellProvider recargue su estado desde persistencia
+      if (onLastSoldTicketUpdated != null) {
+        onLastSoldTicketUpdated();
+      }
+
+      if (kDebugMode) {
+        print('✅ Ticket ${ticket.id} anulado en Firebase + SharedPreferences');
+        print('   - sales: NO modificado (solo ventas efectivas)');
+        print('   - annulledTickets: incrementado automáticamente');
+        print('   - billing/discount: decrementados automáticamente');
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error anulando ticket: $e');
+      }
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Obtiene tickets de una caja registradora específica
+  ///
+  /// **Parámetros:**
+  /// - `accountId`: ID de la cuenta
+  /// - `cashRegisterId`: ID de la caja (requerido)
+  /// - `todayOnly`: true = solo tickets de hoy, false = todo el historial (default: true)
+  ///
+  /// **Retorna:** Lista de TicketModel o null si hay error
+  ///
+  /// **Uso:**
+  /// ```dart
+  /// // Solo tickets de hoy (default)
+  /// final todayTickets = await getCashRegisterTickets(
+  ///   accountId: accountId,
+  ///   cashRegisterId: cashRegisterId,
+  /// );
+  ///
+  /// // Todo el historial de la caja
+  /// final allTickets = await getCashRegisterTickets(
+  ///   accountId: accountId,
+  ///   cashRegisterId: cashRegisterId,
+  ///   todayOnly: false,
+  /// );
+  /// ```
+  Future<List<TicketModel>?> getCashRegisterTickets({
+    required String accountId,
+    required String cashRegisterId,
+    bool todayOnly = false, // por defecto mostrar todos los tickets de la caja
+  }) async {
+    try {
+      // Validar cashRegisterId requerido
+      if (cashRegisterId.isEmpty) {
+        throw Exception('cashRegisterId es requerido');
+      }
+
+      List<Map<String, dynamic>> result;
+
+      if (todayOnly) {
+        // Obtener solo tickets de hoy
+        result = await _sellUsecases.getTodayTransactions(
+          accountId: accountId,
+          cashRegisterId: cashRegisterId,
+        );
+      } else {
+        // Obtener todo el historial de la caja
+        // Usar rango de fechas desde hace 1 año hasta hoy
+        final now = DateTime.now();
+        final oneYearAgo = now.subtract(const Duration(days: 365));
+
+        result = await _sellUsecases.getTransactionsByDateRange(
+          accountId: accountId,
+          startDate: oneYearAgo,
+          endDate: now,
+        );
+
+        // Filtrar solo tickets de esta caja
+        result = result
+            .where((ticket) => ticket['cashRegisterId'] == cashRegisterId)
+            .toList();
+      }
+
+      // Convertir a TicketModel
+      return result.map((ticketMap) => TicketModel.fromMap(ticketMap)).toList();
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
@@ -815,31 +945,31 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// Obtiene los tickets por rango de fechas como objetos TicketModel
-  /// Nota: Por ahora devuelve Map hasta implementar conversión completa
+  /// ⚠️ DEPRECADO: Usar getCashRegisterTickets
+  @Deprecated('Usar getCashRegisterTickets con cashRegisterId requerido')
+  Future<List<TicketModel>?> getTodayTickets({
+    required String accountId,
+    String cashRegisterId = '',
+  }) async {
+    return getCashRegisterTickets(
+      accountId: accountId,
+      cashRegisterId: cashRegisterId,
+    );
+  }
+
+  /// Obtiene los tickets filtrados el día actual y si se proporciona cashRegisterId se filtra por esa caja
   Future<List<Map<String, dynamic>>?> getTicketsByDateRange({
     required String accountId,
     required DateTime startDate,
     required DateTime endDate,
+    String cashRegisterId = '',
   }) async {
     try {
-      return await _cashRegisterUsecases.getTransactionsByDateRange(
+      return await _sellUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
       );
-    } catch (e) {
-      _state = _state.copyWith(errorMessage: e.toString());
-      notifyListeners();
-      return null;
-    }
-  }
-
-  /// Obtiene las transacciones del día actual
-  Future<List<Map<String, dynamic>>?> getTodayTransactions(
-      String accountId) async {
-    try {
-      return await _cashRegisterUsecases.getTodayTransactions(accountId);
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
@@ -854,7 +984,7 @@ class CashRegisterProvider extends ChangeNotifier {
     required DateTime endDate,
   }) async {
     try {
-      return await _cashRegisterUsecases.getTransactionsByDateRange(
+      return await _sellUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
@@ -875,8 +1005,7 @@ class CashRegisterProvider extends ChangeNotifier {
   }) async {
     try {
       // Por ahora devolver análisis básico usando los datos disponibles
-      final transactions =
-          await _cashRegisterUsecases.getTransactionsByDateRange(
+      final transactions = await _sellUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
@@ -922,11 +1051,6 @@ class CashRegisterProvider extends ChangeNotifier {
   // ==========================================
   // MÉTODOS PRIVADOS
   // ==========================================
-
-  /// Calcula el precio total usando ProductCatalogue almacenados como mapas
-  double _calculateTotalPriceOptimized(TicketModel ticket) {
-    return ticket.calculatedTotal;
-  }
 
   void _clearOpenForm() {
     openDescriptionController.clear();

@@ -316,17 +316,22 @@ class DatabaseCloudService {
               .snapshots();
 
   /// Future de transacciones filtradas por rango de fechas
+  /// Opcionalmente puede filtrar por cashRegisterId si se proporciona
   static Future<QuerySnapshot<Map<String, dynamic>>>
       getTransactionsByDateRange({
     required String accountId,
     required Timestamp startDate,
     required Timestamp endDate,
-  }) =>
-          accountTransactions(accountId)
-              .orderBy('creation', descending: true)
-              .where('creation', isGreaterThan: startDate)
-              .where('creation', isLessThan: endDate)
-              .get();
+  }) async {
+    Query<Map<String, dynamic>> query = accountTransactions(accountId)
+        .orderBy('creation', descending: true)
+        .where('creation', isGreaterThan: startDate)
+        .where('creation', isLessThan: endDate);
+
+    final result = await query.get();
+
+    return result;
+  }
 
   // ==========================================
   // PRODUCTOS MÁS VENDIDOS

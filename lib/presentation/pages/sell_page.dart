@@ -1,35 +1,22 @@
 import 'dart:ui';
 
-import 'package:sellweb/core/core.dart' show ProductCatalogueFullScreenView;
-import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
-import 'package:sellweb/core/widgets/dialogs/configuration/printer_config_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/catalogue/product_edit_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/cash_flow_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/cash_register_close_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/cash_register_management_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/sales/quick_sale_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/tickets/ticket_options_dialog.dart';
+import 'package:sellweb/core/core.dart';
+import 'package:sellweb/presentation/widgets/dialogs/sales/cash_flow_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/sales/cash_register_close_dialog.dart';
+import 'package:sellweb/presentation/widgets/dialogs/sales/cash_register_management_dialog.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/utils/fuctions.dart';
-import 'package:sellweb/core/utils/responsive.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
-import 'package:sellweb/core/widgets/inputs/money_input_text_field.dart';
-import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/component/ui.dart'; 
-import '../../core/widgets/dialogs/tickets/last_ticket_dialog.dart';
-import '../../core/widgets/navigation/drawer_ticket/ticket_drawer_widget.dart';
 import '../providers/sell_provider.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/cash_register_provider.dart';
-import 'welcome_page.dart';
+import '../widgets/views/welcome_selected_account_page.dart';
 
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
@@ -73,7 +60,9 @@ class _SellPageState extends State<SellPage> {
     // consumer : escucha los cambios en ventas (SellProvider) y el catalogo (CatalogueProvider)
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
-        // --- Si no hay cuenta seleccionada, mostrar la página de bienvenida ---
+        // - - -
+        // - - Si no hay cuenta seleccionada, mostrar la página de bienvenida
+        // - - -
         if (sellProvider.profileAccountSelected.id == '') {
           // provider : authProvider y catalogueProvider
           final authProvider =
@@ -81,7 +70,7 @@ class _SellPageState extends State<SellPage> {
           final catalogueProvider =
               Provider.of<CatalogueProvider>(context, listen: false);
 
-          return WelcomePage(
+          return WelcomeSelectedAccountPage(
             onSelectAccount: (account) async {
               // Selecciona la cuenta y recarga el catálogo
               await sellProvider.initAccount(
@@ -147,16 +136,21 @@ class _SellPageState extends State<SellPage> {
                     ),
                   ),
                   // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) && sellProvider.ticket.getProductsQuantity() != 0 || (isMobile(context) && sellProvider.ticketView))
+                  if (!isMobile(context) &&
+                          sellProvider.ticket.getProductsQuantity() != 0 ||
+                      (isMobile(context) && sellProvider.ticketView))
                     // drawerTicket : información del ticket
                     TicketDrawerWidget(
-                      showConfirmedPurchase: _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                      showConfirmedPurchase:
+                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
                       onEditCashAmount: () =>
                           dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
                       onConfirmSale: () =>
                           _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: () => sellProvider
-                          .setTicketView(false), // para cerrar el ticket
+                      onCloseTicket: _showConfirmedPurchase
+                          ? _onConfirmationComplete // Callback especial cuando está en modo confirmación
+                          : () => sellProvider.setTicketView(
+                              false), // para cerrar el ticket normalmente
                     ),
                 ],
               );
@@ -197,16 +191,20 @@ class _SellPageState extends State<SellPage> {
     final context = _focusNode.context;
     if (context == null) return;
 
-    final catalogueProvider = Provider.of<CatalogueProvider>(context, listen: false);
+    final catalogueProvider =
+        Provider.of<CatalogueProvider>(context, listen: false);
     final homeProvider = Provider.of<SellProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
-    if (product != null && product.id.isNotEmpty && product.description.isNotEmpty) {
+    if (product != null &&
+        product.id.isNotEmpty &&
+        product.description.isNotEmpty) {
       // - Si se encuentra el producto en el catálogo con datos válidos, agregarlo al ticket -
       homeProvider.addProductsticket(product.copyWith());
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
-      final publicProduct = await catalogueProvider.getPublicProductByCode(code);
+      final publicProduct =
+          await catalogueProvider.getPublicProductByCode(code);
 
       if (publicProduct != null) {
         // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
@@ -219,7 +217,7 @@ class _SellPageState extends State<SellPage> {
         // Si no se encuentra el producto, mostrar un diálogo de [producto no encontrado]
         if (mounted) {
           // ignore: use_build_context_synchronously
-         showAddProductDialog(context,
+          showAddProductDialog(context,
               isNew: true, product: ProductCatalogue(id: code, code: code));
         }
       }
@@ -281,7 +279,7 @@ class _SellPageState extends State<SellPage> {
               children: [
                 const Spacer(),
                 // button : cancelar
-                AppOutlinedButton(
+                ButtonApp.outlined(
                   text: 'Cancelar',
                   onPressed: () {
                     accionRealizada = true;
@@ -290,7 +288,7 @@ class _SellPageState extends State<SellPage> {
                 ),
                 const SizedBox(width: 12),
                 // button : Agregar producto
-                AppButton(
+                ButtonApp.primary(
                   text: 'Crear producto',
                   onPressed: () {
                     accionRealizada = true;
@@ -489,6 +487,7 @@ class _SellPageState extends State<SellPage> {
                         icon: isConnected
                             ? Icons.print_outlined
                             : Icons.print_disabled_outlined,
+                        
                         tooltip: isConnected
                             ? 'Impresora conectada y lista\nToca para configurar'
                             : 'Impresora no disponible\nToca para configurar conexión',
@@ -496,9 +495,7 @@ class _SellPageState extends State<SellPage> {
                         backgroundColor: isConnected
                             ? Colors.green.withValues(alpha: 0.1)
                             : null,
-                        colorAccent: isConnected
-                            ? Colors.green.shade700
-                            : null,
+                        colorAccent: isConnected ? Colors.green.shade700 : null,
                       );
                     },
                   ),
@@ -508,20 +505,20 @@ class _SellPageState extends State<SellPage> {
                     builder: (context, sellProvider, __) {
                       final hasLastTicket = sellProvider.lastSoldTicket != null;
                       return AppBarButtonCircle(
-                        icon: Icons.receipt_long_rounded,
-                        tooltip: hasLastTicket
-                            ? 'Ver último ticket\nToca para ver detalles y reimprimir'
-                            : 'No hay tickets recientes',
-                        onPressed: hasLastTicket
-                            ? () => _showLastTicketDialog(
-                                buildContext, sellProvider)
-                            : null,
-                        backgroundColor:Theme.of(buildContext)
-                                .colorScheme
-                                .primaryContainer
-                                .withValues(alpha: 0.4),
-                        colorAccent: Theme.of(buildContext).colorScheme.primary
-                      );
+                          icon: Icons.receipt_long_rounded, 
+                          tooltip: hasLastTicket
+                              ? 'Ver último ticket\nToca para ver detalles y reimprimir'
+                              : 'No hay tickets recientes',
+                          onPressed: hasLastTicket
+                              ? () => _showLastTicketDialog(
+                                  buildContext, sellProvider)
+                              : null,
+                          backgroundColor: Theme.of(buildContext)
+                              .colorScheme
+                              .primaryContainer
+                              .withValues(alpha: 0.4),
+                          colorAccent:
+                              Theme.of(buildContext).colorScheme.primary);
                     },
                   ),
 
@@ -533,8 +530,8 @@ class _SellPageState extends State<SellPage> {
                   (provider.ticket.getProductsQuantity() > 0)
                       ? AppBarButtonCircle(
                           icon: Icons.close,
-                          text: isMobile(buildContext) 
-                              ? null 
+                          text: isMobile(buildContext)
+                              ? null
                               : 'Descartar ticket',
                           tooltip: 'Descartar ticket',
                           onPressed: discartTicketAlertDialg,
@@ -613,7 +610,7 @@ class _SellPageState extends State<SellPage> {
                   const SizedBox(height: 8),
                   SizedBox(
                       width: double.infinity,
-                      child: AppButton(
+                      child: ButtonApp.primary(
                         text: 'Descargar App',
                         onPressed: () {
                           // Abre la URL de descarga de la app
@@ -639,303 +636,28 @@ class _SellPageState extends State<SellPage> {
           true; // para mostrar el mensaje de compra confirmada
     });
 
-    // Si el checkbox está activo, procesar la impresión/generación de tickets
-    if (provider.shouldPrintTicket) {
-      await _processSaveAndPrintTicket(provider);
-    } else {
-      await _processSimpleSaveSale(provider);
-    }
-  }
-
-  /// Procesa la venta con impresión de ticket
-  Future<void> _processSaveAndPrintTicket(SellProvider provider) async {
-    // Obtener el provider de caja registradora
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
-
-    // Si hay una caja activa, registrar la venta
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
-      provider.ticket.cashRegisterName = activeCashRegister.description;
-      provider.ticket.cashRegisterId = activeCashRegister.id;
-
-      await cashRegisterProvider.registerSale(
-        accountId: provider.profileAccountSelected.id,
-        saleAmount: provider.ticket.getTotalPrice,
-        discountAmount: provider.ticket.discount,
-        itemCount: provider.ticket.getProductsQuantity(),
-      );
-    }
-
-    // Verificar si hay impresora conectada
-    final printerService = ThermalPrinterHttpService();
-    await printerService.initialize();
-
-    if (printerService.isConnected) {
-      // Si hay impresora conectada, imprimir directamente el ticket real
-      try {
-        // Determinar método de pago primero
-        String paymentMethod = 'Efectivo';
-        switch (provider.ticket.payMode) {
-          case 'mercadopago':
-            paymentMethod = 'Mercado Pago';
-            break;
-          case 'card':
-            paymentMethod = 'Tarjeta Déb/Créd';
-            break;
-          default:
-            paymentMethod = 'Efectivo';
-        }
-
-        // Preparar datos del ticket
-        final products = provider.ticket.products.map((item) {
-          return {
-            'quantity': item.quantity.toString(),
-            'description': item.description,
-            'price': item.salePrice,
-          };
-        }).toList();
-
-        // Imprimir el ticket
-        final printSuccess = await printerService.printTicket(
-          businessName: provider.profileAccountSelected.name.isNotEmpty
-              ? provider.profileAccountSelected.name
-              : 'PUNTO DE VENTA',
-          products: products,
-          total: provider.ticket.getTotalPrice,
-          paymentMethod: paymentMethod,
-          cashReceived: provider.ticket.valueReceived > 0
-              ? provider.ticket.valueReceived
-              : null,
-          change: provider.ticket.valueReceived > provider.ticket.getTotalPrice
-              ? provider.ticket.valueReceived - provider.ticket.getTotalPrice
-              : null,
-        );
-
-        // Mostrar resultado
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(
-                    printSuccess ? Icons.check_circle : Icons.error,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      printSuccess
-                          ? 'Ticket impreso correctamente'
-                          : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: printSuccess ? Colors.green : Colors.red,
-              duration: const Duration(seconds: 3),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Error al procesar impresión: $e',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
-      }
-    } else {
-      // Si no hay impresora, mostrar diálogo de opciones
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      if (mounted) {
-        await showTicketOptionsDialog(
-          context: context,
-          ticket: provider.ticket,
-          businessName: provider.profileAccountSelected.name.isNotEmpty
-              ? provider.profileAccountSelected.name
-              : 'PUNTO DE VENTA',
-          onComplete: () {
-            // Este callback se ejecuta solo cuando se completa exitosamente
-          },
-        );
-      }
-    }
-
-    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
-
-    // Obtener información del usuario para asignar como vendedor
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userEmail = authProvider.user?.email ?? 'unknown@example.com';
-    final userName = authProvider.user?.displayName ?? 'Vendedor';
-
-    // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
-    await cashRegisterProvider.saveTicketToTransactionHistory(
-      accountId: provider.profileAccountSelected.id,
-      ticket: provider.ticket,
-      sellerName: userName,
-      sellerId: userEmail,
-    );
-
-    // ===== INCREMENTAR VENTAS DE PRODUCTOS EN EL CATÁLOGO =====
-    await _updateProductSalesAndStock(provider);
-
-    // Imprimir resultado del guardado
-    await _finalizeSale(provider);
-  }
-
-  /// === Procesa la venta simple sin impresión de ticket ===
-  Future<void> _processSimpleSaveSale(SellProvider provider) async {
-    // Obtener el provider de caja registradora
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
-
-    // Si hay una caja activa, registrar la venta en la caja
-    if (cashRegisterProvider.hasActiveCashRegister) {
-      // Obtener la caja activa y asignar los datos al ticket
-      final activeCashRegister =
-          cashRegisterProvider.currentActiveCashRegister!;
-      provider.ticket.cashRegisterName = activeCashRegister.description;
-      provider.ticket.cashRegisterId = activeCashRegister.id;
-      // Registrar la venta en la caja
-      await cashRegisterProvider.registerSale(
-        accountId: provider.profileAccountSelected.id,
-        saleAmount: provider.ticket.getTotalPrice,
-        discountAmount: provider.ticket.discount,
-        itemCount: provider.ticket.getProductsQuantity(),
-      );
-    }
-
-    // ===== GUARDAR EN HISTORIAL DE TRANSACCIONES (SIEMPRE) =====
-
-    // Obtener información del usuario para asignar como vendedor
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userEmail = authProvider.user?.email ?? 'unknown@example.com';
-    final userName = authProvider.user?.displayName ?? 'Vendedor';
-
-    // GUARDAR TRANSACCIÓN EN HISTORIAL SIEMPRE (con o sin caja activa)
-    await cashRegisterProvider.saveTicketToTransactionHistory(
-      accountId: provider.profileAccountSelected.id,
-      ticket: provider.ticket,
-      sellerName: userName,
-      sellerId: userEmail,
-    );
-
-    // ===== INCREMENTAR VENTAS DE PRODUCTOS EN EL CATÁLOGO =====
-    await _updateProductSalesAndStock(provider);
-
-    // Imprimir resultado del guardado
-    await _finalizeSale(provider);
-  }
-
-  /// Finaliza la venta guardando el último ticket y limpiando
-  Future<void> _finalizeSale(SellProvider provider) async {
-    // Guardar el último ticket vendido
-    await provider.saveLastSoldTicket();
-
-    // Limpiar ticket después del proceso
-    Future.delayed(const Duration(milliseconds: 1)).then((_) {
+    try {
+      // Usar el método unificado del provider
+      await provider.processSale(context);
+    } catch (e) {
+      // El error ya se maneja en el provider, solo necesitamos resetear el estado
       if (mounted) {
         setState(() {
           _showConfirmedPurchase = false;
         });
-        provider.discartTicket();
       }
-    });
+    }
   }
 
-  /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo
-  ///
-  /// Este método se ejecuta después de confirmar una venta para:
-  /// 1. Incrementar el contador de ventas de cada producto
-  /// 2. Decrementar el stock si el producto tiene habilitado el control de stock
-  Future<void> _updateProductSalesAndStock(SellProvider provider) async {
-    try {
-      // Obtener el provider del catálogo
-      final catalogueProvider =
-          Provider.of<CatalogueProvider>(context, listen: false);
-      final accountId = provider.profileAccountSelected.id;
-
-      // Procesar cada producto del ticket
-      for (final product in provider.ticket.products) {
-        if (product.code.isEmpty) {
-          // Si el producto no tiene código, saltar (productos de venta rápida)
-          continue;
-        }
-
-        try {
-          // Incrementar ventas del producto en el catálogo
-          await catalogueProvider.incrementProductSales(
-            accountId,
-            product.id,
-            quantity: product.quantity,
-          );
-
-          // Si el producto tiene control de stock habilitado, decrementar stock
-          if (product.stock && product.quantityStock > 0) {
-            await catalogueProvider.decrementProductStock(
-              accountId,
-              product.id,
-              product.quantity,
-            );
-          }
-        } catch (productError) {
-          // Si falla la actualización de un producto específico, continuar con los demás
-        }
-      }
-    } catch (e) {
-      // Registrar el error pero no fallar la venta
-
-      // Opcionalmente mostrar una notificación al usuario
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.warning, color: Colors.white),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Venta registrada correctamente. Hay un problema menor con la actualización de estadísticas.',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
+  /// Callback que se ejecuta cuando la animación de confirmación se completa
+  void _onConfirmationComplete() {
+    if (mounted) {
+      setState(() {
+        _showConfirmedPurchase = false;
+      });
+      final provider = Provider.of<SellProvider>(context, listen: false);
+      provider.discartTicket();
+      provider.setTicketView(false);
     }
   }
 
@@ -943,26 +665,26 @@ class _SellPageState extends State<SellPage> {
   Widget floatingActionButtonBody({required SellProvider sellProvider}) {
     return Row(
       children: [
-        AppFloatingActionButton(
+        ButtonApp.fab(
           heroTag: "quick_sale_fab", // Hero tag único
-          onTap: () => showQuickSaleDialog(context, provider: sellProvider),
+          onPressed: () => showQuickSaleDialog(context, provider: sellProvider),
           icon: Icons.flash_on_rounded,
-          buttonColor: Colors.amber,
+          backgroundColor: Colors.amber,
         ).animate(delay: const Duration(milliseconds: 0)).fade(),
         const SizedBox(width: 8),
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
-            ? AppFloatingActionButton(
+            ? ButtonApp.fab(
                 heroTag: "charge_fab", // Hero tag único
-                onTap: () {
+                onPressed: () {
                   if (sellProvider.ticket.getTotalPrice == 0) {
                     return;
                   }
                   sellProvider.setTicketView(true);
                 },
                 text:
-                    'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : Publications.getFormatoPrecio(value: sellProvider.ticket.getTotalPrice)}',
-                buttonColor:
+                    'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : CurrencyFormatter.formatPrice(value: sellProvider.ticket.getTotalPrice)}',
+                backgroundColor:
                     sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
                 extended: true,
               )
@@ -1001,7 +723,8 @@ class _SellPageState extends State<SellPage> {
             crossAxisCount = 6; // Ancho para pantallas grandes
           }
           // Usar los productos seleccionados del ticket
-          final List<ProductCatalogue> list = provider.ticket.products.toList().reversed.toList();
+          final List<ProductCatalogue> list =
+              provider.ticket.products.toList().reversed.toList();
           // Calcular cuántas filas caben en la vista
           final double itemHeight = (constraints.maxWidth / crossAxisCount) *
               1.1; // Ajusta el factor según el aspecto de los ítems
@@ -1225,7 +948,7 @@ class _SellPageState extends State<SellPage> {
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                           label: Text(
-                            Publications.getFormatoPrecio(
+                            CurrencyFormatter.formatPrice(
                                 value: amount.toDouble()),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w500,
@@ -1256,7 +979,7 @@ class _SellPageState extends State<SellPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total:', style: theme.textTheme.bodyLarge),
-                      Text(Publications.getFormatoPrecio(value: total),
+                      Text(CurrencyFormatter.formatPrice(value: total),
                           style: theme.textTheme.bodyLarge
                               ?.copyWith(fontWeight: FontWeight.bold)),
                     ],
@@ -1285,7 +1008,7 @@ class _SellPageState extends State<SellPage> {
                             fontWeight: FontWeight.bold,
                           ),
                           child: Text(
-                              Publications.getFormatoPrecio(
+                              CurrencyFormatter.formatPrice(
                                   value: vuelto < 0 ? 0 : vuelto),
                               style: theme.textTheme.bodyLarge?.copyWith(
                                   fontWeight: FontWeight.bold, fontSize: 24)),
@@ -1490,7 +1213,7 @@ class _SellPageState extends State<SellPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                Publications.getFormatoPrecio(value: product.salePrice),
+                CurrencyFormatter.formatPrice(value: product.salePrice),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.primary,
@@ -1618,7 +1341,7 @@ class _ProductoItemState extends State<ProductoItem> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            Publications.getFormatoPrecio(value: widget.producto.salePrice),
+            CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 22, // Precio más grande
@@ -1681,7 +1404,7 @@ class _ProductoItemState extends State<ProductoItem> {
                         overflow: TextOverflow.ellipsis),
                     maxLines: 1),
                 Text(
-                    Publications.getFormatoPrecio(
+                    CurrencyFormatter.formatPrice(
                         value: widget.producto.salePrice),
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -1795,15 +1518,19 @@ void _showPrinterConfigDialog(BuildContext context) {
 
 /// Muestra el diálogo del último ticket vendido
 void _showLastTicketDialog(BuildContext context, SellProvider provider) {
-  if (provider.lastSoldTicket == null) return;
+  if (provider.lastSoldTicket == null) return; // No hay ticket para mostrar
+  final ticket = provider.lastSoldTicket!;
 
   showLastTicketDialog(
-    context: context,
-    ticket: provider.lastSoldTicket!,
-    businessName: provider.profileAccountSelected.name.isNotEmpty
-        ? provider.profileAccountSelected.name
-        : 'PUNTO DE VENTA',
-  );
+      context: context,
+      ticket: ticket,
+      title: 'Último ticket',
+      businessName: provider.profileAccountSelected.name.isNotEmpty
+          ? provider.profileAccountSelected.name
+          : 'PUNTO DE VENTA',
+      onTicketAnnulled: () async {
+        await provider.annullLastSoldTicket(context: context, ticket: ticket);
+      });
 }
 
 /// --- Widget --- que muestra un botón para ver el estado de la caja registradora.
@@ -1900,7 +1627,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               ),
               const SizedBox(height: 4),
               Text(
-                Publications.getFormatoPrecio(value: balance),
+                CurrencyFormatter.formatPrice(value: balance),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.primary,
@@ -2065,28 +1792,72 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;
+        final int salesCount = provider.currentActiveCashRegister?.sales ?? 0;
 
         // button : boton con el estado de la caja registradora
-        return AppBarButtonCircle(
-          isLoading: _isInitializing,
-          icon: Icons.point_of_sale_outlined,
-          tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
-          onPressed: () {
-            // Si no hay caja activa, abrir directamente el administrador de caja
-            if (!isActive) {
-              _showCashRegisterManagementDialog(context);
-            } else {
-              // Si hay caja activa, mostrar el popup menu
-              _showStatusDialog(context);
-            }
-          },
-          backgroundColor: isActive
-              ? Colors.green.withValues(alpha: 0.1)
-              : null,
-          colorAccent: isActive ? Colors.green.shade700 : null,
-          text: isMobile(context) 
-              ? null 
-              : (isActive ? 'Caja abierta' : 'Abrir caja'),
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AppBarButtonCircle(
+              isLoading: _isInitializing,
+              icon: Icons.point_of_sale_outlined,
+              tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
+              onPressed: () {
+                // Si no hay caja activa, abrir directamente el administrador de caja
+                if (!isActive) {
+                  _showCashRegisterManagementDialog(context);
+                } else {
+                  // Si hay caja activa, mostrar el diálogo de estado
+                  isMobile(context)
+                      ? _showStatusDialog(context)
+                      : _showCashRegisterManagementDialog(context);
+                }
+              },
+              backgroundColor:
+                  isActive ? Colors.green.withValues(alpha: 0.1) : null,
+              colorAccent: isActive ? Colors.green.shade700 : null,
+              text: isMobile(context)
+                  ? null
+                  : (isActive ? 'Caja abierta' : 'Abrir caja'),
+            ),
+            // contador : burbuja circular roja con contador de ventas
+            if (isActive && salesCount > 0)
+              Positioned(
+                right: -1,
+                top: -5,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: salesCount > 99 ? 6 : 4,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade600.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      salesCount > 999 ? '999+' : salesCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        height: 1.0,
+                        letterSpacing: 0.0,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );

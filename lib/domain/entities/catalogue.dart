@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../core/utils/fuctions.dart';
+import '../../core/core.dart';
 
 class Product {
   String id = ""; // ID del producto / código del producto
@@ -197,7 +197,7 @@ class ProductCatalogue {
   int followers = 0; // seguidores
 
   // variables del catalogo de la cuenta
-  bool local = false; //
+  bool local = false;
   Timestamp creation = Timestamp
       .now(); // Marca de tiempo ( hora en que se creo el documento en el catalogo de la cuenta  )
   Timestamp upgrade = Timestamp
@@ -712,7 +712,7 @@ class ProductCatalogue {
     if (salePrice != 0.0 && purchasePrice != 0.0) {
       ganancia = salePrice - purchasePrice;
 
-      final String value = Publications.getFormatoPrecio(value: ganancia);
+      final String value = CurrencyFormatter.formatPrice(value: ganancia);
       return value;
     }
     return '';

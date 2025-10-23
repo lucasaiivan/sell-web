@@ -4,10 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:sellweb/core/utils/responsive.dart';
-import 'package:sellweb/core/widgets/buttons/buttons.dart';
-import 'package:sellweb/core/widgets/feedback/auth_feedback_widget.dart';
+import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
+import 'package:sellweb/presentation/widgets/feedback/auth_feedback_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/helpers/responsive_helper.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends StatelessWidget {
@@ -254,43 +254,47 @@ class _LoginFormState extends State<_LoginForm> {
                 ),
                 const SizedBox(height: 12),
                 // ElevatedButton : Iniciar sesión con Google
-                AppButton(
+                SizedBox(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  backgroundColor: Colors.blue.shade700,
-                  text: "CONTINUAR CON GOOGLE",
-                  icon: const Icon(Icons.login_rounded, size: 20),
-                  isLoading: widget.authProvider.isSigningInWithGoogle,
-                  onPressed: (_acceptPolicy &&
-                          !widget.authProvider.isSigningInWithGoogle &&
-                          !widget.authProvider.isSigningInAsGuest)
-                      ? () async {
-                          await widget.authProvider.signInWithGoogle();
-                        }
-                      : null,
+                  child: ButtonApp(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
+                    backgroundColor: Colors.blue.shade700,
+                    text: "CONTINUAR CON GOOGLE",
+                    icon: const Icon(Icons.login_rounded, size: 20),
+                    isLoading: widget.authProvider.isSigningInWithGoogle,
+                    onPressed: (_acceptPolicy &&
+                            !widget.authProvider.isSigningInWithGoogle &&
+                            !widget.authProvider.isSigningInAsGuest)
+                        ? () async {
+                            await widget.authProvider.signInWithGoogle();
+                          }
+                        : null,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 // ElevatedButton : Iniciar como invitado
-                AppButton(
+                SizedBox(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
-                  backgroundColor: Colors.blueGrey,
-                  text: "CONTINUAR COMO INVITADO",
-                  isLoading: widget.authProvider.isSigningInAsGuest,
-                  onPressed: (!widget.authProvider.isSigningInWithGoogle &&
-                          !widget.authProvider.isSigningInAsGuest)
-                      ? () async {
-                          await widget.authProvider.signInAsGuest();
-                        }
-                      : null,
+                  child: ButtonApp(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
+                    icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
+                    backgroundColor: Colors.blueGrey,
+                    text: "CONTINUAR COMO INVITADO",
+                    isLoading: widget.authProvider.isSigningInAsGuest,
+                    onPressed: (!widget.authProvider.isSigningInWithGoogle &&
+                            !widget.authProvider.isSigningInAsGuest)
+                        ? () async {
+                            await widget.authProvider.signInAsGuest();
+                          }
+                        : null,
+                  ),
                 ),
               ],
             );
           }
-          
+
           // Estado por defecto - no debería llegar aquí
           return const SizedBox.shrink();
         },

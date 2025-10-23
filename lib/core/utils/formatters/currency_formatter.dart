@@ -1,143 +1,61 @@
 import 'package:intl/intl.dart';
-import '../../../core/constants/app_constants.dart';
 
-/// Utilidades para formateo de valores monetarios
+/// Utilidades para formatear valores monetarios
 class CurrencyFormatter {
-  static NumberFormat? _currencyFormatter;
-  static NumberFormat? _simplifiedFormatter;
-
-  /// Formateador de moneda estándar (lazy initialization)
-  static NumberFormat get _standardFormatter {
-    return _currencyFormatter ??= NumberFormat.currency(
-      locale: AppConstants.defaultLocale,
-      symbol: AppConstants.defaultCurrency,
-      decimalDigits: AppConstants.defaultDecimalPlaces,
-    );
-  }
-
-  /// Formateador para valores simplificados hjj
-  static NumberFormat get _compactFormatter {
-    return _simplifiedFormatter ??= NumberFormat.compact(
-      locale: AppConstants.defaultLocale,
-    );
-  }
-
-  /// Formatea un valor monetario según la configuración regional.
+  /// Obtiene un double y devuelve un monto formateado
   ///
-  /// [value] El valor numérico a formatear
-  /// [symbol] El símbolo de moneda (por defecto '\$')
-  /// [simplified] Si debe usar notación abreviada (K, M)
-  /// 
-  /// Retorna el valor formateado como String.
-  /// 
-  /// Ejemplo:
-  /// ```dart
-  /// formatCurrency(1234.56) // "\$1,234.56"
-  /// formatCurrency(15000, simplified: true) // "\$15K"
-  /// ```
-  static String formatCurrency({
+  /// [moneda] - Símbolo de moneda (por defecto "$")
+  /// [value] - Valor a formatear
+  /// [simplified] - Si true, usa abreviaciones K y M para números grandes
+  static String formatPrice({
+    String moneda = "\$",
     required double value,
-    String? symbol,
     bool simplified = false,
   }) {
-    final currencySymbol = symbol ?? AppConstants.defaultCurrency;
+    // cantidad de decimales
+    int decimalDigits = (value % 1) == 0 ? 0 : 2;
 
-    // Determinar cantidad de decimales basado en si el valor es entero
-    int decimalDigits = (value % 1) == 0 ? 0 : AppConstants.defaultDecimalPlaces;
+    // formater : formato de moneda
+    var formatter = NumberFormat.currency(
+      locale: 'es_AR',
+      name: moneda,
+      customPattern:
+          value >= 0 ? '\u00a4###,###,##0.0' : '-\u00a4###,###,##0.0',
+      decimalDigits: decimalDigits,
+    );
 
     if (simplified) {
-      return _formatSimplifiedCurrency(value, currencySymbol);
+      return _formatSimplified(value, formatter);
     }
 
-    // Crear formateador personalizado si se necesita símbolo específico
-    if (symbol != null && symbol != AppConstants.defaultCurrency) {
-      final customFormatter = NumberFormat.currency(
-        locale: AppConstants.defaultLocale,
-        symbol: currencySymbol,
-        decimalDigits: decimalDigits,
-      );
-      return customFormatter.format(value);
-    }
-
-    // Usar formateador estándar
-    return _standardFormatter.format(value);
+    return formatter.format(value.abs());
   }
 
-  /// Formatea un número entero a una cadena con abreviaturas 'K' y 'M'.
+  /// Formatea un número entero con abreviaciones 'K' y 'M'
   ///
   /// Si el número es menor que 10,000, se devuelve como está.
   /// Si el número es 10,000 o más, pero menos que 1,000,000, se divide por 1,000 y se agrega 'K'.
   /// Si el número es 1,000,000 o más, se divide por 1,000,000 y se agrega 'M'.
-  static String _formatSimplifiedCurrency(double value, String symbol) {
+  static String formatAmount({required int value}) {
+    final formatCurrency = NumberFormat('#,##0');
+
     if (value < 10000) {
-      // Para números menores a 10K, formato estándar
-      return formatCurrency(value: value, symbol: symbol, simplified: false);
+      return formatCurrency.format(value);
     } else if (value < 1000000) {
-      // Para números entre 10K y 1M, usar 'K'
-      double simplified = value / 1000;
-      String formattedValue = simplified.toStringAsFixed(
-        simplified % 1 == 0 ? 0 : 1,
-      );
-      return '$symbol${formattedValue}K';
+      return '${formatCurrency.format(value / 1000)}K';
     } else {
-      // Para números 1M o más, usar 'M'
-      double simplified = value / 1000000;
-      String formattedValue = simplified.toStringAsFixed(
-        simplified % 1 == 0 ? 0 : 1,
-      );
-      return '$symbol${formattedValue}M';
+      return '${formatCurrency.format(value / 1000000)}M';
     }
   }
 
-  /// Formatea un porcentaje con el símbolo %
-  ///
-  /// [value] Valor entre 0 y 1 (ej: 0.15 para 15%)
-  /// [decimalPlaces] Cantidad de decimales a mostrar
-  ///
-  /// Ejemplo:
-  /// ```dart
-  /// formatPercentage(0.15) // "15%"
-  /// formatPercentage(0.1234, decimalPlaces: 2) // "12.34%"
-  /// ```
-  static String formatPercentage(double value, {int decimalPlaces = 0}) {
-    final percentage = value * 100;
-    return '${percentage.toStringAsFixed(decimalPlaces)}%';
-  }
-
-  /// Convierte un string formateado de vuelta a double
-  ///
-  /// [formattedValue] String con formato de moneda (ej: "\$1,234.56")
-  ///
-  /// Retorna el valor numérico o null si no es válido
-  static double? parseCurrency(String formattedValue) {
-    try {
-      // Remover símbolos de moneda y separadores
-      String cleaned = formattedValue
-          .replaceAll(RegExp(r'[^\d.,]'), '')
-          .replaceAll(',', '');
-      
-      return double.tryParse(cleaned);
-    } catch (e) {
-      return null;
+  /// Formatea valores grandes con abreviaciones
+  static String _formatSimplified(double value, NumberFormat formatter) {
+    if (value < 10000) {
+      return formatter.format(value);
+    } else if (value < 1000000) {
+      return '${formatter.format(value / 1000)}K';
+    } else {
+      return '${formatter.format(value / 1000000)}M';
     }
-  }
-
-  /// Valida si un string representa un valor monetario válido
-  static bool isValidCurrency(String value) {
-    return AppConstants.priceRegex.hasMatch(value);
-  }
-
-  /// Formatea un valor para input de usuario (sin símbolo de moneda)
-  ///
-  /// Útil para campos de entrada donde el usuario ingresa solo números
-  static String formatForInput(double value) {
-    int decimalDigits = (value % 1) == 0 ? 0 : AppConstants.defaultDecimalPlaces;
-    return value.toStringAsFixed(decimalDigits);
-  }
-
-  /// Resetea los formatters (útil para tests o cambios de configuración)
-  static void reset() {
-    _currencyFormatter = null;
-    _simplifiedFormatter = null;
   }
 }

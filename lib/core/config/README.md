@@ -1,23 +1,13 @@
-# 🔧 Config - Configuraciones de la Aplicación
+## Descripción
+Configuraciones centralizadas de la aplicación incluyendo configuraciones de Firebase, OAuth y variables generales.
 
-El directorio `config` contiene todas las **configuraciones centralizadas** de la aplicación, incluyendo configuraciones de servicios externos, credenciales y parámetros de inicialización.
-
-## 🎯 Propósito
-
-Centralizar todas las configuraciones de la aplicación siguiendo el principio de **Single Source of Truth** y facilitando el mantenimiento y despliegue en diferentes entornos.
-
-## 📁 Archivos y Responsabilidades
-
-### `app_config.dart`
-**Configuraciones generales de la aplicación**
-- Variables de entorno
-- Configuraciones por ambiente (dev, staging, prod)
-- Feature flags
-- Configuraciones globales de UI/UX
-
-```dart
-class AppConfig {
-  static const String environment = String.fromEnvironment('ENV', defaultValue: 'dev');
+## Contenido
+```
+config/
+├── app_config.dart - Configuración general de la aplicación
+├── firebase_options.dart - Configuración de Firebase para diferentes plataformas
+└── oauth_config.dart - Configuración de autenticación OAuth
+```
   static const bool enableDebugFeatures = true;
   static const String appTitle = 'Sell Web';
 }

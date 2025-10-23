@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 
@@ -13,9 +15,8 @@ class TicketModel {
   double priceTotal = 0.0; // precio total de la venta
   double valueReceived = 0.0; // valor recibido por la venta
   double discount =
-      0.0; // descuento aplicado: valor original ingresado (porcentaje o monto)
-  String currencySymbol = '\$';
-
+      0.0; // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
+  String currencySymbol = '\$'; // simbolo de la moneda utilizada en la venta
   /// Información del descuento aplicado
   bool discountIsPercentage =
       false; // true si el descuento es porcentual, false si es monto fijo
@@ -28,6 +29,10 @@ class TicketModel {
   /// - 'exchange': Cambio de producto
   /// - 'adjustment': Ajuste de inventario
   String transactionType = 'sale';
+
+  /// Indica si el ticket ha sido anulado
+  /// true si el ticket está anulado, false si está activo
+  bool annulled = false;
 
   /// Lista de productos en el ticket almacenados como mapas de ProductCatalogue
   /// Almacena directamente los datos completos del producto del catálogo
@@ -49,6 +54,7 @@ class TicketModel {
     this.discount = 0.0,
     this.discountIsPercentage = false,
     this.transactionType = "sale",
+    this.annulled = false,
     required List<Map<String, dynamic>> listPoduct,
     required this.creation,
   }) : _listPoduct = listPoduct;
@@ -140,7 +146,8 @@ class TicketModel {
 
   /// Getter de solo lectura para acceso controlado a la lista interna
   /// Solo para depuración y casos especiales - NO modificar directamente
-  List<Map<String, dynamic>> get internalProductList => List.unmodifiable(_listPoduct);
+  List<Map<String, dynamic>> get internalProductList =>
+      List.unmodifiable(_listPoduct);
 
   /// Valida que todos los elementos en _listPoduct tengan la estructura de ProductCatalogue
   bool _validateInternalProductStructure() {
@@ -166,10 +173,8 @@ class TicketModel {
     return true;
   }
 
-
-
   // ==========================================
-  // MÉTODOS EXISTENTES
+  // MÉTODOS ADICIONALES DE CONVENIENCIA
   // ==========================================
 
   int getProductsQuantity() {
@@ -180,7 +185,14 @@ class TicketModel {
     return count;
   }
 
-  // format : formateo de texto
+  // get style : obtiene el color asociado al medio de pago
+  Color get getPayModeColor {
+    if (payMode == 'effective') return const Color(0xFF4CAF50); // Verde
+    if (payMode == 'mercadopago') return const Color(0xFF3B5998); // Azul
+    if (payMode == 'card') return const Color(0xFFFFC107); // Amarillo
+    return const Color(0xFF9E9E9E); // Gris para sin especificar
+  }
+  //  get : obtiene el nombre del medio de pago en formato legible
   String get getNamePayMode {
     if (payMode == 'effective') return 'Efectivo';
     if (payMode == 'mercadopago') return 'Mercado Pago';
@@ -188,11 +200,97 @@ class TicketModel {
     return 'Sin Especificar';
   }
 
+  // get : recibe un id de medio de pago y devuelve su nombre en formato legible
   static String getFormatPayMode({required String id}) {
     if (id == 'effective') return 'Efectivo';
     if (id == 'mercadopago') return 'Mercado Pago';
     if (id == 'card') return 'Tarjeta De Crédito/Débito';
     return 'Sin Especificar';
+  }
+
+  /// Analiza una lista de tickets y devuelve los medios de pago ordenados por uso
+  ///
+  /// Retorna una lista ordenada de mayor a menor uso con la siguiente estructura:
+  /// ```dart
+  /// [
+  ///   {
+  ///     'description': 'Efectivo',      // Nombre del medio de pago
+  ///     'amount': 15000.50,             // Monto total vendido con este medio
+  ///     'percentage': 45.5,             // Porcentaje del total de ventas
+  ///     'count': 120                    // Cantidad de tickets con este medio
+  ///   },
+  ///   ...
+  /// ]
+  /// ```
+  ///
+  /// [tickets] - Lista de tickets a analizar
+  /// [includeAnnulled] - Si es true, incluye tickets anulados en el análisis (por defecto: false)
+  static List<Map<String, dynamic>> getPaymentMethodsRanking({
+    required List<TicketModel> tickets,
+    bool includeAnnulled = false, // por defecto no incluir anulados
+  }) {
+    // Filtrar tickets anulados si corresponde
+    final validTickets = includeAnnulled
+        ? tickets
+        : tickets.where((ticket) => !ticket.annulled).toList();
+
+    if (validTickets.isEmpty) {
+      return [];
+    }
+
+    // Agrupar por medio de pago (usando mapa dinámico para incluir no registrados)
+    final Map<String, Map<String, dynamic>> paymentStats = {};
+
+    double totalAmount = 0.0;
+
+    // Acumular estadísticas
+    for (var ticket in validTickets) {
+      final payMode = ticket.payMode;
+      final amount = ticket.getTotalPrice;
+
+      // Si el medio de pago no existe en el mapa, inicializarlo
+      if (!paymentStats.containsKey(payMode)) {
+        paymentStats[payMode] = {
+          'description': getFormatPayMode(id: payMode),
+          'amount': 0.0,
+          'count': 0,
+        };
+      }
+
+      // Acumular datos
+      paymentStats[payMode]!['amount'] =
+          (paymentStats[payMode]!['amount'] as double) + amount;
+      paymentStats[payMode]!['count'] =
+          (paymentStats[payMode]!['count'] as int) + 1;
+      totalAmount += amount;
+    }
+
+    // Convertir a lista y calcular porcentajes
+    final List<Map<String, dynamic>> result = [];
+
+    paymentStats.forEach((key, stats) {
+      final amount = stats['amount'] as double;
+      final count = stats['count'] as int;
+
+      // Solo incluir medios de pago que se han utilizado
+      if (count > 0) {
+        final percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0.0;
+
+        result.add({
+          'description': stats['description'],
+          'amount': amount,
+          'percentage': double.parse(percentage.toStringAsFixed(2)),
+          'count': count,
+        });
+      }
+    });
+
+    // Ordenar por monto (de mayor a menor)
+    result.sort(
+        (a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+
+    // devuelve la lista de métodos de pago ordenados
+    return result;
   }
 
   // Map : serializa el objeto a un mapa con tipo de datos primitivos
@@ -209,6 +307,7 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
+        "annulled": annulled,
         // Usar directamente los mapas de ProductCatalogue almacenados
         "listPoduct": _listPoduct,
         "creation": creation,
@@ -228,6 +327,7 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
+        "annulled": annulled,
         // Usar directamente el _listPoduct (que contiene mapas de ProductCatalogue)
         "listPoduct": _listPoduct,
         "creation": creation,
@@ -247,29 +347,89 @@ class TicketModel {
         "discountIsPercentage": discountIsPercentage,
         "discount": discount,
         "transactionType": transactionType,
+        "annulled": annulled,
         // Serializar productos con Timestamp convertidos a milliseconds para SharedPreferences
         "listPoduct": _listPoduct.map((productMap) {
-          Map<String, dynamic> serializedProduct = Map<String, dynamic>.from(productMap);
-          
+          Map<String, dynamic> serializedProduct =
+              Map<String, dynamic>.from(productMap);
+
           // Convertir campos Timestamp a milliseconds para JSON
           if (serializedProduct['creation'] is Timestamp) {
-            serializedProduct['creation'] = (serializedProduct['creation'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['creation'] =
+                (serializedProduct['creation'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
           if (serializedProduct['upgrade'] is Timestamp) {
-            serializedProduct['upgrade'] = (serializedProduct['upgrade'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['upgrade'] =
+                (serializedProduct['upgrade'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
           if (serializedProduct['documentCreation'] is Timestamp) {
-            serializedProduct['documentCreation'] = (serializedProduct['documentCreation'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['documentCreation'] =
+                (serializedProduct['documentCreation'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
           if (serializedProduct['documentUpgrade'] is Timestamp) {
-            serializedProduct['documentUpgrade'] = (serializedProduct['documentUpgrade'] as Timestamp).millisecondsSinceEpoch;
+            serializedProduct['documentUpgrade'] =
+                (serializedProduct['documentUpgrade'] as Timestamp)
+                    .millisecondsSinceEpoch;
           }
-          
+
           return serializedProduct;
         }).toList(),
         // Serializamos creation como int (milisegundos desde época)
         "creation": creation.millisecondsSinceEpoch,
       };
+
+  /// Factory constructor para crear un TicketModel desde un Map (principalmente para Firestore)
+  factory TicketModel.fromMap(Map<String, dynamic> data) {
+    // Manejo robusto de la marca de tiempo para soportar Timestamp o int (milisegundos)
+    Timestamp creationTimestamp;
+    if (data.containsKey('creation')) {
+      if (data['creation'] is Timestamp) {
+        creationTimestamp = data['creation'];
+      } else if (data['creation'] is int) {
+        creationTimestamp =
+            Timestamp.fromMillisecondsSinceEpoch(data['creation']);
+      } else {
+        creationTimestamp = Timestamp.now();
+      }
+    } else {
+      creationTimestamp = Timestamp.now();
+    }
+
+    // Procesar la lista de productos
+    List<Map<String, dynamic>> processedProducts = [];
+    if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
+      final productList = data['listPoduct'] as List;
+      processedProducts = productList.map((item) {
+        Map<String, dynamic> productMap = item is Map<String, dynamic>
+            ? Map<String, dynamic>.from(item)
+            : Map<String, dynamic>.from(item as Map);
+        return productMap;
+      }).toList();
+    }
+
+    return TicketModel(
+      id: data['id'] ?? '',
+      payMode: data['payMode'] ?? '',
+      sellerName: data['sellerName'] ?? '',
+      sellerId: data['sellerId'] ?? '',
+      currencySymbol: data['currencySymbol'] ?? '\$',
+      cashRegisterName: data['cashRegisterName'] ??
+          data['cashRegister'] ??
+          '', // Soporte para ambos nombres de campo
+      cashRegisterId: data['cashRegisterId'] ?? '',
+      priceTotal: (data['priceTotal'] ?? 0.0).toDouble(),
+      valueReceived: (data['valueReceived'] ?? 0.0).toDouble(),
+      discount: (data['discount'] ?? 0.0).toDouble(),
+      discountIsPercentage: data['discountIsPercentage'] ?? false,
+      transactionType: data['transactionType'] ?? 'sale',
+      annulled: data['annulled'] ?? false,
+      listPoduct: processedProducts,
+      creation: creationTimestamp,
+    );
+  }
 
   factory TicketModel.sahredPreferencefromMap(Map<dynamic, dynamic> data) {
     // Manejo robusto de la marca de tiempo para soportar int (milisegundos) o Timestamp obtenido de shared preferences
@@ -292,24 +452,28 @@ class TicketModel {
     if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
       final productList = data['listPoduct'] as List;
       processedProducts = productList.map((item) {
-        Map<String, dynamic> productMap = item is Map<String, dynamic> 
-            ? Map<String, dynamic>.from(item) 
+        Map<String, dynamic> productMap = item is Map<String, dynamic>
+            ? Map<String, dynamic>.from(item)
             : Map<String, dynamic>.from(item as Map);
-        
+
         // Convertir campos de milliseconds de vuelta a Timestamp
         if (productMap['creation'] is int) {
-          productMap['creation'] = Timestamp.fromMillisecondsSinceEpoch(productMap['creation']);
+          productMap['creation'] =
+              Timestamp.fromMillisecondsSinceEpoch(productMap['creation']);
         }
         if (productMap['upgrade'] is int) {
-          productMap['upgrade'] = Timestamp.fromMillisecondsSinceEpoch(productMap['upgrade']);
+          productMap['upgrade'] =
+              Timestamp.fromMillisecondsSinceEpoch(productMap['upgrade']);
         }
         if (productMap['documentCreation'] is int) {
-          productMap['documentCreation'] = Timestamp.fromMillisecondsSinceEpoch(productMap['documentCreation']);
+          productMap['documentCreation'] = Timestamp.fromMillisecondsSinceEpoch(
+              productMap['documentCreation']);
         }
         if (productMap['documentUpgrade'] is int) {
-          productMap['documentUpgrade'] = Timestamp.fromMillisecondsSinceEpoch(productMap['documentUpgrade']);
+          productMap['documentUpgrade'] = Timestamp.fromMillisecondsSinceEpoch(
+              productMap['documentUpgrade']);
         }
-        
+
         return productMap;
       }).toList();
     }
@@ -340,8 +504,47 @@ class TicketModel {
       transactionType: data.containsKey('transactionType')
           ? data['transactionType'] as String
           : 'sale',
+      annulled: data.containsKey('annulled')
+          ? (data['annulled'] ?? false) as bool
+          : false,
       listPoduct: processedProducts,
       creation: creationTimestamp,
+    );
+  }
+  // copyWith : crea una copia del ticket con modificaciones opcionales
+  TicketModel copyWith({
+    String? id,
+    String? payMode,
+    String? currencySymbol,
+    String? sellerName,
+    String? sellerId,
+    String? cashRegisterName,
+    String? cashRegisterId,
+    double? priceTotal,
+    double? valueReceived,
+    double? discount,
+    bool? discountIsPercentage,
+    String? transactionType,
+    bool? annulled,
+    List<Map<String, dynamic>>? listPoduct,
+    Timestamp? creation,
+  }) {
+    return TicketModel(
+      id: id ?? this.id,
+      payMode: payMode ?? this.payMode,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
+      sellerName: sellerName ?? this.sellerName,
+      sellerId: sellerId ?? this.sellerId,
+      cashRegisterName: cashRegisterName ?? this.cashRegisterName,
+      cashRegisterId: cashRegisterId ?? this.cashRegisterId,
+      priceTotal: priceTotal ?? this.priceTotal,
+      valueReceived: valueReceived ?? this.valueReceived,
+      discount: discount ?? this.discount,
+      discountIsPercentage: discountIsPercentage ?? this.discountIsPercentage,
+      transactionType: transactionType ?? this.transactionType,
+      annulled: annulled ?? this.annulled,
+      listPoduct: listPoduct ?? _listPoduct,
+      creation: creation ?? this.creation,
     );
   }
 
@@ -357,9 +560,13 @@ class TicketModel {
     String cashRegisterId = "",
     double priceTotal = 0.0,
     double valueReceived = 0.0,
-    double discount = 0.0,
-    bool discountIsPercentage = false,
-    String transactionType = "sale",
+    double discount =
+        0.0, // descuento aplicado: valor original ingresado (porcentaje o monto) segun [discountIsPercentage]
+    bool discountIsPercentage =
+        false, // true si el descuento es porcentual, false si es monto fijo
+    String transactionType =
+        "sale", // tipo de transacción que representa este ticket
+    bool annulled = false,
     Timestamp? creation,
   }) {
     final ticket = TicketModel(
@@ -375,6 +582,7 @@ class TicketModel {
       discount: discount,
       discountIsPercentage: discountIsPercentage,
       transactionType: transactionType,
+      annulled: annulled,
       listPoduct: [],
       creation: creation ?? Timestamp.now(),
     );
@@ -389,8 +597,8 @@ class TicketModel {
 
     return ticket;
   }
-  TicketModel.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
-
+  TicketModel.fromDocumentSnapshot(
+      {required DocumentSnapshot documentSnapshot}) {
     Map data = documentSnapshot.data() as Map;
     id = data['id'] ?? '';
     payMode = data['payMode'] ?? '';
@@ -404,12 +612,12 @@ class TicketModel {
     discountIsPercentage = data['discountIsPercentage'] ?? false;
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
-    _listPoduct = data['listPoduct'] != null 
-        ? List<Map<String, dynamic>>.from(
-            (data['listPoduct'] as List).map((item) => 
-              item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map)
-            )
-          )
+    annulled = data['annulled'] ?? false;
+    _listPoduct = data['listPoduct'] != null
+        ? List<Map<String, dynamic>>.from((data['listPoduct'] as List).map(
+            (item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map)))
         : [];
     creation = data['creation'];
   }
@@ -629,25 +837,27 @@ class TicketModel {
       issues.add('Estructura interna de productos inconsistente');
     }
 
-    // Validar que el precio total coincida con el calculado
-    if ((priceTotal - calculatedPrice).abs() > 0.01) {
+    // Validar que el precio total coincida con el calculado (solo si no está anulado)
+    if (!annulled && (priceTotal - calculatedPrice).abs() > 0.01) {
       issues.add(
           'Precio total inconsistente: $priceTotal vs calculado: $calculatedPrice');
     }
 
-    // Validar que hay productos
-    if (_listPoduct.isEmpty) {
+    // Validar que hay productos (solo si no está anulado)
+    if (!annulled && _listPoduct.isEmpty) {
       issues.add('El ticket no tiene productos');
     }
 
-    // Validar productos individuales
-    for (var i = 0; i < _listPoduct.length; i++) {
-      final product = _listPoduct[i];
-      if (product['quantity'] == null || product['quantity'] <= 0) {
-        issues.add('Producto en posición $i tiene cantidad inválida');
-      }
-      if (product['salePrice'] == null || product['salePrice'] < 0) {
-        issues.add('Producto en posición $i tiene precio inválido');
+    // Validar productos individuales (solo si no está anulado)
+    if (!annulled) {
+      for (var i = 0; i < _listPoduct.length; i++) {
+        final product = _listPoduct[i];
+        if (product['quantity'] == null || product['quantity'] <= 0) {
+          issues.add('Producto en posición $i tiene cantidad inválida');
+        }
+        if (product['salePrice'] == null || product['salePrice'] < 0) {
+          issues.add('Producto en posición $i tiene precio inválido');
+        }
       }
     }
 
@@ -658,6 +868,7 @@ class TicketModel {
       'reportedTotal': priceTotal,
       'productCount': _listPoduct.length,
       'totalQuantity': totalProductCount,
+      'isAnnulled': annulled,
     };
   }
 
@@ -666,5 +877,3 @@ class TicketModel {
     priceTotal = calculatedTotal;
   }
 }
-
-

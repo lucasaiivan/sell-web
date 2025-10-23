@@ -201,7 +201,8 @@ class ThemeService {
         onError: Color(0xFF690005),
         errorContainer: Color(0xFF93000A),
         onErrorContainer: Color(0xFFFFDAD6),
-        surface: Color(0xFF1A1A1A), // Fondo gris muy oscuro en lugar de negro puro
+        surface:
+            Color(0xFF1A1A1A), // Fondo gris muy oscuro en lugar de negro puro
         onSurface: Colors.white,
         surfaceContainerHighest: Color(0xFF2A2A2A),
         onSurfaceVariant: Color(0xFFBDBDBD),

@@ -7,24 +7,34 @@ import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/presentation/widgets/views/welcome_selected_account_page.dart';
 import 'core/config/firebase_options.dart';
 import 'core/config/oauth_config.dart';
+import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
 import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
 import 'domain/usecases/auth_usecases.dart';
 import 'domain/usecases/catalogue_usecases.dart';
 import 'domain/usecases/cash_register_usecases.dart';
+import 'domain/usecases/sell_usecases.dart'; // NUEVO
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';
 import 'presentation/pages/sell_page.dart';
-import 'presentation/pages/welcome_page.dart';
 
-void main() async {
+void main() {
+  // CRITICAL: Initialize bindings FIRST in the main zone
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Run async initialization and app launch in the SAME zone
+  _initializeAndRunApp();
+}
+
+Future<void> _initializeAndRunApp() async {
+  // Firebase initialization in the same zone as runApp
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Configuración de GoogleSignIn usando configuración centralizada y segura
@@ -40,6 +50,16 @@ void main() async {
   );
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
+
+  // Inicializar repositorio y usecases compartidos globalmente
+  final cashRegisterRepository = CashRegisterRepositoryImpl();
+
+  // Inicializar SellUsecases (lógica de negocio de tickets - compartido globalmente)
+  final persistenceService = AppDataPersistenceService.instance;
+  final sellUsecases = SellUsecases(
+    repository: cashRegisterRepository,
+    persistenceService: persistenceService,
+  );
 
   runApp(
     MultiProvider(
@@ -61,11 +81,17 @@ void main() async {
 
         // SellProvider - creado una sola vez y reutilizado
         ChangeNotifierProxyProvider<AuthProvider, SellProvider>(
-          create: (_) =>
-              SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+          create: (_) => SellProvider(
+            getUserAccountsUseCase: getUserAccountsUseCase,
+            sellUsecases: sellUsecases, // NUEVO: Solo SellUsecases para tickets
+          ),
           update: (_, auth, previousSell) =>
               previousSell ??
-              SellProvider(getUserAccountsUseCase: getUserAccountsUseCase),
+              SellProvider(
+                getUserAccountsUseCase: getUserAccountsUseCase,
+                sellUsecases:
+                    sellUsecases, // NUEVO: Solo SellUsecases para tickets
+              ),
         ),
       ],
       child: Consumer<ThemeDataAppProvider>(
@@ -85,7 +111,7 @@ void main() async {
                 return Consumer<SellProvider>(
                   builder: (context, sellProvider, _) {
                     if (sellProvider.profileAccountSelected.id.isEmpty) {
-                      return WelcomePage(
+                      return WelcomeSelectedAccountPage(
                         onSelectAccount: (account) => sellProvider.initAccount(
                           account: account,
                           context: context,
@@ -117,7 +143,16 @@ Widget _buildAccountSpecificProviders({
 }) {
   // Crear repositorios específicos de la cuenta
   final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+
+  // Reutilizar el repository de cash register (ya está inicializado globalmente)
+  // Compartir el mismo cashRegisterRepository pero crear nuevos UseCases
   final cashRegisterRepository = CashRegisterRepositoryImpl();
+  final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
+  final persistenceService = AppDataPersistenceService.instance;
+  final sellUsecases = SellUsecases(
+    repository: cashRegisterRepository,
+    persistenceService: persistenceService,
+  );
 
   return MultiProvider(
     key: ValueKey('account_providers_$accountId'),
@@ -143,7 +178,8 @@ Widget _buildAccountSpecificProviders({
       ),
       ChangeNotifierProvider(
         create: (_) => CashRegisterProvider(
-          CashRegisterUsecases(cashRegisterRepository),
+          cashRegisterUsecases, // Operaciones de caja
+          sellUsecases, // NUEVO: Operaciones de tickets
         ),
       ),
     ],

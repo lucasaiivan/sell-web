@@ -192,8 +192,7 @@ class _AccountSelectionContent extends StatelessWidget {
 
     return DialogComponents.infoSection(
       context: context,
-      title: 'Cuentas Asociadas',
-      icon: Icons.business_outlined,
+      title: 'Comercios', 
       content: DialogComponents.itemList(
         context: context,
         items: accounts.map((account) {
@@ -222,11 +221,11 @@ class _AccountSelectionContent extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0), 
       leading: UserAvatar(
         imageUrl: account.image,
         text: account.name.isNotEmpty ? account.name[0].toUpperCase() : '?',
-        radius: 20,
+        radius: 18,
       ),
       title: Text(
         account.name,

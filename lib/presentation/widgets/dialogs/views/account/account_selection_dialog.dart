@@ -221,7 +221,9 @@ class _AccountSelectionContent extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0), 
+      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
+      dense: true,
+      visualDensity: const VisualDensity(vertical: -4),
       leading: UserAvatar(
         imageUrl: account.image,
         text: account.name.isNotEmpty ? account.name[0].toUpperCase() : '?',
@@ -281,8 +283,7 @@ class _AccountSelectionContent extends StatelessWidget {
         Expanded(
           child: DialogComponents.primaryActionButton(
             context: context,
-            text: 'Cerrar',
-            icon: Icons.close_rounded,
+            text: 'ok', 
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),

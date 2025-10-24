@@ -1574,13 +1574,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                     items: [
                       // view : listado de tickets recientes
                       ...recentTickets.map((ticket) {
-                        return _buildTicketTile(
-                          context,
-                          ticket,
-                          widget.isMobile,
-                          onTicketUpdated: widget
-                              .onTicketUpdated, // ✅ Usar callback compartido
-                        );
+                        return _buildTicketTile(context, ticket, widget.isMobile, onTicketUpdated: widget.onTicketUpdated);
                       }),
                     ]);
               },

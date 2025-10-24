@@ -59,6 +59,7 @@ class DialogComponents {
               if (rightIcon != null) rightIcon,
             ],
           ), 
+          const SizedBox(height: 12),
           content,
         ],
       ),
@@ -239,15 +240,12 @@ class DialogComponents {
         ),
       ],
     );
-
-    if (!fill) {
-      return rowContent;
-    }
+ 
 
     // Aplicar relleno con color translúcido y esquinas redondeadas
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
+      decoration: fill == false ? null : BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
       ),

@@ -359,6 +359,38 @@ class _SellPageState extends State<SellPage> {
     );
   }
 
+  /// Obtiene el texto descriptivo del tipo de administrador
+  String _getAdminTypeText(AdminProfile? admin) {
+    if (admin == null) return 'Usuario';
+    
+    if (admin.superAdmin) {
+      return 'Propietario';
+    } else if (admin.admin) {
+      return 'Administrador';
+    } else if (admin.personalized) {
+      return 'Personalizado';
+    } else {
+      return 'Usuario';
+    }
+  }
+
+  /// Obtiene el color del tipo de administrador
+  Color _getAdminTypeColor(AdminProfile? admin, BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    if (admin == null) return colorScheme.onSurfaceVariant;
+    
+    if (admin.superAdmin) {
+      return Colors.amber.shade700; // Dorado para propietario
+    } else if (admin.admin) {
+      return colorScheme.primary; // Color primario para admin
+    } else if (admin.personalized) {
+      return Colors.blue.shade600; // Azul para personalizado
+    } else {
+      return colorScheme.onSurfaceVariant; // Gris para usuario normal
+    }
+  }
+
  
 
   /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
@@ -524,10 +556,58 @@ class _SellPageState extends State<SellPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // button : button personalizado que abre el modal de selección de cuenta administradas
-                  accoutsAssociatedsButton(
-                    context: context,
-                    onTap: () =>  showAccountSelectionDialog(context: context),
+                  // view : perfil de usuario administrador
+                  InkWell(
+                    onTap: () async {
+                      // dialog : muestra el dialog de información del perfil del usuario administrador
+                      await _showAdminProfileInfo(context: context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal:0.0, vertical: 4.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // avatar : avatar del usuario administrador
+                          UserAvatar(
+                            imageUrl: sellProvider.currentAdminProfile?.email != null 
+                                ? null // Podría usarse un avatar del email si está disponible
+                                : null,
+                            text: sellProvider.currentAdminProfile?.name ?? 
+                                  sellProvider.currentAdminProfile?.email ?? '?',
+                            radius: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          // info : nombre y tipo de administrador
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // nombre del administrador
+                              Text(
+                                sellProvider.currentAdminProfile?.name.isNotEmpty == true
+                                    ? sellProvider.currentAdminProfile!.name
+                                    : sellProvider.currentAdminProfile?.email ?? 'Usuario',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              // tipo de administrador
+                              Text(
+                                _getAdminTypeText(sellProvider.currentAdminProfile),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _getAdminTypeColor(sellProvider.currentAdminProfile, context),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const Spacer(),
                   // Controles de tema reutilizables
@@ -538,20 +618,12 @@ class _SellPageState extends State<SellPage> {
                 ],
               ),
             ),
-            // listitle : perfil de negocio, nombre de la cuenta seleccionada y avatar
-            ListTile(
-              leading: UserAvatar(
-                  imageUrl: sellProvider.profileAccountSelected.image,
-                  text: sellProvider.profileAccountSelected.name),
-              title: Text(sellProvider.profileAccountSelected.name,
-                  style: const TextStyle(fontSize: 18)),
-              subtitle: Text(sellProvider.profileAccountSelected.province,
-                  style: const TextStyle(fontSize: 14)),
-              onTap: () async {
-                // dialog : muestra el dialog de información del perfil del usuario administrador
-                await _showAdminProfileInfo(context: context);
-              },
+            // button : button personalizado que abre el modal de selección de cuenta administradas
+            accoutsAssociatedsButton(
+              context: context,
+              onTap: () =>  showAccountSelectionDialog(context: context),
             ),
+             
             // view : Mas funciones en nuesta app
             Padding(
               padding:
@@ -1380,36 +1452,35 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 }
 
-/// Botón personalizado que muestra hasta 3 cuentas asociadas con superposición estilo Material 3
-/// Siempre muestra al menos un avatar o contador indicando la cantidad de cuentas disponibles
+/// Botón personalizado que muestra la cuenta seleccionada en primer plano
+/// y las otras cuentas disponibles detrás con superposición estilo Material 3
 Widget accoutsAssociatedsButton({
   required BuildContext context,
   required VoidCallback onTap,
   double iconSize = 36,
 }) {
-  // Usar Consumer para escuchar cambios en AuthProvider y reconstruir automáticamente
-  return Consumer<AuthProvider>(
-    builder: (context, authProvider, child) {
+  // Usar Consumer2 para escuchar cambios en AuthProvider y SellProvider
+  return Consumer2<AuthProvider, SellProvider>(
+    builder: (context, authProvider, sellProvider, child) {
       final accounts = authProvider.accountsAssociateds;
+      final selectedAccount = sellProvider.profileAccountSelected;
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
       
-      final int totalAccounts = accounts.length;
-      
       // Calcular el ancho total basado en la cantidad de avatares
-      final double avatarSize = iconSize * 0.85;
-      final double overlap = avatarSize * 0.35; // Superposición del 35%
+      final double avatarSize = iconSize;
+      final double backAvatarSize = iconSize * 0.70; // Avatares de fondo más pequeños
+      final double overlap = backAvatarSize * 0.55; // Superposición del 55%
       
-      // Siempre mostrar al menos el icono + 1 contador/avatar
-      final int minAvatars = totalAccounts > 0 ? 1 : 1;
-      final int displayAvatars = totalAccounts > 0 
-          ? (totalAccounts >= 3 ? 3 : totalAccounts)
-          : minAvatars;
+      // Filtrar otras cuentas (excluyendo la seleccionada)
+      final otherAccounts = accounts.where((acc) => acc.id != selectedAccount.id).toList();
+      final int otherAccountsCount = otherAccounts.length;
       
-      final double totalWidth = iconSize + (displayAvatars * (avatarSize - overlap)) + 12;
+      // Determinar cuántos avatares mostrar detrás (máximo 2)
+      final int displayBackAvatars = otherAccountsCount > 2 ? 2 : otherAccountsCount;
       
-      // Tomar hasta 3 cuentas para mostrar
-      final visibleAccounts = accounts.take(3).toList();
+      // Calcular posición inicial de los avatares
+      final double avatarsStartPosition = displayBackAvatars > 0 ? (displayBackAvatars * overlap) : 0;
       
       return Material(
         color: Colors.transparent,
@@ -1417,105 +1488,127 @@ Widget accoutsAssociatedsButton({
           borderRadius: BorderRadius.circular(32),
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: SizedBox(
-              width: totalWidth,
-              height: iconSize + 8,
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                clipBehavior: Clip.none,
-                children: [
-                  // Icono principal (siempre visible)
-                  Positioned(
-                    left: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colorScheme.primaryContainer,
-                            colorScheme.primaryContainer.withValues(alpha: 0.7),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withValues(alpha: 0.15),
-                            blurRadius: 1,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+            padding: const EdgeInsets.symmetric(horizontal:12, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Stack con avatares superpuestos
+                SizedBox(
+                  width: avatarsStartPosition + avatarSize + 8,
+                  height: avatarSize + 8,
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Avatares de fondo (otras cuentas) - se muestran primero para estar detrás
+                      if (displayBackAvatars > 0)
+                        ...List.generate(displayBackAvatars, (index) {
+                          // Si hay más de 2 cuentas y estamos en el segundo avatar, mostrar contador
+                          if (otherAccountsCount > 2 && index == 1) {
+                            return Positioned(
+                              left: index * overlap,
+                              child: _buildCounterAvatar(
+                                count: otherAccountsCount - 1,
+                                radius: backAvatarSize / 2,
+                                colorScheme: colorScheme,
+                                borderColor: theme.scaffoldBackgroundColor,
+                                showZero: false,
+                              ).animate().slideX(
+                                begin: 0.5, 
+                                end: 0, 
+                                duration: Duration(milliseconds: 300 + (index * 50)),
+                              ).fade(),
+                            );
+                          }
+                          // Mostrar avatar normal
+                          return Positioned(
+                            left: index * overlap,
+                            child: _buildBackAccountAvatar(
+                              account: otherAccounts[index],
+                              radius: backAvatarSize / 2,
+                              colorScheme: colorScheme,
+                              borderColor: theme.scaffoldBackgroundColor,
+                            ).animate().slideX(
+                              begin: 0.5, 
+                              end: 0, 
+                              duration: Duration(milliseconds: 300 + (index * 50)),
+                            ).fade(),
+                          );
+                        }),
+                      
+                      // Avatar principal (cuenta seleccionada) - en primer plano
+                      Positioned(
+                        left: avatarsStartPosition,
+                        child: selectedAccount.id.isNotEmpty
+                            ? _buildSelectedAccountAvatar(
+                                account: selectedAccount,
+                                radius: avatarSize / 2,
+                                colorScheme: colorScheme,
+                                borderColor: theme.scaffoldBackgroundColor,
+                              ).animate().scale(duration: 300.ms).fade()
+                            : Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      colorScheme.primaryContainer,
+                                      colorScheme.primaryContainer.withValues(alpha: 0.7),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colorScheme.shadow.withValues(alpha: 0.15),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: avatarSize / 2,
+                                  backgroundColor: Colors.transparent,
+                                  child: Icon(
+                                    Icons.autorenew_rounded,
+                                    color: colorScheme.onPrimaryContainer,
+                                    size: avatarSize * 0.6,
+                                  ),
+                                ),
+                              ).animate().scale(duration: 300.ms).fade(),
                       ),
-                      child: CircleAvatar(
-                        radius: iconSize / 2,
-                        backgroundColor: Colors.transparent,
-                        child: Icon(
-                          Icons.autorenew_rounded,
-                          color: colorScheme.onPrimaryContainer,
-                          size: iconSize * 0.6,
-                        ),
-                      ),
-                    ).animate().scale(duration: 300.ms).fade(),
+                    ],
                   ),
-                  
-                  // Si no hay cuentas, mostrar contador "0"
-                  if (totalAccounts == 0)
-                    Positioned(
-                      left: iconSize - overlap,
-                      child: _buildCounterAvatar(
-                        count: 0,
-                        radius: avatarSize / 2,
-                        colorScheme: colorScheme,
-                        borderColor: theme.scaffoldBackgroundColor,
-                        showZero: true,
-                      ).animate().slideX(begin: 0.3, end: 0, duration: 350.ms).fade(),
-                    ),
-                  
-                  // Primer cuenta (si existe)
-                  if (visibleAccounts.isNotEmpty)
-                    Positioned(
-                      left: iconSize - overlap,
-                      child: _buildAccountAvatar(
-                        account: visibleAccounts[0],
-                        radius: avatarSize / 2,
-                        colorScheme: colorScheme,
-                        borderColor: theme.scaffoldBackgroundColor,
-                      ).animate().slideX(begin: 0.3, end: 0, duration: 350.ms).fade(),
-                    ),
-                  
-                  // Segunda cuenta (si existe)
-                  if (visibleAccounts.length > 1)
-                    Positioned(
-                      left: iconSize + (avatarSize - overlap) - overlap,
-                      child: _buildAccountAvatar(
-                        account: visibleAccounts[1],
-                        radius: avatarSize / 2,
-                        colorScheme: colorScheme,
-                        borderColor: theme.scaffoldBackgroundColor,
-                      ).animate().slideX(begin: 0.5, end: 0, duration: 400.ms).fade(),
-                    ),
-                  
-                  // Tercera cuenta o contador (si hay más de 2 cuentas)
-                  if (visibleAccounts.length > 2)
-                    Positioned(
-                      left: iconSize + (2 * (avatarSize - overlap)) - overlap,
-                      child: totalAccounts > 3
-                          ? _buildCounterAvatar(
-                              count: totalAccounts - 2,
-                              radius: avatarSize / 2,
-                              colorScheme: colorScheme,
-                              borderColor: theme.scaffoldBackgroundColor,
-                            ).animate().slideX(begin: 0.7, end: 0, duration: 450.ms).fade()
-                          : _buildAccountAvatar(
-                              account: visibleAccounts[2],
-                              radius: avatarSize / 2,
-                              colorScheme: colorScheme,
-                              borderColor: theme.scaffoldBackgroundColor,
-                            ).animate().slideX(begin: 0.7, end: 0, duration: 450.ms).fade(),
-                    ),
+                ),
+                
+                // Información de la cuenta seleccionada
+                if (selectedAccount.id.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        selectedAccount.name,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (selectedAccount.province.isNotEmpty)
+                        Text(
+                          selectedAccount.province,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ).animate().slideX(begin: 0.2, end: 0, duration: 350.ms).fade(),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -1524,8 +1617,8 @@ Widget accoutsAssociatedsButton({
   );
 }
 
-/// Construye un avatar de cuenta con borde y sombra
-Widget _buildAccountAvatar({
+/// Construye un avatar de cuenta seleccionada (principal) con borde destacado y sombra
+Widget _buildSelectedAccountAvatar({
   required AccountProfile account,
   required double radius,
   required ColorScheme colorScheme,
@@ -1534,18 +1627,27 @@ Widget _buildAccountAvatar({
   return Container(
     decoration: BoxDecoration(
       shape: BoxShape.circle,
-      border: Border.all(color: borderColor, width: 2.5),
+      border: Border.all(
+        color: colorScheme.primary,
+        width: 3.0,
+      ),
       boxShadow: [
         BoxShadow(
+          color: colorScheme.primary.withValues(alpha: 0.3),
+          blurRadius: 8,
+          spreadRadius: 1,
+          offset: const Offset(0, 2),
+        ),
+        BoxShadow(
           color: colorScheme.shadow.withValues(alpha: 0.2),
-          blurRadius: 1,
+          blurRadius: 4,
           offset: const Offset(0, 2),
         ),
       ],
     ),
     child: CircleAvatar(
       radius: radius,
-      backgroundColor: colorScheme.secondaryContainer,
+      backgroundColor: colorScheme.primaryContainer,
       backgroundImage: (account.image.isNotEmpty && account.image.contains('https://'))
           ? NetworkImage(account.image)
           : null,
@@ -1553,9 +1655,48 @@ Widget _buildAccountAvatar({
           ? Text(
               account.name.isNotEmpty ? account.name[0].toUpperCase() : '?',
               style: TextStyle(
-                fontSize: radius * 0.9,
-                color: colorScheme.onSecondaryContainer,
+                fontSize: radius * 0.85,
+                color: colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
+    ),
+  );
+}
+
+/// Construye un avatar de cuenta de fondo (no seleccionada) con estilo atenuado
+Widget _buildBackAccountAvatar({
+  required AccountProfile account,
+  required double radius,
+  required ColorScheme colorScheme,
+  required Color borderColor,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: borderColor, width: 2.0),
+      boxShadow: [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.15),
+          blurRadius: 2,
+          offset: const Offset(0, 1),
+        ),
+      ],
+    ),
+    child: CircleAvatar(
+      radius: radius,
+      backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+      backgroundImage: (account.image.isNotEmpty && account.image.contains('https://'))
+          ? NetworkImage(account.image)
+          : null,
+      child: (account.image.isEmpty)
+          ? Text(
+              account.name.isNotEmpty ? account.name[0].toUpperCase() : '?',
+              style: TextStyle(
+                fontSize: radius * 0.75,
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                fontWeight: FontWeight.w600,
               ),
             )
           : null,

@@ -1741,7 +1741,6 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
         child: Padding(
           padding: EdgeInsets.symmetric(
             vertical: isMobile ? 8 : 10,
-            horizontal: isMobile ? 8 : 10,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -2047,15 +2046,6 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                 ],
               ),
               SizedBox(width: isMobile ? 4 : 6),
-              // Icono indicador de que es clickeable
-              Center(
-                child: Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: isMobile ? 12 : 16,
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                ),
-              ),
             ],
           ),
         ),

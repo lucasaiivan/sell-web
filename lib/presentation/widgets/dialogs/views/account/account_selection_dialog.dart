@@ -75,7 +75,7 @@ class _AccountSelectionContent extends StatelessWidget {
     
     return DialogComponents.infoSection(
       context: context,
-      title: 'Administrador',
+      title: 'Identificación',
       content: InkWell(
         onTap: user?.email != null
             ? () async {
@@ -147,14 +147,7 @@ class _AccountSelectionContent extends StatelessWidget {
                   ],
                 ),
               ),
-              
-              // Icono indicador de clickeable (solo si hay email)
-              if (user?.email != null)
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
+               
             ],
           ),
         ),
@@ -270,10 +263,12 @@ class _AccountSelectionContent extends StatelessWidget {
         // Botón: Cerrar sesión
         if (authProvider.user?.email != null)
           Expanded(
-            child: DialogComponents.secondaryActionButton(
-              context: context,
-              text: 'Cerrar sesión', 
+            child: TextButton(
               onPressed: () => _handleSignOut(context, authProvider),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Cerrar sesión'),
             ),
           ),
         

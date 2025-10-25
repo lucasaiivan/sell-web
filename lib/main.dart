@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
+import 'package:sellweb/presentation/pages/sell_page.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/presentation/widgets/views/welcome_selected_account_page.dart';
@@ -23,7 +24,6 @@ import 'presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';
-import 'presentation/pages/sell_page.dart';
 
 void main() async {
   // CRITICAL: Initialize bindings FIRST in the main zone, synchronously

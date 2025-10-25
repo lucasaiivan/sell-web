@@ -4,7 +4,6 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_flow_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_close_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_management_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/account/admin_profile_info_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/account/account_selection_dialog.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
@@ -492,7 +491,7 @@ class _SellPageState extends State<SellPage> {
               ),
             ),
             
-             
+             const Spacer(),
             // view : Mas funciones en nuesta app
             Padding(
               padding:
@@ -526,6 +525,7 @@ class _SellPageState extends State<SellPage> {
                 ],
               ),
             ),
+            const SizedBox(height:20),
           ],
         ),
       ),

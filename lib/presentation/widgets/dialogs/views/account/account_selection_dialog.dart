@@ -41,24 +41,23 @@ class _AccountSelectionContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final authProvider = context.watch<AuthProvider>();
-    final sellProvider = context.watch<SellProvider>(); 
-    
+    final sellProvider = context.watch<SellProvider>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         // Sección: Información del usuario administrador
         _buildAdminSection(context),
-        
+
         DialogComponents.sectionSpacing,
-        
+
         // Sección: Lista de cuentas asociadas
         _buildAccountsSection(context, authProvider.accountsAssociateds),
-        
+
         DialogComponents.sectionSpacing,
-        
+
         // Sección: Botones de acción
         _buildActionsSection(context, authProvider, sellProvider),
       ],
@@ -68,11 +67,11 @@ class _AccountSelectionContent extends StatelessWidget {
   /// Sección de información del usuario administrador (clickeable)
   Widget _buildAdminSection(BuildContext context) {
     final theme = Theme.of(context);
-     
+
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
-    
+
     return DialogComponents.infoSection(
       context: context,
       title: 'Identificación',
@@ -82,10 +81,10 @@ class _AccountSelectionContent extends StatelessWidget {
                 try {
                   // Obtener AdminProfile desde SellProvider
                   final adminProfile = sellProvider.currentAdminProfile;
-                  
-                  if (adminProfile != null ) {
+
+                  if (adminProfile != null) {
                     await showAdminProfileInfoDialog(
-                      context: context, 
+                      context: context,
                       admin: adminProfile,
                     );
                   } else if (context.mounted) {
@@ -101,8 +100,8 @@ class _AccountSelectionContent extends StatelessWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content:
-                            Text('Error al cargar la información: ${e.toString()}'),
+                        content: Text(
+                            'Error al cargar la información: ${e.toString()}'),
                         backgroundColor: Colors.red,
                         duration: const Duration(seconds: 3),
                       ),
@@ -123,7 +122,7 @@ class _AccountSelectionContent extends StatelessWidget {
                 radius: 24,
               ),
               const SizedBox(width: 12),
-              
+
               // Información del usuario
               Expanded(
                 child: Column(
@@ -147,7 +146,6 @@ class _AccountSelectionContent extends StatelessWidget {
                   ],
                 ),
               ),
-               
             ],
           ),
         ),
@@ -158,10 +156,9 @@ class _AccountSelectionContent extends StatelessWidget {
   /// Sección de lista de cuentas asociadas
   Widget _buildAccountsSection(
     BuildContext context,
-    List<AccountProfile> accounts, 
+    List<AccountProfile> accounts,
   ) {
-
-    final theme = Theme.of(context); 
+    final theme = Theme.of(context);
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
     if (accounts.isEmpty) {
@@ -185,11 +182,12 @@ class _AccountSelectionContent extends StatelessWidget {
 
     return DialogComponents.infoSection(
       context: context,
-      title: 'Comercios', 
+      title: 'Comercios',
       content: DialogComponents.itemList(
         context: context,
         items: accounts.map((account) {
-          final isSelected = sellProvider.profileAccountSelected.id == account.id;
+          final isSelected =
+              sellProvider.profileAccountSelected.id == account.id;
           return _buildAccountItem(context, account, isSelected, sellProvider);
         }).toList(),
         showDividers: true,
@@ -271,14 +269,14 @@ class _AccountSelectionContent extends StatelessWidget {
               child: const Text('Cerrar sesión'),
             ),
           ),
-        
+
         const SizedBox(width: 12),
-        
+
         // Botón: Cerrar
         Expanded(
           child: DialogComponents.primaryActionButton(
             context: context,
-            text: 'ok', 
+            text: 'ok',
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),

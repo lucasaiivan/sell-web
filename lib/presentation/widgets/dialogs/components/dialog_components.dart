@@ -52,13 +52,13 @@ class DialogComponents {
                         fontWeight: FontWeight.w600,
                         color: effectiveAccentColor,
                       ),
-              ),
+                    ),
               const SizedBox(width: 8),
               const Spacer(),
               // iconbutton : botones personalizados de accion
               if (rightIcon != null) rightIcon,
             ],
-          ), 
+          ),
           const SizedBox(height: 12),
           content,
         ],
@@ -203,7 +203,8 @@ class DialogComponents {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            color: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(6),
           ),
           child: valueText,
@@ -240,15 +241,17 @@ class DialogComponents {
         ),
       ],
     );
- 
 
     // Aplicar relleno con color translúcido y esquinas redondeadas
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
-      decoration: fill == false ? null : BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: fill == false
+          ? null
+          : BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
       child: rowContent,
     );
   }

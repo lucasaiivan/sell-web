@@ -29,7 +29,6 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
         '${date.hour.toString().padLeft(2, '0')}:'
         '${date.minute.toString().padLeft(2, '0')}';
   }
- 
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +47,7 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
           // Información del negocio y fecha
           DialogComponents.infoSection(
             context: context,
-            title: ' Información del Ticket', 
+            title: ' Información del Ticket',
             content: Column(
               children: [
                 DialogComponents.infoRow(
@@ -93,14 +92,14 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
           // Información de pago
           DialogComponents.infoSection(
             context: context,
-            title: 'Facturación', 
+            title: 'Facturación',
             content: Column(
               children: [
                 // Método de pago
                 DialogComponents.infoRow(
                   context: context,
                   label: 'Método de Pago',
-                  value: widget.ticket.getNamePayMode, 
+                  value: widget.ticket.getNamePayMode,
                   icon: Icons.credit_card_rounded,
                   valueFill: true,
                   valueStyle: TextStyle(

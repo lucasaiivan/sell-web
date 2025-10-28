@@ -100,8 +100,7 @@ class SellProvider extends ChangeNotifier {
   // Getters que no causan rebuild
   bool get ticketView => _state.ticketView;
   bool get shouldPrintTicket => _state.shouldPrintTicket;
-  AccountProfile get profileAccountSelected =>
-      _state.profileAccountSelected;
+  AccountProfile get profileAccountSelected => _state.profileAccountSelected;
   AdminProfile? get currentAdminProfile => _state.currentAdminProfile;
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
@@ -124,10 +123,10 @@ class SellProvider extends ChangeNotifier {
   }
 
   /// Inicializa el AdminProfile cuando el usuario está autenticado
-  /// 
+  ///
   /// RESPONSABILIDAD: Obtener el perfil desde Firebase cuando hay usuario y cuenta
   /// Este método debe llamarse después de que AuthProvider tenga un usuario autenticado
-  /// 
+  ///
   /// @param email Email del usuario autenticado
   Future<void> initializeAdminProfile(String email) async {
     // Solo actualizar si hay una cuenta seleccionada
@@ -158,13 +157,14 @@ class SellProvider extends ChangeNotifier {
     // Esto preserva el ticket en progreso cuando se reselecciona la misma cuenta
     _state = _state.copyWith(profileAccountSelected: account.copyWith());
     await _saveSelectedAccount(account.id);
-    
+
     // Actualizar el AdminProfile para la cuenta seleccionada
-    final authProvider = provider.Provider.of<AuthProvider>(context, listen: false);
+    final authProvider =
+        provider.Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.user?.email != null) {
       await updateAdminProfileForSelectedAccount(authProvider.user!.email!);
     }
-    
+
     notifyListeners();
   }
 
@@ -198,12 +198,12 @@ class SellProvider extends ChangeNotifier {
       if (kDebugMode) {
         print('📦 SellProvider: Cargando cuenta desde persistencia: $id');
       }
-      
+
       final account = await fetchAccountById(id);
       if (account != null) {
         _state = _state.copyWith(profileAccountSelected: account);
         notifyListeners();
-        
+
         if (kDebugMode) {
           print('✅ SellProvider: Cuenta cargada exitosamente');
           print('   - ID: ${account.id}');
@@ -211,7 +211,8 @@ class SellProvider extends ChangeNotifier {
         }
       } else {
         if (kDebugMode) {
-          print('⚠️ SellProvider: No se pudo obtener los datos de la cuenta $id');
+          print(
+              '⚠️ SellProvider: No se pudo obtener los datos de la cuenta $id');
         }
       }
     } else {
@@ -234,10 +235,11 @@ class SellProvider extends ChangeNotifier {
     final adminProfileJson = await _persistenceService.getCurrentAdminProfile();
     if (adminProfileJson != null && adminProfileJson.isNotEmpty) {
       try {
-        final adminProfile = AdminProfile.fromMap(_decodeJson(adminProfileJson));
+        final adminProfile =
+            AdminProfile.fromMap(_decodeJson(adminProfileJson));
         _state = _state.copyWith(currentAdminProfile: adminProfile);
         notifyListeners();
-        
+
         if (kDebugMode) {
           print('✅ SellProvider: AdminProfile cargado desde persistencia');
           print('   - Email: ${adminProfile.email}');
@@ -246,7 +248,8 @@ class SellProvider extends ChangeNotifier {
         }
       } catch (e) {
         if (kDebugMode) {
-          print('❌ SellProvider: Error al cargar AdminProfile desde persistencia: $e');
+          print(
+              '❌ SellProvider: Error al cargar AdminProfile desde persistencia: $e');
         }
       }
     } else {
@@ -266,7 +269,8 @@ class SellProvider extends ChangeNotifier {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ SellProvider: Error al guardar AdminProfile en persistencia: $e');
+        print(
+            '❌ SellProvider: Error al guardar AdminProfile en persistencia: $e');
       }
       rethrow;
     }
@@ -284,7 +288,7 @@ class SellProvider extends ChangeNotifier {
     _state = _state.copyWith(currentAdminProfile: adminProfile);
     _saveAdminProfile();
     notifyListeners();
-    
+
     if (kDebugMode) {
       print('✅ SellProvider: AdminProfile configurado');
       print('   - Email: ${adminProfile.email}');
@@ -309,46 +313,53 @@ class SellProvider extends ChangeNotifier {
       }
 
       // Obtener todos los AdminProfile asociados al email
-      final adminProfiles = await getUserAccountsUseCase.getAccountAdmins(email);
-      
+      final adminProfiles =
+          await getUserAccountsUseCase.getAccountAdmins(email);
+
       if (kDebugMode) {
-        print('📋 SellProvider: Se encontraron ${adminProfiles.length} perfiles de administrador');
+        print(
+            '📋 SellProvider: Se encontraron ${adminProfiles.length} perfiles de administrador');
         for (var profile in adminProfiles) {
-          print('   - Perfil: ${profile.email} | Cuenta: ${profile.account} | Admin: ${profile.admin}');
+          print(
+              '   - Perfil: ${profile.email} | Cuenta: ${profile.account} | Admin: ${profile.admin}');
         }
       }
-      
+
       // Si no hay cuenta seleccionada, retornar el primero (o null si está vacío)
       if (_state.profileAccountSelected.id.isEmpty) {
         if (kDebugMode) {
-          print('⚠️ SellProvider: No hay cuenta seleccionada, retornando primer perfil');
+          print(
+              '⚠️ SellProvider: No hay cuenta seleccionada, retornando primer perfil');
         }
         return adminProfiles.isNotEmpty ? adminProfiles.first : null;
       }
-      
+
       if (kDebugMode) {
-        print('🔎 SellProvider: Buscando perfil para cuenta seleccionada: ${_state.profileAccountSelected.id}');
+        print(
+            '🔎 SellProvider: Buscando perfil para cuenta seleccionada: ${_state.profileAccountSelected.id}');
       }
-      
+
       // Buscar el AdminProfile que corresponde a la cuenta seleccionada
       try {
         final matchedProfile = adminProfiles.firstWhere(
           (admin) => admin.account == _state.profileAccountSelected.id,
         );
-        
+
         if (kDebugMode) {
-          print('✅ SellProvider: AdminProfile encontrado para cuenta ${_state.profileAccountSelected.id}');
+          print(
+              '✅ SellProvider: AdminProfile encontrado para cuenta ${_state.profileAccountSelected.id}');
           print('   - Email: ${matchedProfile.email}');
           print('   - Nombre: ${matchedProfile.name}');
           print('   - Super Admin: ${matchedProfile.superAdmin}');
           print('   - Admin: ${matchedProfile.admin}');
         }
-        
+
         return matchedProfile;
       } catch (_) {
         // Si no se encuentra, retornar null
         if (kDebugMode) {
-          print('❌ SellProvider: No se encontró AdminProfile para la cuenta ${_state.profileAccountSelected.id}');
+          print(
+              '❌ SellProvider: No se encontró AdminProfile para la cuenta ${_state.profileAccountSelected.id}');
         }
         return null;
       }
@@ -369,9 +380,10 @@ class SellProvider extends ChangeNotifier {
   /// @param email Email del usuario autenticado
   Future<void> updateAdminProfileForSelectedAccount(String email) async {
     if (kDebugMode) {
-      print('🔄 SellProvider: Actualizando AdminProfile para cuenta seleccionada...');
+      print(
+          '🔄 SellProvider: Actualizando AdminProfile para cuenta seleccionada...');
     }
-    
+
     final adminProfile = await fetchAdminProfile(email);
     if (adminProfile != null) {
       setAdminProfile(adminProfile);
@@ -380,9 +392,10 @@ class SellProvider extends ChangeNotifier {
       _state = _state.copyWith(currentAdminProfile: null);
       await _persistenceService.clearCurrentAdminProfile();
       notifyListeners();
-      
+
       if (kDebugMode) {
-        print('⚠️ SellProvider: No se encontró AdminProfile para la cuenta seleccionada');
+        print(
+            '⚠️ SellProvider: No se encontró AdminProfile para la cuenta seleccionada');
         print('   - Cuenta: ${_state.profileAccountSelected.id}');
         print('   - Email: $email');
       }

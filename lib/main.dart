@@ -5,10 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sellweb/data/account_repository_impl.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
-import 'package:sellweb/presentation/pages/sell_page.dart';
+import 'package:sellweb/presentation/pages/home_page.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
+import 'package:sellweb/presentation/providers/home_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/presentation/widgets/views/welcome_selected_account_page.dart';
 import 'core/config/firebase_options.dart';
 import 'core/config/oauth_config.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
@@ -37,7 +37,6 @@ void main() async {
 }
 
 void _runApp() {
-
   // Configuración de GoogleSignIn usando configuración centralizada y segura
   final googleSignIn = GoogleSignIn(
     scopes: OAuthConfig.googleSignInScopes,
@@ -68,6 +67,7 @@ void _runApp() {
         // Providers globales que no dependen del estado de autenticación
         ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
         ChangeNotifierProvider(create: (_) => PrinterProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
 
         // AuthProvider - gestiona el estado de autenticación
         ChangeNotifierProvider(
@@ -118,17 +118,9 @@ void _runApp() {
                         sellProvider.currentAdminProfile == null) {
                       // Ejecutar en el siguiente frame para evitar setState durante build
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        sellProvider.initializeAdminProfile(authProvider.user!.email!);
+                        sellProvider
+                            .initializeAdminProfile(authProvider.user!.email!);
                       });
-                    }
-
-                    if (sellProvider.profileAccountSelected.id.isEmpty) {
-                      return WelcomeSelectedAccountPage(
-                        onSelectAccount: (account) => sellProvider.initAccount(
-                          account: account,
-                          context: context,
-                        ),
-                      );
                     }
 
                     // Providers específicos de la cuenta seleccionada
@@ -153,8 +145,10 @@ Widget _buildAccountSpecificProviders({
   required SellProvider sellProvider,
   required AccountRepositoryImpl accountRepository,
 }) {
+  final effectiveAccountId = accountId.isEmpty ? null : accountId;
+
   // Crear repositorios específicos de la cuenta
-  final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
+  final catalogueRepository = CatalogueRepositoryImpl(id: effectiveAccountId);
 
   // Reutilizar el repository de cash register (ya está inicializado globalmente)
   // Compartir el mismo cashRegisterRepository pero crear nuevos UseCases
@@ -171,22 +165,30 @@ Widget _buildAccountSpecificProviders({
     providers: [
       // Providers específicos de la cuenta actual
       ChangeNotifierProvider(
-        create: (_) => CatalogueProvider(
-          getProductsStreamUseCase:
-              GetCatalogueStreamUseCase(catalogueRepository),
-          getProductByCodeUseCase: GetProductByCodeUseCase(),
-          isProductScannedUseCase:
-              IsProductScannedUseCase(GetProductByCodeUseCase()),
-          getPublicProductByCodeUseCase:
-              GetPublicProductByCodeUseCase(CatalogueRepositoryImpl()),
-          addProductToCatalogueUseCase:
-              AddProductToCatalogueUseCase(catalogueRepository),
-          createPublicProductUseCase:
-              CreatePublicProductUseCase(catalogueRepository),
-          registerProductPriceUseCase:
-              RegisterProductPriceUseCase(catalogueRepository),
-          getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
-        )..initCatalogue(accountId),
+        create: (_) {
+          final catalogueProvider = CatalogueProvider(
+            getProductsStreamUseCase:
+                GetCatalogueStreamUseCase(catalogueRepository),
+            getProductByCodeUseCase: GetProductByCodeUseCase(),
+            isProductScannedUseCase:
+                IsProductScannedUseCase(GetProductByCodeUseCase()),
+            getPublicProductByCodeUseCase:
+                GetPublicProductByCodeUseCase(CatalogueRepositoryImpl()),
+            addProductToCatalogueUseCase:
+                AddProductToCatalogueUseCase(catalogueRepository),
+            createPublicProductUseCase:
+                CreatePublicProductUseCase(catalogueRepository),
+            registerProductPriceUseCase:
+                RegisterProductPriceUseCase(catalogueRepository),
+            getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
+          );
+
+          if (accountId.isNotEmpty) {
+            catalogueProvider.initCatalogue(accountId);
+          }
+
+          return catalogueProvider;
+        },
       ),
       ChangeNotifierProvider(
         create: (_) => CashRegisterProvider(
@@ -195,6 +197,6 @@ Widget _buildAccountSpecificProviders({
         ),
       ),
     ],
-    child: const SellPage(),
+    child: const HomePage(),
   );
 }

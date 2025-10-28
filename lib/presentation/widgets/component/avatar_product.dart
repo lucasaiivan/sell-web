@@ -52,11 +52,10 @@ class AvatarCircleProduct extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: _getAvatarGradient(),
-                  color: product.favorite ||
-                          (product.stock && product.quantityStock < 5)
+                  color: product.favorite ||(product.stock && product.quantityStock < 5)
                       ? null
                       : theme.colorScheme.onSurface
-                          .withOpacity(0.12), // Color en contraste con opacidad
+                          .withValues(alpha: 0.12), // Color en contraste con opacidad
                 ),
                 child: Container(
                   margin: const EdgeInsets.all(2),

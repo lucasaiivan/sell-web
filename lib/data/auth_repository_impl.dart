@@ -56,7 +56,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Stream<AuthProfile?> get user => _firebaseAuth.authStateChanges().map((fbUser) {
+  Stream<AuthProfile?> get user =>
+      _firebaseAuth.authStateChanges().map((fbUser) {
         if (fbUser == null) return null;
         return AuthProfile(
           uid: fbUser.uid,

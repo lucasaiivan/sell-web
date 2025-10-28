@@ -1,187 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/core.dart';
-import 'package:sellweb/presentation/providers/auth_provider.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/account/account_selection_dialog.dart';
-import 'package:web/web.dart' as html;
+import 'package:url_launcher/url_launcher.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/sell_provider.dart';
+import '../../providers/home_provider.dart';
+import '../core_widgets.dart';
 
-/// Widget del drawer principal de la aplicación
+/// Widget reutilizable del Drawer para las pantallas principales
+/// Muestra información de la cuenta seleccionada, controles de tema y acceso a funcionalidades
 class AppDrawer extends StatelessWidget {
-  /// Página actual seleccionada ('sell' o 'catalogue')
-  final String currentPage;
-  
-  /// Callback cuando se selecciona una página
-  final Function(String page) onPageSelected;
-
-  const AppDrawer({
-    super.key,
-    required this.currentPage,
-    required this.onPageSelected,
-  });
+  const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            const SizedBox(height: 16),
-            // view : logo y título de encabezado
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  // button : button personalizado que abre el modal de selección de cuenta administradas
-                  Expanded(
-                    child: _accountsAssociatedsButton(
-                      context: context,
-                      onTap: () => showAccountSelectionDialog(context: context),
-                    ),
-                  ),
-                  // Controles de tema reutilizables
-                  ThemeControlButtons(
-                    spacing: 4,
-                    iconSize: 20,
-                  ),
-                ],
+            // button : cambiar el tema de la app
+            Positioned(
+              right: 8,
+              top: 8,
+              child: ThemeControlButtons(
+                spacing: 4,
+                iconSize: 20,
               ),
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Navegación principal
-            _buildNavigationItem(
-              context: context,
-              icon: Icons.point_of_sale,
-              title: 'Punto de Venta',
-              isSelected: currentPage == 'sell',
-              onTap: () {
-                Navigator.pop(context); // Cerrar drawer
-                onPageSelected('sell');
-              },
-            ),
-            
-            _buildNavigationItem(
-              context: context,
-              icon: Icons.inventory_2_outlined,
-              title: 'Catálogo',
-              isSelected: currentPage == 'catalogue',
-              onTap: () {
-                Navigator.pop(context); // Cerrar drawer
-                onPageSelected('catalogue');
-              },
-            ),
-            
-            const Spacer(),
-            
-            // view : Mas funciones en nuestra app
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Divider(thickness: 0.2, color: Colors.grey.shade300),
-                  const SizedBox(height: 8),
-                  Text(
-                    '¡Descubre todas las funciones en nuestra app móvil!',
-                    style: TextStyle(
-                      color: Colors.blueGrey.shade700,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+            // view : cuerpo del drawer
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                const SizedBox(height: 30),
+                // Cuenta seleccionada con avatar e información
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  child: _AccountsAssociatedsButton(
+                    onTap: () => showAccountSelectionDialog(context: context),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ButtonApp.primary(
-                      borderRadius: 4,
-                      text: 'Descargar de Play Store',
-                      onPressed: () {
-                        // Abre la URL de descarga de la app
-                        html.window.open(
-                          'https://play.google.com/store/apps/details?id=com.sellweb.app',
-                          '_blank',
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const Divider(thickness: 0.08),
+                const SizedBox(height: 12),
+                const _NavigationMenu(),
+                const Spacer(),
+                const _DrawerFooter(),
+              ],
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
+}
 
-  /// Construye un item de navegación del drawer
-  Widget _buildNavigationItem({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-      child: Material(
-        color: isSelected 
-            ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected 
-                      ? colorScheme.primary 
-                      : colorScheme.onSurface.withValues(alpha: 0.7),
-                  size: 24,
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  title,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: isSelected 
-                        ? colorScheme.primary 
-                        : colorScheme.onSurface,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+/// Botón personalizado que muestra la cuenta seleccionada con avatar e información
+class _AccountsAssociatedsButton extends StatelessWidget {
+  final VoidCallback onTap;
 
-  /// Botón personalizado que muestra la cuenta seleccionada con avatar e información
-  Widget _accountsAssociatedsButton({
-    required BuildContext context,
-    required VoidCallback onTap,
-    double iconSize = 30,
-  }) {
+  const _AccountsAssociatedsButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     // Usar Consumer2 para escuchar cambios en AuthProvider y SellProvider
     return Consumer2<AuthProvider, SellProvider>(
       builder: (context, authProvider, sellProvider, child) {
         final selectedAccount = sellProvider.profileAccountSelected;
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-        
+        const double iconSize = 24;
+
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -205,17 +95,17 @@ class AppDrawer extends StatelessWidget {
                       child: CircleAvatar(
                         radius: iconSize / 2,
                         backgroundColor: colorScheme.primaryContainer,
-                        backgroundImage: (selectedAccount.image.isNotEmpty && 
-                                         selectedAccount.image.contains('https://'))
+                        backgroundImage: (selectedAccount.image.isNotEmpty &&
+                                selectedAccount.image.contains('https://'))
                             ? NetworkImage(selectedAccount.image)
                             : null,
                         child: (selectedAccount.image.isEmpty)
                             ? Text(
-                                selectedAccount.name.isNotEmpty 
-                                    ? selectedAccount.name[0].toUpperCase() 
+                                selectedAccount.name.isNotEmpty
+                                    ? selectedAccount.name[0].toUpperCase()
                                     : '?',
                                 style: TextStyle(
-                                  fontSize: iconSize * 0.45,
+                                  fontSize: iconSize * 0.30,
                                   color: colorScheme.onPrimaryContainer,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -223,7 +113,7 @@ class AppDrawer extends StatelessWidget {
                             : null,
                       ),
                     ),
-                  
+
                   // Información de la cuenta seleccionada
                   if (selectedAccount.id.isNotEmpty) ...[
                     const SizedBox(width: 12),
@@ -241,13 +131,14 @@ class AppDrawer extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (sellProvider.currentAdminProfile?.email != null && 
-                              sellProvider.currentAdminProfile!.email.isNotEmpty)
+                          if (sellProvider.currentAdminProfile?.email != null &&
+                              sellProvider
+                                  .currentAdminProfile!.email.isNotEmpty)
                             Text(
                               sellProvider.currentAdminProfile!.email,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                fontSize: 11,
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 10,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -262,6 +153,166 @@ class AppDrawer extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _NavigationMenu extends StatelessWidget {
+  const _NavigationMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Consumer<HomeProvider>(
+      builder: (context, homeProvider, _) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DrawerNavTile(
+                  icon: Icons.point_of_sale,
+                  label: 'Ventas',
+                  description: 'Gestiona cobros y tickets',
+                  index: 0,
+                  currentIndex: homeProvider.currentPageIndex,
+                  onSelected: () {
+                    if (homeProvider.currentPageIndex != 0) {
+                      homeProvider.setPageIndex(0);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  colorScheme: colorScheme,
+                ),
+                _DrawerNavTile(
+                  icon: Icons.inventory_2,
+                  label: 'Catálogo',
+                  description: 'Administra productos y precios',
+                  index: 1,
+                  currentIndex: homeProvider.currentPageIndex,
+                  onSelected: () {
+                    if (homeProvider.currentPageIndex != 1) {
+                      homeProvider.setPageIndex(1);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  colorScheme: colorScheme,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DrawerNavTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String description;
+  final int index;
+  final int currentIndex;
+  final VoidCallback onSelected;
+  final ColorScheme colorScheme;
+
+  const _DrawerNavTile({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.index,
+    required this.currentIndex,
+    required this.onSelected,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = index == currentIndex;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color:
+              isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        ),
+        title: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+          ),
+        ),
+        subtitle: Text(
+          description,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected
+                ? colorScheme.primary.withValues(alpha: 0.7)
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
+        trailing: isSelected
+            ? Icon(Icons.check_circle, color: colorScheme.primary)
+            : null,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        tileColor: isSelected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.8)
+            : null,
+        onTap: onSelected,
+      ),
+    );
+  }
+}
+
+class _DrawerFooter extends StatelessWidget {
+  const _DrawerFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Divider(thickness: 0.1, color: Colors.grey.shade300),
+          const SizedBox(height: 8),
+          Text(
+            '¡Más funciones en nuestra app móvil!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.blueGrey.shade700,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ButtonApp.primary(
+              borderRadius: 4,
+              text: 'Descargar de Play Store',
+              onPressed: () async {
+                final url = Uri.parse(
+                  'https://play.google.com/store/apps/details?id=com.logicabooleana.sell',
+                );
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 }

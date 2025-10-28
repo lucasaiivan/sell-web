@@ -4,7 +4,6 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_flow_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_close_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_management_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/account/account_selection_dialog.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +16,7 @@ import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/cash_register_provider.dart';
-import '../widgets/views/welcome_selected_account_page.dart';
+import '../widgets/navigation/drawer.dart';
 
 class SellPage extends StatefulWidget {
   const SellPage({super.key});
@@ -61,33 +60,6 @@ class _SellPageState extends State<SellPage> {
     // consumer : escucha los cambios en ventas (SellProvider) y el catalogo (CatalogueProvider)
     return Consumer2<SellProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
-        // - - -
-        // - - Si no hay cuenta seleccionada, mostrar la página de bienvenida
-        // - - -
-        if (sellProvider.profileAccountSelected.id == '') {
-          // provider : authProvider y catalogueProvider
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final catalogueProvider =
-              Provider.of<CatalogueProvider>(context, listen: false);
-
-          return WelcomeSelectedAccountPage(
-            onSelectAccount: (account) async {
-              // Selecciona la cuenta y recarga el catálogo
-              await sellProvider.initAccount(
-                  account: account, context: context);
-              // Si es demo, cargar productos demo
-
-              if (account.id == 'demo' &&
-                  authProvider.user?.isAnonymous == true) {
-                final demoProducts =
-                    authProvider.getUserAccountsUseCase.getDemoProducts();
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  catalogueProvider.loadDemoProducts(demoProducts);
-                });
-              }
-            },
-          );
-        }
         // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         // Si es cuenta demo y usuario anónimo, cargar productos demo
@@ -103,10 +75,10 @@ class _SellPageState extends State<SellPage> {
 
         // inicialiar [initializeFromPersistence]
 
-        // --- si ahi cuenta seleccionada, mostrar la página de venta ---
+        // --- pantalla principal de venta ---
         return Scaffold(
           appBar: appbar(buildContext: context, provider: sellProvider),
-          drawer: drawer,
+          drawer: const AppDrawer(),
           body: LayoutBuilder(
             builder: (context, constraints) {
               return Row(
@@ -315,9 +287,6 @@ class _SellPageState extends State<SellPage> {
       }
     }
   }
- 
- 
- 
 
   /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
   PreferredSizeWidget appbar(
@@ -404,7 +373,6 @@ class _SellPageState extends State<SellPage> {
                         icon: isConnected
                             ? Icons.print_outlined
                             : Icons.print_disabled_outlined,
-                        
                         tooltip: isConnected
                             ? 'Impresora conectada y lista\nToca para configurar'
                             : 'Impresora no disponible\nToca para configurar conexión',
@@ -422,7 +390,7 @@ class _SellPageState extends State<SellPage> {
                     builder: (context, sellProvider, __) {
                       final hasLastTicket = sellProvider.lastSoldTicket != null;
                       return AppBarButtonCircle(
-                          icon: Icons.receipt_long_rounded, 
+                          icon: Icons.receipt_long_rounded,
                           tooltip: hasLastTicket
                               ? 'Ver último ticket\nToca para ver detalles y reimprimir'
                               : 'No hay tickets recientes',
@@ -464,71 +432,6 @@ class _SellPageState extends State<SellPage> {
       ),
       // Remover las propiedades leading, title y actions ya que están en flexibleSpace
       centerTitle: false,
-    );
-  }
-
-  Widget get drawer { 
-    return Drawer(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            // view : logo y título de encabezado
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row( 
-                children: [
-                  // button : button personalizado que abre el modal de selección de cuenta administradas
-                  Expanded(child: accoutsAssociatedsButton(context: context,onTap: () =>  showAccountSelectionDialog(context: context))),
-                  // Controles de tema reutilizables
-                  ThemeControlButtons(
-                    spacing: 4,
-                    iconSize: 20,
-                  ),
-                ],
-              ),
-            ),
-            
-             const Spacer(),
-            // view : Mas funciones en nuesta app
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Divider(thickness:0.2, color: Colors.grey.shade300),
-                  const SizedBox(height: 8),
-                  Text(
-                    '¡Descubre todas las funciones en nuestra app móvil!',
-                    style: TextStyle(
-                      color: Colors.blueGrey.shade700,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                      width: double.infinity,
-                      child: ButtonApp.primary(borderRadius: 4,
-                        text: 'Descargar de Play Store',
-                        onPressed: () {
-                          // Abre la URL de descarga de la app
-                          html.window.open(
-                            'https://play.google.com/store/apps/details?id=com.sellweb.app',
-                            '_blank',
-                          );
-                        },
-                      )),
-                ],
-              ),
-            ),
-            const SizedBox(height:20),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1165,6 +1068,12 @@ class _ProductoItemState extends State<ProductoItem> {
   @override
   Widget build(BuildContext context) {
     //  values
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBackgroundColor = isDark 
+        ? theme.colorScheme.surfaceContainerHighest 
+        : Colors.white;
+    
     final String alertStockText = widget.producto.stock
         ? (widget.producto.quantityStock >= 0
             ? widget.producto.quantityStock <= widget.producto.alertStock
@@ -1175,7 +1084,7 @@ class _ProductoItemState extends State<ProductoItem> {
 
     // aparición animada
     return Card(
-      color: Colors.white,
+      color: cardBackgroundColor,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       clipBehavior: Clip.antiAlias,
@@ -1233,11 +1142,20 @@ class _ProductoItemState extends State<ProductoItem> {
 
   /// Layout para productos de venta rápida - solo precio centrado
   Widget _buildQuickSaleLayout() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark 
+        ? theme.colorScheme.onSurface 
+        : Colors.black87;
+    final overlayColor = isDark
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.1)
+        : Colors.grey.shade200.withValues(alpha: 0.2);
+    
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200.withValues(alpha: 0.2),
+        color: overlayColor,
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Center(
@@ -1245,10 +1163,10 @@ class _ProductoItemState extends State<ProductoItem> {
           padding: const EdgeInsets.all(8.0),
           child: Text(
             CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 22, // Precio más grande
-              color: Colors.black87,
+              color: textColor,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1292,6 +1210,15 @@ class _ProductoItemState extends State<ProductoItem> {
   }
 
   Widget contentInfo() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final descriptionColor = isDark 
+        ? theme.colorScheme.onSurfaceVariant 
+        : Colors.grey;
+    final priceColor = isDark 
+        ? theme.colorScheme.onSurface 
+        : Colors.black;
+    
     return widget.producto.description == ''
         ? Container()
         : Padding(
@@ -1301,120 +1228,24 @@ class _ProductoItemState extends State<ProductoItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(widget.producto.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.normal,
-                        color: Colors.grey,
+                        color: descriptionColor,
                         overflow: TextOverflow.ellipsis),
                     maxLines: 1),
                 Text(
                     CurrencyFormatter.formatPrice(
                         value: widget.producto.salePrice),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 17.0,
-                        color: Colors.black),
+                        color: priceColor),
                     overflow: TextOverflow.clip,
                     softWrap: false),
               ],
             ),
           );
   }
-}
-
-/// Botón personalizado que muestra la cuenta seleccionada con avatar e información
-Widget accoutsAssociatedsButton({
-  required BuildContext context,
-  required VoidCallback onTap,
-  double iconSize = 30,
-}) {
-  // Usar Consumer2 para escuchar cambios en AuthProvider y SellProvider
-  return Consumer2<AuthProvider, SellProvider>(
-    builder: (context, authProvider, sellProvider, child) {
-      final selectedAccount = sellProvider.profileAccountSelected;
-      final theme = Theme.of(context);
-      final colorScheme = theme.colorScheme;
-      
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Avatar del comercio
-                if (selectedAccount.id.isNotEmpty)
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorScheme.primary,
-                        width: 2.0,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: iconSize / 2,
-                      backgroundColor: colorScheme.primaryContainer,
-                      backgroundImage: (selectedAccount.image.isNotEmpty && 
-                                       selectedAccount.image.contains('https://'))
-                          ? NetworkImage(selectedAccount.image)
-                          : null,
-                      child: (selectedAccount.image.isEmpty)
-                          ? Text(
-                              selectedAccount.name.isNotEmpty 
-                                  ? selectedAccount.name[0].toUpperCase() 
-                                  : '?',
-                              style: TextStyle(
-                                fontSize: iconSize * 0.45,
-                                color: colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                
-                // Información de la cuenta seleccionada
-                if (selectedAccount.id.isNotEmpty) ...[
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          selectedAccount.name,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (sellProvider.currentAdminProfile?.email != null && 
-                            sellProvider.currentAdminProfile!.email.isNotEmpty)
-                          Text(
-                            sellProvider.currentAdminProfile!.email,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      );
-    },
-  );
 }
 
 /// Muestra el diálogo de configuración de impresora

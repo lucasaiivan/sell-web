@@ -28,13 +28,13 @@ Future<void> showAdminProfileInfoDialog({
 }) {
   return showBaseDialog(
     context: context,
-    title: 'Perfil de Administrador', 
+    title: 'Perfil de Administrador',
     width: 500,
     content: _AdminProfileInfoContent(admin: admin),
     actions: [
       DialogComponents.secondaryActionButton(
         context: context,
-        text: 'Ok', 
+        text: 'Ok',
         onPressed: () => Navigator.of(context).pop(),
       ),
     ],
@@ -57,14 +57,14 @@ class _AdminProfileInfoContent extends StatelessWidget {
         DialogComponents.sectionSpacing,
 
         // Estado y roles
-        _buildStatusAndRolesSection(context), 
+        _buildStatusAndRolesSection(context),
 
         // Restricciones de acceso (horarios y días)
-        if (admin.hasAccessTimeConfiguration || admin.daysOfWeek.isNotEmpty)
-          ...[
-            DialogComponents.sectionSpacing,
-            _buildAccessRestrictionsSection(context),
-          ],
+        if (admin.hasAccessTimeConfiguration ||
+            admin.daysOfWeek.isNotEmpty) ...[
+          DialogComponents.sectionSpacing,
+          _buildAccessRestrictionsSection(context),
+        ],
       ],
     );
   }
@@ -73,7 +73,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
   Widget _buildBasicInfoSection(BuildContext context) {
     return DialogComponents.infoSection(
       context: context,
-      title: 'Información Básica', 
+      title: 'Información Básica',
       content: Column(
         children: [
           if (admin.name.isNotEmpty)
@@ -82,26 +82,26 @@ class _AdminProfileInfoContent extends StatelessWidget {
               label: 'Nombre',
               value: admin.name,
               icon: Icons.person_outline_rounded,
-            ), 
+            ),
           DialogComponents.infoRow(
             context: context,
             label: 'Email',
             value: admin.email,
             icon: Icons.business_outlined,
-          ),  
+          ),
           // Fechas de creación y actualización
           DialogComponents.infoRow(
-              context: context,
-              label: 'Creación',
-              value: admin.formatTimestamp(admin.creation),
-              icon: Icons.event_available_rounded,
-            ), 
-            DialogComponents.infoRow(
-              context: context,
-              label: 'Última actualización',
-              value: admin.formatTimestamp(admin.lastUpdate),
-              icon: Icons.update_rounded,
-            ),
+            context: context,
+            label: 'Creación',
+            value: admin.formatTimestamp(admin.creation),
+            icon: Icons.event_available_rounded,
+          ),
+          DialogComponents.infoRow(
+            context: context,
+            label: 'Última actualización',
+            value: admin.formatTimestamp(admin.lastUpdate),
+            icon: Icons.update_rounded,
+          ),
         ],
       ),
     );
@@ -110,14 +110,13 @@ class _AdminProfileInfoContent extends StatelessWidget {
   /// Sección de roles
   Widget _buildStatusAndRolesSection(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return DialogComponents.infoSection(
       context: context,
-      title: 'Permisos', 
+      title: 'Permisos',
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [ 
-          
+        children: [
           // Roles
           Wrap(
             spacing: 8,
@@ -146,9 +145,9 @@ class _AdminProfileInfoContent extends StatelessWidget {
                 ),
             ],
           ),
-          
+
           // Permisos personalizados detallados
-          if (admin.personalized) ...[ 
+          if (admin.personalized) ...[
             const SizedBox(height: 8),
             _buildDetailedPermissions(context),
           ],
@@ -160,7 +159,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
   /// Widget para mostrar los permisos detallados
   Widget _buildDetailedPermissions(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     final permissions = [
       if (admin.arqueo)
         _PermissionInfo('Arqueo de caja', Icons.calculate_outlined),
@@ -218,15 +217,14 @@ class _AdminProfileInfoContent extends StatelessWidget {
       }).toList(),
     );
   }
- 
 
   /// Sección unificada de restricciones de acceso (días con horarios implícitos)
   Widget _buildAccessRestrictionsSection(BuildContext context) {
     final theme = Theme.of(context);
     final startTime = admin.formatTime(admin.startTime);
     final endTime = admin.formatTime(admin.endTime);
-    final hasTimeRestriction = admin.hasAccessTimeConfiguration && 
-                               (startTime.isNotEmpty || endTime.isNotEmpty);
+    final hasTimeRestriction = admin.hasAccessTimeConfiguration &&
+        (startTime.isNotEmpty || endTime.isNotEmpty);
 
     return DialogComponents.infoSection(
       context: context,
@@ -235,7 +233,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Días habilitados con horario implícito
-          if (admin.daysOfWeek.isNotEmpty) ...[ 
+          if (admin.daysOfWeek.isNotEmpty) ...[
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -249,7 +247,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
               }).toList(),
             ),
           ],
-          
+
           // Solo mostrar horarios si no hay días configurados
           if (admin.daysOfWeek.isEmpty && hasTimeRestriction) ...[
             Row(
@@ -273,7 +271,8 @@ class _AdminProfileInfoContent extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.colorScheme.outline.withValues(alpha: 0.2),
@@ -340,7 +339,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     final hasTimeRestriction = startTime != null && startTime.isNotEmpty ||
-                                endTime != null && endTime.isNotEmpty;
+        endTime != null && endTime.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -375,7 +374,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Horarios si están configurados
           if (hasTimeRestriction) ...[
             const SizedBox(height: 6),
@@ -397,8 +396,10 @@ class _AdminProfileInfoContent extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (startTime != null && startTime.isNotEmpty &&
-                      endTime != null && endTime.isNotEmpty) ...[
+                  if (startTime != null &&
+                      startTime.isNotEmpty &&
+                      endTime != null &&
+                      endTime.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
@@ -434,7 +435,7 @@ class _AdminProfileInfoContent extends StatelessWidget {
     Color color,
   ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(

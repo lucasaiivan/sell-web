@@ -16,7 +16,7 @@ class AuthProfile {
     this.isAnonymous,
     this.photoUrl,
   });
-} 
+}
 
 // Modelo de usuario administrador
 class AdminProfile {
@@ -133,10 +133,10 @@ class AdminProfile {
       superAdmin: data['superAdmin'] ?? false,
       admin: data['admin'] ?? false,
       personalized: data['personalized'] ?? false,
-      creation: data['creation'] is String 
+      creation: data['creation'] is String
           ? Timestamp.fromDate(DateTime.parse(data['creation']))
           : data['creation'] ?? Timestamp.now(),
-      lastUpdate: data['lastUpdate'] is String 
+      lastUpdate: data['lastUpdate'] is String
           ? Timestamp.fromDate(DateTime.parse(data['lastUpdate']))
           : data['lastUpdate'] ?? Timestamp.now(),
       startTime: data['startTime'] ?? {},
@@ -309,12 +309,12 @@ class AdminProfile {
   /// Formatea un mapa de tiempo a string legible (HH:MM)
   String formatTime(Map<String, dynamic> timeMap) {
     if (timeMap.isEmpty) return '';
-    
+
     final hour = timeMap['hour'];
     final minute = timeMap['minute'];
-    
+
     if (hour == null || minute == null) return '';
-    
+
     return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 
@@ -329,6 +329,7 @@ class AdminProfile {
     return startTime.isNotEmpty || endTime.isNotEmpty;
   }
 }
+
 // Modelo de perfil de cuenta del comercio
 class AccountProfile {
   // Informacion de la cuenta

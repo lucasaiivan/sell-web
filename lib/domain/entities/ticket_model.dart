@@ -192,6 +192,7 @@ class TicketModel {
     if (payMode == 'card') return const Color(0xFFFFC107); // Amarillo
     return const Color(0xFF9E9E9E); // Gris para sin especificar
   }
+
   //  get : obtiene el nombre del medio de pago en formato legible
   String get getNamePayMode {
     if (payMode == 'effective') return 'Efectivo';

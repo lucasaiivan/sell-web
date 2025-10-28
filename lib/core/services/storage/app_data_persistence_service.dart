@@ -63,7 +63,8 @@ class AppDataPersistenceService {
   Future<void> saveCurrentAdminProfile(String adminProfileJson) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.currentAdminProfile, adminProfileJson);
+      await prefs.setString(
+          SharedPrefsKeys.currentAdminProfile, adminProfileJson);
     } catch (e) {
       rethrow;
     }

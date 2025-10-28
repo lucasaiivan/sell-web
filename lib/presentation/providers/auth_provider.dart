@@ -105,7 +105,8 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _accountsAssociateds = await getUserAccountsUseCase.getProfilesAccountsAsociateds(_user!.email!);
+    _accountsAssociateds = await getUserAccountsUseCase
+        .getProfilesAccountsAsociateds(_user!.email!);
     _isLoadingAccounts = false;
     notifyListeners();
   }

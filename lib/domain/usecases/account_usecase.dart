@@ -54,8 +54,7 @@ class GetUserAccountsUseCase {
   }
 
   /// Devuelve la lista de cuentas asociadas, agregando una cuenta demo si el usuario es anónimo.
-  List<AccountProfile> getAccountsWithDemo(
-      List<AccountProfile> accounts,
+  List<AccountProfile> getAccountsWithDemo(List<AccountProfile> accounts,
       {bool isAnonymous = false}) {
     final List<AccountProfile> result = List.from(accounts);
     if (isAnonymous) {

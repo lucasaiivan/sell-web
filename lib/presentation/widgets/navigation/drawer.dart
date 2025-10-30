@@ -92,25 +92,17 @@ class _AccountsAssociatedsButton extends StatelessWidget {
                           width: 2.0,
                         ),
                       ),
-                      child: CircleAvatar(
-                        radius: iconSize / 2,
-                        backgroundColor: colorScheme.primaryContainer,
-                        backgroundImage: (selectedAccount.image.isNotEmpty &&
-                                selectedAccount.image.contains('https://'))
-                            ? NetworkImage(selectedAccount.image)
-                            : null,
-                        child: (selectedAccount.image.isEmpty)
-                            ? Text(
-                                selectedAccount.name.isNotEmpty
-                                    ? selectedAccount.name[0].toUpperCase()
-                                    : '?',
-                                style: TextStyle(
-                                  fontSize: iconSize * 0.30,
-                                  color: colorScheme.onPrimaryContainer,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
+                      child: UserAvatar( 
+                        imageUrl: selectedAccount.image,
+                        text: selectedAccount.name.isNotEmpty
+                            ? selectedAccount.name[0].toUpperCase()
+                            : '?',
+                        radius: 16,
+                        backgroundColor:
+                            colorScheme.primaryContainer.withValues(
+                          alpha: 0.9,
+                        ),
+                        foregroundColor: colorScheme.onPrimaryContainer,
                       ),
                     ),
 

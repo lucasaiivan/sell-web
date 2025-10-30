@@ -409,21 +409,7 @@ class _SellPageState extends State<SellPage> {
 
                   // button : administrar caja
                   CashRegisterStatusWidget(),
-
-                  // Botón de descartar ticket (existente) usando [AppBarButtonCircle]
-                  // En pantallas reducidas solo muestra el icono, en pantallas grandes muestra icono y texto
-                  (provider.ticket.getProductsQuantity() > 0)
-                      ? AppBarButtonCircle(
-                          icon: Icons.close,
-                          text: isMobile(buildContext)
-                              ? null
-                              : 'Descartar ticket',
-                          tooltip: 'Descartar ticket',
-                          onPressed: discartTicketAlertDialg,
-                          colorAccent: Colors.red.shade700,
-                          backgroundColor: Colors.red.withValues(alpha: 0.1),
-                        )
-                      : Container(),
+ 
                 ],
               )
             ],
@@ -471,6 +457,16 @@ class _SellPageState extends State<SellPage> {
   Widget floatingActionButtonBody({required SellProvider sellProvider}) {
     return Row(
       children: [
+        // button : descartar ticket si es existente y tiene productos
+        if (sellProvider.ticket.getProductsQuantity() > 0)
+          ButtonApp.fab(
+            heroTag: "discard_ticket_fab", // Hero tag único
+            onPressed: () => discartTicketAlertDialg(),
+            icon: Icons.close_rounded,
+            backgroundColor: Colors.grey,
+          ).animate(delay: const Duration(milliseconds: 0)).fade(),
+        const SizedBox(width: 8),
+        // button : muestra el botón de venta rápida
         ButtonApp.fab(
           heroTag: "quick_sale_fab", // Hero tag único
           onPressed: () => showQuickSaleDialog(context, provider: sellProvider),
@@ -1425,21 +1421,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       if (value != null) {
         switch (value) {
           case 'manage':
-            // Mostrar el diálogo completo de administración
-            showDialog(
-              context: context,
-              builder: (_) => MultiProvider(
-                providers: [
-                  ChangeNotifierProvider<CashRegisterProvider>.value(
-                      value: cashRegisterProvider),
-                  ChangeNotifierProvider<SellProvider>.value(
-                      value: sellProvider),
-                  ChangeNotifierProvider<AuthProvider>.value(
-                      value: authProvider),
-                ],
-                child: const CashRegisterManagementDialog(),
-              ),
-            );
+            // Mostrar el diálogo completo de administración usando el método estático
+            CashRegisterManagementDialog.showAdaptive(context);
             break;
           case 'income':
             // Reutilizar CashFlowDialog para ingresos
@@ -1512,23 +1495,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   // - Muestra el diálogo completo de administración de caja registradora -
   void _showCashRegisterManagementDialog(BuildContext context) {
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    showDialog(
-      context: context,
-      builder: (_) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
-          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-        ],
-        child: const CashRegisterManagementDialog(),
-      ),
-    );
+    // Usar el método adaptativo que detecta automáticamente el tipo de dispositivo
+    CashRegisterManagementDialog.showAdaptive(context);
   }
 
   @override

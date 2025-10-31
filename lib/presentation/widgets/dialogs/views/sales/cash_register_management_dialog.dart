@@ -87,8 +87,7 @@ class CashRegisterManagementDialog extends StatefulWidget {
         pageBuilder: (context, animation, secondaryAnimation) =>
             MultiProvider(
           providers: [
-            ChangeNotifierProvider<CashRegisterProvider>.value(
-                value: cashRegisterProvider),
+            ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
             ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
             ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
           ],
@@ -265,8 +264,7 @@ class _CashRegisterManagementDialogState
                 );
               }
               // view : Construir contenido responsivo de la  información de caja
-              return _buildResponsiveContent(
-                  context, cashRegisterProvider, isMobileDevice);
+              return _buildResponsiveContent(context, cashRegisterProvider, isMobileDevice);
             },
           ),
           actions: [
@@ -299,13 +297,17 @@ class _CashRegisterManagementDialogState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
-        leading: IconButton(
+        title: Text(title), 
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.85),
+        actions: [
+          IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        elevation: 0,
-        backgroundColor: theme.colorScheme.secondaryContainer.withValues(alpha: 0.85),
+        const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -360,8 +362,8 @@ class _CashRegisterManagementDialogState
   }
 
   // view : información de caja activa
-  Widget _buildActiveCashRegister(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildActiveCashRegister(BuildContext context, CashRegisterProvider provider, bool isMobile){
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

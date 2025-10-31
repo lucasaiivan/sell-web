@@ -339,58 +339,95 @@ class _CashRegisterManagementDialogState
 
   // view : información de caja activa
   Widget _buildActiveCashRegister(BuildContext context, CashRegisterProvider provider, bool isMobile){
+    // Obtener accountId desde SellProvider
+    final sellProvider = context.read<SellProvider>();
+    final accountId = sellProvider.profileAccountSelected.id;
+    final cashRegisterId = provider.currentActiveCashRegister?.id ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // view : información de flujo de caja (usa tickets del provider)
+        // view : información de flujo de caja (usa stream del provider)
         _buildCashFlowView(context, provider, isMobile),
         SizedBox(height: getResponsiveSpacing(context, scale: 2)),
-        // view : resumen de métodos de pago
-        FutureBuilder<List<TicketModel>?>(
-          future: provider.cashRegisterTickets, // ✅ Usar tickets del provider
-          builder: (context, snapshot) {
-            if (snapshot.hasData &&
-                snapshot.data != null &&
-                snapshot.data!.isNotEmpty) {
-              final tickets = snapshot.data!;
-              final activeTickets =
-                  tickets.where((ticket) => !ticket.annulled).toList();
-
-              if (activeTickets.isEmpty) {
-                return const SizedBox.shrink();
+        // view : resumen de métodos de pago con StreamBuilder
+        if (accountId.isNotEmpty && cashRegisterId.isNotEmpty)
+        // STREAM // resumen de métodos de pago
+          StreamBuilder<List<TicketModel>>(
+            stream: provider.getCashRegisterTicketsStream(
+              accountId: accountId,
+              cashRegisterId: cashRegisterId,
+              todayOnly: true, // Solo tickets de hoy
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                // Mostrar indicador mientras carga
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
               }
 
-              final paymentMethodsRanking =
-                  TicketModel.getPaymentMethodsRanking(
-                tickets: activeTickets,
-                includeAnnulled: false,
-              );
-              final theme = Theme.of(context);
-
-              return Column(
-                children: [
-                  // view : muestra resumen de métodos de pago
-                  _buildSalesSummaryInfo(
-                    context: context,
-                    theme: theme,
-                    paymentMethodsRanking: paymentMethodsRanking,
-                    isMobile: isMobile,
+              if (snapshot.hasError) {
+                // Mostrar error si ocurre
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Error al cargar tickets: ${snapshot.error}',
+                    style: TextStyle(color: Colors.red),
                   ),
-                  SizedBox(height: getResponsiveSpacing(context, scale: 2)),
-                ],
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-        // view : lista de las ultimas ventas (usa tickets del provider)
-        RecentTicketsView(
-          ticketsFuture: provider.cashRegisterTickets, // ✅ Usar tickets del provider
-          cashRegisterProvider: provider,
-          isMobile: isMobile,
-          onTicketUpdated: _reloadTickets,
-        ),
+                );
+              }
+
+              if (snapshot.hasData &&
+                  snapshot.data != null &&
+                  snapshot.data!.isNotEmpty) {
+                final tickets = snapshot.data!;
+                final activeTickets =
+                    tickets.where((ticket) => !ticket.annulled).toList();
+
+                if (activeTickets.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final paymentMethodsRanking =
+                    TicketModel.getPaymentMethodsRanking(
+                  tickets: activeTickets,
+                  includeAnnulled: false,
+                );
+                final theme = Theme.of(context);
+
+                return Column(
+                  children: [
+                    // view : muestra resumen de métodos de pago
+                    _buildSalesSummaryInfo(
+                      context: context,
+                      theme: theme,
+                      paymentMethodsRanking: paymentMethodsRanking,
+                      isMobile: isMobile,
+                    ),
+                    SizedBox(height: getResponsiveSpacing(context, scale: 2)),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        // view : lista de las ultimas ventas (usa stream del provider)
+        if (accountId.isNotEmpty && cashRegisterId.isNotEmpty)
+          RecentTicketsView(
+            // ✅ Usar stream para datos en tiempo real
+            ticketsStream: provider.getCashRegisterTicketsStream(
+              accountId: accountId,
+              cashRegisterId: cashRegisterId,
+              todayOnly: true,
+            ),
+            cashRegisterProvider: provider,
+            isMobile: isMobile,
+            onTicketUpdated: _reloadTickets,
+          ),
         DialogComponents.sectionSpacing,
       ],
     );
@@ -1483,11 +1520,14 @@ class _CashRegisterManagementDialogState
 }
 
 /// Widget separado para manejar la lista de tickets recientes de manera eficiente
-/// ✅ Recibe el Future de tickets desde [CashRegisterProvider] como parámetro
+/// ✅ Acepta TANTO Future COMO Stream de tickets para máxima flexibilidad
 /// Evita rebuilds innecesarios y llamadas duplicadas a la base de datos
-class RecentTicketsView extends StatefulWidget {
-  /// Future compartido con los tickets ya cargados desde el provider
-  final Future<List<TicketModel>?>? ticketsFuture;
+class RecentTicketsView extends StatefulWidget { 
+  
+  /// Stream de tickets con actualizaciones en tiempo real (opcional)
+  /// Si se proporciona, tiene prioridad sobre ticketsFuture
+  final Stream<List<TicketModel>>? ticketsStream;
+  
   final CashRegisterProvider cashRegisterProvider;
   final bool isMobile;
 
@@ -1495,8 +1535,8 @@ class RecentTicketsView extends StatefulWidget {
   final VoidCallback? onTicketUpdated;
 
   const RecentTicketsView({
-    super.key,
-    required this.ticketsFuture,
+    super.key, 
+    this.ticketsStream,
     required this.cashRegisterProvider,
     required this.isMobile,
     this.onTicketUpdated,
@@ -1514,21 +1554,26 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
     if (accountId.isEmpty) return const SizedBox();
 
-    if (widget.ticketsFuture == null) {
-      return _buildEmptyTicketsView(context, widget.isMobile);
+    // ✅ Si hay stream, usar StreamBuilder (datos en tiempo real)
+    if (widget.ticketsStream != null) {
+      return _buildWithStreamBuilder();
     }
 
-    return FutureBuilder<List<TicketModel>?>(
-      future: widget
-          .ticketsFuture, // ✅ Usar Future compartido recibido como parámetro
+    // Sin datos, mostrar vista vacía
+    return _buildEmptyTicketsView(context, widget.isMobile);
+  }
+
+  /// Construye la vista usando StreamBuilder para datos en tiempo real
+  Widget _buildWithStreamBuilder() {
+    return StreamBuilder<List<TicketModel>>(
+      stream: widget.ticketsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
-          // Log del error para debug
-          debugPrint('Error loading tickets: ${snapshot.error}');
+          debugPrint('Error loading tickets stream: ${snapshot.error}');
           return _buildEmptyTicketsView(context, widget.isMobile);
         }
 
@@ -1536,37 +1581,45 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
           return _buildEmptyTicketsView(context, widget.isMobile);
         }
 
-        final allTickets = snapshot.data!;
-        // Convertir a TicketModel y ordenar por fecha (más recientes primero)
-        final tickets = allTickets
-            .map((ticketData) {
-              try {
-                // Crear TicketModel desde Map usando los datos directamente
-                return TicketModel.fromMap(ticketData.toMap());
-              } catch (e) {
-                debugPrint('Error converting ticket data: $e');
-                return null;
-              }
-            })
-            .where((ticket) => ticket != null)
-            .cast<TicketModel>()
-            .toList();
+        final tickets = snapshot.data!;
+        return _buildTicketsList(tickets);
+      },
+    );
+  }
 
-        // Ordenar por fecha de creación (más recientes primero)
-        tickets.sort((a, b) => b.creation.compareTo(a.creation));
 
-        if (tickets.isEmpty) {
-          return _buildEmptyTicketsView(context, widget.isMobile);
-        }
+  /// Construye la lista de tickets (lógica compartida)
+  Widget _buildTicketsList(List<TicketModel> allTickets) {
+    // Convertir a TicketModel y ordenar por fecha (más recientes primero)
+    final tickets = allTickets
+        .map((ticketData) {
+          try {
+            // Si ya es TicketModel, usarlo directamente
+            return ticketData;
+          } catch (e) {
+            debugPrint('Error processing ticket data: $e');
+            return null;
+          }
+        })
+        .where((ticket) => ticket != null)
+        .cast<TicketModel>()
+        .toList();
 
-        // Tomar solo los primeros 5 para mostrar
-        final recentTickets = tickets.take(5).toList();
-        final hasMoreTickets = tickets.length > 5;
-        final theme = Theme.of(context);
+    // Ordenar por fecha de creación (más recientes primero)
+    tickets.sort((a, b) => b.creation.compareTo(a.creation));
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    if (tickets.isEmpty) {
+      return _buildEmptyTicketsView(context, widget.isMobile);
+    }
+
+    // Tomar solo los primeros 5 para mostrar
+    final recentTickets = tickets.take(5).toList();
+    final hasMoreTickets = tickets.length > 5;
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
             // Calcular el total de facturación y ganancia de TODOS los tickets activos (no anulados)
             Builder(
               builder: (context) {
@@ -1679,8 +1732,6 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
             ],
           ],
         );
-      },
-    );
   }
 
   void _showAllTicketsDialog(BuildContext context, List<TicketModel> tickets) {

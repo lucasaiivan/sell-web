@@ -492,10 +492,13 @@ class CashRegisterProvider extends ChangeNotifier {
 
     try {
       // 🎯 PASO 1: Obtener transacciones reales de hoy para validar contadores
-      final todayTickets = await _sellUsecases.getTodayTransactions(
-        accountId: accountId,
-        cashRegisterId: cashRegisterId,
-      );
+      // ✅ MEJORADO: Usar stream para obtener datos más actualizados
+      final todayTickets = await _sellUsecases
+          .getTodayTransactionsStream(
+            accountId: accountId,
+            cashRegisterId: cashRegisterId,
+          )
+          .first; // Obtener snapshot actual del stream
 
       // 🎯 PASO 2: Calcular contadores desde la fuente de verdad (para verificación)
       final effectiveSales =
@@ -691,6 +694,7 @@ class CashRegisterProvider extends ChangeNotifier {
     required String accountId,
     bool forceReload = false,
   }) async {
+
     final cashRegisterId = currentActiveCashRegister?.id ?? '';
 
     // Validar que haya una caja activa
@@ -1034,17 +1038,82 @@ class CashRegisterProvider extends ChangeNotifier {
     }
   }
 
-  /// ⚠️ DEPRECADO: Usar getCashRegisterTickets
-  @Deprecated('Usar getCashRegisterTickets con cashRegisterId requerido')
-  Future<List<TicketModel>?> getTodayTickets({
+  /// Stream de tickets de caja registradora con actualizaciones en tiempo real
+  ///
+  /// RESPONSABILIDAD: Proporcionar stream de tickets que se actualiza automáticamente
+  ///
+  /// PARÁMETROS:
+  /// - `accountId`: ID de la cuenta
+  /// - `cashRegisterId`: ID de la caja registradora
+  /// - `todayOnly`: Si es true, solo devuelve tickets de hoy
+  ///
+  /// RETORNA: Stream de lista de TicketModel
+  ///
+  /// USO:
+  /// ```dart
+  /// // En un StreamBuilder
+  /// StreamBuilder<List<TicketModel>>(
+  ///   stream: provider.getCashRegisterTicketsStream(
+  ///     accountId: accountId,
+  ///     cashRegisterId: cashRegisterId,
+  ///   ),
+  ///   builder: (context, snapshot) {
+  ///     if (snapshot.hasData) {
+  ///       final tickets = snapshot.data!;
+  ///       // Usar tickets actualizados en tiempo real
+  ///     }
+  ///     return Container();
+  ///   },
+  /// )
+  /// ```
+  Stream<List<TicketModel>> getCashRegisterTicketsStream({
     required String accountId,
-    String cashRegisterId = '',
-  }) async {
-    return getCashRegisterTickets(
-      accountId: accountId,
-      cashRegisterId: cashRegisterId,
-    );
+    required String cashRegisterId,
+    bool todayOnly = true, // Por defecto solo tickets de hoy
+  }) {
+    try {
+      // Validar cashRegisterId requerido
+      if (cashRegisterId.isEmpty) {
+        throw Exception('cashRegisterId es requerido');
+      }
+
+      if (todayOnly) {
+        // Stream de tickets de hoy con filtro por caja
+        return _sellUsecases
+            .getTodayTransactionsStream(
+          accountId: accountId,
+          cashRegisterId: cashRegisterId,
+        )
+            .map((transactionsList) {
+          // Convertir Map a TicketModel
+          return transactionsList
+              .map((ticketMap) => TicketModel.fromMap(ticketMap))
+              .toList();
+        });
+      } else {
+        // Stream de todos los tickets filtrados por caja
+        return _sellUsecases
+            .getTransactionsStream(accountId)
+            .map((allTransactions) {
+          // Filtrar por cashRegisterId
+          final filteredTransactions = allTransactions
+              .where((ticket) => ticket['cashRegisterId'] == cashRegisterId)
+              .toList();
+
+          // Convertir a TicketModel
+          return filteredTransactions
+              .map((ticketMap) => TicketModel.fromMap(ticketMap))
+              .toList();
+        });
+      }
+    } catch (e) {
+      _state = _state.copyWith(errorMessage: e.toString());
+      notifyListeners();
+      // Retornar stream vacío en caso de error
+      return Stream.value([]);
+    }
   }
+ 
 
   /// Obtiene los tickets filtrados el día actual y si se proporciona cashRegisterId se filtra por esa caja
   Future<List<Map<String, dynamic>>?> getTicketsByDateRange({

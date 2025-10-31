@@ -808,6 +808,66 @@ class SellUsecases {
     return result;
   }
 
+  /// Stream de transacciones del día actual con actualizaciones en tiempo real
+  ///
+  /// RESPONSABILIDAD: Escuchar cambios en tickets de hoy en tiempo real, con filtro opcional por caja
+  ///
+  /// PARÁMETROS:
+  /// - `accountId`: ID de la cuenta
+  /// - `cashRegisterId`: (Opcional) ID de caja para filtrar
+  ///
+  /// RETORNA: Stream con lista de tickets actualizados del día actual
+  ///
+  /// USO:
+  /// ```dart
+  /// // Todas las transacciones de hoy
+  /// final stream = sellUsecases.getTodayTransactionsStream(accountId: accountId);
+  ///
+  /// // Solo transacciones de una caja específica
+  /// final stream = sellUsecases.getTodayTransactionsStream(
+  ///   accountId: accountId,
+  ///   cashRegisterId: 'cash-123',
+  /// );
+  /// ```
+  Stream<List<Map<String, dynamic>>> getTodayTransactionsStream({
+    required String accountId,
+    String cashRegisterId = '',
+  }) {
+    // Definir el rango de fechas para hoy
+    final today = DateTime.now();
+
+    // Obtener stream de todas las transacciones
+    final transactionsStream = _repository.getTransactionsStream(accountId);
+
+    // Transformar el stream para filtrar por fecha de hoy y opcionalmente por caja
+    return transactionsStream.map((allTransactions) {
+      // Filtrar transacciones del día actual
+      final todayTransactions = allTransactions.where((transaction) {
+        // Validar que tenga timestamp de creación
+        if (transaction['creation'] == null) return false;
+
+        final creation = transaction['creation'] as Timestamp;
+        final transactionDate = creation.toDate();
+
+        // Verificar si es del día actual
+        final isToday = transactionDate.year == today.year &&
+            transactionDate.month == today.month &&
+            transactionDate.day == today.day;
+
+        if (!isToday) return false;
+
+        // Si se especificó cashRegisterId, filtrar por caja
+        if (cashRegisterId.isNotEmpty) {
+          return transaction['cashRegisterId'] == cashRegisterId;
+        }
+
+        return true;
+      }).toList();
+
+      return todayTransactions;
+    });
+  }
+
   /// Obtiene transacciones por rango de fechas
   ///
   /// RESPONSABILIDAD: Consultar tickets vendidos en un período específico

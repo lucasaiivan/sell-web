@@ -189,18 +189,14 @@ class CatalogueProvider extends ChangeNotifier {
         // Siempre actualizar si hay cambios detectados
         if (!_areProductListsEqual(_state.products, products)) {
           _updateState(_state.copyWith(products: products));
-          print(
-              '📦 Lista de catálogo actualizada: ${products.length} productos');
         }
 
         // Marcar como cargado si aún está en estado loading
         if (_state.isLoading) {
           _updateState(_state.copyWith(isLoading: false));
-          print('✅ Catálogo inicializado correctamente');
         }
       },
       onError: (error) {
-        print('Error al cargar productos: $error');
         _updateState(_state.copyWith(
           isLoading: false,
           scanError: error.toString(),
@@ -232,16 +228,12 @@ class CatalogueProvider extends ChangeNotifier {
     required String query,
     int? maxResults,
   }) {
-    print('🔍 CatalogueProvider - searchProducts llamado con: "$query"');
-    print('📦 Productos disponibles en state: ${_state.products.length}');
-
     final results = SearchCatalogueService.searchProducts(
       products: _state.products,
       query: query,
       maxResults: maxResults,
     );
 
-    print('✅ Resultados de búsqueda: ${results.length}');
     return results;
   }
 
@@ -295,19 +287,15 @@ class CatalogueProvider extends ChangeNotifier {
   /// Útil cuando se necesita asegurar que los datos estén sincronizados
   Future<void> forceRefreshCatalogue() async {
     if (_catalogueSubscription == null) {
-      print('⚠️ No hay suscripción activa al catálogo');
       return;
     }
 
     try {
-      print('🔄 Forzando actualización del catálogo...');
       _updateState(_state.copyWith(isLoading: true));
 
       // La actualización se hará automáticamente por el listener del stream
       // Solo necesitamos marcar que estamos refrescando
-      print('✅ Solicitud de actualización enviada');
     } catch (e) {
-      print('❌ Error al forzar actualización del catálogo: $e');
       _updateState(_state.copyWith(
         isLoading: false,
         scanError: 'Error al actualizar catálogo: $e',
@@ -474,10 +462,7 @@ class CatalogueProvider extends ChangeNotifier {
           );
 
           await registerProductPriceUseCase(productPrice, product.code);
-          print(
-              '✅ Precio registrado en base pública para producto: ${product.code}');
         } catch (e) {
-          print('⚠️ Error al registrar precio en base pública: $e');
           // No lanzamos error aquí para no interrumpir el flujo principal
         }
       }
@@ -530,7 +515,6 @@ class CatalogueProvider extends ChangeNotifier {
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
     } catch (e) {
-      print('❌ Error al incrementar ventas del producto $productId: $e');
       throw Exception('Error al incrementar ventas del producto: $e');
     }
   }
@@ -563,12 +547,9 @@ class CatalogueProvider extends ChangeNotifier {
       // Ejecutar la reducción de stock
       await decrementStockUseCase(accountId, productId, quantity);
 
-      print('✅ Stock decrementado: Producto $productId, Cantidad: $quantity');
-
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
     } catch (e) {
-      print('❌ Error al decrementar stock del producto $productId: $e');
       throw Exception('Error al decrementar stock del producto: $e');
     }
   }
@@ -596,13 +577,9 @@ class CatalogueProvider extends ChangeNotifier {
       // Ejecutar la actualización de favorito
       await updateProductFavoriteUseCase!(accountId, productId, isFavorite);
 
-      print(
-          '✅ Favorito actualizado: Producto $productId, Favorito: $isFavorite');
-
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que actualizamos el timestamp de modificación
     } catch (e) {
-      print('❌ Error al actualizar favorito del producto $productId: $e');
       throw Exception('Error al actualizar favorito del producto: $e');
     }
   }

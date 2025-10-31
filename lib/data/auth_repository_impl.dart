@@ -40,11 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     } catch (e) {
       // Log detallado para debugging de errores de configuración
-      print('Error en signInWithGoogle: $e');
-      if (e.toString().contains('redirect_uri_mismatch')) {
-        print(
-            'Error de redirect_uri_mismatch detectado. Verificar configuración en Google Cloud Console.');
-      }
+      // TODO: Implement proper logging system
       return null;
     }
   }

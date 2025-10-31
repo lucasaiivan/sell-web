@@ -70,7 +70,6 @@ class _AccountsAssociatedsButton extends StatelessWidget {
         final selectedAccount = sellProvider.profileAccountSelected;
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-        const double iconSize = 24;
 
         return Material(
           color: Colors.transparent,

@@ -465,8 +465,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('❌ Error en _processAddProduct: $e');
-
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -508,7 +506,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
       // Actualizar el producto público
       await widget.catalogueProvider.createPublicProduct(updatedPublicProduct);
     } catch (e) {
-      print('❌ Error al actualizar descripción del producto público: $e');
       // No lanzamos el error para no interrumpir el flujo principal
     }
   }
@@ -556,7 +553,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
         );
       }
     } catch (e) {
-      print('❌ Error al crear producto: $e');
       // Mostrar error si falla la creación
       if (mounted) {
         showErrorDialog(
@@ -587,7 +583,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
         accountProfile: accountProfile,
       );
     } catch (e) {
-      print('❌ Error al agregar producto existente: $e');
       // Mostrar error si falla
       if (mounted) {
         showErrorDialog(
@@ -636,8 +631,6 @@ Future<void> showAddProductDialog(
       ),
     );
   } catch (e) {
-    print('❌ Error al mostrar AddProductDialog: $e');
-
     // Mostrar error al usuario si falla la obtención de providers
     showErrorDialog(
       context: context,

@@ -113,6 +113,11 @@ class CashRegisterProvider extends ChangeNotifier {
   StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
   String? _currentAccountId;
 
+  // ✅ Gestión de tickets de la caja registradora activa
+  Future<List<TicketModel>?>? _cashRegisterTickets;
+  String? _cachedCashRegisterId;
+  bool _isLoadingTickets = false;
+
   // Form controllers
   final TextEditingController openDescriptionController =
       TextEditingController();
@@ -142,6 +147,10 @@ class CashRegisterProvider extends ChangeNotifier {
   bool get hasAvailableCashRegisters => _state.hasAvailableCashRegisters;
   CashRegister? get currentActiveCashRegister =>
       _state.currentActiveCashRegister;
+
+  // ✅ Getters para tickets de la caja registradora
+  Future<List<TicketModel>?>? get cashRegisterTickets => _cashRegisterTickets;
+  bool get isLoadingTickets => _isLoadingTickets;
 
   CashRegisterProvider(
     this._cashRegisterUsecases,
@@ -318,6 +327,9 @@ class CashRegisterProvider extends ChangeNotifier {
     final persistenceService = AppDataPersistenceService.instance;
 
     try {
+      // ✅ Limpiar cache de tickets de la caja anterior
+      clearTicketsCache();
+      
       // Actualizar estado
       _state = _state.copyWith(selectedCashRegister: cashRegister);
       notifyListeners();
@@ -339,6 +351,10 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // Limpiar estado
       _state = _state.copyWith(clearSelectedCashRegister: true);
+      
+      // ✅ Limpiar cache de tickets al deseleccionar caja
+      clearTicketsCache();
+      
       notifyListeners();
 
       // Limpiar persistencia
@@ -655,6 +671,79 @@ class CashRegisterProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  // ==========================================
+  // MÉTODOS PÚBLICOS - GESTIÓN DE TICKETS
+  // ==========================================
+
+  /// Carga los tickets de la caja registradora activa solo si es necesario.
+  /// Detecta cambios en la caja registradora para evitar llamadas innecesarias.
+  ///
+  /// **Uso:**
+  /// ```dart
+  /// await cashRegisterProvider.loadCashRegisterTickets(
+  ///   accountId: accountId,
+  ///   forceReload: false, // opcional: forzar recarga
+  /// );
+  /// ```
+  Future<void> loadCashRegisterTickets({
+    required String accountId,
+    bool forceReload = false,
+  }) async {
+    final cashRegisterId = currentActiveCashRegister?.id ?? '';
+
+    // Validar que haya una caja activa
+    if (cashRegisterId.isEmpty || accountId.isEmpty) {
+      _cashRegisterTickets = Future.value(null);
+      _cachedCashRegisterId = null;
+      notifyListeners();
+      return;
+    }
+
+    // Solo recargar si:
+    // 1. Se fuerza la recarga (forceReload = true)
+    // 2. Cambió la caja registradora (_cachedCashRegisterId != cashRegisterId)
+    // 3. No hay datos cargados (_cashRegisterTickets == null)
+    if (forceReload ||
+        _cachedCashRegisterId != cashRegisterId ||
+        _cashRegisterTickets == null) {
+      _cachedCashRegisterId = cashRegisterId;
+      _isLoadingTickets = true;
+      notifyListeners();
+
+      // Obtener tickets de la caja activa
+      _cashRegisterTickets = getCashRegisterTickets(
+        accountId: accountId,
+        cashRegisterId: cashRegisterId,
+        todayOnly: false, // Cargar todo el historial de la caja
+      );
+
+      // Esperar a que termine la carga para actualizar el estado
+      await _cashRegisterTickets;
+      _isLoadingTickets = false;
+      notifyListeners();
+    }
+  }
+
+  /// Fuerza la recarga de tickets de la caja registradora activa.
+  /// Útil después de acciones como anular un ticket, agregar movimientos, etc.
+  ///
+  /// **Uso:**
+  /// ```dart
+  /// await cashRegisterProvider.reloadTickets(accountId: accountId);
+  /// ```
+  Future<void> reloadTickets({required String accountId}) async {
+    await loadCashRegisterTickets(accountId: accountId, forceReload: true);
+  }
+
+  /// Limpia el cache de tickets.
+  /// Útil cuando se cambia de cuenta o se cierra sesión.
+  void clearTicketsCache() {
+    _cashRegisterTickets = null;
+    _cachedCashRegisterId = null;
+    _isLoadingTickets = false;
+    notifyListeners();
   }
 
   // ==========================================

@@ -14,8 +14,9 @@ import 'cash_register_open_dialog.dart';
 /// Diálogo principal para administrar cajas registradoras con diseño responsivo.
 /// Optimizado para experiencia móvil y desktop siguiendo Material Design 3.
 ///
-/// ✅ OPTIMIZADO: Carga los tickets UNA SOLA VEZ y los comparte entre todas las vistas
-/// para evitar llamadas duplicadas a la base de datos.
+/// ✅ OPTIMIZADO: La gestión de tickets se realiza en [CashRegisterProvider]
+/// con cache inteligente para evitar llamadas duplicadas a la base de datos.
+/// Los tickets se cargan automáticamente y se comparten entre todas las vistas.
 ///
 /// ## Uso:
 /// ```dart
@@ -146,47 +147,29 @@ class CashRegisterManagementDialog extends StatefulWidget {
 
 class _CashRegisterManagementDialogState
     extends State<CashRegisterManagementDialog> {
-  /// Future compartido para los tickets del día
-  /// Se carga una sola vez y se comparte entre _buildCashFlowView y RecentTicketsView
-  Future<List<TicketModel>?>? _ticketsFuture;
-
-  /// ID de la caja registradora actual para detectar cambios
-  String? _currentCashRegisterId;
 
   @override
   void initState() {
     super.initState();
-    // Se cargará en el primer build cuando tengamos el contexto
+    // ✅ La carga de tickets ahora se maneja en el provider
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // ✅ Cargar tickets usando el provider cuando cambian las dependencias
     _loadTicketsIfNeeded();
   }
 
-  /// Carga los tickets solo si:
-  /// 1. Aún no se han cargado (_ticketsFuture == null)
-  /// 2. La caja registradora cambió
+  /// Carga los tickets usando el provider solo cuando sea necesario
   void _loadTicketsIfNeeded() {
-    final cashRegisterProvider = context.watch<CashRegisterProvider>();
-    final sellProvider = context.watch<SellProvider>();
+    final cashRegisterProvider = context.read<CashRegisterProvider>();
+    final sellProvider = context.read<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
-    final cashRegisterId =
-        cashRegisterProvider.currentActiveCashRegister?.id ?? '';
 
-    // Solo recargar si cambió la caja o no hay datos
-    if (_ticketsFuture == null || _currentCashRegisterId != cashRegisterId) {
-      _currentCashRegisterId = cashRegisterId;
-      if (accountId.isNotEmpty && cashRegisterId.isNotEmpty) {
-        // get : Usar getCashRegisterTickets para obtener tickets de la caja activa
-        _ticketsFuture = cashRegisterProvider.getCashRegisterTickets(
-          accountId: accountId,
-          cashRegisterId: cashRegisterId,
-        );
-      } else {
-        _ticketsFuture = Future.value(null);
-      }
+    // ✅ Delegar la lógica de carga al provider
+    if (accountId.isNotEmpty) {
+      cashRegisterProvider.loadCashRegisterTickets(accountId: accountId);
     }
   }
 
@@ -195,17 +178,10 @@ class _CashRegisterManagementDialogState
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     final sellProvider = context.read<SellProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
-    final cashRegisterId =
-        cashRegisterProvider.currentActiveCashRegister?.id ?? '';
 
-    if (accountId.isNotEmpty && cashRegisterId.isNotEmpty) {
-      setState(() {
-        // ✅ MEJORADO: Usar getCashRegisterTickets para obtener tickets de la caja activa
-        _ticketsFuture = cashRegisterProvider.getCashRegisterTickets(
-          accountId: accountId,
-          cashRegisterId: cashRegisterId,
-        );
-      });
+    // ✅ Usar el método del provider para forzar la recarga
+    if (accountId.isNotEmpty) {
+      cashRegisterProvider.reloadTickets(accountId: accountId);
     }
   }
 
@@ -367,12 +343,12 @@ class _CashRegisterManagementDialogState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // view : información de flujo de caja (usa _ticketsFuture compartido)
+        // view : información de flujo de caja (usa tickets del provider)
         _buildCashFlowView(context, provider, isMobile),
         SizedBox(height: getResponsiveSpacing(context, scale: 2)),
         // view : resumen de métodos de pago
         FutureBuilder<List<TicketModel>?>(
-          future: _ticketsFuture,
+          future: provider.cashRegisterTickets, // ✅ Usar tickets del provider
           builder: (context, snapshot) {
             if (snapshot.hasData &&
                 snapshot.data != null &&
@@ -408,9 +384,9 @@ class _CashRegisterManagementDialogState
             return const SizedBox.shrink();
           },
         ),
-        // view : lista de las ultimas ventas (usa _ticketsFuture compartido)
+        // view : lista de las ultimas ventas (usa tickets del provider)
         RecentTicketsView(
-          ticketsFuture: _ticketsFuture,
+          ticketsFuture: provider.cashRegisterTickets, // ✅ Usar tickets del provider
           cashRegisterProvider: provider,
           isMobile: isMobile,
           onTicketUpdated: _reloadTickets,
@@ -987,7 +963,7 @@ class _CashRegisterManagementDialogState
     final cashRegister = provider.currentActiveCashRegister!;
 
     return FutureBuilder<List<TicketModel>?>(
-      future: _ticketsFuture,
+      future: provider.cashRegisterTickets, // ✅ Usar tickets del provider
       builder: (context, snapshot) {
         final tickets = snapshot.data;
 
@@ -1507,10 +1483,10 @@ class _CashRegisterManagementDialogState
 }
 
 /// Widget separado para manejar la lista de tickets recientes de manera eficiente
-/// ✅ Recibe el Future de tickets como parámetro en lugar de cargarlo internamente
+/// ✅ Recibe el Future de tickets desde [CashRegisterProvider] como parámetro
 /// Evita rebuilds innecesarios y llamadas duplicadas a la base de datos
 class RecentTicketsView extends StatefulWidget {
-  /// Future compartido con los tickets ya cargados
+  /// Future compartido con los tickets ya cargados desde el provider
   final Future<List<TicketModel>?>? ticketsFuture;
   final CashRegisterProvider cashRegisterProvider;
   final bool isMobile;

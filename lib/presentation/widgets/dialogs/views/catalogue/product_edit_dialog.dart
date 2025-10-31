@@ -399,8 +399,6 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         widget.product.favorite = !widget.product.favorite;
       });
 
-      print('❌ Error al actualizar favorito: $e');
-
       // Mostrar mensaje de error al usuario
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

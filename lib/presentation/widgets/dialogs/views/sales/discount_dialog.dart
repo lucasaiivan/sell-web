@@ -2,9 +2,6 @@ import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 
 /// Diálogo para agregar descuento al ticket de venta

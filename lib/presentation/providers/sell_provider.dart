@@ -882,10 +882,12 @@ class SellProvider extends ChangeNotifier {
           provider.Provider.of<CashRegisterProvider>(context, listen: false);
 
       if (cashRegisterProvider.hasActiveCashRegister) {
-        // Registrar la venta en la caja activa
+        // ✅ FIX: Usar priceTotal que ya incluye el descuento aplicado
+        // priceTotal se estableció correctamente en prepareSaleTicket con getTotalPrice
+        // Esto garantiza que billing coincida con la suma de priceTotal de todos los tickets
         await cashRegisterProvider.cashRegisterSale(
           accountId: _state.profileAccountSelected.id,
-          saleAmount: _state.ticket.getTotalPrice,
+          saleAmount: _state.ticket.priceTotal,
           discountAmount: _state.ticket
               .getDiscountAmount, // Usar el monto calculado del descuento
           itemCount: _state.ticket.getProductsQuantity(),

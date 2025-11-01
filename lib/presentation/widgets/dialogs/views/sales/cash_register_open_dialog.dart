@@ -125,74 +125,153 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
       BuildContext context, CashRegisterProvider cashRegisterProvider) {
     final theme = Theme.of(context);
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // view : Lista de nombres frecuentes
-        _localFixedDescriptions.isEmpty
-            ? Opacity(
-                opacity: 0.5,
-                child: const Text('Aun no ahi nombres frecuentes guardados'))
-            : Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _localFixedDescriptions.map((description) {
-                  return Stack(
+        // Header con título y botón de agregar
+        Row(
+          children: [
+            Text(
+              'Nombres frecuentes',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // button : Botón para agregar nuevo nombre frecuente
+            InkWell(
+              onTap: () =>
+                  _showAddDescriptionDialog(context, cashRegisterProvider),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.add_circle_outline,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // view : Lista de nombres frecuentes con scroll
+        Container(
+          constraints: const BoxConstraints(
+            maxHeight: 120, // Altura máxima para evitar desbordamiento
+          ),
+          child: _localFixedDescriptions.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
                     children: [
-                      ActionChip(
-                        label: Padding(
-                          padding: const EdgeInsets.only(
-                              right: 18), // Espacio para el botón X
-                          child: Text(description),
-                        ),
-                        onPressed: () {
-                          cashRegisterProvider.openDescriptionController.text =
-                              description;
-                        },
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
-                        labelStyle: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: theme.colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.5),
                       ),
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        bottom: 4,
-                        child: InkWell(
-                          onTap: () => _deleteFixedDescription(
-                              context, cashRegisterProvider, description),
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            child: Icon(
-                              Icons.close,
-                              size: 12,
-                              color: theme.colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.8),
-                            ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Aún no hay nombres frecuentes guardados',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.7),
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ),
                     ],
-                  );
-                }).toList(),
-              ),
-        const Spacer(),
-        // button : Botón para agregar nuevo nombre frecuente
-        IconButton(
-          onPressed: () =>
-              _showAddDescriptionDialog(context, cashRegisterProvider),
-          icon: Icon(
-            Icons.add_circle_outline,
-            size: 18,
-            color: theme.colorScheme.primary,
-          ),
-          tooltip: 'Agregar nombre frecuente',
-          visualDensity: VisualDensity.compact,
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _localFixedDescriptions.map((description) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: IntrinsicWidth(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Área clickeable del chip
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () {
+                                    cashRegisterProvider
+                                        .openDescriptionController.text =
+                                        description;
+                                  },
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    bottomLeft: Radius.circular(20),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      description,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Divisor vertical
+                              Container(
+                                width: 1,
+                                height: 16,
+                                color: theme.colorScheme.outline
+                                    .withValues(alpha: 0.2),
+                              ),
+                              // Botón de eliminar
+                              InkWell(
+                                onTap: () => _deleteFixedDescription(
+                                    context, cashRegisterProvider, description),
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(20),
+                                  bottomRight: Radius.circular(20),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 14,
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
         ),
       ],
     );

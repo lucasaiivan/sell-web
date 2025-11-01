@@ -51,16 +51,6 @@ void _runApp() {
   final accountRepository = AccountRepositoryImpl();
   final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
 
-  // Inicializar repositorio y usecases compartidos globalmente
-  final cashRegisterRepository = CashRegisterRepositoryImpl();
-
-  // Inicializar SellUsecases (lógica de negocio de tickets - compartido globalmente)
-  final persistenceService = AppDataPersistenceService.instance;
-  final sellUsecases = SellUsecases(
-    repository: cashRegisterRepository,
-    persistenceService: persistenceService,
-  );
-
   runApp(
     MultiProvider(
       providers: [
@@ -82,17 +72,27 @@ void _runApp() {
 
         // SellProvider - creado una sola vez y reutilizado
         ChangeNotifierProxyProvider<AuthProvider, SellProvider>(
-          create: (_) => SellProvider(
-            getUserAccountsUseCase: getUserAccountsUseCase,
-            sellUsecases: sellUsecases, // NUEVO: Solo SellUsecases para tickets
-          ),
-          update: (_, auth, previousSell) =>
-              previousSell ??
-              SellProvider(
-                getUserAccountsUseCase: getUserAccountsUseCase,
-                sellUsecases:
-                    sellUsecases, // NUEVO: Solo SellUsecases para tickets
-              ),
+          create: (_) {
+            final persistenceService = AppDataPersistenceService.instance;
+            final sellUsecases = SellUsecases(
+              persistenceService: persistenceService,
+            );
+            return SellProvider(
+              getUserAccountsUseCase: getUserAccountsUseCase,
+              sellUsecases: sellUsecases,
+            );
+          },
+          update: (_, auth, previousSell) {
+            if (previousSell != null) return previousSell;
+            final persistenceService = AppDataPersistenceService.instance;
+            final sellUsecases = SellUsecases(
+              persistenceService: persistenceService,
+            );
+            return SellProvider(
+              getUserAccountsUseCase: getUserAccountsUseCase,
+              sellUsecases: sellUsecases,
+            );
+          },
         ),
       ],
       child: Consumer<ThemeDataAppProvider>(
@@ -150,13 +150,11 @@ Widget _buildAccountSpecificProviders({
   // Crear repositorios específicos de la cuenta
   final catalogueRepository = CatalogueRepositoryImpl(id: effectiveAccountId);
 
-  // Reutilizar el repository de cash register (ya está inicializado globalmente)
-  // Compartir el mismo cashRegisterRepository pero crear nuevos UseCases
+  // Inicializar casos de uso
   final cashRegisterRepository = CashRegisterRepositoryImpl();
   final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
   final persistenceService = AppDataPersistenceService.instance;
   final sellUsecases = SellUsecases(
-    repository: cashRegisterRepository,
     persistenceService: persistenceService,
   );
 

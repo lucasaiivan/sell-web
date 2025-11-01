@@ -1,18 +1,19 @@
 import '../../domain/entities/cash_register_model.dart';
+import '../../domain/entities/ticket_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Casos de uso para el sistema de caja registradora
 ///
-/// Implementa la lógica de negocio para:
-/// - Apertura y cierre de caja
-/// - Gestión de flujos de caja
-/// - Consultas del historial
-/// - Operaciones de arqueo
-/// - Validaciones de negocio
-/// - Transformaciones de datos
+/// RESPONSABILIDAD:
+/// - Gestión de cajas (abrir, cerrar, consultar)
+/// - Flujos de caja (ingresos, egresos, ventas)
+/// - Persistencia de tickets en Firebase
+/// - Historial de transacciones
+/// - Anulación de tickets
+/// - Análisis y reportes
 ///
-/// RESPONSABILIDAD ÚNICA: Solo operaciones de CAJA REGISTRADORA
-/// Para operaciones con tickets, ver SellUsecases (lib/domain/usecases/sell_usecases.dart)
+/// Para gestión temporal de tickets (productos, cálculos), ver SellUsecases
 class CashRegisterUsecases {
   final CashRegisterRepository _repository;
 
@@ -23,9 +24,6 @@ class CashRegisterUsecases {
   // ==========================================
 
   /// Abre una nueva caja registradora
-  ///
-  /// Valida que no exista otra caja abierta con el mismo cajero
-  /// y crea una nueva caja con el monto inicial especificado
   Future<CashRegister> openCashRegister({
     required String accountId,
     required String description,
@@ -33,7 +31,6 @@ class CashRegisterUsecases {
     required String cashierId,
     required String cashierName,
   }) async {
-    // VALIDACIONES DE NEGOCIO
     if (description.trim().isEmpty) {
       throw Exception('La descripción es obligatoria');
     }
@@ -54,7 +51,6 @@ class CashRegisterUsecases {
       throw Exception('El nombre del cajero no puede estar vacío');
     }
 
-    // TRANSFORMACIÓN: Descripción por defecto si está vacía
     final finalDescription = description.trim().isEmpty
         ? 'Caja ${DateTime.now().day}/${DateTime.now().month}'
         : description.trim();
@@ -68,89 +64,12 @@ class CashRegisterUsecases {
     );
   }
 
-  /// Cierra una caja registradora específica
-  ///
-  /// Calcula automáticamente la diferencia y mueve la caja al historial
-  /// Cierra una caja registradora existente
-  ///
-  /// RESPONSABILIDAD: Validar cierre y delegar a repositorio
-  ///
-  /// ⚠️ IMPORTANTE - LÓGICA DE CONTADORES:
-  ///
-  /// ## Contador `sales` (Ventas Efectivas) ✅
-  /// - Se incrementa automáticamente (+1) en cada VENTA mediante `cashRegisterSale()`
-  /// - Representa SOLO las ventas EFECTIVAS (NO incluye anulaciones)
-  /// - **NO se modifica** al anular un ticket
-  /// - **NO debe modificarse al cerrar caja** - ya está correcto
-  ///
-  /// ## Contador `annulledTickets` (Tickets Anulados)
-  /// - Se incrementa (+1) cada vez que se anula un ticket
-  /// - Se incrementa automáticamente en `updateBillingOnAnnullment()`
-  /// - Puede requerir verificación al cerrar para corregir desincronizaciones
-  ///
-  /// ## Cálculo de Total de Transacciones
-  /// ```dart
-  /// totalTransacciones = sales + annulledTickets
-  /// ventasEfectivas = sales // Directo, ya no requiere resta
-  /// ```
-  ///
-  /// ## FLUJO AL CERRAR CAJA (ARQUEO):
-  /// 1. Obtener transacciones reales de hoy:
-  ///    ```dart
-  ///    final todayTickets = await sellUsecases.getTodayTransactions(
-  ///      accountId: accountId,
-  ///      cashRegisterId: cashRegisterId
-  ///    );
-  ///    ```
-  ///
-  /// 2. Calcular contadores reales para VERIFICACIÓN:
-  ///    ```dart
-  ///    final realEffective = todayTickets.where((t) => t['annulled'] != true).length;
-  ///    final realAnnulled = todayTickets.where((t) => t['annulled'] == true).length;
-  ///    final realTotal = realEffective + realAnnulled;
-  ///    ```
-  ///
-  /// 3. VALIDAR consistencia (NO sobrescribir):
-  ///    ```dart
-  ///    final currentSales = cashRegister.sales; // Ya correcto (solo ventas efectivas)
-  ///    final currentAnnulled = cashRegister.annulledTickets;
-  ///
-  ///    // Verificar si requiere corrección
-  ///    final needsUpdate = currentSales != realEffective || currentAnnulled != realAnnulled;
-  ///
-  ///    if (needsUpdate) {
-  ///      await repository.setCashRegister(
-  ///        accountId,
-  ///        cashRegister.update(
-  ///          sales: realEffective, // Corregir si hay desincronización
-  ///          annulledTickets: realAnnulled, // Corregir si hay desincronización
-  ///        ),
-  ///      );
-  ///    }
-  ///    ```
-  ///
-  /// 4. Cerrar la caja con contadores validados
-  ///
-  /// ## ¿Por qué sales ahora es SOLO ventas efectivas?
-  /// - **Claridad**: "ventas" no debería incluir anulaciones
-  /// - **Simplicidad**: effectiveSales = sales (directo)
-  /// - **Trazabilidad**: totalTransactions = sales + annulledTickets
-  /// - **Consistencia**: Cada venta suma +1, cada anulación NO modifica sales
-  ///
-  /// PARÁMETROS:
-  /// - `accountId`: ID de la cuenta
-  /// - `cashRegisterId`: ID de la caja a cerrar
-  /// - `finalBalance`: Balance final declarado en el arqueo
-  ///
-  /// RETORNA: CashRegister cerrado
-  ///
-  /// LANZA: Exception si validaciones fallan
+  /// Cierra una caja registradora
   Future<CashRegister> closeCashRegister({
     required String accountId,
     required String cashRegisterId,
     required double finalBalance,
   }) async {
-    // VALIDACIONES DE NEGOCIO
     if (accountId.trim().isEmpty) {
       throw Exception('El ID de la cuenta no puede estar vacío');
     }
@@ -185,8 +104,6 @@ class CashRegisterUsecases {
   // ==========================================
 
   /// Registra un ingreso de caja
-  ///
-  /// Valida que el monto sea positivo y actualiza los totales
   Future<void> addCashInflow({
     required String accountId,
     required String cashRegisterId,
@@ -218,8 +135,6 @@ class CashRegisterUsecases {
   }
 
   /// Registra un egreso de caja
-  ///
-  /// Valida que el monto sea positivo y actualiza los totales
   Future<void> addCashOutflow({
     required String accountId,
     required String cashRegisterId,
@@ -252,33 +167,7 @@ class CashRegisterUsecases {
 
   /// Registra una venta en la caja registradora
   ///
-  /// ⚠️ IMPORTANTE - ORDEN DE EJECUCIÓN:
-  /// Este método DEBE llamarse DESPUÉS de guardar el ticket en Firebase.
-  /// Garantiza consistencia: el contador 'sales' se incrementa SOLO si el ticket
-  /// se guardó exitosamente en la base de datos.
-  ///
-  /// RESPONSABILIDAD:
-  /// - Incrementar contador de ventas efectivas (+1)
-  /// - Actualizar facturación total
-  /// - Actualizar descuentos totales
-  ///
-  /// VALIDACIONES:
-  /// - saleAmount >= 0
-  /// - discountAmount >= 0
-  ///
-  /// USO CORRECTO:
-  /// ```dart
-  /// // 1. Guardar ticket en Firebase
-  /// await saveTicketToTransactionHistory(ticket);
-  ///
-  /// // 2. SOLO si el guardado fue exitoso, incrementar contador
-  /// await cashRegisterSale(
-  ///   accountId: accountId,
-  ///   cashRegisterId: cashRegisterId,
-  ///   saleAmount: ticket.getTotalPrice,
-  ///   discountAmount: ticket.discount,
-  /// );
-  /// ```
+  /// ⚠️ IMPORTANTE: Llamar DESPUÉS de guardar el ticket en Firebase
   Future<void> cashRegisterSale({
     required String accountId,
     required String cashRegisterId,
@@ -416,7 +305,153 @@ class CashRegisterUsecases {
   }
 
   // ==========================================
-  // UTILIDADES PRIVADAS
+  // GESTIÓN DE TICKETS Y TRANSACCIONES
+  // ==========================================
+
+  /// Guarda un ticket en el historial de transacciones
+  Future<void> saveTicketToTransactionHistory({
+    required String accountId,
+    required TicketModel ticket,
+  }) async {
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta no puede estar vacío');
+    }
+
+    if (ticket.id.isEmpty) {
+      throw Exception('El ID del ticket no puede estar vacío');
+    }
+
+    if (ticket.sellerId.isEmpty) {
+      throw Exception('El ID del vendedor no puede estar vacío');
+    }
+
+    if (ticket.products.isEmpty) {
+      throw Exception('El ticket debe contener al menos un producto');
+    }
+
+    if (ticket.priceTotal <= 0) {
+      throw Exception('El monto total de la venta debe ser mayor a cero');
+    }
+
+    final transactionData = ticket.toMap();
+
+    await _repository.saveTicketTransaction(
+      accountId: accountId,
+      ticketId: ticket.id,
+      transactionData: transactionData,
+    );
+  }
+
+  /// Procesa la anulación de un ticket
+  Future<TicketModel> processTicketAnnullment({
+    required String accountId,
+    required TicketModel ticket,
+    CashRegister? activeCashRegister,
+  }) async {
+    if (ticket.annulled) {
+      throw Exception('El ticket ya está anulado');
+    }
+
+    if (ticket.id.trim().isEmpty) {
+      throw Exception('El ticket debe tener un ID válido');
+    }
+
+    final annulledTicket = ticket.copyWith(annulled: true);
+
+    await _repository.saveTicketTransaction(
+      accountId: accountId,
+      ticketId: ticket.id,
+      transactionData: annulledTicket.toMap(),
+    );
+
+    if (activeCashRegister != null &&
+        ticket.cashRegisterId == activeCashRegister.id) {
+      await _repository.updateBillingOnAnnullment(
+        accountId: accountId,
+        cashRegisterId: activeCashRegister.id,
+        billingDecrement: ticket.priceTotal,
+        discountDecrement: ticket.getDiscountAmount,
+      );
+    }
+
+    return annulledTicket;
+  }
+
+  /// Obtiene las transacciones del día actual
+  Future<List<Map<String, dynamic>>> getTodayTransactions({
+    required String accountId,
+    String cashRegisterId = '',
+  }) async {
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final result = await getTransactionsByDateRange(
+      accountId: accountId,
+      startDate: startOfDay,
+      endDate: endOfDay,
+    );
+
+    if (cashRegisterId.isNotEmpty) {
+      return result
+          .where((doc) => doc['cashRegisterId'] == cashRegisterId)
+          .toList();
+    }
+    return result;
+  }
+
+  /// Stream de transacciones del día actual con actualizaciones en tiempo real
+  Stream<List<Map<String, dynamic>>> getTodayTransactionsStream({
+    required String accountId,
+    String cashRegisterId = '',
+  }) {
+    final today = DateTime.now();
+    final transactionsStream = _repository.getTransactionsStream(accountId);
+
+    return transactionsStream.map((allTransactions) {
+      final todayTransactions = allTransactions.where((transaction) {
+        if (transaction['creation'] == null) return false;
+
+        final creation = transaction['creation'] as Timestamp;
+        final transactionDate = creation.toDate();
+
+        final isToday = transactionDate.year == today.year &&
+            transactionDate.month == today.month &&
+            transactionDate.day == today.day;
+
+        if (!isToday) return false;
+
+        if (cashRegisterId.isNotEmpty) {
+          return transaction['cashRegisterId'] == cashRegisterId;
+        }
+
+        return true;
+      }).toList();
+
+      return todayTransactions;
+    });
+  }
+
+  /// Obtiene transacciones por rango de fechas
+  Future<List<Map<String, dynamic>>> getTransactionsByDateRange({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    return await _repository.getTransactionsByDateRange(
+      accountId: accountId,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  /// Stream de transacciones con actualizaciones en tiempo real
+  Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
+    return _repository.getTransactionsStream(accountId);
+  }
+
+  // ==========================================
+  // UTILIDADES
   // ==========================================
 
   String _formatDate(DateTime date) {
@@ -424,18 +459,10 @@ class CashRegisterUsecases {
   }
 
   // ==========================================
-  // GESTIÓN DE DESCRIPCIONES FIJAS (NOMBRES DE CAJAS)
+  // GESTIÓN DE DESCRIPCIONES FIJAS
   // ==========================================
 
-  /// Crea una nueva descripción fija para nombres de caja registradora
-  ///
-  /// RESPONSABILIDAD: Agregar opciones predefinidas para nombrar cajas
-  ///
-  /// PARÁMETROS:
-  /// - `accountId`: ID de la cuenta
-  /// - `description`: Descripción/nombre a agregar
-  ///
-  /// LANZA: Exception si la descripción está vacía
+  /// Crea una nueva descripción fija para nombres de caja
   Future<void> createCashRegisterFixedDescription({
     required String accountId,
     required String description,
@@ -448,14 +475,7 @@ class CashRegisterUsecases {
         accountId, description.trim());
   }
 
-  /// Obtiene las descripciones fijas disponibles para nombres de caja registradora
-  ///
-  /// RESPONSABILIDAD: Consultar opciones predefinidas para nombrar cajas
-  ///
-  /// PARÁMETROS:
-  /// - `accountId`: ID de la cuenta
-  ///
-  /// RETORNA: Lista de descripciones como Strings
+  /// Obtiene las descripciones fijas disponibles
   Future<List<String>> getCashRegisterFixedDescriptions(
       String accountId) async {
     final descriptions =
@@ -466,13 +486,7 @@ class CashRegisterUsecases {
         .toList();
   }
 
-  /// Elimina una descripción fija para nombres de caja registradora
-  ///
-  /// RESPONSABILIDAD: Remover opciones predefinidas para nombrar cajas
-  ///
-  /// PARÁMETROS:
-  /// - `accountId`: ID de la cuenta
-  /// - `description`: Descripción/nombre a eliminar
+  /// Elimina una descripción fija
   Future<void> deleteCashRegisterFixedDescription({
     required String accountId,
     required String description,
@@ -480,40 +494,4 @@ class CashRegisterUsecases {
     await _repository.deleteCashRegisterFixedDescription(
         accountId, description);
   }
-
-  // ==========================================
-  // NOTA: MÉTODOS DE TICKETS MOVIDOS A SellUsecases
-  // ==========================================
-  // Los siguientes 20 métodos fueron movidos a lib/domain/usecases/sell_usecases.dart
-  // para cumplir con el Principio de Responsabilidad Única (SRP):
-  //
-  // - createEmptyTicket()
-  // - updateTicketFields()
-  // - prepareSaleTicket()
-  // - prepareTicketForTransaction()
-  // - _validateSaleTicket()
-  // - addProductToTicket()
-  // - removeProductFromTicket()
-  // - setTicketPaymentMode()
-  // - setTicketDiscount()
-  // - setTicketReceivedCash()
-  // - associateTicketWithCashRegister()
-  // - assignSellerToTicket()
-  // - saveTicketToTransactionHistory()
-  // - processTicketAnnullment()
-  // - processTicketAnnullmentWithLocalUpdate()
-  // - saveLastSoldTicket()
-  // - getLastSoldTicket()
-  // - updateLastSoldTicket()
-  // - clearLastSoldTicket()
-  // - hasLastSoldTicket()
-  //
-  // Adicionalmente, los siguientes 3 métodos de consulta de transacciones fueron
-  // movidos a SellUsecases:
-  // - getTodayTransactions()
-  // - getTransactionsByDateRange()
-  // - getTransactionsStream()
-  //
-  // CashRegisterUsecases ahora se enfoca EXCLUSIVAMENTE en operaciones de caja registradora.
-  // Para operaciones con tickets, usar SellUsecases.
 }

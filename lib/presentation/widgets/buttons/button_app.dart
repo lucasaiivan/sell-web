@@ -401,8 +401,8 @@ class ButtonApp extends StatelessWidget {
     final Color effectiveIconColor =
         _getEffectiveIconColor(colorScheme) ?? effectiveForegroundColor;
 
-    if (hasText && (extended || hasIcon)) {
-      // FloatingActionButton.extended para texto o icono+texto
+    // ✅ Si hay texto, siempre usar FloatingActionButton.extended (con o sin icono)
+    if (hasText) {
       return FloatingActionButton.extended(
         heroTag: heroTag,
         onPressed: onPressed,

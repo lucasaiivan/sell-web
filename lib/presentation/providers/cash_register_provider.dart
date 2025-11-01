@@ -482,25 +482,21 @@ class CashRegisterProvider extends ChangeNotifier {
   ///
   /// FLUJO:
   /// 1. Obtener transacciones reales de hoy de esta caja
-  /// 2. Calcular contadores correctos (ventas efectivas, anulados)
-  /// 3. Validar/corregir contadores si hay desincronización
-  /// 4. Cerrar la caja (arqueo)
   Future<bool> closeCashRegister(
       String accountId, String cashRegisterId) async {
     _state = _state.copyWith(isProcessing: true, errorMessage: null);
     notifyListeners();
 
     try {
-      // 🎯 PASO 1: Obtener transacciones reales de hoy para validar contadores
-      // ✅ MEJORADO: Usar stream para obtener datos más actualizados
-      final todayTickets = await _sellUsecases
+      // Obtener transacciones reales de hoy para validar contadores
+      final todayTickets = await _cashRegisterUsecases
           .getTodayTransactionsStream(
             accountId: accountId,
             cashRegisterId: cashRegisterId,
           )
-          .first; // Obtener snapshot actual del stream
+          .first;
 
-      // 🎯 PASO 2: Calcular contadores desde la fuente de verdad (para verificación)
+      // Calcular contadores desde la fuente de verdad
       final effectiveSales =
           todayTickets.where((ticket) => ticket['annulled'] != true).length;
 
@@ -661,6 +657,7 @@ class CashRegisterProvider extends ChangeNotifier {
     }
 
     try {
+      // case use : realizar venta en caja registradora activa
       await _cashRegisterUsecases.cashRegisterSale(
         accountId: accountId,
         cashRegisterId: currentActiveCashRegister!.id,
@@ -701,32 +698,40 @@ class CashRegisterProvider extends ChangeNotifier {
     if (cashRegisterId.isEmpty || accountId.isEmpty) {
       _cashRegisterTickets = Future.value(null);
       _cachedCashRegisterId = null;
-      notifyListeners();
+      // Usar scheduleMicrotask para evitar llamar notifyListeners durante build
+      scheduleMicrotask(() {
+        notifyListeners();
+      });
       return;
     }
 
-    // Solo recargar si:
-    // 1. Se fuerza la recarga (forceReload = true)
-    // 2. Cambió la caja registradora (_cachedCashRegisterId != cashRegisterId)
-    // 3. No hay datos cargados (_cashRegisterTickets == null)
+    // Solo recargar si hay cambios
     if (forceReload ||
         _cachedCashRegisterId != cashRegisterId ||
         _cashRegisterTickets == null) {
       _cachedCashRegisterId = cashRegisterId;
       _isLoadingTickets = true;
-      notifyListeners();
+      
+      // Usar scheduleMicrotask para evitar llamar notifyListeners durante build
+      scheduleMicrotask(() {
+        notifyListeners();
+      });
 
       // Obtener tickets de la caja activa
       _cashRegisterTickets = getCashRegisterTickets(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        todayOnly: false, // Cargar todo el historial de la caja
+        todayOnly: false,
       );
 
       // Esperar a que termine la carga para actualizar el estado
       await _cashRegisterTickets;
       _isLoadingTickets = false;
-      notifyListeners();
+      
+      // Usar scheduleMicrotask para evitar problemas si se llama durante build
+      scheduleMicrotask(() {
+        notifyListeners();
+      });
     }
   }
 
@@ -869,21 +874,16 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Guarda un ticket de venta confirmada en el historial de transacciones
-  ///
-  /// RESPONSABILIDAD: Solo coordinar UI y llamar al UseCase
-  /// Las transformaciones y validaciones están en SellUsecases
   Future<bool> saveTicketToTransactionHistory({
     required String accountId,
     required TicketModel ticket,
   }) async {
     try {
-      // UseCase maneja preparación, validaciones y transformaciones
-      final preparedTicket =
-          _sellUsecases.prepareTicketForTransaction(ticket); // CAMBIADO
+      // Preparar ticket (validaciones en SellUsecases)
+      final preparedTicket = _sellUsecases.prepareTicketForTransaction(ticket);
 
-      // Guardar el ticket preparado en el historial
-      await _sellUsecases.saveTicketToTransactionHistory(
-        // CAMBIADO
+      // Guardar en Firebase (ahora en CashRegisterUsecases)
+      await _cashRegisterUsecases.saveTicketToTransactionHistory(
         accountId: accountId,
         ticket: preparedTicket,
       );
@@ -902,37 +902,26 @@ class CashRegisterProvider extends ChangeNotifier {
   /// La lógica de negocio está en CashRegisterUsecases
   ///
   /// 🆕 IMPORTANTE: Si el ticket anulado es el último vendido, debe actualizarse
-  /// en SellProvider también para mantener sincronización entre providers
   /// Anula un ticket en el historial de transacciones
-  ///
-  /// RESPONSABILIDAD: Coordinar anulación y actualizar estado UI
-  /// La lógica de negocio (Firebase + SharedPreferences) está en SellUsecases
-  ///
-  /// 🆕 Ahora usa processTicketAnnullmentWithLocalUpdate para actualizar automáticamente
-  /// el último ticket vendido en SharedPreferences
   Future<bool> annullTicket({
     required String accountId,
     required TicketModel ticket,
-    VoidCallback?
-        onLastSoldTicketUpdated, // 🆕 Callback opcional para notificar
+    VoidCallback? onLastSoldTicketUpdated,
   }) async {
     try {
-      // 🔧 PASO 1: UseCase maneja validaciones, transformaciones, Firebase Y SharedPreferences
-      // Usar processTicketAnnullmentWithLocalUpdate para actualizar automáticamente el último ticket
-      await _sellUsecases.processTicketAnnullmentWithLocalUpdate(
-        // CAMBIADO
+      // Anular ticket (ahora en CashRegisterUsecases)
+      final annulledTicket = await _cashRegisterUsecases.processTicketAnnullment(
         accountId: accountId,
         ticket: ticket,
         activeCashRegister: _state.selectedCashRegister,
-        updateLastSold:
-            true, // ✅ Actualizar automáticamente en SharedPreferences
       );
 
-      // PASO 2: Recargar caja desde Firebase para obtener contadores actualizados
-      // Esto asegura que annulledTickets refleje el incremento automático del repository
+      // Actualizar último ticket local si es necesario
+      await _sellUsecases.updateLastSoldTicket(annulledTicket);
+
+      // Recargar caja desde Firebase para obtener contadores actualizados
       if (hasActiveCashRegister &&
           ticket.cashRegisterId == _state.selectedCashRegister!.id) {
-        // Recargar caja desde Firebase para sincronizar contadores
         final updatedCashRegisters =
             await _cashRegisterUsecases.getActiveCashRegisters(accountId);
         final updatedCashRegister = updatedCashRegisters.firstWhere(
@@ -1006,18 +995,17 @@ class CashRegisterProvider extends ChangeNotifier {
       List<Map<String, dynamic>> result;
 
       if (todayOnly) {
-        // Obtener solo tickets de hoy
-        result = await _sellUsecases.getTodayTransactions(
+        // Obtener solo tickets de hoy (ahora en CashRegisterUsecases)
+        result = await _cashRegisterUsecases.getTodayTransactions(
           accountId: accountId,
           cashRegisterId: cashRegisterId,
         );
       } else {
         // Obtener todo el historial de la caja
-        // Usar rango de fechas desde hace 1 año hasta hoy
         final now = DateTime.now();
         final oneYearAgo = now.subtract(const Duration(days: 365));
 
-        result = await _sellUsecases.getTransactionsByDateRange(
+        result = await _cashRegisterUsecases.getTransactionsByDateRange(
           accountId: accountId,
           startDate: oneYearAgo,
           endDate: now,
@@ -1069,43 +1057,25 @@ class CashRegisterProvider extends ChangeNotifier {
   Stream<List<TicketModel>> getCashRegisterTicketsStream({
     required String accountId,
     required String cashRegisterId,
-    bool todayOnly = true, // Por defecto solo tickets de hoy
+    bool todayOnly = true,
   }) {
     try {
-      // Validar cashRegisterId requerido
       if (cashRegisterId.isEmpty) {
         throw Exception('cashRegisterId es requerido');
       }
 
-      if (todayOnly) {
-        // Stream de tickets de hoy con filtro por caja
-        return _sellUsecases
-            .getTodayTransactionsStream(
-          accountId: accountId,
-          cashRegisterId: cashRegisterId,
-        )
-            .map((transactionsList) {
-          // Convertir Map a TicketModel
-          return transactionsList
-              .map((ticketMap) => TicketModel.fromMap(ticketMap))
-              .toList();
-        });
-      } else {
-        // Stream de todos los tickets filtrados por caja
-        return _sellUsecases
-            .getTransactionsStream(accountId)
-            .map((allTransactions) {
-          // Filtrar por cashRegisterId
-          final filteredTransactions = allTransactions
-              .where((ticket) => ticket['cashRegisterId'] == cashRegisterId)
-              .toList();
+      // Stream de todos los tickets filtrados por caja
+      return _cashRegisterUsecases
+          .getTransactionsStream(accountId)
+          .map((allTransactions) {
+        final filteredTransactions = allTransactions
+            .where((ticket) => ticket['cashRegisterId'] == cashRegisterId)
+            .toList();
 
-          // Convertir a TicketModel
-          return filteredTransactions
-              .map((ticketMap) => TicketModel.fromMap(ticketMap))
-              .toList();
-        });
-      }
+        return filteredTransactions
+            .map((ticketMap) => TicketModel.fromMap(ticketMap))
+            .toList();
+      });
     } catch (e) {
       _state = _state.copyWith(errorMessage: e.toString());
       notifyListeners();
@@ -1113,9 +1083,7 @@ class CashRegisterProvider extends ChangeNotifier {
       return Stream.value([]);
     }
   }
- 
-
-  /// Obtiene los tickets filtrados el día actual y si se proporciona cashRegisterId se filtra por esa caja
+  /// Obtiene los tickets filtrados por rango de fechas
   Future<List<Map<String, dynamic>>?> getTicketsByDateRange({
     required String accountId,
     required DateTime startDate,
@@ -1123,7 +1091,7 @@ class CashRegisterProvider extends ChangeNotifier {
     String cashRegisterId = '',
   }) async {
     try {
-      return await _sellUsecases.getTransactionsByDateRange(
+      return await _cashRegisterUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
@@ -1142,7 +1110,7 @@ class CashRegisterProvider extends ChangeNotifier {
     required DateTime endDate,
   }) async {
     try {
-      return await _sellUsecases.getTransactionsByDateRange(
+      return await _cashRegisterUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,
@@ -1155,15 +1123,13 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   /// Obtiene análisis de transacciones para reportes
-  /// TODO: Implementar método getTransactionAnalytics en use case
   Future<Map<String, dynamic>?> getTransactionAnalytics({
     required String accountId,
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     try {
-      // Por ahora devolver análisis básico usando los datos disponibles
-      final transactions = await _sellUsecases.getTransactionsByDateRange(
+      final transactions = await _cashRegisterUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,

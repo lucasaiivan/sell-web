@@ -4,9 +4,26 @@ Casos de uso que implementan la lógica de negocio específica y orquestan las o
 ## Contenido
 ```
 usecases/
-├── account_usecase.dart - Casos de uso para gestión de cuentas
-├── auth_usecases.dart - Casos de uso de autenticación
-├── cash_register_usecases.dart - Casos de uso de caja registradora
-├── catalogue_usecases.dart - Casos de uso de catálogo
-└── sell_usecases.dart - Casos de uso de ventas
+├── account_usecase.dart           # Gestión de cuentas
+├── auth_usecases.dart             # Autenticación y autorización
+├── cash_register_usecases.dart    # Gestión de cajas, persistencia de tickets, historial
+├── catalogue_usecases.dart        # Gestión de catálogo de productos
+└── sell_usecases.dart             # Gestión temporal de tickets (productos, cálculos)
 ```
+
+## Separación de Responsabilidades
+
+### SellUsecases (Gestión Temporal)
+- Crear y modificar tickets en memoria
+- Agregar/eliminar productos
+- Configurar pagos y descuentos
+- Preparar tickets para venta
+- Persistencia local (SharedPreferences)
+
+### CashRegisterUsecases (Persistencia y Caja)
+- Abrir/cerrar cajas registradoras
+- Flujos de caja (ingresos/egresos)
+- Guardar tickets en Firebase
+- Consultar historial de transacciones
+- Anular tickets persistidos
+- Reportes y análisis

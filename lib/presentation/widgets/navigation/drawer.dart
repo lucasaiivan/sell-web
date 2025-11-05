@@ -205,7 +205,6 @@ class _NavigationMenu extends StatelessWidget {
 class _DrawerNavTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String? description;
   final int index;
   final int currentIndex;
   final VoidCallback onSelected;
@@ -214,7 +213,6 @@ class _DrawerNavTile extends StatelessWidget {
   const _DrawerNavTile({
     required this.icon,
     required this.label,
-    this.description,
     required this.index,
     required this.currentIndex,
     required this.onSelected,
@@ -240,17 +238,6 @@ class _DrawerNavTile extends StatelessWidget {
             color: isSelected ? colorScheme.primary : colorScheme.onSurface,
           ),
         ),
-        subtitle: description != null
-            ? Text(
-                description!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isSelected
-                      ? colorScheme.primary.withValues(alpha: 0.7)
-                      : colorScheme.onSurfaceVariant,
-                ),
-              )
-            : null,
         trailing: isSelected
             ? Icon(Icons.circle, color: colorScheme.primary,size: 16,)
             : null,

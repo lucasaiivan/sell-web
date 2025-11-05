@@ -94,16 +94,9 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  // Dependencies
-  GetCatalogueStreamUseCase getProductsStreamUseCase;
-  final GetProductByCodeUseCase getProductByCodeUseCase;
-  final IsProductScannedUseCase isProductScannedUseCase;
-  final GetPublicProductByCodeUseCase getPublicProductByCodeUseCase;
-  AddProductToCatalogueUseCase addProductToCatalogueUseCase;
-  CreatePublicProductUseCase createPublicProductUseCase;
-  RegisterProductPriceUseCase registerProductPriceUseCase;
-  UpdateProductFavoriteUseCase? updateProductFavoriteUseCase;
-  final GetUserAccountsUseCase getUserAccountsUseCase;
+  // Dependencies - Únicamente CatalogueUseCases
+  CatalogueUseCases _catalogueUseCases;
+  final AccountsUseCase getUserAccountsUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
@@ -135,15 +128,9 @@ class CatalogueProvider extends ChangeNotifier {
   }
 
   CatalogueProvider({
-    required this.getProductsStreamUseCase,
-    required this.getProductByCodeUseCase,
-    required this.isProductScannedUseCase,
-    required this.getPublicProductByCodeUseCase,
-    required this.addProductToCatalogueUseCase,
-    required this.createPublicProductUseCase,
-    required this.registerProductPriceUseCase,
+    required CatalogueUseCases catalogueUseCases,
     required this.getUserAccountsUseCase,
-  }); // Removido _initProducts() del constructor
+  }) : _catalogueUseCases = catalogueUseCases;
 
   /// Inicializa el catálogo para una cuenta específica
   void initCatalogue(String id) {
@@ -163,19 +150,10 @@ class CatalogueProvider extends ChangeNotifier {
 
     // Crear nuevos casos de uso con el nuevo ID de cuenta
     final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
-    getProductsStreamUseCase =
-        GetCatalogueStreamUseCase(newCatalogueRepository);
-    addProductToCatalogueUseCase =
-        AddProductToCatalogueUseCase(newCatalogueRepository);
-    createPublicProductUseCase =
-        CreatePublicProductUseCase(newCatalogueRepository);
-    registerProductPriceUseCase =
-        RegisterProductPriceUseCase(newCatalogueRepository);
-    updateProductFavoriteUseCase =
-        UpdateProductFavoriteUseCase(newCatalogueRepository);
+    _catalogueUseCases = CatalogueUseCases(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
-    _catalogueSubscription = getProductsStreamUseCase().listen(
+    _catalogueSubscription = _catalogueUseCases.getCatalogueStream().listen(
       (snapshot) {
         // Convertir los documentos del snapshot en objetos ProductCatalogue
         final products = snapshot.docs
@@ -219,7 +197,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca un producto público por código de barra en la base pública.
   Future<Product?> getPublicProductByCode(String code) async {
-    return await getPublicProductByCodeUseCase(code);
+    return await _catalogueUseCases.getPublicProductByCode(code);
   }
 
   /// Busca productos usando el algoritmo avanzado de búsqueda
@@ -356,7 +334,7 @@ class CatalogueProvider extends ChangeNotifier {
     }
     try {
       _shouldNotifyListeners = false;
-      await addProductToCatalogueUseCase(productToSave, accountId);
+      await _catalogueUseCases.addProductToCatalogue(productToSave, accountId);
       _shouldNotifyListeners = true;
       notifyListeners();
     } catch (e) {
@@ -386,7 +364,7 @@ class CatalogueProvider extends ChangeNotifier {
         idUserUpgrade: product.idUserUpgrade,
       );
 
-      await createPublicProductUseCase(productToSave);
+      await _catalogueUseCases.createPublicProduct(productToSave);
     } catch (e) {
       throw Exception('Error al crear producto público: $e');
     }
@@ -434,7 +412,7 @@ class CatalogueProvider extends ChangeNotifier {
           upgrade: DateFormatter.getCurrentTimestamp(),
           documentIdUpgrade: accountId,
         );
-        await addProductToCatalogueUseCase(updatedProduct, accountId);
+        await _catalogueUseCases.addProductToCatalogue(updatedProduct, accountId);
       } else {
         // Agregar nuevo producto
         final newProduct = product.copyWith(
@@ -443,7 +421,7 @@ class CatalogueProvider extends ChangeNotifier {
           documentIdCreation: accountId,
           documentIdUpgrade: accountId,
         );
-        await addProductToCatalogueUseCase(newProduct, accountId);
+        await _catalogueUseCases.addProductToCatalogue(newProduct, accountId);
       }
 
       // Registrar precio del producto en la base de datos pública si se proporciona accountProfile
@@ -461,7 +439,7 @@ class CatalogueProvider extends ChangeNotifier {
             town: accountProfile.town,
           );
 
-          await registerProductPriceUseCase(productPrice, product.code);
+          await _catalogueUseCases.registerProductPrice(productPrice, product.code);
         } catch (e) {
           // No lanzamos error aquí para no interrumpir el flujo principal
         }
@@ -504,13 +482,8 @@ class CatalogueProvider extends ChangeNotifier {
     }
 
     try {
-      // Crear nuevos casos de uso con el ID de cuenta actual
-      final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
-      final incrementSalesUseCase =
-          IncrementProductSalesUseCase(catalogueRepository);
-
-      // Ejecutar el incremento de ventas
-      await incrementSalesUseCase(accountId, productId, quantity: quantity);
+      // Ejecutar el incremento de ventas usando CatalogueUseCases
+      await _catalogueUseCases.incrementProductSales(accountId, productId, quantity: quantity);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -539,13 +512,8 @@ class CatalogueProvider extends ChangeNotifier {
     }
 
     try {
-      // Crear nuevos casos de uso con el ID de cuenta actual
-      final catalogueRepository = CatalogueRepositoryImpl(id: accountId);
-      final decrementStockUseCase =
-          DecrementProductStockUseCase(catalogueRepository);
-
-      // Ejecutar la reducción de stock
-      await decrementStockUseCase(accountId, productId, quantity);
+      // Ejecutar la reducción de stock usando CatalogueUseCases
+      await _catalogueUseCases.decrementProductStock(accountId, productId, quantity);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -569,13 +537,9 @@ class CatalogueProvider extends ChangeNotifier {
       throw Exception('El accountId y productId son requeridos');
     }
 
-    if (updateProductFavoriteUseCase == null) {
-      throw Exception('UpdateProductFavoriteUseCase no está inicializado');
-    }
-
     try {
-      // Ejecutar la actualización de favorito
-      await updateProductFavoriteUseCase!(accountId, productId, isFavorite);
+      // Ejecutar la actualización de favorito usando CatalogueUseCases
+      await _catalogueUseCases.updateProductFavorite(accountId, productId, isFavorite);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que actualizamos el timestamp de modificación

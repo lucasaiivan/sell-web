@@ -10,7 +10,7 @@ class AuthProvider extends ChangeNotifier {
   final SignInSilentlyUseCase signInSilentlyUseCase;
   final SignOutUseCase signOutUseCase;
   final GetUserStreamUseCase getUserStreamUseCase;
-  final GetUserAccountsUseCase getUserAccountsUseCase;
+  final AccountsUseCase getUserAccountsUseCase;
 
   AuthProfile? _user;
   AuthProfile? get user => _user;

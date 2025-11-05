@@ -1,13 +1,17 @@
+import 'dart:convert';
 import '../entities/user.dart';
 import '../repositories/account_repository.dart';
 import '../entities/catalogue.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/services/storage/app_data_persistence_service.dart';
 
 // case use : Cuentas asociada
-class GetUserAccountsUseCase {
+class AccountsUseCase {
   final AccountRepository repository;
+  final AppDataPersistenceService _persistenceService;
 
-  GetUserAccountsUseCase(this.repository);
+  AccountsUseCase(this.repository, {AppDataPersistenceService? persistenceService})
+      : _persistenceService = persistenceService ?? AppDataPersistenceService.instance;
 
   /// Guarda el ID de la cuenta seleccionada
   Future<void> saveSelectedAccountId(String accountId) =>
@@ -93,5 +97,86 @@ class GetUserAccountsUseCase {
               documentCreation: Timestamp.now(),
               documentUpgrade: Timestamp.now(),
             ));
+  }
+
+  // ==========================================
+  // GESTIÓN DE ADMINPROFILE
+  // ==========================================
+
+  /// Carga el AdminProfile desde SharedPreferences
+  Future<AdminProfile?> loadAdminProfile() async {
+    final adminProfileJson = await _persistenceService.getCurrentAdminProfile();
+    if (adminProfileJson == null || adminProfileJson.isEmpty) {
+      return null;
+    }
+
+    try {
+      final Map<String, dynamic> jsonMap = 
+          const JsonDecoder().convert(adminProfileJson) as Map<String, dynamic>;
+      return AdminProfile.fromMap(jsonMap);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Guarda el AdminProfile en SharedPreferences
+  Future<void> saveAdminProfile(AdminProfile adminProfile) async {
+    try {
+      await _persistenceService.saveCurrentAdminProfile(
+        jsonEncode(adminProfile.toJson()),
+      );
+    } catch (e) {
+      throw Exception('Error al guardar AdminProfile en persistencia: $e');
+    }
+  }
+
+  /// Limpia el AdminProfile guardado
+  Future<void> clearAdminProfile() async {
+    await _persistenceService.clearCurrentAdminProfile();
+  }
+
+  /// Busca el AdminProfile correspondiente a un email y cuenta específica
+  /// 
+  /// [email] - Email del usuario autenticado
+  /// [accountId] - ID de la cuenta seleccionada (opcional)
+  /// 
+  /// Si [accountId] está vacío, retorna el primer perfil encontrado
+  /// Si [accountId] está especificado, busca el perfil correspondiente a esa cuenta
+  Future<AdminProfile?> fetchAdminProfile(String email, {String accountId = ''}) async {
+    try {
+      // Obtener todos los AdminProfile asociados al email
+      final adminProfiles = await getAccountAdmins(email);
+
+      if (adminProfiles.isEmpty) {
+        return null;
+      }
+
+      // Si no hay cuenta seleccionada, retornar el primero
+      if (accountId.isEmpty) {
+        return adminProfiles.first;
+      }
+
+      // Buscar el AdminProfile que corresponde a la cuenta seleccionada
+      try {
+        return adminProfiles.firstWhere(
+          (admin) => admin.account == accountId,
+        );
+      } catch (_) {
+        // Si no se encuentra, retornar null
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Carga el ID de la cuenta seleccionada desde SharedPreferences
+  Future<String?> loadSelectedAccountId() async {
+    return await _persistenceService.getSelectedAccountId();
+  }
+
+  /// Guarda el ID de la cuenta seleccionada en SharedPreferences
+  Future<void> saveAccountId(String accountId) async {
+    await _persistenceService.saveSelectedAccountId(accountId);
   }
 }

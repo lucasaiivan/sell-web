@@ -8,7 +8,8 @@ import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
 import 'package:sellweb/domain/usecases/account_usecase.dart';
-import 'package:sellweb/domain/usecases/sell_usecases.dart'; // Lógica de negocio de tickets
+import 'package:sellweb/domain/usecases/sell_usecases.dart';
+import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
 import 'package:provider/provider.dart' as provider;
 import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
@@ -75,8 +76,9 @@ class _SellProviderState {
 }
 
 class SellProvider extends ChangeNotifier {
-  final GetUserAccountsUseCase getUserAccountsUseCase;
-  final SellUsecases _sellUsecases; // Operaciones de tickets
+  final AccountsUseCase getUserAccountsUseCase;
+  final SellUsecases _sellUsecases;
+  final CatalogueUseCases? _catalogueUseCases;
   final AppDataPersistenceService _persistenceService =
       AppDataPersistenceService.instance;
 
@@ -108,7 +110,9 @@ class SellProvider extends ChangeNotifier {
   SellProvider({
     required this.getUserAccountsUseCase,
     required SellUsecases sellUsecases,
-  }) : _sellUsecases = sellUsecases {
+    CatalogueUseCases? catalogueUseCases,
+  })  : _sellUsecases = sellUsecases,
+        _catalogueUseCases = catalogueUseCases {
     _loadInitialState();
   }
 
@@ -193,7 +197,7 @@ class SellProvider extends ChangeNotifier {
 
   /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
   Future<void> _loadSelectedAccount() async {
-    final id = await _persistenceService.getSelectedAccountId();
+    final id = await getUserAccountsUseCase.loadSelectedAccountId();
     if (id != null && id.isNotEmpty) {
       if (kDebugMode) {
         print('📦 SellProvider: Cargando cuenta desde persistencia: $id');
@@ -221,7 +225,7 @@ class SellProvider extends ChangeNotifier {
       }
     }
   }
-
+  /// Obtiene el AccountProfile por ID desde Firebase
   Future<AccountProfile?> fetchAccountById(String id) async {
     try {
       return await getUserAccountsUseCase.getAccount(idAccount: id);
@@ -232,11 +236,9 @@ class SellProvider extends ChangeNotifier {
 
   /// Carga el AdminProfile desde SharedPreferences al inicializar el provider
   Future<void> _loadAdminProfile() async {
-    final adminProfileJson = await _persistenceService.getCurrentAdminProfile();
-    if (adminProfileJson != null && adminProfileJson.isNotEmpty) {
-      try {
-        final adminProfile =
-            AdminProfile.fromMap(_decodeJson(adminProfileJson));
+    try {
+      final adminProfile = await getUserAccountsUseCase.loadAdminProfile();
+      if (adminProfile != null) {
         _state = _state.copyWith(currentAdminProfile: adminProfile);
         notifyListeners();
 
@@ -246,15 +248,15 @@ class SellProvider extends ChangeNotifier {
           print('   - Cuenta: ${adminProfile.account}');
           print('   - Admin: ${adminProfile.admin}');
         }
-      } catch (e) {
+      } else {
         if (kDebugMode) {
-          print(
-              '❌ SellProvider: Error al cargar AdminProfile desde persistencia: $e');
+          print('📦 SellProvider: No hay AdminProfile guardado en persistencia');
         }
       }
-    } else {
+    } catch (e) {
       if (kDebugMode) {
-        print('📦 SellProvider: No hay AdminProfile guardado en persistencia');
+        print(
+            '❌ SellProvider: Error al cargar AdminProfile desde persistencia: $e');
       }
     }
   }
@@ -263,9 +265,7 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveAdminProfile() async {
     try {
       if (_state.currentAdminProfile != null) {
-        await _persistenceService.saveCurrentAdminProfile(
-          jsonEncode(_state.currentAdminProfile!.toJson()),
-        );
+        await getUserAccountsUseCase.saveAdminProfile(_state.currentAdminProfile!);
       }
     } catch (e) {
       if (kDebugMode) {
@@ -288,84 +288,40 @@ class SellProvider extends ChangeNotifier {
     _state = _state.copyWith(currentAdminProfile: adminProfile);
     _saveAdminProfile();
     notifyListeners();
-
-    if (kDebugMode) {
-      print('✅ SellProvider: AdminProfile configurado');
-      print('   - Email: ${adminProfile.email}');
-      print('   - Nombre: ${adminProfile.name}');
-      print('   - Cuenta: ${adminProfile.account}');
-      print('   - Super Admin: ${adminProfile.superAdmin}');
-      print('   - Admin: ${adminProfile.admin}');
-    }
   }
 
   /// Obtiene el AdminProfile del usuario actual desde Firebase
   ///
-  /// RESPONSABILIDAD: Coordinar obtención y actualización del perfil admin
+  /// RESPONSABILIDAD: Coordinar obtención del perfil admin con UseCase
   /// Este método busca el AdminProfile correspondiente a la cuenta seleccionada
   ///
-  /// @param email Email del usuario autenticado
-  /// @return Future<AdminProfile?> El perfil encontrado o null
   Future<AdminProfile?> fetchAdminProfile(String email) async {
     try {
       if (kDebugMode) {
         print('🔍 SellProvider: Buscando AdminProfile para email: $email');
       }
 
-      // Obtener todos los AdminProfile asociados al email
-      final adminProfiles =
-          await getUserAccountsUseCase.getAccountAdmins(email);
+      // UseCase maneja toda la lógica de búsqueda y selección
+      final adminProfile = await getUserAccountsUseCase.fetchAdminProfile(
+        email,
+        accountId: _state.profileAccountSelected.id,
+      );
 
       if (kDebugMode) {
-        print(
-            '📋 SellProvider: Se encontraron ${adminProfiles.length} perfiles de administrador');
-        for (var profile in adminProfiles) {
-          print(
-              '   - Perfil: ${profile.email} | Cuenta: ${profile.account} | Admin: ${profile.admin}');
+        if (adminProfile != null) {
+          print('✅ SellProvider: AdminProfile encontrado');
+          print('   - Email: ${adminProfile.email}');
+          print('   - Cuenta: ${adminProfile.account}');
+          print('   - Admin: ${adminProfile.admin}');
+        } else {
+          print('⚠️ SellProvider: No se encontró AdminProfile');
         }
       }
 
-      // Si no hay cuenta seleccionada, retornar el primero (o null si está vacío)
-      if (_state.profileAccountSelected.id.isEmpty) {
-        if (kDebugMode) {
-          print(
-              '⚠️ SellProvider: No hay cuenta seleccionada, retornando primer perfil');
-        }
-        return adminProfiles.isNotEmpty ? adminProfiles.first : null;
-      }
-
-      if (kDebugMode) {
-        print(
-            '🔎 SellProvider: Buscando perfil para cuenta seleccionada: ${_state.profileAccountSelected.id}');
-      }
-
-      // Buscar el AdminProfile que corresponde a la cuenta seleccionada
-      try {
-        final matchedProfile = adminProfiles.firstWhere(
-          (admin) => admin.account == _state.profileAccountSelected.id,
-        );
-
-        if (kDebugMode) {
-          print(
-              '✅ SellProvider: AdminProfile encontrado para cuenta ${_state.profileAccountSelected.id}');
-          print('   - Email: ${matchedProfile.email}');
-          print('   - Nombre: ${matchedProfile.name}');
-          print('   - Super Admin: ${matchedProfile.superAdmin}');
-          print('   - Admin: ${matchedProfile.admin}');
-        }
-
-        return matchedProfile;
-      } catch (_) {
-        // Si no se encuentra, retornar null
-        if (kDebugMode) {
-          print(
-              '❌ SellProvider: No se encontró AdminProfile para la cuenta ${_state.profileAccountSelected.id}');
-        }
-        return null;
-      }
+      return adminProfile;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ SellProvider: Error al obtener AdminProfile: $e');
+        print('❌ SellProvider: Error buscando AdminProfile: $e');
       }
       return null;
     }
@@ -379,26 +335,14 @@ class SellProvider extends ChangeNotifier {
   ///
   /// @param email Email del usuario autenticado
   Future<void> updateAdminProfileForSelectedAccount(String email) async {
-    if (kDebugMode) {
-      print(
-          '🔄 SellProvider: Actualizando AdminProfile para cuenta seleccionada...');
-    }
-
     final adminProfile = await fetchAdminProfile(email);
     if (adminProfile != null) {
       setAdminProfile(adminProfile);
     } else {
       // Limpiar AdminProfile si no se encuentra
       _state = _state.copyWith(currentAdminProfile: null);
-      await _persistenceService.clearCurrentAdminProfile();
+      await getUserAccountsUseCase.clearAdminProfile();
       notifyListeners();
-
-      if (kDebugMode) {
-        print(
-            '⚠️ SellProvider: No se encontró AdminProfile para la cuenta seleccionada');
-        print('   - Cuenta: ${_state.profileAccountSelected.id}');
-        print('   - Email: $email');
-      }
     }
   }
 
@@ -428,8 +372,7 @@ class SellProvider extends ChangeNotifier {
       } catch (e) {
         // Log del error para debugging
         if (kDebugMode) {
-          print(
-              '❌ SellProvider: Error al cargar ticket desde persistencia: $e');
+          print('❌ SellProvider: Error al cargar ticket desde persistencia: $e');
         }
       }
     } else {
@@ -506,8 +449,7 @@ class SellProvider extends ChangeNotifier {
 
   void addQuickProduct(
       {required String description, required double salePrice}) {
-    final product = ProductCatalogue(
-      id: UidHelper.generateUid(),
+    final product = _sellUsecases.createQuickProduct(
       description: description,
       salePrice: salePrice,
     );
@@ -515,7 +457,7 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveSelectedAccount(String id) async {
-    await _persistenceService.saveSelectedAccountId(id);
+    await getUserAccountsUseCase.saveAccountId(id);
   }
 
   /// Configura la forma de pago del ticket
@@ -762,10 +704,10 @@ class SellProvider extends ChangeNotifier {
 
   /// Remueve la cuenta seleccionada, limpia todos los datos y notifica a los listeners
   Future<void> removeSelectedAccount() async {
-    // Eliminar el ID de la cuenta seleccionada de AppDataPersistenceService
-    await _persistenceService.clearSelectedAccountId();
-    // Eliminar el AdminProfile guardado
-    await _persistenceService.clearCurrentAdminProfile();
+    // Eliminar el ID de la cuenta seleccionada usando UseCase
+    await getUserAccountsUseCase.removeSelectedAccountId();
+    // Eliminar el AdminProfile guardado usando UseCase
+    await getUserAccountsUseCase.clearAdminProfile();
     // Limpiar todos los datos y estado
     cleanData();
     notifyListeners();
@@ -1074,17 +1016,21 @@ class SellProvider extends ChangeNotifier {
 
   /// Actualiza las estadísticas de ventas y stock de los productos en el catálogo
   ///
+  /// RESPONSABILIDAD: Coordinar actualización de productos usando UseCases
   /// Este método se ejecuta después de confirmar una venta para:
   /// 1. Incrementar el contador de ventas de cada producto
   /// 2. Decrementar el stock si el producto tiene habilitado el control de stock
   Future<void> _updateProductSalesAndStock(BuildContext context) async {
     try {
-      // Obtener el provider del catálogo
-      final catalogueProvider =
-          provider.Provider.of<CatalogueProvider>(context, listen: false);
       final accountId = _state.profileAccountSelected.id;
 
-      // Procesar cada producto del ticket
+      // Si no hay casos de uso inyectados, usar el provider (fallback)
+      if (_catalogueUseCases == null) {
+        await _updateProductSalesAndStockViaProvider(context);
+        return;
+      }
+
+      // Procesar cada producto del ticket usando UseCases directamente
       for (final product in _state.ticket.products) {
         if (product.code.isEmpty) {
           // Si el producto no tiene código, saltar (productos de venta rápida)
@@ -1092,8 +1038,8 @@ class SellProvider extends ChangeNotifier {
         }
 
         try {
-          // Incrementar ventas del producto en el catálogo
-          await catalogueProvider.incrementProductSales(
+          // Incrementar ventas del producto usando UseCase
+          await _catalogueUseCases.incrementProductSales(
             accountId,
             product.id,
             quantity: product.quantity,
@@ -1101,7 +1047,7 @@ class SellProvider extends ChangeNotifier {
 
           // Si el producto tiene control de stock habilitado, decrementar stock
           if (product.stock && product.quantityStock > 0) {
-            await catalogueProvider.decrementProductStock(
+            await _catalogueUseCases.decrementProductStock(
               accountId,
               product.id,
               product.quantity,
@@ -1144,6 +1090,51 @@ class SellProvider extends ChangeNotifier {
             ),
           ),
         );
+      }
+    }
+  }
+
+  /// Método de fallback para actualizar productos vía provider cuando no hay UseCases inyectados
+  Future<void> _updateProductSalesAndStockViaProvider(BuildContext context) async {
+    try {
+      // Obtener el provider del catálogo
+      final catalogueProvider =
+          provider.Provider.of<CatalogueProvider>(context, listen: false);
+      final accountId = _state.profileAccountSelected.id;
+
+      // Procesar cada producto del ticket
+      for (final product in _state.ticket.products) {
+        if (product.code.isEmpty) {
+          // Si el producto no tiene código, saltar (productos de venta rápida)
+          continue;
+        }
+
+        try {
+          // Incrementar ventas del producto en el catálogo
+          await catalogueProvider.incrementProductSales(
+            accountId,
+            product.id,
+            quantity: product.quantity,
+          );
+
+          // Si el producto tiene control de stock habilitado, decrementar stock
+          if (product.stock && product.quantityStock > 0) {
+            await catalogueProvider.decrementProductStock(
+              accountId,
+              product.id,
+              product.quantity,
+            );
+          }
+        } catch (productError) {
+          // Si falla la actualización de un producto específico, continuar con los demás
+          if (kDebugMode) {
+            print('Error actualizando producto ${product.id}: $productError');
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error general actualizando productos vía provider: $e');
       }
     }
   }

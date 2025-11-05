@@ -84,8 +84,7 @@ class ProductImage extends StatelessWidget {
             fit: fit,
             width: size,
             height: size,
-            // Configuraciones optimizadas para carga rápida
-            fadeInDuration: enableFadeIn ? fadeInDuration : Duration.zero,
+            // Configuraciones optimizadas para carga rápida 
             placeholderFadeInDuration: placeholderFadeInDuration,
             // Configuración de caché para mejor rendimiento
             memCacheWidth: size != null ? (size! * 2).round() : null,

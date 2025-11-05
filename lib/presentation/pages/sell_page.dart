@@ -1176,27 +1176,44 @@ class _ProductoItemState extends State<ProductoItem> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // view : alerta de stock bajo o sin stock
-        alertStockText == ''
-            ? Container()
-            : Container(
-                width: double.infinity,
-                color: Colors.red,
-                child: Center(
-                    child: Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Text(alertStockText,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold)),
-                ))),
-        // image : imagen del producto que ocupa parte de la tarjeta
+        // image : imagen del producto que ocupa parte de la tarjeta con alerta de stock superpuesta
         Expanded(
           flex: 2,
-          child: ProductImage(
-            imageUrl: widget.producto.image,
-            fit: BoxFit.cover,
+          child: Stack(
+            children: [
+              ProductImage(
+                borderRadius: 12,
+                imageUrl: widget.producto.image,
+                fit: BoxFit.cover,
+              ),
+              // view : alerta de stock bajo o sin stock
+              if (alertStockText.isNotEmpty)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        alertStockText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
         // view : información del producto

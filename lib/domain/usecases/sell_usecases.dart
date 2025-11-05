@@ -163,6 +163,33 @@ class SellUsecases {
     return newTicket;
   }
 
+  /// Crea un producto rápido (sin código de barras)
+  /// 
+  /// RESPONSABILIDAD: Crear producto temporal para venta rápida
+  /// - Generar ID único
+  /// - Validar descripción y precio
+  /// - Establecer valores por defecto
+  ProductCatalogue createQuickProduct({
+    required String description,
+    required double salePrice,
+  }) {
+    if (description.trim().isEmpty) {
+      throw Exception('La descripción no puede estar vacía');
+    }
+
+    if (salePrice < 0) {
+      throw Exception('El precio de venta no puede ser negativo');
+    }
+
+    return ProductCatalogue(
+      id: UidHelper.generateUid(),
+      description: description,
+      salePrice: salePrice,
+      code: '', // Productos rápidos no tienen código
+      quantity: 1,
+    );
+  }
+
   // ==========================================
   // CONFIGURACIÓN DE PAGO Y DESCUENTO
   // ==========================================

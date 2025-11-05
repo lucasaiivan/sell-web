@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/presentation/providers/theme_data_app_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/sell_provider.dart';
@@ -21,9 +22,10 @@ class AppDrawer extends StatelessWidget {
             Positioned(
               right: 8,
               top: 8,
-              child: ThemeControlButtons(
-                spacing: 4,
+              child: ThemeBrightnessButton(
                 iconSize: 20,
+                iconColor: Theme.of(context).colorScheme.primary,
+                themeProvider: Provider.of<ThemeDataAppProvider>(context, listen: false),
               ),
             ),
             // view : cuerpo del drawer
@@ -40,8 +42,8 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => showAccountSelectionDialog(context: context),
                   ),
                 ),
-                const Divider(thickness: 0.08),
-                const SizedBox(height: 12),
+                const Divider(thickness: 0.3,endIndent: 75,indent:75),
+                const SizedBox(height: 20),
                 const _NavigationMenu(),
                 const Spacer(),
                 const _DrawerFooter(),
@@ -167,8 +169,7 @@ class _NavigationMenu extends StatelessWidget {
               children: [
                 _DrawerNavTile(
                   icon: Icons.point_of_sale,
-                  label: 'Ventas',
-                  description: 'Gestiona cobros y tickets',
+                  label: 'Ventas', 
                   index: 0,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
@@ -181,8 +182,7 @@ class _NavigationMenu extends StatelessWidget {
                 ),
                 _DrawerNavTile(
                   icon: Icons.inventory_2,
-                  label: 'Catálogo',
-                  description: 'Administra productos y precios',
+                  label: 'Catálogo', 
                   index: 1,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
@@ -205,7 +205,7 @@ class _NavigationMenu extends StatelessWidget {
 class _DrawerNavTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String description;
+  final String? description;
   final int index;
   final int currentIndex;
   final VoidCallback onSelected;
@@ -214,7 +214,7 @@ class _DrawerNavTile extends StatelessWidget {
   const _DrawerNavTile({
     required this.icon,
     required this.label,
-    required this.description,
+    this.description,
     required this.index,
     required this.currentIndex,
     required this.onSelected,
@@ -240,17 +240,19 @@ class _DrawerNavTile extends StatelessWidget {
             color: isSelected ? colorScheme.primary : colorScheme.onSurface,
           ),
         ),
-        subtitle: Text(
-          description,
-          style: TextStyle(
-            fontSize: 12,
-            color: isSelected
-                ? colorScheme.primary.withValues(alpha: 0.7)
-                : colorScheme.onSurfaceVariant,
-          ),
-        ),
+        subtitle: description != null
+            ? Text(
+                description!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected
+                      ? colorScheme.primary.withValues(alpha: 0.7)
+                      : colorScheme.onSurfaceVariant,
+                ),
+              )
+            : null,
         trailing: isSelected
-            ? Icon(Icons.check_circle, color: colorScheme.primary)
+            ? Icon(Icons.circle, color: colorScheme.primary,size: 16,)
             : null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

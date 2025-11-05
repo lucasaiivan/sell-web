@@ -49,7 +49,11 @@ void _runApp() {
     googleSignIn,
   );
   final accountRepository = AccountRepositoryImpl();
-  final getUserAccountsUseCase = GetUserAccountsUseCase(accountRepository);
+  final catalogueRepository = CatalogueRepositoryImpl();
+  final getUserAccountsUseCase = AccountsUseCase(
+    accountRepository,
+    persistenceService: AppDataPersistenceService.instance,
+  );
 
   runApp(
     MultiProvider(
@@ -77,9 +81,11 @@ void _runApp() {
             final sellUsecases = SellUsecases(
               persistenceService: persistenceService,
             );
+            final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SellProvider(
               getUserAccountsUseCase: getUserAccountsUseCase,
               sellUsecases: sellUsecases,
+              catalogueUseCases: catalogueUseCases,
             );
           },
           update: (_, auth, previousSell) {
@@ -88,9 +94,11 @@ void _runApp() {
             final sellUsecases = SellUsecases(
               persistenceService: persistenceService,
             );
+            final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SellProvider(
               getUserAccountsUseCase: getUserAccountsUseCase,
               sellUsecases: sellUsecases,
+              catalogueUseCases: catalogueUseCases,
             );
           },
         ),
@@ -164,21 +172,13 @@ Widget _buildAccountSpecificProviders({
       // Providers específicos de la cuenta actual
       ChangeNotifierProvider(
         create: (_) {
+          final catalogueUseCases = CatalogueUseCases(catalogueRepository);
           final catalogueProvider = CatalogueProvider(
-            getProductsStreamUseCase:
-                GetCatalogueStreamUseCase(catalogueRepository),
-            getProductByCodeUseCase: GetProductByCodeUseCase(),
-            isProductScannedUseCase:
-                IsProductScannedUseCase(GetProductByCodeUseCase()),
-            getPublicProductByCodeUseCase:
-                GetPublicProductByCodeUseCase(CatalogueRepositoryImpl()),
-            addProductToCatalogueUseCase:
-                AddProductToCatalogueUseCase(catalogueRepository),
-            createPublicProductUseCase:
-                CreatePublicProductUseCase(catalogueRepository),
-            registerProductPriceUseCase:
-                RegisterProductPriceUseCase(catalogueRepository),
-            getUserAccountsUseCase: GetUserAccountsUseCase(accountRepository),
+            catalogueUseCases: catalogueUseCases,
+            getUserAccountsUseCase: AccountsUseCase(
+              accountRepository,
+              persistenceService: AppDataPersistenceService.instance,
+            ),
           );
 
           if (accountId.isNotEmpty) {

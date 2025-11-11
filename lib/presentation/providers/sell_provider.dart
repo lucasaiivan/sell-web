@@ -15,6 +15,10 @@ import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
 import '../providers/catalogue_provider.dart';
 
+/// Estado inmutable del provider de ventas
+///
+/// Encapsula todo el estado relacionado con el proceso de venta
+/// para optimizar notificaciones y mantener coherencia
 class _SellProviderState {
   final bool ticketView;
   final bool shouldPrintTicket; // si se debe imprimir el ticket
@@ -75,6 +79,39 @@ class _SellProviderState {
       lastSoldTicket.hashCode;
 }
 
+/// Provider para gestionar el proceso de ventas
+///
+/// **Responsabilidad:** Coordinar UI y casos de uso de ventas
+/// - Gestiona estado del ticket actual, cuenta seleccionada y último ticket vendido
+/// - Delega lógica de negocio a SellUsecases (crear, preparar, confirmar ventas)
+/// - Delega operaciones de caja a CashRegisterUsecases vía CashRegisterProvider
+/// - Delega actualización de productos a CatalogueUseCases
+/// - Maneja persistencia local con AppDataPersistenceService
+/// - Coordina impresión de tickets con ThermalPrinterHttpService
+/// - No contiene validaciones ni lógica de negocio, solo coordinación
+///
+/// **Arquitectura:**
+/// - Estado inmutable con _SellProviderState para optimizar notificaciones
+/// - Persistencia automática de ticket en curso
+/// - Coordinación entre múltiples providers (CashRegister, Catalogue, Auth)
+///
+/// **Flujo de venta:**
+/// 1. Agregar productos al ticket → SellUsecases (lógica de negocio)
+/// 2. Configurar descuentos/pago → SellUsecases (validaciones)
+/// 3. Confirmar venta → processSale() coordina todos los pasos:
+///    - Preparar ticket (SellUsecases)
+///    - Guardar en Firebase (CashRegisterUsecases)
+///    - Actualizar caja (CashRegisterUsecases)
+///    - Actualizar productos (CatalogueUseCases)
+///    - Imprimir ticket (ThermalPrinterHttpService)
+///
+/// **Uso:**
+/// ```dart
+/// final sellProvider = Provider.of<SellProvider>(context);
+/// sellProvider.addProductsticket(product); // Agregar producto
+/// sellProvider.setDiscount(discount: 10.0); // Configurar descuento
+/// await sellProvider.processSale(context); // Confirmar venta
+/// ```
 class SellProvider extends ChangeNotifier {
   final AccountsUseCase getUserAccountsUseCase;
   final SellUsecases _sellUsecases;

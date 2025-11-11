@@ -13,6 +13,10 @@ extension ListExtensions<T> on List<T> {
   T? get firstOrNull => isEmpty ? null : first;
 }
 
+/// Estado inmutable del provider de caja registradora
+///
+/// Encapsula todo el estado relacionado con cajas registradoras
+/// para optimizar notificaciones y mantener coherencia
 class _CashRegisterState {
   final List<CashRegister> activeCashRegisters;
   final CashRegister?
@@ -98,13 +102,28 @@ class _CashRegisterState {
       fixedDescriptions.hashCode;
 }
 
-/// Provider para el sistema de caja registradora
+/// Provider para gestionar el estado de cajas registradoras
 ///
-/// Maneja el estado de:
-/// - Cajas registradoras activas
-/// - Historial de arqueos
-/// - Flujos de caja
-/// - Operaciones de apertura y cierre
+/// **Responsabilidad:** Coordinar UI y casos de uso de cajas registradoras
+/// - Gestiona estado de cajas activas, historial y tickets
+/// - Delega lógica de negocio a CashRegisterUsecases (abrir, cerrar, movimientos)
+/// - Delega gestión de tickets a SellUsecases
+/// - Maneja estados de carga, procesamiento y errores para la UI
+/// - Proporciona streams para actualizaciones en tiempo real
+/// - No contiene validaciones ni lógica de negocio, solo coordinación
+///
+/// **Arquitectura:**
+/// - Estado inmutable con _CashRegisterState para optimizar notificaciones
+/// - Streams de Firebase para sincronización automática
+/// - Persistencia local con AppDataPersistenceService
+///
+/// **Uso:**
+/// ```dart
+/// final cashProvider = Provider.of<CashRegisterProvider>(context);
+/// await cashProvider.openCashRegister(...); // Abrir caja
+/// await cashProvider.closeCashRegister(...); // Cerrar caja
+/// await cashProvider.addCashInflow(...); // Registrar ingreso
+/// ```
 class CashRegisterProvider extends ChangeNotifier {
   final CashRegisterUsecases _cashRegisterUsecases; // Operaciones de caja
   final SellUsecases _sellUsecases; // NUEVO: Operaciones de tickets

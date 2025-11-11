@@ -3,6 +3,22 @@ import '../../domain/usecases/auth_usecases.dart';
 import '../../domain/usecases/account_usecase.dart';
 import 'package:flutter/material.dart';
 
+/// Provider para gestionar el estado de autenticación
+///
+/// **Responsabilidad:** Coordinar UI y casos de uso de autenticación
+/// - Gestiona estado de usuario autenticado y cuentas asociadas
+/// - Delega autenticación a AuthUseCases (signIn, signOut)
+/// - Delega gestión de cuentas a AccountsUseCase
+/// - Maneja estados de carga y errores para la UI
+/// - No contiene lógica de negocio, solo coordinación
+///
+/// **Uso:**
+/// ```dart
+/// final authProvider = Provider.of<AuthProvider>(context);
+/// await authProvider.signInWithGoogle(); // Iniciar sesión con Google
+/// await authProvider.signInAsGuest(); // Iniciar sesión como invitado
+/// await authProvider.signOut(); // Cerrar sesión
+/// ```
 class AuthProvider extends ChangeNotifier {
   /// Retorna true si el usuario está autenticado como invitado (anónimo)
   bool get isGuest => _user?.isAnonymous == true;

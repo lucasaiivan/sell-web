@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Provider para gestionar el estado de navegación y UI del HomePage
-/// Centraliza la lógica de navegación entre las pantallas principales
+/// Provider para gestionar el estado de navegación del HomePage
+///
+/// **Responsabilidad:** Solo gestionar el índice de navegación entre páginas
+/// - Maneja el estado de la página actual (Ventas o Catálogo)
+/// - Proporciona métodos para cambiar entre páginas
+/// - No contiene lógica de negocio
+///
+/// **Uso:**
+/// ```dart
+/// final homeProvider = Provider.of<HomeProvider>(context);
+/// homeProvider.navigateToSell(); // Ir a página de ventas
+/// homeProvider.navigateToCatalogue(); // Ir a página de catálogo
+/// ```
 class HomeProvider extends ChangeNotifier {
   // --- Estado de navegación ---
   int _currentPageIndex = 0;

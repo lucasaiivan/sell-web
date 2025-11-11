@@ -2,7 +2,19 @@ import 'package:flutter/material.dart';
 import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../core/services/theme_service.dart';
 
-/// Proveedor para manejar el tema (brillo) de la app usando ThemeService
+/// Provider para gestionar el tema de la aplicación
+///
+/// **Responsabilidad:** Coordinar UI y servicios de tema
+/// - Delega lógica de tema a ThemeService
+/// - Persiste configuración con AppDataPersistenceService
+/// - No contiene lógica de negocio, solo coordinación
+///
+/// **Uso:**
+/// ```dart
+/// final themeProvider = Provider.of<ThemeDataAppProvider>(context);
+/// themeProvider.toggleTheme(); // Alternar entre claro/oscuro
+/// themeProvider.changeSeedColor(Colors.blue); // Cambiar color semilla
+/// ```
 class ThemeDataAppProvider extends ChangeNotifier {
   final ThemeService _themeService = ThemeService.instance;
   final AppDataPersistenceService _persistenceService =

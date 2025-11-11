@@ -1,52 +1,158 @@
-# Providers (Presentation Layer)
+# Providers - Gestión de Estado UI
 
 ## Descripción
-Proveedores de estado usando `ChangeNotifier` que gestionan la interfaz de usuario y coordinan llamadas a los casos de uso del dominio.
+Providers que coordinan la interfaz de usuario con los casos de uso del dominio siguiendo arquitectura limpia.
 
-## 🎯 Responsabilidades
+**Principio fundamental:** Los providers NO contienen lógica de negocio, solo coordinan UI y UseCases.
 
-### ✅ **Lo que DEBE hacer un Provider:**
-- Gestionar estado de la UI (loading, error, success)
+---
+
+## 🎯 Responsabilidades de un Provider
+
+### ✅ SÍ debe hacer:
+- Gestionar estado de UI (loading, error, success)
+- Coordinar llamadas a UseCases y servicios
 - Manejar controllers de formularios
-- Coordinar llamadas a UseCases
-- Mostrar mensajes de error al usuario
-- Navegar entre pantallas
-- Actualizar la UI cuando cambia el estado
-- Escuchar streams de datos
+- Escuchar streams y actualizar UI
+- Persistir datos con AppDataPersistenceService
+- Notificar cambios a los listeners
 
-### ❌ **Lo que NO debe hacer un Provider:**
-- Implementar validaciones de negocio
-- Transformar datos según reglas de negocio
-- Acceder directamente a Firebase o bases de datos
-- Contener lógica de negocio compleja
-- Generar IDs únicos (delegar al UseCase)
-- Calcular totales o aplicar reglas (delegar al UseCase)
+### ❌ NO debe hacer:
+- Validaciones de negocio (delegar a UseCases)
+- Transformaciones de datos (delegar a UseCases)
+- Acceso directo a Firebase/bases de datos (delegar a repositorios)
+- Cálculos complejos (delegar a UseCases)
+- Generación de IDs (delegar a UseCases)
+
+---
 
 ## 📁 Contenido
 
-```
-providers/
-├── auth_provider.dart                 # Autenticación y usuario actual
-├── cash_register_provider.dart        # Caja registradora ⭐ Refactorizado
-├── catalogue_provider.dart            # Catálogo de productos
-├── printer_provider.dart              # Configuración de impresora
-├── sell_provider.dart                 # Proceso de venta ⭐ Actualizado
-└── theme_data_app_provider.dart       # Tema de la aplicación
-```
+### **auth_provider.dart**
+Gestiona autenticación de usuarios y cuentas asociadas
+- Delega a: `AuthUseCases`, `AccountsUseCase`
+- Estado: usuario actual, cuentas, loading, errores
+- Sin lógica de negocio
 
-## ⭐ CashRegisterProvider (Refactorizado)
+### **cash_register_provider.dart**
+Gestiona cajas registradoras, transacciones y arqueos
+- Delega a: `CashRegisterUsecases`, `SellUsecases`
+- Estado: cajas activas, historial, tickets, loading
+- Streams de Firebase para sincronización en tiempo real
+- Arquitectura con estado inmutable
 
-### **Estructura del Estado Inmutable:**
+### **catalogue_provider.dart**
+Gestiona catálogo de productos y búsquedas
+- Delega a: `CatalogueUseCases`, `SearchCatalogueService`
+- Estado: productos, búsquedas, loading
+- Búsqueda con debouncing para optimización
+- Streams de Firebase para actualizaciones automáticas
+
+### **home_provider.dart**
+Gestiona navegación entre páginas principales
+- Sin casos de uso (solo navegación UI)
+- Estado: índice de página actual
+
+### **printer_provider.dart**
+Gestiona conexión con impresora térmica
+- Delega a: `ThermalPrinterHttpService`
+- Estado: conexión, errores
+
+### **sell_provider.dart**
+Gestiona proceso de ventas y tickets
+- Delega a: `SellUsecases`, `CashRegisterUsecases`, `CatalogueUseCases`
+- Estado: ticket actual, cuenta, admin profile, último ticket
+- Coordina flujo completo de venta
+- Arquitectura con estado inmutable
+
+### **theme_data_app_provider.dart**
+Gestiona tema visual de la aplicación
+- Delega a: `ThemeService`, `AppDataPersistenceService`
+- Estado: modo claro/oscuro, color semilla
+
+---
+
+## 🏗️ Arquitectura de Providers Complejos
+
+Los providers complejos (`CashRegisterProvider`, `SellProvider`, `CatalogueProvider`) usan **estado inmutable** para optimizar notificaciones:
 
 ```dart
-class _CashRegisterState {
-  final List<CashRegister> activeCashRegisters;
-  final CashRegister? selectedCashRegister;
-  final bool isLoadingActive;
-  final bool isProcessing;
-  final String? errorMessage;
-  // ... más propiedades
+class _ProviderState {
+  final Data data;
+  final bool isLoading;
+  final String? error;
+  
+  _ProviderState copyWith({...}) => _ProviderState(...);
 }
+
+class MyProvider extends ChangeNotifier {
+  _ProviderState _state = _ProviderState(...);
+  
+  // Getters exponen estado
+  Data get data => _state.data;
+  
+  // Métodos actualizan estado inmutable
+  void updateData(Data newData) {
+    _state = _state.copyWith(data: newData);
+    notifyListeners();
+  }
+}
+```
+
+**Ventajas:**
+- Actualizaciones atómicas
+- Fácil debugging
+- Mejor performance (comparación por referencia)
+
+---
+
+## 🔄 Flujo de Coordinación
+
+```
+UI (Widget)
+    ↓
+Provider (Coordina)
+    ↓
+UseCase (Lógica de negocio)
+    ↓
+Repository (Datos)
+    ↓
+Firebase / SharedPreferences
+```
+
+**Ejemplo - Confirmar Venta:**
+```dart
+// ❌ INCORRECTO - Lógica en Provider
+void processSale() {
+  final total = ticket.products.fold(0, (sum, p) => sum + p.price);
+  if (total > 0) {
+    // Validación de negocio en provider
+  }
+}
+
+// ✅ CORRECTO - Delegar a UseCase
+Future<void> processSale() async {
+  final preparedTicket = _sellUsecases.prepareSaleTicket(ticket);
+  await _cashRegisterUsecases.saveTicket(preparedTicket);
+  await _catalogueUseCases.updateProductStats(preparedTicket);
+}
+```
+
+---
+
+## 🧪 Testing
+
+Los providers deben ser fáciles de testear porque solo coordinan:
+
+```dart
+test('Should call usecase when adding product', () {
+  final mockUsecase = MockSellUsecases();
+  final provider = SellProvider(sellUsecases: mockUsecase);
+  
+  provider.addProduct(product);
+  
+  verify(mockUsecase.addProductToTicket(any, product)).called(1);
+});
 ```
 
 ### **Métodos Simplificados:**

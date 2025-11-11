@@ -215,8 +215,7 @@ class CashRegisterManagementDialog extends StatefulWidget {
       PageRouteBuilder<T>(
         pageBuilder: (context, animation, secondaryAnimation) => MultiProvider(
           providers: [
-            ChangeNotifierProvider<CashRegisterProvider>.value(
-                value: cashRegisterProvider),
+            ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
             ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
             ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
           ],
@@ -270,12 +269,11 @@ class CashRegisterManagementDialog extends StatefulWidget {
   }
 
   @override
-  State<CashRegisterManagementDialog> createState() =>
-      _CashRegisterManagementDialogState();
+  State<CashRegisterManagementDialog> createState() => _CashRegisterManagementDialogState();
 }
 
-class _CashRegisterManagementDialogState
-    extends State<CashRegisterManagementDialog> {
+class _CashRegisterManagementDialogState extends State<CashRegisterManagementDialog> {
+  
   @override
   void initState() {
     super.initState();
@@ -321,8 +319,7 @@ class _CashRegisterManagementDialogState
       selector: (_, provider) => provider.hasActiveCashRegister,
       builder: (context, hasActiveCashRegister, child) {
         // var
-        final sTitle =
-            hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
+        final sTitle = hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
 
         // Si fullView es true, usar Scaffold para ocupar toda la pantalla
         if (widget.fullView) {
@@ -372,8 +369,7 @@ class _CashRegisterManagementDialogState
                       }
                       // ✅ Usar context.read para acceder sin suscribirse
                       final provider = context.read<CashRegisterProvider>();
-                      return _buildResponsiveContent(
-                          context, provider, isMobileDevice);
+                      return _buildResponsiveContent(context, provider, isMobileDevice);
                     },
                   );
                 },
@@ -423,7 +419,8 @@ class _CashRegisterManagementDialogState
           const SizedBox(width: 8),
         ],
       ),
-      body: Stack(
+      body: Stack( 
+        fit: StackFit.expand,
         children: [
           SingleChildScrollView(
             // ✅ Padding adaptativo: horizontal responsive + vertical fijo
@@ -460,7 +457,7 @@ class _CashRegisterManagementDialogState
   Widget _buildResponsiveContent(
       BuildContext context, CashRegisterProvider provider, bool isMobile) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(height: getResponsiveSpacing(context, scale: 0.5)),
@@ -722,8 +719,7 @@ class _CashRegisterManagementDialogState
   }
 
   /// Construye la vista de flujo de caja con información financiera
-  Widget _buildCashFlowView(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
     // ✅ Usar widget separado que no depende de FutureBuilder

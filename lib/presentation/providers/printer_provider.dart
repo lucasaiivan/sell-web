@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 
-/// Provider para manejar el estado de la impresora térmica
+/// Provider para gestionar el estado de conexión de impresora térmica
+///
+/// **Responsabilidad:** Coordinar UI y servicio de impresora
+/// - Delega toda la lógica de conexión a ThermalPrinterHttpService
+/// - Expone estado de conexión y errores para la UI
+/// - No contiene lógica de impresión, solo gestión de estado
+///
+/// **Uso:**
+/// ```dart
+/// final printerProvider = Provider.of<PrinterProvider>(context);
+/// await printerProvider.initialize(); // Inicializar conexión
+/// await printerProvider.connectPrinter(serverHost: '192.168.1.100');
+/// ```
 class PrinterProvider extends ChangeNotifier {
   final ThermalPrinterHttpService _printerService = ThermalPrinterHttpService();
 

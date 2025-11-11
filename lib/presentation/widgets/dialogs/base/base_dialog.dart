@@ -181,7 +181,8 @@ class BaseDialog extends StatelessWidget {
       );
     }
 
-    return Stack(
+    return Stack( 
+      fit: StackFit.expand,
       children: [
         // Contenido scrollable
         SingleChildScrollView(
@@ -195,7 +196,7 @@ class BaseDialog extends StatelessWidget {
           ),
           child: content,
         ),
-
+    
         // Gradiente difuminado al final (solo si hay acciones)
         if (hasActions)
           Positioned(

@@ -9,6 +9,10 @@ import '../../domain/entities/user.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
 import '../../domain/usecases/account_usecase.dart';
 
+/// Estado inmutable del provider de catálogo
+///
+/// Encapsula todo el estado relacionado con productos y búsqueda
+/// para optimizar notificaciones y mantener coherencia
 class _CatalogueState {
   final List<ProductCatalogue> products;
   final ProductCatalogue? lastScannedProduct;
@@ -79,6 +83,28 @@ class _CatalogueState {
       isLoading.hashCode;
 }
 
+/// Provider para gestionar el estado del catálogo de productos
+///
+/// **Responsabilidad:** Coordinar UI y casos de uso de catálogo
+/// - Gestiona estado de productos y búsquedas
+/// - Delega operaciones CRUD a CatalogueUseCases (crear, actualizar, buscar)
+/// - Delega búsqueda y filtrado a SearchCatalogueService
+/// - Maneja streams de Firebase para sincronización en tiempo real
+/// - Proporciona búsqueda con debouncing para mejor rendimiento
+/// - No contiene lógica de negocio, solo coordinación
+///
+/// **Arquitectura:**
+/// - Estado inmutable con _CatalogueState para optimizar notificaciones
+/// - Streams de Firebase para actualizaciones automáticas de productos
+/// - Debouncing en búsquedas para reducir operaciones
+///
+/// **Uso:**
+/// ```dart
+/// final catalogueProvider = Provider.of<CatalogueProvider>(context);
+/// catalogueProvider.initCatalogue(accountId); // Inicializar catálogo
+/// catalogueProvider.searchProducts(query: 'producto'); // Buscar productos
+/// await catalogueProvider.saveProductToCatalogue(...); // Guardar producto
+/// ```
 class CatalogueProvider extends ChangeNotifier {
   bool _shouldNotifyListeners = true;
 

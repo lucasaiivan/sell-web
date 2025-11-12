@@ -75,6 +75,7 @@ class _AccountSelectionContent extends StatelessWidget {
     return DialogComponents.infoSection(
       context: context,
       title: 'Identificación',
+      showBorder: false,
       content: InkWell(
         onTap: user?.email != null
             ? () async {
@@ -145,6 +146,12 @@ class _AccountSelectionContent extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              // icon : arrow right 
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
           ),

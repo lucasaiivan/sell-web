@@ -172,10 +172,7 @@ class SellUsecases {
   ProductCatalogue createQuickProduct({
     required String description,
     required double salePrice,
-  }) {
-    if (description.trim().isEmpty) {
-      throw Exception('La descripción no puede estar vacía');
-    }
+  }) { 
 
     if (salePrice < 0) {
       throw Exception('El precio de venta no puede ser negativo');

@@ -11,6 +11,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 // Presentation imports
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.
 ///
@@ -474,21 +475,104 @@ class _ProductCatalogueFullScreenViewState
             return [
               SliverOverlapAbsorber(
                 // Absorber el overlap para evitar problemas de posicionamiento
-                handle:
-                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
                   // Configuración optimizada del SliverAppBar para NestedScrollView
                   floating: true,
                   pinned: true,
                   snap: true,
-                  expandedHeight:
-                      210, // Altura fija para siempre mostrar búsqueda y chips
+                  expandedHeight: 190, // Altura fija para siempre mostrar búsqueda y chips
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surface,
                   elevation: 0,
                   scrolledUnderElevation: innerBoxIsScrolled ? 2 : 0,
-                  forceElevated: innerBoxIsScrolled,
-                  leading: const SizedBox.shrink(),
+                  forceElevated: innerBoxIsScrolled, 
+                  // Título siempre visible en el AppBar
+                  title: Row(
+                    children: [
+                      Text(
+                        'Catálogo',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      if (_getSelectedProductsCount() > 0)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.elasticOut,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${_getSelectedProductsCount()}',
+                            style: TextStyle(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  actions: [
+                    // Botón toggle para cambiar vista lista/cuadrícula
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOutCubic,
+                      child: IconButton(
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                            return RotationTransition(
+                              turns: animation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Icon(
+                            _isGridView
+                                ? Icons.view_list_rounded
+                                : Icons.grid_view_rounded,
+                            key: ValueKey(_isGridView),
+                          ),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isGridView = !_isGridView;
+                          });
+                        },
+                        style: IconButton.styleFrom(
+                          backgroundColor: _isGridView
+                              ? colorScheme.primaryContainer
+                              : colorScheme.surfaceContainerHighest,
+                          foregroundColor: _isGridView
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface,
+                        ),
+                        tooltip: _isGridView
+                            ? 'Vista de lista'
+                            : 'Vista de cuadrícula',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: IconButton.styleFrom(
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        foregroundColor: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   // Usar stretch para mejor UX en iOS y permitir over-scroll
                   stretch: true,
                   onStretchTrigger: () async {
@@ -499,132 +583,11 @@ class _ProductCatalogueFullScreenViewState
                       StretchMode.zoomBackground,
                       StretchMode.fadeTitle,
                     ],
-                    titlePadding: EdgeInsets.zero,
-                    title: AnimatedOpacity(
-                      opacity: innerBoxIsScrolled ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOutCubic,
-                      child: Container(
-                        padding: const EdgeInsets.only(
-                            left: 16, right: 16, bottom: 2, top: 20),
-                        child: Row(
-                          children: [
-                            // text flexibleSpace : información del catálogo
-                            Expanded(
-                              child: Text(
-                                'Catálogo • ${CurrencyFormatter.formatAmount(value: _filteredProducts.length)} resultados',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                     background: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(16, 80, 16, 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header principal con título y botón de cierre
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      'Catálogo',
-                                      style: theme.textTheme.headlineSmall
-                                          ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    if (_getSelectedProductsCount() > 0)
-                                      AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        curve: Curves.elasticOut,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: colorScheme.primary,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          '${_getSelectedProductsCount()}',
-                                          style: TextStyle(
-                                            color: colorScheme.onPrimary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              // Botón toggle para cambiar vista lista/cuadrícula
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeInOutCubic,
-                                child: IconButton(
-                                  icon: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    transitionBuilder: (Widget child,
-                                        Animation<double> animation) {
-                                      return RotationTransition(
-                                        turns: animation,
-                                        child: FadeTransition(
-                                          opacity: animation,
-                                          child: child,
-                                        ),
-                                      );
-                                    },
-                                    child: Icon(
-                                      _isGridView
-                                          ? Icons.view_list_rounded
-                                          : Icons.grid_view_rounded,
-                                      key: ValueKey(_isGridView),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isGridView = !_isGridView;
-                                    });
-                                  },
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: _isGridView
-                                        ? colorScheme.primaryContainer
-                                        : colorScheme.surfaceContainerHighest,
-                                    foregroundColor: _isGridView
-                                        ? colorScheme.onPrimaryContainer
-                                        : colorScheme.onSurface,
-                                  ),
-                                  tooltip: _isGridView
-                                      ? 'Vista de lista'
-                                      : 'Vista de cuadrícula',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.close_rounded),
-                                onPressed: () => Navigator.of(context).pop(),
-                                style: IconButton.styleFrom(
-                                  backgroundColor:
-                                      colorScheme.surfaceContainerHighest,
-                                  foregroundColor: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
                           // Campo de búsqueda - siempre visible
                           _buildSearchField(),
 
@@ -1036,119 +999,79 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        width: 400,
-        height: 500,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Icon(
-                  Icons.local_offer_outlined,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Seleccionar Marca',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                    foregroundColor: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Campo de búsqueda
-            TextField(
-              controller: _searchController,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Buscar marca...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged();
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onChanged: (_) => _onSearchChanged(),
-            ),
-            const SizedBox(height: 16),
-
-            // Contador de resultados
-            Text(
-              '${_filteredBrands.length} marca${_filteredBrands.length != 1 ? 's' : ''} encontrada${_filteredBrands.length != 1 ? 's' : ''}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Lista de marcas
-            Expanded(
-              child: _filteredBrands.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: colorScheme.onSurface.withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No se encontraron marcas',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color:
-                                  colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Intenta con otros términos de búsqueda',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color:
-                                  colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ],
-                      ),
+    return BaseDialog(
+      title: 'Seleccionar Marca',
+      subtitle:
+          '${_filteredBrands.length} resultado${_filteredBrands.length != 1 ? 's' : ''}',
+      icon: Icons.local_offer_outlined,
+      width: 400,
+      maxHeight: 600,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Campo de búsqueda
+          TextField(
+            controller: _searchController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Buscar',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged();
+                      },
                     )
-                  : DialogComponents.itemList(
-                      context: context,
-                      items: _filteredBrands
-                          .map((brand) =>
-                              _buildBrandListItem(brand, theme, colorScheme))
-                          .toList(),
-                      showDividers: true,
-                    ),
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-          ],
-        ),
+            onChanged: (_) => _onSearchChanged(),
+          ),
+          const SizedBox(height: 16),
+
+          // Lista de marcas
+          _filteredBrands.isEmpty
+              ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 48,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No se encontraron marcas',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color:
+                          colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Intenta con otros términos de búsqueda',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color:
+                          colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              )
+              : DialogComponents.itemList(
+                useFillStyle: true,
+                  context: context,padding: EdgeInsets.zero,
+                  items: _filteredBrands
+                      .map((brand) =>
+                          _buildBrandListItem(brand, theme, colorScheme))
+                      .toList(),
+                  showDividers: true,
+                ),
+        ],
       ),
     );
   }

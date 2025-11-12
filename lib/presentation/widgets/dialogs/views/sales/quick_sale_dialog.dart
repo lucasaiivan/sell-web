@@ -42,8 +42,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
     return BaseDialog(
       title: 'Venta Rápida',
-      icon: Icons.flash_on_rounded,
-      width: 450,
+      icon: Icons.flash_on_rounded, 
       headerColor: theme.colorScheme.tertiaryContainer,
       content: Form(
         key: _formKey,
@@ -125,16 +124,11 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
     });
 
     try {
-      final price = _priceController.doubleValue;
-      final description = _descriptionController.text.trim().isEmpty
-          ? ''
-          : _descriptionController.text.trim();
+      final price = _priceController.doubleValue; 
+      final description = _descriptionController.text.trim().isEmpty? '': _descriptionController.text.trim();
 
       // Agregar el producto de venta rápida
-      widget.provider.addQuickProduct(
-        description: description,
-        salePrice: price,
-      );
+      widget.provider.addQuickProduct(description: description,salePrice: price);
 
       if (mounted) {
         Navigator.of(context).pop();

@@ -13,6 +13,7 @@ class DialogComponents {
     Color? backgroundColor,
     Color? accentColor,
     Widget? rightIcon,
+    bool showBorder = true,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
@@ -25,9 +26,11 @@ class DialogComponents {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
+        border: showBorder
+            ? Border.all(
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              )
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +291,7 @@ class DialogComponents {
         foregroundColor: isDestructive
             ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal:12, vertical: 8),
       ),
     );
   }
@@ -705,7 +708,7 @@ class ExpandableListContainer<T> extends StatefulWidget {
 }
 
 class _ExpandableListContainerState<T>
-    extends State<ExpandableListContainer<T>> {
+    extends State<ExpandableListContainer<T>> with SingleTickerProviderStateMixin {
   bool showAllItems =
       false; // Estado para controlar si se muestran todos los elementos
 
@@ -740,107 +743,87 @@ class _ExpandableListContainerState<T>
                 ),
               if (widget.trailing != null) widget.trailing!,
             ],
-          ),
-          SizedBox(height: widget.isMobile ? 8 : 12),
+          ), 
         ],
 
-        // Contenedor estilizado con la lista
-        Column(
-          children: [
-            // Items de la lista
-            ...itemsToShow.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              final isLast = index == itemsToShow.length - 1;
+        // Contenedor estilizado con la lista - envuelto en AnimatedSize para transición suave
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(
+            children: [
+              // Items de la lista - usar ListView.builder para lazy loading cuando hay muchos items
+              if (showAllItems && widget.items.length > 20)
+                // Para listas grandes expandidas, usar ListView con tamaño fijo
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: 400, // Altura máxima para scrolling
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: widget.items.length,
+                    itemBuilder: (context, index) {
+                      final item = widget.items[index];
+                      final isLast = index == widget.items.length - 1;
+                      return widget.itemBuilder(context, item, index, isLast);
+                    },
+                  ),
+                )
+              else
+                // Para listas pequeñas o colapsadas, usar map tradicional
+                ...itemsToShow.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  final isLast = index == itemsToShow.length - 1;
 
-              return widget.itemBuilder(context, item, index, isLast);
-            }),
+                  return widget.itemBuilder(context, item, index, isLast);
+                }),
 
-            // Botón "Ver más" si hay más elementos
-            if (hasMoreItems && !showAllItems) ...[
-              if (widget.showDividers)
-                Divider(
-                  thickness: widget.useFillStyle ? 0.5 : 1,
-                  color: widget.useFillStyle
-                      ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
-                      : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
-                  height: widget.useFillStyle ? 1 : 0,
-                  indent: widget.useFillStyle && widget.isMobile
-                      ? 12
-                      : (widget.useFillStyle ? 16 : 0),
-                  endIndent: widget.useFillStyle && widget.isMobile
-                      ? 12
-                      : (widget.useFillStyle ? 16 : 0),
-                ),
-              InkWell(
-                onTap: () => setState(() => showAllItems = true),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMobile ? 12 : 16,
-                      vertical: widget.isMobile ? 8 : 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.expandText ?? 'Ver más',
-                        style: widget.theme.textTheme.titleSmall?.copyWith(
+              // Botón "Ver más" si hay más elementos
+              if (hasMoreItems && !showAllItems) ...[
+                if (widget.showDividers)
+                  Divider(
+                    thickness: widget.useFillStyle ? 0.5 : 1,
+                    color: widget.useFillStyle
+                        ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
+                        : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+                    height: widget.useFillStyle ? 1 : 0,
+                    indent: widget.useFillStyle && widget.isMobile
+                        ? 12
+                        : (widget.useFillStyle ? 16 : 0),
+                    endIndent: widget.useFillStyle && widget.isMobile
+                        ? 12
+                        : (widget.useFillStyle ? 16 : 0),
+                  ),
+                InkWell(
+                  onTap: () => setState(() => showAllItems = true),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: widget.isMobile ? 12 : 16,
+                        vertical: widget.isMobile ? 8 : 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.expandText ?? 'Ver más',
+                          style: widget.theme.textTheme.titleSmall?.copyWith(
+                            color: widget.theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.expand_more_rounded,
                           color: widget.theme.colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.expand_more_rounded,
-                        color: widget.theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
+ 
             ],
-
-            // Botón "Ver menos" si se están mostrando todos
-            if (showAllItems && hasMoreItems) ...[
-              if (widget.showDividers)
-                // muestra un botón "Ver menos"
-                Divider(
-                  thickness: widget.useFillStyle ? 0.5 : 1,
-                  color: widget.useFillStyle
-                      ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
-                      : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
-                  height: widget.useFillStyle ? 1 : 0,
-                  indent: widget.useFillStyle && widget.isMobile
-                      ? 12
-                      : (widget.useFillStyle ? 16 : 0),
-                  endIndent: widget.useFillStyle && widget.isMobile
-                      ? 12
-                      : (widget.useFillStyle ? 16 : 0),
-                ),
-              InkWell(
-                onTap: () => setState(() => showAllItems = false),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(widget.borderRadius),
-                  bottomRight: Radius.circular(widget.borderRadius),
-                ),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMobile ? 12 : 16,
-                      vertical: widget.isMobile ? 8 : 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Ver menos',
-                          style: widget.theme.textTheme.titleSmall),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.expand_less_rounded,
-                        color: widget.theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ],
     );

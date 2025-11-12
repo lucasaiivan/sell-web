@@ -427,16 +427,10 @@ class SellProvider extends ChangeNotifier {
   ///
   /// RESPONSABILIDAD: Coordinar UI y persistencia
   /// La lógica de negocio (buscar, incrementar, agregar) está en SellUsecases
-  void addProductsticket(ProductCatalogue product,
-      {bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,{bool replaceQuantity = false}) {
     try {
       // PASO 1: UseCase maneja toda la lógica de negocio
-      final updatedTicket = _sellUsecases.addProductToTicket(
-        // CAMBIADO
-        _state.ticket,
-        product,
-        replaceQuantity: replaceQuantity,
-      );
+      final updatedTicket = _sellUsecases.addProductToTicket(_state.ticket,product,replaceQuantity: replaceQuantity);
 
       // PASO 2: Actualizar estado UI
       _state = _state.copyWith(ticket: updatedTicket);
@@ -484,12 +478,8 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addQuickProduct(
-      {required String description, required double salePrice}) {
-    final product = _sellUsecases.createQuickProduct(
-      description: description,
-      salePrice: salePrice,
-    );
+  void addQuickProduct({required String description, required double salePrice}) {
+    final product = _sellUsecases.createQuickProduct(description: description,salePrice: salePrice,);
     addProductsticket(product, replaceQuantity: true);
   }
 

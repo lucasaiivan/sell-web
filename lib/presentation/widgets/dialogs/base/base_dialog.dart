@@ -60,7 +60,7 @@ class BaseDialog extends StatelessWidget {
         width: width,
         constraints: BoxConstraints(
           maxHeight: maxHeight,
-          maxWidth: 600, // Máximo para desktop
+          maxWidth: 500, // Máximo para desktop
         ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
@@ -85,13 +85,7 @@ class BaseDialog extends StatelessWidget {
             _buildHeader(context, theme),
 
             // Contenido principal con gradiente difuminado
-            Flexible(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                child: _buildContentWithGradient(context, theme),
-              ),
-            ),
+            _buildContentWithGradient(context, theme),
 
             // Acciones/botones
             if (actions != null && actions!.isNotEmpty)
@@ -176,69 +170,66 @@ class BaseDialog extends StatelessWidget {
     if (!scrollable) {
       // Si no es scrollable, solo agregar padding normal
       return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
         child: content,
       );
     }
 
-    return Stack( 
-      fit: StackFit.expand,
-      children: [
-        // Contenido scrollable
-        SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            12,
-            16,
-            12,
-            hasActions
-                ? 48
-                : 16, // Más padding inferior si hay acciones para el gradiente
-          ),
-          child: content,
-        ),
-    
-        // Gradiente difuminado al final (solo si hay acciones)
-        if (hasActions)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            // IgnorePointer : para que el gradiente no interfiera con los botones
-            child: IgnorePointer(
-              child: Container(
-                height: 56, // Altura del gradiente más amplia para efecto suave
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      theme.colorScheme.surface.withValues(
-                          alpha: 0.0), // Completamente transparente arriba
-                      theme.colorScheme.surface
-                          .withValues(alpha: 0.3), // Ligeramente visible
-                      theme.colorScheme.surface
-                          .withValues(alpha: 0.7), // Más visible
-                      theme.colorScheme.surface
-                          .withValues(alpha: 0.9), // Casi opaco
-                      theme.colorScheme.surface, // Completamente opaco abajo
-                    ],
-                    stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+    // Usar Flexible con shrinkWrap para ajustarse al contenido
+    return Flexible(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: [
+              // Contenido scrollable que se ajusta al tamaño real
+              SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  16,
+                  24,
+                  hasActions ? 32 : 16, // Padding inferior para el gradiente
+                ),
+                child: content,
+              ),
+
+              // Gradiente difuminado al final (solo si hay acciones)
+              if (hasActions)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            theme.colorScheme.surface.withValues(alpha: 0.0),
+                            theme.colorScheme.surface.withValues(alpha: 0.5),
+                            theme.colorScheme.surface.withValues(alpha: 0.9),
+                            theme.colorScheme.surface,
+                          ],
+                          stops: const [0.0, 0.4, 0.8, 1.0],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-      ],
+            ],
+          );
+        },
+      ),
     );
   }
 
   Widget _buildActions(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      width: double.infinity,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
           for (int i = 0; i < actions!.length; i++) ...[
             if (i > 0) const SizedBox(width: 12),

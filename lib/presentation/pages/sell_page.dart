@@ -705,11 +705,9 @@ class _SellPageState extends State<SellPage> {
               }
             }
 
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              backgroundColor: theme.colorScheme.surface,
-              title: const Text('Cobro en efectivo'),
+            return BaseDialog(
+              title: 'Cobro en efectivo',
+              icon: Icons.payments_outlined,
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -776,47 +774,86 @@ class _SellPageState extends State<SellPage> {
                         );
                       }).toList(),
                     ),
-                  const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total:', style: theme.textTheme.bodyLarge),
-                      Text(CurrencyFormatter.formatPrice(value: total),
-                          style: theme.textTheme.bodyLarge
-                              ?.copyWith(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Vuelto:', style: theme.textTheme.bodyLarge),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: vuelto < 0
-                              ? theme.colorScheme.error.withValues(alpha: 0.08)
-                              : theme.colorScheme.secondaryContainer
-                                  .withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 20),
+                  // Contenedor destacado para Total y Vuelto
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2),width: 1),
+                    ),
+                    child: Column(
+                      children: [
+                        // Fila del Total
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total:',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.8),
+                              ),
+                            ),
+                            Text(
+                              CurrencyFormatter.formatPrice(value: total),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
                         ),
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: theme.textTheme.bodyLarge!.copyWith(
-                            color: vuelto < 0
-                                ? theme.colorScheme.error
-                                : theme.colorScheme.secondary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          child: Text(
-                              CurrencyFormatter.formatPrice(
-                                  value: vuelto < 0 ? 0 : vuelto),
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.bold, fontSize: 24)),
+                        const SizedBox(height: 5),
+                        Divider(
+                          height: 1,
+                          color: theme.colorScheme.outline
+                              .withValues(alpha: 0.2),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        // Fila del Vuelto
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Vuelto:',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.8),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: vuelto < 0
+                                    ? theme.colorScheme.error
+                                        .withValues(alpha: 0.12)
+                                    : theme.colorScheme.secondaryContainer
+                                        .withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 200),
+                                style: theme.textTheme.headlineSmall!.copyWith(
+                                  color: vuelto < 0
+                                      ? theme.colorScheme.error
+                                      : theme.colorScheme.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                child: Text(
+                                  CurrencyFormatter.formatPrice(
+                                      value: vuelto < 0 ? 0 : vuelto),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -12,7 +12,7 @@ class BaseDialog extends StatelessWidget {
     required this.content,
     this.icon,
     this.actions,
-    this.width,
+    this.width=400,
     this.maxHeight = 600,
     this.headerColor,
     this.showCloseButton = true,

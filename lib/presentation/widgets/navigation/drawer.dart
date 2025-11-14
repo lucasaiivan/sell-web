@@ -25,7 +25,8 @@ class AppDrawer extends StatelessWidget {
               child: ThemeBrightnessButton(
                 iconSize: 20,
                 iconColor: Theme.of(context).colorScheme.primary,
-                themeProvider: Provider.of<ThemeDataAppProvider>(context, listen: false),
+                themeProvider:
+                    Provider.of<ThemeDataAppProvider>(context, listen: false),
               ),
             ),
             // view : cuerpo del drawer
@@ -42,7 +43,7 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => showAccountSelectionDialog(context: context),
                   ),
                 ),
-                const Divider(thickness: 0.3,endIndent: 75,indent:75),
+                const Divider(thickness: 0.3, endIndent: 75, indent: 75),
                 const SizedBox(height: 20),
                 const _NavigationMenu(),
                 const Spacer(),
@@ -93,7 +94,7 @@ class _AccountsAssociatedsButton extends StatelessWidget {
                           width: 2.0,
                         ),
                       ),
-                      child: UserAvatar( 
+                      child: UserAvatar(
                         imageUrl: selectedAccount.image,
                         text: selectedAccount.name.isNotEmpty
                             ? selectedAccount.name[0].toUpperCase()
@@ -169,7 +170,7 @@ class _NavigationMenu extends StatelessWidget {
               children: [
                 _DrawerNavTile(
                   icon: Icons.point_of_sale,
-                  label: 'Ventas', 
+                  label: 'Ventas',
                   index: 0,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
@@ -182,7 +183,7 @@ class _NavigationMenu extends StatelessWidget {
                 ),
                 _DrawerNavTile(
                   icon: Icons.inventory_2,
-                  label: 'Catálogo', 
+                  label: 'Catálogo',
                   index: 1,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
@@ -239,7 +240,11 @@ class _DrawerNavTile extends StatelessWidget {
           ),
         ),
         trailing: isSelected
-            ? Icon(Icons.circle, color: colorScheme.primary,size: 16,)
+            ? Icon(
+                Icons.circle,
+                color: colorScheme.primary,
+                size: 16,
+              )
             : null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

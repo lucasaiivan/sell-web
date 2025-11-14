@@ -409,7 +409,6 @@ class _SellPageState extends State<SellPage> {
 
                   // button : administrar caja
                   CashRegisterStatusWidget(),
- 
                 ],
               )
             ],
@@ -779,9 +778,13 @@ class _SellPageState extends State<SellPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2),width: 1),
+                      border: Border.all(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.2),
+                          width: 1),
                     ),
                     child: Column(
                       children: [
@@ -809,8 +812,8 @@ class _SellPageState extends State<SellPage> {
                         const SizedBox(height: 5),
                         Divider(
                           height: 1,
-                          color: theme.colorScheme.outline
-                              .withValues(alpha: 0.2),
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.2),
                         ),
                         const SizedBox(height: 12),
                         // Fila del Vuelto
@@ -1103,10 +1106,9 @@ class _ProductoItemState extends State<ProductoItem> {
     //  values
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBackgroundColor = isDark 
-        ? theme.colorScheme.surfaceContainerHighest 
-        : Colors.white;
-    
+    final cardBackgroundColor =
+        isDark ? theme.colorScheme.surfaceContainerHighest : Colors.white;
+
     final String alertStockText = widget.producto.stock
         ? (widget.producto.quantityStock >= 0
             ? widget.producto.quantityStock <= widget.producto.alertStock
@@ -1177,13 +1179,11 @@ class _ProductoItemState extends State<ProductoItem> {
   Widget _buildQuickSaleLayout() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark 
-        ? theme.colorScheme.onSurface 
-        : Colors.black87;
+    final textColor = isDark ? theme.colorScheme.onSurface : Colors.black87;
     final overlayColor = isDark
         ? theme.colorScheme.onSurface.withValues(alpha: 0.1)
         : Colors.grey.shade200.withValues(alpha: 0.2);
-    
+
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -1242,10 +1242,9 @@ class _ProductoItemState extends State<ProductoItem> {
                       child: Text(
                         alertStockText,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold
-                        ),
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -1262,13 +1261,10 @@ class _ProductoItemState extends State<ProductoItem> {
   Widget contentInfo() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final descriptionColor = isDark 
-        ? theme.colorScheme.onSurfaceVariant 
-        : Colors.grey;
-    final priceColor = isDark 
-        ? theme.colorScheme.onSurface 
-        : Colors.black;
-    
+    final descriptionColor =
+        isDark ? theme.colorScheme.onSurfaceVariant : Colors.grey;
+    final priceColor = isDark ? theme.colorScheme.onSurface : Colors.black;
+
     return widget.producto.description == ''
         ? Container()
         : Padding(

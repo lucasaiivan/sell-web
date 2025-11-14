@@ -30,7 +30,8 @@ class CatalogueUseCases {
   /// [products] - Lista de productos donde buscar
   /// [code] - Código de barra a buscar
   /// Retorna el producto encontrado o null si no existe
-  ProductCatalogue? getProductByCode(List<ProductCatalogue> products, String code) {
+  ProductCatalogue? getProductByCode(
+      List<ProductCatalogue> products, String code) {
     try {
       return products.firstWhere((p) => p.code == code);
     } catch (_) {
@@ -64,7 +65,8 @@ class CatalogueUseCases {
   ///
   /// [product] - Producto a agregar
   /// [accountId] - ID de la cuenta del negocio
-  Future<void> addProductToCatalogue(ProductCatalogue product, String accountId) {
+  Future<void> addProductToCatalogue(
+      ProductCatalogue product, String accountId) {
     return repository.addProductToCatalogue(product, accountId);
   }
 
@@ -79,7 +81,8 @@ class CatalogueUseCases {
   ///
   /// [productPrice] - Datos del precio del producto
   /// [productCode] - Código del producto
-  Future<void> registerProductPrice(ProductPrice productPrice, String productCode) {
+  Future<void> registerProductPrice(
+      ProductPrice productPrice, String productCode) {
     return repository.registerProductPrice(productPrice, productCode);
   }
 
@@ -92,7 +95,8 @@ class CatalogueUseCases {
   /// [accountId] - ID de la cuenta del negocio
   /// [productId] - ID del producto
   /// [quantity] - Cantidad vendida (por defecto 1)
-  Future<void> incrementProductSales(String accountId, String productId, {int quantity = 1}) {
+  Future<void> incrementProductSales(String accountId, String productId,
+      {int quantity = 1}) {
     return repository.incrementSales(accountId, productId, quantity);
   }
 
@@ -101,7 +105,8 @@ class CatalogueUseCases {
   /// [accountId] - ID de la cuenta del negocio
   /// [productId] - ID del producto
   /// [quantity] - Cantidad a decrementar
-  Future<void> decrementProductStock(String accountId, String productId, int quantity) {
+  Future<void> decrementProductStock(
+      String accountId, String productId, int quantity) {
     return repository.decrementStock(accountId, productId, quantity);
   }
 
@@ -110,8 +115,8 @@ class CatalogueUseCases {
   /// [accountId] - ID de la cuenta del negocio
   /// [productId] - ID del producto
   /// [isFavorite] - Nuevo estado de favorito
-  Future<void> updateProductFavorite(String accountId, String productId, bool isFavorite) {
+  Future<void> updateProductFavorite(
+      String accountId, String productId, bool isFavorite) {
     return repository.updateProductFavorite(accountId, productId, isFavorite);
   }
 }
-

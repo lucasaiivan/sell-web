@@ -475,18 +475,20 @@ class _ProductCatalogueFullScreenViewState
             return [
               SliverOverlapAbsorber(
                 // Absorber el overlap para evitar problemas de posicionamiento
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                handle:
+                    NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
                   // Configuración optimizada del SliverAppBar para NestedScrollView
                   floating: true,
                   pinned: true,
                   snap: true,
-                  expandedHeight: 190, // Altura fija para siempre mostrar búsqueda y chips
+                  expandedHeight:
+                      190, // Altura fija para siempre mostrar búsqueda y chips
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surface,
                   elevation: 0,
                   scrolledUnderElevation: innerBoxIsScrolled ? 2 : 0,
-                  forceElevated: innerBoxIsScrolled, 
+                  forceElevated: innerBoxIsScrolled,
                   // Título siempre visible en el AppBar
                   title: Row(
                     children: [
@@ -1037,34 +1039,33 @@ class _BrandSelectionDialogState extends State<_BrandSelectionDialog> {
           // Lista de marcas
           _filteredBrands.isEmpty
               ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 48,
-                    color: colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No se encontraron marcas',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color:
-                          colorScheme.onSurface.withValues(alpha: 0.6),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 48,
+                      color: colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Intenta con otros términos de búsqueda',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color:
-                          colorScheme.onSurface.withValues(alpha: 0.5),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No se encontraron marcas',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
-                  ),
-                ],
-              )
+                    const SizedBox(height: 8),
+                    Text(
+                      'Intenta con otros términos de búsqueda',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                )
               : DialogComponents.itemList(
-                useFillStyle: true,
-                  context: context,padding: EdgeInsets.zero,
+                  useFillStyle: true,
+                  context: context,
+                  padding: EdgeInsets.zero,
                   items: _filteredBrands
                       .map((brand) =>
                           _buildBrandListItem(brand, theme, colorScheme))

@@ -29,8 +29,9 @@ class _CataloguePageState extends State<CataloguePage> {
   }
 
   /// Construye el AppBar de la página de catálogo
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final catalogueProvider = Provider.of<CatalogueProvider>(context);
+  PreferredSizeWidget _buildAppBar(BuildContext context) { 
+
+    // controllers
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
     return AppBar(
@@ -55,52 +56,28 @@ class _CataloguePageState extends State<CataloguePage> {
                   onTap: () => Scaffold.of(context).openDrawer(),
                   child: UserAvatar(
                     imageUrl: sellProvider.profileAccountSelected.image,
-                    text: sellProvider.profileAccountSelected.name,
-                    radius: 18,
+                    text: sellProvider.profileAccountSelected.name, 
                   ),
                 ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Título de la página
-              Text(
-                'Catálogo',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(width:12),
+              ), 
+              const SizedBox(width: 12),
               SearchButton(
-                label: 'Buscar',
-                 onPressed: () {  }
-                 ,
-                
-              ),
-
-              const Spacer(),
-              // Contador de productos
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${catalogueProvider.products.length} productos',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                ),
-              ),
+                label: 'Productos',
+                onPressed: () {},
+              ),  
               const SizedBox(width: 8),
+              const Spacer(),
+              // button : filtro de productos
+              AppBarButtonCircle(
+                icon: Icons.filter_list,
+                tooltip: 'Filtrar',
+                onPressed: () {},
+              ),
               // Botón para alternar vista
-              IconButton(
-                onPressed: () => setState(() => _isGridView = !_isGridView),
-                icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
+              AppBarButtonCircle(
+                icon: _isGridView ? Icons.view_list : Icons.grid_view,
                 tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
+                onPressed: () => setState(() => _isGridView = !_isGridView),
               ),
             ],
           ),
@@ -144,7 +121,15 @@ class _CataloguePageState extends State<CataloguePage> {
       itemCount: catalogueProvider.products.length,
       itemBuilder: (context, index) {
         final product = catalogueProvider.products[index];
-        return _ProductCatalogueCard(product: product);
+        return _ProductCatalogueCard(
+          product: product,
+          onTap: () {
+            // TODO: Implementar navegación o acción al tocar el producto
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Seleccionado: ${product.description}')),
+            );
+          },
+        );
       },
     );
   }
@@ -152,12 +137,20 @@ class _CataloguePageState extends State<CataloguePage> {
   /// Construye la vista en lista vertical
   Widget _buildListView(CatalogueProvider catalogueProvider) {
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(0),
       itemCount: catalogueProvider.products.length,
-      separatorBuilder: (context, index) => const Divider(height:0,thickness:0.4),
+      separatorBuilder: (context, index) => const Divider(height: 0, thickness: 0.4),
       itemBuilder: (context, index) {
         final product = catalogueProvider.products[index];
-        return _ProductListTile(product: product);
+        return _ProductListTile(
+          product: product,
+          onTap: () {
+            // TODO: Implementar navegación o acción al tocar el producto
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Seleccionado: ${product.description}')),
+            );
+          },
+        );
       },
     );
   }
@@ -200,16 +193,16 @@ class _CataloguePageState extends State<CataloguePage> {
         );
       },
       icon: const Icon(Icons.add),
-      label: const Text('Agregar producto'),
+      label: const Text('Agregar'),
     );
   }
 
   /// Calcula el número de columnas según el ancho de la pantalla
   int _getCrossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    if (width < 600) return 3;
-    if (width < 900) return 4;
-    if (width < 1200) return 6;
+    if (width < 600) return 2;
+    if (width < 900) return 3;
+    if (width < 1200) return 4;
     return 7;
   }
 }
@@ -217,8 +210,12 @@ class _CataloguePageState extends State<CataloguePage> {
 /// Tarjeta para mostrar un producto en vista de lista
 class _ProductListTile extends StatelessWidget {
   final ProductCatalogue product;
+  final VoidCallback? onTap;
 
-  const _ProductListTile({required this.product});
+  const _ProductListTile({
+    required this.product,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -226,13 +223,13 @@ class _ProductListTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return InkWell(
-      onTap: () {
+      onTap: onTap ?? () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Editar: ${product.description}')),
         );
       },
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             // Imagen del producto
@@ -244,26 +241,84 @@ class _ProductListTile extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-    
+
             const SizedBox(width: 16),
-    
+
             // Información del producto
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Descripción
-                  Text(
-                    product.description,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (product.favorite)
+                        Icon(
+                          Icons.star_rate_rounded,
+                          size: 16,
+                          color: Colors.yellow[700],
+                        ),
+                      if (product.favorite)
+                        const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          product.description,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // text : marca del producto y nombre de la categoría
+                  Row(
+                    children: [
+                      if (product.nameMark.isNotEmpty) ...[
+                        if (product.verified)
+                          Icon(
+                            Icons.verified,
+                            size: 14,
+                            color: Colors.blue,
+                          ),
+                        if (product.verified)
+                          const SizedBox(width: 4),
+                        Text(
+                          product.nameMark,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: (product.verified)
+                                ? Colors.blue
+                                : colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (product.category.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              '•',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                      if (product.category.isNotEmpty)
+                        Text(
+                          product.nameCategory,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 4),
-    
-                  // Código
+
+                  // text : código
                   if (product.code.isNotEmpty)
                     Text(
                       product.code,
@@ -271,45 +326,136 @@ class _ProductListTile extends StatelessWidget {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
-    
-                  const SizedBox(height: 8),
-    
-                  // Precio y stock
-                  if (product.stock && product.quantityStock <= product.alertStock)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  const SizedBox(height: 4),
+                    // Precio y fecha de actualización
+                    Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                      CurrencyFormatter.formatPrice(value: product.salePrice),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                        fontSize: 24,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(12),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
                       child: Text(
-                        product.quantityStock > 0
-                            ? 'Stock bajo'
-                            : 'Sin stock',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                        DateFormatter.getSimplePublicationDate(product.upgrade.toDate(),DateTime.now()),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 10,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      ),
+                    ],
+                    ),
+                  const SizedBox(height: 8),
+
+                  // text : stock
+                  if (product.stock)
+                    _buildStockIndicator(
+                      context: context,
+                      quantityStock: product.quantityStock,
+                      alertStock: product.alertStock,
                     ),
                 ],
               ),
             ),
-            const SizedBox(width:12),
-            // text : Precio
-            Text(
-              CurrencyFormatter.formatPrice(value: product.salePrice),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
-                fontSize: 20,
-              ),
-            ),
+            const SizedBox(width: 12),
+            // text : ganancia  en monto y procentaje 
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      product.getBenefits,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    Text(
+                       product.getPorcentageFormat,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Construye el indicador de stock con colores adaptativos
+  Widget _buildStockIndicator({
+    required BuildContext context,
+    required int quantityStock,
+    required int alertStock,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Determinar el estado del stock
+    final bool isOutOfStock = quantityStock <= 0;
+    final bool isLowStock = quantityStock > 0 && quantityStock <= alertStock;
+
+    // Colores adaptativos según el brillo
+    Color backgroundColor;
+    Color textColor;
+    String label;
+
+    if (isOutOfStock) {
+      backgroundColor = isDark 
+        ? Colors.red.shade900.withValues(alpha: 0.3)
+        : Colors.red.shade50;
+      textColor = isDark ? Colors.red.shade300 : Colors.red.shade700;
+      label = 'Sin stock';
+    } else if (isLowStock) {
+      backgroundColor = isDark 
+        ? Colors.orange.shade900.withValues(alpha: 0.3)
+        : Colors.orange.shade50;
+      textColor = isDark ? Colors.orange.shade300 : Colors.orange.shade700;
+      label = 'Stock bajo ($quantityStock)';
+    } else {
+      backgroundColor = isDark 
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+      textColor = isDark 
+        ? theme.colorScheme.onSurfaceVariant 
+        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8);
+      label = 'Stock: $quantityStock';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: textColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
@@ -319,8 +465,12 @@ class _ProductListTile extends StatelessWidget {
 /// Tarjeta para mostrar un producto del catálogo
 class _ProductCatalogueCard extends StatelessWidget {
   final ProductCatalogue product;
+  final VoidCallback? onTap;
 
-  const _ProductCatalogueCard({required this.product});
+  const _ProductCatalogueCard({
+    required this.product,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -334,7 +484,7 @@ class _ProductCatalogueCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: () {
+        onTap: onTap ?? () {
           // TODO: Implementar edición de producto
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Editar: ${product.description}')),
@@ -399,24 +549,71 @@ class _ProductCatalogueCard extends StatelessWidget {
               ),
             ),
 
-            // Indicador de stock bajo
-            if (product.stock && product.quantityStock <= product.alertStock)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                color: Colors.red,
-                child: Text(
-                  product.quantityStock > 0 ? 'Stock bajo' : 'Sin stock',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+            // Indicador de stock
+            if (product.stock)
+              _buildStockBanner(
+                context: context,
+                quantityStock: product.quantityStock,
+                alertStock: product.alertStock,
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Construye el banner de stock con colores adaptativos
+  Widget _buildStockBanner({
+    required BuildContext context,
+    required int quantityStock,
+    required int alertStock,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Determinar el estado del stock
+    final bool isOutOfStock = quantityStock <= 0;
+    final bool isLowStock = quantityStock > 0 && quantityStock <= alertStock;
+
+    // Colores adaptativos según el brillo
+    Color backgroundColor;
+    Color textColor;
+    String label;
+
+    if (isOutOfStock) {
+      backgroundColor = isDark 
+        ? Colors.red.shade900.withValues(alpha: 0.4)
+        : Colors.red.shade600;
+      textColor = Colors.white;
+      label = 'Sin stock';
+    } else if (isLowStock) {
+      backgroundColor = isDark 
+        ? Colors.orange.shade900.withValues(alpha: 0.4)
+        : Colors.orange.shade600;
+      textColor = Colors.white;
+      label = 'Stock bajo ($quantityStock)';
+    } else {
+      backgroundColor = isDark 
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
+        : theme.colorScheme.surfaceContainerHigh;
+      textColor = isDark 
+        ? theme.colorScheme.onSurfaceVariant 
+        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85);
+      label = 'Stock: $quantityStock';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      color: backgroundColor,
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }

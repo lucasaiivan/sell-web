@@ -18,7 +18,7 @@ class UserAvatar extends StatelessWidget {
     this.icon,
     this.backgroundColor,
     this.foregroundColor,
-    this.radius = 20.0,
+    this.radius = 16.0,
     this.isEmpty = false,
   });
 

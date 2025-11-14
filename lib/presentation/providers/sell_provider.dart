@@ -262,6 +262,7 @@ class SellProvider extends ChangeNotifier {
       }
     }
   }
+
   /// Obtiene el AccountProfile por ID desde Firebase
   Future<AccountProfile?> fetchAccountById(String id) async {
     try {
@@ -287,7 +288,8 @@ class SellProvider extends ChangeNotifier {
         }
       } else {
         if (kDebugMode) {
-          print('📦 SellProvider: No hay AdminProfile guardado en persistencia');
+          print(
+              '📦 SellProvider: No hay AdminProfile guardado en persistencia');
         }
       }
     } catch (e) {
@@ -302,7 +304,8 @@ class SellProvider extends ChangeNotifier {
   Future<void> _saveAdminProfile() async {
     try {
       if (_state.currentAdminProfile != null) {
-        await getUserAccountsUseCase.saveAdminProfile(_state.currentAdminProfile!);
+        await getUserAccountsUseCase
+            .saveAdminProfile(_state.currentAdminProfile!);
       }
     } catch (e) {
       if (kDebugMode) {
@@ -409,7 +412,8 @@ class SellProvider extends ChangeNotifier {
       } catch (e) {
         // Log del error para debugging
         if (kDebugMode) {
-          print('❌ SellProvider: Error al cargar ticket desde persistencia: $e');
+          print(
+              '❌ SellProvider: Error al cargar ticket desde persistencia: $e');
         }
       }
     } else {
@@ -427,10 +431,13 @@ class SellProvider extends ChangeNotifier {
   ///
   /// RESPONSABILIDAD: Coordinar UI y persistencia
   /// La lógica de negocio (buscar, incrementar, agregar) está en SellUsecases
-  void addProductsticket(ProductCatalogue product,{bool replaceQuantity = false}) {
+  void addProductsticket(ProductCatalogue product,
+      {bool replaceQuantity = false}) {
     try {
       // PASO 1: UseCase maneja toda la lógica de negocio
-      final updatedTicket = _sellUsecases.addProductToTicket(_state.ticket,product,replaceQuantity: replaceQuantity);
+      final updatedTicket = _sellUsecases.addProductToTicket(
+          _state.ticket, product,
+          replaceQuantity: replaceQuantity);
 
       // PASO 2: Actualizar estado UI
       _state = _state.copyWith(ticket: updatedTicket);
@@ -478,8 +485,12 @@ class SellProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addQuickProduct({required String description, required double salePrice}) {
-    final product = _sellUsecases.createQuickProduct(description: description,salePrice: salePrice,);
+  void addQuickProduct(
+      {required String description, required double salePrice}) {
+    final product = _sellUsecases.createQuickProduct(
+      description: description,
+      salePrice: salePrice,
+    );
     addProductsticket(product, replaceQuantity: true);
   }
 
@@ -1122,7 +1133,8 @@ class SellProvider extends ChangeNotifier {
   }
 
   /// Método de fallback para actualizar productos vía provider cuando no hay UseCases inyectados
-  Future<void> _updateProductSalesAndStockViaProvider(BuildContext context) async {
+  Future<void> _updateProductSalesAndStockViaProvider(
+      BuildContext context) async {
     try {
       // Obtener el provider del catálogo
       final catalogueProvider =

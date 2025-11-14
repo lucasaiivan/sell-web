@@ -147,7 +147,7 @@ class _AccountSelectionContent extends StatelessWidget {
                   ],
                 ),
               ),
-              // icon : arrow right 
+              // icon : arrow right
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,

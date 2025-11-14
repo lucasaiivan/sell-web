@@ -164,7 +164,7 @@ class SellUsecases {
   }
 
   /// Crea un producto rápido (sin código de barras)
-  /// 
+  ///
   /// RESPONSABILIDAD: Crear producto temporal para venta rápida
   /// - Generar ID único
   /// - Validar descripción y precio
@@ -172,8 +172,7 @@ class SellUsecases {
   ProductCatalogue createQuickProduct({
     required String description,
     required double salePrice,
-  }) { 
-
+  }) {
     if (salePrice < 0) {
       throw Exception('El precio de venta no puede ser negativo');
     }

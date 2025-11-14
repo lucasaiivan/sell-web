@@ -348,7 +348,7 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // ✅ Limpiar cache de tickets de la caja anterior
       clearTicketsCache();
-      
+
       // Actualizar estado
       _state = _state.copyWith(selectedCashRegister: cashRegister);
       notifyListeners();
@@ -370,10 +370,10 @@ class CashRegisterProvider extends ChangeNotifier {
     try {
       // Limpiar estado
       _state = _state.copyWith(clearSelectedCashRegister: true);
-      
+
       // ✅ Limpiar cache de tickets al deseleccionar caja
       clearTicketsCache();
-      
+
       notifyListeners();
 
       // Limpiar persistencia
@@ -710,7 +710,6 @@ class CashRegisterProvider extends ChangeNotifier {
     required String accountId,
     bool forceReload = false,
   }) async {
-
     final cashRegisterId = currentActiveCashRegister?.id ?? '';
 
     // Validar que haya una caja activa
@@ -730,7 +729,7 @@ class CashRegisterProvider extends ChangeNotifier {
         _cashRegisterTickets == null) {
       _cachedCashRegisterId = cashRegisterId;
       _isLoadingTickets = true;
-      
+
       // Usar scheduleMicrotask para evitar llamar notifyListeners durante build
       scheduleMicrotask(() {
         notifyListeners();
@@ -746,7 +745,7 @@ class CashRegisterProvider extends ChangeNotifier {
       // Esperar a que termine la carga para actualizar el estado
       await _cashRegisterTickets;
       _isLoadingTickets = false;
-      
+
       // Usar scheduleMicrotask para evitar problemas si se llama durante build
       scheduleMicrotask(() {
         notifyListeners();
@@ -929,7 +928,8 @@ class CashRegisterProvider extends ChangeNotifier {
   }) async {
     try {
       // Anular ticket (ahora en CashRegisterUsecases)
-      final annulledTicket = await _cashRegisterUsecases.processTicketAnnullment(
+      final annulledTicket =
+          await _cashRegisterUsecases.processTicketAnnullment(
         accountId: accountId,
         ticket: ticket,
         activeCashRegister: _state.selectedCashRegister,
@@ -1102,6 +1102,7 @@ class CashRegisterProvider extends ChangeNotifier {
       return Stream.value([]);
     }
   }
+
   /// Obtiene los tickets filtrados por rango de fechas
   Future<List<Map<String, dynamic>>?> getTicketsByDateRange({
     required String accountId,
@@ -1148,7 +1149,8 @@ class CashRegisterProvider extends ChangeNotifier {
     required DateTime endDate,
   }) async {
     try {
-      final transactions = await _cashRegisterUsecases.getTransactionsByDateRange(
+      final transactions =
+          await _cashRegisterUsecases.getTransactionsByDateRange(
         accountId: accountId,
         startDate: startDate,
         endDate: endDate,

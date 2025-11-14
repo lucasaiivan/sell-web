@@ -291,7 +291,7 @@ class DialogComponents {
         foregroundColor: isDestructive
             ? theme.colorScheme.onError
             : theme.colorScheme.onPrimary,
-        padding: const EdgeInsets.symmetric(horizontal:12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }
@@ -707,8 +707,8 @@ class ExpandableListContainer<T> extends StatefulWidget {
       _ExpandableListContainerState<T>();
 }
 
-class _ExpandableListContainerState<T>
-    extends State<ExpandableListContainer<T>> with SingleTickerProviderStateMixin {
+class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
+    with SingleTickerProviderStateMixin {
   bool showAllItems =
       false; // Estado para controlar si se muestran todos los elementos
 
@@ -743,7 +743,7 @@ class _ExpandableListContainerState<T>
                 ),
               if (widget.trailing != null) widget.trailing!,
             ],
-          ), 
+          ),
         ],
 
         // Contenedor estilizado con la lista - envuelto en AnimatedSize para transición suave
@@ -786,8 +786,10 @@ class _ExpandableListContainerState<T>
                   Divider(
                     thickness: widget.useFillStyle ? 0.5 : 1,
                     color: widget.useFillStyle
-                        ? widget.theme.colorScheme.outline.withValues(alpha: 0.1)
-                        : widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+                        ? widget.theme.colorScheme.outline
+                            .withValues(alpha: 0.1)
+                        : widget.theme.colorScheme.outline
+                            .withValues(alpha: 0.2),
                     height: widget.useFillStyle ? 1 : 0,
                     indent: widget.useFillStyle && widget.isMobile
                         ? 12
@@ -821,7 +823,6 @@ class _ExpandableListContainerState<T>
                   ),
                 ),
               ],
- 
             ],
           ),
         ),

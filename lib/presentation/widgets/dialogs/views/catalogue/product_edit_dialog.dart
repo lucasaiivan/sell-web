@@ -79,7 +79,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         ),
         DialogComponents.primaryActionButton(
           context: context,
-          text: 'Cerrar', 
+          text: 'Cerrar',
           onPressed: _isProcessing ? null : () => Navigator.of(context).pop(),
           isLoading: _isProcessing,
         ),

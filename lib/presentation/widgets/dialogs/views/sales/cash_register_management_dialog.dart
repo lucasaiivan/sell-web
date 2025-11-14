@@ -215,7 +215,8 @@ class CashRegisterManagementDialog extends StatefulWidget {
       PageRouteBuilder<T>(
         pageBuilder: (context, animation, secondaryAnimation) => MultiProvider(
           providers: [
-            ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+            ChangeNotifierProvider<CashRegisterProvider>.value(
+                value: cashRegisterProvider),
             ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
             ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
           ],
@@ -269,11 +270,12 @@ class CashRegisterManagementDialog extends StatefulWidget {
   }
 
   @override
-  State<CashRegisterManagementDialog> createState() => _CashRegisterManagementDialogState();
+  State<CashRegisterManagementDialog> createState() =>
+      _CashRegisterManagementDialogState();
 }
 
-class _CashRegisterManagementDialogState extends State<CashRegisterManagementDialog> {
-  
+class _CashRegisterManagementDialogState
+    extends State<CashRegisterManagementDialog> {
   @override
   void initState() {
     super.initState();
@@ -319,7 +321,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
       selector: (_, provider) => provider.hasActiveCashRegister,
       builder: (context, hasActiveCashRegister, child) {
         // var
-        final sTitle = hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
+        final sTitle =
+            hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
 
         // Si fullView es true, usar Scaffold para ocupar toda la pantalla
         if (widget.fullView) {
@@ -369,7 +372,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
                       }
                       // ✅ Usar context.read para acceder sin suscribirse
                       final provider = context.read<CashRegisterProvider>();
-                      return _buildResponsiveContent(context, provider, isMobileDevice);
+                      return _buildResponsiveContent(
+                          context, provider, isMobileDevice);
                     },
                   );
                 },
@@ -419,7 +423,7 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
           const SizedBox(width: 8),
         ],
       ),
-      body: Stack( 
+      body: Stack(
         fit: StackFit.expand,
         children: [
           SingleChildScrollView(
@@ -719,7 +723,8 @@ class _CashRegisterManagementDialogState extends State<CashRegisterManagementDia
   }
 
   /// Construye la vista de flujo de caja con información financiera
-  Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildCashFlowView(
+      BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
     // ✅ Usar widget separado que no depende de FutureBuilder
@@ -1487,8 +1492,8 @@ class _BalanceSection extends StatelessWidget {
         return Container(
           padding: EdgeInsets.all(isMobile ? 14 : 16),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer ,
-            borderRadius: BorderRadius.circular(12), 
+            color: theme.colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1512,7 +1517,7 @@ class _BalanceSection extends StatelessWidget {
                         ? theme.textTheme.headlineSmall
                         : theme.textTheme.headlineMedium)
                     ?.copyWith(
-                      fontSize: isMobile ? 22 : 28,
+                  fontSize: isMobile ? 22 : 28,
                   fontWeight: FontWeight.w900,
                   color: theme.colorScheme.primary,
                 ),
@@ -1938,8 +1943,7 @@ class _CashFlowMovementsList extends StatelessWidget {
     final isIngreso = movement['type'] == 'ingreso';
 
     final iconColor = isIngreso ? Colors.green : Colors.red;
-    final icon =
-        isIngreso ? Icons.call_received : Icons.arrow_outward_rounded;
+    final icon = isIngreso ? Icons.call_received : Icons.arrow_outward_rounded;
 
     return Row(
       children: [

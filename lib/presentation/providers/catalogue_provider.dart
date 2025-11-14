@@ -438,7 +438,8 @@ class CatalogueProvider extends ChangeNotifier {
           upgrade: DateFormatter.getCurrentTimestamp(),
           documentIdUpgrade: accountId,
         );
-        await _catalogueUseCases.addProductToCatalogue(updatedProduct, accountId);
+        await _catalogueUseCases.addProductToCatalogue(
+            updatedProduct, accountId);
       } else {
         // Agregar nuevo producto
         final newProduct = product.copyWith(
@@ -465,7 +466,8 @@ class CatalogueProvider extends ChangeNotifier {
             town: accountProfile.town,
           );
 
-          await _catalogueUseCases.registerProductPrice(productPrice, product.code);
+          await _catalogueUseCases.registerProductPrice(
+              productPrice, product.code);
         } catch (e) {
           // No lanzamos error aquí para no interrumpir el flujo principal
         }
@@ -509,7 +511,8 @@ class CatalogueProvider extends ChangeNotifier {
 
     try {
       // Ejecutar el incremento de ventas usando CatalogueUseCases
-      await _catalogueUseCases.incrementProductSales(accountId, productId, quantity: quantity);
+      await _catalogueUseCases.incrementProductSales(accountId, productId,
+          quantity: quantity);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -539,7 +542,8 @@ class CatalogueProvider extends ChangeNotifier {
 
     try {
       // Ejecutar la reducción de stock usando CatalogueUseCases
-      await _catalogueUseCases.decrementProductStock(accountId, productId, quantity);
+      await _catalogueUseCases.decrementProductStock(
+          accountId, productId, quantity);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
@@ -565,7 +569,8 @@ class CatalogueProvider extends ChangeNotifier {
 
     try {
       // Ejecutar la actualización de favorito usando CatalogueUseCases
-      await _catalogueUseCases.updateProductFavorite(accountId, productId, isFavorite);
+      await _catalogueUseCases.updateProductFavorite(
+          accountId, productId, isFavorite);
 
       // El stream de Firebase se encargará automáticamente de la actualización
       // gracias a que actualizamos el timestamp de modificación

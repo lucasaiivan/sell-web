@@ -203,7 +203,8 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                           color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                            color: theme.colorScheme.outline
+                                .withValues(alpha: 0.2),
                             width: 1,
                           ),
                         ),
@@ -216,8 +217,8 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                                 child: InkWell(
                                   onTap: () {
                                     cashRegisterProvider
-                                        .openDescriptionController.text =
-                                        description;
+                                        .openDescriptionController
+                                        .text = description;
                                   },
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(20),
@@ -230,8 +231,10 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                                     ),
                                     child: Text(
                                       description,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                         fontWeight: FontWeight.w500,
                                       ),
                                       maxLines: 1,

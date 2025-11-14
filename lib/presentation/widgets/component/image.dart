@@ -32,12 +32,12 @@ class ProductImage extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     // Usar color adaptativo tanto para backgroundColor personalizado como por defecto
-    final defaultBackgroundColor = backgroundColor ?? 
-      (imageUrl != null && imageUrl!.isNotEmpty 
-        ? Colors.white
-        : isDark 
-          ? theme.colorScheme.surfaceContainerHighest 
-          : theme.colorScheme.surface);
+    final defaultBackgroundColor = backgroundColor ??
+        (imageUrl != null && imageUrl!.isNotEmpty
+            ? Colors.white
+            : isDark
+                ? theme.colorScheme.surfaceContainerHighest
+                : theme.colorScheme.surface);
 
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {
@@ -84,7 +84,7 @@ class ProductImage extends StatelessWidget {
             fit: fit,
             width: size,
             height: size,
-            // Configuraciones optimizadas para carga rápida 
+            // Configuraciones optimizadas para carga rápida
             placeholderFadeInDuration: placeholderFadeInDuration,
             // Configuración de caché para mejor rendimiento
             memCacheWidth: size != null ? (size! * 2).round() : null,

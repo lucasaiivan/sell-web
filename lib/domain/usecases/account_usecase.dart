@@ -10,8 +10,10 @@ class AccountsUseCase {
   final AccountRepository repository;
   final AppDataPersistenceService _persistenceService;
 
-  AccountsUseCase(this.repository, {AppDataPersistenceService? persistenceService})
-      : _persistenceService = persistenceService ?? AppDataPersistenceService.instance;
+  AccountsUseCase(this.repository,
+      {AppDataPersistenceService? persistenceService})
+      : _persistenceService =
+            persistenceService ?? AppDataPersistenceService.instance;
 
   /// Guarda el ID de la cuenta seleccionada
   Future<void> saveSelectedAccountId(String accountId) =>
@@ -111,7 +113,7 @@ class AccountsUseCase {
     }
 
     try {
-      final Map<String, dynamic> jsonMap = 
+      final Map<String, dynamic> jsonMap =
           const JsonDecoder().convert(adminProfileJson) as Map<String, dynamic>;
       return AdminProfile.fromMap(jsonMap);
     } catch (e) {
@@ -136,13 +138,14 @@ class AccountsUseCase {
   }
 
   /// Busca el AdminProfile correspondiente a un email y cuenta específica
-  /// 
+  ///
   /// [email] - Email del usuario autenticado
   /// [accountId] - ID de la cuenta seleccionada (opcional)
-  /// 
+  ///
   /// Si [accountId] está vacío, retorna el primer perfil encontrado
   /// Si [accountId] está especificado, busca el perfil correspondiente a esa cuenta
-  Future<AdminProfile?> fetchAdminProfile(String email, {String accountId = ''}) async {
+  Future<AdminProfile?> fetchAdminProfile(String email,
+      {String accountId = ''}) async {
     try {
       // Obtener todos los AdminProfile asociados al email
       final adminProfiles = await getAccountAdmins(email);

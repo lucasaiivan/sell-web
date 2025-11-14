@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/sell_provider.dart';
 import '../widgets/navigation/drawer.dart';
@@ -29,8 +30,7 @@ class _CataloguePageState extends State<CataloguePage> {
   }
 
   /// Construye el AppBar de la página de catálogo
-  PreferredSizeWidget _buildAppBar(BuildContext context) { 
-
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     // controllers
     final sellProvider = Provider.of<SellProvider>(context, listen: false);
 
@@ -56,15 +56,15 @@ class _CataloguePageState extends State<CataloguePage> {
                   onTap: () => Scaffold.of(context).openDrawer(),
                   child: UserAvatar(
                     imageUrl: sellProvider.profileAccountSelected.image,
-                    text: sellProvider.profileAccountSelected.name, 
+                    text: sellProvider.profileAccountSelected.name,
                   ),
                 ),
-              ), 
+              ),
               const SizedBox(width: 12),
               SearchButton(
                 label: 'Productos',
                 onPressed: () {},
-              ),  
+              ),
               const SizedBox(width: 8),
               const Spacer(),
               // button : filtro de productos
@@ -108,16 +108,13 @@ class _CataloguePageState extends State<CataloguePage> {
     );
   }
 
-  /// Construye la vista en grilla
+  /// Construye la vista en grilla con efecto masonry
   Widget _buildGridView(CatalogueProvider catalogueProvider) {
-    return GridView.builder(
+    return MasonryGridView.count(
       padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: _getCrossAxisCount(context),
-        crossAxisSpacing: 0,
-        mainAxisSpacing: 0,
-        childAspectRatio: 0.75,
-      ),
+      crossAxisCount: _getCrossAxisCount(context),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
       itemCount: catalogueProvider.products.length,
       itemBuilder: (context, index) {
         final product = catalogueProvider.products[index];
@@ -139,7 +136,8 @@ class _CataloguePageState extends State<CataloguePage> {
     return ListView.separated(
       padding: const EdgeInsets.all(0),
       itemCount: catalogueProvider.products.length,
-      separatorBuilder: (context, index) => const Divider(height: 0, thickness: 0.4),
+      separatorBuilder: (context, index) =>
+          const Divider(height: 0, thickness: 0.4),
       itemBuilder: (context, index) {
         final product = catalogueProvider.products[index];
         return _ProductListTile(
@@ -223,11 +221,12 @@ class _ProductListTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return InkWell(
-      onTap: onTap ?? () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Editar: ${product.description}')),
-        );
-      },
+      onTap: onTap ??
+          () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Editar: ${product.description}')),
+            );
+          },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -259,8 +258,7 @@ class _ProductListTile extends StatelessWidget {
                           size: 16,
                           color: Colors.yellow[700],
                         ),
-                      if (product.favorite)
-                        const SizedBox(width: 4),
+                      if (product.favorite) const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           product.description,
@@ -283,8 +281,7 @@ class _ProductListTile extends StatelessWidget {
                             size: 14,
                             color: Colors.blue,
                           ),
-                        if (product.verified)
-                          const SizedBox(width: 4),
+                        if (product.verified) const SizedBox(width: 4),
                         Text(
                           product.nameMark,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -327,32 +324,33 @@ class _ProductListTile extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 4),
-                    // Precio y fecha de actualización
-                    Row(
+                  // Precio y fecha de actualización
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                      CurrencyFormatter.formatPrice(value: product.salePrice),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                        fontSize: 24,
-                      ),
+                        CurrencyFormatter.formatPrice(value: product.salePrice),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                          fontSize: 24,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                      child: Text(
-                        DateFormatter.getSimplePublicationDate(product.upgrade.toDate(),DateTime.now()),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 10,
+                        child: Text(
+                          DateFormatter.getSimplePublicationDate(
+                              product.upgrade.toDate(), DateTime.now()),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
                       ),
                     ],
-                    ),
+                  ),
                   const SizedBox(height: 8),
 
                   // text : stock
@@ -366,7 +364,7 @@ class _ProductListTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // text : ganancia  en monto y procentaje 
+            // text : ganancia  en monto y procentaje
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -381,7 +379,7 @@ class _ProductListTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                       product.getPorcentageFormat,
+                      product.getPorcentageFormat,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.green,
                         fontWeight: FontWeight.w500,
@@ -416,24 +414,24 @@ class _ProductListTile extends StatelessWidget {
     String label;
 
     if (isOutOfStock) {
-      backgroundColor = isDark 
-        ? Colors.red.shade900.withValues(alpha: 0.3)
-        : Colors.red.shade50;
+      backgroundColor = isDark
+          ? Colors.red.shade900.withValues(alpha: 0.3)
+          : Colors.red.shade50;
       textColor = isDark ? Colors.red.shade300 : Colors.red.shade700;
       label = 'Sin stock';
     } else if (isLowStock) {
-      backgroundColor = isDark 
-        ? Colors.orange.shade900.withValues(alpha: 0.3)
-        : Colors.orange.shade50;
+      backgroundColor = isDark
+          ? Colors.orange.shade900.withValues(alpha: 0.3)
+          : Colors.orange.shade50;
       textColor = isDark ? Colors.orange.shade300 : Colors.orange.shade700;
       label = 'Stock bajo ($quantityStock)';
     } else {
-      backgroundColor = isDark 
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
-      textColor = isDark 
-        ? theme.colorScheme.onSurfaceVariant 
-        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8);
+      backgroundColor = isDark
+          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+      textColor = isDark
+          ? theme.colorScheme.onSurfaceVariant
+          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8);
       label = 'Stock: $quantityStock';
     }
 
@@ -462,7 +460,7 @@ class _ProductListTile extends StatelessWidget {
   }
 }
 
-/// Tarjeta para mostrar un producto del catálogo
+/// Tarjeta para mostrar un producto del catálogo con altura adaptativa
 class _ProductCatalogueCard extends StatelessWidget {
   final ProductCatalogue product;
   final VoidCallback? onTap;
@@ -484,68 +482,177 @@ class _ProductCatalogueCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: onTap ?? () {
-          // TODO: Implementar edición de producto
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Editar: ${product.description}')),
-          );
-        },
+        onTap: onTap ??
+            () {
+              // TODO: Implementar edición de producto
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Editar: ${product.description}')),
+              );
+            },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Imagen del producto
-            Expanded(
-              flex: 3,
-              child: ProductImage(
-                imageUrl: product.image,
-                fit: BoxFit.cover,
+            // Imagen del producto con Stack para overlays
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: Stack(
+                children: [
+                  // Imagen de fondo
+                  ProductImage(
+                    imageUrl: product.image,
+                    fit: BoxFit.cover,
+                  ),
+
+                  // Badge de favorito en la esquina superior derecha
+                  if (product.favorite)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.star_rate_rounded,
+                          size: 18,
+                          color: Colors.yellow[700],
+                        ),
+                      ),
+                    ),
+
+                  // Badge de categoría en la esquina superior izquierda
+                  if (product.category.isNotEmpty)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          product.nameCategory,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
 
             // Información del producto
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Descripción
-                    Text(
-                      product.description,
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Descripción con altura dinámica
+                  Text(
+                    product.description,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
 
-                    // Precio y código
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Marca si existe
+                  if (product.nameMark.isNotEmpty)
+                    Row(
                       children: [
-                        Text(
-                          CurrencyFormatter.formatPrice(
-                              value: product.salePrice),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
+                        if (product.verified)
+                          Icon(
+                            Icons.verified,
+                            size: 12,
+                            color: Colors.blue,
                           ),
-                        ),
-                        if (product.code.isNotEmpty)
-                          Text(
-                            product.code,
+                        if (product.verified) const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            product.nameMark,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w900,
+                              color: product.verified
+                                  ? Colors.blue
+                                  : colorScheme.onSurfaceVariant,
                               fontSize: 10,
                             ),
+                            
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                        ),
                       ],
                     ),
+                  if (product.nameMark.isNotEmpty) const SizedBox(height: 8),
+
+                  // Precio y beneficio juntos
+                  Row(
+                    children: [
+                      // Precio
+                      Text(
+                        CurrencyFormatter.formatPrice(value: product.salePrice),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Beneficio y porcentaje
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              product.getBenefits,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                            ),
+                            Text(
+                              product.getPorcentageFormat,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Código si existe
+                  if (product.code.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      product.code,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 10,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
 
@@ -581,24 +688,24 @@ class _ProductCatalogueCard extends StatelessWidget {
     String label;
 
     if (isOutOfStock) {
-      backgroundColor = isDark 
-        ? Colors.red.shade900.withValues(alpha: 0.4)
-        : Colors.red.shade600;
+      backgroundColor = isDark
+          ? Colors.red.shade900.withValues(alpha: 0.4)
+          : Colors.red.shade600;
       textColor = Colors.white;
       label = 'Sin stock';
     } else if (isLowStock) {
-      backgroundColor = isDark 
-        ? Colors.orange.shade900.withValues(alpha: 0.4)
-        : Colors.orange.shade600;
+      backgroundColor = isDark
+          ? Colors.orange.shade900.withValues(alpha: 0.4)
+          : Colors.orange.shade600;
       textColor = Colors.white;
       label = 'Stock bajo ($quantityStock)';
     } else {
-      backgroundColor = isDark 
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
-        : theme.colorScheme.surfaceContainerHigh;
-      textColor = isDark 
-        ? theme.colorScheme.onSurfaceVariant 
-        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85);
+      backgroundColor = isDark
+          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
+          : theme.colorScheme.surfaceContainerHigh;
+      textColor = isDark
+          ? theme.colorScheme.onSurfaceVariant
+          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85);
       label = 'Stock: $quantityStock';
     }
 

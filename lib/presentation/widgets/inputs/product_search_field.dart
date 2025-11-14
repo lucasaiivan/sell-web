@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/core/services/search_catalogue_service.dart';
+import 'package:sellweb/domain/entities/catalogue.dart';
 
 /// Widget mejorado para búsqueda de productos con sugerencias inteligentes
 class ProductSearchField extends StatefulWidget {
@@ -10,11 +10,13 @@ class ProductSearchField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
   final bool autofocus;
+  final List<ProductCatalogue> products; // Lista obligatoria de productos para sugerencias
 
   const ProductSearchField({
     super.key,
     required this.controller,
     required this.focusNode,
+    required this.products, // Productos obligatorios
     this.hintText = 'Buscar productos...',
     this.onChanged,
     this.onClear,
@@ -33,8 +35,10 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
   @override
   void initState() {
     super.initState();
-    widget.controller.addListener(_onTextChanged);
-    widget.focusNode.addListener(_onFocusChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.addListener(_onTextChanged);
+      widget.focusNode.addListener(_onFocusChanged);
+    });
   }
 
   @override
@@ -50,12 +54,15 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
 
     if (query.isNotEmpty && query.length >= 2) {
       try {
-        // Obtener sugerencias del provider
-        final catalogueProvider =
-            Provider.of<CatalogueProvider>(context, listen: false);
-        _suggestions = catalogueProvider.getSearchSuggestions(query: query);
+        // Obtener sugerencias únicamente desde la lista de productos proporcionada
+        _suggestions = SearchCatalogueService.getSearchSuggestions(
+          products: widget.products,
+          query: query,
+          maxSuggestions: 5,
+        );
 
-        if (_suggestions.isNotEmpty && widget.focusNode.hasFocus) {
+        // Mostrar overlay tanto si hay resultados como si no hay (para mostrar "Sin resultados")
+        if (widget.focusNode.hasFocus) {
           _showSuggestionsOverlay();
         } else {
           _hideSuggestions();
@@ -65,6 +72,11 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
       }
     } else {
       _hideSuggestions();
+    }
+
+    // Reconstruir para mostrar/ocultar el botón de limpiar
+    if (mounted) {
+      setState(() {});
     }
 
     // Llamar al callback de cambio
@@ -77,8 +89,7 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
       Future.delayed(const Duration(milliseconds: 150), () {
         _hideSuggestions();
       });
-    } else if (_suggestions.isNotEmpty &&
-        widget.controller.text.trim().length >= 2) {
+    } else if (widget.controller.text.trim().length >= 2) {
       _showSuggestionsOverlay();
     }
   }
@@ -92,49 +103,117 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
         child: CompositedTransformFollower(
           link: _layerLink,
           showWhenUnlinked: false,
-          offset: const Offset(0.0, 65.0),
+          offset: const Offset(0.0, 50.0),
           child: Material(
-            elevation: 8.0,
-            borderRadius: BorderRadius.circular(12),
+            elevation: 0,
+            borderRadius: BorderRadius.circular(10),
             child: Container(
-              constraints: const BoxConstraints(maxHeight: 200),
+              constraints: const BoxConstraints(maxHeight: 240),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: Theme.of(context)
                       .colorScheme
-                      .outline
+                      .primary
                       .withValues(alpha: 0.2),
+                  width: 1,
                 ),
               ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _suggestions.length,
-                itemBuilder: (context, index) {
-                  final suggestion = _suggestions[index];
-                  return ListTile(
-                    dense: true,
-                    leading: Icon(
-                      Icons.search_rounded,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    title: Text(
-                      suggestion,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    onTap: () {
-                      widget.controller.text = suggestion;
-                      widget.controller.selection = TextSelection.fromPosition(
-                        TextPosition(offset: suggestion.length),
-                      );
-                      _hideSuggestions();
-                      widget.onChanged?.call(suggestion);
-                    },
-                  );
-                },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: _suggestions.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 16,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer
+                                  .withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Sin resultados',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                        .withValues(alpha: 0.6),
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        itemCount: _suggestions.length,
+                        itemBuilder: (context, index) {
+                          final suggestion = _suggestions[index];
+                          return InkWell(
+                            onTap: () {
+                              widget.controller.text = suggestion;
+                              widget.controller.selection =
+                                  TextSelection.fromPosition(
+                                TextPosition(offset: suggestion.length),
+                              );
+                              _hideSuggestions();
+                              widget.onChanged?.call(suggestion);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.search_rounded,
+                                    size: 16,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      suggestion,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 14,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ),
           ),
@@ -169,53 +248,85 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
       link: _layerLink,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.focusNode.hasFocus
-                ? colorScheme.primary
-                : colorScheme.outline.withValues(alpha: 0.3),
-            width: widget.focusNode.hasFocus ? 2 : 1,
-          ),
+          color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(10),
+          border: widget.focusNode.hasFocus
+              ? Border.all(
+                  color: colorScheme.primary.withValues(alpha: 0.6),
+                  width: 1.5,
+                )
+              : Border.all(
+                  color: Colors.transparent,
+                  width: 1.5,
+                ),
         ),
-        child: TextField(
-          controller: widget.controller,
-          focusNode: widget.focusNode,
-          autofocus: widget.autofocus,
-          style: theme.textTheme.bodyLarge,
-          decoration: InputDecoration(
-            hintText: widget.hintText,
-            hintStyle: theme.textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Ícono de búsqueda
+            Padding(
+              padding: const EdgeInsets.only(left: 12, right: 8),
+              child: Icon(
+                Icons.search_rounded,
+                color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                size: 20,
+              ),
             ),
-            prefixIcon: Icon(
-              Icons.search_rounded,
-              color: colorScheme.primary,
-              size: 24,
-            ),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Botón de limpiar
-                if (widget.controller.text.isNotEmpty)
-                  IconButton(
-                    icon: Icon(
-                      Icons.clear_rounded,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                    onPressed: () {
-                      widget.controller.clear();
-                      _hideSuggestions();
-                      widget.onClear?.call();
-                    },
+            // Campo de texto
+            Expanded(
+              child: TextField(
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                autofocus: widget.autofocus,
+                maxLines: 1,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
+                decoration: InputDecoration(
+                  hintText: widget.hintText,
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color:
+                        colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
                   ),
-              ],
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                  ),
+                ),
+              ),
             ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
+            // Botón de limpiar
+            if (widget.controller.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: IconButton(
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                  icon: Icon(
+                    Icons.clear_rounded,
+                    color:
+                        colorScheme.onPrimaryContainer.withValues(alpha: 0.6),
+                    size: 18,
+                  ),
+                  onPressed: () {
+                    widget.controller.clear();
+                    _hideSuggestions();
+                    widget.onClear?.call();
+                  },
+                ),
+              )
+            else
+              const SizedBox(width: 8),
+          ],
         ),
       ),
     );

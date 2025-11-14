@@ -6,6 +6,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/sell_provider.dart';
 import '../widgets/navigation/drawer.dart';
+import '../widgets/inputs/product_search_field.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -18,6 +19,15 @@ class CataloguePage extends StatefulWidget {
 
 class _CataloguePageState extends State<CataloguePage> {
   bool _isGridView = true;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,12 +71,31 @@ class _CataloguePageState extends State<CataloguePage> {
                 ),
               ),
               const SizedBox(width: 12),
-              SearchButton(
-                label: 'Productos',
-                onPressed: () {},
+              Flexible(
+                child: ProductSearchField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  hintText: 'Buscar producto',
+                  products: Provider.of<CatalogueProvider>(context, listen: false).products,
+                  onChanged: (query) {
+                    // Buscar productos según el query con debouncing
+                    final catalogueProvider = Provider.of<CatalogueProvider>(
+                      context,
+                      listen: false,
+                    );
+                    catalogueProvider.searchProductsWithDebounce(query: query);
+                  },
+                  onClear: () {
+                    // Limpiar búsqueda y mostrar todos los productos
+                    final catalogueProvider = Provider.of<CatalogueProvider>(
+                      context,
+                      listen: false,
+                    );
+                    catalogueProvider.clearSearchResults();
+                  },
+                ),
               ),
-              const SizedBox(width: 8),
-              const Spacer(),
+              const SizedBox(width: 12),
               // button : filtro de productos
               AppBarButtonCircle(
                 icon: Icons.filter_list,
@@ -95,29 +124,36 @@ class _CataloguePageState extends State<CataloguePage> {
           return const Center(child: CircularProgressIndicator());
         }
 
+        // Determinar qué lista mostrar: filtrada o completa
+        final displayProducts = catalogueProvider.currentSearchQuery.isNotEmpty
+            ? catalogueProvider.filteredProducts
+            : catalogueProvider.products;
+
         // Sin productos
-        if (catalogueProvider.products.isEmpty) {
-          return _buildEmptyState(context);
+        if (displayProducts.isEmpty) {
+          return catalogueProvider.currentSearchQuery.isNotEmpty
+              ? _buildNoResultsState(context)
+              : _buildEmptyState(context);
         }
 
         // Lista de productos
         return _isGridView
-            ? _buildGridView(catalogueProvider)
-            : _buildListView(catalogueProvider);
+            ? _buildGridView(displayProducts)
+            : _buildListView(displayProducts);
       },
     );
   }
 
   /// Construye la vista en grilla con efecto masonry
-  Widget _buildGridView(CatalogueProvider catalogueProvider) {
+  Widget _buildGridView(List<ProductCatalogue> products) {
     return MasonryGridView.count(
       padding: const EdgeInsets.all(16),
       crossAxisCount: _getCrossAxisCount(context),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      itemCount: catalogueProvider.products.length,
+      itemCount: products.length,
       itemBuilder: (context, index) {
-        final product = catalogueProvider.products[index];
+        final product = products[index];
         return _ProductCatalogueCard(
           product: product,
           onTap: () {
@@ -132,14 +168,14 @@ class _CataloguePageState extends State<CataloguePage> {
   }
 
   /// Construye la vista en lista vertical
-  Widget _buildListView(CatalogueProvider catalogueProvider) {
+  Widget _buildListView(List<ProductCatalogue> products) {
     return ListView.separated(
       padding: const EdgeInsets.all(0),
-      itemCount: catalogueProvider.products.length,
+      itemCount: products.length,
       separatorBuilder: (context, index) =>
           const Divider(height: 0, thickness: 0.4),
       itemBuilder: (context, index) {
-        final product = catalogueProvider.products[index];
+        final product = products[index];
         return _ProductListTile(
           product: product,
           onTap: () {
@@ -175,6 +211,35 @@ class _CataloguePageState extends State<CataloguePage> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Estado cuando no hay resultados de búsqueda
+  Widget _buildNoResultsState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 80,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Sin resultados',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No se encontraron productos para "${_searchController.text}"',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -363,32 +428,55 @@ class _ProductListTile extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            // text : ganancia  en monto y procentaje
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
+            // Ganancia en monto y porcentaje - Estilo minimalista (solo si hay precio de compra)
+            if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty) ...[
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       product.getBenefits,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: Colors.green.shade700,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    Text(
-                      product.getPorcentageFormat,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.green,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.trending_up,
+                          size: 12,
+                          color: Colors.green.shade600,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          product.getPorcentageFormat,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.green.shade600,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            )
+              ),
+            ]
           ],
         ),
       ),
@@ -590,7 +678,6 @@ class _ProductCatalogueCard extends StatelessWidget {
                                   : colorScheme.onSurfaceVariant,
                               fontSize: 10,
                             ),
-                            
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -599,43 +686,72 @@ class _ProductCatalogueCard extends StatelessWidget {
                     ),
                   if (product.nameMark.isNotEmpty) const SizedBox(height: 8),
 
-                  // Precio y beneficio juntos
-                  Row(
+                  // Precio
+                  Text(
+                    CurrencyFormatter.formatPrice(value: product.salePrice),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                      fontSize: 18,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Beneficio, porcentaje y stock - Estilo minimalista con wrap
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
-                      // Precio
-                      Text(
-                        CurrencyFormatter.formatPrice(value: product.salePrice),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Beneficio y porcentaje
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              product.getBenefits,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
+                      // Beneficio y porcentaje (solo si hay precio de compra)
+                      if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              width: 1,
                             ),
-                            Text(
-                              product.getPorcentageFormat,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 10,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                product.getBenefits,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.trending_up,
+                                size: 10,
+                                color: Colors.green.shade600,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                product.getPorcentageFormat,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.green.shade600,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      
+                      // Indicador de stock si está habilitado
+                      if (product.stock)
+                        _buildStockIndicatorCompact(
+                          context: context,
+                          quantityStock: product.quantityStock,
+                          alertStock: product.alertStock,
+                        ),
                     ],
                   ),
 
@@ -655,22 +771,14 @@ class _ProductCatalogueCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Indicador de stock
-            if (product.stock)
-              _buildStockBanner(
-                context: context,
-                quantityStock: product.quantityStock,
-                alertStock: product.alertStock,
-              ),
           ],
         ),
       ),
     );
   }
 
-  /// Construye el banner de stock con colores adaptativos
-  Widget _buildStockBanner({
+  /// Construye el indicador de stock compacto para mostrar junto a las ganancias
+  Widget _buildStockIndicatorCompact({
     required BuildContext context,
     required int quantityStock,
     required int alertStock,
@@ -682,45 +790,54 @@ class _ProductCatalogueCard extends StatelessWidget {
     final bool isOutOfStock = quantityStock <= 0;
     final bool isLowStock = quantityStock > 0 && quantityStock <= alertStock;
 
-    // Colores adaptativos según el brillo
+    // Colores y contenido adaptativos
     Color backgroundColor;
-    Color textColor;
+    Color borderColor; 
+    Color textColor; 
     String label;
 
     if (isOutOfStock) {
       backgroundColor = isDark
-          ? Colors.red.shade900.withValues(alpha: 0.4)
-          : Colors.red.shade600;
-      textColor = Colors.white;
+          ? Colors.red.shade900.withValues(alpha: 0.15)
+          : Colors.red.withValues(alpha: 0.08);
+      borderColor = Colors.red.withValues(alpha: 0.2); 
+      textColor = isDark ? Colors.red.shade300 : Colors.red.shade700; 
       label = 'Sin stock';
     } else if (isLowStock) {
       backgroundColor = isDark
-          ? Colors.orange.shade900.withValues(alpha: 0.4)
-          : Colors.orange.shade600;
-      textColor = Colors.white;
-      label = 'Stock bajo ($quantityStock)';
+          ? Colors.orange.shade900.withValues(alpha: 0.15)
+          : Colors.orange.withValues(alpha: 0.08);
+      borderColor = Colors.orange.withValues(alpha: 0.2); 
+      textColor = isDark ? Colors.orange.shade300 : Colors.orange.shade700; 
+      label = 'Bajo stock $quantityStock';
     } else {
       backgroundColor = isDark
-          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
-          : theme.colorScheme.surfaceContainerHigh;
+          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+      borderColor = theme.colorScheme.outline.withValues(alpha: 0.2);
       textColor = isDark
           ? theme.colorScheme.onSurfaceVariant
-          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.85);
-      label = 'Stock: $quantityStock';
+          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8);
+      label = 'Stock $quantityStock';
     }
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      color: backgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: borderColor,
+          width: 1,
+        ),
+      ),
       child: Text(
         label,
-        style: TextStyle(
+        style: theme.textTheme.bodySmall?.copyWith(
           color: textColor,
-          fontSize: 11,
           fontWeight: FontWeight.bold,
+          fontSize: 10,
         ),
-        textAlign: TextAlign.center,
       ),
     );
   }

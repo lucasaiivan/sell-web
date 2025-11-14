@@ -11,7 +11,6 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 // Presentation imports
 import 'package:sellweb/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.
 ///
@@ -473,132 +472,68 @@ class _ProductCatalogueFullScreenViewState
           physics: const BouncingScrollPhysics(),
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
             return [
+              // Primer SliverAppBar: Búsqueda y acciones (floating, desaparece al scroll)
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                pinned: false,
+                toolbarHeight: 64,
+                backgroundColor: colorScheme.surface,
+                surfaceTintColor: colorScheme.surface,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                automaticallyImplyLeading: false,
+                title: _buildSearchField(),
+                leading: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    color: colorScheme.onSurface,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: 'Volver',
+                ),
+                actions: [
+                  // Botón toggle para cambiar vista lista/cuadrícula
+                  AppBarButtonCircle(
+                    icon: _isGridView
+                        ? Icons.view_list_rounded
+                        : Icons.grid_view_rounded,
+                    onPressed: () {
+                      setState(() {
+                        _isGridView = !_isGridView;
+                      });
+                    },
+                    tooltip:
+                        _isGridView ? 'Vista de lista' : 'Vista de cuadrícula',
+                  ),
+                  const SizedBox(width: 8),
+                  AppBarButtonCircle(
+                    icon: Icons.close_rounded,
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Cerrar',
+                  ),
+                  const SizedBox(width: 16),
+                ],
+              ),
+              // Segundo SliverAppBar: Chips de marcas (pinned, siempre visible)
               SliverOverlapAbsorber(
-                // Absorber el overlap para evitar problemas de posicionamiento
                 handle:
                     NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 sliver: SliverAppBar(
-                  // Configuración optimizada del SliverAppBar para NestedScrollView
-                  floating: true,
                   pinned: true,
-                  snap: true,
-                  expandedHeight:
-                      190, // Altura fija para siempre mostrar búsqueda y chips
+                  toolbarHeight: 0,
+                  collapsedHeight: 48,
+                  expandedHeight: 48,
                   backgroundColor: colorScheme.surface,
                   surfaceTintColor: colorScheme.surface,
                   elevation: 0,
-                  scrolledUnderElevation: innerBoxIsScrolled ? 2 : 0,
-                  forceElevated: innerBoxIsScrolled,
-                  // Título siempre visible en el AppBar
-                  title: Row(
-                    children: [
-                      Text(
-                        'Catálogo',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      if (_getSelectedProductsCount() > 0)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.elasticOut,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '${_getSelectedProductsCount()}',
-                            style: TextStyle(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  actions: [
-                    // Botón toggle para cambiar vista lista/cuadrícula
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOutCubic,
-                      child: IconButton(
-                        icon: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder:
-                              (Widget child, Animation<double> animation) {
-                            return RotationTransition(
-                              turns: animation,
-                              child: FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Icon(
-                            _isGridView
-                                ? Icons.view_list_rounded
-                                : Icons.grid_view_rounded,
-                            key: ValueKey(_isGridView),
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isGridView = !_isGridView;
-                          });
-                        },
-                        style: IconButton.styleFrom(
-                          backgroundColor: _isGridView
-                              ? colorScheme.primaryContainer
-                              : colorScheme.surfaceContainerHighest,
-                          foregroundColor: _isGridView
-                              ? colorScheme.onPrimaryContainer
-                              : colorScheme.onSurface,
-                        ),
-                        tooltip: _isGridView
-                            ? 'Vista de lista'
-                            : 'Vista de cuadrícula',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: IconButton.styleFrom(
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        foregroundColor: colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  // Usar stretch para mejor UX en iOS y permitir over-scroll
-                  stretch: true,
-                  onStretchTrigger: () async {
-                    // Opcional: agregar funcionalidad de pull-to-refresh
-                  },
-                  flexibleSpace: FlexibleSpaceBar(
-                    stretchModes: const [
-                      StretchMode.zoomBackground,
-                      StretchMode.fadeTitle,
-                    ],
-                    background: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 80, 16, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Campo de búsqueda - siempre visible
-                          _buildSearchField(),
-
-                          // Chips de sugerencias - siempre visibles
-                          const SizedBox(height: 12),
-                          _buildSuggestionChips(),
-                        ],
-                      ),
-                    ),
+                  scrolledUnderElevation: innerBoxIsScrolled ? 1 : 0,
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    alignment: Alignment.centerLeft,
+                    child: _buildSuggestionChips(),
                   ),
                 ),
               ),
@@ -610,9 +545,8 @@ class _ProductCatalogueFullScreenViewState
                 // Inyectar el overlap para mantener consistencia
                 slivers: [
                   SliverOverlapInjector(
-                    handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                        context),
-                  ),
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                          context)),
                   // Siempre mostrar la lista de productos (filtrados o todos)
                   _buildProductListAsSliver(),
 
@@ -633,19 +567,44 @@ class _ProductCatalogueFullScreenViewState
         child: AnimatedOpacity(
           opacity: 1.0, // Siempre visible
           duration: const Duration(milliseconds: 300),
-          child: FloatingActionButton.extended(
-            heroTag:
-                "product_catalogue_fab", // Hero tag único para evitar conflictos
-            onPressed: () => Navigator.of(context).pop(),
-            backgroundColor: colorScheme.primary,
-            foregroundColor: colorScheme.onPrimary,
-            elevation: 4,
-            highlightElevation: 8,
-            label: Text(
-              'Continuar',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
+          child: _getSelectedProductsCount() > 0
+              ? Badge(
+                  label: Text(
+                    '${_getSelectedProductsCount()}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  backgroundColor: colorScheme.tertiary,
+                  textColor: colorScheme.onTertiary,
+                  largeSize: 24,
+                  offset: const Offset(4, -4),
+                  child: FloatingActionButton.extended(
+                    heroTag: "product_catalogue_fab",
+                    onPressed: () => Navigator.of(context).pop(),
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    elevation: 4,
+                    highlightElevation: 8,
+                    label: const Text(
+                      'Continuar',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                )
+              : FloatingActionButton.extended(
+                  heroTag: "product_catalogue_fab",
+                  onPressed: () => Navigator.of(context).pop(),
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  elevation: 4,
+                  highlightElevation: 8,
+                  label: const Text(
+                    'Continuar',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
         ),
       ),
     );
@@ -657,6 +616,7 @@ class _ProductCatalogueFullScreenViewState
       focusNode: _searchFocusNode,
       hintText: 'Buscar por nombre, marca, código...',
       autofocus: true,
+      products: widget.products, // Pasar productos para las sugerencias
       onChanged: (query) {
         // El método _onSearchChanged ya maneja la lógica de filtrado
         _onSearchChanged();

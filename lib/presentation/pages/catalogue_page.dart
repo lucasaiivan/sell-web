@@ -147,10 +147,10 @@ class _CataloguePageState extends State<CataloguePage> {
   /// Construye la vista en grilla con efecto masonry
   Widget _buildGridView(List<ProductCatalogue> products) {
     return MasonryGridView.count(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       crossAxisCount: _getCrossAxisCount(context),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
+      crossAxisSpacing: 2,
+      mainAxisSpacing: 6,
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
@@ -564,7 +564,8 @@ class _ProductCatalogueCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: 2,
+      elevation:1,
+      color: Theme.of(context).colorScheme.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -592,25 +593,6 @@ class _ProductCatalogueCard extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
 
-                  // Badge de favorito en la esquina superior derecha
-                  if (product.favorite)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.star_rate_rounded,
-                          size: 18,
-                          color: Colors.yellow[700],
-                        ),
-                      ),
-                    ),
-
                   // Badge de categoría en la esquina superior izquierda
                   if (product.category.isNotEmpty)
                     Positioned(
@@ -637,6 +619,57 @@ class _ProductCatalogueCard extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                  // Badge de favorito en la esquina superior derecha
+                  if (product.favorite)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container( 
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade500,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 16,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Precio en la esquina inferior izquierda
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        borderRadius: BorderRadius.circular(12), 
+                      ),
+                      child: Text(
+                        CurrencyFormatter.formatPrice(value: product.salePrice),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimary,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
                 ],
               ),
             ),
@@ -647,15 +680,6 @@ class _ProductCatalogueCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Descripción con altura dinámica
-                  Text(
-                    product.description,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
 
                   // Marca si existe
                   if (product.nameMark.isNotEmpty)
@@ -685,19 +709,15 @@ class _ProductCatalogueCard extends StatelessWidget {
                       ],
                     ),
                   if (product.nameMark.isNotEmpty) const SizedBox(height: 8),
-
-                  // Precio
+                  // Descripción con altura dinámica
                   Text(
-                    CurrencyFormatter.formatPrice(value: product.salePrice),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                      fontSize: 18,
-                    ),
+                    product.description,
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  
                   const SizedBox(height: 8),
-                  
                   // Beneficio, porcentaje y stock - Estilo minimalista con wrap
                   Wrap(
                     spacing: 6,

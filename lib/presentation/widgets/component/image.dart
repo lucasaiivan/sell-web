@@ -28,16 +28,9 @@ class ProductImage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  Widget build(BuildContext context) { 
     // Usar color adaptativo tanto para backgroundColor personalizado como por defecto
-    final defaultBackgroundColor = backgroundColor ??
-        (imageUrl != null && imageUrl!.isNotEmpty
-            ? Colors.white
-            : isDark
-                ? theme.colorScheme.surfaceContainerHighest
-                : theme.colorScheme.surface);
+    final defaultBackgroundColor = Theme.of(context).colorScheme.surface;
 
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {
@@ -84,14 +77,16 @@ class ProductImage extends StatelessWidget {
             fit: fit,
             width: size,
             height: size,
-            // Configuraciones optimizadas para carga rápida
-            placeholderFadeInDuration: placeholderFadeInDuration,
+            // Configuraciones optimizadas para carga rápida sin transiciones
+            fadeInDuration: Duration.zero, // Sin animación de fade-in
+            fadeOutDuration: Duration.zero, // Sin animación de fade-out
+            placeholderFadeInDuration: Duration.zero, // Sin animación del placeholder
             // Configuración de caché para mejor rendimiento
             memCacheWidth: size != null ? (size! * 2).round() : null,
             memCacheHeight: size != null ? (size! * 2).round() : null,
             maxWidthDiskCache: size != null ? (size! * 3).round() : null,
             maxHeightDiskCache: size != null ? (size! * 3).round() : null,
-            // Manejo de errores y placeholder optimizado
+            // Manejo de errores y placeholder sin animaciones
             errorWidget: (context, url, error) =>
                 _buildDefaultImageWithAnimation(context),
             placeholder: (context, url) =>

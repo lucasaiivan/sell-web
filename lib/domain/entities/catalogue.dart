@@ -194,7 +194,9 @@ class ProductCatalogue {
   bool verified = false; // estado de verificación por un moderador
   bool reviewed = false; // estado de revisado por un moderador
   bool outstanding = false; // producto destacado en la DB global
-  int followers = 0; // seguidores
+
+  // TODO : eliminar esta variable (followers) porque esta en desuso
+  int followers = 0; // seguidores (pronto a liminar)
 
   // variables del catalogo de la cuenta
   bool local = false;

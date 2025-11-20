@@ -5,8 +5,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/sell_provider.dart';
-import '../widgets/navigation/drawer.dart';
-import '../widgets/inputs/product_search_field.dart';
+import '../widgets/navigation/drawer.dart'; 
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -1052,27 +1051,11 @@ class _ProductEditView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar Producto'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save_outlined),
-            tooltip: 'Guardar cambios',
-            onPressed: () {
-              // TODO: Implementar guardado
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Función de guardado pendiente')),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Producto'), centerTitle: false,),
       body: LayoutBuilder(
         builder: (context, constraints) {
           const double maxContentWidth = 1200;
-          final double effectiveWidth = constraints.maxWidth > maxContentWidth
-              ? maxContentWidth
-              : constraints.maxWidth;
+          final double effectiveWidth = constraints.maxWidth > maxContentWidth? maxContentWidth: constraints.maxWidth;
           final bool isDesktop = effectiveWidth >= 1000;
           final bool isTablet = effectiveWidth >= 720;
           final int columns = isDesktop
@@ -1110,6 +1093,7 @@ class _ProductEditView extends StatelessWidget {
                         );
                       }).toList(),
                     ),
+                    const SizedBox(height:50),
                   ],
                 ),
               ),
@@ -1117,61 +1101,73 @@ class _ProductEditView extends StatelessWidget {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {},
+        icon: const Icon(Icons.edit),
+        label: const Text('Editar'),
+      ),
     );
   }
 
   List<Widget> _buildInfoCards(BuildContext context) {
     final cards = <Widget>[
-      _buildInfoCard(
-        context: context,
-        title: 'Detalles del producto',
-        icon: Icons.info_outline,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              product.description.isNotEmpty
-                  ? product.description
-                  : 'Sin descripción registrada',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+
+      if (product.nameCategory.isNotEmpty ||
+          product.provider.isNotEmpty ||
+          product.nameProvider.isNotEmpty ||
+          product.stock)
+        _buildInfoCard(
+          context: context,
+          title: 'Información y Stock',
+          icon: Icons.inventory_2_outlined,
+          child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoList(
+            context,
+            [
+          // item : categoría
+          if (product.nameCategory.isNotEmpty)
+            _InfoItem( 
+              icon: Icons.category_outlined,
+              label: 'Categoría',
+              value: product.nameCategory,
             ),
+          // item : proveedor
+          if (product.nameProvider.isNotEmpty || product.provider.isNotEmpty)
+            _InfoItem(
+              icon: Icons.local_shipping_outlined,
+              label: 'Proveedor',
+              value: product.nameProvider.isNotEmpty
+              ? product.nameProvider
+              : product.provider,
+            ),
+            if (product.stock) ...[
+            _InfoItem(
+              label: 'Cantidad disponible',
+              value: product.quantityStock.toString(),
+              icon: Icons.inventory_outlined,
+            ),
+            _InfoItem(
+              label: 'Alerta configurada',
+              value: product.alertStock.toString(),
+              icon: Icons.notification_important_outlined,
+            ),
+            ] else
+            _InfoItem(
+              label: 'Control de stock',
+              value: 'Sin control',
+              icon: Icons.inventory_outlined,
+            ),
+            ],
+          ),
+          if (product.stock && product.quantityStock <= product.alertStock) ...[
             const SizedBox(height: 12),
-            _buildInfoList(
-              context,
-              [
-                _InfoItem(
-                  label: 'Código',
-                  value: product.code,
-                  icon: Icons.qr_code_2,
-                ),
-                _InfoItem(
-                  label: 'Categoría',
-                  value: product.nameCategory.isNotEmpty
-                      ? product.nameCategory
-                      : 'Sin categoría',
-                  icon: Icons.category_outlined,
-                ),
-                if (product.nameMark.isNotEmpty)
-                  _InfoItem(
-                    label: 'Marca',
-                    value: product.nameMark,
-                    icon: Icons.loyalty_outlined,
-                  ),
-                if (product.provider.isNotEmpty)
-                  _InfoItem(
-                    label: 'Proveedor',
-                    value: product.nameProvider.isNotEmpty
-                        ? product.nameProvider
-                        : product.provider,
-                    icon: Icons.local_shipping_outlined,
-                  ),
-              ],
-            ),
+            _buildStockAlert(context),
           ],
+        ],
+          ),
         ),
-      ),
       _buildInfoCard(
         context: context,
         title: 'Precios y margen',
@@ -1180,12 +1176,12 @@ class _ProductEditView extends StatelessWidget {
           context,
           [
             _InfoItem(
-              label: 'Precio de venta',
+              label: 'Venta al público',
               value: CurrencyFormatter.formatPrice(value: product.salePrice),
               icon: Icons.trending_up,
             ),
             _InfoItem(
-              label: 'Precio de compra',
+              label: 'Compra', 
               value: product.purchasePrice > 0
                   ? CurrencyFormatter.formatPrice(
                       value: product.purchasePrice,
@@ -1197,6 +1193,7 @@ class _ProductEditView extends StatelessWidget {
                 product.getBenefits.isNotEmpty)
               _InfoItem(
                 label: 'Beneficio estimado',
+                valueColor: Colors.green.shade700,
                 value: product.getBenefits,
                 icon: Icons.ssid_chart_outlined,
               ),
@@ -1204,42 +1201,13 @@ class _ProductEditView extends StatelessWidget {
                 product.getPorcentageFormat.isNotEmpty)
               _InfoItem(
                 label: 'Margen',
+                valueColor: Colors.green.shade700,
                 value: product.getPorcentageFormat,
                 icon: Icons.percent_outlined,
               ),
           ],
         ),
       ),
-      if (product.stock)
-        _buildInfoCard(
-          context: context,
-          title: 'Stock y alertas',
-          icon: Icons.inventory_2_outlined,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildInfoList(
-                context,
-                [
-                  _InfoItem(
-                    label: 'Cantidad disponible',
-                    value: product.quantityStock.toString(),
-                    icon: Icons.inventory_outlined,
-                  ),
-                  _InfoItem(
-                    label: 'Alerta configurada',
-                    value: product.alertStock.toString(),
-                    icon: Icons.notification_important_outlined,
-                  ),
-                ],
-              ),
-              if (product.quantityStock <= product.alertStock) ...[
-                const SizedBox(height: 12),
-                _buildStockAlert(context),
-              ],
-            ],
-          ),
-        ),
       _buildInfoCard(
         context: context,
         title: 'Actividad',
@@ -1247,11 +1215,6 @@ class _ProductEditView extends StatelessWidget {
         child: _buildInfoList(
           context,
           [
-            _InfoItem(
-              label: 'Seguidores',
-              value: product.followers.toString(),
-              icon: Icons.people_alt_outlined,
-            ),
             _InfoItem(
               label: 'Ventas',
               value: product.sales.toString(),
@@ -1266,92 +1229,13 @@ class _ProductEditView extends StatelessWidget {
               icon: Icons.calendar_today_outlined,
             ),
             _InfoItem(
-              label: 'Actualizado',
+              label: 'Ultima actualización',
               value: DateFormatter.getSimplePublicationDate(
                 product.upgrade.toDate(),
                 DateTime.now(),
               ),
               icon: Icons.update,
             ),
-          ],
-        ),
-      ),
-      _buildInfoCard(
-        context: context,
-        title: 'Estado',
-        icon: Icons.toggle_on_outlined,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildStatusChip(
-              context,
-              icon: Icons.star_rate_rounded,
-              label: 'Favorito',
-              color: Colors.amber,
-              filled: product.favorite,
-            ),
-            _buildStatusChip(
-              context,
-              icon: Icons.verified,
-              label: 'Verificado',
-              color: Colors.blue,
-              filled: product.verified,
-            ),
-            _buildStatusChip(
-              context,
-              icon: Icons.workspace_premium_outlined,
-              label: 'Destacado',
-              color: Colors.purple,
-              filled: product.outstanding,
-            ),
-            _buildStatusChip(
-              context,
-              icon: Icons.store_mall_directory_outlined,
-              label: 'Local',
-              color: Colors.teal,
-              filled: product.local,
-            ),
-            _buildStatusChip(
-              context,
-              icon: product.stock
-                  ? Icons.inventory_2_outlined
-                  : Icons.inventory_outlined,
-              label:
-                  product.stock ? 'Stock habilitado' : 'Sin control de stock',
-              color: product.stock ? Colors.green : Colors.grey,
-              filled: product.stock,
-            ),
-          ],
-        ),
-      ),
-      _buildInfoCard(
-        context: context,
-        title: 'Identificadores',
-        icon: Icons.fingerprint,
-        child: _buildInfoList(
-          context,
-          [
-            _InfoItem(
-              label: 'ID',
-              value: product.id,
-              icon: Icons.confirmation_number_outlined,
-              selectable: true,
-            ),
-            if (product.documentIdCreation.isNotEmpty)
-              _InfoItem(
-                label: 'Creado por',
-                value: product.documentIdCreation,
-                icon: Icons.badge_outlined,
-                selectable: true,
-              ),
-            if (product.documentIdUpgrade.isNotEmpty)
-              _InfoItem(
-                label: 'Actualizado por',
-                value: product.documentIdUpgrade,
-                icon: Icons.manage_accounts_outlined,
-                selectable: true,
-              ),
           ],
         ),
       ),
@@ -1385,11 +1269,39 @@ class _ProductEditView extends StatelessWidget {
           ),
         ),
         if (product.nameMark.isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: product.verified
+            ? Colors.blue.withValues(alpha: 0.12)
+            : theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(999),
+              border: product.verified
+            ? Border.all(color: Colors.blue.withValues(alpha: 0.3))
+            : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+          if (product.verified) ...[
+            Icon(
+              Icons.verified,
+              size: 16,
+              color: Colors.blue,
+            ),
+            const SizedBox(width: 6),
+          ],
           Text(
             product.nameMark,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: product.verified
+            ? Colors.blue
+            : theme.colorScheme.onSurfaceVariant,
+              fontWeight: product.verified ? FontWeight.w600 : null,
+            ),
+          ),
+              ],
             ),
           ),
         ],
@@ -1398,18 +1310,22 @@ class _ProductEditView extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            if (product.nameCategory.isNotEmpty)
-              _buildMetaChip(
-                context,
-                icon: Icons.category_outlined,
-                label: product.nameCategory,
-              ),
+            // text chip : código
             if (product.code.isNotEmpty)
               _buildMetaChip(
                 context,
                 icon: Icons.qr_code_2,
                 label: product.code,
               ),
+            // text chip : categoría
+            if (product.nameCategory.isNotEmpty)
+              _buildMetaChip(
+                context,
+                icon: Icons.category_outlined,
+                label: product.nameCategory,
+              ),
+             
+            // text chip : marca
             if (product.provider.isNotEmpty)
               _buildMetaChip(
                 context,
@@ -1469,29 +1385,43 @@ class _ProductEditView extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
+            // status chip : favorito
             if (product.favorite)
               _buildStatusChip(
                 context,
                 icon: Icons.star_rate_rounded,
                 label: 'Favorito',
                 color: Colors.amber.shade600,
-              ),
-            if (product.verified)
+              ), 
+            // status chip : stock con estados
+            if (product.stock)
               _buildStatusChip(
                 context,
-                icon: Icons.verified_rounded,
-                label: 'Verificado',
-                color: Colors.blue,
+                icon: product.quantityStock <= 0
+                    ? Icons.inventory_2_outlined
+                    : product.quantityStock <= product.alertStock
+                        ? Icons.warning_amber_rounded
+                        : Icons.inventory_outlined,
+                label: product.quantityStock <= 0
+                    ? 'Sin stock'
+                    : product.quantityStock <= product.alertStock
+                        ? 'Bajo stock (${product.quantityStock})'
+                        : 'Stock: ${product.quantityStock}',
+                color: product.quantityStock <= 0
+                    ? Colors.red
+                    : product.quantityStock <= product.alertStock
+                        ? Colors.orange
+                        : Colors.green,
+                filled: true,
+              )
+            else
+              _buildStatusChip(
+                context,
+                icon: Icons.inventory_outlined,
+                label: 'Sin control de stock',
+                color: colorScheme.outline,
+                filled: false,
               ),
-            _buildStatusChip(
-              context,
-              icon: product.stock
-                  ? Icons.inventory_2_outlined
-                  : Icons.inventory_outlined,
-              label: product.stock ? 'Stock habilitado' : 'Sin control de stock',
-              color: product.stock ? Colors.green : colorScheme.outline,
-              filled: product.stock,
-            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -1735,12 +1665,14 @@ class _InfoItem {
   final String value;
   final IconData? icon;
   final bool selectable;
+  final Color? valueColor;
 
   const _InfoItem({
     required this.label,
     required this.value,
     this.icon,
     this.selectable = false,
+    this.valueColor,
   });
 }
 
@@ -1756,6 +1688,7 @@ class _InfoRow extends StatelessWidget {
     final textStyle = theme.textTheme.titleSmall?.copyWith(
       fontWeight: FontWeight.w600,
       height: 1.2,
+      color: item.valueColor,
     );
 
     return Row(

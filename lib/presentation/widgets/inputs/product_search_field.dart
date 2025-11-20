@@ -11,6 +11,8 @@ class ProductSearchField extends StatefulWidget {
   final VoidCallback? onClear;
   final bool autofocus;
   final List<ProductCatalogue> products; // Lista obligatoria de productos para sugerencias
+  final int? searchResultsCount; // Contador de resultados de búsqueda
+  final bool showResultsCounter; // Mostrar contador de resultados (por defecto true)
 
   const ProductSearchField({
     super.key,
@@ -21,6 +23,8 @@ class ProductSearchField extends StatefulWidget {
     this.onChanged,
     this.onClear,
     this.autofocus = false,
+    this.searchResultsCount,
+    this.showResultsCounter = true,
   });
 
   @override
@@ -301,6 +305,41 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
                 ),
               ),
             ),
+            // Contador de resultados
+            if (widget.showResultsCounter && widget.searchResultsCount != null && widget.controller.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: widget.searchResultsCount == 0
+                        ? colorScheme.errorContainer.withValues(alpha: 0.3)
+                        : colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: widget.searchResultsCount == 0
+                          ? colorScheme.error.withValues(alpha: 0.3)
+                          : colorScheme.primary.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    widget.searchResultsCount == 0
+                        ? 'Sin resultados'
+                        : '${widget.searchResultsCount}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: widget.searchResultsCount == 0
+                          ? colorScheme.error
+                          : colorScheme.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ),
             // Botón de limpiar
             if (widget.controller.text.isNotEmpty)
               Padding(

@@ -9,6 +9,9 @@ import '../../domain/entities/user.dart';
 import '../../domain/usecases/catalogue_usecases.dart';
 import '../../domain/usecases/account_usecase.dart';
 
+/// Tipos de filtro disponibles para el catálogo
+enum CatalogueFilter { none, favorites, lowStock, outOfStock }
+
 /// Estado inmutable del provider de catálogo
 ///
 /// Encapsula todo el estado relacionado con productos y búsqueda
@@ -22,6 +25,7 @@ class _CatalogueState {
   final bool isLoading;
   final List<ProductCatalogue> filteredProducts;
   final String currentSearchQuery;
+  final CatalogueFilter activeFilter;
 
   const _CatalogueState({
     required this.products,
@@ -30,8 +34,9 @@ class _CatalogueState {
     this.showSplash = false,
     this.scanError,
     this.isLoading = true,
-    this.filteredProducts = const [],
+    this.filteredProducts = const <ProductCatalogue>[],
     this.currentSearchQuery = '',
+    this.activeFilter = CatalogueFilter.none,
   });
 
   _CatalogueState copyWith({
@@ -43,6 +48,7 @@ class _CatalogueState {
     bool? isLoading,
     List<ProductCatalogue>? filteredProducts,
     String? currentSearchQuery,
+    CatalogueFilter? activeFilter,
   }) {
     return _CatalogueState(
       products: products ?? this.products,
@@ -58,6 +64,7 @@ class _CatalogueState {
       isLoading: isLoading ?? this.isLoading,
       filteredProducts: filteredProducts ?? this.filteredProducts,
       currentSearchQuery: currentSearchQuery ?? this.currentSearchQuery,
+      activeFilter: activeFilter ?? this.activeFilter,
     );
   }
 
@@ -71,7 +78,10 @@ class _CatalogueState {
           lastScannedCode == other.lastScannedCode &&
           showSplash == other.showSplash &&
           scanError == other.scanError &&
-          isLoading == other.isLoading;
+          isLoading == other.isLoading &&
+          listEquals(filteredProducts, other.filteredProducts) &&
+          currentSearchQuery == other.currentSearchQuery &&
+          activeFilter == other.activeFilter;
 
   @override
   int get hashCode =>
@@ -80,7 +90,10 @@ class _CatalogueState {
       lastScannedCode.hashCode ^
       showSplash.hashCode ^
       scanError.hashCode ^
-      isLoading.hashCode;
+      isLoading.hashCode ^
+      filteredProducts.hashCode ^
+      currentSearchQuery.hashCode ^
+      activeFilter.hashCode;
 }
 
 /// Provider para gestionar el estado del catálogo de productos
@@ -134,12 +147,20 @@ class CatalogueProvider extends ChangeNotifier {
   // Public getters
   List<ProductCatalogue> get products => _state.products;
   List<ProductCatalogue> get filteredProducts => _state.filteredProducts;
+  List<ProductCatalogue> get visibleProducts =>
+      (currentSearchQuery.isNotEmpty || hasActiveFilter)
+          ? _state.filteredProducts
+          : _state.products;
   String get currentSearchQuery => _state.currentSearchQuery;
   ProductCatalogue? get lastScannedProduct => _state.lastScannedProduct;
   String? get lastScannedCode => _state.lastScannedCode;
   bool get showSplash => _state.showSplash;
   String? get scanError => _state.scanError;
   bool get isLoading => _state.isLoading;
+  CatalogueFilter get activeFilter => _state.activeFilter;
+  bool get hasActiveFilter => activeFilter != CatalogueFilter.none;
+  bool get isFiltering =>
+      currentSearchQuery.isNotEmpty || activeFilter != CatalogueFilter.none;
 
   /// Obtiene los productos más vendidos ordenados por cantidad de ventas
   /// [limit] Número máximo de productos a retornar (por defecto 8)
@@ -193,6 +214,7 @@ class CatalogueProvider extends ChangeNotifier {
         // Siempre actualizar si hay cambios detectados
         if (!_areProductListsEqual(_state.products, products)) {
           _updateState(_state.copyWith(products: products));
+          _refreshFilteredView();
         }
 
         // Marcar como cargado si aún está en estado loading
@@ -253,22 +275,33 @@ class CatalogueProvider extends ChangeNotifier {
     // Crear nuevo timer
     _searchDebounceTimer = Timer(delay, () {
       final results = searchProducts(query: query, maxResults: maxResults);
-      _state = _state.copyWith(
-        filteredProducts: results,
-        currentSearchQuery: query,
+      _recomputeFilteredProducts(
+        query: query,
+        searchResults: results,
       );
-      notifyListeners();
     });
   }
 
   /// Limpia los resultados de búsqueda
   void clearSearchResults() {
     _searchDebounceTimer?.cancel();
-    _state = _state.copyWith(
-      filteredProducts: [],
-      currentSearchQuery: '',
-    );
-    notifyListeners();
+    _recomputeFilteredProducts(query: '');
+  }
+
+  /// Aplica un filtro predefinido a la lista de productos
+  void applyFilter(CatalogueFilter filter) {
+    if (filter == _state.activeFilter) {
+      return;
+    }
+    _recomputeFilteredProducts(filter: filter);
+  }
+
+  /// Limpia cualquier filtro aplicado
+  void clearFilter() {
+    if (!hasActiveFilter) {
+      return;
+    }
+    _recomputeFilteredProducts(filter: CatalogueFilter.none);
   }
 
   /// Busca productos por código exacto
@@ -403,6 +436,7 @@ class CatalogueProvider extends ChangeNotifier {
       products: demoProducts,
       isLoading: false,
     );
+    _recomputeFilteredProducts(shouldNotify: false);
     _shouldNotifyListeners = true;
     notifyListeners();
   }
@@ -632,5 +666,77 @@ class CatalogueProvider extends ChangeNotifier {
     if (oldState != _state) {
       _notifyProductChanges();
     }
+  }
+
+  /// Recalcula la lista filtrada en base al query y filtro activo
+  void _recomputeFilteredProducts({
+    String? query,
+    List<ProductCatalogue>? searchResults,
+    CatalogueFilter? filter,
+    bool shouldNotify = true,
+  }) {
+    final normalizedQuery = (query ?? _state.currentSearchQuery).trim();
+    final effectiveFilter = filter ?? _state.activeFilter;
+
+    final bool hasQuery = normalizedQuery.isNotEmpty;
+    final bool hasFilter = effectiveFilter != CatalogueFilter.none;
+
+    List<ProductCatalogue> workingList = _state.products;
+
+    if (hasQuery) {
+      workingList = searchResults ?? searchProducts(query: normalizedQuery);
+    }
+
+    if (hasFilter) {
+      workingList = _filterProductsByOption(workingList, effectiveFilter);
+    }
+
+    final bool shouldUseFilteredList = hasQuery || hasFilter;
+
+    _state = _state.copyWith(
+      filteredProducts: shouldUseFilteredList
+          ? List<ProductCatalogue>.from(workingList)
+          : const <ProductCatalogue>[],
+      currentSearchQuery: normalizedQuery,
+      activeFilter: effectiveFilter,
+    );
+
+    if (shouldNotify) {
+      notifyListeners();
+    }
+  }
+
+  /// Aplica la regla del filtro correspondiente
+  List<ProductCatalogue> _filterProductsByOption(
+      List<ProductCatalogue> source, CatalogueFilter filter) {
+    switch (filter) {
+      case CatalogueFilter.favorites:
+        return source.where((product) => product.favorite).toList();
+      case CatalogueFilter.lowStock:
+        return source.where(_isLowStock).toList();
+      case CatalogueFilter.outOfStock:
+        return source.where(_isOutOfStock).toList();
+      case CatalogueFilter.none:
+        return source;
+    }
+  }
+
+  bool _isLowStock(ProductCatalogue product) {
+    if (!product.stock) return false;
+    return product.quantityStock > 0 &&
+        product.quantityStock <= product.alertStock;
+  }
+
+  bool _isOutOfStock(ProductCatalogue product) {
+    if (!product.stock) return false;
+    return product.quantityStock <= 0;
+  }
+
+  void _refreshFilteredView() {
+    if (!isFiltering) {
+      return;
+    }
+    _recomputeFilteredProducts(shouldNotify: false);
+    _notifyProductChanges();
   }
 }

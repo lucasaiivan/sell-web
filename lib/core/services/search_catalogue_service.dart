@@ -274,20 +274,14 @@ class SearchCatalogueService {
     }
 
     // Lógica de bonificación por coincidencias
-    if (matchedWords == queryWords.length) {
-      // Bonificación completa si coinciden todas las palabras
-      totalScore *= 1.5;
-    } else if (matchedWords >= queryWords.length * 0.7) {
-      // Bonificación parcial si coinciden al menos el 70%
-      totalScore *= 1.3;
-    } else if (matchedWords >= queryWords.length * 0.5) {
-      // Bonificación menor si coinciden al menos el 50%
-      totalScore *= 1.1;
+    if (matchedWords < queryWords.length) {
+      return 0.0;
     }
 
-    // Factor de coincidencia para priorizar más palabras coincidentes
-    final matchFactor = matchedWords / queryWords.length;
-    totalScore *= matchFactor;
+    // Bonificación adicional si hay coincidencias exactas o de alta puntuación
+    if (totalScore / queryWords.length > 50) {
+      totalScore *= 1.2;
+    }
 
     return totalScore;
   }
@@ -305,26 +299,11 @@ class SearchCatalogueService {
 
   /// Búsqueda difusa para encontrar coincidencias similares
   static bool _fuzzyMatch(String text, String word) {
-    if (word.length < 2) return false;
+    if (word.length < 3) return false;
 
-    // Caso 1: Buscar subcadenas de la palabra en el texto
-    for (int i = 0; i <= word.length - 2; i++) {
-      final substring = word.substring(i, i + 2);
-      if (text.contains(substring)) {
-        return true;
-      }
-    }
-
-    // Caso 2: Verificar primeras letras coincidentes
-    final firstThreeChars = word.length >= 3 ? word.substring(0, 3) : word;
     final textWords = text.split(' ');
-    for (final textWord in textWords) {
-      if (textWord.startsWith(firstThreeChars)) {
-        return true;
-      }
-    }
 
-    // Caso 3: Tolerancia a errores de tipeo
+    // Caso: Tolerancia a errores de tipeo
     if (word.length >= 4) {
       for (final textWord in textWords) {
         if (_isTypoTolerant(textWord, word)) {

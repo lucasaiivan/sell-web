@@ -1960,7 +1960,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
   }
 }
 
-/// Vista de edición completa del producto del catálogo
+/// Formulario de edición de producto con validación y estado local
 class _ProductEditCatalogueView extends StatefulWidget {
   final ProductCatalogue product;
   final CatalogueProvider catalogueProvider;
@@ -1978,9 +1978,13 @@ class _ProductEditCatalogueView extends StatefulWidget {
 }
 
 class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
-  // ═══════════════════════════════════════════════════════════════
-  // FORM CONTROLLERS
-  // ═══════════════════════════════════════════════════════════════
+  // Form state
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+  bool _stockEnabled = false;
+  bool _favoriteEnabled = false;
+
+  // Controllers
   late final TextEditingController _descriptionController;
   late final TextEditingController _salePriceController;
   late final TextEditingController _purchasePriceController;
@@ -1990,23 +1994,17 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
   late final TextEditingController _providerController;
   late final TextEditingController _markController;
 
-  // ═══════════════════════════════════════════════════════════════
-  // FORM STATE
-  // ═══════════════════════════════════════════════════════════════
-  final _formKey = GlobalKey<FormState>();
-  bool _isSaving = false;
-  bool _stockEnabled = false;
-  bool _favoriteEnabled = false;
-
-  // ═══════════════════════════════════════════════════════════════
-  // LIFECYCLE METHODS
-  // ═══════════════════════════════════════════════════════════════
   @override
   void initState() {
     super.initState();
-    final product = widget.product;
+    _initializeControllers();
+    _initializeState();
+    _setupListeners();
+  }
 
-    // Inicializar controllers con valores actuales
+  /// Inicializa los controllers con valores del producto
+  void _initializeControllers() {
+    final product = widget.product;
     _descriptionController = TextEditingController(text: product.description);
     _salePriceController = TextEditingController(
       text: product.salePrice > 0 ? product.salePrice.toString() : '',
@@ -2023,18 +2021,18 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     _categoryController = TextEditingController(text: product.nameCategory);
     _providerController = TextEditingController(text: product.nameProvider);
     _markController = TextEditingController(text: product.nameMark);
+  }
 
-    // Inicializar estados
-    _stockEnabled = product.stock;
-    _favoriteEnabled = product.favorite;
+  /// Inicializa el estado del formulario
+  void _initializeState() {
+    _stockEnabled = widget.product.stock;
+    _favoriteEnabled = widget.product.favorite;
+  }
 
-    // Listeners para actualizar la UI cuando cambien los precios
-    _salePriceController.addListener(() {
-      setState(() {});
-    });
-    _purchasePriceController.addListener(() {
-      setState(() {});
-    });
+  /// Configura listeners para recalcular beneficios
+  void _setupListeners() {
+    _salePriceController.addListener(() => setState(() {}));
+    _purchasePriceController.addListener(() => setState(() {}));
   }
 
   @override
@@ -2050,162 +2048,193 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SAVE METHOD
-  // ═══════════════════════════════════════════════════════════════
-
-  /// Guarda los cambios del producto
+  /// Valida y guarda los cambios del producto en Firebase
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
 
     try {
-      // Limpiar y parsear los valores de precio formateados
-      final cleanSalePrice = _salePriceController.text
-          .replaceAll('.', '')
-          .replaceAll(',', '.');
-      final cleanPurchasePrice = _purchasePriceController.text
-          .replaceAll('.', '')
-          .replaceAll(',', '.');
-      
-      // Crear producto actualizado con los nuevos valores
-      final updatedProduct = widget.product.copyWith(
-        description: widget.product.verified
-            ? widget.product.description
-            : _descriptionController.text.trim(),
-        salePrice: double.tryParse(cleanSalePrice) ?? 0.0,
-        purchasePrice: double.tryParse(cleanPurchasePrice) ?? 0.0,
-        quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
-        alertStock: int.tryParse(_alertStockController.text) ?? 5,
-        nameCategory: _categoryController.text.trim(),
-        nameProvider: _providerController.text.trim(),
-        nameMark: _markController.text.trim(),
-        stock: _stockEnabled,
-        favorite: _favoriteEnabled,
-      );
-
-      // Guardar en Firebase usando el provider
+      final updatedProduct = _buildUpdatedProduct();
       await widget.catalogueProvider.addAndUpdateProductToCatalogue(
         updatedProduct,
         widget.accountId,
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text('Producto actualizado correctamente'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
-        // Regresar a la vista anterior
+        _showSuccessMessage();
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('Error al guardar: ${e.toString()}'),
-                ),
-              ],
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      if (mounted) _showErrorMessage(e.toString());
     } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // BUILD METHOD
-  // ═══════════════════════════════════════════════════════════════
+  /// Construye el producto actualizado con los valores del formulario
+  ProductCatalogue _buildUpdatedProduct() {
+    return widget.product.copyWith(
+      description: widget.product.verified
+          ? widget.product.description
+          : _descriptionController.text.trim(),
+      salePrice: _parsePriceFromController(_salePriceController),
+      purchasePrice: _parsePriceFromController(_purchasePriceController),
+      quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
+      alertStock: int.tryParse(_alertStockController.text) ?? 5,
+      nameCategory: _categoryController.text.trim(),
+      nameProvider: _providerController.text.trim(),
+      nameMark: _markController.text.trim(),
+      stock: _stockEnabled,
+      favorite: _favoriteEnabled,
+    );
+  }
+
+  /// Parsea el precio desde un controller limpiando formato
+  double _parsePriceFromController(TextEditingController controller) {
+    final cleanValue = controller.text.replaceAll('.', '').replaceAll(',', '.');
+    return double.tryParse(cleanValue) ?? 0.0;
+  }
+
+  /// Muestra mensaje de éxito al guardar
+  void _showSuccessMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text('Producto actualizado correctamente'),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// Muestra mensaje de error al guardar
+  void _showErrorMessage(String error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Error al guardar: $error'),
+            ),
+          ],
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar producto'),
-        centerTitle: false,
-        actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ) 
-        ],
+      appBar: _buildAppBar(),
+      body: _buildForm(),
+      floatingActionButton: _buildFab(),
+    );
+  }
+
+  /// Construye el AppBar con indicador de carga
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: const Text('Editar producto'),
+      centerTitle: false,
+      actions: [
+        if (_isSaving)
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Construye el formulario completo con todas las secciones
+  Widget _buildForm() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildImageSection(),
+                const SizedBox(height: 24),
+                _buildBasicInfoSection(colorScheme),
+                const SizedBox(height: 24),
+                _buildPricingSection(),
+                const SizedBox(height: 24),
+                _buildInventorySection(colorScheme),
+                const SizedBox(height: 24),
+                _buildPreferencesSection(colorScheme),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+    );
+  }
+
+  /// Construye sección de imagen del producto
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Imagen del producto',
+          icon: Icons.image_outlined,
+        ),
+        const SizedBox(height: 12),
+        _buildCard(
+          context: context,
           child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ═══════════════════════════════════════════════════════════════
-                  // SECCIÓN: IMAGEN DEL PRODUCTO
-                  // ═══════════════════════════════════════════════════════
-                  _buildSectionHeader(
-                    context: context,
-                    title: 'Imagen del producto',
-                    icon: Icons.image_outlined,
-                  ),
-                  const SizedBox(height: 12),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: ProductImage(
+                imageUrl: widget.product.image,
+                size: 75,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-                  _buildCard(
-                    context: context,
-                    child: Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: ProductImage(
-                          imageUrl: widget.product.image,
-                          size: 75,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  // ═══════════════════════════════════════════════════════
-                  // SECCIÓN: INFORMACIÓN BÁSICA
-                  // ═══════════════════════════════════════════════════════
-                  _buildSectionHeader(
-                    context: context,
-                    title: 'Información básica',
-                    icon: Icons.info_outline,
-                  ),
-                  const SizedBox(height: 12),Column(
+  /// Construye sección de información básica (descripción y código)
+  Widget _buildBasicInfoSection(ColorScheme colorScheme) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Información básica',
+          icon: Icons.info_outline,
+        ),
+        const SizedBox(height: 12),
+        Column(
             children: [
                 // Marca del producto
                 if (widget.product.nameMark.isNotEmpty) ...[
@@ -2383,266 +2412,252 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                   ],
                 ),
               ),
-            ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ═══════════════════════════════════════════════════════
-                  // SECCIÓN: PRECIOS Y MÁRGENES
-                  // ═══════════════════════════════════════════════════════
-                  _buildSectionHeader(
-                    context: context,
-                    title: 'Precios y márgenes',
-                    icon: Icons.attach_money,
-                  ),
-                  const SizedBox(height: 12),
-
-                  Column(
-                    children: [
-                      TextFormField(
-                        controller: _salePriceController,
-                        decoration: InputDecoration(
-                          labelText: 'Precio de venta *',
-                          hintText: '0.00',
-                          prefixIcon: const Icon(Icons.trending_up),
-                          prefixText: '\$ ',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          AppMoneyInputFormatter(symbol: ''),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'El precio de venta es requerido';
-                          }
-                          final cleanValue = value.replaceAll('.', '').replaceAll(',', '.');
-                          final price = double.tryParse(cleanValue);
-                          if (price == null || price <= 0) {
-                            return 'Ingrese un precio válido mayor a 0';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _purchasePriceController,
-                        decoration: InputDecoration(
-                          labelText: 'Precio de compra',
-                          hintText: '0.00',
-                          prefixIcon:
-                              const Icon(Icons.shopping_basket_outlined),
-                          prefixText: '\$ ',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          AppMoneyInputFormatter(symbol: ''),
-                        ],
-                      ),
-                      // Mostrar beneficio calculado si hay ambos precios
-                      if (_salePriceController.text.isNotEmpty &&
-                          _purchasePriceController.text.isNotEmpty)
-                        _buildProfitPreview(),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ═══════════════════════════════════════════════════════
-                  // SECCIÓN: INVENTARIO Y STOCK
-                  // ═══════════════════════════════════════════════════════
-                  _buildSectionHeader(
-                    context: context,
-                    title: 'Inventario y stock',
-                    icon: Icons.inventory_2_outlined,
-                  ),
-                  const SizedBox(height: 12),
-
-                  Column(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .outlineVariant
-                                .withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: SwitchListTile(
-                          value: _stockEnabled,
-                          onChanged: (value) {
-                            setState(() => _stockEnabled = value);
-                          },
-                          title: const Text('Control de stock'),
-                          subtitle: const Text(
-                            'Activa para rastrear cantidad disponible',
-                          ),
-                          secondary: Icon(
-                            _stockEnabled
-                                ? Icons.inventory
-                                : Icons.inventory_outlined,
-                            color: _stockEnabled ? colorScheme.primary : null,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (_stockEnabled) ...[ 
-
-                        TextFormField(
-                          controller: _quantityStockController,
-                          decoration: InputDecoration(
-                            labelText: 'Cantidad disponible',
-                            hintText: '0',
-                            prefixIcon: const Icon(Icons.numbers),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: _stockEnabled
-                              ? (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Ingrese la cantidad';
-                                  }
-                                  final qty = int.tryParse(value);
-                                  if (qty == null || qty < 0) {
-                                    return 'Ingrese una cantidad válida';
-                                  }
-                                  return null;
-                                }
-                              : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _alertStockController,
-                          decoration: InputDecoration(
-                            labelText: 'Alerta de stock bajo',
-                            hintText: '5',
-                            prefixIcon: const Icon(
-                              Icons.notification_important_outlined,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            helperText:
-                                'Se mostrará una alerta cuando el stock esté en este nivel',
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ],
-                    ],
-                  ), 
-                  const SizedBox(height: 24),  
-                  // ═══════════════════════════════════════════════════════
-                  // SECCIÓN: PREFERENCIAS
-                  // ═══════════════════════════════════════════════════════
-                  _buildSectionHeader(
-                    context: context,
-                    title: 'Preferencias',
-                    icon: Icons.tune,
-                  ),
-                  const SizedBox(height: 20),
-                  Column(
-                    children: [
-                      TextFormField(
-                        controller: _categoryController,
-                        decoration: InputDecoration(
-                          labelText: 'Categoría',
-                          hintText: 'Ej: Bebidas',
-                          prefixIcon: const Icon(Icons.category_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _providerController,
-                        decoration: InputDecoration(
-                          labelText: 'Proveedor',
-                          hintText: 'Ej: Coca Cola Company',
-                          prefixIcon:
-                              const Icon(Icons.local_shipping_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _markController,
-                        decoration: InputDecoration(
-                          labelText: 'Marca',
-                          hintText: 'Ej: Coca Cola',
-                          prefixIcon: const Icon(Icons.branding_watermark),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ), 
-                  const SizedBox(height: 12),
-
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .outlineVariant
-                            .withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: SwitchListTile(
-                      value: _favoriteEnabled,
-                      onChanged: (value) {
-                        setState(() => _favoriteEnabled = value);
-                      },
-                      title: const Text('Producto favorito'),
-                      subtitle: const Text(
-                        'Marca como favorito para acceso rápido',
-                      ),
-                      secondary: Icon(
-                        _favoriteEnabled ? Icons.star : Icons.star_border,
-                        color: _favoriteEnabled ? Colors.amber.shade600 : null,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 80),
-                ],
-              ),
-            ),
-          ),
+          ],
         ),
-      ),
-      floatingActionButton: _isSaving
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _saveProduct, 
-              label: const Text('Guardar'),
-            ),
+      ],
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // UI BUILDERS - Componentes de la vista
-  // ═══════════════════════════════════════════════════════════════
+  /// Construye sección de precios con preview de beneficio
+  Widget _buildPricingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Precios y márgenes',
+          icon: Icons.attach_money,
+        ),
+        const SizedBox(height: 12),
+        _buildSalePriceField(),
+        const SizedBox(height: 16),
+        _buildPurchasePriceField(),
+        if (_salePriceController.text.isNotEmpty &&
+            _purchasePriceController.text.isNotEmpty)
+          _buildProfitPreview(),
+      ],
+    );
+  }
 
-  /// Construye el encabezado de una sección
+  /// Campo de precio de venta con validación
+  Widget _buildSalePriceField() {
+    return TextFormField(
+      controller: _salePriceController,
+      decoration: InputDecoration(
+        labelText: 'Precio de venta *',
+        hintText: '0.00',
+        prefixIcon: const Icon(Icons.trending_up),
+        prefixText: '\$ ',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [AppMoneyInputFormatter(symbol: '')],
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'El precio de venta es requerido';
+        }
+        final price = _parsePriceFromController(_salePriceController);
+        if (price <= 0) return 'Ingrese un precio válido mayor a 0';
+        return null;
+      },
+    );
+  }
+
+  /// Campo de precio de compra
+  Widget _buildPurchasePriceField() {
+    return TextFormField(
+      controller: _purchasePriceController,
+      decoration: InputDecoration(
+        labelText: 'Precio de compra',
+        hintText: '0.00',
+        prefixIcon: const Icon(Icons.shopping_basket_outlined),
+        prefixText: '\$ ',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [AppMoneyInputFormatter(symbol: '')],
+    );
+  }
+
+  /// Construye sección de inventario y control de stock
+  Widget _buildInventorySection(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Inventario y stock',
+          icon: Icons.inventory_2_outlined,
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
+          ),
+          child: SwitchListTile(
+            value: _stockEnabled,
+            onChanged: (value) => setState(() => _stockEnabled = value),
+            title: const Text('Control de stock'),
+            subtitle: const Text('Activa para rastrear cantidad disponible'),
+            secondary: Icon(
+              _stockEnabled ? Icons.inventory : Icons.inventory_outlined,
+              color: _stockEnabled ? colorScheme.primary : null,
+            ),
+          ),
+        ),
+        if (_stockEnabled) ...[          const SizedBox(height: 16),
+          _buildQuantityField(),
+          const SizedBox(height: 16),
+          _buildAlertStockField(),
+        ],
+      ],
+    );
+  }
+
+  /// Campo de cantidad en stock con validación
+  Widget _buildQuantityField() {
+    return TextFormField(
+      controller: _quantityStockController,
+      decoration: InputDecoration(
+        labelText: 'Cantidad disponible',
+        hintText: '0',
+        prefixIcon: const Icon(Icons.numbers),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      keyboardType: TextInputType.number,
+      validator: _stockEnabled
+          ? (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Ingrese la cantidad';
+              }
+              final qty = int.tryParse(value);
+              if (qty == null || qty < 0) return 'Ingrese una cantidad válida';
+              return null;
+            }
+          : null,
+    );
+  }
+
+  /// Campo de alerta de stock bajo
+  Widget _buildAlertStockField() {
+    return TextFormField(
+      controller: _alertStockController,
+      decoration: InputDecoration(
+        labelText: 'Alerta de stock bajo',
+        hintText: '5',
+        prefixIcon: const Icon(Icons.notification_important_outlined),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        helperText: 'Se mostrará una alerta cuando el stock esté en este nivel',
+      ),
+      keyboardType: TextInputType.number,
+    );
+  }
+
+  /// Construye sección de preferencias (categoría, proveedor, marca, favorito)
+  Widget _buildPreferencesSection(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Preferencias',
+          icon: Icons.tune,
+        ),
+        const SizedBox(height: 20),
+        _buildCategoryField(),
+        const SizedBox(height: 16),
+        _buildProviderField(),
+        const SizedBox(height: 16),
+        _buildMarkField(),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
+          ),
+          child: SwitchListTile(
+            value: _favoriteEnabled,
+            onChanged: (value) => setState(() => _favoriteEnabled = value),
+            title: const Text('Producto favorito'),
+            subtitle: const Text('Marca como favorito para acceso rápido'),
+            secondary: Icon(
+              _favoriteEnabled ? Icons.star : Icons.star_border,
+              color: _favoriteEnabled ? Colors.amber.shade600 : null,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Campo de categoría
+  Widget _buildCategoryField() {
+    return TextFormField(
+      controller: _categoryController,
+      decoration: InputDecoration(
+        labelText: 'Categoría',
+        hintText: 'Ej: Bebidas',
+        prefixIcon: const Icon(Icons.category_outlined),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  /// Campo de proveedor
+  Widget _buildProviderField() {
+    return TextFormField(
+      controller: _providerController,
+      decoration: InputDecoration(
+        labelText: 'Proveedor',
+        hintText: 'Ej: Coca Cola Company',
+        prefixIcon: const Icon(Icons.local_shipping_outlined),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  /// Campo de marca
+  Widget _buildMarkField() {
+    return TextFormField(
+      controller: _markController,
+      decoration: InputDecoration(
+        labelText: 'Marca',
+        hintText: 'Ej: Coca Cola',
+        prefixIcon: const Icon(Icons.branding_watermark),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  /// Botón flotante de guardar
+  Widget? _buildFab() {
+    if (_isSaving) return null;
+    return FloatingActionButton.extended(
+      onPressed: _saveProduct,
+      label: const Text('Guardar'),
+    );
+  }
+
+  /// Encabezado de sección con ícono y título
   Widget _buildSectionHeader({
     required BuildContext context,
     required String title,
@@ -2664,7 +2679,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     );
   }
 
-  /// Construye una tarjeta contenedora
+  /// Tarjeta contenedora con bordes redondeados
   Widget _buildCard({
     required BuildContext context,
     required Widget child,
@@ -2688,26 +2703,31 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     );
   }
 
-  /// Muestra una vista previa del beneficio calculado
-  Widget _buildProfitPreview() {
-    // Limpiar y parsear los valores formateados
-    final cleanSalePrice = _salePriceController.text
-        .replaceAll('.', '')
-        .replaceAll(',', '.');
-    final cleanPurchasePrice = _purchasePriceController.text
-        .replaceAll('.', '')
-        .replaceAll(',', '.');
-    
-    final salePrice = double.tryParse(cleanSalePrice) ?? 0;
-    final purchasePrice = double.tryParse(cleanPurchasePrice) ?? 0;
+  /// Calcula el beneficio y porcentaje de ganancia
+  ({double profit, double percentage, bool isProfitable})? _calculateProfit() {
+    final salePrice = _parsePriceFromController(_salePriceController);
+    final purchasePrice = _parsePriceFromController(_purchasePriceController);
 
-    if (salePrice <= 0 || purchasePrice <= 0) {
-      return const SizedBox.shrink();
-    }
+    if (salePrice <= 0 || purchasePrice <= 0) return null;
 
     final profit = salePrice - purchasePrice;
-    final percentage = ((profit / purchasePrice) * 100);
-    final isProfitable = profit > 0;
+    final percentage = (profit / purchasePrice) * 100;
+
+    return (
+      profit: profit,
+      percentage: percentage,
+      isProfitable: profit > 0,
+    );
+  }
+
+  /// Preview del beneficio calculado con indicadores visuales
+  Widget _buildProfitPreview() {
+    final calculation = _calculateProfit();
+    if (calculation == null) return const SizedBox.shrink();
+
+    final profit = calculation.profit;
+    final percentage = calculation.percentage;
+    final isProfitable = calculation.isProfitable;
 
     return Container(
       margin: const EdgeInsets.only(top: 16),

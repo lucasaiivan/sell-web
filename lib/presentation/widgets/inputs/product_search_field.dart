@@ -10,9 +10,11 @@ class ProductSearchField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
   final bool autofocus;
-  final List<ProductCatalogue> products; // Lista obligatoria de productos para sugerencias
+  final List<ProductCatalogue>
+      products; // Lista obligatoria de productos para sugerencias
   final int? searchResultsCount; // Contador de resultados de búsqueda
-  final bool showResultsCounter; // Mostrar contador de resultados (por defecto true)
+  final bool
+      showResultsCounter; // Mostrar contador de resultados (por defecto true)
 
   const ProductSearchField({
     super.key,
@@ -306,7 +308,9 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
               ),
             ),
             // Contador de resultados
-            if (widget.showResultsCounter && widget.searchResultsCount != null && widget.controller.text.isNotEmpty)
+            if (widget.showResultsCounter &&
+                widget.searchResultsCount != null &&
+                widget.controller.text.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Container(

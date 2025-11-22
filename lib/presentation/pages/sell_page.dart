@@ -1125,7 +1125,7 @@ class _ProductoItemState extends State<ProductoItem> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Si es venta rápida, mostrar solo precio centrado
+          // view : Si es venta rápida, mostrar solo precio centrado sino mostrar layout normal
           _isQuickSaleProduct
               ? _buildQuickSaleLayout()
               : _buildNormalLayout(alertStockText),

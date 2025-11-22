@@ -28,7 +28,7 @@ class ProductImage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     // Usar color adaptativo tanto para backgroundColor personalizado como por defecto
     final defaultBackgroundColor = Theme.of(context).colorScheme.surface;
 
@@ -37,17 +37,14 @@ class ProductImage extends StatelessWidget {
       return SizedBox(
         width: size,
         height: size,
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: Container(
-            decoration: BoxDecoration(
-              color: defaultBackgroundColor,
-              borderRadius: BorderRadius.circular(borderRadius),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(borderRadius),
-              child: _buildImageContent(),
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: defaultBackgroundColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: _buildImageContent(context),
           ),
         ),
       );
@@ -61,48 +58,43 @@ class ProductImage extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: _buildImageContent(),
+        child: _buildImageContent(context),
       ),
     );
   }
 
-  Widget _buildImageContent() {
+  Widget _buildImageContent(BuildContext context) {
     // Si la URL de la imagen es válida, carga la imagen desde la red
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       // Utiliza CachedNetworkImage para optimizar la carga y caché
-      return Builder(
-        builder: (context) => Center(
-          child: CachedNetworkImage(
-            imageUrl: imageUrl!,
-            fit: fit,
-            width: size,
-            height: size,
-            // Configuraciones optimizadas para carga rápida sin transiciones
-            fadeInDuration: Duration.zero, // Sin animación de fade-in
-            fadeOutDuration: Duration.zero, // Sin animación de fade-out
-            placeholderFadeInDuration: Duration.zero, // Sin animación del placeholder
-            // Configuración de caché para mejor rendimiento
-            memCacheWidth: size != null ? (size! * 2).round() : null,
-            memCacheHeight: size != null ? (size! * 2).round() : null,
-            maxWidthDiskCache: size != null ? (size! * 3).round() : null,
-            maxHeightDiskCache: size != null ? (size! * 3).round() : null,
-            // Manejo de errores y placeholder sin animaciones
-            errorWidget: (context, url, error) =>
-                _buildDefaultImageWithAnimation(context),
-            placeholder: (context, url) =>
-                _buildDefaultImageWithAnimation(context),
-            // Configuración adicional para mejor UX
-            useOldImageOnUrlChange: true,
-            filterQuality: FilterQuality.medium,
-          ),
-        ),
+      return CachedNetworkImage(
+        imageUrl: imageUrl!,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+        // Configuraciones optimizadas para carga rápida sin transiciones
+        fadeInDuration: Duration.zero, // Sin animación de fade-in
+        fadeOutDuration: Duration.zero, // Sin animación de fade-out
+        placeholderFadeInDuration:
+            Duration.zero, // Sin animación del placeholder
+        // Configuración de caché para mejor rendimiento
+        memCacheWidth: size != null ? (size! * 2).round() : null,
+        memCacheHeight: size != null ? (size! * 2).round() : null,
+        maxWidthDiskCache: size != null ? (size! * 3).round() : null,
+        maxHeightDiskCache: size != null ? (size! * 3).round() : null,
+        // Manejo de errores y placeholder sin animaciones
+        errorWidget: (context, url, error) =>
+            _buildDefaultImageWithAnimation(context),
+        placeholder: (context, url) =>
+            _buildDefaultImageWithAnimation(context),
+        // Configuración adicional para mejor UX
+        useOldImageOnUrlChange: true,
+        filterQuality: FilterQuality.medium,
       );
     }
 
     // Si no hay URL, muestra la imagen por defecto con animación
-    return Builder(
-      builder: (context) => _buildDefaultImageWithAnimation(context),
-    );
+    return _buildDefaultImageWithAnimation(context);
   }
 
   /// Construye la imagen por defecto con animación suave
@@ -116,23 +108,22 @@ class ProductImage extends StatelessWidget {
         colorScheme.onSurfaceVariant.withValues(alpha: 0.04);
 
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
         color: backgroundOverlay,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: Center(
-          child: Image.asset(
-            defaultAsset,
-            fit: fit,
-            width: size != null
-                ? size! * 0.6
-                : null, // Reducir tamaño del icono para mejor proporción
-            height: size != null ? size! * 0.6 : null,
-            filterQuality: FilterQuality.medium,
-            color: iconColor,
-          ),
+      child: Center(
+        child: Image.asset(
+          defaultAsset,
+          fit: fit,
+          width: size != null
+              ? size! * 0.6
+              : null, // Reducir tamaño del icono para mejor proporción
+          height: size != null ? size! * 0.6 : null,
+          filterQuality: FilterQuality.medium,
+          color: iconColor,
         ),
       ),
     );

@@ -1571,7 +1571,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: colorScheme.primaryContainer,
+            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -1982,7 +1982,6 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
   // FORM CONTROLLERS
   // ═══════════════════════════════════════════════════════════════
   late final TextEditingController _descriptionController;
-  late final TextEditingController _codeController;
   late final TextEditingController _salePriceController;
   late final TextEditingController _purchasePriceController;
   late final TextEditingController _quantityStockController;
@@ -2009,7 +2008,6 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
     // Inicializar controllers con valores actuales
     _descriptionController = TextEditingController(text: product.description);
-    _codeController = TextEditingController(text: product.code);
     _salePriceController = TextEditingController(
       text: product.salePrice > 0 ? product.salePrice.toString() : '',
     );
@@ -2042,7 +2040,6 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
   @override
   void dispose() {
     _descriptionController.dispose();
-    _codeController.dispose();
     _salePriceController.dispose();
     _purchasePriceController.dispose();
     _quantityStockController.dispose();
@@ -2064,12 +2061,21 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     setState(() => _isSaving = true);
 
     try {
+      // Limpiar y parsear los valores de precio formateados
+      final cleanSalePrice = _salePriceController.text
+          .replaceAll('.', '')
+          .replaceAll(',', '.');
+      final cleanPurchasePrice = _purchasePriceController.text
+          .replaceAll('.', '')
+          .replaceAll(',', '.');
+      
       // Crear producto actualizado con los nuevos valores
       final updatedProduct = widget.product.copyWith(
-        description: _descriptionController.text.trim(),
-        code: _codeController.text.trim(),
-        salePrice: double.tryParse(_salePriceController.text) ?? 0.0,
-        purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0.0,
+        description: widget.product.verified
+            ? widget.product.description
+            : _descriptionController.text.trim(),
+        salePrice: double.tryParse(cleanSalePrice) ?? 0.0,
+        purchasePrice: double.tryParse(cleanPurchasePrice) ?? 0.0,
         quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
         alertStock: int.tryParse(_alertStockController.text) ?? 5,
         nameCategory: _categoryController.text.trim(),
@@ -2153,13 +2159,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                 height: 24,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-            )
-          else
-            IconButton(
-              onPressed: _saveProduct,
-              icon: const Icon(Icons.save),
-              tooltip: 'Guardar cambios',
-            ),
+            ) 
         ],
       ),
       body: Form(
@@ -2172,6 +2172,31 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ═══════════════════════════════════════════════════════════════
+                  // SECCIÓN: IMAGEN DEL PRODUCTO
+                  // ═══════════════════════════════════════════════════════
+                  _buildSectionHeader(
+                    context: context,
+                    title: 'Imagen del producto',
+                    icon: Icons.image_outlined,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildCard(
+                    context: context,
+                    child: Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: ProductImage(
+                          imageUrl: widget.product.image,
+                          size: 75,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
                   // ═══════════════════════════════════════════════════════
                   // SECCIÓN: INFORMACIÓN BÁSICA
                   // ═══════════════════════════════════════════════════════
@@ -2180,51 +2205,185 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                     title: 'Información básica',
                     icon: Icons.info_outline,
                   ),
-                  const SizedBox(height: 12),
-
-                  _buildCard(
-                    context: context,
-                    child: Column(
+                  const SizedBox(height: 12),Column(
+            children: [
+                // Marca del producto
+                if (widget.product.nameMark.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration( 
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: widget.product.verified
+                            ? Colors.blue.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        TextFormField(
-                          controller: _descriptionController,
-                          decoration: InputDecoration(
-                            labelText: 'Descripción del producto *',
-                            hintText: 'Ej: Coca Cola 2L',
-                            prefixIcon: const Icon(Icons.description_outlined),
-                            border: OutlineInputBorder(
+                        Icon(
+                          widget.product.verified
+                              ? Icons.verified
+                              : Icons.branding_watermark,
+                          color: widget.product.verified
+                              ? Colors.blue
+                              : colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Marca',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: widget.product.verified
+                                      ? Colors.blue.withValues(alpha: 0.8)
+                                      : colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.product.nameMark,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: widget.product.verified
+                                      ? Colors.blue
+                                      : colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (widget.product.verified)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          maxLength: 100,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'La descripción es requerida';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _codeController,
-                          decoration: InputDecoration(
-                            labelText: 'Código de barras *',
-                            hintText: 'Ej: 7790315001234',
-                            prefixIcon: const Icon(Icons.qr_code_2),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            child: Text(
+                              'Verificado',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'El código es requerido';
-                            }
-                            return null;
-                          },
-                        ),
                       ],
                     ),
+                  ),
+                
+                // Campo de descripción (solo lectura) 
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration( 
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color:
+                          colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Descripción',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.product.description.isNotEmpty
+                            ? widget.product.description
+                            : 'Producto sin nombre',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 8), 
+              ] else ...[
+                // Campo de descripción (editable)
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Descripción del producto *',
+                    hintText: 'Ej: Coca Cola 2L',
+                    prefixIcon:
+                        const Icon(Icons.description_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  maxLength: 100,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'La descripción es requerida';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: 16),
+              // Campo de código de barras (solo lectura)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration( 
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.qr_code_2,
+                      color: colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Código de barras',
+                            style:
+                                theme.textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.product.code.isNotEmpty
+                                ? widget.product.code
+                                : 'Sin código',
+                            style:
+                                theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                              fontSize: 18
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
                   ),
 
                   const SizedBox(height: 24),
@@ -2239,58 +2398,62 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                   ),
                   const SizedBox(height: 12),
 
-                  _buildCard(
-                    context: context,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _salePriceController,
-                          decoration: InputDecoration(
-                            labelText: 'Precio de venta *',
-                            hintText: '0.00',
-                            prefixIcon: const Icon(Icons.trending_up),
-                            prefixText: '\$ ',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'El precio de venta es requerido';
-                            }
-                            final price = double.tryParse(value);
-                            if (price == null || price <= 0) {
-                              return 'Ingrese un precio válido mayor a 0';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _purchasePriceController,
-                          decoration: InputDecoration(
-                            labelText: 'Precio de compra',
-                            hintText: '0.00',
-                            prefixIcon:
-                                const Icon(Icons.shopping_basket_outlined),
-                            prefixText: '\$ ',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                  Column(
+                    children: [
+                      TextFormField(
+                        controller: _salePriceController,
+                        decoration: InputDecoration(
+                          labelText: 'Precio de venta *',
+                          hintText: '0.00',
+                          prefixIcon: const Icon(Icons.trending_up),
+                          prefixText: '\$ ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        // Mostrar beneficio calculado si hay ambos precios
-                        if (_salePriceController.text.isNotEmpty &&
-                            _purchasePriceController.text.isNotEmpty)
-                          _buildProfitPreview(),
-                      ],
-                    ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          AppMoneyInputFormatter(symbol: ''),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'El precio de venta es requerido';
+                          }
+                          final cleanValue = value.replaceAll('.', '').replaceAll(',', '.');
+                          final price = double.tryParse(cleanValue);
+                          if (price == null || price <= 0) {
+                            return 'Ingrese un precio válido mayor a 0';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _purchasePriceController,
+                        decoration: InputDecoration(
+                          labelText: 'Precio de compra',
+                          hintText: '0.00',
+                          prefixIcon:
+                              const Icon(Icons.shopping_basket_outlined),
+                          prefixText: '\$ ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          AppMoneyInputFormatter(symbol: ''),
+                        ],
+                      ),
+                      // Mostrar beneficio calculado si hay ambos precios
+                      if (_salePriceController.text.isNotEmpty &&
+                          _purchasePriceController.text.isNotEmpty)
+                        _buildProfitPreview(),
+                    ],
                   ),
 
                   const SizedBox(height: 24),
@@ -2305,11 +2468,19 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                   ),
                   const SizedBox(height: 12),
 
-                  _buildCard(
-                    context: context,
-                    child: Column(
-                      children: [
-                        SwitchListTile(
+                  Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outlineVariant
+                                .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: SwitchListTile(
                           value: _stockEnabled,
                           onChanged: (value) {
                             setState(() => _stockEnabled = value);
@@ -2325,112 +2496,55 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                             color: _stockEnabled ? colorScheme.primary : null,
                           ),
                         ),
-                        if (_stockEnabled) ...[
-                          const Divider(height: 24),
-                          TextFormField(
-                            controller: _quantityStockController,
-                            decoration: InputDecoration(
-                              labelText: 'Cantidad disponible',
-                              hintText: '0',
-                              prefixIcon: const Icon(Icons.numbers),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (_stockEnabled) ...[ 
+
+                        TextFormField(
+                          controller: _quantityStockController,
+                          decoration: InputDecoration(
+                            labelText: 'Cantidad disponible',
+                            hintText: '0',
+                            prefixIcon: const Icon(Icons.numbers),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            keyboardType: TextInputType.number,
-                            validator: _stockEnabled
-                                ? (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return 'Ingrese la cantidad';
-                                    }
-                                    final qty = int.tryParse(value);
-                                    if (qty == null || qty < 0) {
-                                      return 'Ingrese una cantidad válida';
-                                    }
-                                    return null;
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: _stockEnabled
+                              ? (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Ingrese la cantidad';
                                   }
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _alertStockController,
-                            decoration: InputDecoration(
-                              labelText: 'Alerta de stock bajo',
-                              hintText: '5',
-                              prefixIcon: const Icon(
-                                Icons.notification_important_outlined,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              helperText:
-                                  'Se mostrará una alerta cuando el stock esté en este nivel',
-                            ),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ═══════════════════════════════════════════════════════
-                  // SECCIÓN: CATEGORIZACIÓN
-                  // ═══════════════════════════════════════════════════════
-                  _buildSectionHeader(
-                    context: context,
-                    title: 'Categorización',
-                    icon: Icons.category_outlined,
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildCard(
-                    context: context,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _categoryController,
-                          decoration: InputDecoration(
-                            labelText: 'Categoría',
-                            hintText: 'Ej: Bebidas',
-                            prefixIcon: const Icon(Icons.category_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                                  final qty = int.tryParse(value);
+                                  if (qty == null || qty < 0) {
+                                    return 'Ingrese una cantidad válida';
+                                  }
+                                  return null;
+                                }
+                              : null,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
-                          controller: _providerController,
+                          controller: _alertStockController,
                           decoration: InputDecoration(
-                            labelText: 'Proveedor',
-                            hintText: 'Ej: Coca Cola Company',
-                            prefixIcon:
-                                const Icon(Icons.local_shipping_outlined),
+                            labelText: 'Alerta de stock bajo',
+                            hintText: '5',
+                            prefixIcon: const Icon(
+                              Icons.notification_important_outlined,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            helperText:
+                                'Se mostrará una alerta cuando el stock esté en este nivel',
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _markController,
-                          decoration: InputDecoration(
-                            labelText: 'Marca',
-                            hintText: 'Ej: Coca Cola',
-                            prefixIcon: const Icon(Icons.branding_watermark),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                          keyboardType: TextInputType.number,
                         ),
                       ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
+                    ],
+                  ), 
+                  const SizedBox(height: 24),  
                   // ═══════════════════════════════════════════════════════
                   // SECCIÓN: PREFERENCIAS
                   // ═══════════════════════════════════════════════════════
@@ -2439,10 +2553,59 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                     title: 'Preferencias',
                     icon: Icons.tune,
                   ),
+                  const SizedBox(height: 20),
+                  Column(
+                    children: [
+                      TextFormField(
+                        controller: _categoryController,
+                        decoration: InputDecoration(
+                          labelText: 'Categoría',
+                          hintText: 'Ej: Bebidas',
+                          prefixIcon: const Icon(Icons.category_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _providerController,
+                        decoration: InputDecoration(
+                          labelText: 'Proveedor',
+                          hintText: 'Ej: Coca Cola Company',
+                          prefixIcon:
+                              const Icon(Icons.local_shipping_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _markController,
+                        decoration: InputDecoration(
+                          labelText: 'Marca',
+                          hintText: 'Ej: Coca Cola',
+                          prefixIcon: const Icon(Icons.branding_watermark),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ), 
                   const SizedBox(height: 12),
 
-                  _buildCard(
-                    context: context,
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outlineVariant
+                            .withValues(alpha: 0.3),
+                      ),
+                    ),
                     child: SwitchListTile(
                       value: _favoriteEnabled,
                       onChanged: (value) {
@@ -2469,8 +2632,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
       floatingActionButton: _isSaving
           ? null
           : FloatingActionButton.extended(
-              onPressed: _saveProduct,
-              icon: const Icon(Icons.save),
+              onPressed: _saveProduct, 
               label: const Text('Guardar'),
             ),
     );
@@ -2528,8 +2690,16 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
   /// Muestra una vista previa del beneficio calculado
   Widget _buildProfitPreview() {
-    final salePrice = double.tryParse(_salePriceController.text) ?? 0;
-    final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
+    // Limpiar y parsear los valores formateados
+    final cleanSalePrice = _salePriceController.text
+        .replaceAll('.', '')
+        .replaceAll(',', '.');
+    final cleanPurchasePrice = _purchasePriceController.text
+        .replaceAll('.', '')
+        .replaceAll(',', '.');
+    
+    final salePrice = double.tryParse(cleanSalePrice) ?? 0;
+    final purchasePrice = double.tryParse(cleanPurchasePrice) ?? 0;
 
     if (salePrice <= 0 || purchasePrice <= 0) {
       return const SizedBox.shrink();

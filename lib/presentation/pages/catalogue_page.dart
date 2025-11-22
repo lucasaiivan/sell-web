@@ -5,7 +5,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/sell_provider.dart';
-import '../widgets/navigation/drawer.dart'; 
+import '../widgets/navigation/drawer.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -77,14 +77,15 @@ class _CataloguePageState extends State<CataloguePage> {
                     return ProductSearchField(
                       controller: _searchController,
                       focusNode: _searchFocusNode,
-                      hintText: 'Buscar producto', 
-                      products: catalogueProvider.products, 
+                      hintText: 'Buscar producto',
+                      products: catalogueProvider.products,
                       searchResultsCount: _searchController.text.isNotEmpty
                           ? catalogueProvider.visibleProducts.length
                           : null,
                       onChanged: (query) {
                         // Buscar productos según el query con debouncing
-                        catalogueProvider.searchProductsWithDebounce(query: query);
+                        catalogueProvider.searchProductsWithDebounce(
+                            query: query);
                       },
                       onClear: () {
                         // Limpiar búsqueda y mostrar todos los productos
@@ -182,12 +183,22 @@ class _CataloguePageState extends State<CataloguePage> {
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
+        final catalogueProvider =
+            Provider.of<CatalogueProvider>(context, listen: false);
+        final sellProvider = Provider.of<SellProvider>(context, listen: false);
+
         return _ProductCatalogueCard(
           product: product,
+          catalogueProvider: catalogueProvider,
+          accountId: sellProvider.profileAccountSelected.id,
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => _ProductEditView(product: product),
+                builder: (context) => _ProductCatalogueView(
+                  product: product,
+                  catalogueProvider: catalogueProvider,
+                  accountId: sellProvider.profileAccountSelected.id,
+                ),
               ),
             );
           },
@@ -205,12 +216,22 @@ class _CataloguePageState extends State<CataloguePage> {
           const Divider(height: 0, thickness: 0.4),
       itemBuilder: (context, index) {
         final product = products[index];
+        final catalogueProvider =
+            Provider.of<CatalogueProvider>(context, listen: false);
+        final sellProvider = Provider.of<SellProvider>(context, listen: false);
+
         return _ProductListTile(
           product: product,
+          catalogueProvider: catalogueProvider,
+          accountId: sellProvider.profileAccountSelected.id,
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => _ProductEditView(product: product),
+                builder: (context) => _ProductCatalogueView(
+                  product: product,
+                  catalogueProvider: catalogueProvider,
+                  accountId: sellProvider.profileAccountSelected.id,
+                ),
               ),
             );
           },
@@ -448,10 +469,14 @@ class _CataloguePageState extends State<CataloguePage> {
 /// Tarjeta para mostrar un producto en vista de lista
 class _ProductListTile extends StatelessWidget {
   final ProductCatalogue product;
+  final CatalogueProvider catalogueProvider;
+  final String accountId;
   final VoidCallback? onTap;
 
   const _ProductListTile({
     required this.product,
+    required this.catalogueProvider,
+    required this.accountId,
     this.onTap,
   });
 
@@ -461,12 +486,19 @@ class _ProductListTile extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return InkWell(
-      onTap: onTap ??
-          () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Editar: ${product.description}')),
-            );
-          },
+      onTap: onTap,
+      onLongPress: () {
+        // Navegar a la vista de edición al hacer long press
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => _ProductEditCatalogueView(
+              product: product,
+              catalogueProvider: catalogueProvider,
+              accountId: accountId,
+            ),
+          ),
+        );
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -728,10 +760,14 @@ class _ProductListTile extends StatelessWidget {
 /// Tarjeta para mostrar un producto del catálogo con altura adaptativa
 class _ProductCatalogueCard extends StatelessWidget {
   final ProductCatalogue product;
+  final CatalogueProvider catalogueProvider;
+  final String accountId;
   final VoidCallback? onTap;
 
   const _ProductCatalogueCard({
     required this.product,
+    required this.catalogueProvider,
+    required this.accountId,
     this.onTap,
   });
 
@@ -748,13 +784,19 @@ class _ProductCatalogueCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: onTap ??
-            () {
-              // TODO: Implementar edición de producto
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Editar: ${product.description}')),
-              );
-            },
+        onTap: onTap,
+        onLongPress: () {
+          // Navegar a la vista de edición al hacer long press
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => _ProductEditCatalogueView(
+                product: product,
+                catalogueProvider: catalogueProvider,
+                accountId: accountId,
+              ),
+            ),
+          );
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -1040,22 +1082,192 @@ class _ProductCatalogueCard extends StatelessWidget {
   }
 }
 
-/// Vista para editar un producto del catálogo con diseño responsivo
-class _ProductEditView extends StatelessWidget {
+/// Vista previa del producto del catálogo con diseño responsivo
+class _ProductCatalogueView extends StatefulWidget {
   final ProductCatalogue product;
+  final CatalogueProvider catalogueProvider;
+  final String accountId;
 
-  const _ProductEditView({
+  const _ProductCatalogueView({
     required this.product,
+    required this.catalogueProvider,
+    required this.accountId,
   });
+
+  @override
+  State<_ProductCatalogueView> createState() => _ProductCatalogueViewState();
+}
+
+class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
+  /// Indica si hay una operación de actualización de favorito en progreso
+  bool _isUpdatingFavorite = false;
+
+  /// Producto actual sincronizado con Firebase
+  late ProductCatalogue _currentProduct;
+
+  // ═══════════════════════════════════════════════════════════════
+  // LIFECYCLE METHODS
+  // ═══════════════════════════════════════════════════════════════
+  @override
+  void initState() {
+    super.initState();
+    _currentProduct = widget.product;
+    widget.catalogueProvider.addListener(_onProviderUpdate);
+  }
+
+  @override
+  void dispose() {
+    widget.catalogueProvider.removeListener(_onProviderUpdate);
+    super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // EVENT HANDLERS - Gestión de favoritos
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Sincroniza el producto completo cuando el provider detecta cambios en Firebase
+  void _onProviderUpdate() {
+    final updatedProduct = widget.catalogueProvider.products.firstWhere(
+      (p) => p.id == widget.product.id,
+      orElse: () => widget.product,
+    );
+
+    // Actualizar el producto completo si hay cambios (comparar por timestamp de actualización)
+    if (mounted &&
+        updatedProduct.upgrade.millisecondsSinceEpoch !=
+            _currentProduct.upgrade.millisecondsSinceEpoch) {
+      setState(() {
+        _currentProduct = updatedProduct;
+      });
+    }
+  }
+
+  /// Alterna el estado de favorito del producto con manejo de errores
+  Future<void> _toggleFavorite() async {
+    if (_isUpdatingFavorite) return;
+
+    setState(() {
+      _isUpdatingFavorite = true;
+    });
+
+    final newFavoriteState = !_currentProduct.favorite;
+
+    try {
+      await widget.catalogueProvider.updateProductFavorite(
+        widget.accountId,
+        widget.product.id,
+        newFavoriteState,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  newFavoriteState ? Icons.star : Icons.star_border,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    newFavoriteState
+                        ? 'Producto agregado a favoritos'
+                        : 'Producto quitado de favoritos',
+                  ),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    errorMessage.contains('Error al actualizar favorito')
+                        ? 'No se pudo actualizar. Intenta nuevamente.'
+                        : errorMessage,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: _toggleFavorite,
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingFavorite = false;
+        });
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BUILD METHOD - Construcción de la UI principal
+  // ═══════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Producto'), centerTitle: false,),
+      appBar: AppBar(
+        title: Text(_currentProduct.description),
+        centerTitle: false,
+        actions: [
+          // button : agregar a favoritos
+          IconButton(
+            onPressed: _isUpdatingFavorite ? null : _toggleFavorite,
+            icon: _isUpdatingFavorite
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  )
+                : Icon(
+                    _currentProduct.favorite ? Icons.star : Icons.star_border,
+                    color:
+                        _currentProduct.favorite ? Colors.amber.shade600 : null,
+                  ),
+            tooltip: _currentProduct.favorite
+                ? 'Quitar de favoritos'
+                : 'Agregar a favoritos',
+          ),
+        ],
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           const double maxContentWidth = 1200;
-          final double effectiveWidth = constraints.maxWidth > maxContentWidth? maxContentWidth: constraints.maxWidth;
+          final double effectiveWidth = constraints.maxWidth > maxContentWidth
+              ? maxContentWidth
+              : constraints.maxWidth;
           final bool isDesktop = effectiveWidth >= 1000;
           final bool isTablet = effectiveWidth >= 720;
           final int columns = isDesktop
@@ -1093,7 +1305,7 @@ class _ProductEditView extends StatelessWidget {
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height:50),
+                    const SizedBox(height: 50),
                   ],
                 ),
               ),
@@ -1102,16 +1314,31 @@ class _ProductEditView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => _ProductEditCatalogueView(
+                product: _currentProduct,
+                catalogueProvider: widget.catalogueProvider,
+                accountId: widget.accountId,
+              ),
+            ),
+          );
+        },
         icon: const Icon(Icons.edit),
         label: const Text('Editar'),
       ),
     );
   }
 
-  List<Widget> _buildInfoCards(BuildContext context) {
-    final cards = <Widget>[
+  // ═══════════════════════════════════════════════════════════════
+  // UI BUILDERS - Cards de información
+  // ═══════════════════════════════════════════════════════════════
 
+  /// Construye las tarjetas de información del producto (stock, precios, actividad)
+  List<Widget> _buildInfoCards(BuildContext context) {
+    final product = _currentProduct;
+    final cards = <Widget>[
       if (product.nameCategory.isNotEmpty ||
           product.provider.isNotEmpty ||
           product.nameProvider.isNotEmpty ||
@@ -1121,51 +1348,53 @@ class _ProductEditView extends StatelessWidget {
           title: 'Información y Stock',
           icon: Icons.inventory_2_outlined,
           child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoList(
-            context,
-            [
-          // item : categoría
-          if (product.nameCategory.isNotEmpty)
-            _InfoItem( 
-              icon: Icons.category_outlined,
-              label: 'Categoría',
-              value: product.nameCategory,
-            ),
-          // item : proveedor
-          if (product.nameProvider.isNotEmpty || product.provider.isNotEmpty)
-            _InfoItem(
-              icon: Icons.local_shipping_outlined,
-              label: 'Proveedor',
-              value: product.nameProvider.isNotEmpty
-              ? product.nameProvider
-              : product.provider,
-            ),
-            if (product.stock) ...[
-            _InfoItem(
-              label: 'Cantidad disponible',
-              value: product.quantityStock.toString(),
-              icon: Icons.inventory_outlined,
-            ),
-            _InfoItem(
-              label: 'Alerta configurada',
-              value: product.alertStock.toString(),
-              icon: Icons.notification_important_outlined,
-            ),
-            ] else
-            _InfoItem(
-              label: 'Control de stock',
-              value: 'Sin control',
-              icon: Icons.inventory_outlined,
-            ),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoList(
+                context,
+                [
+                  // item : categoría
+                  if (product.nameCategory.isNotEmpty)
+                    {
+                      'icon': Icons.category_outlined,
+                      'label': 'Categoría',
+                      'value': product.nameCategory,
+                    },
+                  // item : proveedor
+                  if (product.nameProvider.isNotEmpty ||
+                      product.provider.isNotEmpty)
+                    {
+                      'icon': Icons.local_shipping_outlined,
+                      'label': 'Proveedor',
+                      'value': product.nameProvider.isNotEmpty
+                          ? product.nameProvider
+                          : product.provider,
+                    },
+                  if (product.stock) ...[
+                    {
+                      'label': 'Cantidad disponible',
+                      'value': product.quantityStock.toString(),
+                      'icon': Icons.inventory_outlined,
+                    },
+                    {
+                      'label': 'Alerta configurada',
+                      'value': product.alertStock.toString(),
+                      'icon': Icons.notification_important_outlined,
+                    },
+                  ] else
+                    {
+                      'label': 'Control de stock',
+                      'value': 'Sin control',
+                      'icon': Icons.inventory_outlined,
+                    },
+                ],
+              ),
+              if (product.stock &&
+                  product.quantityStock <= product.alertStock) ...[
+                const SizedBox(height: 12),
+                _buildStockAlert(context),
+              ],
             ],
-          ),
-          if (product.stock && product.quantityStock <= product.alertStock) ...[
-            const SizedBox(height: 12),
-            _buildStockAlert(context),
-          ],
-        ],
           ),
         ),
       _buildInfoCard(
@@ -1175,36 +1404,35 @@ class _ProductEditView extends StatelessWidget {
         child: _buildInfoList(
           context,
           [
-            _InfoItem(
-              label: 'Venta al público',
-              value: CurrencyFormatter.formatPrice(value: product.salePrice),
-              icon: Icons.trending_up,
-            ),
-            _InfoItem(
-              label: 'Compra', 
-              value: product.purchasePrice > 0
+            {
+              'label': 'Venta al público',
+              'value': CurrencyFormatter.formatPrice(value: product.salePrice),
+              'icon': Icons.trending_up,
+            },
+            {
+              'label': 'Compra',
+              'value': product.purchasePrice > 0
                   ? CurrencyFormatter.formatPrice(
                       value: product.purchasePrice,
                     )
                   : 'No definido',
-              icon: Icons.shopping_basket_outlined,
-            ),
-            if (product.purchasePrice > 0 &&
-                product.getBenefits.isNotEmpty)
-              _InfoItem(
-                label: 'Beneficio estimado',
-                valueColor: Colors.green.shade700,
-                value: product.getBenefits,
-                icon: Icons.ssid_chart_outlined,
-              ),
+              'icon': Icons.shopping_basket_outlined,
+            },
+            if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty)
+              {
+                'label': 'Beneficio estimado',
+                'valueColor': Colors.green.shade700,
+                'value': product.getBenefits,
+                'icon': Icons.ssid_chart_outlined,
+              },
             if (product.purchasePrice > 0 &&
                 product.getPorcentageFormat.isNotEmpty)
-              _InfoItem(
-                label: 'Margen',
-                valueColor: Colors.green.shade700,
-                value: product.getPorcentageFormat,
-                icon: Icons.percent_outlined,
-              ),
+              {
+                'label': 'Margen',
+                'valueColor': Colors.green.shade700,
+                'value': product.getPorcentageFormat,
+                'icon': Icons.percent_outlined,
+              },
           ],
         ),
       ),
@@ -1215,27 +1443,27 @@ class _ProductEditView extends StatelessWidget {
         child: _buildInfoList(
           context,
           [
-            _InfoItem(
-              label: 'Ventas',
-              value: product.sales.toString(),
-              icon: Icons.receipt_long_outlined,
-            ),
-            _InfoItem(
-              label: 'Creado',
-              value: DateFormatter.getSimplePublicationDate(
+            {
+              'label': 'Ventas',
+              'value': product.sales.toString(),
+              'icon': Icons.receipt_long_outlined,
+            },
+            {
+              'label': 'Creado',
+              'value': DateFormatter.getSimplePublicationDate(
                 product.creation.toDate(),
                 DateTime.now(),
               ),
-              icon: Icons.calendar_today_outlined,
-            ),
-            _InfoItem(
-              label: 'Ultima actualización',
-              value: DateFormatter.getSimplePublicationDate(
+              'icon': Icons.calendar_today_outlined,
+            },
+            {
+              'label': 'Ultima actualización',
+              'value': DateFormatter.getSimplePublicationDate(
                 product.upgrade.toDate(),
                 DateTime.now(),
               ),
-              icon: Icons.update,
-            ),
+              'icon': Icons.update,
+            },
           ],
         ),
       ),
@@ -1244,7 +1472,9 @@ class _ProductEditView extends StatelessWidget {
     return cards;
   }
 
+  /// Construye el card de resumen principal con imagen y datos destacados
   Widget _buildSummaryCard(BuildContext context, bool isWide) {
+    final product = _currentProduct;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final salePrice = CurrencyFormatter.formatPrice(value: product.salePrice);
@@ -1274,33 +1504,33 @@ class _ProductEditView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: product.verified
-            ? Colors.blue.withValues(alpha: 0.12)
-            : theme.colorScheme.surfaceContainerHighest,
+                  ? Colors.blue.withValues(alpha: 0.12)
+                  : theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(999),
               border: product.verified
-            ? Border.all(color: Colors.blue.withValues(alpha: 0.3))
-            : null,
+                  ? Border.all(color: Colors.blue.withValues(alpha: 0.3))
+                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-          if (product.verified) ...[
-            Icon(
-              Icons.verified,
-              size: 16,
-              color: Colors.blue,
-            ),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            product.nameMark,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: product.verified
-            ? Colors.blue
-            : theme.colorScheme.onSurfaceVariant,
-              fontWeight: product.verified ? FontWeight.w600 : null,
-            ),
-          ),
+                if (product.verified) ...[
+                  Icon(
+                    Icons.verified,
+                    size: 16,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  product.nameMark,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: product.verified
+                        ? Colors.blue
+                        : theme.colorScheme.onSurfaceVariant,
+                    fontWeight: product.verified ? FontWeight.w600 : null,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1324,7 +1554,7 @@ class _ProductEditView extends StatelessWidget {
                 icon: Icons.category_outlined,
                 label: product.nameCategory,
               ),
-             
+
             // text chip : marca
             if (product.provider.isNotEmpty)
               _buildMetaChip(
@@ -1392,7 +1622,7 @@ class _ProductEditView extends StatelessWidget {
                 icon: Icons.star_rate_rounded,
                 label: 'Favorito',
                 color: Colors.amber.shade600,
-              ), 
+              ),
             // status chip : stock con estados
             if (product.stock)
               _buildStatusChip(
@@ -1488,6 +1718,11 @@ class _ProductEditView extends StatelessWidget {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // UI HELPERS - Componentes reutilizables
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Construye un card genérico con título e ícono
   Widget _buildInfoCard({
     required BuildContext context,
     required String title,
@@ -1532,32 +1767,92 @@ class _ProductEditView extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoList(BuildContext context, List<_InfoItem> items) {
-    if (items.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final theme = Theme.of(context);
+  /// Construye una lista de items informativos con dividers
+  Widget _buildInfoList(
+      BuildContext context, List<Map<String, dynamic>> items) {
+    if (items.isEmpty) return const SizedBox.shrink();
 
     return Column(
       children: [
         for (int index = 0; index < items.length; index++) ...[
-          _InfoRow(item: items[index], theme: theme),
-          if (index != items.length - 1) const Divider(height: 16, thickness: 0.4),
+          _buildInfoRow(
+            context,
+            label: items[index]['label'] as String,
+            value: items[index]['value'] as String,
+            icon: items[index]['icon'] as IconData?,
+            valueColor: items[index]['valueColor'] as Color?,
+            selectable: items[index]['selectable'] as bool? ?? false,
+          ),
+          if (index != items.length - 1)
+            const Divider(height: 16, thickness: 0.4),
         ],
       ],
     );
   }
 
+  /// Construye una fila informativa con label, valor e ícono opcional
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required String label,
+    required String value,
+    IconData? icon,
+    Color? valueColor,
+    bool selectable = false,
+  }) {
+    final theme = Theme.of(context);
+    final displayValue = value.isNotEmpty ? value : 'No especificado';
+    final textStyle = theme.textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+      color: valueColor,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              selectable
+                  ? SelectableText(displayValue, style: textStyle)
+                  : Text(displayValue, style: textStyle),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // UTILITY METHODS - Cálculos y helpers
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Calcula el ancho de cada card en el grid responsivo
   double _calculateCardWidth(double availableWidth, int columns, double gap) {
-    if (columns <= 1 || availableWidth <= 0) {
-      return availableWidth;
-    }
+    if (columns <= 1 || availableWidth <= 0) return availableWidth;
+
     final double totalSpacing = gap * (columns - 1);
     final double width = (availableWidth - totalSpacing) / columns;
     return width < 260 ? availableWidth : width;
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // UI BUILDERS - Chips y badges
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Construye un chip de metadata (código, categoría, proveedor)
   Widget _buildMetaChip(
     BuildContext context, {
     required IconData icon,
@@ -1586,6 +1881,7 @@ class _ProductEditView extends StatelessWidget {
     );
   }
 
+  /// Construye un chip de estado (favorito, stock)
   Widget _buildStatusChip(
     BuildContext context, {
     required IconData icon,
@@ -1595,8 +1891,10 @@ class _ProductEditView extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     final Color baseColor = filled ? color : color.withValues(alpha: 0.6);
-    final background = filled ? baseColor.withValues(alpha: 0.18) : Colors.transparent;
-    final borderColor = filled ? Colors.transparent : baseColor.withValues(alpha: 0.3);
+    final background =
+        filled ? baseColor.withValues(alpha: 0.18) : Colors.transparent;
+    final borderColor =
+        filled ? Colors.transparent : baseColor.withValues(alpha: 0.3);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -1622,7 +1920,9 @@ class _ProductEditView extends StatelessWidget {
     );
   }
 
+  /// Construye una alerta de stock bajo o sin stock
   Widget _buildStockAlert(BuildContext context) {
+    final product = _currentProduct;
     final theme = Theme.of(context);
     final isCritical = product.quantityStock <= 0;
     final alertColor = isCritical ? Colors.red : Colors.orange;
@@ -1660,63 +1960,651 @@ class _ProductEditView extends StatelessWidget {
   }
 }
 
-class _InfoItem {
-  final String label;
-  final String value;
-  final IconData? icon;
-  final bool selectable;
-  final Color? valueColor;
+/// Vista de edición completa del producto del catálogo
+class _ProductEditCatalogueView extends StatefulWidget {
+  final ProductCatalogue product;
+  final CatalogueProvider catalogueProvider;
+  final String accountId;
 
-  const _InfoItem({
-    required this.label,
-    required this.value,
-    this.icon,
-    this.selectable = false,
-    this.valueColor,
+  const _ProductEditCatalogueView({
+    required this.product,
+    required this.catalogueProvider,
+    required this.accountId,
   });
+
+  @override
+  State<_ProductEditCatalogueView> createState() =>
+      _ProductEditCatalogueViewState();
 }
 
-class _InfoRow extends StatelessWidget {
-  final _InfoItem item;
-  final ThemeData theme;
+class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
+  // ═══════════════════════════════════════════════════════════════
+  // FORM CONTROLLERS
+  // ═══════════════════════════════════════════════════════════════
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _codeController;
+  late final TextEditingController _salePriceController;
+  late final TextEditingController _purchasePriceController;
+  late final TextEditingController _quantityStockController;
+  late final TextEditingController _alertStockController;
+  late final TextEditingController _categoryController;
+  late final TextEditingController _providerController;
+  late final TextEditingController _markController;
 
-  const _InfoRow({required this.item, required this.theme});
+  // ═══════════════════════════════════════════════════════════════
+  // FORM STATE
+  // ═══════════════════════════════════════════════════════════════
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+  bool _stockEnabled = false;
+  bool _favoriteEnabled = false;
+
+  // ═══════════════════════════════════════════════════════════════
+  // LIFECYCLE METHODS
+  // ═══════════════════════════════════════════════════════════════
+  @override
+  void initState() {
+    super.initState();
+    final product = widget.product;
+
+    // Inicializar controllers con valores actuales
+    _descriptionController = TextEditingController(text: product.description);
+    _codeController = TextEditingController(text: product.code);
+    _salePriceController = TextEditingController(
+      text: product.salePrice > 0 ? product.salePrice.toString() : '',
+    );
+    _purchasePriceController = TextEditingController(
+      text: product.purchasePrice > 0 ? product.purchasePrice.toString() : '',
+    );
+    _quantityStockController = TextEditingController(
+      text: product.quantityStock.toString(),
+    );
+    _alertStockController = TextEditingController(
+      text: product.alertStock.toString(),
+    );
+    _categoryController = TextEditingController(text: product.nameCategory);
+    _providerController = TextEditingController(text: product.nameProvider);
+    _markController = TextEditingController(text: product.nameMark);
+
+    // Inicializar estados
+    _stockEnabled = product.stock;
+    _favoriteEnabled = product.favorite;
+
+    // Listeners para actualizar la UI cuando cambien los precios
+    _salePriceController.addListener(() {
+      setState(() {});
+    });
+    _purchasePriceController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    _codeController.dispose();
+    _salePriceController.dispose();
+    _purchasePriceController.dispose();
+    _quantityStockController.dispose();
+    _alertStockController.dispose();
+    _categoryController.dispose();
+    _providerController.dispose();
+    _markController.dispose();
+    super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // SAVE METHOD
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Guarda los cambios del producto
+  Future<void> _saveProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      // Crear producto actualizado con los nuevos valores
+      final updatedProduct = widget.product.copyWith(
+        description: _descriptionController.text.trim(),
+        code: _codeController.text.trim(),
+        salePrice: double.tryParse(_salePriceController.text) ?? 0.0,
+        purchasePrice: double.tryParse(_purchasePriceController.text) ?? 0.0,
+        quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
+        alertStock: int.tryParse(_alertStockController.text) ?? 5,
+        nameCategory: _categoryController.text.trim(),
+        nameProvider: _providerController.text.trim(),
+        nameMark: _markController.text.trim(),
+        stock: _stockEnabled,
+        favorite: _favoriteEnabled,
+      );
+
+      // Guardar en Firebase usando el provider
+      await widget.catalogueProvider.addAndUpdateProductToCatalogue(
+        updatedProduct,
+        widget.accountId,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text('Producto actualizado correctamente'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        // Regresar a la vista anterior
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Error al guardar: ${e.toString()}'),
+                ),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BUILD METHOD
+  // ═══════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
-    final value = item.value.isNotEmpty ? item.value : 'No especificado';
-    final textStyle = theme.textTheme.titleSmall?.copyWith(
-      fontWeight: FontWeight.w600,
-      height: 1.2,
-      color: item.valueColor,
-    );
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (item.icon != null) ...[
-          Icon(item.icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-        ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Editar producto'),
+        centerTitle: false,
+        actions: [
+          if (_isSaving)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              const SizedBox(height: 4),
-              item.selectable
-                  ? SelectableText(value, style: textStyle)
-                  : Text(value, style: textStyle),
-            ],
+            )
+          else
+            IconButton(
+              onPressed: _saveProduct,
+              icon: const Icon(Icons.save),
+              tooltip: 'Guardar cambios',
+            ),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ═══════════════════════════════════════════════════════
+                  // SECCIÓN: INFORMACIÓN BÁSICA
+                  // ═══════════════════════════════════════════════════════
+                  _buildSectionHeader(
+                    context: context,
+                    title: 'Información básica',
+                    icon: Icons.info_outline,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildCard(
+                    context: context,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _descriptionController,
+                          decoration: InputDecoration(
+                            labelText: 'Descripción del producto *',
+                            hintText: 'Ej: Coca Cola 2L',
+                            prefixIcon: const Icon(Icons.description_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          maxLength: 100,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'La descripción es requerida';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _codeController,
+                          decoration: InputDecoration(
+                            labelText: 'Código de barras *',
+                            hintText: 'Ej: 7790315001234',
+                            prefixIcon: const Icon(Icons.qr_code_2),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'El código es requerido';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ═══════════════════════════════════════════════════════
+                  // SECCIÓN: PRECIOS Y MÁRGENES
+                  // ═══════════════════════════════════════════════════════
+                  _buildSectionHeader(
+                    context: context,
+                    title: 'Precios y márgenes',
+                    icon: Icons.attach_money,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildCard(
+                    context: context,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _salePriceController,
+                          decoration: InputDecoration(
+                            labelText: 'Precio de venta *',
+                            hintText: '0.00',
+                            prefixIcon: const Icon(Icons.trending_up),
+                            prefixText: '\$ ',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'El precio de venta es requerido';
+                            }
+                            final price = double.tryParse(value);
+                            if (price == null || price <= 0) {
+                              return 'Ingrese un precio válido mayor a 0';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _purchasePriceController,
+                          decoration: InputDecoration(
+                            labelText: 'Precio de compra',
+                            hintText: '0.00',
+                            prefixIcon:
+                                const Icon(Icons.shopping_basket_outlined),
+                            prefixText: '\$ ',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                        ),
+                        // Mostrar beneficio calculado si hay ambos precios
+                        if (_salePriceController.text.isNotEmpty &&
+                            _purchasePriceController.text.isNotEmpty)
+                          _buildProfitPreview(),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ═══════════════════════════════════════════════════════
+                  // SECCIÓN: INVENTARIO Y STOCK
+                  // ═══════════════════════════════════════════════════════
+                  _buildSectionHeader(
+                    context: context,
+                    title: 'Inventario y stock',
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildCard(
+                    context: context,
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          value: _stockEnabled,
+                          onChanged: (value) {
+                            setState(() => _stockEnabled = value);
+                          },
+                          title: const Text('Control de stock'),
+                          subtitle: const Text(
+                            'Activa para rastrear cantidad disponible',
+                          ),
+                          secondary: Icon(
+                            _stockEnabled
+                                ? Icons.inventory
+                                : Icons.inventory_outlined,
+                            color: _stockEnabled ? colorScheme.primary : null,
+                          ),
+                        ),
+                        if (_stockEnabled) ...[
+                          const Divider(height: 24),
+                          TextFormField(
+                            controller: _quantityStockController,
+                            decoration: InputDecoration(
+                              labelText: 'Cantidad disponible',
+                              hintText: '0',
+                              prefixIcon: const Icon(Icons.numbers),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: _stockEnabled
+                                ? (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Ingrese la cantidad';
+                                    }
+                                    final qty = int.tryParse(value);
+                                    if (qty == null || qty < 0) {
+                                      return 'Ingrese una cantidad válida';
+                                    }
+                                    return null;
+                                  }
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _alertStockController,
+                            decoration: InputDecoration(
+                              labelText: 'Alerta de stock bajo',
+                              hintText: '5',
+                              prefixIcon: const Icon(
+                                Icons.notification_important_outlined,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              helperText:
+                                  'Se mostrará una alerta cuando el stock esté en este nivel',
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ═══════════════════════════════════════════════════════
+                  // SECCIÓN: CATEGORIZACIÓN
+                  // ═══════════════════════════════════════════════════════
+                  _buildSectionHeader(
+                    context: context,
+                    title: 'Categorización',
+                    icon: Icons.category_outlined,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildCard(
+                    context: context,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _categoryController,
+                          decoration: InputDecoration(
+                            labelText: 'Categoría',
+                            hintText: 'Ej: Bebidas',
+                            prefixIcon: const Icon(Icons.category_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _providerController,
+                          decoration: InputDecoration(
+                            labelText: 'Proveedor',
+                            hintText: 'Ej: Coca Cola Company',
+                            prefixIcon:
+                                const Icon(Icons.local_shipping_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _markController,
+                          decoration: InputDecoration(
+                            labelText: 'Marca',
+                            hintText: 'Ej: Coca Cola',
+                            prefixIcon: const Icon(Icons.branding_watermark),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ═══════════════════════════════════════════════════════
+                  // SECCIÓN: PREFERENCIAS
+                  // ═══════════════════════════════════════════════════════
+                  _buildSectionHeader(
+                    context: context,
+                    title: 'Preferencias',
+                    icon: Icons.tune,
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildCard(
+                    context: context,
+                    child: SwitchListTile(
+                      value: _favoriteEnabled,
+                      onChanged: (value) {
+                        setState(() => _favoriteEnabled = value);
+                      },
+                      title: const Text('Producto favorito'),
+                      subtitle: const Text(
+                        'Marca como favorito para acceso rápido',
+                      ),
+                      secondary: Icon(
+                        _favoriteEnabled ? Icons.star : Icons.star_border,
+                        color: _favoriteEnabled ? Colors.amber.shade600 : null,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: _isSaving
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _saveProduct,
+              icon: const Icon(Icons.save),
+              label: const Text('Guardar'),
+            ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // UI BUILDERS - Componentes de la vista
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Construye el encabezado de una sección
+  Widget _buildSectionHeader({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+  }) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
           ),
         ),
       ],
     );
   }
-}
 
+  /// Construye una tarjeta contenedora
+  Widget _buildCard({
+    required BuildContext context,
+    required Widget child,
+  }) {
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context)
+              .colorScheme
+              .outlineVariant
+              .withValues(alpha: 0.3),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: child,
+      ),
+    );
+  }
+
+  /// Muestra una vista previa del beneficio calculado
+  Widget _buildProfitPreview() {
+    final salePrice = double.tryParse(_salePriceController.text) ?? 0;
+    final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
+
+    if (salePrice <= 0 || purchasePrice <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    final profit = salePrice - purchasePrice;
+    final percentage = ((profit / purchasePrice) * 100);
+    final isProfitable = profit > 0;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isProfitable
+            ? Colors.green.withValues(alpha: 0.08)
+            : Colors.red.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isProfitable
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.red.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isProfitable ? Icons.trending_up : Icons.trending_down,
+            color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isProfitable ? 'Beneficio estimado' : 'Pérdida estimada',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isProfitable
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  CurrencyFormatter.formatPrice(value: profit.abs()),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isProfitable
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isProfitable ? Colors.green : Colors.red,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${isProfitable ? '+' : ''}${percentage.toStringAsFixed(1)}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

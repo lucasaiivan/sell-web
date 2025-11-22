@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:sellweb/core/core.dart';
@@ -26,15 +27,23 @@ class SellPage extends StatefulWidget {
 }
 
 class _SellPageState extends State<SellPage> {
-  // variables
-  String _barcodeBuffer = '';
-  DateTime? _lastKey;
   final FocusNode _focusNode = FocusNode();
   bool _showConfirmedPurchase = false;
+
+  bool _isDialogOpen = false;
+  BuildContext? _manualDialogContext;
+  late final _ScannerInputController _scannerInputController;
 
   @override
   void initState() {
     super.initState();
+    _scannerInputController = _ScannerInputController(
+      onScannerCodeDetected: (code) => scanCodeProduct(code: code),
+      requestManualDialog: _handleManualEntryRequested,
+      closeManualDialog: _closeManualInputDialog,
+      isManualDialogOpen: () => _isDialogOpen,
+    );
+    RawKeyboard.instance.addListener(_handleRawKeyEvent);
     // si es web ?
     if (html.window.location.href.contains('web')) {
       // Enfoca el nodo de entrada para que el teclado se muestre automáticamente
@@ -51,7 +60,9 @@ class _SellPageState extends State<SellPage> {
 
   @override
   void dispose() {
+    RawKeyboard.instance.removeListener(_handleRawKeyEvent);
     _focusNode.dispose();
+    _scannerInputController.dispose();
     super.dispose();
   }
 
@@ -91,10 +102,9 @@ class _SellPageState extends State<SellPage> {
                         // -----------------------------
                         /// body : cuerpo de la página de venta
                         /// ----------------------------
-                        KeyboardListener(
+                        Focus(
                           focusNode: _focusNode,
                           autofocus: true,
-                          onKeyEvent: _onKey,
                           child: body(provider: sellProvider),
                         ),
                         // floatingActionButtonBody : boton flotante para agregar productos al ticket
@@ -132,34 +142,71 @@ class _SellPageState extends State<SellPage> {
       },
     );
   }
-
-  // FUCTIONS
-  void _onKey(KeyEvent event) async {
-    // Detecta un código de barras válido por velocidad de tipeo y enter
-    if (event is KeyDownEvent && event.character != null) {
-      final now = DateTime.now();
-      // Si pasa más de 100ms entre teclas, se asume que es un nuevo escaneo
-      if (_lastKey != null &&
-          now.difference(_lastKey!) > const Duration(milliseconds: 500)) {
-        _barcodeBuffer = '';
-      }
-      _lastKey = now;
-      // Agrega el carácter al buffer
-      _barcodeBuffer += event.character!;
-      // espera 100 ms antes de procesar el buffer
-      await Future.delayed(const Duration(milliseconds: 200)).whenComplete(() {
-        // Si el buffer tiene más de 6 caracteres, se asume que es un código de barras completo
-        if (_barcodeBuffer.length > 6) {
-          // Procesa el código de barras
-          scanCodeProduct(code: _barcodeBuffer);
-          // Limpia el buffer
-          _barcodeBuffer = '';
-        }
-      });
-    }
+ // admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
+  void _handleRawKeyEvent(RawKeyEvent event) {
+    if (event is! RawKeyDownEvent) return;
+    _scannerInputController.handleKeyInput(
+      logicalKey: event.logicalKey,
+      character: event.character,
+    );
   }
 
-  void scanCodeProduct({required String code}) async {
+  void _handleManualEntryRequested() {
+    if (_isDialogOpen || !mounted) return;
+    _isDialogOpen = true;
+    unawaited(_showSearchByNumberDialog());
+  }
+
+  void _closeManualInputDialog({bool resetBuffer = false}) {
+    if (!_isDialogOpen) {
+      if (resetBuffer) {
+        _scannerInputController.clearManualInput();
+      }
+      return;
+    }
+
+    final dialogContext = _manualDialogContext ?? _focusNode.context;
+    if (dialogContext != null && Navigator.of(dialogContext).canPop()) {
+      Navigator.of(dialogContext).pop();
+    }
+    _isDialogOpen = false;
+    _manualDialogContext = null;
+
+    if (resetBuffer) {
+      _scannerInputController.clearManualInput();
+    }
+  }
+  /// Muestra un diálogo simple que captura la entrada numérica en tiempo real
+  Future<void> _showSearchByNumberDialog() async {
+    final context = _focusNode.context;
+    if (context == null) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        _manualDialogContext = dialogContext;
+        return _SearchNumberDialog(
+          numberBufferNotifier: _scannerInputController.manualBuffer,
+          onCancel: () {
+            _scannerInputController.clearManualInput();
+            Navigator.of(dialogContext).pop();
+          },
+          onSearch: () {
+            final code = _scannerInputController.manualBuffer.value;
+            _scannerInputController.clearManualInput();
+            Navigator.of(dialogContext).pop();
+            unawaited(scanCodeProduct(code: code));
+          },
+        );
+      },
+    ).then((_) {
+      _scannerInputController.clearManualInput();
+      _isDialogOpen = false;
+      _manualDialogContext = null;
+    });
+  }
+  Future<void> scanCodeProduct({required String code}) async {
     final context = _focusNode.context;
     if (context == null) return;
 
@@ -195,6 +242,8 @@ class _SellPageState extends State<SellPage> {
       }
     }
   }
+ // fin - admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
+
 
   /// Muestra un AlertDialog temporal con mensaje de error y opciones para crear o agregar producto.
   /// Se cierra automáticamente después de [duracion] milisegundos si no se elige una acción.
@@ -1624,5 +1673,295 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
         );
       },
     );
+  }
+}
+
+/// Widget de diálogo para mostrar la búsqueda por número en tiempo real
+class _SearchNumberDialog extends StatelessWidget {
+  final ValueNotifier<String> numberBufferNotifier;
+  final VoidCallback onCancel;
+  final VoidCallback onSearch;
+
+  const _SearchNumberDialog({
+    required this.numberBufferNotifier,
+    required this.onCancel,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: numberBufferNotifier,
+      builder: (context, currentBuffer, child) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [ 
+              const SizedBox(height: 20),
+              // Texto de búsqueda
+              Text(
+                'CÓDIGO',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Mostrar números ingresados con animación
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 150),
+                  child: Text(
+                    currentBuffer.isEmpty ? '...' : currentBuffer,
+                    key: ValueKey(currentBuffer),
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Botones de acción
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: onCancel,
+                    child: const Text('Cancelar'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: currentBuffer.isEmpty ? null : onSearch,
+                    icon: const Icon(Icons.search_rounded),
+                    label: const Text('Buscar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Handles barcode bursts versus manual typing and notifies the page accordingly.
+class _ScannerInputController {
+  _ScannerInputController({
+    required Future<void> Function(String code) onScannerCodeDetected,
+    required VoidCallback requestManualDialog,
+    required bool Function() isManualDialogOpen,
+    required void Function({bool resetBuffer}) closeManualDialog,
+  })  : _onScannerCodeDetected = onScannerCodeDetected,
+        _requestManualDialog = requestManualDialog,
+        _isManualDialogOpen = isManualDialogOpen,
+        _closeManualDialog = closeManualDialog;
+
+  static const Duration _scannerKeyInterval = Duration(milliseconds: 35);
+  static const Duration _manualResetInterval = Duration(milliseconds: 500);
+  static const Duration _scannerProcessDelay = Duration(milliseconds: 100);
+  static const Duration _scannerSequenceMaxDuration = Duration(milliseconds: 600);
+  static const int _scannerMinLength = 6;
+  static final RegExp _numericRegExp = RegExp(r'^[0-9]$');
+
+  final Future<void> Function(String code) _onScannerCodeDetected;
+  final VoidCallback _requestManualDialog;
+  final bool Function() _isManualDialogOpen;
+  final void Function({bool resetBuffer}) _closeManualDialog;
+
+  final ValueNotifier<String> manualBuffer = ValueNotifier<String>('');
+
+  DateTime? _lastKey;
+  final StringBuffer _scannerBuffer = StringBuffer();
+  Timer? _scannerProcessingTimer;
+  bool _scannerCandidateActive = false;
+  DateTime? _scannerSequenceStart;
+  String _manualPendingCandidate = '';
+
+  void handleKeyInput({
+    required LogicalKeyboardKey logicalKey,
+    String? character,
+  }) {
+    if (logicalKey == LogicalKeyboardKey.backspace) {
+      _handleBackspace();
+      return;
+    }
+
+    if (logicalKey == LogicalKeyboardKey.enter) {
+      if (_scannerCandidateActive &&
+          _scannerBuffer.isNotEmpty &&
+          _scannerBuffer.length >= _scannerMinLength) {
+        _finalizeScannerCandidate(forceScanner: true);
+      }
+      return;
+    }
+
+    final char = character;
+    if (char == null || !_numericRegExp.hasMatch(char)) {
+      return;
+    }
+
+    final previousTimestamp = _lastKey;
+    final now = DateTime.now();
+    final diff = previousTimestamp == null ? null : now.difference(previousTimestamp);
+    _lastKey = now;
+
+    final bool isNewSequence = diff == null || diff > _manualResetInterval;
+    final bool shouldResetManual = !_isManualDialogOpen() && isNewSequence;
+    final bool isRapidInput = diff != null && diff <= _scannerKeyInterval;
+
+    if (_isManualDialogOpen()) {
+      if (isRapidInput) {
+        _appendScannerCharacter(char, now, previousTimestamp);
+        return;
+      }
+      _cancelScannerCandidate();
+      _updateManualInputBuffer(char, false);
+      return;
+    }
+
+    if (isRapidInput) {
+      _appendScannerCharacter(char, now, previousTimestamp);
+      return;
+    }
+
+    _flushScannerCandidateAsManual(shouldReset: shouldResetManual);
+    _updateManualInputBuffer(char, shouldResetManual);
+  }
+
+  void dispose() {
+    manualBuffer.dispose();
+    _scannerProcessingTimer?.cancel();
+  }
+
+  void clearManualInput() {
+    manualBuffer.value = '';
+    _manualPendingCandidate = '';
+  }
+
+  void _handleBackspace() {
+    if (manualBuffer.value.isEmpty) {
+      _manualPendingCandidate = '';
+      return;
+    }
+    manualBuffer.value =
+        manualBuffer.value.substring(0, manualBuffer.value.length - 1);
+    _manualPendingCandidate = manualBuffer.value;
+  }
+
+  void _appendScannerCharacter(
+    String char,
+    DateTime timestamp,
+    DateTime? previousTimestamp,
+  ) {
+    if (!_scannerCandidateActive) {
+      _scannerCandidateActive = true;
+      _scannerSequenceStart = previousTimestamp ?? timestamp;
+      final manualPrefix = _manualPendingCandidate;
+      _manualPendingCandidate = '';
+      if (manualPrefix.isNotEmpty) {
+        _closeManualDialog(resetBuffer: true);
+      }
+      _scannerBuffer
+        ..clear()
+        ..write(manualPrefix);
+    }
+    _scannerBuffer.write(char);
+    _scheduleScannerProcessing();
+  }
+
+  void _scheduleScannerProcessing() {
+    _scannerProcessingTimer?.cancel();
+    _scannerProcessingTimer = Timer(
+      _scannerProcessDelay,
+      _finalizeScannerCandidate,
+    );
+  }
+
+  void _finalizeScannerCandidate({bool forceScanner = false}) {
+    if (!_scannerCandidateActive || _scannerBuffer.isEmpty) {
+      _cancelScannerCandidate();
+      return;
+    }
+
+    final code = _scannerBuffer.toString();
+    final elapsed = _scannerSequenceStart == null
+        ? null
+        : DateTime.now().difference(_scannerSequenceStart!);
+
+    final qualifiesAsScanner = forceScanner ||
+        (code.length >= _scannerMinLength &&
+            elapsed != null &&
+            elapsed <= _scannerSequenceMaxDuration);
+
+    _cancelScannerCandidate();
+
+    if (qualifiesAsScanner) {
+      _handleScannerDetection(code);
+    } else {
+      _injectManualFromCode(code, shouldReset: true);
+    }
+  }
+
+  void _flushScannerCandidateAsManual({required bool shouldReset}) {
+    if (!_scannerCandidateActive || _scannerBuffer.isEmpty) {
+      _cancelScannerCandidate();
+      return;
+    }
+    final code = _scannerBuffer.toString();
+    _cancelScannerCandidate();
+    _injectManualFromCode(code, shouldReset: shouldReset);
+  }
+
+  void _injectManualFromCode(String code, {required bool shouldReset}) {
+    if (code.isEmpty) return;
+    var resetFlag = shouldReset;
+    for (final char in code.split('')) {
+      _updateManualInputBuffer(char, resetFlag);
+      resetFlag = false;
+    }
+  }
+
+  void _cancelScannerCandidate({bool clearBuffer = true}) {
+    _scannerCandidateActive = false;
+    _scannerSequenceStart = null;
+    _scannerProcessingTimer?.cancel();
+    if (clearBuffer) {
+      _scannerBuffer.clear();
+    }
+  }
+
+  void _handleScannerDetection(String code) {
+    if (code.isEmpty) return;
+    _closeManualDialog(resetBuffer: true);
+    unawaited(_onScannerCodeDetected(code));
+  }
+
+  void _updateManualInputBuffer(String char, bool shouldReset) {
+    if (shouldReset) {
+      clearManualInput();
+    }
+    manualBuffer.value += char;
+    _manualPendingCandidate += char;
+    if (!_isManualDialogOpen()) {
+      _requestManualDialog();
+    }
   }
 }

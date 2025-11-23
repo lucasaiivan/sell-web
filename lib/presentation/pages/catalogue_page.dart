@@ -1,11 +1,17 @@
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:sellweb/domain/entities/catalogue.dart' as entity;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import '../providers/sell_provider.dart';
 import '../widgets/navigation/drawer.dart';
+import '../widgets/modals/selection_modal.dart';
+import '../widgets/dialogs/base/base_dialog.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -1786,7 +1792,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
     );
   }
 
-  /// Construye una lista de items informativos con dividers
+  /// Construye una lista de items informativos with dividers
   Widget _buildInfoList(
       BuildContext context, List<Map<String, dynamic>> items) {
     if (items.isEmpty) return const SizedBox.shrink();
@@ -2003,6 +2009,10 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
   bool _stockEnabled = false;
   bool _favoriteEnabled = false;
 
+  // Image state
+  Uint8List? _newImageBytes;
+  final ImagePicker _picker = ImagePicker();
+
   // Controllers
   late final TextEditingController _descriptionController;
   late final TextEditingController _salePriceController;
@@ -2012,6 +2022,11 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
   late final TextEditingController _categoryController;
   late final TextEditingController _providerController;
   late final TextEditingController _markController;
+
+  // Selected IDs
+  String? _selectedCategoryId;
+  String? _selectedProviderId;
+  String? _selectedBrandId;
 
   @override
   void initState() {
@@ -2046,6 +2061,9 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
   void _initializeState() {
     _stockEnabled = widget.product.stock;
     _favoriteEnabled = widget.product.favorite;
+    _selectedCategoryId = widget.product.category.isNotEmpty ? widget.product.category : null;
+    _selectedProviderId = widget.product.provider.isNotEmpty ? widget.product.provider : null;
+    _selectedBrandId = widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
   }
 
   /// Configura listeners para recalcular beneficios
@@ -2067,6 +2085,54 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     super.dispose();
   }
 
+  /// Selecciona una imagen de la galería
+  Future<void> _pickImage() async {
+    // Verificar si el producto está verificado
+    if (widget.product.verified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.lock, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text('No se puede modificar la imagen de un producto verificado'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.orange.shade600,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _newImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar imagen: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   /// Valida y guarda los cambios del producto en Firebase
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
@@ -2074,13 +2140,23 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     setState(() => _isSaving = true);
 
     try {
-      final updatedProduct = _buildUpdatedProduct();
+      var updatedProduct = _buildUpdatedProduct();
+      
+      // Subir imagen si se seleccionó una nueva
+      if (_newImageBytes != null) {
+        final imageUrl = await DatabaseCloudService.uploadProductImage(
+          widget.product.id, 
+          _newImageBytes!
+        );
+        updatedProduct = updatedProduct.copyWith(image: imageUrl);
+      }
+
       // Detectar si cambiaron los precios para actualizar el timestamp upgrade
       final pricesChanged = _havePricesChanged();
       await widget.catalogueProvider.addAndUpdateProductToCatalogue(
         updatedProduct,
         widget.accountId,
-        shouldUpdateUpgrade: pricesChanged,
+        shouldUpdateUpgrade: pricesChanged || _newImageBytes != null,
       );
 
       if (mounted) {
@@ -2104,9 +2180,12 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
       purchasePrice: _parsePriceFromController(_purchasePriceController),
       quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
       alertStock: int.tryParse(_alertStockController.text) ?? 5,
+      category: _selectedCategoryId ?? '',
       nameCategory: _categoryController.text.trim(),
+      provider: _selectedProviderId ?? '',
       nameProvider: _providerController.text.trim(),
-      nameMark: _markController.text.trim(),
+      idMark: widget.product.verified ? widget.product.idMark : (_selectedBrandId ?? ''),
+      nameMark: widget.product.verified ? widget.product.nameMark : _markController.text.trim(),
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
     );
@@ -2163,6 +2242,178 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
         backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  /// Muestra dialog para crear una nueva marca
+  Future<entity.Mark?> _showCreateBrandDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
+    Uint8List? brandImageBytes;
+    final picker = ImagePicker();
+
+    return showDialog<entity.Mark>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return BaseDialog(
+            title: 'Crear Marca',
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Image picker
+                  GestureDetector(
+                    onTap: () async {
+                      try {
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          maxWidth: 512,
+                          maxHeight: 512,
+                          imageQuality: 85,
+                        );
+                        if (image != null) {
+                          final bytes = await image.readAsBytes();
+                          setState(() {
+                            brandImageBytes = bytes;
+                          });
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al seleccionar imagen: $e')),
+                          );
+                        }
+                      }
+                    },
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade400),
+                      ),
+                      child: brandImageBytes != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.memory(
+                                brandImageBytes!,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey.shade600),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Agregar imagen',
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Name field
+                  TextFormField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre de la marca *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.label_outline),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'El nombre es requerido';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Description field
+                  TextFormField(
+                    controller: descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Descripción (opcional)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.description_outlined),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (!formKey.currentState!.validate()) return;
+
+                  try {
+                    // Generate ID for the brand
+                    final brandId = DateTime.now().millisecondsSinceEpoch.toString();
+                    
+                    // Upload image if provided
+                    String imageUrl = '';
+                    if (brandImageBytes != null) {
+                      imageUrl = await DatabaseCloudService.uploadBrandImage(
+                        brandId,
+                        brandImageBytes!,
+                      );
+                    }
+
+                    // Create brand object
+                    final newBrand = entity.Mark(
+                      id: brandId,
+                      name: nameController.text.trim(),
+                      description: descriptionController.text.trim(),
+                      image: imageUrl,
+                      verified: false,
+                      creation: Timestamp.now(),
+                      upgrade: Timestamp.now(),
+                    );
+
+                    // Save to database
+                    await widget.catalogueProvider.createBrand(newBrand);
+
+                    if (context.mounted) {
+                      Navigator.of(context).pop(newBrand);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Marca creada exitosamente'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al crear marca: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Crear Marca'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2228,6 +2479,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
   /// Construye sección de imagen del producto
   Widget _buildImageSection() {
+    final isVerified = widget.product.verified;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -2240,13 +2492,83 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
         _buildCard(
           context: context,
           child: Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: ProductImage(
-                imageUrl: widget.product.image,
-                size: 75,
-                fit: BoxFit.cover,
-              ),
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                GestureDetector(
+                  onTap: isVerified ? null : _pickImage,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      children: [
+                        _newImageBytes != null
+                            ? Image.memory(
+                                _newImageBytes!,
+                                width: 200,
+                                height: 200,
+                                fit: BoxFit.cover,
+                              )
+                            : SizedBox(
+                                width: 200,
+                                height: 200,
+                                child: ProductImage(
+                                  imageUrl: widget.product.image,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                        if (isVerified)
+                          Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.verified,
+                                    size: 48,
+                                    color: Colors.blue.shade300,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Producto verificado',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (!isVerified)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton.icon(
+                      onPressed: _pickImage,
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.black.withValues(alpha: 0.6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text('Actualizar'),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -2271,8 +2593,8 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
             // Marca del producto
             if (widget.product.nameMark.isNotEmpty) ...[
               Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
@@ -2343,7 +2665,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
               // Campo de descripción (solo lectura)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
@@ -2395,10 +2717,10 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                 },
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             // Campo de código de barras (solo lectura)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -2633,46 +2955,357 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
   /// Campo de categoría
   Widget _buildCategoryField() {
-    return TextFormField(
-      controller: _categoryController,
-      decoration: InputDecoration(
-        labelText: 'Categoría',
-        hintText: 'Ej: Bebidas',
-        prefixIcon: const Icon(Icons.category_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+    return StreamBuilder<List<entity.Category>>(
+      stream: widget.catalogueProvider.getCategoriesStream(widget.accountId),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        
+        final categories = snapshot.data ?? [];
+        
+        return InkWell(
+          onTap: () async {
+            final selected = await showModalBottomSheet<entity.Category>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => SelectionModal<entity.Category>(
+                title: 'Seleccionar Categoría',
+                items: categories,
+                labelBuilder: (item) => item.name,
+                idBuilder: (item) => item.id,
+                selectedItem: _selectedCategoryId != null 
+                    ? categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => entity.Category())
+                    : null,
+                searchHint: 'Buscar categoría...',
+              ),
+            );
+
+            if (selected != null) {
+              setState(() {
+                _selectedCategoryId = selected.id;
+                _categoryController.text = selected.name;
+              });
+            }
+          },
+          child: IgnorePointer(
+            child: TextFormField(
+              controller: _categoryController,
+              decoration: InputDecoration(
+                labelText: 'Categoría',
+                hintText: 'Seleccionar categoría',
+                prefixIcon: const Icon(Icons.category_outlined),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
   /// Campo de proveedor
   Widget _buildProviderField() {
-    return TextFormField(
-      controller: _providerController,
-      decoration: InputDecoration(
-        labelText: 'Proveedor',
-        hintText: 'Ej: Coca Cola Company',
-        prefixIcon: const Icon(Icons.local_shipping_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+    return StreamBuilder<List<entity.Provider>>(
+      stream: widget.catalogueProvider.getProvidersStream(widget.accountId),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        
+        final providers = snapshot.data ?? [];
+
+        return InkWell(
+          onTap: () async {
+            final selected = await showModalBottomSheet<entity.Provider>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => SelectionModal<entity.Provider>(
+                title: 'Seleccionar Proveedor',
+                items: providers,
+                labelBuilder: (item) => item.name,
+                idBuilder: (item) => item.id,
+                selectedItem: _selectedProviderId != null 
+                    ? providers.firstWhere((p) => p.id == _selectedProviderId, orElse: () => entity.Provider())
+                    : null,
+                searchHint: 'Buscar proveedor...',
+              ),
+            );
+
+            if (selected != null) {
+              setState(() {
+                _selectedProviderId = selected.id;
+                _providerController.text = selected.name;
+              });
+            }
+          },
+          child: IgnorePointer(
+            child: TextFormField(
+              controller: _providerController,
+              decoration: InputDecoration(
+                labelText: 'Proveedor',
+                hintText: 'Seleccionar proveedor',
+                prefixIcon: const Icon(Icons.local_shipping_outlined),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
   /// Campo de marca
   Widget _buildMarkField() {
-    return TextFormField(
-      controller: _markController,
-      decoration: InputDecoration(
-        labelText: 'Marca',
-        hintText: 'Ej: Coca Cola',
-        prefixIcon: const Icon(Icons.branding_watermark),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+    final isVerified = widget.product.verified;
+    return StreamBuilder<List<entity.Mark>>(
+      stream: widget.catalogueProvider.getBrandsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        
+        final brands = snapshot.data ?? [];
+
+        return InkWell(
+          onTap: isVerified ? () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.lock, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('No se puede modificar la marca de un producto verificado'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.orange.shade600,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          } : () async {
+            final selected = await _showBrandSelectionModal(brands);
+
+            if (selected != null) {
+              setState(() {
+                _selectedBrandId = selected.id;
+                _markController.text = selected.name;
+              });
+            }
+          },
+          child: IgnorePointer(
+            child: TextFormField(
+              controller: _markController,
+              decoration: InputDecoration(
+                labelText: 'Marca',
+                hintText: 'Seleccionar marca',
+                prefixIcon: Icon(
+                  isVerified ? Icons.verified : Icons.branding_watermark_outlined,
+                  color: isVerified ? Colors.blue : null,
+                ),
+                suffixIcon: Icon(
+                  isVerified ? Icons.lock : Icons.arrow_drop_down,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                enabledBorder: isVerified
+                    ? OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.blue.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Muestra modal personalizado de selección de marca con botón para crear nueva
+  Future<entity.Mark?> _showBrandSelectionModal(List<entity.Mark> brands) async {
+    return showModalBottomSheet<entity.Mark>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final searchController = TextEditingController();
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Filter brands based on search
+            final query = searchController.text.toLowerCase().trim();
+            final filteredBrands = query.isEmpty
+                ? brands
+                : brands.where((brand) {
+                    return brand.name.toLowerCase().contains(query) ||
+                        brand.description.toLowerCase().contains(query);
+                  }).toList();
+
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 32,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Seleccionar Marca',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                          style: IconButton.styleFrom(
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Search bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: TextField(
+                      controller: searchController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar marca...',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // List
+                  Expanded(
+                    child: filteredBrands.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off_rounded,
+                                  size: 64,
+                                  color: colorScheme.outline.withValues(alpha: 0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No se encontraron resultados',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                // Botón para crear marca - solo si hay búsqueda
+                                if (query.isNotEmpty) ...[
+                                  const SizedBox(height: 24),
+                                  TextButton.icon(
+                                    onPressed: () async {
+                                      final newBrand = await _showCreateBrandDialog();
+                                      if (newBrand != null && context.mounted) {
+                                        Navigator.of(context).pop(newBrand);
+                                      }
+                                    },
+                                    icon: Icon(Icons.add_circle_outline, size: 20),
+                                    label: Text('Crear "$query"'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: filteredBrands.length,
+                            itemBuilder: (context, index) {
+                              final brand = filteredBrands[index];
+                              final isSelected = _selectedBrandId != null && brand.id == _selectedBrandId;
+
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                                leading: brand.image.isNotEmpty
+                                    ? CircleAvatar(
+                                        backgroundImage: NetworkImage(brand.image),
+                                        backgroundColor: colorScheme.surfaceContainerHighest,
+                                      )
+                                    : CircleAvatar(
+                                        backgroundColor: colorScheme.surfaceContainerHighest,
+                                        child: Icon(Icons.branding_watermark, color: colorScheme.onSurfaceVariant),
+                                      ),
+                                title: Text(
+                                  brand.name,
+                                  style: TextStyle(
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: isSelected ? colorScheme.primary : null,
+                                  ),
+                                ),
+                                subtitle: brand.description.isNotEmpty ? Text(brand.description) : null,
+                                trailing: isSelected
+                                    ? Icon(Icons.check_circle, color: colorScheme.primary)
+                                    : null,
+                                onTap: () => Navigator.of(context).pop(brand),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

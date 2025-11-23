@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -132,6 +133,40 @@ class DatabaseCloudService {
       .child("ARG")
       .child("PRODUCTOS")
       .child(productId);
+
+  /// Imagen de marca pública
+  static Reference publicBrandImage(String brandId) => _storage
+      .ref()
+      .child("APP")
+      .child("ARG")
+      .child("MARCAS")
+      .child(brandId);
+
+  /// Sube una imagen de producto y retorna la URL de descarga
+  static Future<String> uploadProductImage(
+      String productId, Uint8List fileBytes) async {
+    final ref = publicProductImage(productId);
+    final metadata = SettableMetadata(
+      contentType: 'image/jpeg',
+      customMetadata: {'uploaded_by': 'admin_panel'},
+    );
+
+    final uploadTask = await ref.putData(fileBytes, metadata);
+    return await uploadTask.ref.getDownloadURL();
+  }
+
+  /// Sube una imagen de marca y retorna la URL de descarga
+  static Future<String> uploadBrandImage(
+      String brandId, Uint8List fileBytes) async {
+    final ref = publicBrandImage(brandId);
+    final metadata = SettableMetadata(
+      contentType: 'image/jpeg',
+      customMetadata: {'uploaded_by': 'user'},
+    );
+
+    final uploadTask = await ref.putData(fileBytes, metadata);
+    return await uploadTask.ref.getDownloadURL();
+  }
 
   // ==========================================
   // QUERIES ESPECÍFICAS PARA CASH REGISTER

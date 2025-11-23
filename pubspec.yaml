@@ -62,6 +62,7 @@ dependencies:
   shelf: ^1.4.0
   shelf_router: ^1.1.4
   shelf_cors_headers: ^0.1.5
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

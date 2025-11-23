@@ -160,4 +160,49 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       throw Exception('Error al actualizar favorito del producto: $e');
     }
   }
+
+  @override
+  Stream<List<Category>> getCategoriesStream(String accountId) {
+    return FirebaseFirestore.instance
+        .collection('/ACCOUNTS/$accountId/CATEGORY/')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
+            .toList());
+  }
+
+  @override
+  Stream<List<Provider>> getProvidersStream(String accountId) {
+    return FirebaseFirestore.instance
+        .collection('/ACCOUNTS/$accountId/PROVIDER/')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Provider.fromDocumentSnapshot(documentSnapshot: doc))
+            .toList());
+  }
+
+  @override
+  Stream<List<Mark>> getBrandsStream({String country = 'ARG'}) {
+    return FirebaseFirestore.instance
+        .collection('/APP/$country/MARCAS/')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Mark.fromMap(doc.data()))
+            .toList());
+  }
+
+  @override
+  Future<void> createBrand(Mark brand, {String country = 'ARG'}) async {
+    if (brand.id.isEmpty) {
+      throw ArgumentError('La marca debe tener un ID válido');
+    }
+    
+    try {
+      final ref = FirebaseFirestore.instance.collection('/APP/$country/MARCAS/');
+      final brandMap = brand.toJson();
+      await ref.doc(brand.id).set(brandMap, SetOptions(merge: false));
+    } catch (e) {
+      throw Exception('Error al crear marca en Firestore: $e');
+    }
+  }
 }

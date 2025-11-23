@@ -119,4 +119,31 @@ class CatalogueUseCases {
       String accountId, String productId, bool isFavorite) {
     return repository.updateProductFavorite(accountId, productId, isFavorite);
   }
+
+  // ==========================================
+  // DATOS AUXILIARES (Categorías, Proveedores, Marcas)
+  // ==========================================
+
+  /// Obtiene un stream de las categorías de la cuenta
+  Stream<List<Category>> getCategoriesStream(String accountId) {
+    return repository.getCategoriesStream(accountId);
+  }
+
+  /// Obtiene un stream de los proveedores de la cuenta
+  Stream<List<Provider>> getProvidersStream(String accountId) {
+    return repository.getProvidersStream(accountId);
+  }
+
+  /// Obtiene un stream de las marcas públicas
+  Stream<List<Mark>> getBrandsStream({String country = 'ARG'}) {
+    return repository.getBrandsStream(country: country);
+  }
+
+  /// Crea una nueva marca en la base de datos pública
+  ///
+  /// [brand] - Marca a crear
+  /// [country] - País de la marca (por defecto 'ARG')
+  Future<void> createBrand(Mark brand, {String country = 'ARG'}) {
+    return repository.createBrand(brand, country: country);
+  }
 }

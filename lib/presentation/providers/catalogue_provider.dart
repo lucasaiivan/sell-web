@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/core.dart';
 import 'package:sellweb/core/services/search_catalogue_service.dart';
@@ -616,6 +616,33 @@ class CatalogueProvider extends ChangeNotifier {
       // detectando el cambio en el campo 'favorite' sin modificar el timestamp
     } catch (e) {
       throw Exception('Error al actualizar favorito del producto: $e');
+    }
+  }
+
+  /// Obtiene el stream de categorías
+  Stream<List<Category>> getCategoriesStream(String accountId) {
+    return _catalogueUseCases.getCategoriesStream(accountId);
+  }
+
+  /// Obtiene el stream de proveedores
+  Stream<List<Provider>> getProvidersStream(String accountId) {
+    return _catalogueUseCases.getProvidersStream(accountId);
+  }
+
+  /// Obtiene el stream de marcas
+  Stream<List<Mark>> getBrandsStream() {
+    return _catalogueUseCases.getBrandsStream();
+  }
+
+  /// Crea una nueva marca en la base de datos pública
+  ///
+  /// [brand] - Marca a crear
+  /// [country] - País de la marca (por defecto 'ARG')
+  Future<void> createBrand(Mark brand, {String country = 'ARG'}) async {
+    try {
+      await _catalogueUseCases.createBrand(brand, country: country);
+    } catch (e) {
+      throw Exception('Error al crear marca: $e');
     }
   }
 

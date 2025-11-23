@@ -424,60 +424,27 @@ class _DiscountDialogState extends State<DiscountDialog> {
     final discountAmount =
         _isPercentage ? (totalTicket * discountValue / 100) : discountValue;
 
-    // Mostrar confirmación exitosa
-    _showSuccessSnackBar(context, discountAmount);
+    // Cerrar el diálogo primero
     Navigator.of(context).pop();
+
+    // Mostrar confirmación exitosa después de que el diálogo se cierre
+    // usando Future.microtask para asegurar que el diálogo ya se cerró
+    Future.microtask(() {
+      if (context.mounted) {
+        _showSuccessSnackBar(context, discountAmount);
+      }
+    });
   }
 
   /// Muestra SnackBar de error
   void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
+    context.showErrorSnackBar(message);
   }
 
   /// Muestra SnackBar de éxito
   void _showSuccessSnackBar(BuildContext context, double discountAmount) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Descuento de ${CurrencyFormatter.formatPrice(value: discountAmount)} aplicado',
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
+    context.showSuccessSnackBar(
+      'Descuento de ${CurrencyFormatter.formatPrice(value: discountAmount)} aplicado',
     );
   }
 

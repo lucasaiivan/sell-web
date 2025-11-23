@@ -89,8 +89,10 @@ class _AccountSelectionContent extends StatelessWidget {
                       admin: adminProfile,
                     );
                   } else if (context.mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
+                        behavior: SnackBarBehavior.floating,
                         content: Text(
                             'No se encontró información del administrador'),
                         duration: Duration(seconds: 2),
@@ -99,8 +101,10 @@ class _AccountSelectionContent extends StatelessWidget {
                   }
                 } catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
+                        behavior: SnackBarBehavior.floating,
                         content: Text(
                             'Error al cargar la información: ${e.toString()}'),
                         backgroundColor: Colors.red,

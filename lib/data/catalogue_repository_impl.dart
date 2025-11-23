@@ -152,9 +152,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
           .collection('/ACCOUNTS/$accountId/CATALOGUE')
           .doc(productId);
 
+      // Solo actualizar el estado de favorito, sin modificar el timestamp upgrade
       await ref.update({
         'favorite': isFavorite,
-        'upgrade': Timestamp.now(), // Actualizar timestamp de modificación
       });
     } catch (e) {
       throw Exception('Error al actualizar favorito del producto: $e');

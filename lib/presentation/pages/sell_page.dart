@@ -17,6 +17,7 @@ import '../providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/cash_register_provider.dart';
+import '../providers/home_provider.dart';
 import '../widgets/navigation/drawer.dart';
 
 class SellPage extends StatefulWidget {
@@ -29,6 +30,7 @@ class SellPage extends StatefulWidget {
 class _SellPageState extends State<SellPage> {
   final FocusNode _focusNode = FocusNode();
   bool _showConfirmedPurchase = false;
+  bool _isListenerActive = false; // Control del estado del listener
 
   bool _isDialogOpen = false;
   BuildContext? _manualDialogContext;
@@ -43,7 +45,9 @@ class _SellPageState extends State<SellPage> {
       closeManualDialog: _closeManualInputDialog,
       isManualDialogOpen: () => _isDialogOpen,
     );
-    RawKeyboard.instance.addListener(_handleRawKeyEvent);
+    // NO activar listener aquí - se activará en didChangeDependencies
+    // cuando se confirme que la página está visible
+    
     // si es web ?
     if (html.window.location.href.contains('web')) {
       // Enfoca el nodo de entrada para que el teclado se muestre automáticamente
@@ -59,11 +63,47 @@ class _SellPageState extends State<SellPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Detectar si esta página está visible usando HomeProvider
+    final homeProvider = Provider.of<HomeProvider>(context, listen: true);
+    final shouldBeActive = homeProvider.isSellPage;
+    
+    // Activar/desactivar listener según visibilidad de la página
+    if (shouldBeActive && !_isListenerActive) {
+      _activateListener();
+    } else if (!shouldBeActive && _isListenerActive) {
+      _deactivateListener();
+    }
+  }
+
+  @override
   void dispose() {
-    RawKeyboard.instance.removeListener(_handleRawKeyEvent);
+    _deactivateListener(); // Asegurar desactivación al destruir
     _focusNode.dispose();
     _scannerInputController.dispose();
     super.dispose();
+  }
+
+  /// Activa el listener del teclado/escáner
+  void _activateListener() {
+    if (!_isListenerActive) {
+      RawKeyboard.instance.addListener(_handleRawKeyEvent);
+      _isListenerActive = true;
+      _focusNode.requestFocus(); // Enfocar para recibir eventos
+    }
+  }
+
+  /// Desactiva el listener del teclado/escáner
+  void _deactivateListener() {
+    if (_isListenerActive) {
+      RawKeyboard.instance.removeListener(_handleRawKeyEvent);
+      _isListenerActive = false;
+      _scannerInputController.clearManualInput(); // Limpiar buffer al desactivar
+      if (_isDialogOpen) {
+        _closeManualInputDialog(resetBuffer: true); // Cerrar diálogo si está abierto
+      }
+    }
   }
 
   @override
@@ -142,7 +182,8 @@ class _SellPageState extends State<SellPage> {
       },
     );
   }
- // admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
+
+  // admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
   void _handleRawKeyEvent(RawKeyEvent event) {
     if (event is! RawKeyDownEvent) return;
     _scannerInputController.handleKeyInput(
@@ -176,6 +217,7 @@ class _SellPageState extends State<SellPage> {
       _scannerInputController.clearManualInput();
     }
   }
+
   /// Muestra un diálogo simple que captura la entrada numérica en tiempo real
   Future<void> _showSearchByNumberDialog() async {
     final context = _focusNode.context;
@@ -206,6 +248,7 @@ class _SellPageState extends State<SellPage> {
       _manualDialogContext = null;
     });
   }
+
   Future<void> scanCodeProduct({required String code}) async {
     final context = _focusNode.context;
     if (context == null) return;
@@ -242,8 +285,7 @@ class _SellPageState extends State<SellPage> {
       }
     }
   }
- // fin - admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
-
+  // fin - admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
 
   /// Muestra un AlertDialog temporal con mensaje de error y opciones para crear o agregar producto.
   /// Se cierra automáticamente después de [duracion] milisegundos si no se elige una acción.
@@ -1700,7 +1742,7 @@ class _SearchNumberDialog extends StatelessWidget {
           contentPadding: const EdgeInsets.all(24),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [ 
+            children: [
               const SizedBox(height: 20),
               // Texto de búsqueda
               Text(
@@ -1714,7 +1756,8 @@ class _SearchNumberDialog extends StatelessWidget {
               const SizedBox(height: 16),
               // Mostrar números ingresados con animación
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
@@ -1777,7 +1820,8 @@ class _ScannerInputController {
   static const Duration _scannerKeyInterval = Duration(milliseconds: 35);
   static const Duration _manualResetInterval = Duration(milliseconds: 500);
   static const Duration _scannerProcessDelay = Duration(milliseconds: 100);
-  static const Duration _scannerSequenceMaxDuration = Duration(milliseconds: 600);
+  static const Duration _scannerSequenceMaxDuration =
+      Duration(milliseconds: 600);
   static const int _scannerMinLength = 6;
   static final RegExp _numericRegExp = RegExp(r'^[0-9]$');
 
@@ -1820,7 +1864,8 @@ class _ScannerInputController {
 
     final previousTimestamp = _lastKey;
     final now = DateTime.now();
-    final diff = previousTimestamp == null ? null : now.difference(previousTimestamp);
+    final diff =
+        previousTimestamp == null ? null : now.difference(previousTimestamp);
     _lastKey = now;
 
     final bool isNewSequence = diff == null || diff > _manualResetInterval;

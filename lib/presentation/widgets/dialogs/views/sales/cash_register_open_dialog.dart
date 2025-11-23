@@ -360,6 +360,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                       });
                       if (context.mounted) {
                         final theme = Theme.of(context);
+                        ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text(
@@ -378,6 +379,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                       });
                       if (context.mounted) {
                         final theme = Theme.of(context);
+                        ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Error al guardar: $e'),
@@ -401,6 +403,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   // Helper para mostrar mensajes sin problemas de contexto
   void _showErrorMessage(String message) {
     if (mounted && context.mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -413,6 +416,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
 
   void _showSuccessMessage(String message) {
     if (mounted && context.mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),

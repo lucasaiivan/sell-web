@@ -553,15 +553,15 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
           salePrice: salePrice,
           purchasePrice: purchasePrice,
           quantity: currentQuantity, // Preservar la cantidad del ticket
-          upgrade: DateFormatter.getCurrentTimestamp(),
           documentIdUpgrade: accountId,
         );
 
-        // Actualizar en el catálogo
+        // Actualizar en el catálogo (shouldUpdateUpgrade=true porque estamos editando precios)
         await catalogueProvider.addAndUpdateProductToCatalogue(
           updatedProduct,
           accountId,
           accountProfile: accountProfile,
+          shouldUpdateUpgrade: true, // Actualizar upgrade porque cambiaron los precios
         );
 
         // Actualizar en la lista de productos seleccionados si el producto está en el ticket
@@ -570,8 +570,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
       // Mostrar mensaje de éxito
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            behavior: SnackBarBehavior.floating,
             content: const Text('Precios actualizados correctamente'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
@@ -589,8 +591,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       }
 
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            behavior: SnackBarBehavior.floating,
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),

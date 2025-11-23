@@ -332,8 +332,12 @@ class _CataloguePageState extends State<CataloguePage> {
     return FloatingActionButton.extended(
       onPressed: () {
         // TODO: Implementar diálogo para agregar producto
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Agregar producto - Por implementar')),
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text('Agregar producto - Por implementar'),
+          ),
         );
       },
       icon: const Icon(Icons.add),
@@ -1132,25 +1136,36 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
       orElse: () => widget.product,
     );
 
-    // Actualizar el producto completo si hay cambios (comparar por timestamp de actualización)
-    if (mounted &&
-        updatedProduct.upgrade.millisecondsSinceEpoch !=
-            _currentProduct.upgrade.millisecondsSinceEpoch) {
+    // Actualizar el producto si hay cambios en campos relevantes
+    if (mounted && _hasProductChanged(updatedProduct)) {
       setState(() {
         _currentProduct = updatedProduct;
       });
     }
   }
 
+  /// Verifica si el producto ha cambiado comparando campos relevantes
+  bool _hasProductChanged(ProductCatalogue updatedProduct) {
+    return updatedProduct.upgrade.millisecondsSinceEpoch !=
+            _currentProduct.upgrade.millisecondsSinceEpoch ||
+        updatedProduct.favorite != _currentProduct.favorite ||
+        updatedProduct.salePrice != _currentProduct.salePrice ||
+        updatedProduct.purchasePrice != _currentProduct.purchasePrice ||
+        updatedProduct.description != _currentProduct.description ||
+        updatedProduct.quantityStock != _currentProduct.quantityStock;
+  }
+
   /// Alterna el estado de favorito del producto con manejo de errores
   Future<void> _toggleFavorite() async {
-    if (_isUpdatingFavorite) return;
-
-    setState(() {
-      _isUpdatingFavorite = true;
-    });
+    if (_isUpdatingFavorite || !mounted) return;
 
     final newFavoriteState = !_currentProduct.favorite;
+
+    // Actualizar estado local inmediatamente para feedback visual
+    setState(() {
+      _isUpdatingFavorite = true;
+      _currentProduct = _currentProduct.copyWith(favorite: newFavoriteState);
+    });
 
     try {
       await widget.catalogueProvider.updateProductFavorite(
@@ -1160,6 +1175,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
       );
 
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1185,8 +1201,14 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
         );
       }
     } catch (e) {
+      // Revertir el cambio local si hubo error
       if (mounted) {
+        setState(() {
+          _currentProduct = _currentProduct.copyWith(favorite: !newFavoriteState);
+        });
+
         final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1236,29 +1258,23 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
       appBar: AppBar(
         title: Text(_currentProduct.description),
         centerTitle: false,
+        actionsPadding: const EdgeInsets.all(8),
         actions: [
           // button : agregar a favoritos
-          IconButton(
-            onPressed: _isUpdatingFavorite ? null : _toggleFavorite,
-            icon: _isUpdatingFavorite
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    _currentProduct.favorite ? Icons.star : Icons.star_border,
-                    color:
-                        _currentProduct.favorite ? Colors.amber.shade600 : null,
-                  ),
+          AppBarButtonCircle(
+            icon: _currentProduct.favorite
+                ? Icons.star_rate_rounded
+                : Icons.star_outline_rounded,
             tooltip: _currentProduct.favorite
                 ? 'Quitar de favoritos'
                 : 'Agregar a favoritos',
+            onPressed: _isUpdatingFavorite ? null : _toggleFavorite,
+            isLoading: _isUpdatingFavorite,
+            colorAccent:
+                _currentProduct.favorite ? Colors.amber.shade600 : null,
+            backgroundColor: _currentProduct.favorite
+                ? Colors.amber.withValues(alpha: 0.2)
+                : null,
           ),
         ],
       ),
@@ -1345,7 +1361,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
           product.stock)
         _buildInfoCard(
           context: context,
-          title: 'Información y Stock',
+          title: 'Inventario y proveedor',
           icon: Icons.inventory_2_outlined,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1498,6 +1514,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
             letterSpacing: -0.5,
           ),
         ),
+        // marca del producto
         if (product.nameMark.isNotEmpty) ...[
           const SizedBox(height: 8),
           Container(
@@ -1584,6 +1601,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
                 ),
               ),
               const SizedBox(width: 16),
+              if (product.purchasePrice > 0)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -2056,9 +2074,12 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
     try {
       final updatedProduct = _buildUpdatedProduct();
+      // Detectar si cambiaron los precios para actualizar el timestamp upgrade
+      final pricesChanged = _havePricesChanged();
       await widget.catalogueProvider.addAndUpdateProductToCatalogue(
         updatedProduct,
         widget.accountId,
+        shouldUpdateUpgrade: pricesChanged,
       );
 
       if (mounted) {
@@ -2096,8 +2117,17 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
     return double.tryParse(cleanValue) ?? 0.0;
   }
 
+  /// Verifica si los precios de compra o venta han cambiado
+  bool _havePricesChanged() {
+    final newSalePrice = _parsePriceFromController(_salePriceController);
+    final newPurchasePrice = _parsePriceFromController(_purchasePriceController);
+    return newSalePrice != widget.product.salePrice ||
+        newPurchasePrice != widget.product.purchasePrice;
+  }
+
   /// Muestra mensaje de éxito al guardar
   void _showSuccessMessage() {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -2117,6 +2147,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
   /// Muestra mensaje de error al guardar
   void _showErrorMessage(String error) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -2235,151 +2266,29 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
         ),
         const SizedBox(height: 12),
         Column(
-            children: [
-                // Marca del producto
-                if (widget.product.nameMark.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration( 
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: widget.product.verified
-                            ? Colors.blue.withValues(alpha: 0.3)
-                            : colorScheme.outline.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          widget.product.verified
-                              ? Icons.verified
-                              : Icons.branding_watermark,
-                          color: widget.product.verified
-                              ? Colors.blue
-                              : colorScheme.primary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Marca',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: widget.product.verified
-                                      ? Colors.blue.withValues(alpha: 0.8)
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                widget.product.nameMark,
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: widget.product.verified
-                                      ? Colors.blue
-                                      : colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (widget.product.verified)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Verificado',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                
-                // Campo de descripción (solo lectura) 
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration( 
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color:
-                          colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Descripción',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.product.description.isNotEmpty
-                            ? widget.product.description
-                            : 'Producto sin nombre',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 8), 
-              ] else ...[
-                // Campo de descripción (editable)
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Descripción del producto *',
-                    hintText: 'Ej: Coca Cola 2L',
-                    prefixIcon:
-                        const Icon(Icons.description_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  maxLength: 100,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'La descripción es requerida';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-              const SizedBox(height: 16),
-              // Campo de código de barras (solo lectura)
+          children: [
+            // Marca del producto
+            if (widget.product.nameMark.isNotEmpty) ...[
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration( 
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    color: widget.product.verified
+                        ? Colors.blue.withValues(alpha: 0.3)
+                        : colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      Icons.qr_code_2,
-                      color: colorScheme.primary,
+                      widget.product.verified
+                          ? Icons.verified
+                          : Icons.branding_watermark,
+                      color: widget.product.verified
+                          ? Colors.blue
+                          : colorScheme.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -2388,30 +2297,147 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Código de barras',
-                            style:
-                                theme.textTheme.labelMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                            'Marca',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: widget.product.verified
+                                  ? Colors.blue.withValues(alpha: 0.8)
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            widget.product.code.isNotEmpty
-                                ? widget.product.code
-                                : 'Sin código',
-                            style:
-                                theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'monospace',
-                              fontSize: 18
+                            widget.product.nameMark,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: widget.product.verified
+                                  ? Colors.blue
+                                  : colorScheme.onSurface,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    if (widget.product.verified)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Verificado',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
+
+              // Campo de descripción (solo lectura)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Descripción',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.product.description.isNotEmpty
+                          ? widget.product.description
+                          : 'Producto sin nombre',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8),
+            ] else ...[
+              // Campo de descripción (editable)
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Descripción del producto *',
+                  hintText: 'Ej: Coca Cola 2L',
+                  prefixIcon: const Icon(Icons.description_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                maxLength: 100,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'La descripción es requerida';
+                  }
+                  return null;
+                },
+              ),
+            ],
+            const SizedBox(height: 16),
+            // Campo de código de barras (solo lectura)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.qr_code_2,
+                    color: colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Código de barras',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.product.code.isNotEmpty
+                              ? widget.product.code
+                              : 'Sin código',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                              fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ],
@@ -2512,7 +2538,8 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
             ),
           ),
         ),
-        if (_stockEnabled) ...[          const SizedBox(height: 16),
+        if (_stockEnabled) ...[
+          const SizedBox(height: 16),
           _buildQuantityField(),
           const SizedBox(height: 16),
           _buildAlertStockField(),

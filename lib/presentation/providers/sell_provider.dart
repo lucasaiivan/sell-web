@@ -786,6 +786,7 @@ class SellProvider extends ChangeNotifier {
     } catch (e) {
       // Mostrar error al usuario
       if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -940,6 +941,7 @@ class SellProvider extends ChangeNotifier {
 
       // Mostrar resultado
       if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -970,6 +972,7 @@ class SellProvider extends ChangeNotifier {
       }
     } catch (e) {
       if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1106,6 +1109,7 @@ class SellProvider extends ChangeNotifier {
 
       // Opcionalmente mostrar una notificación al usuario
       if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(

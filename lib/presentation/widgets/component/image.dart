@@ -85,8 +85,7 @@ class ProductImage extends StatelessWidget {
         // Manejo de errores y placeholder sin animaciones
         errorWidget: (context, url, error) =>
             _buildDefaultImageWithAnimation(context),
-        placeholder: (context, url) =>
-            _buildDefaultImageWithAnimation(context),
+        placeholder: (context, url) => _buildDefaultImageWithAnimation(context),
         // Configuración adicional para mejor UX
         useOldImageOnUrlChange: true,
         filterQuality: FilterQuality.medium,

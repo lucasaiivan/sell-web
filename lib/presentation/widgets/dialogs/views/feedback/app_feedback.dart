@@ -13,6 +13,9 @@ class AppFeedback {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Limpiar SnackBars existentes para evitar Hero tag duplicados
+    ScaffoldMessenger.of(context).clearSnackBars();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(

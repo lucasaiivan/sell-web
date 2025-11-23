@@ -446,10 +446,11 @@ class CatalogueProvider extends ChangeNotifier {
   /// [product] El producto a agregar o actualizar en el catálogo
   /// [accountId] El ID de la cuenta donde se agregará el producto
   /// [accountProfile] El perfil de la cuenta para registrar el precio (opcional)
+  /// [shouldUpdateUpgrade] Indica si se debe actualizar el timestamp upgrade (por defecto true, solo false cuando no cambian precios)
   /// Retorna un [Future<void>] que se completa cuando la operación termina
   Future<void> addAndUpdateProductToCatalogue(
       ProductCatalogue product, String accountId,
-      {AccountProfile? accountProfile}) async {
+      {AccountProfile? accountProfile, bool shouldUpdateUpgrade = true}) async {
     // Validar parámetros requeridos
     if (accountId.isEmpty) {
       throw Exception(
@@ -468,10 +469,15 @@ class CatalogueProvider extends ChangeNotifier {
 
       if (existingProduct != null && existingProduct.id.isNotEmpty) {
         // Actualizar producto existente
-        final updatedProduct = product.copyWith(
-          upgrade: DateFormatter.getCurrentTimestamp(),
-          documentIdUpgrade: accountId,
-        );
+        // Solo actualizar upgrade si se modifican precios (salePrice o purchasePrice)
+        final updatedProduct = shouldUpdateUpgrade
+            ? product.copyWith(
+                upgrade: DateFormatter.getCurrentTimestamp(),
+                documentIdUpgrade: accountId,
+              )
+            : product.copyWith(
+                documentIdUpgrade: accountId,
+              );
         await _catalogueUseCases.addProductToCatalogue(
             updatedProduct, accountId);
       } else {
@@ -607,14 +613,14 @@ class CatalogueProvider extends ChangeNotifier {
           accountId, productId, isFavorite);
 
       // El stream de Firebase se encargará automáticamente de la actualización
-      // gracias a que actualizamos el timestamp de modificación
+      // detectando el cambio en el campo 'favorite' sin modificar el timestamp
     } catch (e) {
       throw Exception('Error al actualizar favorito del producto: $e');
     }
   }
 
   /// Determina si dos listas de productos son iguales comparando todos los campos relevantes
-  /// incluidos sales, quantityStock y upgrade para detectar cambios de actualización
+  /// incluidos sales, quantityStock, upgrade y favorite para detectar cambios de actualización
   bool _areProductListsEqual(
       List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
     if (list1.length != list2.length) return false;
@@ -626,6 +632,7 @@ class CatalogueProvider extends ChangeNotifier {
           list1[i].description != list2[i].description ||
           list1[i].sales != list2[i].sales ||
           list1[i].quantityStock != list2[i].quantityStock ||
+          list1[i].favorite != list2[i].favorite ||
           list1[i].upgrade != list2[i].upgrade) {
         return false;
       }

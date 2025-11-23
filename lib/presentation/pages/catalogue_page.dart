@@ -1423,17 +1423,25 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
             {
               'label': 'Venta al público',
               'value': CurrencyFormatter.formatPrice(value: product.salePrice),
-              'icon': Icons.trending_up,
+              'icon': Icons.local_offer_outlined,
             },
             {
               'label': 'Compra',
-              'value': product.purchasePrice > 0
+                'value': product.purchasePrice > 0
                   ? CurrencyFormatter.formatPrice(
-                      value: product.purchasePrice,
-                    )
+                    value: product.purchasePrice,
+                  )
                   : 'No definido',
-              'icon': Icons.shopping_basket_outlined,
+                'icon': Icons.local_shipping_outlined,
             },
+            if (product.purchasePrice > 0 &&
+                product.getPorcentageFormat.isNotEmpty)
+                {
+                'label': 'Margen',
+                'valueColor': Colors.green.shade700,
+                'value': product.getPorcentageFormat,
+                'icon': Icons.trending_up,
+              },
             if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty)
               {
                 'label': 'Beneficio estimado',
@@ -1441,14 +1449,7 @@ class _ProductCatalogueViewState extends State<_ProductCatalogueView> {
                 'value': product.getBenefits,
                 'icon': Icons.ssid_chart_outlined,
               },
-            if (product.purchasePrice > 0 &&
-                product.getPorcentageFormat.isNotEmpty)
-              {
-                'label': 'Margen',
-                'valueColor': Colors.green.shade700,
-                'value': product.getPorcentageFormat,
-                'icon': Icons.percent_outlined,
-              },
+             
           ],
         ),
       ),

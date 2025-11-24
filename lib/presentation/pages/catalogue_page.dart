@@ -11,7 +11,6 @@ import '../providers/catalogue_provider.dart';
 import '../providers/sell_provider.dart';
 import '../widgets/navigation/drawer.dart';
 import '../widgets/modals/selection_modal.dart';
-import '../widgets/dialogs/base/base_dialog.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -2256,101 +2255,91 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
 
     return showDialog<entity.Mark>(
       context: context,
-      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return BaseDialog(
-            title: 'Crear Marca',
+          return AlertDialog(
+            title: const Text('Crear Nueva Marca'),
             content: Form(
               key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Image picker
-                  GestureDetector(
-                    onTap: () async {
-                      try {
-                        final XFile? image = await picker.pickImage(
-                          source: ImageSource.gallery,
-                          maxWidth: 512,
-                          maxHeight: 512,
-                          imageQuality: 85,
-                        );
-                        if (image != null) {
-                          final bytes = await image.readAsBytes();
-                          setState(() {
-                            brandImageBytes = bytes;
-                          });
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Image picker
+                    GestureDetector(
+                      onTap: () async {
+                        try {
+                          final XFile? image = await picker.pickImage(
+                            source: ImageSource.gallery,
+                            maxWidth: 512,
+                            maxHeight: 512,
+                            imageQuality: 85,
+                          );
+                          if (image != null) {
+                            final bytes = await image.readAsBytes();
+                            setState(() {
+                              brandImageBytes = bytes;
+                            });
+                          }
+                        } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Error al seleccionar imagen: $e')),
                           );
                         }
-                      }
-                    },
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade400),
-                      ),
-                      child: brandImageBytes != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                brandImageBytes!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey.shade600),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Agregar imagen',
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      },
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade400),
+                        ),
+                        child: brandImageBytes != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.memory(
+                                  brandImageBytes!,
+                                  fit: BoxFit.cover,
                                 ),
-                              ],
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Name field
-                  TextFormField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Nombre de la marca *',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey.shade600),
+                                  const SizedBox(height: 8),
+                                  Text('Agregar imagen', style: TextStyle(color: Colors.grey.shade600)),
+                                ],
+                              ),
                       ),
-                      prefixIcon: const Icon(Icons.label_outline),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'El nombre es requerido';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Description field
-                  TextFormField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(
-                      labelText: 'Descripción (opcional)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    // Name field
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre de la marca *',
+                        border: OutlineInputBorder(),
                       ),
-                      prefixIcon: const Icon(Icons.description_outlined),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'El nombre es requerido';
+                        }
+                        return null;
+                      },
                     ),
-                    maxLines: 3,
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    // Description field
+                    TextFormField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -2358,7 +2347,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Cancelar'),
               ),
-              FilledButton(
+              ElevatedButton(
                 onPressed: () async {
                   if (!formKey.currentState!.validate()) return;
 
@@ -2409,7 +2398,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                     }
                   }
                 },
-                child: const Text('Crear Marca'),
+                child: const Text('Crear'),
               ),
             ],
           );
@@ -2499,9 +2488,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                   onTap: isVerified ? null : _pickImage,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      children: [
-                        _newImageBytes != null
+                    child: _newImageBytes != null
                             ? Image.memory(
                                 _newImageBytes!,
                                 width: 200,
@@ -2516,38 +2503,6 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                                   fit: BoxFit.cover,
                                 ),
                               ),
-                        if (isVerified)
-                          Container(
-                            width: 200,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.verified,
-                                    size: 48,
-                                    color: Colors.blue.shade300,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Producto verificado',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
                   ),
                 ),
                 if (!isVerified)
@@ -2590,137 +2545,9 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
         const SizedBox(height: 12),
         Column(
           children: [
-            // Marca del producto
-            if (widget.product.nameMark.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: widget.product.verified
-                        ? Colors.blue.withValues(alpha: 0.3)
-                        : colorScheme.outline.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      widget.product.verified
-                          ? Icons.verified
-                          : Icons.branding_watermark,
-                      color: widget.product.verified
-                          ? Colors.blue
-                          : colorScheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Marca',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: widget.product.verified
-                                  ? Colors.blue.withValues(alpha: 0.8)
-                                  : colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.product.nameMark,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: widget.product.verified
-                                  ? Colors.blue
-                                  : colorScheme.onSurface,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (widget.product.verified)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Verificado',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              // Campo de descripción (solo lectura)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Descripción',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.product.description.isNotEmpty
-                          ? widget.product.description
-                          : 'Producto sin nombre',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 8),
-            ] else ...[
-              // Campo de descripción (editable)
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Descripción del producto *',
-                  hintText: 'Ej: Coca Cola 2L',
-                  prefixIcon: const Icon(Icons.description_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                maxLength: 100,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'La descripción es requerida';
-                  }
-                  return null;
-                },
-              ),
-            ],
-            const SizedBox(height: 8),
             // Campo de código de barras (solo lectura)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -2761,6 +2588,99 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
                 ],
               ),
             ),
+            const SizedBox(height:18),  
+            if (widget.product.verified) ...[ 
+              // Campo de descripción (solo lectura)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Descripción',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.product.description.isNotEmpty
+                          ? widget.product.description
+                          : 'Producto sin nombre',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),  
+            ] else ...[
+              // Campo de descripción (editable)
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Descripción del producto *',
+                  hintText: 'Ej: Coca Cola 2L',
+                  prefixIcon: const Icon(Icons.description_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                maxLength: 100,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'La descripción es requerida';
+                  }
+                  return null;
+                },
+              ),
+            ],
+            const SizedBox(height: 12),
+            // view : marca del prodicto segun si esta verificado o no
+            if (widget.product.verified) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Marca del producto',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: Colors.blue,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.product.nameMark.isNotEmpty
+                              ? widget.product.nameMark
+                              : 'Marca no especificada',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 18,
+                                color: Colors.blue,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+              )
+            ] else ...[_buildMarkField(), const SizedBox(height: 12),],
+            
           ],
         ),
       ],
@@ -2927,9 +2847,7 @@ class _ProductEditCatalogueViewState extends State<_ProductEditCatalogueView> {
         const SizedBox(height: 20),
         _buildCategoryField(),
         const SizedBox(height: 16),
-        _buildProviderField(),
-        const SizedBox(height: 16),
-        _buildMarkField(),
+        _buildProviderField(), 
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(

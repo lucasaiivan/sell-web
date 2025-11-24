@@ -63,11 +63,23 @@ dependencies:
   shelf_router: ^1.1.4
   shelf_cors_headers: ^0.1.5
   image_picker: ^1.2.1
+  # Dependency Injection
+  get_it: ^7.7.0
+  injectable: ^2.4.4
+  # Functional Programming
+  fpdart: ^1.1.0
+  # Value Equality
+  equatable: ^2.0.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
+  # Code generation
+  build_runner: ^2.4.0
+  injectable_generator: ^2.4.4
+  freezed: ^2.4.0
+  json_serializable: ^6.7.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

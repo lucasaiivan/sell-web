@@ -12,6 +12,7 @@ import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'core/config/firebase_options.dart';
 import 'core/config/oauth_config.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
+import 'core/di/injection_container.dart'; // ← NUEVO: Dependency Injection
 import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
@@ -31,6 +32,9 @@ void main() async {
 
   // Firebase initialization in the SAME zone as runApp
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // ← NUEVO: Configurar inyección de dependencias para Clean Architecture
+  configureDependencies();
 
   // Run app initialization
   _runApp();

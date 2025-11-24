@@ -55,12 +55,33 @@ class _HomePageState extends State<HomePage> {
     _handleDemoProducts(context, sellProvider);
 
     final homeProvider = context.watch<HomeProvider>();
+    final isDemo = sellProvider.profileAccountSelected.id == 'demo';
 
-    return IndexedStack(
-      index: homeProvider.currentPageIndex,
-      children: const [
-        SellPage(),
-        CataloguePage(),
+    return Column(
+      children: [
+        if (isDemo)
+          Container(
+            width: double.infinity,
+            color: Colors.orange.shade800,
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: const Text(
+              'MODO INVITADO - Los datos no se guardarán',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        Expanded(
+          child: IndexedStack(
+            index: homeProvider.currentPageIndex,
+            children: const [
+              SellPage(),
+              CataloguePage(),
+            ],
+          ),
+        ),
       ],
     );
   }

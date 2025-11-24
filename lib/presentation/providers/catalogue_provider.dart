@@ -195,6 +195,11 @@ class CatalogueProvider extends ChangeNotifier {
       isLoading: true,
     ));
 
+    // Si es cuenta demo, no iniciamos stream de Firebase
+    if (id == 'demo') {
+      return;
+    }
+
     // Crear nuevos casos de uso con el nuevo ID de cuenta
     final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
     _catalogueUseCases = CatalogueUseCases(newCatalogueRepository);

@@ -202,7 +202,11 @@ class SellProvider extends ChangeNotifier {
     // Actualizar el AdminProfile para la cuenta seleccionada
     final authProvider =
         provider.Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.user?.email != null) {
+
+    // Manejo especial para cuenta demo
+    if (account.id == 'demo') {
+      setAdminProfile(getUserAccountsUseCase.getDemoAdminProfile());
+    } else if (authProvider.user?.email != null) {
       await updateAdminProfileForSelectedAccount(authProvider.user!.email!);
     }
 
@@ -862,6 +866,11 @@ class SellProvider extends ChangeNotifier {
       final cashRegisterProvider =
           provider.Provider.of<CashRegisterProvider>(context, listen: false);
 
+      // Si es cuenta demo, no procesamos caja en Firebase
+      if (_state.profileAccountSelected.id == 'demo') {
+        return;
+      }
+
       if (cashRegisterProvider.hasActiveCashRegister) {
         // ✅ FIX: Usar priceTotal que ya incluye el descuento aplicado
         // priceTotal se estableció correctamente en prepareSaleTicket con getTotalPrice
@@ -1038,6 +1047,14 @@ class SellProvider extends ChangeNotifier {
 
     // PASO 3: Guardar en historial (Firebase + SharedPreferences automático)
     // ⚠️ IMPORTANTE: Verificar que el guardado fue exitoso antes de continuar
+
+    // Si es cuenta demo, simulamos el guardado exitoso
+    if (_state.profileAccountSelected.id == 'demo') {
+      _state = _state.copyWith(lastSoldTicket: preparedTicket);
+      notifyListeners();
+      return;
+    }
+
     final success = await cashRegisterProvider.saveTicketToTransactionHistory(
       accountId: _state.profileAccountSelected.id,
       ticket: preparedTicket, // ← Usar ticket preparado
@@ -1064,6 +1081,11 @@ class SellProvider extends ChangeNotifier {
   Future<void> _updateProductSalesAndStock(BuildContext context) async {
     try {
       final accountId = _state.profileAccountSelected.id;
+
+      // Si es cuenta demo, no actualizamos estadísticas en Firebase
+      if (accountId == 'demo') {
+        return;
+      }
 
       // Si no hay casos de uso inyectados, usar el provider (fallback)
       if (_catalogueUseCases == null) {

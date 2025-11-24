@@ -54,6 +54,17 @@ class AccountsUseCase {
 
   /// Obtiene datos (perfil) de una cuenta específica por su ID
   Future<AccountProfile> getAccount({required String idAccount}) async {
+    if (idAccount == 'demo') {
+      return AccountProfile(
+        id: 'demo',
+        name: 'Negocio de Prueba',
+        country: 'Argentina',
+        province: 'Buenos Aires',
+        town: 'Demo City',
+        image: 'https://cdn-icons-png.flaticon.com/512/869/869636.png',
+        currencySign: '\$',
+      );
+    }
     final profileAccount = await repository.getAccount(idAccount);
     if (profileAccount == null) throw Exception('Cuenta no encontrada');
     return profileAccount;
@@ -68,15 +79,35 @@ class AccountsUseCase {
         AccountProfile(
           id: 'demo',
           name: 'Negocio de Prueba',
-          country: 'DemoLand',
-          province: 'DemoProvincia',
-          town: 'DemoCiudad',
-          image: '',
-          currencySign: '24',
+          country: 'Argentina',
+          province: 'Buenos Aires',
+          town: 'Demo City',
+          image: 'https://cdn-icons-png.flaticon.com/512/869/869636.png', // Icono genérico de tienda
+          currencySign: '\$',
         ),
       );
     }
     return result;
+  }
+
+  /// Devuelve un perfil de administrador de prueba para el modo invitado
+  AdminProfile getDemoAdminProfile() {
+    return AdminProfile(
+      email: 'invitado@demo.com',
+      account: 'demo',
+      admin: true,
+      superAdmin: true,
+      personalized: true,
+      creation: Timestamp.now(),
+      lastUpdate: Timestamp.now(),
+      // Habilitar todos los permisos
+      arqueo: true,
+      historyArqueo: true,
+      transactions: true,
+      catalogue: true,
+      multiuser: true,
+      editAccount: true,
+    );
   }
 
   /// Devuelve una lista de productos de prueba para la cuenta demo.

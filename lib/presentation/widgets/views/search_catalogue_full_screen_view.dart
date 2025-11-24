@@ -659,8 +659,10 @@ class _ProductCatalogueFullScreenViewState
             .floor();
 
         // Asegurar al menos 2 chips y máximo la cantidad que cabe
+        final int totalBrands = sortedBrands.length;
+        final int minVisible = totalBrands < 2 ? totalBrands : 2;
         final maxVisibleBrands =
-            (maxChipsPerLine - 1).clamp(2, sortedBrands.length);
+            (maxChipsPerLine - 1).clamp(minVisible, totalBrands);
 
         // Lista de marcas que se mostrarán
         final List<String> visibleBrands =

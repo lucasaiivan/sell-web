@@ -518,14 +518,14 @@ class _CashRegisterManagementDialogState
 
     return [
       // button : cierre de caja
-      ButtonApp.fab(
+      AppButton.fab(
         text: 'Cerrar Caja',
         icon: Icons.exit_to_app,
         onPressed: () => _showCloseDialog(context, cashRegister),
       ),
       SizedBox(width: isMobile ? 8 : 16),
       // button : cancelar el dialog
-      ButtonApp.fab(
+      AppButton.fab(
         text: 'ok',
         onPressed: () => Navigator.of(context).pop(),
       ),
@@ -1115,7 +1115,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
                     Expanded(
                       child: Container(
                         margin: EdgeInsets.zero,
-                        child: ButtonApp.outlined(
+                        child: AppButton.outlined(
                           borderRadius: 4,
                           icon: const Icon(Icons.arrow_downward_rounded),
                           text: 'Ingreso',
@@ -1145,7 +1145,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
                     Expanded(
                       child: Container(
                         margin: EdgeInsets.zero,
-                        child: ButtonApp.outlined(
+                        child: AppButton.outlined(
                           borderRadius: 4,
                           icon: const Icon(Icons.arrow_upward),
                           text: 'Egreso',

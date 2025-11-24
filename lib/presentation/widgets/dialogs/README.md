@@ -43,8 +43,6 @@ Diálogos de ejemplo y demostración
 - `dialog_showcase.dart` - Showcase completo de componentes
 
 ### **Guías y Documentación**
-- `DIALOG_DESIGN_GUIDE.md` - Guía completa de diseño Material Design 3
-- `MIGRATION_COMPLETE.md` - ✅ Reporte de migración legacy completada
 - `README.md` - Este archivo - Documentación técnica completa
 - `dialogs.dart` - Centraliza todas las exportaciones y funciones helper
 

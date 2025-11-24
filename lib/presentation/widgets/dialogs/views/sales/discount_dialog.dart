@@ -165,14 +165,14 @@ class _DiscountDialogState extends State<DiscountDialog> {
             ),
           ),
           actions: [
-            ButtonApp.text(
+            AppButton.text(
               text: 'Cancelar',
               onPressed: () => Navigator.of(context).pop(),
             ),
 
             // Botón para limpiar descuento si ya existe uno
             if (sellProvider.ticket.discount > 0)
-              ButtonApp.text(
+              AppButton.text(
                 text: 'Quitar descuento',
                 onPressed: () {
                   sellProvider.setDiscount(discount: 0.0, isPercentage: false);
@@ -183,7 +183,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
             Container(
               margin: EdgeInsets.zero,
-              child: ButtonApp.primary(
+              child: AppButton.primary(
                 text: 'Aplicar descuento',
                 onPressed: _canApplyDiscount(totalTicket)
                     ? () => _applyDiscount(context, sellProvider, totalTicket)

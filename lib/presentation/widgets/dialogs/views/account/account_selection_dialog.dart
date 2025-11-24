@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/domain/entities/user.dart';
 import 'package:sellweb/presentation/providers/auth_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/presentation/widgets/component/user_avatar.dart';
+import 'package:sellweb/presentation/widgets/components/avatar_user.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/account/admin_profile_info_dialog.dart';

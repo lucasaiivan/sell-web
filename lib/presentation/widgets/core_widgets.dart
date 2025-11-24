@@ -11,11 +11,11 @@ export 'inputs/inputs.dart';
 export 'dialogs/dialogs.dart';
 
 // 🎨 Componentes de interfaz básicos
-export 'component/ui.dart';
+export 'components/components.dart';
 
 // 🖼️ Componentes multimedia - Exportaciones directas
-export 'component/image.dart';
-export 'component/user_avatar.dart';
+export 'components/image.dart';
+export 'components/avatar_user.dart';
 
 // 📢 Feedback y notificaciones
 export 'feedback/feedback.dart';

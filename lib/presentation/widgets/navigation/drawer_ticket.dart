@@ -840,7 +840,7 @@ class _TicketContent extends StatelessWidget {
       children: [
         const Spacer(),
         if (showCloseButton && onCloseTicket != null) ...[
-          ButtonApp.fab(
+          AppButton.fab(
             heroTag: "close_ticket_nav_fab", // Hero tag único para navigation
             onPressed: onCloseTicket,
             icon: Icons.close_rounded,
@@ -848,7 +848,7 @@ class _TicketContent extends StatelessWidget {
           ).animate(delay: const Duration(milliseconds: 0)).fade(),
           const SizedBox(width: 8),
         ],
-        ButtonApp.fab(
+        AppButton.fab(
           heroTag: "confirm_sale_nav_fab", // Hero tag único para navigation
           onPressed: onConfirmSale,
           icon: Icons.check_circle_outline_rounded,

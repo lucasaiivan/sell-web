@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/presentation/widgets/component/image.dart';
+import 'package:sellweb/presentation/widgets/components/image.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 
 /// Avatar de producto con estilo Instagram Stories

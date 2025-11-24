@@ -282,7 +282,7 @@ class _DrawerFooter extends StatelessWidget {
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            child: ButtonApp.primary(
+            child: AppButton.primary(
               borderRadius: 4,
               text: 'Descargar de Play Store',
               onPressed: () async {

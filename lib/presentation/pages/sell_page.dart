@@ -342,7 +342,7 @@ class _SellPageState extends State<SellPage> {
               children: [
                 const Spacer(),
                 // button : cancelar
-                ButtonApp.outlined(
+                AppButton.outlined(
                   text: 'Cancelar',
                   onPressed: () {
                     accionRealizada = true;
@@ -351,7 +351,7 @@ class _SellPageState extends State<SellPage> {
                 ),
                 const SizedBox(width: 12),
                 // button : Agregar producto
-                ButtonApp.primary(
+                AppButton.primary(
                   text: 'Crear producto',
                   onPressed: () {
                     accionRealizada = true;
@@ -549,7 +549,7 @@ class _SellPageState extends State<SellPage> {
       children: [
         // button : descartar ticket si es existente y tiene productos
         if (sellProvider.ticket.getProductsQuantity() > 0)
-          ButtonApp.fab(
+          AppButton.fab(
             heroTag: "discard_ticket_fab", // Hero tag único
             onPressed: () => discartTicketAlertDialg(),
             icon: Icons.close_rounded,
@@ -557,7 +557,7 @@ class _SellPageState extends State<SellPage> {
           ).animate(delay: const Duration(milliseconds: 0)).fade(),
         const SizedBox(width: 8),
         // button : muestra el botón de venta rápida
-        ButtonApp.fab(
+        AppButton.fab(
           heroTag: "quick_sale_fab", // Hero tag único
           onPressed: () => showQuickSaleDialog(context, provider: sellProvider),
           icon: Icons.flash_on_rounded,
@@ -566,7 +566,7 @@ class _SellPageState extends State<SellPage> {
         const SizedBox(width: 8),
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
-            ? ButtonApp.fab(
+            ? AppButton.fab(
                 heroTag: "charge_fab", // Hero tag único
                 onPressed: () {
                   if (sellProvider.ticket.getTotalPrice == 0) {

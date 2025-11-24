@@ -256,7 +256,7 @@ class _LoginFormState extends State<_LoginForm> {
                 // ElevatedButton : Iniciar sesión con Google
                 SizedBox(
                   width: double.infinity,
-                  child: ButtonApp(
+                  child: AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
                     backgroundColor: Colors.blue.shade700,
@@ -276,7 +276,7 @@ class _LoginFormState extends State<_LoginForm> {
                 // ElevatedButton : Iniciar como invitado
                 SizedBox(
                   width: double.infinity,
-                  child: ButtonApp(
+                  child: AppButton(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
                     icon: const Icon(Icons.auto_fix_high_outlined, size: 20),

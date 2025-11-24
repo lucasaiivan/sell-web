@@ -561,7 +561,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
           updatedProduct,
           accountId,
           accountProfile: accountProfile,
-          shouldUpdateUpgrade: true, // Actualizar upgrade porque cambiaron los precios
+          shouldUpdateUpgrade:
+              true, // Actualizar upgrade porque cambiaron los precios
         );
 
         // Actualizar en la lista de productos seleccionados si el producto está en el ticket

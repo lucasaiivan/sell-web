@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 /// - [selectedItem]: El elemento que está actualmente seleccionado en la lista.
 ///   Este se marcará visualmente.
 /// - [searchHint]: El texto de sugerencia para el campo de búsqueda dentro del modal.
- 
+
 class SelectionModal<T> extends StatefulWidget {
   final String title;
   final List<T> items;
@@ -71,7 +71,8 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
       } else {
         _filteredItems = widget.items.where((item) {
           final label = widget.labelBuilder(item).toLowerCase();
-          final subtitle = widget.subtitleBuilder?.call(item).toLowerCase() ?? '';
+          final subtitle =
+              widget.subtitleBuilder?.call(item).toLowerCase() ?? '';
           return label.contains(query) || subtitle.contains(query);
         }).toList();
       }
@@ -106,7 +107,7 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
               ),
             ),
           ),
-          
+
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
@@ -140,12 +141,14 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
                 hintText: widget.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                fillColor:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
           ),
@@ -184,30 +187,35 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
                       final subtitle = widget.subtitleBuilder?.call(item);
                       final id = widget.idBuilder?.call(item);
                       final imageUrl = widget.imageUrlBuilder?.call(item);
-                      
-                      final isSelected = widget.selectedItem != null && 
-                          (widget.idBuilder != null 
+
+                      final isSelected = widget.selectedItem != null &&
+                          (widget.idBuilder != null
                               ? id == widget.idBuilder!(widget.selectedItem!)
                               : item == widget.selectedItem);
 
                       return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 4),
                         leading: imageUrl != null && imageUrl.isNotEmpty
                             ? CircleAvatar(
                                 backgroundImage: NetworkImage(imageUrl),
-                                backgroundColor: colorScheme.surfaceContainerHighest,
+                                backgroundColor:
+                                    colorScheme.surfaceContainerHighest,
                               )
                             : null,
                         title: Text(
                           label,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             color: isSelected ? colorScheme.primary : null,
                           ),
                         ),
                         subtitle: subtitle != null ? Text(subtitle) : null,
                         trailing: isSelected
-                            ? Icon(Icons.check_circle, color: colorScheme.primary)
+                            ? Icon(Icons.check_circle,
+                                color: colorScheme.primary)
                             : null,
                         onTap: () => Navigator.of(context).pop(item),
                       );

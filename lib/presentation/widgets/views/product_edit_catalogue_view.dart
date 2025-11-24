@@ -94,9 +94,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   void _initializeState() {
     _stockEnabled = widget.product.stock;
     _favoriteEnabled = widget.product.favorite;
-    _selectedCategoryId = widget.product.category.isNotEmpty ? widget.product.category : null;
-    _selectedProviderId = widget.product.provider.isNotEmpty ? widget.product.provider : null;
-    _selectedBrandId = widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
+    _selectedCategoryId =
+        widget.product.category.isNotEmpty ? widget.product.category : null;
+    _selectedProviderId =
+        widget.product.provider.isNotEmpty ? widget.product.provider : null;
+    _selectedBrandId =
+        widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
   }
 
   /// Configura listeners para recalcular beneficios
@@ -129,7 +132,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               Icon(Icons.lock, color: Colors.white),
               SizedBox(width: 12),
               Expanded(
-                child: Text('No se puede modificar la imagen de un producto verificado'),
+                child: Text(
+                    'No se puede modificar la imagen de un producto verificado'),
               ),
             ],
           ),
@@ -174,13 +178,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
     try {
       var updatedProduct = _buildUpdatedProduct();
-      
+
       // Subir imagen si se seleccionó una nueva
       if (_newImageBytes != null) {
         final imageUrl = await DatabaseCloudService.uploadProductImage(
-          widget.product.id, 
-          _newImageBytes!
-        );
+            widget.product.id, _newImageBytes!);
         updatedProduct = updatedProduct.copyWith(image: imageUrl);
       }
 
@@ -217,8 +219,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       nameCategory: _categoryController.text.trim(),
       provider: _selectedProviderId ?? '',
       nameProvider: _providerController.text.trim(),
-      idMark: widget.product.verified ? widget.product.idMark : (_selectedBrandId ?? ''),
-      nameMark: widget.product.verified ? widget.product.nameMark : _markController.text.trim(),
+      idMark: widget.product.verified
+          ? widget.product.idMark
+          : (_selectedBrandId ?? ''),
+      nameMark: widget.product.verified
+          ? widget.product.nameMark
+          : _markController.text.trim(),
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
     );
@@ -233,7 +239,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Verifica si los precios de compra o venta han cambiado
   bool _havePricesChanged() {
     final newSalePrice = _parsePriceFromController(_salePriceController);
-    final newPurchasePrice = _parsePriceFromController(_purchasePriceController);
+    final newPurchasePrice =
+        _parsePriceFromController(_purchasePriceController);
     return newSalePrice != widget.product.salePrice ||
         newPurchasePrice != widget.product.purchasePrice;
   }
@@ -317,7 +324,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           }
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al seleccionar imagen: $e')),
+                            SnackBar(
+                                content:
+                                    Text('Error al seleccionar imagen: $e')),
                           );
                         }
                       },
@@ -340,9 +349,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey.shade600),
+                                  Icon(Icons.add_photo_alternate,
+                                      size: 40, color: Colors.grey.shade600),
                                   const SizedBox(height: 8),
-                                  Text('Agregar imagen', style: TextStyle(color: Colors.grey.shade600)),
+                                  Text('Agregar imagen',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600)),
                                 ],
                               ),
                       ),
@@ -387,8 +399,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
                   try {
                     // Generate ID for the brand
-                    final brandId = DateTime.now().millisecondsSinceEpoch.toString();
-                    
+                    final brandId =
+                        DateTime.now().millisecondsSinceEpoch.toString();
+
                     // Upload image if provided
                     String imageUrl = '';
                     if (brandImageBytes != null) {
@@ -523,20 +536,20 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: _newImageBytes != null
-                            ? Image.memory(
-                                _newImageBytes!,
-                                width: 200,
-                                height: 200,
-                                fit: BoxFit.cover,
-                              )
-                            : SizedBox(
-                                width: 200,
-                                height: 200,
-                                child: ProductImage(
-                                  imageUrl: widget.product.image,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                        ? Image.memory(
+                            _newImageBytes!,
+                            width: 200,
+                            height: 200,
+                            fit: BoxFit.cover,
+                          )
+                        : SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: ProductImage(
+                              imageUrl: widget.product.image,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                   ),
                 ),
                 if (!isVerified)
@@ -622,13 +635,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 ],
               ),
             ),
-            const SizedBox(height:18),  
-            if (widget.product.verified) ...[ 
+            const SizedBox(height: 18),
+            if (widget.product.verified) ...[
               // Campo de descripción (solo lectura)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2))),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: colorScheme.outline.withValues(alpha: 0.2))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -650,7 +666,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     ),
                   ],
                 ),
-              ),  
+              ),
             ] else ...[
               // Campo de descripción (editable)
               TextFormField(
@@ -678,14 +694,18 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2))),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: colorScheme.outline.withValues(alpha: 0.2))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Marca del producto',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                     const SizedBox(height: 4),
@@ -701,20 +721,22 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           widget.product.nameMark.isNotEmpty
                               ? widget.product.nameMark
                               : 'Marca no especificada',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 18,
-                                color: Colors.blue,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 18,
+                                    color: Colors.blue,
+                                  ),
                         ),
                       ],
                     ),
                   ],
                 ),
-
               )
-            ] else ...[_buildMarkField(), const SizedBox(height: 12),],
-            
+            ] else ...[
+              _buildMarkField(),
+              const SizedBox(height: 12),
+            ],
           ],
         ),
       ],
@@ -881,7 +903,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         const SizedBox(height: 20),
         _buildCategoryField(),
         const SizedBox(height: 16),
-        _buildProviderField(), 
+        _buildProviderField(),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
@@ -913,9 +935,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         }
-        
+
         final categories = snapshot.data ?? [];
-        
+
         return InkWell(
           onTap: () async {
             final selected = await showModalBottomSheet<entity.Category>(
@@ -927,8 +949,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 items: categories,
                 labelBuilder: (item) => item.name,
                 idBuilder: (item) => item.id,
-                selectedItem: _selectedCategoryId != null 
-                    ? categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => entity.Category())
+                selectedItem: _selectedCategoryId != null
+                    ? categories.firstWhere((c) => c.id == _selectedCategoryId,
+                        orElse: () => entity.Category())
                     : null,
                 searchHint: 'Buscar categoría...',
               ),
@@ -968,7 +991,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         }
-        
+
         final providers = snapshot.data ?? [];
 
         return InkWell(
@@ -982,8 +1005,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 items: providers,
                 labelBuilder: (item) => item.name,
                 idBuilder: (item) => item.id,
-                selectedItem: _selectedProviderId != null 
-                    ? providers.firstWhere((p) => p.id == _selectedProviderId, orElse: () => entity.Provider())
+                selectedItem: _selectedProviderId != null
+                    ? providers.firstWhere((p) => p.id == _selectedProviderId,
+                        orElse: () => entity.Provider())
                     : null,
                 searchHint: 'Buscar proveedor...',
               ),
@@ -1024,36 +1048,39 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         }
-        
+
         final brands = snapshot.data ?? [];
 
         return InkWell(
-          onTap: isVerified ? () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Row(
-                  children: [
-                    Icon(Icons.lock, color: Colors.white),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text('No se puede modificar la marca de un producto verificado'),
+          onTap: isVerified
+              ? () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.lock, color: Colors.white),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                                'No se puede modificar la marca de un producto verificado'),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: Colors.orange.shade600,
+                      behavior: SnackBarBehavior.floating,
                     ),
-                  ],
-                ),
-                backgroundColor: Colors.orange.shade600,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } : () async {
-            final selected = await _showBrandSelectionModal(brands);
+                  );
+                }
+              : () async {
+                  final selected = await _showBrandSelectionModal(brands);
 
-            if (selected != null) {
-              setState(() {
-                _selectedBrandId = selected.id;
-                _markController.text = selected.name;
-              });
-            }
-          },
+                  if (selected != null) {
+                    setState(() {
+                      _selectedBrandId = selected.id;
+                      _markController.text = selected.name;
+                    });
+                  }
+                },
           child: IgnorePointer(
             child: TextFormField(
               controller: _markController,
@@ -1061,7 +1088,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 labelText: 'Marca',
                 hintText: 'Seleccionar marca',
                 prefixIcon: Icon(
-                  isVerified ? Icons.verified : Icons.branding_watermark_outlined,
+                  isVerified
+                      ? Icons.verified
+                      : Icons.branding_watermark_outlined,
                   color: isVerified ? Colors.blue : null,
                 ),
                 suffixIcon: Icon(
@@ -1088,7 +1117,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Muestra modal personalizado de selección de marca con botón para crear nueva
-  Future<entity.Mark?> _showBrandSelectionModal(List<entity.Mark> brands) async {
+  Future<entity.Mark?> _showBrandSelectionModal(
+      List<entity.Mark> brands) async {
     return showModalBottomSheet<entity.Mark>(
       context: context,
       isScrollControlled: true,
@@ -1097,7 +1127,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
         final searchController = TextEditingController();
-        
+
         return StatefulBuilder(
           builder: (context, setState) {
             // Filter brands based on search
@@ -1115,7 +1145,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               ),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1127,12 +1158,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                       width: 32,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                        color:
+                            colorScheme.outlineVariant.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                  
+
                   // Header
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
@@ -1150,7 +1182,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           onPressed: () => Navigator.of(context).pop(),
                           icon: const Icon(Icons.close),
                           style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            backgroundColor:
+                                colorScheme.surfaceContainerHighest,
                           ),
                         ),
                       ],
@@ -1167,12 +1200,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         hintText: 'Buscar marca...',
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        fillColor: colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                       ),
                     ),
                   ),
@@ -1189,7 +1224,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                 Icon(
                                   Icons.search_off_rounded,
                                   size: 64,
-                                  color: colorScheme.outline.withValues(alpha: 0.5),
+                                  color: colorScheme.outline
+                                      .withValues(alpha: 0.5),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
@@ -1203,12 +1239,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                   const SizedBox(height: 24),
                                   TextButton.icon(
                                     onPressed: () async {
-                                      final newBrand = await _showCreateBrandDialog();
+                                      final newBrand =
+                                          await _showCreateBrandDialog();
                                       if (newBrand != null && context.mounted) {
                                         Navigator.of(context).pop(newBrand);
                                       }
                                     },
-                                    icon: Icon(Icons.add_circle_outline, size: 20),
+                                    icon: Icon(Icons.add_circle_outline,
+                                        size: 20),
                                     label: Text('Crear "$query"'),
                                     style: TextButton.styleFrom(
                                       foregroundColor: colorScheme.primary,
@@ -1223,29 +1261,42 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             itemCount: filteredBrands.length,
                             itemBuilder: (context, index) {
                               final brand = filteredBrands[index];
-                              final isSelected = _selectedBrandId != null && brand.id == _selectedBrandId;
+                              final isSelected = _selectedBrandId != null &&
+                                  brand.id == _selectedBrandId;
 
                               return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 4),
                                 leading: brand.image.isNotEmpty
                                     ? CircleAvatar(
-                                        backgroundImage: NetworkImage(brand.image),
-                                        backgroundColor: colorScheme.surfaceContainerHighest,
+                                        backgroundImage:
+                                            NetworkImage(brand.image),
+                                        backgroundColor:
+                                            colorScheme.surfaceContainerHighest,
                                       )
                                     : CircleAvatar(
-                                        backgroundColor: colorScheme.surfaceContainerHighest,
-                                        child: Icon(Icons.branding_watermark, color: colorScheme.onSurfaceVariant),
+                                        backgroundColor:
+                                            colorScheme.surfaceContainerHighest,
+                                        child: Icon(Icons.branding_watermark,
+                                            color:
+                                                colorScheme.onSurfaceVariant),
                                       ),
                                 title: Text(
                                   brand.name,
                                   style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isSelected ? colorScheme.primary : null,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color:
+                                        isSelected ? colorScheme.primary : null,
                                   ),
                                 ),
-                                subtitle: brand.description.isNotEmpty ? Text(brand.description) : null,
+                                subtitle: brand.description.isNotEmpty
+                                    ? Text(brand.description)
+                                    : null,
                                 trailing: isSelected
-                                    ? Icon(Icons.check_circle, color: colorScheme.primary)
+                                    ? Icon(Icons.check_circle,
+                                        color: colorScheme.primary)
                                     : null,
                                 onTap: () => Navigator.of(context).pop(brand),
                               );

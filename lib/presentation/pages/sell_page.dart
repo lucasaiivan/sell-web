@@ -47,7 +47,7 @@ class _SellPageState extends State<SellPage> {
     );
     // NO activar listener aquí - se activará en didChangeDependencies
     // cuando se confirme que la página está visible
-    
+
     // si es web ?
     if (html.window.location.href.contains('web')) {
       // Enfoca el nodo de entrada para que el teclado se muestre automáticamente
@@ -68,7 +68,7 @@ class _SellPageState extends State<SellPage> {
     // Detectar si esta página está visible usando HomeProvider
     final homeProvider = Provider.of<HomeProvider>(context, listen: true);
     final shouldBeActive = homeProvider.isSellPage;
-    
+
     // Activar/desactivar listener según visibilidad de la página
     if (shouldBeActive && !_isListenerActive) {
       _activateListener();
@@ -99,9 +99,11 @@ class _SellPageState extends State<SellPage> {
     if (_isListenerActive) {
       RawKeyboard.instance.removeListener(_handleRawKeyEvent);
       _isListenerActive = false;
-      _scannerInputController.clearManualInput(); // Limpiar buffer al desactivar
+      _scannerInputController
+          .clearManualInput(); // Limpiar buffer al desactivar
       if (_isDialogOpen) {
-        _closeManualInputDialog(resetBuffer: true); // Cerrar diálogo si está abierto
+        _closeManualInputDialog(
+            resetBuffer: true); // Cerrar diálogo si está abierto
       }
     }
   }

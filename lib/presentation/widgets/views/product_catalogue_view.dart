@@ -130,7 +130,8 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       // Revertir el cambio local si hubo error
       if (mounted) {
         setState(() {
-          _currentProduct = _currentProduct.copyWith(favorite: !newFavoriteState);
+          _currentProduct =
+              _currentProduct.copyWith(favorite: !newFavoriteState);
         });
 
         final errorMessage = e.toString().replaceFirst('Exception: ', '');
@@ -353,16 +354,16 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             },
             {
               'label': 'Compra',
-                'value': product.purchasePrice > 0
+              'value': product.purchasePrice > 0
                   ? CurrencyFormatter.formatPrice(
-                    value: product.purchasePrice,
-                  )
+                      value: product.purchasePrice,
+                    )
                   : 'No definido',
-                'icon': Icons.local_shipping_outlined,
+              'icon': Icons.local_shipping_outlined,
             },
             if (product.purchasePrice > 0 &&
                 product.getPorcentageFormat.isNotEmpty)
-                {
+              {
                 'label': 'Margen',
                 'valueColor': Colors.green.shade700,
                 'value': product.getPorcentageFormat,
@@ -375,7 +376,6 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 'value': product.getBenefits,
                 'icon': Icons.ssid_chart_outlined,
               },
-             
           ],
         ),
       ),
@@ -529,29 +529,29 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
               ),
               const SizedBox(width: 16),
               if (product.purchasePrice > 0)
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Compra: $purchasePrice',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onPrimaryContainer.withValues(
-                          alpha: 0.8,
-                        ),
-                      ),
-                    ),
-                    if (product.getPorcentageFormat.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
                       Text(
-                        'Margen ${product.getPorcentageFormat}',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
+                        'Compra: $purchasePrice',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer.withValues(
+                            alpha: 0.8,
+                          ),
                         ),
                       ),
-                  ],
+                      if (product.getPorcentageFormat.isNotEmpty)
+                        Text(
+                          'Margen ${product.getPorcentageFormat}',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),

@@ -1087,4 +1087,3 @@ class _ProductCatalogueCard extends StatelessWidget {
     );
   }
 }
-

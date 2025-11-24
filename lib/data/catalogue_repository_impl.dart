@@ -186,9 +186,8 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     return FirebaseFirestore.instance
         .collection('/APP/$country/MARCAS/')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Mark.fromMap(doc.data()))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList());
   }
 
   @override
@@ -196,9 +195,10 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     if (brand.id.isEmpty) {
       throw ArgumentError('La marca debe tener un ID válido');
     }
-    
+
     try {
-      final ref = FirebaseFirestore.instance.collection('/APP/$country/MARCAS/');
+      final ref =
+          FirebaseFirestore.instance.collection('/APP/$country/MARCAS/');
       final brandMap = brand.toJson();
       await ref.doc(brand.id).set(brandMap, SetOptions(merge: false));
     } catch (e) {

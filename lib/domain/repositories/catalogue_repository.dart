@@ -30,7 +30,7 @@ abstract class CatalogueRepository {
 
   // Obtiene un stream de las marcas públicas
   Stream<List<Mark>> getBrandsStream({String country = 'ARG'});
-  
+
   // Crea una nueva marca en la base de datos pública
   Future<void> createBrand(Mark brand, {String country = 'ARG'});
 }

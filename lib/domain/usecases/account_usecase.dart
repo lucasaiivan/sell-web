@@ -82,7 +82,8 @@ class AccountsUseCase {
           country: 'Argentina',
           province: 'Buenos Aires',
           town: 'Demo City',
-          image: 'https://cdn-icons-png.flaticon.com/512/869/869636.png', // Icono genérico de tienda
+          image:
+              'https://cdn-icons-png.flaticon.com/512/869/869636.png', // Icono genérico de tienda
           currencySign: '\$',
         ),
       );

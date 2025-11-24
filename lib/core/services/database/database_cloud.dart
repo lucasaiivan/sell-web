@@ -135,12 +135,8 @@ class DatabaseCloudService {
       .child(productId);
 
   /// Imagen de marca pública
-  static Reference publicBrandImage(String brandId) => _storage
-      .ref()
-      .child("APP")
-      .child("ARG")
-      .child("MARCAS")
-      .child(brandId);
+  static Reference publicBrandImage(String brandId) =>
+      _storage.ref().child("APP").child("ARG").child("MARCAS").child(brandId);
 
   /// Sube una imagen de producto y retorna la URL de descarga
   static Future<String> uploadProductImage(

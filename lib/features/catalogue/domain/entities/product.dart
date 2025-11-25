@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'product_catalogue.dart';
+
 /// Entidad que representa un producto en su forma más pura.
 /// No contiene dependencias externas (Firebase, JSON, etc.)
 class Product {
@@ -46,6 +49,36 @@ class Product {
   /// ID del usuario que actualizó el producto
   final String idUserUpgrade;
 
+  /// Convierte este producto global a un producto de catálogo
+  ProductCatalogue convertProductCatalogue() {
+    return ProductCatalogue(
+      id: id,
+      idMark: idMark,
+      nameMark: nameMark,
+      imageMark: imageMark,
+      image: image,
+      description: description,
+      code: code,
+      verified: verified,
+      reviewed: reviewed,
+      followers: followers,
+      favorite: favorite,
+      creation: creation,
+      upgrade: upgrade,
+      documentCreation: DateTime.now(),
+      documentUpgrade: DateTime.now(),
+      // Valores por defecto para campos específicos del catálogo
+      stock: false,
+      quantityStock: 0,
+      alertStock: 5,
+      sales: 0,
+      salePrice: 0.0,
+      purchasePrice: 0.0,
+      currencySign: '\$',
+      local: false,
+    );
+  }
+
   Product({
     this.id = "",
     this.idMark = "",
@@ -63,4 +96,48 @@ class Product {
     this.idUserCreation = '',
     this.idUserUpgrade = '',
   });
+
+  factory Product.fromMap(Map<String, dynamic> map) {
+    return Product(
+      id: map['id'] ?? '',
+      idMark: map['idMark'] ?? '',
+      nameMark: map['nameMark'] ?? '',
+      imageMark: map['imageMark'] ?? '',
+      description: map['description'] ?? '',
+      image: map['image'] ?? '',
+      code: map['code'] ?? '',
+      followers: map['followers'] ?? 0,
+      favorite: map['favorite'] ?? false,
+      verified: map['verified'] ?? false,
+      reviewed: map['reviewed'] ?? false,
+      creation: map['creation'] is Timestamp 
+          ? (map['creation'] as Timestamp).toDate() 
+          : DateTime.now(),
+      upgrade: map['upgrade'] is Timestamp 
+          ? (map['upgrade'] as Timestamp).toDate() 
+          : DateTime.now(),
+      idUserCreation: map['idUserCreation'] ?? '',
+      idUserUpgrade: map['idUserUpgrade'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'idMark': idMark,
+      'nameMark': nameMark,
+      'imageMark': imageMark,
+      'description': description,
+      'image': image,
+      'code': code,
+      'followers': followers,
+      'favorite': favorite,
+      'verified': verified,
+      'reviewed': reviewed,
+      'creation': Timestamp.fromDate(creation),
+      'upgrade': Timestamp.fromDate(upgrade),
+      'idUserCreation': idUserCreation,
+      'idUserUpgrade': idUserUpgrade,
+    };
+  }
 }

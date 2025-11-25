@@ -1,7 +1,12 @@
 import 'package:injectable/injectable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../repositories/catalogue_repository.dart';
-import '../entities/catalogue.dart';
+import '../entities/product_catalogue.dart';
+import '../entities/product.dart';
+import '../entities/product_price.dart';
+import '../entities/category.dart';
+import '../entities/mark.dart';
+import '../entities/provider.dart';
 
 /// Casos de uso para gestión del catálogo de productos
 ///
@@ -23,8 +28,8 @@ class CatalogueUseCases {
   // ==========================================
 
   /// Devuelve un stream de productos del catálogo de la cuenta del negocio seleccionada
-  Stream<QuerySnapshot> getCatalogueStream() {
-    return repository.getCatalogueStream();
+  Stream<QuerySnapshot> getCatalogueStream(String accountId) {
+    return repository.getCatalogueStream(accountId);
   }
 
   /// Busca un producto por código de barra en una lista de productos
@@ -164,10 +169,10 @@ class CatalogueUseCases {
               stock: true,
               alertStock: 10,
               currencySign: '24',
-              creation: Timestamp.now(),
-              upgrade: Timestamp.now(),
-              documentCreation: Timestamp.now(),
-              documentUpgrade: Timestamp.now(),
+              creation: DateTime.now(),
+              upgrade: DateTime.now(),
+              documentCreation: DateTime.now(),
+              documentUpgrade: DateTime.now(),
             ));
   }
 }

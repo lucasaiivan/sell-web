@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ProductPrice {
   final String id;
   final double price;
@@ -22,4 +24,18 @@ class ProductPrice {
     this.province = '',
     this.town = '',
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'idAccount': idAccount,
+      'imageAccount': imageAccount,
+      'nameAccount': nameAccount,
+      'price': price,
+      'time': Timestamp.fromDate(time),
+      'currencySign': currencySign,
+      'province': province,
+      'town': town,
+    };
+  }
 }

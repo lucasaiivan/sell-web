@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/data/catalogue_repository_impl.dart';
+import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/features/catalogue/data/repositories/catalogue_repository_impl.dart';
 
 /// Tests unitarios para CatalogueProvider
 /// 
@@ -20,7 +20,7 @@ void main() {
   setUp(() {
     // Crear instancias reales de los use cases con repositorios vacíos
     // Para testing, usamos el modo demo que no requiere Firebase
-    final catalogueRepository = CatalogueRepositoryImpl(id: 'test');
+    final catalogueRepository = CatalogueRepositoryImpl();
     final catalogueUseCases = CatalogueUseCases(catalogueRepository);
     
     catalogueProvider = CatalogueProvider(

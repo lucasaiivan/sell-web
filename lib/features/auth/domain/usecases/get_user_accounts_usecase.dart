@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../repositories/account_repository.dart';
 import '../entities/admin_profile.dart';
 import '../entities/account_profile.dart';
@@ -238,10 +237,10 @@ class GetUserAccountsUseCase {
               stock: true,
               alertStock: 10,
               currencySign: '24',
-              creation: Timestamp.now(),
-              upgrade: Timestamp.now(),
-              documentCreation: Timestamp.now(),
-              documentUpgrade: Timestamp.now(),
+              creation: DateTime.now(),
+              upgrade: DateTime.now(),
+              documentCreation: DateTime.now(),
+              documentUpgrade: DateTime.now(),
             ));
   }
 

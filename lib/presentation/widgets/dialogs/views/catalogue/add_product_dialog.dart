@@ -1,6 +1,7 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
@@ -494,7 +495,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         nameMark: updatedProduct.nameMark,
         imageMark: updatedProduct.imageMark,
         creation: updatedProduct.documentCreation,
-        upgrade: DateFormatter.getCurrentTimestamp(),
+        upgrade: DateTime.now(),
         idUserCreation: updatedProduct.documentIdCreation,
         idUserUpgrade: widget.authProvider.user?.email ?? '',
         verified: updatedProduct.verified,
@@ -527,8 +528,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
         idMark: updatedProduct.idMark,
         nameMark: updatedProduct.nameMark,
         imageMark: updatedProduct.imageMark,
-        creation: DateFormatter.getCurrentTimestamp(),
-        upgrade: DateFormatter.getCurrentTimestamp(),
+        creation: DateTime.now(),
+        upgrade: DateTime.now(),
         idUserCreation: authProvider.user?.email ?? '',
         idUserUpgrade: authProvider.user?.email ?? '',
         verified: false,

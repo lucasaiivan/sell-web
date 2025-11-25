@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/utils/helpers/uid_helper.dart';
-import 'package:sellweb/domain/entities/cash_register_model.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 import 'package:injectable/injectable.dart';
 
@@ -186,6 +186,10 @@ class SellUsecases {
       salePrice: salePrice,
       code: '', // Productos rápidos no tienen código
       quantity: 1,
+      creation: DateTime.now(),
+      upgrade: DateTime.now(),
+      documentCreation: DateTime.now(),
+      documentUpgrade: DateTime.now(),
     );
   }
 

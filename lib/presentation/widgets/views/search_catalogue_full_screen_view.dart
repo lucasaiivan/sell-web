@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/services/search_catalogue_service.dart';
 
 // Domain imports
-import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 // Presentation imports
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';

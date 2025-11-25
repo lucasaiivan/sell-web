@@ -172,11 +172,111 @@ class ProductCatalogue {
   }
 
   double get getBenefitsValue {
-    if (salePrice != 0.0 && purchasePrice != 0.0) {
-      return salePrice - purchasePrice;
-    }
-    return 0.0;
+    if (purchasePrice <= 0 || salePrice <= 0) return 0.0;
+    return salePrice - purchasePrice;
+  }
+
+  String get getBenefits {
+    if (purchasePrice <= 0 || salePrice <= 0) return '';
+    final profit = salePrice - purchasePrice;
+    final percentage = (profit / purchasePrice) * 100;
+    return '${percentage.toStringAsFixed(0)}%';
   }
 
   bool get isComplete => description.isNotEmpty && nameMark.isNotEmpty;
+
+  // Serialization methods
+  Map<String, dynamic> toMap() => {
+        "id": id,
+        'local': local,
+        "verified": verified,
+        'reviewed': reviewed,
+        'followers': followers,
+        'outstanding': outstanding,
+        "favorite": favorite,
+        "idMark": idMark,
+        "nameMark": nameMark,
+        'imageMark': imageMark,
+        "image": image,
+        "description": description,
+        "code": code,
+        "provider": provider,
+        "nameProvider": nameProvider,
+        "category": category,
+        "nameCategory": nameCategory,
+        "subcategory": subcategory,
+        "nameSubcategory": nameSubcategory,
+        "salePrice": salePrice,
+        "purchasePrice": purchasePrice,
+        "creation": creation.millisecondsSinceEpoch,
+        "upgrade": upgrade.millisecondsSinceEpoch,
+        "documentCreation": documentCreation.millisecondsSinceEpoch,
+        "documentUpgrade": documentUpgrade.millisecondsSinceEpoch,
+        'documentIdCreation': documentIdCreation,
+        'documentIdUpgrade': documentIdUpgrade,
+        "currencySign": currencySign,
+        "quantity": quantity,
+        "stock": stock,
+        "quantityStock": quantityStock,
+        "sales": sales,
+        "alertStock": alertStock,
+        "revenue": revenue,
+      };
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory ProductCatalogue.fromMap(Map data) {
+    DateTime parseDateTime(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is DateTime) return value;
+      if (value is int) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      }
+      // Handle Firestore Timestamp
+      if (value.runtimeType.toString() == 'Timestamp') {
+        return (value as dynamic).toDate();
+      }
+      return DateTime.now();
+    }
+
+    return ProductCatalogue(
+      id: data['id'] ?? '',
+      local: data['local'] ?? false,
+      verified: data['verified'] ?? data['verificado'] ?? false,
+      reviewed: data['reviewed'] ?? data['revisado'] ?? false,
+      followers: data['followers'] ?? data['seguidores'] ?? 0,
+      favorite: data['favorite'] ?? data['favorito'] ?? false,
+      outstanding: data['outstanding'] ?? data['destacado'] ?? false,
+      idMark: data['idMark'] ?? data['id_marca'] ?? '',
+      nameMark: data['nameMark'] ?? data['nombre_marca'] ?? '',
+      imageMark: data['imageMark'] ?? '',
+      image: data['image'] ?? data['urlimagen'] ?? '',
+      description: data['description'] ?? data['descripcion'] ?? '',
+      code: data['code'] ?? data['codigo'] ?? '',
+      provider: data['provider'] ?? data['proveedor'] ?? '',
+      nameProvider: data['nameProvider'] ?? data['proveedorName'] ?? '',
+      category: data['category'] ?? data['categoria'] ?? '',
+      nameCategory: data['nameCategory'] ?? data['categoriaName'] ?? '',
+      subcategory: data['subcategory'] ?? data['subcategoria'] ?? '',
+      nameSubcategory:
+          data['nameSubcategory'] ?? data['subcategoriaName'] ?? '',
+      upgrade: parseDateTime(data['upgrade'] ?? data['timestamp_actualizacion']),
+      creation: parseDateTime(data['creation'] ?? data['timestamp_creation']),
+      documentCreation: parseDateTime(
+          data['documentCreation'] ?? data['timestamp_creation_document']),
+      documentUpgrade: parseDateTime(
+          data['documentUpgrade'] ?? data['timestamp_upgrade_document']),
+      documentIdCreation: data['documentIdCreation'] ?? '',
+      documentIdUpgrade: data['documentIdUpgrade'] ?? '',
+      currencySign: data['currencySign'] ?? '\$',
+      quantity: data['quantity'] ?? 1,
+      stock: data['stock'] ?? false,
+      quantityStock: data['quantityStock'] ?? 0,
+      sales: data['sales'] ?? 0,
+      alertStock: data['alertStock'] ?? 5,
+      revenue: (data['revenue'] ?? 0.0).toDouble(),
+      salePrice: (data['salePrice'] ?? 0.0).toDouble(),
+      purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
+    );
+  }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/presentation/widgets/components/image.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 /// Avatar de producto con estilo Instagram Stories
 /// Incluye gradiente animado, imagen del producto y texto descriptivo

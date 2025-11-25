@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
@@ -618,7 +619,7 @@ class _ProductListTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           DateFormatter.getSimplePublicationDate(
-                              product.upgrade.toDate(), DateTime.now()),
+                              product.upgrade, DateTime.now()),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 10,

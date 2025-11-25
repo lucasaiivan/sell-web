@@ -1,6 +1,7 @@
-import '../../domain/entities/cash_register_model.dart';
+import 'package:injectable/injectable.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
-import '../../domain/repositories/cash_register_repository.dart';
+import '../../../../domain/repositories/cash_register_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Casos de uso para el sistema de caja registradora
@@ -14,6 +15,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// - Análisis y reportes
 ///
 /// Para gestión temporal de tickets (productos, cálculos), ver SellUsecases
+@lazySingleton
 class CashRegisterUsecases {
   final CashRegisterRepository _repository;
 

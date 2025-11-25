@@ -10,13 +10,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
-import 'package:sellweb/presentation/providers/cash_register_provider.dart';
+import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/presentation/providers/home_provider.dart';
 import 'package:sellweb/presentation/widgets/navigation/drawer.dart';
 
@@ -282,7 +282,15 @@ class _SalesPageState extends State<SalesPage> {
         if (mounted) {
           // ignore: use_build_context_synchronously
           showAddProductDialog(context,
-              isNew: true, product: ProductCatalogue(id: code, code: code));
+              isNew: true,
+              product: ProductCatalogue(
+                id: code,
+                code: code,
+                creation: DateTime.now(),
+                upgrade: DateTime.now(),
+                documentCreation: DateTime.now(),
+                documentUpgrade: DateTime.now(),
+              ));
         }
       }
     }
@@ -360,7 +368,14 @@ class _SalesPageState extends State<SalesPage> {
                     Navigator.of(context).pop();
                     showAddProductDialog(context,
                         isNew: true,
-                        product: ProductCatalogue(id: code, code: code));
+                        product: ProductCatalogue(
+                          id: code,
+                          code: code,
+                          creation: DateTime.now(),
+                          upgrade: DateTime.now(),
+                          documentCreation: DateTime.now(),
+                          documentUpgrade: DateTime.now(),
+                        ));
                   },
                 ),
               ],

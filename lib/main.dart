@@ -9,14 +9,14 @@ import 'package:sellweb/features/sales/presentation/providers/sales_provider.dar
 import 'core/config/firebase_options.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
 import 'core/di/injection_container.dart'; // ← NUEVO: Dependency Injection
-import 'data/catalogue_repository_impl.dart';
+import 'features/catalogue/data/repositories/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
-import 'domain/usecases/catalogue_usecases.dart';
-import 'domain/usecases/cash_register_usecases.dart';
+import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
+import 'package:sellweb/features/cash_register/domain/usecases/cash_register_usecases.dart';
 import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'presentation/providers/cash_register_provider.dart';
+import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';
 
@@ -128,10 +128,8 @@ Widget _buildAccountSpecificProviders({
   required String accountId,
   required SalesProvider sellProvider,
 }) {
-  final effectiveAccountId = accountId.isEmpty ? null : accountId;
-
   // Crear repositorios específicos de la cuenta
-  final catalogueRepository = CatalogueRepositoryImpl(id: effectiveAccountId);
+  final catalogueRepository = CatalogueRepositoryImpl();
 
   // Inicializar casos de uso
   final cashRegisterRepository = CashRegisterRepositoryImpl();

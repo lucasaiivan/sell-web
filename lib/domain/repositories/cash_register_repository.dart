@@ -1,4 +1,4 @@
-import '../entities/cash_register_model.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 
 /// Repositorio abstracto para operaciones del sistema de caja registradora
 ///

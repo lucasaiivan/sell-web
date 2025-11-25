@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../providers/catalogue_provider.dart';
 import 'product_edit_catalogue_view.dart';
 
@@ -369,11 +369,12 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 'value': product.getPorcentageFormat,
                 'icon': Icons.trending_up,
               },
-            if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty)
+            if (product.purchasePrice > 0 && product.getBenefitsValue > 0)
               {
                 'label': 'Beneficio estimado',
                 'valueColor': Colors.green.shade700,
-                'value': product.getBenefits,
+                'value':
+                    '${product.currencySign} ${product.getBenefitsValue.toStringAsFixed(2)} ganancia',
                 'icon': Icons.ssid_chart_outlined,
               },
           ],
@@ -394,7 +395,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             {
               'label': 'Creado',
               'value': DateFormatter.getSimplePublicationDate(
-                product.creation.toDate(),
+                product.creation,
                 DateTime.now(),
               ),
               'icon': Icons.calendar_today_outlined,
@@ -402,7 +403,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             {
               'label': 'Ultima actualización',
               'value': DateFormatter.getSimplePublicationDate(
-                product.upgrade.toDate(),
+                product.upgrade,
                 DateTime.now(),
               ),
               'icon': Icons.update,
@@ -425,7 +426,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
         ? CurrencyFormatter.formatPrice(value: product.purchasePrice)
         : 'Sin dato';
     final updatedLabel = DateFormatter.getSimplePublicationDate(
-      product.upgrade.toDate(),
+      product.upgrade,
       DateTime.now(),
     );
 

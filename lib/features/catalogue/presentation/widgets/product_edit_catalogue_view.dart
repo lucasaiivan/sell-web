@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
-import 'package:sellweb/domain/entities/catalogue.dart' as entity;
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/category.dart';
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
+import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
+
 import '../providers/catalogue_provider.dart';
 import '../../../../presentation/widgets/modals/selection_modal.dart';
 
@@ -287,14 +289,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Muestra dialog para crear una nueva marca
-  Future<entity.Mark?> _showCreateBrandDialog() async {
+  Future<Mark?> _showCreateBrandDialog() async {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     Uint8List? brandImageBytes;
     final picker = ImagePicker();
 
-    return showDialog<entity.Mark>(
+    return showDialog<Mark>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
@@ -412,14 +414,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     }
 
                     // Create brand object
-                    final newBrand = entity.Mark(
+                    final newBrand = Mark(
                       id: brandId,
                       name: nameController.text.trim(),
+                      country: 'ARG',
                       description: descriptionController.text.trim(),
                       image: imageUrl,
                       verified: false,
-                      creation: Timestamp.now(),
-                      upgrade: Timestamp.now(),
+                      creation: DateTime.now(),
+                      upgrade: DateTime.now(),
                     );
 
                     // Save to database
@@ -929,7 +932,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de categoría
   Widget _buildCategoryField() {
-    return StreamBuilder<List<entity.Category>>(
+    return StreamBuilder<List<Category>>(
       stream: widget.catalogueProvider.getCategoriesStream(widget.accountId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -940,18 +943,18 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
         return InkWell(
           onTap: () async {
-            final selected = await showModalBottomSheet<entity.Category>(
+            final selected = await showModalBottomSheet<Category>(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (context) => SelectionModal<entity.Category>(
+              builder: (context) => SelectionModal<Category>(
                 title: 'Seleccionar Categoría',
                 items: categories,
                 labelBuilder: (item) => item.name,
                 idBuilder: (item) => item.id,
                 selectedItem: _selectedCategoryId != null
                     ? categories.firstWhere((c) => c.id == _selectedCategoryId,
-                        orElse: () => entity.Category())
+                        orElse: () => Category())
                     : null,
                 searchHint: 'Buscar categoría...',
               ),
@@ -985,7 +988,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de proveedor
   Widget _buildProviderField() {
-    return StreamBuilder<List<entity.Provider>>(
+    return StreamBuilder<List<Provider>>(
       stream: widget.catalogueProvider.getProvidersStream(widget.accountId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -996,18 +999,18 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
         return InkWell(
           onTap: () async {
-            final selected = await showModalBottomSheet<entity.Provider>(
+            final selected = await showModalBottomSheet<Provider>(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (context) => SelectionModal<entity.Provider>(
+              builder: (context) => SelectionModal<Provider>(
                 title: 'Seleccionar Proveedor',
                 items: providers,
                 labelBuilder: (item) => item.name,
                 idBuilder: (item) => item.id,
                 selectedItem: _selectedProviderId != null
                     ? providers.firstWhere((p) => p.id == _selectedProviderId,
-                        orElse: () => entity.Provider())
+                        orElse: () => Provider(id: '', name: ''))
                     : null,
                 searchHint: 'Buscar proveedor...',
               ),
@@ -1042,7 +1045,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Campo de marca
   Widget _buildMarkField() {
     final isVerified = widget.product.verified;
-    return StreamBuilder<List<entity.Mark>>(
+    return StreamBuilder<List<Mark>>(
       stream: widget.catalogueProvider.getBrandsStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -1117,9 +1120,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Muestra modal personalizado de selección de marca con botón para crear nueva
-  Future<entity.Mark?> _showBrandSelectionModal(
-      List<entity.Mark> brands) async {
-    return showModalBottomSheet<entity.Mark>(
+  Future<Mark?> _showBrandSelectionModal(
+      List<Mark> brands) async {
+    return showModalBottomSheet<Mark>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

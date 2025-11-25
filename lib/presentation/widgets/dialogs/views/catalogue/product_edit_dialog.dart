@@ -1,7 +1,7 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/catalogue/product_price_edit_dialog.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
@@ -377,11 +377,8 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         throw Exception('No se pudo obtener el ID de la cuenta');
       }
 
-      // Cambiar el estado local primero para dar feedback inmediato
+      // Cambiar el estado de favorito
       final newFavoriteState = !widget.product.favorite;
-      setState(() {
-        widget.product.favorite = newFavoriteState;
-      });
 
       // Actualizar en Firebase a través del provider pasado como parámetro
       await widget.catalogueProvider.updateProductFavorite(
@@ -393,11 +390,6 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       // Llamar al callback si existe
       widget.onProductUpdated?.call();
     } catch (e) {
-      // Si hay error, revertir el cambio local
-      setState(() {
-        widget.product.favorite = !widget.product.favorite;
-      });
-
       // Mostrar mensaje de error al usuario
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();

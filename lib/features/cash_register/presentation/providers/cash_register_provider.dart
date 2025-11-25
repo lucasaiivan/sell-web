@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../core/core.dart';
-import '../../core/services/storage/app_data_persistence_service.dart';
-import '../../domain/entities/cash_register_model.dart';
+import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/core.dart';
+import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
-import '../../domain/usecases/cash_register_usecases.dart';
+import 'package:sellweb/features/cash_register/domain/usecases/cash_register_usecases.dart';
 import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 
 /// Extension helper para firstOrNull si no está disponible
@@ -124,6 +125,7 @@ class _CashRegisterState {
 /// await cashProvider.closeCashRegister(...); // Cerrar caja
 /// await cashProvider.addCashInflow(...); // Registrar ingreso
 /// ```
+@injectable
 class CashRegisterProvider extends ChangeNotifier {
   final CashRegisterUsecases _cashRegisterUsecases; // Operaciones de caja
   final SellUsecases _sellUsecases; // NUEVO: Operaciones de tickets

@@ -2,12 +2,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/core.dart';
 import '../../../../core/services/search_catalogue_service.dart';
-import '../../../../data/catalogue_repository_impl.dart';
-import '../../../../domain/entities/catalogue.dart';
+import '../../data/repositories/catalogue_repository_impl.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_price.dart';
+import 'package:sellweb/features/catalogue/domain/entities/category.dart';
+import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
-import '../../../../domain/usecases/catalogue_usecases.dart';
+import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
@@ -200,11 +204,11 @@ class CatalogueProvider extends ChangeNotifier {
     }
 
     // Crear nuevos casos de uso con el nuevo ID de cuenta
-    final newCatalogueRepository = CatalogueRepositoryImpl(id: id);
+    final newCatalogueRepository = CatalogueRepositoryImpl();
     _catalogueUseCases = CatalogueUseCases(newCatalogueRepository);
 
     // Inicializar el stream de productos para la nueva cuenta
-    _catalogueSubscription = _catalogueUseCases.getCatalogueStream().listen(
+    _catalogueSubscription = _catalogueUseCases.getCatalogueStream(id).listen(
       (snapshot) {
         // Convertir los documentos del snapshot en objetos ProductCatalogue
         final products = snapshot.docs
@@ -421,8 +425,8 @@ class CatalogueProvider extends ChangeNotifier {
         favorite: product.favorite,
         verified: product.verified,
         reviewed: product.reviewed,
-        creation: DateFormatter.getCurrentTimestamp(),
-        upgrade: DateFormatter.getCurrentTimestamp(),
+        creation: DateTime.now(),
+        upgrade: DateTime.now(),
         idUserCreation: product.idUserCreation,
         idUserUpgrade: product.idUserUpgrade,
       );
@@ -476,7 +480,7 @@ class CatalogueProvider extends ChangeNotifier {
         // Solo actualizar upgrade si se modifican precios (salePrice o purchasePrice)
         final updatedProduct = shouldUpdateUpgrade
             ? product.copyWith(
-                upgrade: DateFormatter.getCurrentTimestamp(),
+                upgrade: DateTime.now(),
                 documentIdUpgrade: accountId,
               )
             : product.copyWith(
@@ -487,8 +491,8 @@ class CatalogueProvider extends ChangeNotifier {
       } else {
         // Agregar nuevo producto
         final newProduct = product.copyWith(
-          creation: DateFormatter.getCurrentTimestamp(),
-          upgrade: DateFormatter.getCurrentTimestamp(),
+          creation: DateTime.now(),
+          upgrade: DateTime.now(),
           documentIdCreation: accountId,
           documentIdUpgrade: accountId,
         );
@@ -504,7 +508,7 @@ class CatalogueProvider extends ChangeNotifier {
             imageAccount: accountProfile.image,
             nameAccount: accountProfile.name,
             price: product.salePrice,
-            time: DateFormatter.getCurrentTimestamp(),
+            time: DateTime.now(),
             currencySign: accountProfile.currencySign,
             province: accountProfile.province,
             town: accountProfile.town,

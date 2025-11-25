@@ -1,4 +1,4 @@
-import '../../domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 /// Servicio unificado de búsqueda y filtrado de productos del catálogo.
 ///

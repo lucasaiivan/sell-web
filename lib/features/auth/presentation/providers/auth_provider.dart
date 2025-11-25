@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/auth_profile.dart';
@@ -26,6 +27,10 @@ class AuthProvider extends ChangeNotifier {
   final GetUserAccountsUseCase _getUserAccountsUseCase;
 
   GetUserAccountsUseCase get getUserAccountsUseCase => _getUserAccountsUseCase;
+
+  // Stream subscription para poder cancelarla en dispose
+  StreamSubscription<AuthProfile?>? _userStreamSubscription;
+  bool _isDisposed = false;
 
   AuthProfile? _user;
   AuthProfile? get user => _user;
@@ -68,8 +73,15 @@ class AuthProvider extends ChangeNotifier {
     debugPrint('🚀 [AuthProvider] Constructor - Inicializando...');
     
     // Escucha los cambios en el usuario autenticado y actualiza el estado
-    _getUserStreamUseCase().listen((user) async {
+    _userStreamSubscription = _getUserStreamUseCase().listen((user) async {
       debugPrint('👤 [AuthProvider] Stream - Usuario actualizado: ${user?.email}');
+      
+      // Verificar si el provider fue disposed antes de actualizar
+      if (_isDisposed) {
+        debugPrint('⚠️ [AuthProvider] Provider disposed, ignorando actualización de stream');
+        return;
+      }
+      
       _user = user;
       if (_user != null) {
         // Notifica a los listeners que el usuario ha cambiado
@@ -77,12 +89,22 @@ class AuthProvider extends ChangeNotifier {
       } else {
         // Si el usuario es nulo, limpia las cuentas asociadas
         _accountsAssociateds = [];
-        notifyListeners();
+        if (!_isDisposed) {
+          notifyListeners();
+        }
       }
     });
     
     // Inicializar estado del usuario actual (si ya está autenticado)
     _initializeCurrentUser();
+  }
+  
+  @override
+  void dispose() {
+    debugPrint('🗑️ [AuthProvider] Disposing provider...');
+    _isDisposed = true;
+    _userStreamSubscription?.cancel();
+    super.dispose();
   }
   
   /// Inicializa el estado si el usuario ya está autenticado
@@ -172,7 +194,9 @@ class AuthProvider extends ChangeNotifier {
       _accountsAssociateds = [];
     } finally {
       _isLoadingAccounts = false;
-      notifyListeners();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
       debugPrint('🏁 [AuthProvider] getUserAssociatedAccount - Finalizado');
     }
   }

@@ -1,11 +1,11 @@
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../domain/entities/cash_register_model.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import '../../../../providers/cash_register_provider.dart';
+import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 
 import '../../../graphics/graphics.dart';
 import 'cash_flow_dialog.dart';

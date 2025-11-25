@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/services/search_catalogue_service.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 /// Widget mejorado para búsqueda de productos con sugerencias inteligentes
 class ProductSearchField extends StatefulWidget {

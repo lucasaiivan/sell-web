@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/discount_dialog.dart';
-import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta

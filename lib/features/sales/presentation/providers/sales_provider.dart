@@ -5,16 +5,16 @@ import 'package:flutter/foundation.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
-import 'package:sellweb/domain/entities/catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
-import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
+import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:provider/provider.dart' as provider;
 
-import 'package:sellweb/presentation/providers/cash_register_provider.dart';
+import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 

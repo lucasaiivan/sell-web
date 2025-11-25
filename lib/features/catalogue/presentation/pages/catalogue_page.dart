@@ -4,10 +4,10 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
-import '../providers/sell_provider.dart';
-import '../widgets/navigation/drawer.dart';
-import '../widgets/views/product_catalogue_view.dart';
-import '../widgets/views/product_edit_catalogue_view.dart';
+import '../../../../presentation/providers/sell_provider.dart';
+import '../../../../presentation/widgets/navigation/drawer.dart';
+import '../widgets/product_catalogue_view.dart';
+import '../widgets/product_edit_catalogue_view.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización

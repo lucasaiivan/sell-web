@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/catalogue/product_price_edit_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Diálogo para editar producto seleccionado

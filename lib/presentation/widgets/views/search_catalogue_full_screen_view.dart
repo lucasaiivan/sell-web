@@ -9,7 +9,7 @@ import 'package:sellweb/core/services/search_catalogue_service.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 
 // Presentation imports
-import 'package:sellweb/presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.

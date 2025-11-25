@@ -13,7 +13,7 @@ import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
 import 'package:provider/provider.dart' as provider;
 import '../providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
-import '../providers/catalogue_provider.dart';
+import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
 
 /// Estado inmutable del provider de ventas
 ///

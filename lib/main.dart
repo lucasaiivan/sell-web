@@ -21,7 +21,7 @@ import 'domain/usecases/catalogue_usecases.dart';
 import 'domain/usecases/cash_register_usecases.dart';
 import 'domain/usecases/sell_usecases.dart'; // NUEVO
 import 'presentation/providers/auth_provider.dart';
-import 'presentation/providers/catalogue_provider.dart';
+import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
 import 'presentation/pages/presentation_page.dart';

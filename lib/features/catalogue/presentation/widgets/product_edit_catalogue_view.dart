@@ -5,8 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/catalogue.dart' as entity;
-import '../../providers/catalogue_provider.dart';
-import '../modals/selection_modal.dart';
+import '../providers/catalogue_provider.dart';
+import '../../../../presentation/widgets/modals/selection_modal.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///

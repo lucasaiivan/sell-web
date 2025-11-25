@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
-import '../../providers/catalogue_provider.dart';
+import '../providers/catalogue_provider.dart';
 import 'product_edit_catalogue_view.dart';
 
 /// Vista de detalle de un producto del catálogo

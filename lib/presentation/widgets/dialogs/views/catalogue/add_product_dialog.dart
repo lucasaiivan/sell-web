@@ -2,7 +2,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
-import 'package:sellweb/presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/presentation/providers/auth_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 

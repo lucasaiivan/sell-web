@@ -13,7 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/domain/entities/user.dart';
 import '../providers/sell_provider.dart';
-import '../providers/catalogue_provider.dart';
+import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/cash_register_provider.dart';

@@ -5,7 +5,7 @@ import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/presentation/pages/home_page.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/home_provider.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
 import 'core/di/injection_container.dart'; // ← NUEVO: Dependency Injection
@@ -13,7 +13,7 @@ import 'data/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
 import 'domain/usecases/catalogue_usecases.dart';
 import 'domain/usecases/cash_register_usecases.dart';
-import 'domain/usecases/sell_usecases.dart'; // NUEVO
+import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
@@ -51,15 +51,15 @@ void _runApp() {
           create: (_) => getIt<AuthProvider>(),
         ),
 
-        // SellProvider - creado una sola vez y reutilizado
-        ChangeNotifierProxyProvider<AuthProvider, SellProvider>(
+        // SalesProvider - creado una sola vez y reutilizado
+        ChangeNotifierProxyProvider<AuthProvider, SalesProvider>(
           create: (_) {
             final persistenceService = AppDataPersistenceService.instance;
             final sellUsecases = SellUsecases(
               persistenceService: persistenceService,
             );
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
-            return SellProvider(
+            return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
               sellUsecases: sellUsecases,
               catalogueUseCases: catalogueUseCases,
@@ -72,7 +72,7 @@ void _runApp() {
               persistenceService: persistenceService,
             );
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
-            return SellProvider(
+            return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
               sellUsecases: sellUsecases,
               catalogueUseCases: catalogueUseCases,
@@ -94,7 +94,7 @@ void _runApp() {
                   return const AppPresentationPage();
                 }
 
-                return Consumer<SellProvider>(
+                return Consumer<SalesProvider>(
                   builder: (context, sellProvider, _) {
                     // 🆕 Inicializar AdminProfile cuando hay usuario autenticado y cuenta seleccionada
                     // Esto maneja el caso cuando el usuario recarga la app con una sesión activa
@@ -126,7 +126,7 @@ void _runApp() {
 
 Widget _buildAccountSpecificProviders({
   required String accountId,
-  required SellProvider sellProvider,
+  required SalesProvider sellProvider,
 }) {
   final effectiveAccountId = accountId.isEmpty ? null : accountId;
 

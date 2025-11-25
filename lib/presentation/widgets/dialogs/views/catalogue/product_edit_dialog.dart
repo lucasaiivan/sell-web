@@ -2,7 +2,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/catalogue/product_price_edit_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
@@ -341,7 +341,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
     // Actualizar en el provider
     final sellProvider =
-        provider_package.Provider.of<SellProvider>(context, listen: false);
+        provider_package.Provider.of<SalesProvider>(context, listen: false);
     sellProvider.addProductsticket(
       widget.product.copyWith(quantity: newQuantity),
       replaceQuantity: true,
@@ -366,9 +366,9 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     });
 
     try {
-      // Obtener el SellProvider
+      // Obtener el SalesProvider
       final sellProvider =
-          provider_package.Provider.of<SellProvider>(context, listen: false);
+          provider_package.Provider.of<SalesProvider>(context, listen: false);
 
       // Obtener el ID de la cuenta
       final accountId = sellProvider.profileAccountSelected.id;
@@ -449,7 +449,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
       // Eliminar del provider
       final sellProvider =
-          provider_package.Provider.of<SellProvider>(context, listen: false);
+          provider_package.Provider.of<SalesProvider>(context, listen: false);
       sellProvider.removeProduct(widget.product);
 
       if (mounted) {

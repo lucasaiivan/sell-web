@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../../../providers/cash_register_provider.dart';
-import '../../../../providers/sell_provider.dart';
+
 import '../../../buttons/app_button.dart';
 
 /// Diálogo para abrir una nueva caja registradora
@@ -37,7 +38,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
 
   void _loadFixedDescriptions() async {
     final cashRegisterProvider = context.read<CashRegisterProvider>();
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     if (accountId.isNotEmpty) {
@@ -101,7 +102,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        Consumer<SellProvider>(
+        Consumer<SalesProvider>(
           builder: (context, sellProvider, child) {
             return AppButton.primary(
               onPressed: cashRegisterProvider.isProcessing
@@ -283,7 +284,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   Future<void> _handleOpenCashRegister(
     BuildContext context,
     CashRegisterProvider cashRegisterProvider,
-    SellProvider sellProvider,
+    SalesProvider sellProvider,
   ) async {
     final accountId = sellProvider.profileAccountSelected.id;
     final authProvider = context.read<AuthProvider>();
@@ -310,7 +311,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
     CashRegisterProvider cashRegisterProvider,
   ) {
     final textController = TextEditingController();
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
 
     showDialog<void>(
       context: context,
@@ -433,7 +434,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
     CashRegisterProvider cashRegisterProvider,
     String description,
   ) async {
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     // Mostrar diálogo de confirmación

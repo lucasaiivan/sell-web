@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sellweb/presentation/widgets/dialogs/views/sales/discount_dialog.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación
@@ -63,7 +63,7 @@ class _TicketContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<SellProvider>(context);
+    final provider = Provider.of<SalesProvider>(context);
     final ticket = provider.ticket;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -134,7 +134,7 @@ class _TicketContent extends StatelessWidget {
     required ColorScheme colorScheme,
     required Color backgroundColor,
   }) {
-    final provider = Provider.of<SellProvider>(context, listen: false);
+    final provider = Provider.of<SalesProvider>(context, listen: false);
 
     return Stack(
       children: [
@@ -289,7 +289,7 @@ class _TicketContent extends StatelessWidget {
     VoidCallback? onEditCashAmount,
     ColorScheme colorScheme,
   ) {
-    return Consumer<SellProvider>(
+    return Consumer<SalesProvider>(
       builder: (context, provider, _) {
         final hasDiscount = provider.ticket.discount > 0;
         final hasChange = ticket.valueReceived > 0 &&
@@ -730,7 +730,7 @@ class _TicketContent extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 6),
-            Consumer<SellProvider>(
+            Consumer<SalesProvider>(
               builder: (context, provider, _) {
                 return Wrap(
                   spacing: 5,
@@ -777,7 +777,7 @@ class _TicketContent extends StatelessWidget {
   Widget _buildPrintCheckbox() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Consumer<SellProvider>(
+      child: Consumer<SalesProvider>(
         builder: (context, sellProvider, __) {
           final colorScheme = Theme.of(context).colorScheme;
 
@@ -1056,7 +1056,7 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<SellProvider>(context, listen: false);
+    final provider = Provider.of<SalesProvider>(context, listen: false);
     final theme = Theme.of(context);
     final ticket = provider.ticket;
 

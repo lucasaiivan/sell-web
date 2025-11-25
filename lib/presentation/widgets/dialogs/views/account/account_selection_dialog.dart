@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/presentation/widgets/components/avatar_user.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
@@ -42,7 +42,7 @@ class _AccountSelectionContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final sellProvider = context.watch<SellProvider>();
+    final sellProvider = context.watch<SalesProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,7 +68,7 @@ class _AccountSelectionContent extends StatelessWidget {
   Widget _buildAdminSection(BuildContext context) {
     final theme = Theme.of(context);
 
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
 
@@ -80,7 +80,7 @@ class _AccountSelectionContent extends StatelessWidget {
         onTap: user?.email != null
             ? () async {
                 try {
-                  // Obtener AdminProfile desde SellProvider
+                  // Obtener AdminProfile desde SalesProvider
                   final adminProfile = sellProvider.currentAdminProfile;
 
                   if (adminProfile != null) {
@@ -170,7 +170,7 @@ class _AccountSelectionContent extends StatelessWidget {
     List<AccountProfile> accounts,
   ) {
     final theme = Theme.of(context);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     if (accounts.isEmpty) {
       return DialogComponents.infoSection(
@@ -218,7 +218,7 @@ class _AccountSelectionContent extends StatelessWidget {
     BuildContext context,
     AccountProfile account,
     bool isSelected,
-    SellProvider sellProvider,
+    SalesProvider sellProvider,
   ) {
     final theme = Theme.of(context);
 
@@ -264,7 +264,7 @@ class _AccountSelectionContent extends StatelessWidget {
   Widget _buildActionsSection(
     BuildContext context,
     AuthProvider authProvider,
-    SellProvider sellProvider,
+    SalesProvider sellProvider,
   ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,

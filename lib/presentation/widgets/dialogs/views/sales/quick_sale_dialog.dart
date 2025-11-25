@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/core.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo modernizado para venta rápida siguiendo Material Design 3
 class QuickSaleDialog extends StatefulWidget {
@@ -9,7 +9,7 @@ class QuickSaleDialog extends StatefulWidget {
     required this.provider,
   });
 
-  final SellProvider provider;
+  final SalesProvider provider;
 
   @override
   State<QuickSaleDialog> createState() => _QuickSaleDialogState();
@@ -158,7 +158,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 /// Helper function para mostrar el diálogo de venta rápida
 Future<void> showQuickSaleDialog(
   BuildContext context, {
-  required SellProvider provider,
+  required SalesProvider provider,
 }) {
   return showDialog(
     context: context,

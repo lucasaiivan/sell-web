@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sellweb/domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
 class CashRegister {
   String id; // id de la caja

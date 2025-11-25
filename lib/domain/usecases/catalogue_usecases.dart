@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../repositories/catalogue_repository.dart';
 import '../entities/catalogue.dart';
@@ -11,6 +12,7 @@ import '../entities/catalogue.dart';
 /// - Actualizar estadísticas (ventas, stock)
 /// - Actualizar estado de favoritos
 /// - Gestionar productos públicos
+@lazySingleton
 class CatalogueUseCases {
   final CatalogueRepository repository;
 

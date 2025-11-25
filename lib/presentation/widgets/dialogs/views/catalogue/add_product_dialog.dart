@@ -1,7 +1,7 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
@@ -19,7 +19,7 @@ class AddProductDialog extends StatefulWidget {
   });
 
   final ProductCatalogue product;
-  final SellProvider sellProvider;
+  final SalesProvider sellProvider;
   final CatalogueProvider catalogueProvider;
   final AuthProvider authProvider;
   final String? errorMessage;
@@ -514,7 +514,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
     ProductCatalogue updatedProduct,
     CatalogueProvider catalogueProvider,
     AuthProvider authProvider,
-    SellProvider sellProvider,
+    SalesProvider sellProvider,
   ) async {
     try {
       final publicProduct = Product(
@@ -568,7 +568,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
   Future<void> _addExistingProduct(
     ProductCatalogue updatedProduct,
     CatalogueProvider catalogueProvider,
-    SellProvider sellProvider,
+    SalesProvider sellProvider,
     AuthProvider authProvider,
   ) async {
     try {
@@ -606,7 +606,7 @@ Future<void> showAddProductDialog(
   try {
     // Obtener los providers del contexto antes de mostrar el diálogo
     final sellProvider =
-        provider_package.Provider.of<SellProvider>(context, listen: false);
+        provider_package.Provider.of<SalesProvider>(context, listen: false);
     final catalogueProvider =
         provider_package.Provider.of<CatalogueProvider>(context, listen: false);
     final authProvider =

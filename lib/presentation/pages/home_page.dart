@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
-import '../providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'welcome_selected_account_page.dart';
-import 'sell_page.dart';
+import 'package:sellweb/features/sales/presentation/pages/sales_page.dart';
 import '../../features/catalogue/presentation/pages/catalogue_page.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
@@ -20,8 +20,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
-    // Obtener SellProvider de forma segura
-    final sellProvider = context.watch<SellProvider>();
+    // Obtener SalesProvider de forma segura
+    final sellProvider = context.watch<SalesProvider>();
 
     // Si no hay cuenta seleccionada, mostrar la pantalla de bienvenida
     if (sellProvider.profileAccountSelected.id.isEmpty) {
@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Construye la pantalla de bienvenida para seleccionar cuenta
-  Widget _buildWelcomeScreen(BuildContext context, SellProvider sellProvider) {
+  Widget _buildWelcomeScreen(BuildContext context, SalesProvider sellProvider) {
     return WelcomeSelectedAccountPage(
       onSelectAccount: (account) async {
         // Selecciona la cuenta y recarga el catálogo
@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Construye la navegación principal manteniendo ambas pantallas montadas
-  Widget _buildMainNavigation(BuildContext context, SellProvider sellProvider) {
+  Widget _buildMainNavigation(BuildContext context, SalesProvider sellProvider) {
     // Manejar productos demo si aplica
     _handleDemoProducts(context, sellProvider);
 
@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
           child: IndexedStack(
             index: homeProvider.currentPageIndex,
             children: const [
-              SellPage(),
+              SalesPage(),
               CataloguePage(),
             ],
           ),
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Maneja la carga de productos demo si corresponde
-  void _handleDemoProducts(BuildContext context, SellProvider sellProvider) {
+  void _handleDemoProducts(BuildContext context, SalesProvider sellProvider) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);

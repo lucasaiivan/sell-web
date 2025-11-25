@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/providers/theme_data_app_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../providers/home_provider.dart';
 import '../core_widgets.dart';
 
@@ -67,8 +67,8 @@ class _AccountsAssociatedsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usar Consumer2 para escuchar cambios en AuthProvider y SellProvider
-    return Consumer2<AuthProvider, SellProvider>(
+    // Usar Consumer2 para escuchar cambios en AuthProvider y SalesProvider
+    return Consumer2<AuthProvider, SalesProvider>(
       builder: (context, authProvider, sellProvider, child) {
         final selectedAccount = sellProvider.profileAccountSelected;
         final theme = Theme.of(context);

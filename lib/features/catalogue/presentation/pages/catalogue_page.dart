@@ -4,7 +4,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
-import '../../../../presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../../../presentation/widgets/navigation/drawer.dart';
 import '../widgets/product_catalogue_view.dart';
 import '../widgets/product_edit_catalogue_view.dart';
@@ -43,7 +43,7 @@ class _CataloguePageState extends State<CataloguePage> {
   /// Construye el AppBar de la página de catálogo
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     // controllers
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     return AppBar(
       toolbarHeight: 70,
@@ -187,7 +187,7 @@ class _CataloguePageState extends State<CataloguePage> {
         final product = products[index];
         final catalogueProvider =
             Provider.of<CatalogueProvider>(context, listen: false);
-        final sellProvider = Provider.of<SellProvider>(context, listen: false);
+        final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
         return _ProductCatalogueCard(
           product: product,
@@ -220,7 +220,7 @@ class _CataloguePageState extends State<CataloguePage> {
         final product = products[index];
         final catalogueProvider =
             Provider.of<CatalogueProvider>(context, listen: false);
-        final sellProvider = Provider.of<SellProvider>(context, listen: false);
+        final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
         return _ProductListTile(
           product: product,

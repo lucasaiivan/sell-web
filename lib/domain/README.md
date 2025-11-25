@@ -28,7 +28,7 @@ domain/
 ├── entities/              # Modelos de dominio y entidades de negocio
 │   ├── cash_register_model.dart
 │   ├── catalogue.dart
-│   ├── ticket_model.dart
+
 │   └── user.dart
 │
 ├── repositories/          # Interfaces abstractas de repositorios

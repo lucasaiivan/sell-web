@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../domain/entities/cash_register_model.dart';
 import '../../../../providers/cash_register_provider.dart';
-import '../../../../providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo para cerrar una caja registradora
 class CashRegisterCloseDialog extends StatefulWidget {
@@ -123,7 +123,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
           children: [
             const Spacer(),
             // button : Cerrar caja
-            Consumer<SellProvider>(
+            Consumer<SalesProvider>(
               builder: (context, sellProvider, child) {
                 return DialogComponents.primaryActionButton(
                     context: context,
@@ -223,7 +223,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
   Future<void> _handleCloseCashRegister(
     BuildContext context,
     CashRegisterProvider cashRegisterProvider,
-    SellProvider sellProvider,
+    SalesProvider sellProvider,
   ) async {
     final success = await cashRegisterProvider.closeCashRegister(
       sellProvider.profileAccountSelected.id,

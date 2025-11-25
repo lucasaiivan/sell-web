@@ -1,7 +1,7 @@
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
-import 'package:sellweb/domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
 /// Diálogo modernizado para opciones del ticket siguiendo Material Design 3
 class TicketOptionsDialog extends StatefulWidget {

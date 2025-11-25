@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../core/services/storage/app_data_persistence_service.dart';
-import '../../core/utils/helpers/uid_helper.dart';
-import '../entities/cash_register_model.dart';
-import '../entities/ticket_model.dart';
-import '../entities/catalogue.dart';
+import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
+import 'package:sellweb/core/utils/helpers/uid_helper.dart';
+import 'package:sellweb/domain/entities/cash_register_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+import 'package:sellweb/domain/entities/catalogue.dart';
+
+import 'package:injectable/injectable.dart';
 
 /// Casos de uso para gestión temporal de tickets de venta
 ///
@@ -20,6 +22,7 @@ import '../entities/catalogue.dart';
 /// - Persistencia en Firebase → Ver CashRegisterUsecases
 /// - Consultas de historial → Ver CashRegisterUsecases
 /// - Anulaciones persistentes → Ver CashRegisterUsecases
+@lazySingleton
 class SellUsecases {
   final AppDataPersistenceService _persistenceService;
 

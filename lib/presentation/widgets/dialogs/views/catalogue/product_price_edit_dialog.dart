@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Diálogo para editar precios de producto (precio de venta y precio de compra)
@@ -518,7 +518,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
       // Obtener providers necesarios
       final sellProvider =
-          provider_package.Provider.of<SellProvider>(context, listen: false);
+          provider_package.Provider.of<SalesProvider>(context, listen: false);
 
       // Obtener la cantidad actual del producto en el ticket si existe
       final currentQuantity = sellProvider.ticket.products

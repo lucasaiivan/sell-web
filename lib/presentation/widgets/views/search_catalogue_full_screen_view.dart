@@ -10,7 +10,7 @@ import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 
 // Presentation imports
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.
 ///
@@ -31,7 +31,7 @@ class ProductCatalogueFullScreenView extends StatefulWidget {
   });
 
   final List<ProductCatalogue> products;
-  final SellProvider sellProvider;
+  final SalesProvider sellProvider;
 
   @override
   State<ProductCatalogueFullScreenView> createState() =>

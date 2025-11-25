@@ -2,7 +2,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/presentation/providers/sell_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo para agregar descuento al ticket de venta
 class DiscountDialog extends StatefulWidget {
@@ -25,7 +25,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     _moneyController = AppMoneyTextEditingController();
 
     // Inicializar con el descuento actual si existe
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     if (sellProvider.ticket.discount > 0) {
       // Restaurar el estado original del descuento
       _isPercentage = sellProvider.ticket.discountIsPercentage;
@@ -49,7 +49,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SellProvider>(
+    return Consumer<SalesProvider>(
       builder: (context, sellProvider, _) {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
@@ -391,7 +391,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
   }
 
   void _applyDiscount(
-      BuildContext context, SellProvider sellProvider, double totalTicket) {
+      BuildContext context, SalesProvider sellProvider, double totalTicket) {
     // Solo validar el formulario si es necesario
     if (_isPercentage && !_formKey.currentState!.validate()) return;
 

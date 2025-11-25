@@ -2,10 +2,11 @@ import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../domain/entities/cash_register_model.dart';
-import '../../../../../domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../../../providers/cash_register_provider.dart';
-import '../../../../providers/sell_provider.dart';
+
 import '../../../graphics/graphics.dart';
 import 'cash_flow_dialog.dart';
 import 'cash_register_close_dialog.dart';
@@ -178,7 +179,7 @@ class CashRegisterManagementDialog extends StatefulWidget {
   }) {
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return showDialog<T>(
@@ -188,7 +189,7 @@ class CashRegisterManagementDialog extends StatefulWidget {
         providers: [
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
         child: const CashRegisterManagementDialog(fullView: false),
@@ -208,7 +209,7 @@ class CashRegisterManagementDialog extends StatefulWidget {
   }) {
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Navigator.of(context).push<T>(
@@ -217,7 +218,7 @@ class CashRegisterManagementDialog extends StatefulWidget {
           providers: [
             ChangeNotifierProvider<CashRegisterProvider>.value(
                 value: cashRegisterProvider),
-            ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+            ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
             ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
           ],
           child: const CashRegisterManagementDialog(fullView: true),
@@ -294,7 +295,7 @@ class _CashRegisterManagementDialogState
   /// Carga los tickets usando el provider solo cuando sea necesario
   void _loadTicketsIfNeeded() {
     final cashRegisterProvider = context.read<CashRegisterProvider>();
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     if (accountId.isNotEmpty) {
@@ -305,7 +306,7 @@ class _CashRegisterManagementDialogState
   /// Recarga los tickets manualmente (llamado después de acciones como anular ticket)
   void _reloadTickets() {
     final cashRegisterProvider = context.read<CashRegisterProvider>();
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     // ✅ Usar el método del provider para forzar la recarga
@@ -478,8 +479,8 @@ class _CashRegisterManagementDialogState
   // view : información de caja activa
   Widget _buildActiveCashRegister(
       BuildContext context, CashRegisterProvider provider, bool isMobile) {
-    // Obtener accountId desde SellProvider
-    final sellProvider = context.read<SellProvider>();
+    // Obtener accountId desde SalesProvider
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     return AnimatedSwitcher(
@@ -738,7 +739,7 @@ class _CashRegisterManagementDialogState
     // Capturar los providers antes de mostrar el diálogo
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     showDialog(
       context: context,
@@ -746,7 +747,7 @@ class _CashRegisterManagementDialogState
         providers: [
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
         ],
         child: const CashRegisterOpenDialog(),
       ),
@@ -757,7 +758,7 @@ class _CashRegisterManagementDialogState
     // Capturar los providers antes de mostrar el diálogo
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     showDialog(
       context: context,
@@ -765,7 +766,7 @@ class _CashRegisterManagementDialogState
         providers: [
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
         ],
         child: CashRegisterCloseDialog(cashRegister: cashRegister),
       ),
@@ -1064,7 +1065,7 @@ class _CashFlowView extends StatefulWidget {
 class _CashFlowViewState extends State<_CashFlowView> {
   @override
   Widget build(BuildContext context) {
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     // ✅ Usar Selector para escuchar solo cambios relevantes del cashRegister
@@ -1197,7 +1198,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     if (!cashRegisterProvider.hasActiveCashRegister) return;
 
@@ -1210,7 +1211,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
         ],
         child: CashFlowDialog(
           isInflow: isInflow,
@@ -2204,14 +2205,14 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
   void _showAllTicketsDialog(BuildContext context, List<TicketModel> tickets) {
     final theme = Theme.of(context);
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
         ],
@@ -2299,7 +2300,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     // styles
     final theme = Theme.of(context);
     // providers
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
 
     // Información adicional

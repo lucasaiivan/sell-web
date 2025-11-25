@@ -12,22 +12,22 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/domain/entities/catalogue.dart' hide Provider;
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
-import '../providers/sell_provider.dart';
-import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
-import '../../features/auth/presentation/providers/auth_provider.dart';
-import '../providers/printer_provider.dart';
-import '../providers/cash_register_provider.dart';
-import '../providers/home_provider.dart';
-import '../widgets/navigation/drawer.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/presentation/providers/printer_provider.dart';
+import 'package:sellweb/presentation/providers/cash_register_provider.dart';
+import 'package:sellweb/presentation/providers/home_provider.dart';
+import 'package:sellweb/presentation/widgets/navigation/drawer.dart';
 
-class SellPage extends StatefulWidget {
-  const SellPage({super.key});
+class SalesPage extends StatefulWidget {
+  const SalesPage({super.key});
 
   @override
-  State<SellPage> createState() => _SellPageState();
+  State<SalesPage> createState() => _SalesPageState();
 }
 
-class _SellPageState extends State<SellPage> {
+class _SalesPageState extends State<SalesPage> {
   final FocusNode _focusNode = FocusNode();
   bool _showConfirmedPurchase = false;
   bool _isListenerActive = false; // Control del estado del listener
@@ -110,8 +110,8 @@ class _SellPageState extends State<SellPage> {
 
   @override
   Widget build(BuildContext context) {
-    // consumer : escucha los cambios en ventas (SellProvider) y el catalogo (CatalogueProvider)
-    return Consumer2<SellProvider, CatalogueProvider>(
+    // consumer : escucha los cambios en ventas (SalesProvider) y el catalogo (CatalogueProvider)
+    return Consumer2<SalesProvider, CatalogueProvider>(
       builder: (_, sellProvider, catalogueProvider, __) {
         // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -257,7 +257,7 @@ class _SellPageState extends State<SellPage> {
 
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);
-    final homeProvider = Provider.of<SellProvider>(context, listen: false);
+    final homeProvider = Provider.of<SalesProvider>(context, listen: false);
     final product = catalogueProvider.getProductByCode(code);
 
     if (product != null &&
@@ -383,7 +383,7 @@ class _SellPageState extends State<SellPage> {
 
   /// Returns the AppBar for the SellPage, using the current CatalogueProvider.
   PreferredSizeWidget appbar(
-      {required BuildContext buildContext, required SellProvider provider}) {
+      {required BuildContext buildContext, required SalesProvider provider}) {
     // provider
     final catalogueProvider = Provider.of<CatalogueProvider>(buildContext);
     // values
@@ -479,7 +479,7 @@ class _SellPageState extends State<SellPage> {
                   ),
 
                   // button : último ticket vendido
-                  Consumer<SellProvider>(
+                  Consumer<SalesProvider>(
                     builder: (context, sellProvider, __) {
                       final hasLastTicket = sellProvider.lastSoldTicket != null;
                       return AppBarButtonCircle(
@@ -514,7 +514,7 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Lógica para confirmar la venta y procesar el ticket
-  Future<void> _confirmSale(SellProvider provider) async {
+  Future<void> _confirmSale(SalesProvider provider) async {
     setState(() {
       _showConfirmedPurchase =
           true; // para mostrar el mensaje de compra confirmada
@@ -539,14 +539,14 @@ class _SellPageState extends State<SellPage> {
       setState(() {
         _showConfirmedPurchase = false;
       });
-      final provider = Provider.of<SellProvider>(context, listen: false);
+      final provider = Provider.of<SalesProvider>(context, listen: false);
       provider.discartTicket();
       provider.setTicketView(false);
     }
   }
 
   /// Botones para la vista principal. Solo visible en móvil y cuando el ticket no está visible.
-  Widget floatingActionButtonBody({required SellProvider sellProvider}) {
+  Widget floatingActionButtonBody({required SalesProvider sellProvider}) {
     return Row(
       children: [
         // button : descartar ticket si es existente y tiene productos
@@ -588,7 +588,7 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Construye el grid de productos y celdas vacías para llenar toda la vista sin espacios vacíos.
-  Widget body({required SellProvider provider}) {
+  Widget body({required SalesProvider provider}) {
     // widgets
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -674,7 +674,7 @@ class _SellPageState extends State<SellPage> {
   }
 
   /// Construye la lista horizontal de productos favoritos con estilo de historias de Instagram
-  Widget _buildFavoriteProductsRow(SellProvider provider) {
+  Widget _buildFavoriteProductsRow(SalesProvider provider) {
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);
 
@@ -724,7 +724,7 @@ class _SellPageState extends State<SellPage> {
   }
 
   Widget paymentMethodChips() {
-    final provider = Provider.of<SellProvider>(context, listen: false);
+    final provider = Provider.of<SalesProvider>(context, listen: false);
     return Wrap(
       spacing: 5,
       alignment: WrapAlignment.center,
@@ -763,7 +763,7 @@ class _SellPageState extends State<SellPage> {
 
   /// Muestra un diálogo para ingresar el monto recibido, con formateo y cálculo de vuelto.
   void dialogSelectedIncomeCash({double? initialAmount}) {
-    final provider = Provider.of<SellProvider>(context, listen: false);
+    final provider = Provider.of<SalesProvider>(context, listen: false);
     final controller = AppMoneyTextEditingController();
 
     // Si se proporciona un monto inicial, establecerlo en el controlador
@@ -996,7 +996,7 @@ class _SellPageState extends State<SellPage> {
             ),
             TextButton(
               onPressed: () {
-                Provider.of<SellProvider>(this.context, listen: false)
+                Provider.of<SalesProvider>(this.context, listen: false)
                     .discartTicket();
                 Navigator.of(context).pop();
               },
@@ -1045,7 +1045,7 @@ class _SellPageState extends State<SellPage> {
   void showModalBottomSheetSelectProducts(BuildContext context) {
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final products = catalogueProvider.products;
 
     Navigator.of(context).push(
@@ -1076,7 +1076,7 @@ class _SellPageState extends State<SellPage> {
   /// Mejora la UI siguiendo Material 3 y muestra cantidad seleccionada si aplica.
   Widget buildProductListItem(
       {required ProductCatalogue product,
-      required SellProvider sellProvider,
+      required SalesProvider sellProvider,
       required void Function() onTap,
       required StateSetter setState}) {
     //
@@ -1401,7 +1401,7 @@ void _showPrinterConfigDialog(BuildContext context) {
 }
 
 /// Muestra el diálogo del último ticket vendido
-void _showLastTicketDialog(BuildContext context, SellProvider provider) {
+void _showLastTicketDialog(BuildContext context, SalesProvider provider) {
   if (provider.lastSoldTicket == null) return; // No hay ticket para mostrar
   final ticket = provider.lastSoldTicket!;
 
@@ -1442,7 +1442,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
   // - Inicializa la caja registradora desde la persistencia -
   Future<void> _initializeCashRegister() async {
     // Obtener el proveedor de caja registradora y la cuenta seleccionada
-    final sellProvider = context.read<SellProvider>();
+    final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
     if (accountId.isNotEmpty) {
@@ -1465,7 +1465,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     // - obtenemos los proveedores necesarios para el diálogo
     final cashRegisterProvider =
         Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SellProvider>(context, listen: false);
+    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     // Obtener el balance esperado de la caja activa
@@ -1592,7 +1592,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       BuildContext context,
       bool isInflow,
       CashRegisterProvider cashRegisterProvider,
-      SellProvider sellProvider,
+      SalesProvider sellProvider,
       AuthProvider authProvider) {
     if (!cashRegisterProvider.hasActiveCashRegister) return;
 
@@ -1604,7 +1604,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
         providers: [
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
         child: CashFlowDialog(
@@ -1619,7 +1619,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   // - Reutiliza CashRegisterCloseDialog para mostrar diálogo de cierre -
   void _showCloseCashRegisterDialog(BuildContext context,
-      CashRegisterProvider cashRegisterProvider, SellProvider sellProvider) {
+      CashRegisterProvider cashRegisterProvider, SalesProvider sellProvider) {
     final currentCashRegister = cashRegisterProvider.currentActiveCashRegister;
     if (currentCashRegister == null) return;
 
@@ -1629,7 +1629,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
         providers: [
           ChangeNotifierProvider<CashRegisterProvider>.value(
               value: cashRegisterProvider),
-          ChangeNotifierProvider<SellProvider>.value(value: sellProvider),
+          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
         ],
         child: CashRegisterCloseDialog(cashRegister: currentCashRegister),
       ),

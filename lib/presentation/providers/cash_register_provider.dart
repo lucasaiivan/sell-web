@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import '../../core/core.dart';
 import '../../core/services/storage/app_data_persistence_service.dart';
 import '../../domain/entities/cash_register_model.dart';
-import '../../domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import '../../domain/usecases/cash_register_usecases.dart';
-import '../../domain/usecases/sell_usecases.dart'; // NUEVO: Lógica de negocio de tickets
+import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 
 /// Extension helper para firstOrNull si no está disponible
 extension ListExtensions<T> on List<T> {

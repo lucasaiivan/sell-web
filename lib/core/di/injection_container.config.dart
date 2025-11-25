@@ -17,6 +17,8 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:sellweb/core/di/injection_container.dart' as _i220;
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
     as _i581;
+import 'package:sellweb/data/catalogue_repository_impl.dart' as _i187;
+import 'package:sellweb/domain/repositories/catalogue_repository.dart' as _i534;
 import 'package:sellweb/domain/usecases/catalogue_usecases.dart' as _i758;
 import 'package:sellweb/features/auth/data/repositories/account_repository_impl.dart'
     as _i166;
@@ -52,6 +54,10 @@ import 'package:sellweb/features/catalogue/domain/usecases/update_stock_usecase.
     as _i226;
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart'
     as _i127;
+import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart'
+    as _i76;
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart'
+    as _i454;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -70,12 +76,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => externalModule.appDataPersistenceService);
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn);
-    gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
-        catalogueUseCases: gh<_i758.CatalogueUseCases>()));
+    gh.lazySingleton<_i76.SellUsecases>(() => _i76.SellUsecases(
+        persistenceService: gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i983.CatalogueRemoteDataSource>(() =>
         _i983.CatalogueRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()));
     gh.lazySingleton<_i83.CatalogueRepository>(() =>
         _i576.CatalogueRepositoryImpl(gh<_i983.CatalogueRemoteDataSource>()));
+    gh.lazySingleton<_i534.CatalogueRepository>(
+        () => _i187.CatalogueRepositoryImpl(id: gh<String>()));
     gh.lazySingleton<_i840.AccountRepository>(() => _i166.AccountRepositoryImpl(
         persistenceService: gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i226.UpdateStockUseCase>(
@@ -86,11 +94,20 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i59.FirebaseAuth>(),
           gh<_i116.GoogleSignIn>(),
         ));
+    gh.lazySingleton<_i758.CatalogueUseCases>(
+        () => _i758.CatalogueUseCases(gh<_i534.CatalogueRepository>()));
+    gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
+        catalogueUseCases: gh<_i758.CatalogueUseCases>()));
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
         () => _i644.GetUserAccountsUseCase(
               gh<_i840.AccountRepository>(),
               persistenceService: gh<_i581.AppDataPersistenceService>(),
             ));
+    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
+          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
+          sellUsecases: gh<_i76.SellUsecases>(),
+          catalogueUseCases: gh<_i758.CatalogueUseCases>(),
+        ));
     gh.lazySingleton<_i557.GetUserStreamUseCase>(
         () => _i557.GetUserStreamUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i1046.SignInSilentlyUseCase>(

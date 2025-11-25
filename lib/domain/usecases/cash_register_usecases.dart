@@ -1,5 +1,5 @@
 import '../../domain/entities/cash_register_model.dart';
-import '../../domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import '../../domain/repositories/cash_register_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 

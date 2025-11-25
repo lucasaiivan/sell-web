@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sellweb/core/core.dart';
@@ -7,20 +8,21 @@ import 'package:sellweb/core/services/external/thermal_printer_http_service.dart
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
-import 'package:sellweb/domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/domain/usecases/get_user_accounts_usecase.dart';
-import 'package:sellweb/domain/usecases/sell_usecases.dart';
+import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
 import 'package:provider/provider.dart' as provider;
+
+import 'package:sellweb/presentation/providers/cash_register_provider.dart';
+import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import '../providers/cash_register_provider.dart';
-import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
 
 /// Estado inmutable del provider de ventas
 ///
 /// Encapsula todo el estado relacionado con el proceso de venta
 /// para optimizar notificaciones y mantener coherencia
-class _SellProviderState {
+class _SalesProviderState {
   final bool ticketView;
   final bool shouldPrintTicket; // si se debe imprimir el ticket
   final AccountProfile profileAccountSelected;
@@ -28,7 +30,7 @@ class _SellProviderState {
   final TicketModel ticket;
   final TicketModel? lastSoldTicket;
 
-  const _SellProviderState({
+  const _SalesProviderState({
     required this.ticketView,
     required this.shouldPrintTicket,
     required this.profileAccountSelected,
@@ -37,7 +39,7 @@ class _SellProviderState {
     required this.lastSoldTicket,
   });
 
-  _SellProviderState copyWith({
+  _SalesProviderState copyWith({
     bool? ticketView,
     bool? shouldPrintTicket,
     AccountProfile? profileAccountSelected,
@@ -45,7 +47,7 @@ class _SellProviderState {
     TicketModel? ticket,
     Object? lastSoldTicket = const Object(),
   }) {
-    return _SellProviderState(
+    return _SalesProviderState(
       ticketView: ticketView ?? this.ticketView,
       shouldPrintTicket: shouldPrintTicket ?? this.shouldPrintTicket,
       profileAccountSelected:
@@ -61,7 +63,7 @@ class _SellProviderState {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _SellProviderState &&
+      other is _SalesProviderState &&
           runtimeType == other.runtimeType &&
           ticketView == other.ticketView &&
           shouldPrintTicket == other.shouldPrintTicket &&
@@ -80,6 +82,8 @@ class _SellProviderState {
       lastSoldTicket.hashCode;
 }
 
+
+
 /// Provider para gestionar el proceso de ventas
 ///
 /// **Responsabilidad:** Coordinar UI y casos de uso de ventas
@@ -92,7 +96,7 @@ class _SellProviderState {
 /// - No contiene validaciones ni lógica de negocio, solo coordinación
 ///
 /// **Arquitectura:**
-/// - Estado inmutable con _SellProviderState para optimizar notificaciones
+/// - Estado inmutable con _SalesProviderState para optimizar notificaciones
 /// - Persistencia automática de ticket en curso
 /// - Coordinación entre múltiples providers (CashRegister, Catalogue, Auth)
 ///
@@ -108,12 +112,13 @@ class _SellProviderState {
 ///
 /// **Uso:**
 /// ```dart
-/// final sellProvider = Provider.of<SellProvider>(context);
-/// sellProvider.addProductsticket(product); // Agregar producto
-/// sellProvider.setDiscount(discount: 10.0); // Configurar descuento
-/// await sellProvider.processSale(context); // Confirmar venta
+/// final salesProvider = Provider.of<SalesProvider>(context);
+/// salesProvider.addProductsticket(product); // Agregar producto
+/// salesProvider.setDiscount(discount: 10.0); // Configurar descuento
+/// await salesProvider.processSale(context); // Confirmar venta
 /// ```
-class SellProvider extends ChangeNotifier {
+@injectable
+class SalesProvider extends ChangeNotifier {
   final GetUserAccountsUseCase getUserAccountsUseCase;
   final SellUsecases _sellUsecases;
   final CatalogueUseCases? _catalogueUseCases;
@@ -121,7 +126,7 @@ class SellProvider extends ChangeNotifier {
       AppDataPersistenceService.instance;
 
   // Estado encapsulado para optimizar notificaciones
-  late var _state = _SellProviderState(
+  late var _state = _SalesProviderState(
     ticketView: false,
     shouldPrintTicket: false,
     profileAccountSelected: AccountProfile.empty(),
@@ -145,7 +150,7 @@ class SellProvider extends ChangeNotifier {
   TicketModel get ticket => _state.ticket;
   TicketModel? get lastSoldTicket => _state.lastSoldTicket;
 
-  SellProvider({
+  SalesProvider({
     required this.getUserAccountsUseCase,
     required SellUsecases sellUsecases,
     CatalogueUseCases? catalogueUseCases,

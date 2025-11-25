@@ -1,6 +1,6 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
 /// Diálogo para mostrar el  ticket
 class TicketViewDialog extends StatefulWidget {

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
 import 'package:provider/provider.dart';
-import '../../core/utils/helpers/responsive_helper.dart';
+import 'package:sellweb/core/utils/helpers/responsive_helper.dart';
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sellweb/features/auth/presentation/pages/login_page.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'dart:ui';
 
-import '../providers/theme_data_app_provider.dart';
+import 'package:sellweb/presentation/providers/theme_data_app_provider.dart';
 
 /// Clase helper para colores del AppBar optimizada
 class _AppBarColors {

@@ -2,9 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
-import 'package:sellweb/presentation/pages/home_page.dart';
+import 'package:sellweb/features/home/presentation/pages/home_page.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
-import 'package:sellweb/presentation/providers/home_provider.dart';
+import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
@@ -18,7 +18,7 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
-import 'presentation/pages/presentation_page.dart';
+import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 
 void main() async {
   // CRITICAL: Initialize bindings FIRST in the main zone, synchronously

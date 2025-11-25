@@ -7,8 +7,8 @@ import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 
-import '../../../graphics/graphics.dart';
-import 'cash_flow_dialog.dart';
+import 'package:sellweb/presentation/widgets/graphics/graphics.dart';
+import 'package:sellweb/features/cash_register/presentation/dialogs/cash_flow_dialog.dart';
 import 'cash_register_close_dialog.dart';
 import 'cash_register_open_dialog.dart';
 

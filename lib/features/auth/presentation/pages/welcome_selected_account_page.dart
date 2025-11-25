@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/core_widgets.dart';
+import 'package:sellweb/presentation/widgets/core_widgets.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import '../../../presentation/providers/theme_data_app_provider.dart';
+import 'package:sellweb/presentation/providers/theme_data_app_provider.dart';
 
 class WelcomeSelectedAccountPage extends StatelessWidget {
   final Future<void> Function(AccountProfile) onSelectAccount;

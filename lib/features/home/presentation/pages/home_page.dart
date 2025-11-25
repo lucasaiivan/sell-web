@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'welcome_selected_account_page.dart';
+import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/features/auth/presentation/pages/welcome_selected_account_page.dart';
 import 'package:sellweb/features/sales/presentation/pages/sales_page.dart';
-import '../../features/catalogue/presentation/pages/catalogue_page.dart';
+import 'package:sellweb/features/catalogue/presentation/pages/catalogue_page.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 /// Controla el flujo entre: selección de cuenta, ventas y catálogo

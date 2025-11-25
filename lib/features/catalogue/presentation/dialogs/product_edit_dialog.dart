@@ -1,6 +1,6 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/catalogue/product_price_edit_dialog.dart';
+import 'product_price_edit_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';

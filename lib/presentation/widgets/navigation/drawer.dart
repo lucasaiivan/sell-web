@@ -4,7 +4,7 @@ import 'package:sellweb/presentation/providers/theme_data_app_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import '../../providers/home_provider.dart';
+import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import '../core_widgets.dart';
 
 /// Widget reutilizable del Drawer para las pantallas principales

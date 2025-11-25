@@ -9,14 +9,15 @@ export 'base/standard_dialogs.dart';
 export 'components/dialog_components.dart';
 
 // Catalogue Dialogs
-export 'views/catalogue/add_product_dialog.dart';
-export 'views/catalogue/product_edit_dialog.dart';
-export 'views/catalogue/product_not_found_dialog.dart';
+export 'package:sellweb/features/catalogue/presentation/dialogs/add_product_dialog.dart';
+export 'package:sellweb/features/catalogue/presentation/dialogs/product_edit_dialog.dart';
+export 'package:sellweb/features/catalogue/presentation/dialogs/product_not_found_dialog.dart';
 // export 'catalogue/add_product_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario
 // export 'catalogue/product_edit_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario
 
 // Sales Dialogs
-export 'views/sales/quick_sale_dialog.dart';
+export 'package:sellweb/features/sales/presentation/dialogs/quick_sale_dialog.dart';
+export 'package:sellweb/features/sales/presentation/dialogs/discount_dialog.dart';
 // export 'sales/cash_register_management_dialog.dart'; // Conflicto de nombres - contenido en cash_register_dialog
 // export 'sales/cash_register_open_dialog.dart'; // Conflicto de nombres - contenido en cash_register_dialog
 // export 'sales/cash_register_close_dialog.dart'; // Conflicto de nombres - contenido en cash_register_dialog
@@ -24,9 +25,9 @@ export 'views/sales/quick_sale_dialog.dart';
 // export 'sales/quick_sale_dialog_new.dart'; // Conflicto de nombres
 
 // Tickets Dialogs
-export 'views/tickets/last_ticket_dialog.dart';
-export 'views/tickets/ticket_options_dialog.dart';
-export 'views/tickets/discard_ticket_dialog.dart';
+export 'package:sellweb/features/sales/presentation/dialogs/last_ticket_dialog.dart';
+export 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart';
+export 'package:sellweb/features/sales/presentation/dialogs/discard_ticket_dialog.dart';
 // export 'tickets/ticket_options_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario
 // export 'tickets/last_ticket_dialog_new.dart'; // Conflicto de nombres
 
@@ -36,8 +37,8 @@ export 'views/configuration/theme_color_selector_dialog.dart';
 // export 'configuration/printer_config_dialog_new.dart'; // Conflicto de nombres
 
 // Account Dialogs
-export 'views/account/admin_profile_info_dialog.dart';
-export 'views/account/account_selection_dialog.dart';
+export 'package:sellweb/features/auth/presentation/dialogs/admin_profile_info_dialog.dart';
+export 'package:sellweb/features/auth/presentation/dialogs/account_selection_dialog.dart';
 
 // Re-exportar funciones helper principales
 export 'base/base_dialog.dart' show showBaseDialog;
@@ -49,10 +50,10 @@ export 'base/standard_dialogs.dart'
         showLoadingDialog;
 
 // Re-exportar funciones helper específicas
-export 'views/catalogue/product_edit_dialog.dart' show showProductEditDialog;
-export 'views/catalogue/add_product_dialog.dart' show showAddProductDialog;
-export 'views/sales/quick_sale_dialog.dart' show showQuickSaleDialog;
-export 'views/tickets/ticket_options_dialog.dart' show showTicketOptionsDialog;
+export 'package:sellweb/features/catalogue/presentation/dialogs/product_edit_dialog.dart' show showProductEditDialog;
+export 'package:sellweb/features/catalogue/presentation/dialogs/add_product_dialog.dart' show showAddProductDialog;
+export 'package:sellweb/features/sales/presentation/dialogs/quick_sale_dialog.dart' show showQuickSaleDialog;
+export 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart' show showTicketOptionsDialog;
 export 'views/configuration/theme_color_selector_dialog.dart'
     show ThemeColorSelectorDialog;
 

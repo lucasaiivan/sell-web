@@ -6,7 +6,7 @@ import 'package:sellweb/features/sales/presentation/providers/sales_provider.dar
 import 'package:sellweb/presentation/widgets/components/avatar_user.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/account/admin_profile_info_dialog.dart';
+import 'admin_profile_info_dialog.dart';
 
 /// Diálogo de selección de cuentas con información del administrador
 ///

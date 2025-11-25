@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_flow_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_close_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/views/sales/cash_register_management_dialog.dart';
+import 'package:sellweb/features/cash_register/presentation/dialogs/cash_flow_dialog.dart';
+import 'package:sellweb/features/sales/presentation/dialogs/cash_register_close_dialog.dart';
+import 'package:sellweb/features/sales/presentation/dialogs/cash_register_management_dialog.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +17,7 @@ import 'package:sellweb/features/catalogue/presentation/providers/catalogue_prov
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
-import 'package:sellweb/presentation/providers/home_provider.dart';
+import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/presentation/widgets/navigation/drawer.dart';
 
 class SalesPage extends StatefulWidget {

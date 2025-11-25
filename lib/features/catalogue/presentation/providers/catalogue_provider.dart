@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/services/search_catalogue_service.dart';
+import 'package:sellweb/features/catalogue/data/datasources/local_search_datasource.dart';
 import '../../data/repositories/catalogue_repository_impl.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product.dart';
@@ -105,7 +105,7 @@ class _CatalogueState {
 /// **Responsabilidad:** Coordinar UI y casos de uso de catálogo
 /// - Gestiona estado de productos y búsquedas
 /// - Delega operaciones CRUD a CatalogueUseCases (crear, actualizar, buscar)
-/// - Delega búsqueda y filtrado a SearchCatalogueService
+/// - Delega búsqueda y filtrado a LocalSearchDataSource
 /// - Maneja streams de Firebase para sincronización en tiempo real
 /// - Proporciona búsqueda con debouncing para mejor rendimiento
 /// - No contiene lógica de negocio, solo coordinación
@@ -171,7 +171,7 @@ class CatalogueProvider extends ChangeNotifier {
   /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
   List<ProductCatalogue> getTopFilterProducts(
       {int limit = 50, int minimumSales = 1}) {
-    return SearchCatalogueService.getTopSellingProducts(
+    return LocalSearchDataSource.getTopSellingProducts(
       products: _state.products,
       limit: limit,
       minimumSales: minimumSales,
@@ -262,7 +262,7 @@ class CatalogueProvider extends ChangeNotifier {
     required String query,
     int? maxResults,
   }) {
-    final results = SearchCatalogueService.searchProducts(
+    final results = LocalSearchDataSource.searchProducts(
       products: _state.products,
       query: query,
       maxResults: maxResults,
@@ -314,7 +314,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por código exacto
   List<ProductCatalogue> searchByExactCode(String code) {
-    return SearchCatalogueService.searchByExactCode(
+    return LocalSearchDataSource.searchByExactCode(
       products: _state.products,
       code: code,
     );
@@ -322,7 +322,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por categoría
   List<ProductCatalogue> searchByCategory(String category) {
-    return SearchCatalogueService.searchByCategory(
+    return LocalSearchDataSource.searchByCategory(
       products: _state.products,
       category: category,
     );
@@ -350,7 +350,7 @@ class CatalogueProvider extends ChangeNotifier {
 
   /// Busca productos por marca
   List<ProductCatalogue> searchByBrand(String brand) {
-    return SearchCatalogueService.searchByBrand(
+    return LocalSearchDataSource.searchByBrand(
       products: _state.products,
       brand: brand,
     );
@@ -361,7 +361,7 @@ class CatalogueProvider extends ChangeNotifier {
     required String query,
     int maxSuggestions = 5,
   }) {
-    final suggestions = SearchCatalogueService.getSearchSuggestions(
+    final suggestions = LocalSearchDataSource.getSearchSuggestions(
       products: _state.products,
       query: query,
       maxSuggestions: maxSuggestions,

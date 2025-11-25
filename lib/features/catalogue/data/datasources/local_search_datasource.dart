@@ -7,7 +7,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dar
 /// - Filtrado por categorías, marcas y códigos
 /// - Ordenamiento por relevancia y ventas
 /// - Sugerencias de búsqueda inteligentes
-class SearchCatalogueService {
+class LocalSearchDataSource {
   // =================== BÚSQUEDA PRINCIPAL ===================
 
   /// Búsqueda principal de productos con algoritmo avanzado.

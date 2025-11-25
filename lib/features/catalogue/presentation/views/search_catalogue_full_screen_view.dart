@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Core imports
-import 'package:sellweb/core/services/search_catalogue_service.dart';
+import 'package:sellweb/features/catalogue/data/datasources/local_search_datasource.dart';
 
 // Domain imports
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -91,7 +91,7 @@ class _ProductCatalogueFullScreenViewState
           if (_filteredProducts.isEmpty &&
               catalogueProvider.products.isEmpty &&
               widget.products.isNotEmpty) {
-            _filteredProducts = SearchCatalogueService.searchProducts(
+            _filteredProducts = LocalSearchDataSource.searchProducts(
               products: widget.products,
               query: query,
               maxResults: 50,

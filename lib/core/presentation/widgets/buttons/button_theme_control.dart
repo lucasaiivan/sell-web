@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../dialogs/views/configuration/theme_color_selector_dialog.dart';
-import 'package:sellweb/core/services/theme/theme_data_app_provider.dart';
+import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 
 /// Widget reutilizable para controles de tema dinámico
 ///

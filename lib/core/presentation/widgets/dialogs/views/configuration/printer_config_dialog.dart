@@ -6,7 +6,7 @@ import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart'
 import 'package:sellweb/core/presentation/widgets/dialogs/base/standard_dialogs.dart';
 import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
 
-import 'package:sellweb/core/utils/helpers/responsive_helper.dart';
+import 'package:sellweb/core/presentation/helpers/responsive_helper.dart';
 
 /// Diálogo modernizado para configurar impresora térmica siguiendo Material Design 3
 class PrinterConfigDialog extends StatefulWidget {

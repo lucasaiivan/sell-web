@@ -17,7 +17,7 @@ import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
-import 'package:sellweb/core/services/theme/theme_data_app_provider.dart';
+import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 
 void main() async {

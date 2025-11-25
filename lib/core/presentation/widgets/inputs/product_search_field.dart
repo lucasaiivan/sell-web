@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/services/search_catalogue_service.dart';
+import 'package:sellweb/features/catalogue/data/datasources/local_search_datasource.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 /// Widget mejorado para búsqueda de productos con sugerencias inteligentes
@@ -61,7 +61,7 @@ class _ProductSearchFieldState extends State<ProductSearchField> {
     if (query.isNotEmpty && query.length >= 2) {
       try {
         // Obtener sugerencias únicamente desde la lista de productos proporcionada
-        _suggestions = SearchCatalogueService.getSearchSuggestions(
+        _suggestions = LocalSearchDataSource.getSearchSuggestions(
           products: widget.products,
           query: query,
           maxSuggestions: 5,

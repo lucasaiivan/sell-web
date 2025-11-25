@@ -178,7 +178,8 @@ class _ThemeColorSelectorDialogState extends State<ThemeColorSelectorDialog>
           Switch.adaptive(
             value: isDark,
             onChanged: (_) => themeProvider.toggleTheme(),
-            activeColor: theme.colorScheme.primary,
+            activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.5),
+            activeThumbColor: theme.colorScheme.primary,
           ),
         ],
       ),

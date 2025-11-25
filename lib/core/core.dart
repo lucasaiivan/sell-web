@@ -12,8 +12,7 @@ export 'constants/app_constants.dart';
 export 'constants/shared_prefs_keys.dart';
 
 // Errores y Excepciones
-export 'errors/failures.dart';
-export 'errors/exceptions.dart';
+export 'errors/errors.dart';
 
 // Casos de Uso Base
 export 'usecases/usecase.dart';

@@ -112,6 +112,7 @@ class _LoadingWidget extends StatelessWidget {
                     .textTheme
                     .bodyMedium
                     ?.color
+                    // ignore: deprecated_member_use
                     ?.withOpacity(0.7),
               ),
         ).animate().fadeIn(delay: 300.ms),

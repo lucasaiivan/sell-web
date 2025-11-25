@@ -5,11 +5,25 @@ Funcionalidades compartidas del núcleo de la aplicación incluyendo configuraci
 ```
 core/
 ├── core.dart - Archivo de barril que exporta todas las funcionalidades del núcleo
-├── config/ - Configuraciones de la aplicación
+├── config/ - Configuraciones de la aplicación (Firebase, OAuth)
 ├── constants/ - Constantes globales de la aplicación
+├── di/ - Inyección de dependencias (get_it + injectable)
+├── errors/ - Manejo de errores (Failures y Exceptions)
 ├── mixins/ - Mixins reutilizables
+├── presentation/ - Capa de presentación compartida
+│   ├── theme/ - Sistema de temas Material 3
+│   ├── widgets/ - Widgets reutilizables organizados por categoría
+│   ├── helpers/ - Helpers de UI (responsive, snackbar, etc.)
+│   └── providers/ - Providers globales (ThemeProvider)
 ├── services/ - Servicios de infraestructura
+│   ├── database/ - Servicios de Firestore
+│   ├── storage/ - Persistencia local
+│   ├── printing/ - Impresión de tickets
+│   └── external/ - APIs externas
+├── usecases/ - Contrato base UseCase<T, Params>
 └── utils/ - Utilidades y helpers
+    ├── formatters/ - Formateadores (moneda, fecha, texto)
+    └── helpers/ - Helpers especializados
 ```
 
 ### 🔧 Utils

@@ -78,6 +78,6 @@ class ThemeDataAppProvider extends ChangeNotifier {
 
   /// Guarda el color semilla seleccionado
   Future<void> _saveSeedColor() async {
-    await _persistenceService.saveSeedColor(_themeService.seedColor.value);
+    await _persistenceService.saveSeedColor(_themeService.seedColor.toARGB32());
   }
 }

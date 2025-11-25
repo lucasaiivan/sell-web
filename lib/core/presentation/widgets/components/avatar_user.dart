@@ -34,7 +34,7 @@ class UserAvatar extends StatelessWidget {
         foregroundColor ?? colorScheme.onPrimaryContainer;
 
     if (isEmpty) {
-      return Container(
+      return SizedBox(
         width: radius * 2,
         height: radius * 2,
       );

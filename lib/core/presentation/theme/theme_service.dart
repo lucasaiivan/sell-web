@@ -229,6 +229,7 @@ class ThemeService {
 
     // Para otros colores, usar el primaryContainer con mejor saturación
     return isDark
+        // ignore: deprecated_member_use
         ? colorScheme.primaryContainer.withOpacity(0.9)
         : colorScheme.primary;
   }
@@ -252,11 +253,14 @@ class ThemeService {
     // Para el tema negro, usar un tinte sutil
     if (_seedColor.value == Colors.black) {
       return isDark
+          // ignore: deprecated_member_use
           ? Colors.white.withOpacity(0.1)
+          // ignore: deprecated_member_use
           : Colors.black.withOpacity(0.1);
     }
 
     // Para otros colores, usar el primary con opacidad reducida
+    // ignore: deprecated_member_use
     return colorScheme.primary.withOpacity(isDark ? 0.2 : 0.3);
   }
 
@@ -272,6 +276,7 @@ class ThemeService {
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         // Tonalidad personalizable para el fondo del diálogo
+        // ignore: deprecated_member_use
         barrierColor: colorScheme.onSurface.withOpacity(
           isDark ? _dialogBarrierOpacityDark : _dialogBarrierOpacityLight,
         ),
@@ -286,6 +291,7 @@ class ThemeService {
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         // Tonalidad personalizable para el scrim del drawer
+        // ignore: deprecated_member_use
         scrimColor: colorScheme.onSurface.withOpacity(
           isDark ? _drawerScrimOpacityDark : _drawerScrimOpacityLight,
         ),
@@ -303,6 +309,7 @@ class ThemeService {
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         modalBackgroundColor: colorScheme.surface,
+        // ignore: deprecated_member_use
         modalBarrierColor: colorScheme.onSurface.withOpacity(
           isDark
               ? _bottomSheetBarrierOpacityDark
@@ -327,6 +334,7 @@ class ThemeService {
 
           // Mejora de la elevación y sombras
           elevation: isDark ? 2 : 1,
+          // ignore: deprecated_member_use
           shadowColor: colorScheme.shadow.withOpacity(isDark ? 0.3 : 0.2),
 
           // Configuración de superficie para Material 3
@@ -344,12 +352,15 @@ class ThemeService {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) {
+              // ignore: deprecated_member_use
               return colorScheme.primary.withOpacity(0.12);
             }
             if (states.contains(WidgetState.hovered)) {
+              // ignore: deprecated_member_use
               return colorScheme.primary.withOpacity(0.08);
             }
             if (states.contains(WidgetState.focused)) {
+              // ignore: deprecated_member_use
               return colorScheme.primary.withOpacity(0.10);
             }
             return null;

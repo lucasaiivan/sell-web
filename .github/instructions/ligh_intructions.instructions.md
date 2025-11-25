@@ -531,15 +531,15 @@ Consumer<MyProvider>(
    ├── Agregar rutas si necesario
    └── Actualizar navigation
 
-7. TESTING
+7. TESTING 
    ├── Tests unitarios para usecases
    ├── Tests para providers
    └── Widget tests para UI crítica
 
-8. DOCUMENTACIÓN
-   ├── Crear README.md del feature
-   ├── Documentar clases con patrón minimalista
-   └── Actualizar INTEGRATION_GUIDE.md si aplica
+8. DOCUMENTACIÓN 
+   ├── Crear README.md del feature (estructura estándar)
+   ├── Documentar clases con patrón minimalista (durante la creación)
+   └── Actualizar INTEGRATION_GUIDE.md si aplica (durante la implementación el features)
 ```
 
 ### Crear Componente Individual
@@ -671,27 +671,6 @@ Consumer<MyProvider>(
 
 ---
 
-## 🔥 Comandos Útiles
-
-```bash
-# Regenerar código de Dependency Injection
-dart run build_runner build --delete-conflicting-outputs
-
-# Ejecutar tests
-flutter test
-
-# Ejecutar tests con coverage
-flutter test --coverage
-
-# Build para web
-flutter build web --release
-
-# Analizar código
-flutter analyze
-
-# Format código
-dart format .
-```
 
 ---
 

@@ -19,4 +19,4 @@ export 'services/theme_service.dart';
 export 'services/database/database_cloud.dart';
 
 // Widgets reutilizables
-export '../presentation/widgets/core_widgets.dart';
+export 'presentation/widgets/core_widgets.dart';

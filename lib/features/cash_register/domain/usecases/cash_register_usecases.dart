@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
-import '../../../../domain/repositories/cash_register_repository.dart';
+import 'package:sellweb/features/cash_register/domain/repositories/cash_register_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Casos de uso para el sistema de caja registradora

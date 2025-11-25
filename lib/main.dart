@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/features/home/presentation/pages/home_page.dart';
-import 'package:sellweb/presentation/providers/printer_provider.dart';
+import 'package:sellweb/core/services/printing/printer_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
 import 'core/di/injection_container.dart'; // ← NUEVO: Dependency Injection
 import 'features/catalogue/data/repositories/catalogue_repository_impl.dart';
-import 'data/cash_register_repository_impl.dart';
+import 'package:sellweb/features/cash_register/data/repositories/cash_register_repository_impl.dart';
 import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/domain/usecases/cash_register_usecases.dart';
 import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
-import 'presentation/providers/theme_data_app_provider.dart';
+import 'package:sellweb/core/services/theme/theme_data_app_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 
 void main() async {

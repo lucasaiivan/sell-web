@@ -8,7 +8,7 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 
 import '../providers/catalogue_provider.dart';
-import '../../../../presentation/widgets/modals/selection_modal.dart';
+import 'package:sellweb/core/presentation/widgets/modals/selection_modal.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../core/core.dart';
+import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
-import '../domain/repositories/cash_register_repository.dart';
+import 'package:sellweb/features/cash_register/domain/repositories/cash_register_repository.dart';
 
 /// Implementación del repositorio de caja registradora usando Firebase
 ///

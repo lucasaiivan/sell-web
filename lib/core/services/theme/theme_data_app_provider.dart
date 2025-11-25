@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/services/storage/app_data_persistence_service.dart';
-import '../../core/services/theme_service.dart';
+import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
+import 'package:sellweb/core/services/theme_service.dart';
 
 /// Provider para gestionar el tema de la aplicación
 ///

@@ -6,7 +6,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dar
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import '../../../../presentation/widgets/navigation/drawer.dart';
+import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import '../widgets/product_catalogue_view.dart';
 import '../widgets/product_edit_catalogue_view.dart';
 

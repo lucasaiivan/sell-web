@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/core.dart';
+import 'package:sellweb/core/core.dart';
 
 /// TextField reutilizable para ingreso de montos, con formato y estilo Material 3.
 /// Permite personalizar el controlador, el valor inicial y la función onChanged.

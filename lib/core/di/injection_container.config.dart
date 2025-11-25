@@ -17,7 +17,7 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:sellweb/core/di/injection_container.dart' as _i220;
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
     as _i581;
-import 'package:sellweb/domain/repositories/cash_register_repository.dart'
+import 'package:sellweb/features/cash_register/domain/repositories/cash_register_repository.dart'
     as _i0;
 import 'package:sellweb/features/auth/data/repositories/account_repository_impl.dart'
     as _i166;

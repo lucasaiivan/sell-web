@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
 
 /// Diálogo que muestra la información detallada de un AdminProfile
 ///

@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'package:sellweb/presentation/widgets/components/avatar_user.dart';
-import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/core/presentation/widgets/components/avatar_user.dart';
+import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
 import 'admin_profile_info_dialog.dart';
 
 /// Diálogo de selección de cuentas con información del administrador

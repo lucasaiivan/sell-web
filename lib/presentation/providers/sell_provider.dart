@@ -5,13 +5,14 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
-import 'package:sellweb/domain/entities/user.dart';
+import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
+import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/domain/entities/ticket_model.dart';
-import 'package:sellweb/domain/usecases/account_usecase.dart';
+import 'package:sellweb/features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/domain/usecases/sell_usecases.dart';
 import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
 import 'package:provider/provider.dart' as provider;
-import '../providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../providers/cash_register_provider.dart';
 import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
 
@@ -113,7 +114,7 @@ class _SellProviderState {
 /// await sellProvider.processSale(context); // Confirmar venta
 /// ```
 class SellProvider extends ChangeNotifier {
-  final AccountsUseCase getUserAccountsUseCase;
+  final GetUserAccountsUseCase getUserAccountsUseCase;
   final SellUsecases _sellUsecases;
   final CatalogueUseCases? _catalogueUseCases;
   final AppDataPersistenceService _persistenceService =
@@ -123,7 +124,7 @@ class SellProvider extends ChangeNotifier {
   late var _state = _SellProviderState(
     ticketView: false,
     shouldPrintTicket: false,
-    profileAccountSelected: AccountProfile(),
+    profileAccountSelected: AccountProfile.empty(),
     currentAdminProfile: null,
     ticket: _sellUsecases.createEmptyTicket(),
     lastSoldTicket: null,
@@ -178,7 +179,7 @@ class SellProvider extends ChangeNotifier {
 
   void cleanData() {
     _state = _state.copyWith(
-      profileAccountSelected: AccountProfile(),
+      profileAccountSelected: AccountProfile.empty(),
       currentAdminProfile: null,
       ticket: _createEmptyTicket(),
       ticketView: false,
@@ -238,7 +239,7 @@ class SellProvider extends ChangeNotifier {
 
   /// Carga la cuenta seleccionada desde SharedPreferences al inicializar el provider.
   Future<void> _loadSelectedAccount() async {
-    final id = await getUserAccountsUseCase.loadSelectedAccountId();
+    final id = await getUserAccountsUseCase.getSelectedAccountId();
     if (id != null && id.isNotEmpty) {
       if (kDebugMode) {
         print('📦 SellProvider: Cargando cuenta desde persistencia: $id');
@@ -499,7 +500,7 @@ class SellProvider extends ChangeNotifier {
   }
 
   Future<void> _saveSelectedAccount(String id) async {
-    await getUserAccountsUseCase.saveAccountId(id);
+    await getUserAccountsUseCase.saveSelectedAccountId(id);
   }
 
   /// Configura la forma de pago del ticket

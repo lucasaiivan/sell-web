@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/domain/entities/user.dart';
-import 'package:sellweb/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/presentation/widgets/components/avatar_user.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';

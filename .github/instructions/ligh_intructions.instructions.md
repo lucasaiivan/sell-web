@@ -1,518 +1,701 @@
+````instructions
 # Light Instructions - Flutter Web Sell App
 
-## 🎯 Guía Rápida para Componentes
+## 🎯 Principios Fundamentales
 
-### 🏛️ Filosofía Arquitectónica: Feature-First + Clean Architecture
+### 🏛️ Arquitectura: Feature-First + Clean Architecture
 
-**Principios fundamentales:**
-1. ✅ **Feature-First**: Cada funcionalidad de negocio es un módulo autónomo en `lib/features/`
-2. ✅ **Clean Architecture**: Separación clara entre dominio, datos y presentación
-3. ✅ **Dependency Injection**: Uso de `@injectable` y `@lazySingleton` con GetIt
-4. ✅ **Imports relativos**: Dentro de un feature usar rutas relativas (`../`, `../../`)
-5. ✅ **Imports absolutos**: Para `core/`, shared widgets, y routing
-6. ✅ **Widgets compartidos**: En `lib/presentation/widgets/` (cross-feature)
-7. ✅ **Widgets específicos**: En `lib/features/[feature]/presentation/widgets/` (feature-only)
-8. ❌ **No circular dependencies**: Features NO deben importar otros features
+**8 Reglas de Oro:**
+1. ✅ **Feature-First**: Módulos autónomos en `lib/features/[feature]/`
+2. ✅ **Clean Architecture**: Separación domain → data → presentation
+3. ✅ **Dependency Injection**: `@injectable` + `@lazySingleton` con GetIt
+4. ✅ **Imports relativos**: Dentro de features (`../`, `../../`)
+5. ✅ **Imports absolutos**: Para `core/`, shared widgets, routing
+6. ✅ **Reutilización**: Buscar en `lib/presentation/widgets/` antes de crear
+7. ✅ **Documentación minimalista**: Solo lo necesario para entender el contexto
+8. ❌ **No circular deps**: Features NO importan otros features
 
-### Estructura del Proyecto
+---
 
-#### 🏗️ Arquitectura Modular (Clean Architecture + Feature-First)
-
-El proyecto implementa una **arquitectura modular por features** siguiendo Clean Architecture:
-
-```
-lib/
-├── core/                           # Servicios y utilidades compartidas (cross-cutting concerns)
-│   ├── config/                     # Configuraciones globales
-│   │   ├── app_config.dart
-│   │   ├── firebase_options.dart
-│   │   └── oauth_config.dart
-│   ├── constants/                  # Constantes globales
-│   ├── di/                         # ⭐ Dependency Injection
-│   │   ├── injection_container.dart      # Configuración GetIt + Injectable
-│   │   └── injection_container.config.dart  # Generado por build_runner
-│   ├── services/                   # Servicios compartidos entre features
-│   │   ├── database/
-│   │   ├── external/
-│   │   ├── storage/
-│   │   ├── search_catalogue_service.dart
-│   │   └── theme_service.dart
-│   ├── utils/                      # Utilidades compartidas
-│   └── core.dart                   # Exportaciones centralizadas
-│
-├── features/                       # ⭐ FEATURES MODULARES (nuevo enfoque)
-│   └── catalogue/                  # Feature: Catálogo de productos
-│       ├── data/                   # Capa de datos del feature
-│       │   ├── datasources/
-│       │   │   └── catalogue_remote_datasource.dart
-│       │   ├── models/
-│       │   │   ├── product_model.dart
-│       │   │   ├── product_catalogue_model.dart
-│       │   │   ├── category_model.dart
-│       │   │   └── product_price_model.dart
-│       │   └── repositories/
-│       │       └── catalogue_repository_impl.dart
-│       ├── domain/                 # Capa de dominio del feature
-│       │   ├── entities/
-│       │   │   ├── product.dart
-│       │   │   ├── product_catalogue.dart
-│       │   │   ├── category.dart
-│       │   │   └── product_price.dart
-│       │   ├── repositories/
-│       │   │   └── catalogue_repository.dart
-│       │   └── usecases/
-│       │       ├── get_products_usecase.dart
-│       │       └── update_stock_usecase.dart
-│       ├── presentation/           # Capa de presentación del feature
-│       │   ├── pages/
-│       │   │   └── catalogue_page.dart
-│       │   ├── providers/
-│       │   │   └── catalogue_provider.dart (@injectable)
-│       │   └── widgets/
-│       │       ├── product_catalogue_view.dart
-│       │       └── product_edit_catalogue_view.dart
-│       ├── README.md               # Documentación del feature
-│
-├── data/                           # ⚠️ Legacy - Repositorios globales (en migración)
-│   ├── account_repository_impl.dart
-│   ├── auth_repository_impl.dart
-│   └── cash_register_repository_impl.dart
-│
-├── domain/                         # ⚠️ Legacy - Dominio global (en migración)
-│   ├── entities/
-│   ├── repositories/
-│   └── usecases/
-│
-└── presentation/                   # ⚠️ Legacy - UI global (en migración)
-    ├── pages/
-    ├── providers/
-    └── widgets/                    # Componentes UI compartidos (se mantienen)
-        ├── buttons/                # Botones especializados
-        │   ├── app_bar_button.dart
-        │   ├── app_button.dart
-        │   ├── app_floating_action_button.dart
-        │   ├── app_text_button.dart
-        │   ├── search_button.dart
-        │   ├── theme_control_buttons.dart
-        │   └── buttons.dart        # Exportaciones centralizadas
-        ├── component/              # Componentes básicos reutilizables
-        │   ├── avatar_product.dart
-        │   ├── dividers.dart
-        │   ├── image.dart
-        │   ├── progress_indicators.dart
-        │   ├── responsive_helper.dart
-        │   ├── user_avatar.dart
-        │   └── ui.dart             # Exportaciones centralizadas
-        ├── dialogs/                # Diálogos modales especializados
-        │   ├── base/               # Componentes base para diálogos
-        │   ├── catalogue/          # Diálogos del catálogo
-        │   ├── components/         # Componentes de diálogos
-        │   ├── configuration/      # Diálogos de configuración
-        │   ├── examples/           # Ejemplos y plantillas
-        │   ├── feedback/           # Diálogos de feedback
-        │   ├── sales/              # Diálogos de ventas
-        │   ├── tickets/            # Diálogos de tickets
-        │   └── dialogs.dart        # Exportaciones centralizadas
-        ├── feedback/               # Estados de carga y errores
-        │   ├── auth_feedback_widget.dart
-        │   └── feedback.dart       # Exportaciones centralizadas
-        ├── inputs/                 # Campos de entrada especializados
-        │   ├── input_text_field.dart
-        │   ├── money_input_text_field.dart
-        │   ├── product_search_field.dart
-        │   └── inputs.dart         # Exportaciones centralizadas
-        ├── navigation/             # Componentes de navegación
-        │   ├── drawer_ticket/      # Drawer específico de tickets
-        │   └── navigation.dart     # Exportaciones centralizadas
-        ├── responsive/             # Componentes responsive
-        │   ├── responsive_helper.dart
-        │   └── README.md
-        ├── views/                  # Vistas complejas reutilizables
-        │   ├── search_catalogue_full_screen_view.dart
-        │   ├── welcome_selected_account_page.dart
-        │   └── views.dart          # Exportaciones centralizadas
-        └── core_widgets.dart       # Exportaciones centralizadas de widgets
-```
-
-## 🏛️ Principios de Arquitectura Modular
-
-### ⭐ Nueva Filosofía: Feature-First + Clean Architecture
-
-#### 🎯 Cuando Crear un Nuevo Feature Modular
-
-Un **feature** es un módulo completo y autónomo. Crear uno nuevo cuando:
-- ✅ Es una funcionalidad de negocio completa (ej:Auth, Catálogo, Ventas)
-- ✅ Tiene su propio dominio y lógica de negocio
-- ✅ Puede evolucionar independientemente
-- ✅ Tiene múltiples pantallas/componentes relacionados
-
-#### 📐 Estructura de un Feature Modular
+## 📐 Estructura de un Feature Modular
 
 ```
 lib/features/[feature_name]/
-├── data/                    # Implementaciones, datasources, modelos
-│   ├── datasources/         # Firebase, API, local storage
-│   ├── models/              # DTOs con serialización (@freezed, @JsonSerializable)
-│   └── repositories/        # Implementaciones de contratos
-├── domain/                  # Lógica de negocio pura (sin dependencias)
-│   ├── entities/            # Entidades de dominio (inmutables)
-│   ├── repositories/        # Contratos (interfaces)
-│   └── usecases/            # Casos de uso (@lazySingleton)
-├── presentation/            # UI del feature
-│   ├── pages/               # Páginas principales
-│   ├── providers/           # Providers (@injectable)
-│   └── widgets/             # Widgets específicos del feature
-├── README.md                # Documentación del feature
+├── data/                           # Capa de Datos
+│   ├── datasources/                # Firebase, APIs, local storage
+│   │   └── *_datasource.dart       # @lazySingleton
+│   ├── models/                     # DTOs con serialización
+│   │   └── *_model.dart            # fromJson/toJson, fromFirestore
+│   └── repositories/               # Implementaciones
+│       └── *_repository_impl.dart  # @LazySingleton(as: Contract)
+│
+├── domain/                         # Capa de Dominio (lógica pura)
+│   ├── entities/                   # Entidades inmutables
+│   │   └── *.dart                  # Clases puras sin dependencias
+│   ├── repositories/               # Contratos (interfaces)
+│   │   └── *_repository.dart       # abstract class
+│   └── usecases/                   # Casos de uso
+│       └── *_usecase.dart          # @lazySingleton
+│
+├── presentation/                   # Capa de Presentación
+│   ├── providers/                  # State management
+│   │   └── *_provider.dart         # @injectable + ChangeNotifier
+│   ├── pages/                      # Pantallas principales
+│   │   └── *_page.dart
+│   └── widgets/                    # Widgets específicos del feature
+│       └── *.dart
+│
+└── README.md                       # 📄 Documentación del feature
 ```
 
-#### 🔧 Dependency Injection con Injectable
+---
 
-**Todos los providers y use cases** deben usar anotaciones de `injectable`:
+## 📋 Checklist Obligatorio
+
+### 🔍 ANTES de Crear Algo Nuevo
+
+**Componentes UI:**
+- [ ] ¿Botón? → Revisar `presentation/widgets/buttons/`
+- [ ] ¿Input? → Revisar `presentation/widgets/inputs/`
+- [ ] ¿Diálogo? → Revisar `presentation/widgets/dialogs/`
+- [ ] ¿Card/Avatar? → Revisar `presentation/widgets/component/`
+- [ ] ¿Feedback/Loading? → Revisar `presentation/widgets/feedback/`
+- [ ] ¿Específico del feature? → Crear en `features/[feature]/presentation/widgets/`
+
+**Lógica de Negocio:**
+- [ ] ¿Feature completo? → `features/[feature]/` con estructura Clean
+- [ ] ¿Servicio compartido? → `core/services/`
+- [ ] ¿Utilidad? → `core/utils/`
+- [ ] ¿Caso de uso? → `features/[feature]/domain/usecases/` con `@lazySingleton`
+- [ ] ¿Provider? → Anotar con `@injectable`, registrar DI
+
+---
+
+## 🔧 Dependency Injection
+
+### Anotaciones
 
 ```dart
-// Provider
+// Provider (state management)
 @injectable
-class CatalogueProvider extends ChangeNotifier {
-  final CatalogueUseCases catalogueUseCases;
-  
-  CatalogueProvider({required this.catalogueUseCases});
-  // ...
+class MyProvider extends ChangeNotifier {
+  final MyUseCase useCase;
+  MyProvider(this.useCase);
 }
 
-// Use Case
+// Use Case (lógica de negocio)
 @lazySingleton
-class GetProductsUseCase {
-  final CatalogueRepository repository;
-  
-  GetProductsUseCase(this.repository);
-  // ...
+class MyUseCase {
+  final MyRepository repository;
+  MyUseCase(this.repository);
+}
+
+// Repository Implementation
+@LazySingleton(as: MyRepository)
+class MyRepositoryImpl implements MyRepository {
+  final MyDataSource dataSource;
+  MyRepositoryImpl(this.dataSource);
 }
 
 // DataSource
-@LazySingleton(as: CatalogueRemoteDataSource)
-class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
-  // ...
+@lazySingleton
+class MyDataSource {
+  final FirebaseFirestore firestore;
+  MyDataSource(this.firestore);
 }
 ```
 
-**Configuración en `main.dart`:**
+### Regenerar DI
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Configuración en main.dart
+
 ```dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   
-  configureDependencies(); // ⭐ Inicializar DI antes de runApp
+  configureDependencies(); // ⭐ Inicializar DI
   
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => getIt<MyProvider>()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 ```
 
-**Después de añadir anotaciones, ejecutar:**
-```bash
-flutter pub run build_runner build --delete-conflicting-outputs
-```
+---
 
-#### 📦 Imports en Features Modulares
+## 📦 Imports: Cuándo Usar Qué
 
-**REGLAS de imports:**
-1. ✅ Features pueden importar desde `core/`
-2. ✅ Features pueden importar widgets compartidos de `presentation/widgets/`
-3. ❌ Features NO deben importar otros features directamente
-4. ❌ `core/` NO debe importar features
-5. ✅ Usar rutas relativas dentro del feature: `../`, `../../`
-6. ✅ Usar absolute imports para `core/` y shared: `package:sellweb/core/...`
+### Imports Relativos (Dentro del Feature)
 
-**Ejemplos correctos:**
 ```dart
-// Dentro del feature catalogue
-import '../providers/catalogue_provider.dart';              // ✅ Relativo dentro del feature
-import '../../../../core/core.dart';                        // ✅ Core compartido
-import '../../../../presentation/widgets/buttons/app_button.dart'; // ✅ Widget compartido
-
-// En main.dart
-import 'features/catalogue/presentation/providers/catalogue_provider.dart'; // ✅
-import 'features/catalogue/presentation/pages/catalogue_page.dart';        // ✅
+// ✅ Dentro de features/catalogue/presentation/pages/
+import '../providers/catalogue_provider.dart';      // Provider del mismo feature
+import '../widgets/product_card.dart';              // Widget del mismo feature
+import '../../domain/entities/product.dart';        // Entity del mismo feature
+import '../../domain/usecases/get_products.dart';   // UseCase del mismo feature
 ```
 
-## 📏 Buenas Prácticas  ⚡ Reglas Rápidas
+### Imports Absolutos (Cross-Cutting)
 
-### 🚨 REGLA DE ORO: REUTILIZAR ANTES DE CREAR
-**ANTES** de crear cualquier componente nuevo:
-1. ✅ **Revisa** `presentation/widgets/` y sus subcarpetas (widgets compartidos)
-2. ✅ **Verifica** si existe en el feature actual: `features/[feature]/presentation/widgets/`
-3. ✅ **Consulta** `core_widgets.dart` para todos los widgets disponibles
-4. ✅ **Busca** en `core/services/` para servicios, métodos, etc. existentes
-
-### 📋 Checklist Obligatorio
-
-#### Para Componentes UI:
-- [ ] ¿Existe un botón similar en `presentation/widgets/buttons/`? → Usar `AppButton`, `AppTextButton`, etc.
-- [ ] ¿Necesitas un input? → Usar `InputTextField`, `MoneyInputTextField`, etc.
-- [ ] ¿Requieres un diálogo? → Revisar `presentation/widgets/dialogs/base/` y subcarpetas
-- [ ] ¿Es un componente básico? → Verificar `presentation/widgets/component/` (avatars, imágenes, etc.)
-- [ ] ¿Necesitas feedback? → Usar widgets de `presentation/widgets/feedback/`
-- [ ] ¿Es responsive? → Usar `core/utils/helpers/responsive_helper.dart`
-- [ ] ¿Es específico del feature? → Crear en `features/[feature]/presentation/widgets/`
-
-#### Para Lógica de Negocio:
-- [ ] ¿Es lógica específica de un feature? → Crear en `features/[feature]/domain/usecases/`
-- [ ] ¿Es un servicio compartido? → Crear/usar en `core/services/`
-- [ ] ¿Necesitas acceso a datos? → Crear datasource en `features/[feature]/data/datasources/`
-- [ ] ¿Es una entidad de dominio? → Crear en `features/[feature]/domain/entities/`
-- [ ] ¿Usas Provider para estado? → Anotar con `@injectable` y registrar en DI
-
-### 🎯 Flujo de Trabajo
-
-#### Para Crear un Nuevo Feature Completo:
-```
-1. PLANIFICAR → Definir alcance, entidades, casos de uso
-2. CREAR ESTRUCTURA → Carpetas data/, domain/, presentation/
-3. DOMAIN FIRST → Entidades → Repositorios (contratos) → UseCases
-4. DATA LAYER → Models → DataSources → Repository Implementations
-5. PRESENTATION → Provider (@injectable) → Pages → Widgets
-6. DEPENDENCY INJECTION → Anotar con @injectable/@lazySingleton
-7. BUILD RUNNER → Ejecutar build_runner para generar código DI
-8. TESTING → Crear tests unitarios en test/features/[feature]/
-9. INTEGRAR → Actualizar main.dart con imports del nuevo feature
-10. DOCUMENTAR → README.md, INTEGRATION_GUIDE.md, MIGRATION_SUMMARY.md
+```dart
+// ✅ Core services, shared widgets, otros features para routing
+import 'package:sellweb/core/services/database/firestore_service.dart';
+import 'package:sellweb/core/utils/helpers/date_formatter.dart';
+import 'package:sellweb/presentation/widgets/buttons/app_button.dart';
+import 'package:sellweb/features/catalogue/presentation/pages/catalogue_page.dart';
 ```
 
-#### Para Crear Componentes Individuales:
-```
-1. ANALIZAR → ¿Qué necesito crear? ¿Es específico o compartido?
-2. BUSCAR → ¿Ya existe algo similar en widgets compartidos o en el feature?
-3. REUTILIZAR → Usar componente existente (compartido o del feature)
-4. EXTENDER → Solo si es necesario, extender el existente
-5. CREAR → Como último recurso:
-   - Compartido → presentation/widgets/[categoria]/
-   - Feature → features/[feature]/presentation/widgets/
-6. EXPORTAR → Agregar a archivo .dart correspondiente si es compartido
-7. DOCUMENTAR → Actualizar README.md si es significativo
-```
+### Reglas de Imports
 
-### 💡 Reglas Adicionales
-
-#### Arquitectura:
-1. **Feature-First**: Features autónomos en `features/[feature]/`
-2. **Clean Architecture**: Separación clara domain → data → presentation
-3. **Dependency Injection**: Usar `@injectable` y `@lazySingleton`
-4. **Build Runner**: Ejecutar después de añadir anotaciones DI
-5. **Testing**: Test por cada use case y provider en `test/features/[feature]/`
-
-#### UI/UX:
-6. **Responsive first**: Considerar mobile, tablet, desktop SIEMPRE
-7. **Material Design 3**: Usar componentes y colores del tema
-8. **Provider pattern**: Consumer para UI, Provider.of para acciones
-9. **Widgets compartidos**: Reutilizar desde `presentation/widgets/`
-10. **Widgets específicos**: Crear en `features/[feature]/presentation/widgets/`
-
-#### Código:
-11. **Clean imports**: Agrupar (dart, flutter, packages, local)
-12. **Imports relativos**: Dentro del feature usar `../`, `../../`
-13. **Imports absolutos**: Para core y shared usar `package:sellweb/`
-14. **No circular imports**: Features no importan otros features
-15. **Documentar**: Actualizar README.md en cada carpeta modificada
-
-## 📁 Dónde Crear Qué
-
-### 🆕 Features Modulares (Nuevo Enfoque - PRIORIDAD)
-
-| Qué Crear | Ubicación | Ejemplo | Anotación DI |
-|-----------|-----------|---------|--------------|
-| **Feature completo** | `features/[feature_name]/` | `features/catalogue/`, `features/inventory/` | - |
-| **Entidad de dominio** | `features/[feature]/domain/entities/` | `product.dart`, `category.dart` | - |
-| **Repositorio (contrato)** | `features/[feature]/domain/repositories/` | `catalogue_repository.dart` | - |
-| **Caso de uso** | `features/[feature]/domain/usecases/` | `get_products_usecase.dart` | `@lazySingleton` |
-| **Modelo DTO** | `features/[feature]/data/models/` | `product_model.dart` | - |
-| **DataSource** | `features/[feature]/data/datasources/` | `catalogue_remote_datasource.dart` | `@LazySingleton` |
-| **Repositorio (impl)** | `features/[feature]/data/repositories/` | `catalogue_repository_impl.dart` | `@LazySingleton` |
-| **Provider del feature** | `features/[feature]/presentation/providers/` | `catalogue_provider.dart` | `@injectable` |
-| **Página del feature** | `features/[feature]/presentation/pages/` | `catalogue_page.dart` | - |
-| **Widget específico** | `features/[feature]/presentation/widgets/` | `product_card.dart`, `product_form.dart` | - |
-| **Test del feature** | `test/features/[feature]/` | Misma estructura que lib | - |
-
-### 📝 README (obligatorio): archivo de documentación para cada carpeta
-Actualizar o crear en cada carpeta debe contener un archivo README.md con formato estándar:
-- **Descripción**: Propósito de la carpeta
-- **Contenido**: Lista en árbol con descripción de cada archivo
-- **Documentación extensa**: Solo si es necesario explicar implementaciones complejas
-
-Para features modulares, incluir además:
-- `INTEGRATION_GUIDE.md`: Cómo integrar el feature en la app
-- `MIGRATION_SUMMARY.md`: Estado de migración (si aplica)
-
-### 🔍 PRIMERO: Componentes Globales Existentes (en `lib/presentation/widgets/`)
-
-| Tipo | Componentes Disponibles | Ubicación | Importación |
-|------|------------------------|-----------|-------------|
-| **Botones** | `AppButton`, `AppTextButton`, `AppFloatingActionButton`, `AppBarButton`, `SearchButton`, `ThemeControlButtons` | `buttons/` | `'package:sell_web/core/core.dart'` o directa |
-| **Inputs** | `InputTextField`, `MoneyInputTextField`, `ProductSearchField` | `inputs/` | `'package:sell_web/core/core.dart'` o directa |
-| **Componentes básicos** | `UserAvatar`, `AvatarProduct`, `ImageWidget`, `ProgressIndicators`, `Dividers` | `component/` | `'package:sell_web/core/core.dart'` o directa |
-| **Feedback** | `AuthFeedbackWidget` + widgets de feedback general | `feedback/` | Importación directa |
-| **Responsive** | `responsive_helper` | `helpers/` | `'package:sell_web/core/utils/utils.dart'` |
-| **Navegación** | `AppDrawer`, navigation helpers | `navigation/` | `'package:sell_web/core/core.dart'` |
-| **Vistas** | `SearchCatalogueFullScreenView`, `WelcomeSelectedAccountPage` | `views/` | Importación directa |
-| **Diálogos** | Sistema completo con base, catalogue, sales, tickets, etc. | `dialogs/` | Importación directa |
-
-### 🎯 Widgets Específicos de Features (en `lib/features/[feature]/presentation/widgets/`)
-
-| Feature | Widgets Disponibles | Ubicación | Cuándo Usar | Importación |
-|---------|---------------------|-----------|-------------|-------------|
-| **Catalogue** | `ProductCard`, `ProductForm`, `CatalogueView`, `ProductEditCatalogueView` | `features/catalogue/presentation/widgets/` | Solo dentro del feature Catalogue | **Relativa** dentro del feature: `'../widgets/...'` |
-
-**⚠️ Regla de oro para widgets de features:**
-- ✅ Usar importación **relativa** dentro del mismo feature (`../widgets/`, `../../`)
-- ❌ NO importar widgets de otros features
-- ✅ Si necesitas un widget en múltiples features → moverlo a `lib/presentation/widgets/` y cambiar a import absoluto
-
-### 🆕 Solo Si NO Existe: Crear Nuevo
-
-#### Componentes Globales/Compartidos (reutilizables entre features)
-
-| Tipo de Componente | Ubicación | Ejemplo | Exportar en | Importación |
-|-------------------|-----------|---------|-------------|-------------|
-| Botón especializado compartido | `presentation/widgets/buttons/` | `AddToCartButton` | `buttons.dart` | Absoluta |
-| Campo de entrada genérico | `presentation/widgets/inputs/` | `CategoryInput` | `inputs.dart` | Absoluta |
-| Diálogo nuevo dominio | `presentation/widgets/dialogs/[dominio]/` | `InventoryDialog` | `dialogs.dart` | Absoluta |
-| Card/Lista genérica | `presentation/widgets/component/` | `GenericCard` | `ui.dart` | Absoluta |
-| Feedback especializado | `presentation/widgets/feedback/` | `SalesFeedback` | `feedback.dart` | Absoluta |
-| Vista compleja compartida | `presentation/widgets/views/` | `DashboardView` | `views.dart` | Absoluta |
-| Servicio global | `core/services/[categoria]/` | `NotificationService` | `core.dart` | Absoluta |
-| Utilidad específica | `core/utils/[categoria]/` | `CurrencyFormatter` | Crear exportador | Absoluta |
-
-#### Componentes Específicos de Feature (solo para un feature)
-
-| Tipo de Componente | Ubicación | Ejemplo | Exportar en | Importación |
-|-------------------|-----------|---------|-------------|-------------|
-| Widget específico del feature | `features/[feature]/presentation/widgets/` | `ProductCard` (sólo Catalogue) | No exportar globalmente | **Relativa** dentro del feature |
-| Provider del feature | `features/[feature]/presentation/providers/` | `CatalogueProvider` | No exportar globalmente | Absoluta para main.dart, relativa internamente |
-| Página del feature | `features/[feature]/presentation/pages/` | `CataloguePage` | No exportar globalmente | Absoluta para routing |
-
-### ⚠️ IMPORTANTE: Proceso de Creación
-1. **Verificar** que NO existe componente similar
-2. **Crear** en la ubicación apropiada
-3. **Exportar** en el archivo `.dart` correspondiente de la carpeta
-4. **Documentar** en README.md si es significativo
-5. **Actualizar** `core_widgets.dart` si es widget reutilizable
+| Desde | Hacia | Tipo de Import | Permitido |
+|-------|-------|----------------|-----------|
+| Feature interno | Mismo feature | Relativo `../` | ✅ |
+| Feature | `core/` | Absoluto | ✅ |
+| Feature | `presentation/widgets/` | Absoluto | ✅ |
+| Feature | Otro feature | Absoluto (solo routing) | ⚠️ Solo páginas |
+| `core/` | Feature | - | ❌ Prohibido |
+| `main.dart` | Feature | Absoluto | ✅ |
 
 ---
 
-## 🎯 Ejemplos de Uso de Componentes Existentes
+## 📝 Documentación Minimalista
 
-### Usar Botones Globales Compartidos
+### 🎯 Patrón de Documentación Estándar
+
+**Principio:** Documentar **solo lo necesario** para entender el contexto y responsabilidades.
+
+### 1. Clases
+
 ```dart
-// ✅ CORRECTO - Usar botones existentes en cualquier parte de la app
-import 'package:sell_web/core/core.dart';
-
-AppButton(
-  onPressed: () => _handleAction(),
-  text: 'Agregar al Carrito',
-  icon: Icons.add_shopping_cart,
-)
-
-// ❌ INCORRECTO - Crear botón desde cero
-ElevatedButton(...)
+/// [Tipo]: [Nombre Descriptivo]
+///
+/// **Responsabilidad:**
+/// - [Responsabilidad principal 1]
+/// - [Responsabilidad principal 2]
+///
+/// **Dependencias:** [Lista de dependencias inyectadas]
+/// **Inyección DI:** [@injectable | @lazySingleton]
+@injectable
+class ProductProvider extends ChangeNotifier {
+  final GetProductsUseCase _getProductsUseCase;
+  
+  ProductProvider(this._getProductsUseCase);
+  
+  // ...
+}
 ```
 
-### Usar Inputs Globales Compartidos
+**Ejemplos:**
+
 ```dart
-// ✅ CORRECTO - Usar input especializado compartido
-import 'package:sell_web/core/core.dart';
+/// Provider: Gestión de estado del catálogo de productos
+///
+/// **Responsabilidad:**
+/// - Coordinar UI con casos de uso de productos
+/// - Gestionar estado de productos y categorías
+/// - Manejar estados de carga y errores
+///
+/// **Dependencias:** GetProductsUseCase, UpdateProductUseCase
+/// **Inyección DI:** @injectable
+@injectable
+class CatalogueProvider extends ChangeNotifier { }
 
-MoneyInputTextField(
-  controller: _priceController,
-  label: 'Precio',
-  onChanged: (value) => _updatePrice(value),
-)
+/// UseCase: Obtener lista de productos del catálogo
+///
+/// **Responsabilidad:**
+/// - Obtener productos desde el repositorio
+/// - Aplicar filtros y ordenamiento
+///
+/// **Dependencias:** CatalogueRepository
+/// **Inyección DI:** @lazySingleton
+@lazySingleton
+class GetProductsUseCase { }
 
-// ❌ INCORRECTO - Crear input genérico
-TextFormField(...)
+/// Entity: Producto del catálogo
+///
+/// **Propiedades:** id, name, price, stock, category
+/// **Inmutable:** Usar copyWith() para modificaciones
+class Product {
+  final String id;
+  final String name;
+  final double price;
+  // ...
+}
 ```
 
-### Usar Diálogos Existentes
-```dart
-// ✅ CORRECTO - Reutilizar sistema de diálogos
-import 'package:sell_web/presentation/widgets/dialogs/dialogs.dart';
+### 2. Métodos/Funciones
 
-showDialog(
-  context: context,
-  builder: (context) => BaseDialog(
-    title: 'Confirmar Acción',
-    content: Text('¿Estás seguro?'),
-    actions: [/* usar botones existentes */],
-  ),
-)
+**Documentar solo si:**
+- Lógica compleja o no obvia
+- Múltiples pasos o transformaciones
+- Side effects importantes
+- Parámetros no autoexplicativos
+
+```dart
+/// Obtiene productos filtrados por categoría y ordenados por precio
+///
+/// **Parámetros:**
+/// - `categoryId`: ID de la categoría (null = todas)
+/// - `ascending`: true para orden ascendente
+///
+/// **Retorna:** Lista de productos ordenados
+///
+/// **Lanza:** FirestoreException si falla la consulta
+Future<List<Product>> getProducts({
+  String? categoryId,
+  bool ascending = true,
+}) async {
+  // ...
+}
 ```
 
-### Usar Widgets Específicos de un Feature
-```dart
-// ✅ CORRECTO - Importación relativa dentro del mismo feature
-// Archivo: lib/features/catalogue/presentation/pages/catalogue_page.dart
-import '../widgets/product_card.dart';           // Widget específico del feature
-import '../providers/catalogue_provider.dart';   // Provider del feature
+**No documentar métodos obvios:**
 
-class CataloguePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<CatalogueProvider>(
-      builder: (context, provider, _) {
-        return GridView.builder(
-          itemBuilder: (context, index) => ProductCard(
-            product: provider.products[index],
-          ),
-        );
-      },
+```dart
+// ❌ NO hacer esto
+/// Obtiene el ID del producto
+String get id => _id;
+
+// ❌ NO hacer esto
+/// Retorna el nombre
+String getName() => _name;
+
+// ✅ Estos son autoexplicativos
+String get id => _id;
+String getName() => _name;
+```
+
+### 3. Variables/Propiedades
+
+**Documentar solo si:**
+- Representa estado complejo
+- Tiene propósito no obvio
+- Tiene restricciones o validaciones
+
+```dart
+/// Lista de productos filtrados actualmente visibles en UI
+/// Se actualiza cuando cambia el filtro o se recargan datos
+List<Product> _filteredProducts = [];
+
+/// Timestamp de última sincronización con Firestore
+/// Usado para sincronización incremental
+DateTime? _lastSync;
+
+/// Flag que indica si hay operación en progreso
+/// Previene múltiples peticiones simultáneas
+bool _isLoading = false;
+```
+
+**No documentar variables obvias:**
+
+```dart
+// ❌ NO hacer esto
+/// Email del usuario
+String email;
+
+/// Cantidad de productos
+int productCount;
+
+// ✅ Son autoexplicativas
+String email;
+int productCount;
+```
+
+### 4. Entidades de Dominio
+
+```dart
+/// Entity: [Nombre]
+///
+/// [Descripción breve de qué representa]
+///
+/// **Propiedades:**
+/// - `prop1`: Descripción si no es obvia
+/// - `prop2`: Descripción si no es obvia
+///
+/// **Inmutable:** Usar copyWith() para modificaciones
+class Product {
+  final String id;
+  final String name;
+  final double price;
+  final int stock;
+  final String categoryId;
+  
+  const Product({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.stock,
+    required this.categoryId,
+  });
+  
+  Product copyWith({String? name, double? price, int? stock}) {
+    return Product(
+      id: id,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      stock: stock ?? this.stock,
+      categoryId: categoryId,
     );
   }
 }
-
-// ❌ INCORRECTO - NO importar widgets de otros features
-import 'package:sell_web/features/inventory/presentation/widgets/inventory_card.dart'; // ❌
 ```
 
-### Integrar Feature en Main.dart
+### 5. Modelos (DTOs)
+
 ```dart
-// ✅ CORRECTO - Importación absoluta para providers y páginas de features
-import 'features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'features/catalogue/presentation/pages/catalogue_page.dart';
+/// Model: DTO para [Entity]
+///
+/// **Conversión:**
+/// - fromJson() / toJson() para API REST
+/// - fromFirestore() / toFirestore() para Firestore
+/// - toEntity() para conversión a entidad de dominio
+class ProductModel {
+  final String id;
+  final String name;
+  // ...
+  
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    return ProductModel(
+      id: json['id'],
+      name: json['name'],
+      // ...
+    );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      // ...
+    };
+  }
+  
+  factory ProductModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return ProductModel(
+      id: doc.id,
+      name: data['name'],
+      // ...
+    );
+  }
+  
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      // ...
+    };
+  }
+  
+  Product toEntity() {
+    return Product(
+      id: id,
+      name: name,
+      // ...
+    );
+  }
+}
+```
 
-// En el MultiProvider:
-providers: [
-  ChangeNotifierProvider(create: (_) => CatalogueProvider(...)),
-],
+### 6. Repositorios
+
+```dart
+/// Repository Contract: [Nombre]
+///
+/// **Operaciones:**
+/// - Método1: Descripción breve
+/// - Método2: Descripción breve
+abstract class ProductRepository {
+  Future<List<Product>> getProducts();
+  Future<Product> getProductById(String id);
+  Future<void> updateProduct(Product product);
+}
+
+/// Repository Implementation: [Nombre]
+///
+/// **Fuente de datos:** Firestore colección 'products'
+/// **Dependencias:** ProductDataSource
+/// **Inyección DI:** @LazySingleton(as: ProductRepository)
+@LazySingleton(as: ProductRepository)
+class ProductRepositoryImpl implements ProductRepository {
+  final ProductDataSource _dataSource;
+  
+  ProductRepositoryImpl(this._dataSource);
+  
+  @override
+  Future<List<Product>> getProducts() async {
+    final models = await _dataSource.getProducts();
+    return models.map((m) => m.toEntity()).toList();
+  }
+  // ...
+}
+```
+
+### 7. README.md de Features
+
+**Estructura estándar:**
+
+```markdown
+# Feature: [Nombre] [Emoji]
+
+**[Descripción breve en una línea]**
+
+## 🎯 Descripción
+
+[2-3 párrafos explicando qué hace el feature]
+
+## 📦 Componentes Principales
+
+### Entities
+- `Entity1`: Descripción
+- `Entity2`: Descripción
+
+### Use Cases
+- `UseCase1`: Responsabilidad
+- `UseCase2`: Responsabilidad
+
+### Providers
+- `Provider1`: Responsabilidad
+
+## 🔄 Flujos Principales
+
+### Flujo 1: [Nombre]
+```
+Usuario → Acción → Provider → UseCase → Repository → Firestore
+```
+
+## 🔌 Integración
+
+```dart
+// Ejemplo de uso básico
+Consumer<MyProvider>(
+  builder: (context, provider, _) {
+    return MyWidget(data: provider.data);
+  },
+)
+```
+
+## ⚙️ Configuración
+
+[Configuraciones específicas necesarias]
+
+## ✅ Estado
+
+- ✅ Feature completo
+- ✅ Tests implementados
+- ✅ Documentación completa
 ```
 
 ---
 
-## 📚 Resumen de Mejores Prácticas
+## 🚀 Flujo de Trabajo
 
-### 🏛️ Arquitectura
-1. ✅ **Feature-First**: Crear módulos completos en `lib/features/[feature]/`
-2. ✅ **Clean Architecture**: Respetar capas domain/data/presentation
-3. ✅ **DI con @injectable**: Usar anotaciones para casos de uso y repositorios
-4. ✅ **Imports relativos**: Dentro de features usar `../`, `../../`
-5. ✅ **Imports absolutos**: Para core, shared widgets, y routing
+### Crear Nuevo Feature Completo
 
-### 🎨 UI/UX
-6. ✅ **Reutilizar componentes**: Revisar `lib/presentation/widgets/` antes de crear
-7. ✅ **Material Design 3**: Seguir guías de diseño consistentes
-8. ✅ **Responsive Design**: Usar `responsive_helper.dart` para adaptabilidad
-9. ✅ **Widgets compartidos**: En `lib/presentation/widgets/` si se usan en múltiples features
-10. ✅ **Widgets específicos**: En `lib/features/[feature]/presentation/widgets/` si son exclusivos
+```
+1. PLANIFICAR
+   ├── Definir alcance y límites
+   ├── Identificar entidades principales
+   └── Listar casos de uso necesarios
 
-### 💻 Código
-11. ✅ **Provider para estado**: Usar ChangeNotifierProvider con @injectable
-12. ✅ **Tests unitarios**: Crear tests para providers y casos de uso
-13. ✅ **Build runner**: Ejecutar después de añadir @injectable/@lazySingleton
-14. ✅ **README.md**: Documentar cada carpeta con formato estándar
-15. ✅ **No circular deps**: Features NO deben importar otros features
+2. DOMAIN FIRST (lógica pura)
+   ├── Crear entities/ (clases inmutables)
+   ├── Crear repositories/ (contratos abstract)
+   └── Crear usecases/ (@lazySingleton)
+
+3. DATA LAYER (implementación)
+   ├── Crear models/ (DTOs con serialización)
+   ├── Crear datasources/ (@lazySingleton)
+   └── Crear repositories/ implementaciones (@LazySingleton)
+
+4. PRESENTATION (UI)
+   ├── Crear providers/ (@injectable)
+   ├── Crear pages/ (pantallas)
+   └── Crear widgets/ (componentes específicos)
+
+5. DEPENDENCY INJECTION
+   ├── Verificar anotaciones @injectable/@lazySingleton
+   └── Ejecutar: dart run build_runner build --delete-conflicting-outputs
+
+6. INTEGRACIÓN
+   ├── Registrar provider en main.dart
+   ├── Agregar rutas si necesario
+   └── Actualizar navigation
+
+7. TESTING
+   ├── Tests unitarios para usecases
+   ├── Tests para providers
+   └── Widget tests para UI crítica
+
+8. DOCUMENTACIÓN
+   ├── Crear README.md del feature
+   ├── Documentar clases con patrón minimalista
+   └── Actualizar INTEGRATION_GUIDE.md si aplica
+```
+
+### Crear Componente Individual
+
+```
+1. ANALIZAR: ¿Qué necesito?
+2. BUSCAR: ¿Ya existe en presentation/widgets/ o en el feature?
+3. REUTILIZAR: Usar existente (compartido o del feature)
+4. EXTENDER: Solo si necesario, extender componente base
+5. CREAR: Como último recurso
+   ├── Compartido → presentation/widgets/[categoria]/
+   └── Feature → features/[feature]/presentation/widgets/
+6. DOCUMENTAR: Agregar doc minimalista si es necesario
+7. EXPORTAR: Actualizar archivo .dart de exportaciones
+```
 
 ---
-**🔥 Recuerda**: 
-- **Feature-First + Clean Architecture** es la base del proyecto
-- **Provider** para gestión de estado global
-- **Reutilizar SIEMPRE** antes de crear
-- **Material Design 3** para consistencia visual
-- **Responsive Design** en todos los componentes
-- **DI con @injectable** para desacoplar dependencias
-- **Imports relativos** dentro de features, **absolutos** para shared
+
+## 📁 Ubicación de Componentes
+
+### Features Modulares
+
+| Componente | Ubicación | Anotación DI |
+|-----------|-----------|--------------|
+| Entity | `features/[f]/domain/entities/` | - |
+| Repository (contract) | `features/[f]/domain/repositories/` | - |
+| UseCase | `features/[f]/domain/usecases/` | `@lazySingleton` |
+| Model (DTO) | `features/[f]/data/models/` | - |
+| DataSource | `features/[f]/data/datasources/` | `@lazySingleton` |
+| Repository (impl) | `features/[f]/data/repositories/` | `@LazySingleton(as: Contract)` |
+| Provider | `features/[f]/presentation/providers/` | `@injectable` |
+| Page | `features/[f]/presentation/pages/` | - |
+| Widget específico | `features/[f]/presentation/widgets/` | - |
+
+### Componentes Compartidos
+
+| Componente | Ubicación | Cuándo Usar |
+|-----------|-----------|-------------|
+| Botón | `presentation/widgets/buttons/` | Reutilizable en múltiples features |
+| Input | `presentation/widgets/inputs/` | Campo de entrada genérico |
+| Diálogo | `presentation/widgets/dialogs/[tipo]/` | Modal compartido |
+| Card/Avatar | `presentation/widgets/component/` | Componente básico UI |
+| Feedback | `presentation/widgets/feedback/` | Loading/Error states |
+| Servicio | `core/services/[categoria]/` | Lógica compartida cross-cutting |
+| Utilidad | `core/utils/[categoria]/` | Helpers y formatters |
+
+---
+
+## 🎨 Widgets Disponibles
+
+### Botones (`presentation/widgets/buttons/`)
+- `AppButton`: Botón principal con estilos Material 3
+- `AppTextButton`: Botón de texto sin fondo
+- `AppFloatingActionButton`: FAB customizado
+- `AppBarButton`: Botón para AppBar/ToolBar
+- `SearchButton`: Botón especializado de búsqueda
+- `ThemeControlButtons`: Toggle tema claro/oscuro
+
+### Inputs (`presentation/widgets/inputs/`)
+- `InputTextField`: Campo de texto base con validación
+- `MoneyInputTextField`: Input especializado para moneda
+- `ProductSearchField`: Búsqueda de productos con autocompletado
+
+### Componentes (`presentation/widgets/component/`)
+- `UserAvatar`: Avatar de usuario con imagen/iniciales
+- `AvatarProduct`: Avatar de producto con placeholder
+- `ImageWidget`: Imagen con loading y error handling
+- `ProgressIndicators`: Indicadores de progreso customizados
+- `Dividers`: Separadores visuales
+
+### Diálogos (`presentation/widgets/dialogs/`)
+- Sistema completo modular con `BaseDialog`
+- Subcategorías: catalogue, sales, tickets, configuration, feedback
+
+---
+
+## 💡 Mejores Prácticas
+
+### Arquitectura
+1. ✅ **Feature-First**: Crear features autónomos completos
+2. ✅ **Clean Layers**: Respetar domain → data → presentation
+3. ✅ **DI Annotations**: Usar `@injectable` y `@lazySingleton`
+4. ✅ **Build Runner**: Regenerar después de añadir anotaciones
+5. ✅ **Testing**: Test por cada usecase crítico
+
+### UI/UX
+6. ✅ **Reutilizar**: Buscar en `presentation/widgets/` primero
+7. ✅ **Material 3**: Usar tema y componentes del sistema
+8. ✅ **Responsive**: Considerar mobile/tablet/desktop
+9. ✅ **Provider**: Consumer para UI, read() para acciones
+10. ✅ **Feature Widgets**: Componentes específicos en el feature
+
+### Código
+11. ✅ **Clean Imports**: Dart → Flutter → Packages → Local
+12. ✅ **Relative/Absolute**: Relativo en feature, absoluto cross-cutting
+13. ✅ **No Circular**: Features no importan otros features
+14. ✅ **Doc Minimalista**: Solo lo necesario para contexto
+15. ✅ **README.md**: Documentar cada feature con estructura estándar
+
+---
+
+## 📚 Resumen Rápido
+
+### ⚡ Checklist de Creación
+
+**¿Qué voy a crear?**
+- [ ] Feature completo → `lib/features/[name]/` con Clean Architecture
+- [ ] Widget compartido → `lib/presentation/widgets/[categoria]/`
+- [ ] Widget específico → `lib/features/[f]/presentation/widgets/`
+- [ ] Servicio → `lib/core/services/[categoria]/`
+- [ ] Utilidad → `lib/core/utils/[categoria]/`
+
+**Antes de crear:**
+- [ ] ¿Existe componente similar en `presentation/widgets/`?
+- [ ] ¿Existe en el feature actual?
+- [ ] ¿Puedo extender uno existente?
+
+**Al crear:**
+- [ ] Usar anotaciones DI (`@injectable`, `@lazySingleton`)
+- [ ] Documentar con patrón minimalista
+- [ ] Imports relativos dentro del feature
+- [ ] Imports absolutos para cross-cutting
+
+**Después de crear:**
+- [ ] Ejecutar `build_runner` si añadiste DI
+- [ ] Exportar en archivo `.dart` si es compartido
+- [ ] Actualizar README.md del feature
+- [ ] Agregar tests si es lógica crítica
+
+---
+
+## 🔥 Comandos Útiles
+
+```bash
+# Regenerar código de Dependency Injection
+dart run build_runner build --delete-conflicting-outputs
+
+# Ejecutar tests
+flutter test
+
+# Ejecutar tests con coverage
+flutter test --coverage
+
+# Build para web
+flutter build web --release
+
+# Analizar código
+flutter analyze
+
+# Format código
+dart format .
+```
+
+---
+
+**Última actualización:** 25 de noviembre de 2025  
+**Versión:** 2.0.0  
+**Estado:** ✅ Producción
+````

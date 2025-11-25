@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Diálogo modernizado para agregar productos siguiendo Material Design 3
@@ -542,8 +542,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (_checkAddCatalogue) {
         // Obtener perfil de la cuenta para registrar precio
-        final accountProfile = authProvider
-            .getProfileAccountById(sellProvider.profileAccountSelected.id);
+        final accountProfile = authProvider.getProfileAccountById(sellProvider.profileAccountSelected.id);
 
         final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
         await catalogueProvider.addAndUpdateProductToCatalogue(

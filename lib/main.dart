@@ -1,26 +1,20 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sellweb/data/account_repository_impl.dart';
-import 'package:sellweb/domain/usecases/account_usecase.dart';
+import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/presentation/pages/home_page.dart';
 import 'package:sellweb/presentation/providers/printer_provider.dart';
 import 'package:sellweb/presentation/providers/home_provider.dart';
 import 'package:sellweb/presentation/providers/sell_provider.dart';
 import 'core/config/firebase_options.dart';
-import 'core/config/oauth_config.dart';
 import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
 import 'core/di/injection_container.dart'; // ← NUEVO: Dependency Injection
-import 'data/auth_repository_impl.dart';
 import 'data/catalogue_repository_impl.dart';
 import 'data/cash_register_repository_impl.dart';
-import 'domain/usecases/auth_usecases.dart';
 import 'domain/usecases/catalogue_usecases.dart';
 import 'domain/usecases/cash_register_usecases.dart';
 import 'domain/usecases/sell_usecases.dart'; // NUEVO
-import 'presentation/providers/auth_provider.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'presentation/providers/cash_register_provider.dart';
 import 'presentation/providers/theme_data_app_provider.dart';
@@ -41,23 +35,8 @@ void main() async {
 }
 
 void _runApp() {
-  // Configuración de GoogleSignIn usando configuración centralizada y segura
-  final googleSignIn = GoogleSignIn(
-    scopes: OAuthConfig.googleSignInScopes,
-    clientId: OAuthConfig.googleSignInClientId,
-  );
-
   // Inicializar repositorios
-  final authRepository = AuthRepositoryImpl(
-    fb_auth.FirebaseAuth.instance,
-    googleSignIn,
-  );
-  final accountRepository = AccountRepositoryImpl();
   final catalogueRepository = CatalogueRepositoryImpl();
-  final getUserAccountsUseCase = AccountsUseCase(
-    accountRepository,
-    persistenceService: AppDataPersistenceService.instance,
-  );
 
   runApp(
     MultiProvider(
@@ -69,13 +48,7 @@ void _runApp() {
 
         // AuthProvider - gestiona el estado de autenticación
         ChangeNotifierProvider(
-          create: (_) => AuthProvider(
-            signInWithGoogleUseCase: SignInWithGoogleUseCase(authRepository),
-            signInSilentlyUseCase: SignInSilentlyUseCase(authRepository),
-            signOutUseCase: SignOutUseCase(authRepository),
-            getUserStreamUseCase: GetUserStreamUseCase(authRepository),
-            getUserAccountsUseCase: getUserAccountsUseCase,
-          ),
+          create: (_) => getIt<AuthProvider>(),
         ),
 
         // SellProvider - creado una sola vez y reutilizado
@@ -87,7 +60,7 @@ void _runApp() {
             );
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SellProvider(
-              getUserAccountsUseCase: getUserAccountsUseCase,
+              getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
               sellUsecases: sellUsecases,
               catalogueUseCases: catalogueUseCases,
             );
@@ -100,7 +73,7 @@ void _runApp() {
             );
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SellProvider(
-              getUserAccountsUseCase: getUserAccountsUseCase,
+              getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
               sellUsecases: sellUsecases,
               catalogueUseCases: catalogueUseCases,
             );
@@ -139,7 +112,6 @@ void _runApp() {
                     return _buildAccountSpecificProviders(
                       accountId: sellProvider.profileAccountSelected.id,
                       sellProvider: sellProvider,
-                      accountRepository: accountRepository,
                     );
                   },
                 );
@@ -155,7 +127,6 @@ void _runApp() {
 Widget _buildAccountSpecificProviders({
   required String accountId,
   required SellProvider sellProvider,
-  required AccountRepositoryImpl accountRepository,
 }) {
   final effectiveAccountId = accountId.isEmpty ? null : accountId;
 
@@ -179,10 +150,6 @@ Widget _buildAccountSpecificProviders({
           final catalogueUseCases = CatalogueUseCases(catalogueRepository);
           final catalogueProvider = CatalogueProvider(
             catalogueUseCases: catalogueUseCases,
-            getUserAccountsUseCase: AccountsUseCase(
-              accountRepository,
-              persistenceService: AppDataPersistenceService.instance,
-            ),
           );
 
           if (accountId.isNotEmpty) {

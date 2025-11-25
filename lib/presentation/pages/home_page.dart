@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import '../providers/sell_provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../../features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'welcome_selected_account_page.dart';
 import 'sell_page.dart';

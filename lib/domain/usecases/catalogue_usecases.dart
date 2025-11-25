@@ -146,4 +146,26 @@ class CatalogueUseCases {
   Future<void> createBrand(Mark brand, {String country = 'ARG'}) {
     return repository.createBrand(brand, country: country);
   }
+
+  /// Devuelve una lista de productos de prueba para la cuenta demo.
+  List<ProductCatalogue> getDemoProducts({int count = 30}) {
+    return List.generate(
+        count,
+        (i) => ProductCatalogue(
+              id: 'demo_product_${i + 1}',
+              nameMark: 'Marca Demo',
+              image: '',
+              description: 'Producto de prueba #${i + 1}',
+              code: 'DEMO${(i + 1).toString().padLeft(3, '0')}',
+              salePrice: 10.0 + i,
+              quantityStock: 100 - i,
+              stock: true,
+              alertStock: 10,
+              currencySign: '24',
+              creation: Timestamp.now(),
+              upgrade: Timestamp.now(),
+              documentCreation: Timestamp.now(),
+              documentUpgrade: Timestamp.now(),
+            ));
+  }
 }

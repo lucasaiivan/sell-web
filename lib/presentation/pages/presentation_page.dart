@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import '../../core/utils/helpers/responsive_helper.dart';
 import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'login_page.dart';
-import '../providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/pages/login_page.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'dart:ui';
 
 import '../providers/theme_data_app_provider.dart';
@@ -1029,7 +1029,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   void _navigateToLogin(BuildContext context, AuthProvider authProvider) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => LoginPage(authProvider: authProvider),
+        builder: (context) => const LoginPage(),
       ),
     );
   }

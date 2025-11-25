@@ -1,307 +1,8 @@
 import 'dart:async';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:sellweb/presentation/widgets/buttons/buttons.dart';
-import 'package:sellweb/presentation/widgets/feedback/auth_feedback_widget.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../core/utils/helpers/responsive_helper.dart';
-import '../../features/auth/presentation/providers/auth_provider.dart';
-
-class LoginPage extends StatelessWidget {
-  final AuthProvider authProvider;
-  const LoginPage({super.key, required this.authProvider});
-
-  @override
-  Widget build(BuildContext context) {
-    final double width = MediaQuery.of(context).size.width;
-
-    Widget content;
-    if (width < 600) {
-      // Móvil: apilar verticalmente
-      content = Column(
-        children: [
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: OnboardingIntroductionApp(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: _LoginForm(authProvider: authProvider),
-          ),
-        ],
-      );
-    } else if (width < 1024) {
-      // Tablet: proporción 2/3 y 1/3
-      content = Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: OnboardingIntroductionApp(),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: _LoginForm(authProvider: authProvider),
-          ),
-        ],
-      );
-    } else {
-      // Desktop: proporción 3/4 y 1/4
-      content = Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: OnboardingIntroductionApp(),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: _LoginForm(authProvider: authProvider),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Title(
-      title: 'Punto de venta',
-      color: Theme.of(context).colorScheme.primary,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            content,
-            // Botones de configuración del tema
-            Positioned(
-              top: 30,
-              right: 20,
-              child: ThemeControlButtons(
-                spacing: 8,
-                iconSize: 24,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Widget : que muestra el formulario de login y controla el estado del checkbox
-class _LoginForm extends StatefulWidget {
-  final AuthProvider authProvider;
-  const _LoginForm({required this.authProvider});
-  @override
-  State<_LoginForm> createState() => _LoginFormState();
-}
-
-class _LoginFormState extends State<_LoginForm> {
-  bool _acceptPolicy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Limpiar errores previos al inicializar la página
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.authProvider.clearAuthError();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    // Estilos responsivos para el texto
-    final double baseFontSize = getResponsiveValue(
-      context,
-      mobile: 11.0,
-      tablet: 12.0,
-      desktop: 13.0,
-    );
-
-    TextStyle aceptPolitikTextStyle = textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface,
-          fontSize: baseFontSize * 0.95,
-          height: 1.4,
-        ) ??
-        TextStyle(
-          color: colorScheme.onSurface,
-          fontSize: baseFontSize * 0.9,
-          height: 1.4,
-        );
-
-    RichText text = RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: aceptPolitikTextStyle,
-        children: <TextSpan>[
-          const TextSpan(
-              text:
-                  'Al iniciar en INICIAR SESIÓN, usted ha leído y acepta nuestros '),
-          TextSpan(
-              text: 'Términos y condiciones de uso',
-              style: aceptPolitikTextStyle.copyWith(
-                  decoration: TextDecoration.none, color: colorScheme.primary),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () async {
-                  final Uri url = Uri.parse(
-                      'https://sites.google.com/view/sell-app/t%C3%A9rminos-y-condiciones-de-uso');
-                  if (!await launchUrl(url)) throw 'Could not launch $url';
-                }),
-          const TextSpan(text: ' así también como la '),
-          TextSpan(
-              text: 'Política de privacidad',
-              style: aceptPolitikTextStyle.copyWith(
-                  decoration: TextDecoration.none, color: colorScheme.primary),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () async {
-                  final Uri url = Uri.parse(
-                      'https://sites.google.com/view/sell-app/pol%C3%ADticas-de-privacidad');
-                  if (!await launchUrl(url)) throw 'Could not launch $url';
-                }),
-        ],
-      ),
-    );
-
-    return Center(
-      child: AnimatedBuilder(
-        animation: widget.authProvider,
-        builder: (context, _) {
-          // Si el usuario se autentica exitosamente, navegar de vuelta
-          if (widget.authProvider.user != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-            });
-            return AuthFeedbackWidget(
-              showLoading: true,
-              loadingMessage: 'Configurando tu cuenta...',
-            );
-          }
-
-          if (widget.authProvider.user == null) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Widget de feedback unificado para errores y estados
-                AuthFeedbackWidget(
-                  error: widget.authProvider.authError,
-                  onDismissError: widget.authProvider.clearAuthError,
-                ),
-
-                // CheckboxListTile responsivo : aceptar términos y condiciones
-                Container(
-                  margin: getResponsivePadding(
-                    context,
-                    mobile:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    tablet:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                    desktop: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 16),
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: _acceptPolicy
-                          ? colorScheme.primary.withValues(alpha: 0.3)
-                          : colorScheme.outline.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    color: _acceptPolicy
-                        ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-                        : colorScheme.surface,
-                  ),
-                  child: CheckboxListTile(
-                    dense: isMobile(context),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0)),
-                    selectedTileColor: Colors.transparent,
-                    tileColor: Colors.transparent,
-                    checkColor: colorScheme.onPrimary,
-                    activeColor: colorScheme.primary,
-                    title: text,
-                    value: _acceptPolicy,
-                    onChanged: (value) {
-                      setState(() {
-                        _acceptPolicy = value ?? false;
-                      });
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: getResponsivePadding(
-                      context,
-                      mobile: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      tablet: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      desktop: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // ElevatedButton : Iniciar sesión con Google
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                    backgroundColor: Colors.blue.shade700,
-                    text: "CONTINUAR CON GOOGLE",
-                    icon: const Icon(Icons.login_rounded, size: 20),
-                    isLoading: widget.authProvider.isSigningInWithGoogle,
-                    onPressed: (_acceptPolicy &&
-                            !widget.authProvider.isSigningInWithGoogle &&
-                            !widget.authProvider.isSigningInAsGuest)
-                        ? () async {
-                            await widget.authProvider.signInWithGoogle();
-                          }
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // ElevatedButton : Iniciar como invitado
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                    icon: const Icon(Icons.auto_fix_high_outlined, size: 20),
-                    backgroundColor: Colors.blueGrey,
-                    text: "CONTINUAR COMO INVITADO",
-                    isLoading: widget.authProvider.isSigningInAsGuest,
-                    onPressed: (!widget.authProvider.isSigningInWithGoogle &&
-                            !widget.authProvider.isSigningInAsGuest)
-                        ? () async {
-                            await widget.authProvider.signInAsGuest();
-                          }
-                        : null,
-                  ),
-                ),
-              ],
-            );
-          }
-
-          // Estado por defecto - no debería llegar aquí
-          return const SizedBox.shrink();
-        },
-      ),
-    );
-  }
-}
+import 'package:sellweb/core/core.dart';
 
 class OnboardingIntroductionApp extends StatefulWidget {
   // ignore: prefer_const_constructors_in_immutables
@@ -310,8 +11,8 @@ class OnboardingIntroductionApp extends StatefulWidget {
       this.colorText = Colors.white,
       super.key});
 
-  late final Color colorAccent;
-  late final Color colorText;
+  final Color colorAccent;
+  final Color colorText;
 
   @override
   State<OnboardingIntroductionApp> createState() =>
@@ -415,42 +116,44 @@ class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
     // logica de los indicadores de posicion que cambiar cada sierto tiempo
     timer = Timer.periodic(const Duration(microseconds: 50000), (timer) {
       try {
-        setState(() {
-          if (indicatorProgressItem01 < 1) {
-            if (indicatorProgressItem01 >= 0.1 &&
-                indicatorProgressItem01 <= 0.8) {
-              indicatorProgressItem01 += 0.02;
-            } else {
-              indicatorProgressItem01 += 0.01;
+        if (mounted) {
+          setState(() {
+            if (indicatorProgressItem01 < 1) {
+              if (indicatorProgressItem01 >= 0.1 &&
+                  indicatorProgressItem01 <= 0.8) {
+                indicatorProgressItem01 += 0.02;
+              } else {
+                indicatorProgressItem01 += 0.01;
+              }
+              index = 0;
             }
-            index = 0;
-          }
-          if (indicatorProgressItem02 < 1 && indicatorProgressItem01 >= 1) {
-            if (indicatorProgressItem02 >= 0.1 &&
-                indicatorProgressItem02 <= 0.8) {
-              indicatorProgressItem02 += 0.02;
-            } else {
-              indicatorProgressItem02 += 0.01;
+            if (indicatorProgressItem02 < 1 && indicatorProgressItem01 >= 1) {
+              if (indicatorProgressItem02 >= 0.1 &&
+                  indicatorProgressItem02 <= 0.8) {
+                indicatorProgressItem02 += 0.02;
+              } else {
+                indicatorProgressItem02 += 0.01;
+              }
+              index = 1;
             }
-            index = 1;
-          }
-          if (indicatorProgressItem03 < 1 && indicatorProgressItem02 >= 1) {
-            if (indicatorProgressItem03 >= 0.1 &&
-                indicatorProgressItem03 <= 0.8) {
-              indicatorProgressItem03 += 0.02;
-            } else {
-              indicatorProgressItem03 += 0.01;
+            if (indicatorProgressItem03 < 1 && indicatorProgressItem02 >= 1) {
+              if (indicatorProgressItem03 >= 0.1 &&
+                  indicatorProgressItem03 <= 0.8) {
+                indicatorProgressItem03 += 0.02;
+              } else {
+                indicatorProgressItem03 += 0.01;
+              }
+              index = 2;
             }
-            index = 2;
-          }
-          if (indicatorProgressItem01 >= 1 &&
-              indicatorProgressItem02 >= 1 &&
-              indicatorProgressItem03 >= 1) {
-            indicatorProgressItem01 = 0.0;
-            indicatorProgressItem02 = 0.0;
-            indicatorProgressItem03 = 0.0;
-          }
-        });
+            if (indicatorProgressItem01 >= 1 &&
+                indicatorProgressItem02 >= 1 &&
+                indicatorProgressItem03 >= 1) {
+              indicatorProgressItem01 = 0.0;
+              indicatorProgressItem02 = 0.0;
+              indicatorProgressItem03 = 0.0;
+            }
+          });
+        }
         // ignore: empty_catches
       } catch (e) {}
     });

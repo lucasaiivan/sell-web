@@ -6,9 +6,8 @@ import '../../../../core/core.dart';
 import '../../../../core/services/search_catalogue_service.dart';
 import '../../../../data/catalogue_repository_impl.dart';
 import '../../../../domain/entities/catalogue.dart';
-import '../../../../domain/entities/user.dart';
+import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import '../../../../domain/usecases/catalogue_usecases.dart';
-import '../../../../domain/usecases/account_usecase.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
@@ -137,7 +136,6 @@ class CatalogueProvider extends ChangeNotifier {
 
   // Dependencies - Únicamente CatalogueUseCases
   CatalogueUseCases _catalogueUseCases;
-  final AccountsUseCase getUserAccountsUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
@@ -178,7 +176,6 @@ class CatalogueProvider extends ChangeNotifier {
 
   CatalogueProvider({
     required CatalogueUseCases catalogueUseCases,
-    required this.getUserAccountsUseCase,
   }) : _catalogueUseCases = catalogueUseCases;
 
   /// Inicializa el catálogo para una cuenta específica

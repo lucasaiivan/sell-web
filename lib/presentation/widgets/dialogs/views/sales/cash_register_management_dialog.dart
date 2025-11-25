@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../domain/entities/cash_register_model.dart';
 import '../../../../../domain/entities/ticket_model.dart';
-import '../../../../providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../providers/cash_register_provider.dart';
 import '../../../../providers/sell_provider.dart';
 import '../../../graphics/graphics.dart';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/domain/entities/user.dart';
+import 'package:intl/intl.dart';
+import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/presentation/widgets/dialogs/components/dialog_components.dart';
 
@@ -474,4 +475,30 @@ class _PermissionInfo {
   final IconData icon;
 
   _PermissionInfo(this.label, this.icon);
+}
+
+extension AdminProfileFormatting on AdminProfile {
+  String formatTimestamp(DateTime date) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(date);
+  }
+
+  String formatTime(Map<String, dynamic> time) {
+    if (time.isEmpty) return 'No definido';
+    final hour = time['hour'] ?? 0;
+    final minute = time['minute'] ?? 0;
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  }
+
+  String translateDay({required String day}) {
+    switch (day.toLowerCase()) {
+      case 'monday': return 'Lunes';
+      case 'tuesday': return 'Martes';
+      case 'wednesday': return 'Miércoles';
+      case 'thursday': return 'Jueves';
+      case 'friday': return 'Viernes';
+      case 'saturday': return 'Sábado';
+      case 'sunday': return 'Domingo';
+      default: return day;
+    }
+  }
 }

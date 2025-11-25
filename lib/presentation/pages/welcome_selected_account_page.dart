@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/core_widgets.dart';
-import '../../../domain/entities/user.dart';
-import '../../../presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/theme_data_app_provider.dart';
 
 class WelcomeSelectedAccountPage extends StatelessWidget {
@@ -123,9 +123,7 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // providers
     final authProvider = Provider.of<AuthProvider>(context);
-    List<AccountProfile> accounts = authProvider.getUserAccountsUseCase
-        .getAccountsWithDemo(authProvider.accountsAssociateds,
-            isAnonymous: authProvider.user?.isAnonymous == true);
+    List<AccountProfile> accounts = authProvider.accountsWithDemo;
 
     return Scaffold(
       body: Stack(

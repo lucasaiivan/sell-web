@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/providers/theme_data_app_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/sell_provider.dart';
 import '../../providers/home_provider.dart';
 import '../core_widgets.dart';

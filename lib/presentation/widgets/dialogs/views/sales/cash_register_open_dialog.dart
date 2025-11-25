@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/presentation/widgets/inputs/inputs.dart';
-import '../../../../providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../providers/cash_register_provider.dart';
 import '../../../../providers/sell_provider.dart';
 import '../../../buttons/app_button.dart';

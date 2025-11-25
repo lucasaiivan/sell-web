@@ -1,10 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/domain/usecases/catalogue_usecases.dart';
-import 'package:sellweb/domain/usecases/account_usecase.dart';
 import 'package:sellweb/domain/entities/catalogue.dart';
 import 'package:sellweb/data/catalogue_repository_impl.dart';
-import 'package:sellweb/data/account_repository_impl.dart';
 
 /// Tests unitarios para CatalogueProvider
 /// 
@@ -25,12 +23,8 @@ void main() {
     final catalogueRepository = CatalogueRepositoryImpl(id: 'test');
     final catalogueUseCases = CatalogueUseCases(catalogueRepository);
     
-    final accountRepository = AccountRepositoryImpl();
-    final accountsUseCase = AccountsUseCase(accountRepository);
-    
     catalogueProvider = CatalogueProvider(
       catalogueUseCases: catalogueUseCases,
-      getUserAccountsUseCase: accountsUseCase,
     );
   });
 

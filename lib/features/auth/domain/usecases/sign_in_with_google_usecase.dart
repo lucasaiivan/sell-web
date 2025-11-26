@@ -1,4 +1,7 @@
 import 'package:injectable/injectable.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../../core/errors/failures.dart';
 import '../repositories/auth_repository.dart';
 import '../entities/auth_profile.dart';
 
@@ -9,15 +12,16 @@ import '../entities/auth_profile.dart';
 /// - Delega la operación al repositorio
 /// - Retorna el perfil del usuario autenticado
 @lazySingleton
-class SignInWithGoogleUseCase {
+class SignInWithGoogleUseCase extends UseCase<AuthProfile, NoParams> {
   final AuthRepository _repository;
 
   SignInWithGoogleUseCase(this._repository);
 
   /// Ejecuta el inicio de sesión con Google
   ///
-  /// Retorna [AuthProfile] si el inicio de sesión es exitoso, null si falla
-  Future<AuthProfile?> call() async {
+  /// Retorna [Right(AuthProfile)] si es exitoso, [Left(Failure)] si falla
+  @override
+  Future<Either<Failure, AuthProfile>> call(NoParams params) async {
     return await _repository.signInWithGoogle();
   }
 }

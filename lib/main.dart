@@ -7,8 +7,8 @@ import 'package:sellweb/core/services/printing/printer_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
-import 'core/services/storage/app_data_persistence_service.dart'; // NUEVO
-import 'core/di/injection_container.dart'; // ← NUEVO: Dependency Injection
+import 'core/services/storage/app_data_persistence_service.dart';
+import 'core/di/injection_container.dart';
 import 'features/catalogue/data/repositories/catalogue_repository_impl.dart';
 import 'package:sellweb/features/cash_register/data/repositories/cash_register_repository_impl.dart';
 import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
@@ -19,6 +19,21 @@ import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
+// Sales UseCases imports
+import 'package:sellweb/features/sales/domain/usecases/create_empty_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/remove_product_from_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/create_quick_product_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/set_ticket_payment_mode_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/set_ticket_discount_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/set_ticket_received_cash_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/associate_ticket_with_cash_register_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/prepare_sale_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/prepare_ticket_for_transaction_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/save_last_sold_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/clear_last_sold_ticket_usecase.dart';
+import 'package:sellweb/features/sales/domain/usecases/has_last_sold_ticket_usecase.dart';
 
 void main() async {
   // CRITICAL: Initialize bindings FIRST in the main zone, synchronously
@@ -54,27 +69,45 @@ void _runApp() {
         // SalesProvider - creado una sola vez y reutilizado
         ChangeNotifierProxyProvider<AuthProvider, SalesProvider>(
           create: (_) {
-            final persistenceService = AppDataPersistenceService.instance;
-            final sellUsecases = SellUsecases(
-              persistenceService: persistenceService,
-            );
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
-              sellUsecases: sellUsecases,
+              createEmptyTicketUseCase: getIt<CreateEmptyTicketUseCase>(),
+              addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
+              removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
+              createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
+              setTicketPaymentModeUseCase: getIt<SetTicketPaymentModeUseCase>(),
+              setTicketDiscountUseCase: getIt<SetTicketDiscountUseCase>(),
+              setTicketReceivedCashUseCase: getIt<SetTicketReceivedCashUseCase>(),
+              associateTicketWithCashRegisterUseCase: getIt<AssociateTicketWithCashRegisterUseCase>(),
+              prepareSaleTicketUseCase: getIt<PrepareSaleTicketUseCase>(),
+              prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
+              saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
+              getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
+              clearLastSoldTicketUseCase: getIt<ClearLastSoldTicketUseCase>(),
+              hasLastSoldTicketUseCase: getIt<HasLastSoldTicketUseCase>(),
               catalogueUseCases: catalogueUseCases,
             );
           },
           update: (_, auth, previousSell) {
             if (previousSell != null) return previousSell;
-            final persistenceService = AppDataPersistenceService.instance;
-            final sellUsecases = SellUsecases(
-              persistenceService: persistenceService,
-            );
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
-              sellUsecases: sellUsecases,
+              createEmptyTicketUseCase: getIt<CreateEmptyTicketUseCase>(),
+              addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
+              removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
+              createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
+              setTicketPaymentModeUseCase: getIt<SetTicketPaymentModeUseCase>(),
+              setTicketDiscountUseCase: getIt<SetTicketDiscountUseCase>(),
+              setTicketReceivedCashUseCase: getIt<SetTicketReceivedCashUseCase>(),
+              associateTicketWithCashRegisterUseCase: getIt<AssociateTicketWithCashRegisterUseCase>(),
+              prepareSaleTicketUseCase: getIt<PrepareSaleTicketUseCase>(),
+              prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
+              saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
+              getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
+              clearLastSoldTicketUseCase: getIt<ClearLastSoldTicketUseCase>(),
+              hasLastSoldTicketUseCase: getIt<HasLastSoldTicketUseCase>(),
               catalogueUseCases: catalogueUseCases,
             );
           },

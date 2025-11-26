@@ -24,3 +24,8 @@ class CacheFailure extends Failure {
 class NetworkFailure extends Failure {
   const NetworkFailure([super.message = 'Error de red']);
 }
+
+/// Fallo de validación
+class ValidationFailure extends Failure {
+  const ValidationFailure([super.message = 'Error de validación']);
+}

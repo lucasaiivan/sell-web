@@ -1,33 +1,49 @@
 import 'package:injectable/injectable.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../../core/errors/failures.dart';
 import '../repositories/catalogue_repository.dart';
 
-/// Caso de uso para actualizar el stock de un producto.
+/// Parámetros para UpdateStockUseCase
+class UpdateStockParams {
+  final String accountId;
+  final String productId;
+  final int newStock;
+
+  const UpdateStockParams({
+    required this.accountId,
+    required this.productId,
+    required this.newStock,
+  });
+}
+
+/// Caso de uso: Actualizar stock de un producto
 /// 
-/// Encapsula la lógica de negocio y validaciones para
-/// modificar la cantidad en stock.
+/// **Responsabilidad:**
+/// - Valida que el stock no sea negativo
+/// - Actualiza la cantidad en stock del producto
+/// - Delega la operación al repositorio
 @lazySingleton
-class UpdateStockUseCase {
+class UpdateStockUseCase extends UseCase<void, UpdateStockParams> {
   final CatalogueRepository repository;
 
   UpdateStockUseCase(this.repository);
 
-  /// Ejecuta el caso de uso
+  /// Ejecuta la actualización de stock
   /// 
-  /// [accountId] - ID de la cuenta
-  /// [productId] - ID del producto
-  /// [newStock] - Nueva cantidad en stock (debe ser >= 0)
-  /// 
-  /// Throws [ArgumentError] si newStock es negativo
-  Future<void> call({
-    required String accountId,
-    required String productId,
-    required int newStock,
-  }) async {
+  /// Retorna [Right(void)] si es exitoso, [Left(Failure)] si falla o el stock es negativo
+  @override
+  Future<Either<Failure, void>> call(UpdateStockParams params) async {
     // Validación de negocio
-    if (newStock < 0) {
-      throw ArgumentError('El stock no puede ser negativo');
+    if (params.newStock < 0) {
+      return Left(ValidationFailure('El stock no puede ser negativo'));
     }
 
-    await repository.updateStock(accountId, productId, newStock);
+    try {
+      await repository.updateStock(params.accountId, params.productId, params.newStock);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure('Error al actualizar stock: ${e.toString()}'));
+    }
   }
 }

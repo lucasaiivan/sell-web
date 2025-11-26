@@ -1,3 +1,5 @@
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/errors/failures.dart';
 import '../entities/auth_profile.dart';
 
 /// Contrato del repositorio de autenticación
@@ -19,25 +21,26 @@ import '../entities/auth_profile.dart';
 abstract class AuthRepository {
   /// Inicia sesión con Google OAuth
   ///
-  /// Retorna el perfil del usuario autenticado o null si falla
-  Future<AuthProfile?> signInWithGoogle();
+  /// Retorna [Right(AuthProfile)] si es exitoso, [Left(Failure)] si falla
+  Future<Either<Failure, AuthProfile>> signInWithGoogle();
 
   /// Intenta iniciar sesión silenciosamente sin mostrar UI
   ///
   /// Útil para auto-login si el usuario ya autorizó previamente
-  /// Retorna el perfil del usuario o null si no hay sesión guardada
-  Future<AuthProfile?> signInSilently();
+  /// Retorna [Right(AuthProfile)] si hay sesión guardada, [Left(Failure)] si no
+  Future<Either<Failure, AuthProfile>> signInSilently();
 
   /// Inicia sesión anónima/invitado en Firebase
   ///
   /// Permite acceso limitado sin cuenta real
-  /// Retorna el perfil del usuario anónimo o null si falla
-  Future<AuthProfile?> signInAnonymously();
+  /// Retorna [Right(AuthProfile)] con isAnonymous=true si es exitoso, [Left(Failure)] si falla
+  Future<Either<Failure, AuthProfile>> signInAnonymously();
 
   /// Cierra la sesión del usuario actual
   ///
   /// Limpia tokens y credenciales de autenticación
-  Future<void> signOut();
+  /// Retorna [Right(void)] si es exitoso, [Left(Failure)] si falla
+  Future<Either<Failure, void>> signOut();
 
   /// Stream que emite el usuario autenticado actual
   ///

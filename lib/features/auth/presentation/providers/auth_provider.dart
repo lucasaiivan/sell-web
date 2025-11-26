@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/auth_profile.dart';
 import '../../domain/entities/account_profile.dart';
 import '../../domain/usecases/sign_in_with_google_usecase.dart';
@@ -124,32 +125,42 @@ class AuthProvider extends ChangeNotifier {
     _authError = null;
     notifyListeners();
 
-    try {
-      await _signInWithGoogleUseCase();
-      // El éxito se maneja automáticamente por el stream en el constructor
-    } catch (e) {
-      _authError = 'Error al iniciar sesión con Google: ${e.toString()}';
-      debugPrint('Error en signInWithGoogle: $e');
-    } finally {
-      _isSigningInWithGoogle = false;
-      notifyListeners();
-    }
+    final result = await _signInWithGoogleUseCase(const NoParams());
+    
+    result.fold(
+      (failure) {
+        _authError = failure.message;
+        debugPrint('Error en signInWithGoogle: ${failure.message}');
+      },
+      (user) {
+        // El éxito se maneja automáticamente por el stream en el constructor
+        debugPrint('✅ Inicio de sesión con Google exitoso: ${user.email}');
+      },
+    );
+    
+    _isSigningInWithGoogle = false;
+    notifyListeners();
   }
 
   // Cierra sesión usando el caso de uso
   Future<void> signOut() async {
-    try {
-      await _signOutUseCase();
-      // Limpiar estados al cerrar sesión
-      _authError = null;
-      _isSigningInWithGoogle = false;
-      _isSigningInAsGuest = false;
-    } catch (e) {
-      _authError = 'Error al cerrar sesión: ${e.toString()}';
-      debugPrint('Error en signOut: $e');
-    } finally {
-      notifyListeners();
-    }
+    final result = await _signOutUseCase(const NoParams());
+    
+    result.fold(
+      (failure) {
+        _authError = failure.message;
+        debugPrint('Error en signOut: ${failure.message}');
+      },
+      (_) {
+        // Limpiar estados al cerrar sesión
+        _authError = null;
+        _isSigningInWithGoogle = false;
+        _isSigningInAsGuest = false;
+        debugPrint('✅ Cierre de sesión exitoso');
+      },
+    );
+    
+    notifyListeners();
   }
 
   // Obtiene las cuentas asociadas al usuario actual, incluyendo demo si es anónimo
@@ -209,18 +220,22 @@ class AuthProvider extends ChangeNotifier {
     _authError = null;
     notifyListeners();
 
-    try {
-      final user = await _signInAnonymouslyUseCase();
-      _user = user;
-      _accountsAssociateds = [];
-      // El notifyListeners() se maneja en el finally
-    } catch (e) {
-      _authError = 'Error al iniciar sesión como invitado: ${e.toString()}';
-      debugPrint('Error en signInAsGuest: $e');
-    } finally {
-      _isSigningInAsGuest = false;
-      notifyListeners();
-    }
+    final result = await _signInAnonymouslyUseCase(const NoParams());
+    
+    result.fold(
+      (failure) {
+        _authError = failure.message;
+        debugPrint('Error en signInAsGuest: ${failure.message}');
+      },
+      (user) {
+        _user = user;
+        _accountsAssociateds = [];
+        debugPrint('✅ Inicio de sesión como invitado exitoso');
+      },
+    );
+    
+    _isSigningInAsGuest = false;
+    notifyListeners();
   }
 
   /// Limpia los errores de autenticación
@@ -231,7 +246,16 @@ class AuthProvider extends ChangeNotifier {
 
   // Intenta iniciar sesión silenciosamente con Google
   Future<void> signInSilently() async {
-    await _signInSilentlyUseCase();
+    final result = await _signInSilentlyUseCase(const NoParams());
+    
+    result.fold(
+      (failure) {
+        debugPrint('signInSilently falló: ${failure.message}');
+      },
+      (user) {
+        debugPrint('✅ signInSilently exitoso: ${user.email}');
+      },
+    );
   }
 
   // ProfileAccountModel : devuelve los datos del perfil de la cuenta asociada del id pasado por parametro

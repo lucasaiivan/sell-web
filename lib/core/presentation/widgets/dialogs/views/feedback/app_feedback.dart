@@ -16,8 +16,11 @@ class AppFeedback {
     // Limpiar SnackBars existentes para evitar Hero tag duplicados
     ScaffoldMessenger.of(context).clearSnackBars();
 
+    final uniqueKey = UniqueKey();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        key: uniqueKey,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

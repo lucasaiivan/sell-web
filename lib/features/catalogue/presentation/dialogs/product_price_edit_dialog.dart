@@ -572,8 +572,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       // Mostrar mensaje de éxito
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             behavior: SnackBarBehavior.floating,
             content: const Text('Precios actualizados correctamente'),
             backgroundColor: Colors.green,
@@ -593,8 +595,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             behavior: SnackBarBehavior.floating,
             content: Text('Error: $e'),
             backgroundColor: Colors.red,

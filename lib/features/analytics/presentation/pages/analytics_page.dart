@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import '../../domain/entities/date_filter.dart';
 import '../providers/analytics_provider.dart';
-import '../widgets/date_filter_chips.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/payment_methods_card.dart';
 import '../widgets/transaction_list_item.dart';
@@ -31,22 +31,7 @@ class AnalyticsPage extends StatelessWidget {
       drawer: const AppDrawer(),
       body: Consumer<AnalyticsProvider>(
         builder: (context, provider, _) {
-          return Column(
-            children: [
-              // Filtros de fecha
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: DateFilterChips(
-                  selectedFilter: provider.selectedFilter,
-                  onFilterChanged: (filter) => provider.setDateFilter(filter),
-                ),
-              ),
-              // Contenido principal
-              Expanded(
-                child: _buildContent(context, provider),
-              ),
-            ],
-          );
+          return _buildContent(context, provider);
         },
       ),
     );
@@ -115,13 +100,15 @@ class AnalyticsPage extends StatelessWidget {
 
           // Grid de Métricas Principales
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid.count(
-              crossAxisCount: _calculateCrossAxisCount(context),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.5,
-              children: [
+            padding: const EdgeInsets.all(16),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 300,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 1.3,
+              ),
+              delegate: SliverChildListDelegate([
                 // 1. Facturación (Ventas Totales)
                 MetricCard(
                   title: 'Facturación',
@@ -154,27 +141,20 @@ class AnalyticsPage extends StatelessWidget {
                   color: Colors.purple,
                   subtitle: 'Promedio por venta',
                 ),
-              ],
+              ]),
             ),
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
           // Sección: Medios de Pago
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             sliver: SliverToBoxAdapter(
-              child: SizedBox(
-                height: 300, // Altura fija para el card de medios de pago
-                child: PaymentMethodsCard(
-                  paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-                  totalSales: analytics.totalSales,
-                ),
+              child: PaymentMethodsCard(
+                paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
+                totalSales: analytics.totalSales,
               ),
             ),
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
           // Título de Lista
           SliverToBoxAdapter(
@@ -218,82 +198,118 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
-  int _calculateCrossAxisCount(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 1200) return 4;
-    if (width > 800) return 2;
-    return 1; // Móvil
-  }
-
   /// Construye el AppBar personalizado
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final salesProvider = context.read<SalesProvider>();
 
     return AppBar(
-      toolbarHeight: 70,
+      toolbarHeight: 80,
       titleSpacing: 0,
       elevation: 0,
       scrolledUnderElevation: 0,
-      leading: Container(),
-      flexibleSpace: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.only(
-            top: 20.0,
-            bottom: 12,
-            left: 12,
-            right: 12,
-          ),
-          child: Row(
-            children: [
-              // Avatar y botón de drawer
-              Builder(
-                builder: (context) => GestureDetector(
-                  onTap: () => Scaffold.of(context).openDrawer(),
-                  child: UserAvatar(
-                    imageUrl: salesProvider.profileAccountSelected.image,
-                    text: salesProvider.profileAccountSelected.name,
+      automaticallyImplyLeading: false,
+      title: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            // Avatar y botón de drawer
+            Builder(
+              builder: (context) => GestureDetector(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                child: UserAvatar(
+                  imageUrl: salesProvider.profileAccountSelected.image,
+                  text: salesProvider.profileAccountSelected.name,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Título
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Analíticas',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                  Consumer<AnalyticsProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.analytics != null) {
+                        return Text(
+                          '${provider.analytics!.totalTransactions} transacciones',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              // Título
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Analíticas',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Consumer<AnalyticsProvider>(
-                      builder: (context, provider, _) {
-                        if (provider.analytics != null) {
-                          return Text(
-                            '${provider.analytics!.totalTransactions} transacciones',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              // Botón de refrescar
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: 'Actualizar',
-                onPressed: () => _refreshAnalytics(context),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+      actions: [
+        // PopupMenu de filtros
+        Consumer<AnalyticsProvider>(
+          builder: (context, provider, _) {
+            return PopupMenuButton<DateFilter>(
+              icon: Icon(
+                Icons.filter_list_rounded,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              tooltip: 'Filtrar por fecha',
+              onSelected: (DateFilter filter) {
+                provider.setDateFilter(filter);
+              },
+              itemBuilder: (BuildContext context) {
+                return DateFilter.values.map((DateFilter filter) {
+                  final isSelected = filter == provider.selectedFilter;
+                  return PopupMenuItem<DateFilter>(
+                    value: filter,
+                    child: Row(
+                      children: [
+                        if (isSelected)
+                          Icon(
+                            Icons.check_rounded,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary,
+                          )
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 12),
+                        Text(
+                          filter.label,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList();
+              },
+            );
+          },
+        ),
+        // Botón de refrescar
+        IconButton(
+          icon: const Icon(Icons.refresh_rounded),
+          tooltip: 'Actualizar',
+          onPressed: () => _refreshAnalytics(context),
+        ),
+        const SizedBox(width: 8),
+      ],
     );
   }
 

@@ -336,10 +336,12 @@ class _CataloguePageState extends State<CataloguePage> {
       onPressed: () {
         // TODO: Implementar diálogo para agregar producto
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
+            key: uniqueKey,
             behavior: SnackBarBehavior.floating,
-            content: Text('Agregar producto - Por implementar'),
+            content: const Text('Agregar producto - Por implementar'),
           ),
         );
       },

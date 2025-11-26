@@ -27,6 +27,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "TRANSACTIONS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "creation",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creation",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

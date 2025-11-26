@@ -362,10 +362,11 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                       if (context.mounted) {
                         final theme = Theme.of(context);
                         ScaffoldMessenger.of(context).clearSnackBars();
+                        final uniqueKey = UniqueKey();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text(
-                                'Error al guardar el nombre frecuente'),
+                            key: uniqueKey,
+                            content: const Text('Error al guardar el nombre frecuente'),
                             backgroundColor: theme.colorScheme.error,
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -381,8 +382,10 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                       if (context.mounted) {
                         final theme = Theme.of(context);
                         ScaffoldMessenger.of(context).clearSnackBars();
+                        final uniqueKey = UniqueKey();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
+                            key: uniqueKey,
                             content: Text('Error al guardar: $e'),
                             backgroundColor: theme.colorScheme.error,
                             behavior: SnackBarBehavior.floating,
@@ -405,8 +408,10 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   void _showErrorMessage(String message) {
     if (mounted && context.mounted) {
       ScaffoldMessenger.of(context).clearSnackBars();
+      final uniqueKey = UniqueKey();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          key: uniqueKey,
           content: Text(message),
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
@@ -418,8 +423,10 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   void _showSuccessMessage(String message) {
     if (mounted && context.mounted) {
       ScaffoldMessenger.of(context).clearSnackBars();
+      final uniqueKey = UniqueKey();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          key: uniqueKey,
           content: Text(message),
           backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,

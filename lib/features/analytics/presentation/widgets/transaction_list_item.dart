@@ -40,42 +40,121 @@ class TransactionListItem extends StatelessWidget {
 
     final isAnnulled = ticket.annulled;
     final profit = ticket.getProfit;
+    final profitPercentage = ticket.getPercentageProfit;
 
     return Card(
-      elevation: 1,
+      elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      color: colorScheme.surface,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
             children: [
-              // Primera fila: Total y Estado
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Total de venta
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              // Columna izquierda: Info principal
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Fila 1: Método de pago y fecha
+                    Row(
                       children: [
-                        Text(
-                          'Total',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+                        // Badge método de pago
+                        Material(
+                          color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getPaymentIcon(ticket.payMode),
+                                  size: 14,
+                                  color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.8),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _getPaymentMethodLabel(ticket.payMode),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.8),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(width: 8),
+                        // Separator dot
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Fecha
+                        Flexible(
+                          child: Text(
+                            _formatDateTime(ticket.creation.toDate()),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w400,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Fila 2: Detalles de venta
+                    Row(
+                      children: [
+                        // Caja y vendedor
+                        Text(
+                          'caja ${ticket.cashRegisterName}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            ticket.sellerName.split('@')[0],
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Fila 3: Total de venta
+                    Row(
+                      children: [
                         Text(
                           currencyFormat.format(ticket.priceTotal),
-                          style: theme.textTheme.titleLarge?.copyWith(
+                          style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             decoration: isAnnulled ? TextDecoration.lineThrough : null,
                             color: isAnnulled
@@ -83,133 +162,73 @@ class TransactionListItem extends StatelessWidget {
                                 : colorScheme.onSurface,
                           ),
                         ),
+                        if (isAnnulled) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'ANULADA',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                  ),
-                  // Badge de estado
-                  if (isAnnulled)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  ],
+                ),
+              ),
+              // Columna derecha: Ganancia
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ganancia
+                  if (profit != 0)
+                    Text(
+                      currencyFormat.format(profit),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                        fontWeight: FontWeight.w600,
                       ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.cancel_rounded,
-                            size: 14,
-                            color: colorScheme.onErrorContainer,
+                    ),
+                  // Porcentaje
+                  if (profitPercentage != 0) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          profitPercentage > 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                          size: 14,
+                          color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                        ),
+                        const SizedBox(width: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: profit > 0 
+                                ? Colors.green.withValues(alpha: 0.15)
+                                : colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Anulada',
+                          child: Text(
+                            '$profitPercentage%',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onErrorContainer,
+                              color: profit > 0 ? Colors.green.shade700 : colorScheme.onErrorContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              // Segunda fila: Detalles
-              Row(
-                children: [
-                  // Fecha y hora
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            _formatDateTime(ticket.creation.toDate()),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Método de pago
-                  if (ticket.payMode.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getPaymentIcon(ticket.payMode),
-                            size: 14,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getPaymentMethodLabel(ticket.payMode),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Tercera fila: Ganancia
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Ganancia',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: profit > 0 
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      currencyFormat.format(profit),
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: profit > 0 ? Colors.green.shade700 : colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ],
@@ -260,6 +279,23 @@ class TransactionListItem extends StatelessWidget {
         return Icons.account_balance_rounded;
       default:
         return Icons.payments_rounded;
+    }
+  }
+
+  /// Obtiene el color del método de pago
+  Color _getPaymentColor(String payMode) {
+    switch (payMode.toLowerCase()) {
+      case 'effective':
+      case 'efective':
+        return Colors.green;
+      case 'mercadopago':
+        return Colors.blue;
+      case 'card':
+        return Colors.orange;
+      case 'transfer':
+        return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 }

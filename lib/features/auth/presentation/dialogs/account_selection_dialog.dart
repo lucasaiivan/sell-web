@@ -90,23 +90,25 @@ class _AccountSelectionContent extends StatelessWidget {
                     );
                   } else if (context.mounted) {
                     ScaffoldMessenger.of(context).clearSnackBars();
+                    final uniqueKey = UniqueKey();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
+                        key: uniqueKey,
                         behavior: SnackBarBehavior.floating,
-                        content: Text(
-                            'No se encontró información del administrador'),
-                        duration: Duration(seconds: 2),
+                        content: const Text('No se encontró información del administrador'),
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).clearSnackBars();
+                    final uniqueKey = UniqueKey();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
+                        key: uniqueKey,
                         behavior: SnackBarBehavior.floating,
-                        content: Text(
-                            'Error al cargar la información: ${e.toString()}'),
+                        content: Text('Error al cargar la información: ${e.toString()}'),
                         backgroundColor: Colors.red,
                         duration: const Duration(seconds: 3),
                       ),

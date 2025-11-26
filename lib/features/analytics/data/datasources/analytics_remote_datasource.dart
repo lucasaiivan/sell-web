@@ -35,30 +35,43 @@ class AnalyticsRemoteDataSource {
     String accountId, {
     DateFilter? dateFilter,
   }) async {
-    Query<Map<String, dynamic>> query = _firestore
-        .collection('/ACCOUNTS')
-        .doc(accountId)
-        .collection('TRANSACTIONS');
+    try {
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('/ACCOUNTS')
+          .doc(accountId)
+          .collection('TRANSACTIONS');
 
-    // Aplicar filtro de fecha si existe
-    if (dateFilter != null) {
-      final (startDate, endDate) = dateFilter.getDateRange();
-      query = query
-          .where('creation', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('creation', isLessThan: Timestamp.fromDate(endDate));
+      // Aplicar filtro de fecha si existe
+      if (dateFilter != null) {
+        final (startDate, endDate) = dateFilter.getDateRange();
+        
+        // Log para debugging
+        print('📊 [Analytics] Consultando transacciones:');
+        print('   Desde: $startDate');
+        print('   Hasta: $endDate');
+        
+        query = query
+            .where('creation', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+            .where('creation', isLessThan: Timestamp.fromDate(endDate));
+      }
+
+      // Ordenar por fecha de creación descendente
+      query = query.orderBy('creation', descending: true);
+
+      final querySnapshot = await query.get();
+      
+      print('📊 [Analytics] Documentos encontrados: ${querySnapshot.docs.length}');
+
+      // Convertir documentos a TicketModel
+      final tickets = querySnapshot.docs.map((doc) {
+        return TicketModel.fromMap(doc.data());
+      }).toList();
+
+      // Calcular métricas y retornar modelo
+      return SalesAnalyticsModel.fromTickets(tickets);
+    } catch (e) {
+      print('❌ [Analytics] Error en consulta: $e');
+      rethrow;
     }
-
-    // Ordenar por fecha de creación descendente
-    query = query.orderBy('creation', descending: true);
-
-    final querySnapshot = await query.get();
-
-    // Convertir documentos a TicketModel
-    final tickets = querySnapshot.docs.map((doc) {
-      return TicketModel.fromMap(doc.data());
-    }).toList();
-
-    // Calcular métricas y retornar modelo
-    return SalesAnalyticsModel.fromTickets(tickets);
   }
 }

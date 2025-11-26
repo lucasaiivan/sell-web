@@ -393,8 +393,10 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       // Mostrar mensaje de error al usuario
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             behavior: SnackBarBehavior.floating,
             content: Text('Error al actualizar favorito: $e'),
             backgroundColor: Colors.red,

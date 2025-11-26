@@ -102,8 +102,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             content: Row(
               children: [
                 Icon(
@@ -136,8 +138,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
 
         final errorMessage = e.toString().replaceFirst('Exception: ', '');
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             content: Row(
               children: [
                 const Icon(

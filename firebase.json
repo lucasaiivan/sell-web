@@ -1,1 +1,25 @@
-{"hosting":{"site":"commer-ef151-b5fde","public":"build/web"},"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"commer-ef151","configurations":{"web":"1:232181553323:web:09eb353cc175e0479b3fee"}}}}},"storage":{"rules":"storage.rules"}}
+{
+  "hosting": {
+    "site": "commer-ef151-b5fde",
+    "public": "build/web"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "commer-ef151",
+          "configurations": {
+            "web": "1:232181553323:web:09eb353cc175e0479b3fee"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

@@ -867,8 +867,10 @@ class SalesProvider extends ChangeNotifier {
       // Mostrar error al usuario
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             content: Row(
               children: [
                 const Icon(Icons.error, color: Colors.white),
@@ -1028,8 +1030,10 @@ class SalesProvider extends ChangeNotifier {
       // Mostrar resultado
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             content: Row(
               children: [
                 Icon(
@@ -1059,8 +1063,10 @@ class SalesProvider extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             content: Row(
               children: [
                 const Icon(Icons.error, color: Colors.white),
@@ -1223,13 +1229,15 @@ class SalesProvider extends ChangeNotifier {
       // Opcionalmente mostrar una notificación al usuario
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
+            key: uniqueKey,
+            content: const Row(
               children: [
-                const Icon(Icons.warning, color: Colors.white),
-                const SizedBox(width: 8),
-                const Expanded(
+                Icon(Icons.warning, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     'Venta registrada correctamente. Hay un problema menor con la actualización de estadísticas.',
                     style: TextStyle(color: Colors.white),

@@ -127,8 +127,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Future<void> _pickImage() async {
     // Verificar si el producto está verificado
     if (widget.product.verified) {
+      final uniqueKey = UniqueKey();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          key: uniqueKey,
           content: const Row(
             children: [
               Icon(Icons.lock, color: Colors.white),
@@ -162,8 +164,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       }
     } catch (e) {
       if (mounted) {
+        final uniqueKey = UniqueKey();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            key: uniqueKey,
             content: Text('Error al seleccionar imagen: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
@@ -250,13 +254,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Muestra mensaje de éxito al guardar
   void _showSuccessMessage() {
     ScaffoldMessenger.of(context).clearSnackBars();
+    final uniqueKey = UniqueKey();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
+        key: uniqueKey,
+        content: const Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 12),
-            const Expanded(
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 12),
+            Expanded(
               child: Text('Producto actualizado correctamente'),
             ),
           ],
@@ -270,8 +276,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Muestra mensaje de error al guardar
   void _showErrorMessage(String error) {
     ScaffoldMessenger.of(context).clearSnackBars();
+    final uniqueKey = UniqueKey();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        key: uniqueKey,
         content: Row(
           children: [
             const Icon(Icons.error_outline, color: Colors.white),
@@ -325,10 +333,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             });
                           }
                         } catch (e) {
+                          final uniqueKey = UniqueKey();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content:
-                                    Text('Error al seleccionar imagen: $e')),
+                              key: uniqueKey,
+                              content: Text('Error al seleccionar imagen: $e'),
+                            ),
                           );
                         }
                       },
@@ -430,17 +440,21 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
                     if (context.mounted) {
                       Navigator.of(context).pop(newBrand);
+                      final uniqueKey = UniqueKey();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Marca creada exitosamente'),
+                        SnackBar(
+                          key: uniqueKey,
+                          content: const Text('Marca creada exitosamente'),
                           backgroundColor: Colors.green,
                         ),
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
+                      final uniqueKey = UniqueKey();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
+                          key: uniqueKey,
                           content: Text('Error al crear marca: $e'),
                           backgroundColor: Colors.red,
                         ),
@@ -1057,8 +1071,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         return InkWell(
           onTap: isVerified
               ? () {
+                  final uniqueKey = UniqueKey();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
+                      key: uniqueKey,
                       content: const Row(
                         children: [
                           Icon(Icons.lock, color: Colors.white),

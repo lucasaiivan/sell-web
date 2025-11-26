@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
@@ -10,6 +11,7 @@ import 'package:sellweb/features/cash_register/domain/repositories/cash_register
 /// - Historial de arqueos
 /// - Descripciones fijas
 /// - Flujos de caja
+@LazySingleton(as: CashRegisterRepository)
 class CashRegisterRepositoryImpl implements CashRegisterRepository {
   // ==========================================
   // CAJAS REGISTRADORAS ACTIVAS

@@ -65,6 +65,8 @@ import 'package:sellweb/features/auth/domain/usecases/sign_out_usecase.dart'
     as _i158;
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
     as _i638;
+import 'package:sellweb/features/cash_register/data/repositories/cash_register_repository_impl.dart'
+    as _i1059;
 import 'package:sellweb/features/cash_register/domain/repositories/cash_register_repository.dart'
     as _i818;
 import 'package:sellweb/features/cash_register/domain/usecases/add_cash_inflow_usecase.dart'
@@ -103,6 +105,8 @@ import 'package:sellweb/features/cash_register/domain/usecases/get_cash_register
     as _i95;
 import 'package:sellweb/features/cash_register/domain/usecases/get_today_cash_registers_usecase.dart'
     as _i209;
+import 'package:sellweb/features/cash_register/domain/usecases/get_today_transactions_stream_usecase.dart'
+    as _i34;
 import 'package:sellweb/features/cash_register/domain/usecases/get_transaction_detail_usecase.dart'
     as _i827;
 import 'package:sellweb/features/cash_register/domain/usecases/get_transactions_by_date_range_usecase.dart'
@@ -111,6 +115,10 @@ import 'package:sellweb/features/cash_register/domain/usecases/get_transactions_
     as _i454;
 import 'package:sellweb/features/cash_register/domain/usecases/open_cash_register_usecase.dart'
     as _i512;
+import 'package:sellweb/features/cash_register/domain/usecases/process_ticket_annullment_usecase.dart'
+    as _i547;
+import 'package:sellweb/features/cash_register/domain/usecases/save_ticket_to_transaction_history_usecase.dart'
+    as _i223;
 import 'package:sellweb/features/cash_register/domain/usecases/save_ticket_transaction_usecase.dart'
     as _i1034;
 import 'package:sellweb/features/cash_register/domain/usecases/set_cash_register_usecase.dart'
@@ -251,6 +259,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1056.AssociateTicketWithCashRegisterUseCase());
     gh.lazySingleton<_i449.RemoveProductFromTicketUseCase>(
         () => _i449.RemoveProductFromTicketUseCase());
+    gh.lazySingleton<_i818.CashRegisterRepository>(
+        () => _i1059.CashRegisterRepositoryImpl());
     gh.lazySingleton<_i276.ClearLastSoldTicketUseCase>(() =>
         _i276.ClearLastSoldTicketUseCase(
             gh<_i581.AppDataPersistenceService>()));
@@ -335,6 +345,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i264.DeleteCashRegisterFixedDescriptionUseCase>(() =>
         _i264.DeleteCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i34.GetTodayTransactionsStreamUseCase>(() =>
+        _i34.GetTodayTransactionsStreamUseCase(
+            gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i547.ProcessTicketAnnullmentUseCase>(() =>
+        _i547.ProcessTicketAnnullmentUseCase(
+            gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i223.SaveTicketToTransactionHistoryUseCase>(() =>
+        _i223.SaveTicketToTransactionHistoryUseCase(
+            gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i840.AccountRepository>(() => _i166.AccountRepositoryImpl(
         persistenceService: gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i651.RegisterProductPriceUseCase>(() =>
@@ -380,17 +399,44 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i475.SaveAdminProfileUseCase>(() =>
         _i475.SaveAdminProfileUseCase(
             persistenceService: gh<_i581.AppDataPersistenceService>()));
+    gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
+          gh<_i512.OpenCashRegisterUseCase>(),
+          gh<_i202.CloseCashRegisterUseCase>(),
+          gh<_i216.GetActiveCashRegistersUseCase>(),
+          gh<_i797.GetActiveCashRegistersStreamUseCase>(),
+          gh<_i457.AddCashInflowUseCase>(),
+          gh<_i9.AddCashOutflowUseCase>(),
+          gh<_i90.UpdateSalesAndBillingUseCase>(),
+          gh<_i95.GetCashRegisterHistoryUseCase>(),
+          gh<_i522.GetCashRegisterByDaysUseCase>(),
+          gh<_i760.GetCashRegisterByDateRangeUseCase>(),
+          gh<_i547.ProcessTicketAnnullmentUseCase>(),
+          gh<_i23.CreateCashRegisterFixedDescriptionUseCase>(),
+          gh<_i322.GetCashRegisterFixedDescriptionsUseCase>(),
+          gh<_i264.DeleteCashRegisterFixedDescriptionUseCase>(),
+          gh<_i34.GetTodayTransactionsStreamUseCase>(),
+          gh<_i466.GetTransactionsByDateRangeUseCase>(),
+          gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
+        ));
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
         () => _i644.GetUserAccountsUseCase(
               gh<_i840.AccountRepository>(),
               persistenceService: gh<_i581.AppDataPersistenceService>(),
             ));
-    gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
-          gh<_i795.CashRegisterUsecases>(),
-          gh<_i76.SellUsecases>(),
-        ));
     gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
-        catalogueUseCases: gh<_i1012.CatalogueUseCases>()));
+          gh<_i474.GetCatalogueStreamUseCase>(),
+          gh<_i1001.GetPublicProductByCodeUseCase>(),
+          gh<_i821.AddProductToCatalogueUseCase>(),
+          gh<_i540.CreatePublicProductUseCase>(),
+          gh<_i651.RegisterProductPriceUseCase>(),
+          gh<_i878.IncrementProductSalesUseCase>(),
+          gh<_i84.DecrementProductStockUseCase>(),
+          gh<_i55.UpdateProductFavoriteUseCase>(),
+          gh<_i690.GetCategoriesStreamUseCase>(),
+          gh<_i241.GetProvidersStreamUseCase>(),
+          gh<_i230.GetBrandsStreamUseCase>(),
+          gh<_i753.CreateBrandUseCase>(),
+        ));
     gh.lazySingleton<_i654.GetSelectedAccountIdUseCase>(
         () => _i654.GetSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
     gh.lazySingleton<_i695.SaveSelectedAccountIdUseCase>(() =>

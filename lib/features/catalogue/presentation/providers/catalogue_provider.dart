@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' hide Category;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sellweb/features/catalogue/data/datasources/local_search_datasource.dart';
-import '../../data/repositories/catalogue_repository_impl.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_price.dart';
@@ -11,15 +10,25 @@ import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
-import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
+
+// UseCases
+import '../../domain/usecases/get_catalogue_stream_usecase.dart';
+import '../../domain/usecases/get_public_product_by_code_usecase.dart';
+import '../../domain/usecases/add_product_to_catalogue_usecase.dart';
+import '../../domain/usecases/create_public_product_usecase.dart';
+import '../../domain/usecases/register_product_price_usecase.dart';
+import '../../domain/usecases/increment_product_sales_usecase.dart';
+import '../../domain/usecases/decrement_product_stock_usecase.dart';
+import '../../domain/usecases/update_product_favorite_usecase.dart';
+import '../../domain/usecases/get_categories_stream_usecase.dart';
+import '../../domain/usecases/get_providers_stream_usecase.dart';
+import '../../domain/usecases/get_brands_stream_usecase.dart';
+import '../../domain/usecases/create_brand_usecase.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
 
 /// Estado inmutable del provider de catálogo
-///
-/// Encapsula todo el estado relacionado con productos y búsqueda
-/// para optimizar notificaciones y mantener coherencia
 class _CatalogueState {
   final List<ProductCatalogue> products;
   final ProductCatalogue? lastScannedProduct;
@@ -101,32 +110,10 @@ class _CatalogueState {
 }
 
 /// Provider para gestionar el estado del catálogo de productos
-///
-/// **Responsabilidad:** Coordinar UI y casos de uso de catálogo
-/// - Gestiona estado de productos y búsquedas
-/// - Delega operaciones CRUD a CatalogueUseCases (crear, actualizar, buscar)
-/// - Delega búsqueda y filtrado a LocalSearchDataSource
-/// - Maneja streams de Firebase para sincronización en tiempo real
-/// - Proporciona búsqueda con debouncing para mejor rendimiento
-/// - No contiene lógica de negocio, solo coordinación
-///
-/// **Arquitectura:**
-/// - Estado inmutable con _CatalogueState para optimizar notificaciones
-/// - Streams de Firebase para actualizaciones automáticas de productos
-/// - Debouncing en búsquedas para reducir operaciones
-///
-/// **Uso:**
-/// ```dart
-/// final catalogueProvider = Provider.of<CatalogueProvider>(context);
-/// catalogueProvider.initCatalogue(accountId); // Inicializar catálogo
-/// catalogueProvider.searchProducts(query: 'producto'); // Buscar productos
-/// await catalogueProvider.saveProductToCatalogue(...); // Guardar producto
-/// ```
 @injectable
 class CatalogueProvider extends ChangeNotifier {
   bool _shouldNotifyListeners = true;
 
-  /// Flag para controlar si se deben notificar los cambios
   set shouldNotifyListeners(bool value) {
     _shouldNotifyListeners = value;
   }
@@ -138,15 +125,26 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  // Dependencies - Únicamente CatalogueUseCases
-  CatalogueUseCases _catalogueUseCases;
+  // UseCases
+  final GetCatalogueStreamUseCase _getCatalogueStreamUseCase;
+  final GetPublicProductByCodeUseCase _getPublicProductByCodeUseCase;
+  final AddProductToCatalogueUseCase _addProductToCatalogueUseCase;
+  final CreatePublicProductUseCase _createPublicProductUseCase;
+  final RegisterProductPriceUseCase _registerProductPriceUseCase;
+  final IncrementProductSalesUseCase _incrementProductSalesUseCase;
+  final DecrementProductStockUseCase _decrementProductStockUseCase;
+  final UpdateProductFavoriteUseCase _updateProductFavoriteUseCase;
+  final GetCategoriesStreamUseCase _getCategoriesStreamUseCase;
+  final GetProvidersStreamUseCase _getProvidersStreamUseCase;
+  final GetBrandsStreamUseCase _getBrandsStreamUseCase;
+  final CreateBrandUseCase _createBrandUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
   Timer? _searchDebounceTimer;
 
   // Immutable state
-  _CatalogueState _state = _CatalogueState(products: []);
+  _CatalogueState _state = const _CatalogueState(products: []);
 
   // Public getters
   List<ProductCatalogue> get products => _state.products;
@@ -166,9 +164,6 @@ class CatalogueProvider extends ChangeNotifier {
   bool get isFiltering =>
       currentSearchQuery.isNotEmpty || activeFilter != CatalogueFilter.none;
 
-  /// Obtiene los productos más vendidos ordenados por cantidad de ventas
-  /// [limit] Número máximo de productos a retornar (por defecto 8)
-  /// [minimumSales] Número mínimo de ventas para incluir el producto (por defecto 1)
   List<ProductCatalogue> getTopFilterProducts(
       {int limit = 50, int minimumSales = 1}) {
     return LocalSearchDataSource.getTopSellingProducts(
@@ -178,54 +173,52 @@ class CatalogueProvider extends ChangeNotifier {
     );
   }
 
-  CatalogueProvider({
-    required CatalogueUseCases catalogueUseCases,
-  }) : _catalogueUseCases = catalogueUseCases;
+  CatalogueProvider(
+    this._getCatalogueStreamUseCase,
+    this._getPublicProductByCodeUseCase,
+    this._addProductToCatalogueUseCase,
+    this._createPublicProductUseCase,
+    this._registerProductPriceUseCase,
+    this._incrementProductSalesUseCase,
+    this._decrementProductStockUseCase,
+    this._updateProductFavoriteUseCase,
+    this._getCategoriesStreamUseCase,
+    this._getProvidersStreamUseCase,
+    this._getBrandsStreamUseCase,
+    this._createBrandUseCase,
+  );
 
-  /// Inicializa el catálogo para una cuenta específica
   void initCatalogue(String id) {
-    // Validar que el ID no esté vacío
     if (id.isEmpty) {
       throw Exception('El ID de la cuenta no puede estar vacío.');
     }
 
-    // Cancelar la suscripción anterior si existe
     _catalogueSubscription?.cancel();
 
-    // Reinicializar el estado del catálogo
-    _updateState(_CatalogueState(
+    _updateState(const _CatalogueState(
       products: [],
       isLoading: true,
     ));
 
-    // Si es cuenta demo, no iniciamos stream de Firebase
     if (id == 'demo') {
       return;
     }
 
-    // Crear nuevos casos de uso con el nuevo ID de cuenta
-    final newCatalogueRepository = CatalogueRepositoryImpl();
-    _catalogueUseCases = CatalogueUseCases(newCatalogueRepository);
-
-    // Inicializar el stream de productos para la nueva cuenta
-    _catalogueSubscription = _catalogueUseCases.getCatalogueStream(id).listen(
+    _catalogueSubscription =
+        _getCatalogueStreamUseCase(GetCatalogueStreamParams(id)).listen(
       (snapshot) {
-        // Convertir los documentos del snapshot en objetos ProductCatalogue
         final products = snapshot.docs
             .map((doc) =>
                 ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
 
-        // Ordenar productos por fecha de actualización (más recientes primero)
         products.sort((a, b) => b.upgrade.compareTo(a.upgrade));
 
-        // Siempre actualizar si hay cambios detectados
         if (!_areProductListsEqual(_state.products, products)) {
           _updateState(_state.copyWith(products: products));
           _refreshFilteredView();
         }
 
-        // Marcar como cargado si aún está en estado loading
         if (_state.isLoading) {
           _updateState(_state.copyWith(isLoading: false));
         }
@@ -239,7 +232,6 @@ class CatalogueProvider extends ChangeNotifier {
     );
   }
 
-  /// Busca un producto por código de barras en el catálogo local.
   ProductCatalogue? getProductByCode(String code) {
     final normalizedCode = code.trim().toUpperCase();
     try {
@@ -251,13 +243,15 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Busca un producto público por código de barra en la base pública.
   Future<Product?> getPublicProductByCode(String code) async {
-    return await _catalogueUseCases.getPublicProductByCode(code);
+    final result =
+        await _getPublicProductByCodeUseCase(GetPublicProductByCodeParams(code));
+    return result.fold(
+      (failure) => null,
+      (product) => product,
+    );
   }
 
-  /// Busca productos usando el algoritmo avanzado de búsqueda
-  /// Permite buscar sin importar el orden de las palabras
   List<ProductCatalogue> searchProducts({
     required String query,
     int? maxResults,
@@ -271,16 +265,13 @@ class CatalogueProvider extends ChangeNotifier {
     return results;
   }
 
-  /// Busca productos con debouncing para mejorar el rendimiento
   void searchProductsWithDebounce({
     required String query,
     int? maxResults,
     Duration delay = const Duration(milliseconds: 300),
   }) {
-    // Cancelar timer anterior si existe
     _searchDebounceTimer?.cancel();
 
-    // Crear nuevo timer
     _searchDebounceTimer = Timer(delay, () {
       final results = searchProducts(query: query, maxResults: maxResults);
       _recomputeFilteredProducts(
@@ -290,13 +281,11 @@ class CatalogueProvider extends ChangeNotifier {
     });
   }
 
-  /// Limpia los resultados de búsqueda
   void clearSearchResults() {
     _searchDebounceTimer?.cancel();
     _recomputeFilteredProducts(query: '');
   }
 
-  /// Aplica un filtro predefinido a la lista de productos
   void applyFilter(CatalogueFilter filter) {
     if (filter == _state.activeFilter) {
       return;
@@ -304,7 +293,6 @@ class CatalogueProvider extends ChangeNotifier {
     _recomputeFilteredProducts(filter: filter);
   }
 
-  /// Limpia cualquier filtro aplicado
   void clearFilter() {
     if (!hasActiveFilter) {
       return;
@@ -312,7 +300,6 @@ class CatalogueProvider extends ChangeNotifier {
     _recomputeFilteredProducts(filter: CatalogueFilter.none);
   }
 
-  /// Busca productos por código exacto
   List<ProductCatalogue> searchByExactCode(String code) {
     return LocalSearchDataSource.searchByExactCode(
       products: _state.products,
@@ -320,7 +307,6 @@ class CatalogueProvider extends ChangeNotifier {
     );
   }
 
-  /// Busca productos por categoría
   List<ProductCatalogue> searchByCategory(String category) {
     return LocalSearchDataSource.searchByCategory(
       products: _state.products,
@@ -328,8 +314,6 @@ class CatalogueProvider extends ChangeNotifier {
     );
   }
 
-  /// Fuerza la actualización del catálogo desde Firebase
-  /// Útil cuando se necesita asegurar que los datos estén sincronizados
   Future<void> forceRefreshCatalogue() async {
     if (_catalogueSubscription == null) {
       return;
@@ -337,9 +321,6 @@ class CatalogueProvider extends ChangeNotifier {
 
     try {
       _updateState(_state.copyWith(isLoading: true));
-
-      // La actualización se hará automáticamente por el listener del stream
-      // Solo necesitamos marcar que estamos refrescando
     } catch (e) {
       _updateState(_state.copyWith(
         isLoading: false,
@@ -348,7 +329,6 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Busca productos por marca
   List<ProductCatalogue> searchByBrand(String brand) {
     return LocalSearchDataSource.searchByBrand(
       products: _state.products,
@@ -356,7 +336,6 @@ class CatalogueProvider extends ChangeNotifier {
     );
   }
 
-  /// Obtiene sugerencias de búsqueda
   List<String> getSearchSuggestions({
     required String query,
     int maxSuggestions = 5,
@@ -370,7 +349,6 @@ class CatalogueProvider extends ChangeNotifier {
     return suggestions;
   }
 
-  /// Intenta escanear un producto: si no está en el catálogo, busca en la base pública.
   Future<void> scanProduct(String code,
       {required Function(Product) onFoundInPublic}) async {
     final localProduct = getProductByCode(code);
@@ -383,7 +361,6 @@ class CatalogueProvider extends ChangeNotifier {
       return;
     }
 
-    // Buscar en la base pública
     final publicProduct = await getPublicProductByCode(code);
     if (publicProduct != null) {
       onFoundInPublic(publicProduct);
@@ -393,7 +370,6 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Guarda un producto en el catálogo de la cuenta actual.
   Future<void> saveProductToCatalogue(
       ProductCatalogue productToSave, String accountId) async {
     if (accountId.isEmpty) {
@@ -401,7 +377,13 @@ class CatalogueProvider extends ChangeNotifier {
     }
     try {
       _shouldNotifyListeners = false;
-      await _catalogueUseCases.addProductToCatalogue(productToSave, accountId);
+      final result = await _addProductToCatalogueUseCase(
+          AddProductToCatalogueParams(
+              product: productToSave, accountId: accountId));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
       _shouldNotifyListeners = true;
       notifyListeners();
     } catch (e) {
@@ -410,7 +392,6 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Crea un nuevo producto en la base de datos pública.
   Future<void> createPublicProduct(Product product) async {
     try {
       final productToSave = Product(
@@ -431,13 +412,17 @@ class CatalogueProvider extends ChangeNotifier {
         idUserUpgrade: product.idUserUpgrade,
       );
 
-      await _catalogueUseCases.createPublicProduct(productToSave);
+      final result = await _createPublicProductUseCase(
+          CreatePublicProductParams(productToSave));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
     } catch (e) {
       throw Exception('Error al crear producto público: $e');
     }
   }
 
-  /// Carga productos de demostración (solo para modo demo).
   void loadDemoProducts(List<ProductCatalogue> demoProducts) {
     _shouldNotifyListeners = false;
     _state = _state.copyWith(
@@ -449,17 +434,9 @@ class CatalogueProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Agrega un nuevo producto al catálogo o actualiza uno existente.
-  ///
-  /// [product] El producto a agregar o actualizar en el catálogo
-  /// [accountId] El ID de la cuenta donde se agregará el producto
-  /// [accountProfile] El perfil de la cuenta para registrar el precio (opcional)
-  /// [shouldUpdateUpgrade] Indica si se debe actualizar el timestamp upgrade (por defecto true, solo false cuando no cambian precios)
-  /// Retorna un [Future<void>] que se completa cuando la operación termina
   Future<void> addAndUpdateProductToCatalogue(
       ProductCatalogue product, String accountId,
       {AccountProfile? accountProfile, bool shouldUpdateUpgrade = true}) async {
-    // Validar parámetros requeridos
     if (accountId.isEmpty) {
       throw Exception(
           'El ID de la cuenta es requerido para agregar productos al catálogo');
@@ -472,12 +449,9 @@ class CatalogueProvider extends ChangeNotifier {
       _state = _state.copyWith(isLoading: true);
       notifyListeners();
 
-      // Verificar si el producto ya existe
       final existingProduct = getProductByCode(product.code);
 
       if (existingProduct != null && existingProduct.id.isNotEmpty) {
-        // Actualizar producto existente
-        // Solo actualizar upgrade si se modifican precios (salePrice o purchasePrice)
         final updatedProduct = shouldUpdateUpgrade
             ? product.copyWith(
                 upgrade: DateTime.now(),
@@ -486,20 +460,29 @@ class CatalogueProvider extends ChangeNotifier {
             : product.copyWith(
                 documentIdUpgrade: accountId,
               );
-        await _catalogueUseCases.addProductToCatalogue(
-            updatedProduct, accountId);
+        final result = await _addProductToCatalogueUseCase(
+            AddProductToCatalogueParams(
+                product: updatedProduct, accountId: accountId));
+        result.fold(
+          (failure) => throw Exception(failure.message),
+          (_) => null,
+        );
       } else {
-        // Agregar nuevo producto
         final newProduct = product.copyWith(
           creation: DateTime.now(),
           upgrade: DateTime.now(),
           documentIdCreation: accountId,
           documentIdUpgrade: accountId,
         );
-        await _catalogueUseCases.addProductToCatalogue(newProduct, accountId);
+        final result = await _addProductToCatalogueUseCase(
+            AddProductToCatalogueParams(
+                product: newProduct, accountId: accountId));
+        result.fold(
+          (failure) => throw Exception(failure.message),
+          (_) => null,
+        );
       }
 
-      // Registrar precio del producto en la base de datos pública si se proporciona accountProfile
       if (accountProfile != null && product.salePrice > 0) {
         try {
           final productPrice = ProductPrice(
@@ -514,10 +497,10 @@ class CatalogueProvider extends ChangeNotifier {
             town: accountProfile.town,
           );
 
-          await _catalogueUseCases.registerProductPrice(
-              productPrice, product.code);
+          await _registerProductPriceUseCase(RegisterProductPriceParams(
+              productPrice: productPrice, productCode: product.code));
         } catch (e) {
-          // No lanzamos error aquí para no interrumpir el flujo principal
+          // Silent error
         }
       }
 
@@ -538,17 +521,8 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Incrementa el contador de ventas de un producto en el catálogo
-  ///
-  /// Este método se llama cuando se confirma una venta para actualizar
-  /// las estadísticas de ventas del producto en Firebase.
-  ///
-  /// [accountId] - ID de la cuenta del negocio
-  /// [productId] - ID del producto
-  /// [quantity] - Cantidad vendida (por defecto 1)
   Future<void> incrementProductSales(String accountId, String productId,
       {int quantity = 1}) async {
-    // Validar parámetros
     if (accountId.isEmpty || productId.isEmpty) {
       throw Exception('El accountId y productId son requeridos');
     }
@@ -558,28 +532,20 @@ class CatalogueProvider extends ChangeNotifier {
     }
 
     try {
-      // Ejecutar el incremento de ventas usando CatalogueUseCases
-      await _catalogueUseCases.incrementProductSales(accountId, productId,
-          quantity: quantity);
-
-      // El stream de Firebase se encargará automáticamente de la actualización
-      // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
+      final result = await _incrementProductSalesUseCase(
+          IncrementProductSalesParams(
+              accountId: accountId, productId: productId, quantity: quantity));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
     } catch (e) {
       throw Exception('Error al incrementar ventas del producto: $e');
     }
   }
 
-  /// Decrementa el stock de un producto en el catálogo
-  ///
-  /// Este método se llama cuando se confirma una venta para actualizar
-  /// el inventario del producto en Firebase.
-  ///
-  /// [accountId] - ID de la cuenta del negocio
-  /// [productId] - ID del producto
-  /// [quantity] - Cantidad a decrementar del stock
   Future<void> decrementProductStock(
       String accountId, String productId, int quantity) async {
-    // Validar parámetros
     if (accountId.isEmpty || productId.isEmpty) {
       throw Exception('El accountId y productId son requeridos');
     }
@@ -589,73 +555,64 @@ class CatalogueProvider extends ChangeNotifier {
     }
 
     try {
-      // Ejecutar la reducción de stock usando CatalogueUseCases
-      await _catalogueUseCases.decrementProductStock(
-          accountId, productId, quantity);
-
-      // El stream de Firebase se encargará automáticamente de la actualización
-      // gracias a que estamos usando FieldValue.increment() y actualizamos el timestamp
+      final result = await _decrementProductStockUseCase(
+          DecrementProductStockParams(
+              accountId: accountId, productId: productId, quantity: quantity));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
     } catch (e) {
       throw Exception('Error al decrementar stock del producto: $e');
     }
   }
 
-  /// Actualiza el estado de favorito de un producto en el catálogo
-  ///
-  /// Este método se llama cuando el usuario marca/desmarca un producto como favorito
-  /// para sincronizar el estado con Firebase.
-  ///
-  /// [accountId] - ID de la cuenta del negocio
-  /// [productId] - ID del producto
-  /// [isFavorite] - Nuevo estado de favorito
   Future<void> updateProductFavorite(
       String accountId, String productId, bool isFavorite) async {
-    // Validar parámetros
     if (accountId.isEmpty || productId.isEmpty) {
       throw Exception('El accountId y productId son requeridos');
     }
 
     try {
-      // Ejecutar la actualización de favorito usando CatalogueUseCases
-      await _catalogueUseCases.updateProductFavorite(
-          accountId, productId, isFavorite);
-
-      // El stream de Firebase se encargará automáticamente de la actualización
-      // detectando el cambio en el campo 'favorite' sin modificar el timestamp
+      final result = await _updateProductFavoriteUseCase(
+          UpdateProductFavoriteParams(
+              accountId: accountId,
+              productId: productId,
+              isFavorite: isFavorite));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
     } catch (e) {
       throw Exception('Error al actualizar favorito del producto: $e');
     }
   }
 
-  /// Obtiene el stream de categorías
   Stream<List<Category>> getCategoriesStream(String accountId) {
-    return _catalogueUseCases.getCategoriesStream(accountId);
+    return _getCategoriesStreamUseCase(GetCategoriesStreamParams(accountId));
   }
 
-  /// Obtiene el stream de proveedores
   Stream<List<Provider>> getProvidersStream(String accountId) {
-    return _catalogueUseCases.getProvidersStream(accountId);
+    return _getProvidersStreamUseCase(GetProvidersStreamParams(accountId));
   }
 
-  /// Obtiene el stream de marcas
   Stream<List<Mark>> getBrandsStream() {
-    return _catalogueUseCases.getBrandsStream();
+    return _getBrandsStreamUseCase(const GetBrandsStreamParams());
   }
 
-  /// Crea una nueva marca en la base de datos pública
-  ///
-  /// [brand] - Marca a crear
-  /// [country] - País de la marca (por defecto 'ARG')
   Future<void> createBrand(Mark brand, {String country = 'ARG'}) async {
     try {
-      await _catalogueUseCases.createBrand(brand, country: country);
+      final result = await _createBrandUseCase(
+          CreateBrandParams(brand: brand, country: country));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
     } catch (e) {
       throw Exception('Error al crear marca: $e');
     }
   }
 
-  /// Determina si dos listas de productos son iguales comparando todos los campos relevantes
-  /// incluidos sales, quantityStock, upgrade y favorite para detectar cambios de actualización
   bool _areProductListsEqual(
       List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
     if (list1.length != list2.length) return false;
@@ -692,25 +649,20 @@ class CatalogueProvider extends ChangeNotifier {
   @override
   int get hashCode => _state.hashCode;
 
-  /// Notifica solo cuando cambian productos específicos
   void _notifyProductChanges() {
-    // Evitar notificaciones si no hay cambios reales
     if (!hasListeners) return;
     notifyListeners();
   }
 
-  /// Actualiza el estado de forma selectiva
   void _updateState(_CatalogueState newState) {
     final oldState = _state;
     _state = newState;
 
-    // Notificar solo si hay cambios relevantes
     if (oldState != _state) {
       _notifyProductChanges();
     }
   }
 
-  /// Recalcula la lista filtrada en base al query y filtro activo
   void _recomputeFilteredProducts({
     String? query,
     List<ProductCatalogue>? searchResults,
@@ -748,7 +700,6 @@ class CatalogueProvider extends ChangeNotifier {
     }
   }
 
-  /// Aplica la regla del filtro correspondiente
   List<ProductCatalogue> _filterProductsByOption(
       List<ProductCatalogue> source, CatalogueFilter filter) {
     switch (filter) {

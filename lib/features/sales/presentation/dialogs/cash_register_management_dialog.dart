@@ -831,7 +831,6 @@ class _TicketsStreamListener extends StatelessWidget {
       stream: provider.getCashRegisterTicketsStream(
         accountId: accountId,
         cashRegisterId: cashRegisterId,
-        todayOnly: true,
       ),
       // ✅ Usar builder con child estático para optimización
       builder: (context, snapshot) {
@@ -1273,7 +1272,6 @@ class _CashFlowInformation extends StatelessWidget {
               stream: cashRegisterProvider.getCashRegisterTicketsStream(
                 accountId: accountId,
                 cashRegisterId: cashRegister.id,
-                todayOnly: true,
               ),
               builder: (context, snapshot) {
                 final tickets = snapshot.data;

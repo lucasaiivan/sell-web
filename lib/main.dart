@@ -7,15 +7,12 @@ import 'package:sellweb/core/services/printing/printer_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
-import 'core/services/storage/app_data_persistence_service.dart';
-import 'core/di/injection_container.dart';
-import 'features/catalogue/data/repositories/catalogue_repository_impl.dart';
-import 'package:sellweb/features/cash_register/data/repositories/cash_register_repository_impl.dart';
-import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.dart';
-import 'package:sellweb/features/cash_register/domain/usecases/cash_register_usecases.dart';
-import 'package:sellweb/features/sales/domain/usecases/sell_usecases.dart';
+
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/core/di/injection_container.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
+import 'features/catalogue/data/repositories/catalogue_repository_impl.dart';
+import 'features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
@@ -161,27 +158,13 @@ Widget _buildAccountSpecificProviders({
   required String accountId,
   required SalesProvider sellProvider,
 }) {
-  // Crear repositorios específicos de la cuenta
-  final catalogueRepository = CatalogueRepositoryImpl();
-
-  // Inicializar casos de uso
-  final cashRegisterRepository = CashRegisterRepositoryImpl();
-  final cashRegisterUsecases = CashRegisterUsecases(cashRegisterRepository);
-  final persistenceService = AppDataPersistenceService.instance;
-  final sellUsecases = SellUsecases(
-    persistenceService: persistenceService,
-  );
-
   return MultiProvider(
     key: ValueKey('account_providers_$accountId'),
     providers: [
       // Providers específicos de la cuenta actual
       ChangeNotifierProvider(
         create: (_) {
-          final catalogueUseCases = CatalogueUseCases(catalogueRepository);
-          final catalogueProvider = CatalogueProvider(
-            catalogueUseCases: catalogueUseCases,
-          );
+          final catalogueProvider = getIt<CatalogueProvider>();
 
           if (accountId.isNotEmpty) {
             catalogueProvider.initCatalogue(accountId);
@@ -191,10 +174,11 @@ Widget _buildAccountSpecificProviders({
         },
       ),
       ChangeNotifierProvider(
-        create: (_) => CashRegisterProvider(
-          cashRegisterUsecases, // Operaciones de caja
-          sellUsecases, // NUEVO: Operaciones de tickets
-        ),
+        create: (_) {
+          final cashRegisterProvider = getIt<CashRegisterProvider>();
+          cashRegisterProvider.initializeFromPersistence(accountId);
+          return cashRegisterProvider;
+        },
       ),
     ],
     child: const HomePage(),

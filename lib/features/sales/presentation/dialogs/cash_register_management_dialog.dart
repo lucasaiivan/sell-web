@@ -2309,7 +2309,7 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => showLastTicketDialog(
+        onTap: () => showTicketDetailDialog(
           context: context,
           ticket: ticket,
           businessName: sellProvider.profileAccountSelected.name.isNotEmpty

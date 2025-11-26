@@ -2,9 +2,28 @@ import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
-/// Diálogo para mostrar el  ticket
-class TicketViewDialog extends StatefulWidget {
-  const TicketViewDialog({
+/// Diálogo reutilizable para mostrar los detalles completos de un ticket
+///
+/// Este componente muestra:
+/// - Información del negocio y fecha
+/// - Estado del ticket (transaccionado o anulado)
+/// - Método de pago y facturación
+/// - Descuentos aplicados
+/// - Lista completa de productos vendidos
+/// - Acciones: Anular e Imprimir (solo si no está anulado)
+///
+/// **Uso:**
+/// ```dart
+/// showTicketDetailDialog(
+///   context: context,
+///   ticket: myTicket,
+///   businessName: 'Mi Negocio',
+///   title: 'Detalle de Transacción',
+///   onTicketAnnulled: () => handleAnnulment(),
+/// );
+/// ```
+class TicketDetailDialog extends StatefulWidget {
+  const TicketDetailDialog({
     super.key,
     required this.ticket,
     required this.businessName,
@@ -18,10 +37,10 @@ class TicketViewDialog extends StatefulWidget {
   final VoidCallback? onTicketAnnulled;
 
   @override
-  State<TicketViewDialog> createState() => _TicketViewDialogState();
+  State<TicketDetailDialog> createState() => _TicketDetailDialogState();
 }
 
-class _TicketViewDialogState extends State<TicketViewDialog> {
+class _TicketDetailDialogState extends State<TicketDetailDialog> {
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
@@ -332,8 +351,25 @@ class _TicketViewDialogState extends State<TicketViewDialog> {
   }
 }
 
-/// Helper function para mostrar el diálogo del último ticket
-Future<void> showLastTicketDialog({
+/// Helper function para mostrar el diálogo de detalle de ticket
+///
+/// **Parámetros:**
+/// - `context`: BuildContext necesario para mostrar el diálogo
+/// - `ticket`: TicketModel con la información del ticket
+/// - `businessName`: Nombre del negocio a mostrar
+/// - `title`: Título personalizado del diálogo (default: 'Ticket')
+/// - `onTicketAnnulled`: Callback opcional que se ejecuta al anular el ticket
+///
+/// **Ejemplo:**
+/// ```dart
+/// await showTicketDetailDialog(
+///   context: context,
+///   ticket: transaction,
+///   businessName: 'Mi Tienda',
+///   title: 'Detalle de Transacción',
+/// );
+/// ```
+Future<void> showTicketDetailDialog({
   required BuildContext context,
   required TicketModel ticket,
   required String businessName,
@@ -342,7 +378,7 @@ Future<void> showLastTicketDialog({
 }) {
   return showDialog(
     context: context,
-    builder: (context) => TicketViewDialog(
+    builder: (context) => TicketDetailDialog(
       ticket: ticket,
       businessName: businessName,
       title: title,

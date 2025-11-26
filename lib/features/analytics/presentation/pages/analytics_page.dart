@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
+import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../domain/entities/date_filter.dart';
 import '../providers/analytics_provider.dart';
@@ -189,7 +191,10 @@ class AnalyticsPage extends StatelessWidget {
                     final transaction = analytics.transactions[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: TransactionListItem(ticket: transaction),
+                      child: TransactionListItem(
+                        ticket: transaction,
+                        onTap: () => _showTransactionDetail(context, transaction),
+                      ),
                     );
                   },
                   childCount: analytics.transactions.length,
@@ -370,5 +375,58 @@ class AnalyticsPage extends StatelessWidget {
     if (accountId.isNotEmpty) {
       await analyticsProvider.refresh(accountId);
     }
+  }
+
+  /// Muestra el diálogo de detalle de transacción
+  void _showTransactionDetail(BuildContext context, TicketModel transaction) {
+    final salesProvider = context.read<SalesProvider>();
+    final analyticsProvider = context.read<AnalyticsProvider>();
+    final cashRegisterProvider = context.read<CashRegisterProvider>();
+    
+    // Capturar referencias necesarias antes del callback asíncrono
+    final accountId = salesProvider.profileAccountSelected.id;
+    final messenger = ScaffoldMessenger.of(context);
+
+    showTicketDetailDialog(
+      context: context,
+      ticket: transaction,
+      businessName: salesProvider.profileAccountSelected.name.isNotEmpty
+          ? salesProvider.profileAccountSelected.name
+          : 'PUNTO DE VENTA',
+      title: 'Detalle de Transacción',
+      onTicketAnnulled: transaction.annulled ? null : () async {
+        // El diálogo ya se cierra automáticamente desde ticket_detail_dialog.dart
+        // No necesitamos hacer Navigator.pop() aquí
+        
+        // Anular el ticket usando CashRegisterProvider
+        final success = await cashRegisterProvider.annullTicket(
+          accountId: accountId,
+          ticket: transaction,
+        );
+        
+        if (success) {
+          // Mostrar mensaje de éxito
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Ticket anulado exitosamente'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          
+          // Refrescar las analíticas para mostrar el cambio
+          await analyticsProvider.refresh(accountId);
+        } else {
+          // Mostrar mensaje de error
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Error al anular el ticket. Inténtalo nuevamente'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      },
+    );
   }
 }

@@ -25,7 +25,7 @@ export 'package:sellweb/features/sales/presentation/dialogs/discount_dialog.dart
 // export 'sales/quick_sale_dialog_new.dart'; // Conflicto de nombres
 
 // Tickets Dialogs
-export 'package:sellweb/features/sales/presentation/dialogs/last_ticket_dialog.dart';
+export 'tickets/ticket_detail_dialog.dart';
 export 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart';
 export 'package:sellweb/features/sales/presentation/dialogs/discard_ticket_dialog.dart';
 // export 'tickets/ticket_options_dialog_new.dart'; // Conflicto de nombres - usar alias si necesario

@@ -1420,7 +1420,7 @@ void _showLastTicketDialog(BuildContext context, SalesProvider provider) {
   if (provider.lastSoldTicket == null) return; // No hay ticket para mostrar
   final ticket = provider.lastSoldTicket!;
 
-  showLastTicketDialog(
+  showTicketDetailDialog(
       context: context,
       ticket: ticket,
       title: 'Último ticket',

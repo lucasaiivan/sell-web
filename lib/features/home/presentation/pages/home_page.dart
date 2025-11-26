@@ -7,6 +7,7 @@ import 'package:sellweb/features/catalogue/presentation/providers/catalogue_prov
 import 'package:sellweb/features/auth/presentation/pages/welcome_selected_account_page.dart';
 import 'package:sellweb/features/sales/presentation/pages/sales_page.dart';
 import 'package:sellweb/features/catalogue/presentation/pages/catalogue_page.dart';
+import 'package:sellweb/features/analytics/presentation/pages/analytics_page.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 /// Controla el flujo entre: selección de cuenta, ventas y catálogo
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> {
             children: const [
               SalesPage(),
               CataloguePage(),
+              AnalyticsPage(),
             ],
           ),
         ),

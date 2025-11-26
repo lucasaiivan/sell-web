@@ -194,6 +194,19 @@ class _NavigationMenu extends StatelessWidget {
                   },
                   colorScheme: colorScheme,
                 ),
+                _DrawerNavTile(
+                  icon: Icons.analytics,
+                  label: 'Analíticas',
+                  index: 2,
+                  currentIndex: homeProvider.currentPageIndex,
+                  onSelected: () {
+                    if (homeProvider.currentPageIndex != 2) {
+                      homeProvider.setPageIndex(2);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  colorScheme: colorScheme,
+                ),
               ],
             ),
           ),

@@ -16,6 +16,7 @@ import 'features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
+import 'package:sellweb/features/analytics/presentation/providers/analytics_provider.dart';
 // Sales UseCases imports
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/remove_product_from_ticket_usecase.dart';
@@ -169,6 +170,16 @@ Widget _buildAccountSpecificProviders({
           final cashRegisterProvider = getIt<CashRegisterProvider>();
           cashRegisterProvider.initializeFromPersistence(accountId);
           return cashRegisterProvider;
+        },
+      ),
+      // AnalyticsProvider - métricas de ventas
+      ChangeNotifierProvider(
+        create: (_) {
+          final analyticsProvider = getIt<AnalyticsProvider>();
+          if (accountId.isNotEmpty) {
+            analyticsProvider.loadAnalytics(accountId);
+          }
+          return analyticsProvider;
         },
       ),
     ],

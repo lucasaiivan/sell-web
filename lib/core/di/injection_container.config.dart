@@ -17,6 +17,16 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:sellweb/core/di/injection_container.dart' as _i220;
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
     as _i581;
+import 'package:sellweb/features/analytics/data/datasources/analytics_remote_datasource.dart'
+    as _i577;
+import 'package:sellweb/features/analytics/data/repositories/analytics_repository_impl.dart'
+    as _i164;
+import 'package:sellweb/features/analytics/domain/repositories/analytics_repository.dart'
+    as _i732;
+import 'package:sellweb/features/analytics/domain/usecases/get_sales_analytics_usecase.dart'
+    as _i161;
+import 'package:sellweb/features/analytics/presentation/providers/analytics_provider.dart'
+    as _i975;
 import 'package:sellweb/features/auth/data/repositories/account_repository_impl.dart'
     as _i166;
 import 'package:sellweb/features/auth/data/repositories/auth_repository_impl.dart'
@@ -281,6 +291,10 @@ extension GetItInjectableX on _i174.GetIt {
             gh<_i612.GetDemoAccountUseCase>()));
     gh.lazySingleton<_i943.IsProductScannedUseCase>(() =>
         _i943.IsProductScannedUseCase(gh<_i377.GetProductByCodeUseCase>()));
+    gh.lazySingleton<_i577.AnalyticsRemoteDataSource>(
+        () => _i577.AnalyticsRemoteDataSource(gh<_i974.FirebaseFirestore>()));
+    gh.lazySingleton<_i732.AnalyticsRepository>(() =>
+        _i164.AnalyticsRepositoryImpl(gh<_i577.AnalyticsRemoteDataSource>()));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -473,6 +487,8 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i563.GetAccountAdminsUseCase>(),
               gh<_i134.GetAccountUseCase>(),
             ));
+    gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
+        () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
     gh.lazySingleton<_i557.GetUserStreamUseCase>(
         () => _i557.GetUserStreamUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i1046.SignInSilentlyUseCase>(
@@ -491,6 +507,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i557.GetUserStreamUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
         ));
+    gh.factory<_i975.AnalyticsProvider>(
+        () => _i975.AnalyticsProvider(gh<_i161.GetSalesAnalyticsUseCase>()));
     return this;
   }
 }

@@ -71,34 +71,9 @@ class AnalyticsPage extends StatelessWidget {
       decimalDigits: 2,
     );
 
-    return RefreshIndicator(
-      onRefresh: () => _refreshAnalytics(context),
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // Indicador de carga y última actualización
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (provider.isLoading)
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else
-                    const SizedBox(width: 16),
-                  Text(
-                    'Actualizado: ${DateFormat('HH:mm:ss').format(analytics.calculatedAt)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
 
           // Grid de Métricas Principales
           SliverPadding(
@@ -202,8 +177,7 @@ class AnalyticsPage extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
+      );
   }
 
   /// Construye el AppBar personalizado
@@ -211,7 +185,7 @@ class AnalyticsPage extends StatelessWidget {
     final salesProvider = context.read<SalesProvider>();
 
     return AppBar(
-      toolbarHeight: 80,
+      toolbarHeight: 70,
       titleSpacing: 0,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -289,12 +263,6 @@ class AnalyticsPage extends StatelessWidget {
             );
           },
         ),
-        // Botón de refrescar
-        IconButton(
-          icon: const Icon(Icons.refresh_rounded),
-          tooltip: 'Actualizar',
-          onPressed: () => _refreshAnalytics(context),
-        ),
         const SizedBox(width: 8),
       ],
     );
@@ -325,12 +293,6 @@ class AnalyticsPage extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => _refreshAnalytics(context),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
             ),
           ],
         ),
@@ -366,21 +328,9 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
-  /// Refresca las analíticas
-  Future<void> _refreshAnalytics(BuildContext context) async {
-    final salesProvider = context.read<SalesProvider>();
-    final analyticsProvider = context.read<AnalyticsProvider>();
-    final accountId = salesProvider.profileAccountSelected.id;
-
-    if (accountId.isNotEmpty) {
-      await analyticsProvider.refresh(accountId);
-    }
-  }
-
   /// Muestra el diálogo de detalle de transacción
   void _showTransactionDetail(BuildContext context, TicketModel transaction) {
     final salesProvider = context.read<SalesProvider>();
-    final analyticsProvider = context.read<AnalyticsProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     
     // Capturar referencias necesarias antes del callback asíncrono
@@ -414,8 +364,7 @@ class AnalyticsPage extends StatelessWidget {
             ),
           );
           
-          // Refrescar las analíticas para mostrar el cambio
-          await analyticsProvider.refresh(accountId);
+          // Las analíticas se actualizarán automáticamente con el listener en tiempo real
         } else {
           // Mostrar mensaje de error
           messenger.showSnackBar(

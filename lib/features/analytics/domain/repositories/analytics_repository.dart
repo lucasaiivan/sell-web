@@ -11,12 +11,12 @@ import '../entities/sales_analytics.dart';
 ///
 /// **Implementación:** [AnalyticsRepositoryImpl]
 abstract class AnalyticsRepository {
-  /// Obtiene las analíticas de transacciones para una cuenta
+  /// Obtiene las analíticas de transacciones para una cuenta en tiempo real
   ///
   /// [accountId] ID de la cuenta
   /// [dateFilter] Filtro de fecha opcional (null = todas las transacciones)
-  /// Retorna [SalesAnalytics] con métricas calculadas o [Failure] en caso de error
-  Future<Either<Failure, SalesAnalytics>> getTransactions(
+  /// Retorna un [Stream] que emite [SalesAnalytics] con métricas calculadas o [Failure] en caso de error
+  Stream<Either<Failure, SalesAnalytics>> getTransactions(
     String accountId, {
     DateFilter? dateFilter,
   });

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/date_filter.dart';
@@ -51,6 +52,7 @@ class AnalyticsProvider extends ChangeNotifier {
 
   _AnalyticsState _state = const _AnalyticsState();
   String _currentAccountId = '';
+  StreamSubscription<dynamic>? _subscription;
 
   AnalyticsProvider(this._getSalesAnalyticsUseCase);
 
@@ -73,43 +75,55 @@ class AnalyticsProvider extends ChangeNotifier {
 
   // --- Métodos públicos ---
 
-  /// Carga las analíticas para una cuenta específica
+  /// Suscribe a las analíticas para una cuenta específica con actualización en tiempo real
   ///
   /// [accountId] ID de la cuenta
-  Future<void> loadAnalytics(String accountId) async {
+  void subscribeToAnalytics(String accountId) {
     if (accountId.isEmpty) return;
+
+    // Cancelar suscripción anterior si existe
+    _subscription?.cancel();
 
     _currentAccountId = accountId;
     _state = _state.copyWith(isLoading: true, clearError: true);
     notifyListeners();
 
-    final result = await _getSalesAnalyticsUseCase(
+    // Suscribirse al stream de analíticas
+    _subscription = _getSalesAnalyticsUseCase(
       AnalyticsParams(
         accountId: accountId,
         dateFilter: _state.selectedFilter,
       ),
-    );
-
-    result.fold(
-      (failure) {
+    ).listen(
+      (result) {
+        result.fold(
+          (failure) {
+            _state = _state.copyWith(
+              isLoading: false,
+              errorMessage: failure.message,
+            );
+          },
+          (analytics) {
+            _state = _state.copyWith(
+              isLoading: false,
+              analytics: analytics,
+            );
+          },
+        );
+        notifyListeners();
+      },
+      onError: (error) {
         _state = _state.copyWith(
           isLoading: false,
-          errorMessage: failure.message,
+          errorMessage: 'Error: ${error.toString()}',
         );
-      },
-      (analytics) {
-        _state = _state.copyWith(
-          isLoading: false,
-          analytics: analytics,
-        );
+        notifyListeners();
       },
     );
-
-    notifyListeners();
   }
 
-  /// Cambia el filtro de fecha y recarga los datos
-  Future<void> setDateFilter(DateFilter filter) async {
+  /// Cambia el filtro de fecha y re-suscribe con el nuevo filtro
+  void setDateFilter(DateFilter filter) {
     if (_state.selectedFilter == filter) return;
 
     _state = _state.copyWith(
@@ -119,19 +133,21 @@ class AnalyticsProvider extends ChangeNotifier {
     notifyListeners();
 
     if (_currentAccountId.isNotEmpty) {
-      await loadAnalytics(_currentAccountId);
+      subscribeToAnalytics(_currentAccountId);
     }
-  }
-
-  /// Recarga las analíticas (útil para pull-to-refresh)
-  Future<void> refresh(String accountId) async {
-    await loadAnalytics(accountId);
   }
 
   /// Limpia el estado del provider
   void clear() {
+    _subscription?.cancel();
     _state = const _AnalyticsState();
     _currentAccountId = '';
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

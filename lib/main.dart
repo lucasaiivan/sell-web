@@ -177,7 +177,7 @@ Widget _buildAccountSpecificProviders({
         create: (_) {
           final analyticsProvider = getIt<AnalyticsProvider>();
           if (accountId.isNotEmpty) {
-            analyticsProvider.loadAnalytics(accountId);
+            analyticsProvider.subscribeToAnalytics(accountId);
           }
           return analyticsProvider;
         },

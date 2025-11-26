@@ -31,11 +31,11 @@ class GetSalesAnalyticsUseCase {
 
   GetSalesAnalyticsUseCase(this._repository);
 
-  /// Ejecuta el caso de uso
+  /// Ejecuta el caso de uso con actualización en tiempo real
   ///
   /// [params] Parámetros con accountId y filtro de fecha opcional
-  /// Retorna [SalesAnalytics] o [Failure]
-  Future<Either<Failure, SalesAnalytics>> call(AnalyticsParams params) {
+  /// Retorna un [Stream] que emite [SalesAnalytics] o [Failure]
+  Stream<Either<Failure, SalesAnalytics>> call(AnalyticsParams params) {
     return _repository.getTransactions(
       params.accountId,
       dateFilter: params.dateFilter,

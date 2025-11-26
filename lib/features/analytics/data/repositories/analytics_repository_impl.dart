@@ -22,18 +22,20 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
   AnalyticsRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<Either<Failure, SalesAnalytics>> getTransactions(
+  Stream<Either<Failure, SalesAnalytics>> getTransactions(
     String accountId, {
     DateFilter? dateFilter,
-  }) async {
+  }) {
     try {
-      final analyticsModel = await _remoteDataSource.getTransactions(
+      return _remoteDataSource.getTransactions(
         accountId,
         dateFilter: dateFilter,
-      );
-      return Right(analyticsModel.toEntity());
+      ).map((analyticsModel) => Right<Failure, SalesAnalytics>(analyticsModel.toEntity()))
+       .handleError((error) => Left<Failure, SalesAnalytics>(
+         ServerFailure('Error al obtener analíticas: ${error.toString()}')
+       ));
     } catch (e) {
-      return Left(ServerFailure('Error al obtener analíticas: ${e.toString()}'));
+      return Stream.value(Left(ServerFailure('Error al obtener analíticas: ${e.toString()}')));
     }
   }
 }

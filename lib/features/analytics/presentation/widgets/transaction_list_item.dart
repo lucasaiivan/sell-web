@@ -151,7 +151,7 @@ class TransactionListItem extends StatelessWidget {
                     const SizedBox(height: 6),
                     // Fila 3: Total de venta
                     Row(
-                      children: [
+                      children: [ 
                         Text(
                           currencyFormat.format(ticket.priceTotal),
                           style: theme.textTheme.titleMedium?.copyWith(

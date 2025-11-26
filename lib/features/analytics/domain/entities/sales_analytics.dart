@@ -55,6 +55,15 @@ class SalesAnalytics extends Equatable {
     return transactions.fold(0.0, (sum, t) => sum + t.priceTotal);
   }
 
+  /// Total de productos vendidos (suma de cantidades de todos los productos)
+  int get totalProductsSold {
+    return transactions.fold(0, (sum, ticket) {
+      return sum + ticket.products.fold(0, (productSum, product) {
+        return productSum + product.quantity;
+      });
+    });
+  }
+
   /// Constructor vacío para estado inicial
   factory SalesAnalytics.empty() {
     return SalesAnalytics(

@@ -843,7 +843,7 @@ class SalesProvider extends ChangeNotifier {
   Future<void> processSale(BuildContext context) async {
     try {
       // PASO 1: Preparar el ticket con toda la información necesaria (vendedor, caja, precio, ID)
-      _prepareTicketForSale(context);
+      await _prepareTicketForSale(context);
 
       // PASO 2: Guardar en historial de transacciones (Firebase)
       // NOTA: El último ticket vendido se guarda automáticamente en saveTicketToTransactionHistory

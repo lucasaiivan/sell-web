@@ -16,10 +16,13 @@ class SaveTicketToTransactionHistoryUseCase
   Future<Either<Failure, void>> call(
       SaveTicketToTransactionHistoryParams params) async {
     try {
+      // ✅ Usar toMap() en lugar de toJson() para preservar Timestamps de Firestore
+      // toJson() convierte Timestamps a milliseconds (int), lo que rompe las consultas
+      // toMap() mantiene los Timestamps, permitiendo queries con where/orderBy
       await _repository.saveTicketTransaction(
         accountId: params.accountId,
         ticketId: params.ticket.id,
-        transactionData: params.ticket.toJson(),
+        transactionData: params.ticket.toMap(),
       );
       return const Right(null);
     } catch (e) {

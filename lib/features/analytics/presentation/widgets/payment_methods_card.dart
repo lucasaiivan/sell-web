@@ -30,7 +30,6 @@ class PaymentMethodsCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -60,20 +59,20 @@ class PaymentMethodsCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (sortedMethods.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Center(
-                  child: Text(
-                    'Sin datos',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+            sortedMethods.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Center(
+                      child: Text(
+                        'Sin datos',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              )
-            else
-              ...sortedMethods.map((entry) {
+                  )
+                : Column(
+                    children: sortedMethods.map((entry) {
                 final percentage = totalSales > 0 ? entry.value / totalSales : 0.0;
                 
                 // Mapeo de nombres amigables
@@ -151,6 +150,7 @@ class PaymentMethodsCard extends StatelessWidget {
                   ),
                 );
               }).toList(),
+                  ),
           ],
         ),
       ),

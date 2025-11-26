@@ -104,34 +104,31 @@ class AnalyticsPage extends StatelessWidget {
             sliver: SliverGrid(
               gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 300,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
+                mainAxisSpacing: 6,
+                crossAxisSpacing: 6,
                 childAspectRatio: 1.3,
               ),
               delegate: SliverChildListDelegate([
-                // 1. Facturación (Ventas Totales)
-                MetricCard(
-                  title: 'Facturación',
-                  value: currencyFormat.format(analytics.totalSales),
-                  icon: Icons.attach_money,
-                  color: Colors.green,
-                  subtitle: 'Ventas brutas',
-                ),
-                // 2. Ganancia
-                MetricCard(
-                  title: 'Ganancia',
-                  value: currencyFormat.format(analytics.totalProfit),
-                  icon: Icons.trending_up,
-                  color: Colors.blue,
-                  subtitle: 'Beneficio neto',
-                ),
-                // 3. Transacciones
+                // 1. Transacciones
                 MetricCard(
                   title: 'Transacciones',
                   value: analytics.totalTransactions.toString(),
                   icon: Icons.receipt_long,
                   color: Colors.orange,
-                  subtitle: 'Tickets generados',
+                ),
+                // 2. Facturación (Ventas Totales)
+                MetricCard(
+                  title: 'Facturación',
+                  value: currencyFormat.format(analytics.totalSales),
+                  icon: Icons.attach_money,
+                  color: Colors.green,
+                ),
+                // 3. Ganancia
+                MetricCard(
+                  title: 'Ganancia',
+                  value: currencyFormat.format(analytics.totalProfit),
+                  icon: Icons.trending_up,
+                  color: Colors.blue,
                 ),
                 // 4. Ticket Promedio
                 MetricCard(
@@ -139,7 +136,13 @@ class AnalyticsPage extends StatelessWidget {
                   value: currencyFormat.format(analytics.averageProfitPerTransaction),
                   icon: Icons.analytics,
                   color: Colors.purple,
-                  subtitle: 'Promedio por venta',
+                ),
+                // 5. Productos Vendidos
+                MetricCard(
+                  title: 'Productos Vendidos',
+                  value: analytics.totalProductsSold.toString(),
+                  icon: Icons.inventory_2,
+                  color: Colors.teal,
                 ),
               ]),
             ),
@@ -211,6 +214,7 @@ class AnalyticsPage extends StatelessWidget {
       title: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
+
           children: [
             // Avatar y botón de drawer
             Builder(
@@ -224,34 +228,12 @@ class AnalyticsPage extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             // Título
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Analíticas',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Consumer<AnalyticsProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.analytics != null) {
-                        return Text(
-                          '${provider.analytics!.totalTransactions} transacciones',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
+            Text(
+              'Analíticas',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

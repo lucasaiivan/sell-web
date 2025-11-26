@@ -437,10 +437,22 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required Map<String, dynamic> transactionData,
   }) async {
     try {
+      print('💾 [CashRegister] Guardando transacción:');
+      print('   AccountId: $accountId');
+      print('   TicketId: $ticketId');
+      print('   Creation: ${transactionData['creation']}');
+      print('   PriceTotal: ${transactionData['priceTotal']}');
+      print('   Products: ${(transactionData['listPoduct'] as List?)?.length ?? 0}');
+      
       await DatabaseCloudService.accountTransactions(accountId)
           .doc(ticketId)
           .set(transactionData, SetOptions(merge: true));
-    } catch (e) {
+      
+      print('✅ [CashRegister] Transacción guardada exitosamente en Firestore');
+      print('   Ruta: /ACCOUNTS/$accountId/TRANSACTIONS/$ticketId');
+    } catch (e, stackTrace) {
+      print('❌ [CashRegister] Error al guardar transacción: $e');
+      print('❌ [CashRegister] StackTrace: $stackTrace');
       throw Exception('Error al guardar transacción: $e');
     }
   }

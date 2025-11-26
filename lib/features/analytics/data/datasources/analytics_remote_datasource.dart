@@ -36,6 +36,10 @@ class AnalyticsRemoteDataSource {
     DateFilter? dateFilter,
   }) async {
     try {
+      print('📊 [Analytics] Iniciando consulta de transacciones');
+      print('   AccountId: $accountId');
+      print('   DateFilter: ${dateFilter?.name ?? "null (todas las transacciones)"}');
+
       Query<Map<String, dynamic>> query = _firestore
           .collection('/ACCOUNTS')
           .doc(accountId)
@@ -45,32 +49,68 @@ class AnalyticsRemoteDataSource {
       if (dateFilter != null) {
         final (startDate, endDate) = dateFilter.getDateRange();
         
-        // Log para debugging
-        print('📊 [Analytics] Consultando transacciones:');
+        // Log detallado para debugging
+        print('📊 [Analytics] Aplicando filtro de fecha:');
         print('   Desde: $startDate');
         print('   Hasta: $endDate');
+        print('   Timestamp Start: ${Timestamp.fromDate(startDate)}');
+        print('   Timestamp End: ${Timestamp.fromDate(endDate)}');
         
         query = query
             .where('creation', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-            .where('creation', isLessThan: Timestamp.fromDate(endDate));
+            .where('creation', isLessThan: Timestamp.fromDate(endDate))
+            .orderBy('creation', descending: true);
+      } else {
+        // Sin filtro, solo ordenar
+        print('📊 [Analytics] Sin filtro de fecha, obteniendo todas las transacciones');
+        query = query.orderBy('creation', descending: true);
       }
 
-      // Ordenar por fecha de creación descendente
-      query = query.orderBy('creation', descending: true);
-
+      print('📊 [Analytics] Ejecutando query a Firestore...');
       final querySnapshot = await query.get();
       
       print('📊 [Analytics] Documentos encontrados: ${querySnapshot.docs.length}');
 
+      if (querySnapshot.docs.isEmpty) {
+        print('⚠️ [Analytics] No se encontraron transacciones');
+        print('   Verifica que:');
+        print('   1. Las transacciones se estén guardando en /ACCOUNTS/$accountId/TRANSACTIONS/');
+        print('   2. El campo "creation" sea de tipo Timestamp');
+        print('   3. Los índices de Firestore estén correctamente configurados');
+      }
+
       // Convertir documentos a TicketModel
       final tickets = querySnapshot.docs.map((doc) {
-        return TicketModel.fromMap(doc.data());
+        try {
+          final data = doc.data();
+          print('📝 [Analytics] Procesando doc: ${doc.id}, creation: ${data['creation']}');
+          return TicketModel.fromMap(data);
+        } catch (e) {
+          print('❌ [Analytics] Error convirtiendo documento ${doc.id}: $e');
+          rethrow;
+        }
       }).toList();
 
+      print('✅ [Analytics] Tickets procesados correctamente: ${tickets.length}');
+
       // Calcular métricas y retornar modelo
-      return SalesAnalyticsModel.fromTickets(tickets);
-    } catch (e) {
+      final analyticsModel = SalesAnalyticsModel.fromTickets(tickets);
+      print('📊 [Analytics] Métricas calculadas:');
+      print('   Total Transacciones: ${analyticsModel.totalTransactions}');
+      print('   Total Ventas: ${analyticsModel.totalSales}');
+      
+      return analyticsModel;
+    } catch (e, stackTrace) {
       print('❌ [Analytics] Error en consulta: $e');
+      print('❌ [Analytics] StackTrace: $stackTrace');
+      
+      // Verificar si es un error de índice de Firestore
+      if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        print('⚠️ [Analytics] Error de índice detectado:');
+        print('   Asegúrate de que los índices de Firestore estén desplegados correctamente.');
+        print('   Ejecuta: firebase deploy --only firestore:indexes');
+      }
+      
       rethrow;
     }
   }

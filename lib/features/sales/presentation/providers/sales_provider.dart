@@ -3,8 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/usecases/usecase.dart';
+import 'package:sellweb/core/core.dart'; 
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -16,7 +15,6 @@ import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.da
 import 'package:provider/provider.dart' as provider;
 
 // Sales UseCases
-import 'package:sellweb/features/sales/domain/usecases/create_empty_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/remove_product_from_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/create_quick_product_usecase.dart';
@@ -28,8 +26,6 @@ import 'package:sellweb/features/sales/domain/usecases/prepare_sale_ticket_useca
 import 'package:sellweb/features/sales/domain/usecases/prepare_ticket_for_transaction_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/save_last_sold_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usecase.dart';
-import 'package:sellweb/features/sales/domain/usecases/clear_last_sold_ticket_usecase.dart';
-import 'package:sellweb/features/sales/domain/usecases/has_last_sold_ticket_usecase.dart';
 
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
@@ -139,7 +135,6 @@ class SalesProvider extends ChangeNotifier {
   final GetUserAccountsUseCase getUserAccountsUseCase;
   
   // Sales UseCases
-  final CreateEmptyTicketUseCase _createEmptyTicketUseCase;
   final AddProductToTicketUseCase _addProductToTicketUseCase;
   final RemoveProductFromTicketUseCase _removeProductFromTicketUseCase;
   final CreateQuickProductUseCase _createQuickProductUseCase;
@@ -151,8 +146,6 @@ class SalesProvider extends ChangeNotifier {
   final PrepareTicketForTransactionUseCase _prepareTicketForTransactionUseCase;
   final SaveLastSoldTicketUseCase _saveLastSoldTicketUseCase;
   final GetLastSoldTicketUseCase _getLastSoldTicketUseCase;
-  final ClearLastSoldTicketUseCase _clearLastSoldTicketUseCase;
-  final HasLastSoldTicketUseCase _hasLastSoldTicketUseCase;
   
   final CatalogueUseCases? _catalogueUseCases;
   final AppDataPersistenceService _persistenceService =
@@ -178,7 +171,6 @@ class SalesProvider extends ChangeNotifier {
 
   SalesProvider({
     required this.getUserAccountsUseCase,
-    required CreateEmptyTicketUseCase createEmptyTicketUseCase,
     required AddProductToTicketUseCase addProductToTicketUseCase,
     required RemoveProductFromTicketUseCase removeProductFromTicketUseCase,
     required CreateQuickProductUseCase createQuickProductUseCase,
@@ -190,11 +182,8 @@ class SalesProvider extends ChangeNotifier {
     required PrepareTicketForTransactionUseCase prepareTicketForTransactionUseCase,
     required SaveLastSoldTicketUseCase saveLastSoldTicketUseCase,
     required GetLastSoldTicketUseCase getLastSoldTicketUseCase,
-    required ClearLastSoldTicketUseCase clearLastSoldTicketUseCase,
-    required HasLastSoldTicketUseCase hasLastSoldTicketUseCase,
     CatalogueUseCases? catalogueUseCases,
-  })  : _createEmptyTicketUseCase = createEmptyTicketUseCase,
-        _addProductToTicketUseCase = addProductToTicketUseCase,
+  })  : _addProductToTicketUseCase = addProductToTicketUseCase,
         _removeProductFromTicketUseCase = removeProductFromTicketUseCase,
         _createQuickProductUseCase = createQuickProductUseCase,
         _setTicketPaymentModeUseCase = setTicketPaymentModeUseCase,
@@ -205,8 +194,6 @@ class SalesProvider extends ChangeNotifier {
         _prepareTicketForTransactionUseCase = prepareTicketForTransactionUseCase,
         _saveLastSoldTicketUseCase = saveLastSoldTicketUseCase,
         _getLastSoldTicketUseCase = getLastSoldTicketUseCase,
-        _clearLastSoldTicketUseCase = clearLastSoldTicketUseCase,
-        _hasLastSoldTicketUseCase = hasLastSoldTicketUseCase,
         _catalogueUseCases = catalogueUseCases {
     _loadInitialState();
   }

@@ -447,6 +447,25 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i563.GetAccountAdminsUseCase(gh<_i840.AccountRepository>()));
     gh.lazySingleton<_i2.RemoveSelectedAccountIdUseCase>(() =>
         _i2.RemoveSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
+    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
+          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
+          addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
+          removeProductFromTicketUseCase:
+              gh<_i449.RemoveProductFromTicketUseCase>(),
+          createQuickProductUseCase: gh<_i853.CreateQuickProductUseCase>(),
+          setTicketPaymentModeUseCase: gh<_i953.SetTicketPaymentModeUseCase>(),
+          setTicketDiscountUseCase: gh<_i240.SetTicketDiscountUseCase>(),
+          setTicketReceivedCashUseCase:
+              gh<_i519.SetTicketReceivedCashUseCase>(),
+          associateTicketWithCashRegisterUseCase:
+              gh<_i1056.AssociateTicketWithCashRegisterUseCase>(),
+          prepareSaleTicketUseCase: gh<_i399.PrepareSaleTicketUseCase>(),
+          prepareTicketForTransactionUseCase:
+              gh<_i220.PrepareTicketForTransactionUseCase>(),
+          saveLastSoldTicketUseCase: gh<_i401.SaveLastSoldTicketUseCase>(),
+          getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
+          catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
+        ));
     gh.lazySingleton<_i33.FetchAdminProfileUseCase>(() =>
         _i33.FetchAdminProfileUseCase(gh<_i563.GetAccountAdminsUseCase>()));
     gh.lazySingleton<_i817.GetProfilesAccountsAssociatedUseCase>(
@@ -464,28 +483,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i158.SignOutUseCase>(
         () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
-          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
-          createEmptyTicketUseCase: gh<_i283.CreateEmptyTicketUseCase>(),
-          addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
-          removeProductFromTicketUseCase:
-              gh<_i449.RemoveProductFromTicketUseCase>(),
-          createQuickProductUseCase: gh<_i853.CreateQuickProductUseCase>(),
-          setTicketPaymentModeUseCase: gh<_i953.SetTicketPaymentModeUseCase>(),
-          setTicketDiscountUseCase: gh<_i240.SetTicketDiscountUseCase>(),
-          setTicketReceivedCashUseCase:
-              gh<_i519.SetTicketReceivedCashUseCase>(),
-          associateTicketWithCashRegisterUseCase:
-              gh<_i1056.AssociateTicketWithCashRegisterUseCase>(),
-          prepareSaleTicketUseCase: gh<_i399.PrepareSaleTicketUseCase>(),
-          prepareTicketForTransactionUseCase:
-              gh<_i220.PrepareTicketForTransactionUseCase>(),
-          saveLastSoldTicketUseCase: gh<_i401.SaveLastSoldTicketUseCase>(),
-          getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
-          clearLastSoldTicketUseCase: gh<_i276.ClearLastSoldTicketUseCase>(),
-          hasLastSoldTicketUseCase: gh<_i556.HasLastSoldTicketUseCase>(),
-          catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
-        ));
     gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
           gh<_i253.SignInWithGoogleUseCase>(),
           gh<_i1046.SignInSilentlyUseCase>(),

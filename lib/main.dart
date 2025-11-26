@@ -17,7 +17,6 @@ import 'package:sellweb/features/cash_register/presentation/providers/cash_regis
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 // Sales UseCases imports
-import 'package:sellweb/features/sales/domain/usecases/create_empty_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/remove_product_from_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/create_quick_product_usecase.dart';
@@ -29,8 +28,6 @@ import 'package:sellweb/features/sales/domain/usecases/prepare_sale_ticket_useca
 import 'package:sellweb/features/sales/domain/usecases/prepare_ticket_for_transaction_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/save_last_sold_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usecase.dart';
-import 'package:sellweb/features/sales/domain/usecases/clear_last_sold_ticket_usecase.dart';
-import 'package:sellweb/features/sales/domain/usecases/has_last_sold_ticket_usecase.dart';
 
 void main() async {
   // CRITICAL: Initialize bindings FIRST in the main zone, synchronously
@@ -69,7 +66,6 @@ void _runApp() {
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
-              createEmptyTicketUseCase: getIt<CreateEmptyTicketUseCase>(),
               addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
               removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
               createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
@@ -81,8 +77,6 @@ void _runApp() {
               prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
               saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
               getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
-              clearLastSoldTicketUseCase: getIt<ClearLastSoldTicketUseCase>(),
-              hasLastSoldTicketUseCase: getIt<HasLastSoldTicketUseCase>(),
               catalogueUseCases: catalogueUseCases,
             );
           },
@@ -91,7 +85,6 @@ void _runApp() {
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
-              createEmptyTicketUseCase: getIt<CreateEmptyTicketUseCase>(),
               addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
               removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
               createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
@@ -103,8 +96,6 @@ void _runApp() {
               prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
               saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
               getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
-              clearLastSoldTicketUseCase: getIt<ClearLastSoldTicketUseCase>(),
-              hasLastSoldTicketUseCase: getIt<HasLastSoldTicketUseCase>(),
               catalogueUseCases: catalogueUseCases,
             );
           },

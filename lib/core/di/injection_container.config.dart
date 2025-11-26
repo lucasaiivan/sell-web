@@ -227,14 +227,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => externalModule.appDataPersistenceService);
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn);
-    gh.lazySingleton<_i388.GetDemoAdminProfileUseCase>(
-        () => _i388.GetDemoAdminProfileUseCase());
-    gh.lazySingleton<_i612.GetDemoAccountUseCase>(
-        () => _i612.GetDemoAccountUseCase());
-    gh.lazySingleton<_i329.GetDemoProductsUseCase>(
-        () => _i329.GetDemoProductsUseCase());
-    gh.lazySingleton<_i377.GetProductByCodeUseCase>(
-        () => _i377.GetProductByCodeUseCase());
     gh.lazySingleton<_i853.CreateQuickProductUseCase>(
         () => _i853.CreateQuickProductUseCase());
     gh.lazySingleton<_i283.CreateEmptyTicketUseCase>(
@@ -259,6 +251,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1056.AssociateTicketWithCashRegisterUseCase());
     gh.lazySingleton<_i449.RemoveProductFromTicketUseCase>(
         () => _i449.RemoveProductFromTicketUseCase());
+    gh.lazySingleton<_i388.GetDemoAdminProfileUseCase>(
+        () => _i388.GetDemoAdminProfileUseCase());
+    gh.lazySingleton<_i612.GetDemoAccountUseCase>(
+        () => _i612.GetDemoAccountUseCase());
+    gh.lazySingleton<_i329.GetDemoProductsUseCase>(
+        () => _i329.GetDemoProductsUseCase());
+    gh.lazySingleton<_i377.GetProductByCodeUseCase>(
+        () => _i377.GetProductByCodeUseCase());
     gh.lazySingleton<_i818.CashRegisterRepository>(
         () => _i1059.CashRegisterRepositoryImpl());
     gh.lazySingleton<_i276.ClearLastSoldTicketUseCase>(() =>
@@ -281,8 +281,11 @@ extension GetItInjectableX on _i174.GetIt {
             gh<_i612.GetDemoAccountUseCase>()));
     gh.lazySingleton<_i943.IsProductScannedUseCase>(() =>
         _i943.IsProductScannedUseCase(gh<_i377.GetProductByCodeUseCase>()));
-    gh.lazySingleton<_i795.CashRegisterUsecases>(
-        () => _i795.CashRegisterUsecases(gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
+        _i23.CreateCashRegisterFixedDescriptionUseCase(
+            gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i522.GetCashRegisterByDaysUseCase>(() =>
+        _i522.GetCashRegisterByDaysUseCase(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i851.UpdateBillingOnAnnullmentUseCase>(() =>
         _i851.UpdateBillingOnAnnullmentUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -298,59 +301,56 @@ extension GetItInjectableX on _i174.GetIt {
             gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i95.GetCashRegisterHistoryUseCase>(() =>
         _i95.GetCashRegisterHistoryUseCase(gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i34.GetTodayTransactionsStreamUseCase>(() =>
+        _i34.GetTodayTransactionsStreamUseCase(
+            gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i276.GetCashRegisterHistoryStreamUseCase>(() =>
         _i276.GetCashRegisterHistoryStreamUseCase(
             gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i827.GetTransactionDetailUseCase>(() =>
+        _i827.GetTransactionDetailUseCase(gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i173.SetCashRegisterUseCase>(
+        () => _i173.SetCashRegisterUseCase(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i512.OpenCashRegisterUseCase>(() =>
         _i512.OpenCashRegisterUseCase(gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i548.AddCashRegisterToHistoryUseCase>(() =>
+        _i548.AddCashRegisterToHistoryUseCase(
+            gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i202.CloseCashRegisterUseCase>(() =>
         _i202.CloseCashRegisterUseCase(gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i847.DeleteCashRegisterFromHistoryUseCase>(() =>
+        _i847.DeleteCashRegisterFromHistoryUseCase(
+            gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i216.GetActiveCashRegistersUseCase>(() =>
         _i216.GetActiveCashRegistersUseCase(
             gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i760.GetCashRegisterByDateRangeUseCase>(() =>
         _i760.GetCashRegisterByDateRangeUseCase(
             gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i322.GetCashRegisterFixedDescriptionsUseCase>(() =>
+        _i322.GetCashRegisterFixedDescriptionsUseCase(
+            gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i797.GetActiveCashRegistersStreamUseCase>(() =>
         _i797.GetActiveCashRegistersStreamUseCase(
             gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i96.DeleteCashRegisterUseCase>(() =>
+        _i96.DeleteCashRegisterUseCase(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i457.AddCashInflowUseCase>(
         () => _i457.AddCashInflowUseCase(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i454.GetTransactionsStreamUseCase>(() =>
         _i454.GetTransactionsStreamUseCase(gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i209.GetTodayCashRegistersUseCase>(() =>
-        _i209.GetTodayCashRegistersUseCase(gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
-        _i23.CreateCashRegisterFixedDescriptionUseCase(
-            gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i522.GetCashRegisterByDaysUseCase>(() =>
-        _i522.GetCashRegisterByDaysUseCase(gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i827.GetTransactionDetailUseCase>(() =>
-        _i827.GetTransactionDetailUseCase(gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i173.SetCashRegisterUseCase>(
-        () => _i173.SetCashRegisterUseCase(gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i548.AddCashRegisterToHistoryUseCase>(() =>
-        _i548.AddCashRegisterToHistoryUseCase(
-            gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i847.DeleteCashRegisterFromHistoryUseCase>(() =>
-        _i847.DeleteCashRegisterFromHistoryUseCase(
-            gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i322.GetCashRegisterFixedDescriptionsUseCase>(() =>
-        _i322.GetCashRegisterFixedDescriptionsUseCase(
-            gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i96.DeleteCashRegisterUseCase>(() =>
-        _i96.DeleteCashRegisterUseCase(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i830.DeleteTransactionUseCase>(() =>
         _i830.DeleteTransactionUseCase(gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i209.GetTodayCashRegistersUseCase>(() =>
+        _i209.GetTodayCashRegistersUseCase(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i264.DeleteCashRegisterFixedDescriptionUseCase>(() =>
         _i264.DeleteCashRegisterFixedDescriptionUseCase(
-            gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i34.GetTodayTransactionsStreamUseCase>(() =>
-        _i34.GetTodayTransactionsStreamUseCase(
             gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i547.ProcessTicketAnnullmentUseCase>(() =>
         _i547.ProcessTicketAnnullmentUseCase(
             gh<_i818.CashRegisterRepository>()));
+    gh.lazySingleton<_i795.CashRegisterUsecases>(
+        () => _i795.CashRegisterUsecases(gh<_i818.CashRegisterRepository>()));
     gh.lazySingleton<_i223.SaveTicketToTransactionHistoryUseCase>(() =>
         _i223.SaveTicketToTransactionHistoryUseCase(
             gh<_i818.CashRegisterRepository>()));

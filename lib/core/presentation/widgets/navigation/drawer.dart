@@ -6,6 +6,7 @@ import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import '../core_widgets.dart';
+import '../../../../features/multiuser/presentation/pages/multi_user_page.dart';
 
 /// Widget reutilizable del Drawer para las pantallas principales
 /// Muestra información de la cuenta seleccionada, controles de tema y acceso a funcionalidades
@@ -204,6 +205,20 @@ class _NavigationMenu extends StatelessWidget {
                       homeProvider.setPageIndex(2);
                     }
                     Navigator.of(context).pop();
+                  },
+                  colorScheme: colorScheme,
+                ),
+                _DrawerNavTile(
+                  icon: Icons.people,
+                  label: 'Usuarios',
+                  index: 3,
+                  currentIndex: -1,
+                  onSelected: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const MultiUserPage()),
+                    );
                   },
                   colorScheme: colorScheme,
                 ),

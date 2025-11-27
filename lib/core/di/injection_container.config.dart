@@ -183,6 +183,22 @@ import 'package:sellweb/features/catalogue/domain/usecases/update_stock_usecase.
     as _i226;
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart'
     as _i127;
+import 'package:sellweb/features/multiuser/data/datasources/multi_user_remote_datasource.dart'
+    as _i925;
+import 'package:sellweb/features/multiuser/data/repositories/multi_user_repository_impl.dart'
+    as _i431;
+import 'package:sellweb/features/multiuser/domain/repositories/multi_user_repository.dart'
+    as _i754;
+import 'package:sellweb/features/multiuser/domain/usecases/create_user_usecase.dart'
+    as _i442;
+import 'package:sellweb/features/multiuser/domain/usecases/delete_user_usecase.dart'
+    as _i799;
+import 'package:sellweb/features/multiuser/domain/usecases/get_users_usecase.dart'
+    as _i353;
+import 'package:sellweb/features/multiuser/domain/usecases/update_user_usecase.dart'
+    as _i395;
+import 'package:sellweb/features/multiuser/presentation/provider/multi_user_provider.dart'
+    as _i564;
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart'
     as _i60;
 import 'package:sellweb/features/sales/domain/usecases/assign_seller_to_ticket_usecase.dart'
@@ -284,6 +300,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i576.CatalogueRepositoryImpl());
     gh.lazySingleton<_i76.SellUsecases>(() => _i76.SellUsecases(
         persistenceService: gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i925.MultiUserRemoteDataSource>(
+        () => _i925.MultiUserRemoteDataSourceImpl());
     gh.lazySingleton<_i983.CatalogueRemoteDataSource>(() =>
         _i983.CatalogueRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()));
     gh.lazySingleton<_i823.AddDemoAccountIfAnonymousUseCase>(() =>
@@ -432,11 +450,21 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i466.GetTransactionsByDateRangeUseCase>(),
           gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
         ));
+    gh.lazySingleton<_i754.MultiUserRepository>(() =>
+        _i431.MultiUserRepositoryImpl(gh<_i925.MultiUserRemoteDataSource>()));
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
         () => _i644.GetUserAccountsUseCase(
               gh<_i840.AccountRepository>(),
               persistenceService: gh<_i581.AppDataPersistenceService>(),
             ));
+    gh.lazySingleton<_i442.CreateUserUseCase>(
+        () => _i442.CreateUserUseCase(gh<_i754.MultiUserRepository>()));
+    gh.lazySingleton<_i353.GetUsersUseCase>(
+        () => _i353.GetUsersUseCase(gh<_i754.MultiUserRepository>()));
+    gh.lazySingleton<_i799.DeleteUserUseCase>(
+        () => _i799.DeleteUserUseCase(gh<_i754.MultiUserRepository>()));
+    gh.lazySingleton<_i395.UpdateUserUseCase>(
+        () => _i395.UpdateUserUseCase(gh<_i754.MultiUserRepository>()));
     gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
           gh<_i474.GetCatalogueStreamUseCase>(),
           gh<_i1001.GetPublicProductByCodeUseCase>(),
@@ -499,6 +527,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i158.SignOutUseCase>(
         () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i564.MultiUserProvider>(() => _i564.MultiUserProvider(
+          gh<_i353.GetUsersUseCase>(),
+          gh<_i442.CreateUserUseCase>(),
+          gh<_i395.UpdateUserUseCase>(),
+          gh<_i799.DeleteUserUseCase>(),
+          gh<_i644.GetUserAccountsUseCase>(),
+        ));
     gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
           gh<_i253.SignInWithGoogleUseCase>(),
           gh<_i1046.SignInSilentlyUseCase>(),

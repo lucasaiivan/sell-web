@@ -8,7 +8,13 @@ abstract class UseCase<T, Params> {
   Future<Either<Failure, T>> call(Params params);
 }
 
+
 /// Clase para casos de uso sin parámetros
 class NoParams {
   const NoParams();
+}
+
+/// Interfaz base para casos de uso que retornan un Stream
+abstract class StreamUseCase<T, Params> {
+  Stream<Either<Failure, T>> call(Params params);
 }

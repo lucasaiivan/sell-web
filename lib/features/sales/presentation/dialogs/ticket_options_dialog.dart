@@ -1,5 +1,6 @@
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
@@ -330,18 +331,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
         };
       }).toList();
 
-      // Determinar método de pago
-      String paymentMethod = 'Efectivo';
-      switch (widget.ticket.payMode) {
-        case 'mercadopago':
-          paymentMethod = 'Mercado Pago';
-          break;
-        case 'card':
-          paymentMethod = 'Tarjeta Déb/Créd';
-          break;
-        default:
-          paymentMethod = 'Efectivo';
-      }
+      // Determinar método de pago usando el enum
+      final paymentMethodEnum = PaymentMethod.fromCode(widget.ticket.payMode);
+      final paymentMethod = paymentMethodEnum.displayName;
 
       List<String> successMessages = [];
       List<String> errorMessages = [];

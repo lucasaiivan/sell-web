@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/cash_register/presentation/dialogs/cash_flow_dialog.dart';
 import 'package:sellweb/features/sales/presentation/dialogs/cash_register_close_dialog.dart';
@@ -744,35 +745,24 @@ class _SalesPageState extends State<SalesPage> {
       spacing: 5,
       alignment: WrapAlignment.center,
       runSpacing: 5,
-      children: [
-        // choiceChip : pago con efectivo
-        ChoiceChip(
-          label: const Text('Efectivo'),
-          selected: provider.ticket.payMode == 'effective',
+      children: PaymentMethod.getValidMethods().map((method) {
+        final isSelected = provider.ticket.payMode == method.code;
+        return ChoiceChip(
+          avatar: Icon(
+            method.icon,
+            size: 18,
+            color: isSelected ? Colors.white : null,
+          ),
+          label: Text(method.displayName),
+          selected: isSelected,
           onSelected: (bool selected) {
-            if (selected) {
+            if (selected && method == PaymentMethod.cash) {
               dialogSelectedIncomeCash();
             }
-            provider.setPayMode(payMode: selected ? 'effective' : '');
+            provider.setPayMode(payMode: selected ? method.code : '');
           },
-        ),
-        // choiceChip : pago con mercado pago
-        ChoiceChip(
-          label: const Text('Mercado Pago'),
-          selected: provider.ticket.payMode == 'mercadopago',
-          onSelected: (bool selected) {
-            provider.setPayMode(payMode: selected ? 'mercadopago' : '');
-          },
-        ),
-        // choiceChip : pago con tarjeta de credito/debito
-        ChoiceChip(
-          label: const Text('Tarjeta Deb/Cred'),
-          selected: provider.ticket.payMode == 'card',
-          onSelected: (bool selected) {
-            provider.setPayMode(payMode: selected ? 'card' : '');
-          },
-        ),
-      ],
+        );
+      }).toList(),
     );
   }
 

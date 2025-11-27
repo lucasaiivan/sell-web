@@ -1,6 +1,7 @@
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
@@ -105,7 +106,7 @@ class _TicketStatistics {
     return _cachedActiveCount!;
   }
 
-  /// Calcula y agrupa los métodos de pago
+  /// Calcula y agrupa los métodos de pago usando el enum centralizado
   Map<String, double> _calculatePaymentMethods() {
     final ranking = TicketModel.getPaymentMethodsRanking(
       tickets: _tickets,
@@ -114,25 +115,12 @@ class _TicketStatistics {
 
     final Map<String, double> grouped = {};
     for (final payment in ranking) {
-      final description =
-          (payment['description'] as String).trim().toLowerCase();
+      // La description ya viene normalizada desde getPaymentMethodsRanking
+      final description = (payment['description'] as String).trim();
       final percentage = payment['percentage'] as double;
 
-      String key;
-      if (description == 'efectivo') {
-        key = 'Efectivo';
-      } else if (description == 'mercado pago' ||
-          description == 'mercadopago') {
-        key = 'Mercado Pago';
-      } else if (description == 'tarjeta de crédito/débito' ||
-          description == 'tarjeta' ||
-          description == 'tarjeta de credito/debito') {
-        key = 'Tarjeta';
-      } else {
-        key = 'Otros';
-      }
-
-      grouped[key] = (grouped[key] ?? 0) + percentage;
+      // Usar el displayName como key directamente
+      grouped[description] = (grouped[description] ?? 0) + percentage;
     }
 
     return grouped;
@@ -1003,44 +991,28 @@ class _PaymentMethodsSummary extends StatelessWidget {
     );
   }
 
-  /// Helper: Obtener datos de color, icono y etiqueta para un método de pago
+  /// Helper: Obtener datos de color, icono y etiqueta para un método de pago usando el enum
   Map<String, dynamic> _getPaymentMethodData({
     required String description,
     required double percentage,
     required ThemeData theme,
   }) {
-    Color paymentColor;
-    IconData paymentIcon;
-    String fullLabel;
-
-    switch (description) {
-      case 'Efectivo':
-        paymentColor = Colors.orange.shade700;
-        paymentIcon = Icons.payments_rounded;
-        fullLabel = 'Efectivo';
-        break;
-      case 'Mercado Pago':
-        paymentColor = Colors.blue.shade700;
-        paymentIcon = Icons.qr_code_rounded;
-        fullLabel = 'Mercado Pago';
-        break;
-      case 'Tarjeta':
-        paymentColor = Colors.purple.shade700;
-        paymentIcon = Icons.credit_card_rounded;
-        fullLabel = 'Tarjeta';
-        break;
-      case 'Otros':
-      default:
-        paymentColor = Colors.grey.shade600;
-        paymentIcon = Icons.more_horiz_rounded;
-        fullLabel = 'Otros';
-        break;
+    // Intentar obtener el PaymentMethod desde el displayName
+    PaymentMethod paymentMethod;
+    try {
+      // Buscar por displayName
+      paymentMethod = PaymentMethod.values.firstWhere(
+        (method) => method.displayName == description,
+        orElse: () => PaymentMethod.unspecified,
+      );
+    } catch (e) {
+      paymentMethod = PaymentMethod.unspecified;
     }
 
     return {
-      'color': paymentColor,
-      'icon': paymentIcon,
-      'label': fullLabel,
+      'color': paymentMethod.color,
+      'icon': paymentMethod.icon,
+      'label': paymentMethod.displayName,
       'percentage': percentage,
     };
   }
@@ -2654,63 +2626,23 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
 
   // Helper: Obtener icono del método de pago
   IconData _getPaymentMethodIcon(String payMode) {
-    switch (payMode.toLowerCase()) {
-      case 'effective':
-      case 'efectivo':
-        return Icons.payments_rounded;
-      case 'card':
-      case 'tarjeta':
-        return Icons.credit_card_rounded;
-      case 'mercadopago':
-      case 'qr':
-        return Icons.qr_code_rounded;
-      case 'transfer':
-      case 'transferencia':
-        return Icons.account_balance_rounded;
-      default:
-        return Icons.attach_money_rounded;
-    }
+    // Normalizar código y obtener el método de pago desde el enum
+    final paymentMethod = PaymentMethod.fromCode(payMode);
+    return paymentMethod.icon;
   }
 
   // Helper: Obtener color del método de pago
   Color _getPaymentMethodColor(String payMode) {
-    switch (payMode.toLowerCase()) {
-      case 'effective':
-      case 'efectivo':
-        return Colors.orange.shade700;
-      case 'card':
-      case 'tarjeta':
-        return Colors.purple.shade700;
-      case 'mercadopago':
-      case 'qr':
-        return Colors.blue.shade700;
-      case 'transfer':
-      case 'transferencia':
-        return Colors.teal.shade700;
-      default:
-        return Colors.grey.shade600;
-    }
+    // Normalizar código y obtener el método de pago desde el enum
+    final paymentMethod = PaymentMethod.fromCode(payMode);
+    return paymentMethod.color;
   }
 
   // Helper: Obtener label completo del método de pago
   String _getPaymentMethodFullLabel(String payMode) {
-    switch (payMode.toLowerCase()) {
-      case 'effective':
-      case 'efectivo':
-        return 'Efectivo';
-      case 'card':
-      case 'tarjeta':
-        return 'Tarjeta';
-      case 'mercadopago':
-        return 'Mercado Pago';
-      case 'qr':
-        return 'QR';
-      case 'transfer':
-      case 'transferencia':
-        return 'Transferencia';
-      default:
-        return 'Otro';
-    }
+    // Normalizar código y obtener el método de pago desde el enum
+    final paymentMethod = PaymentMethod.fromCode(payMode);
+    return paymentMethod.displayName;
   }
 
   String _formatDateTime(DateTime dateTime) {

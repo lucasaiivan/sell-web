@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/core.dart'; 
+import 'package:sellweb/core/core.dart';
+import 'package:sellweb/core/constants/payment_methods.dart'; 
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -989,18 +990,9 @@ class SalesProvider extends ChangeNotifier {
   Future<void> _printTicketDirectly(
       BuildContext context, ThermalPrinterHttpService printerService) async {
     try {
-      // Determinar método de pago
-      String paymentMethod = 'Efectivo';
-      switch (_state.ticket.payMode) {
-        case 'mercadopago':
-          paymentMethod = 'Mercado Pago';
-          break;
-        case 'card':
-          paymentMethod = 'Tarjeta Déb/Créd';
-          break;
-        default:
-          paymentMethod = 'Efectivo';
-      }
+      // Determinar método de pago usando el enum centralizado
+      final paymentMethod = PaymentMethod.fromCode(_state.ticket.payMode);
+      final paymentMethodLabel = paymentMethod.displayName;
 
       // Preparar datos del ticket
       final products = _state.ticket.products.map((item) {
@@ -1018,7 +1010,7 @@ class SalesProvider extends ChangeNotifier {
             : 'PUNTO DE VENTA',
         products: products,
         total: _state.ticket.getTotalPrice,
-        paymentMethod: paymentMethod,
+        paymentMethod: paymentMethodLabel,
         cashReceived: _state.ticket.valueReceived > 0
             ? _state.ticket.valueReceived
             : null,

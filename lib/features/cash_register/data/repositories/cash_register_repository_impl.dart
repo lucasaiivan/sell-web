@@ -494,12 +494,59 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     return DatabaseCloudService.accountTransactionsStream(accountId)
         .map((querySnapshot) {
       return querySnapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) {
+            final data = doc.data();
+            // Normalizar timestamps en el documento
+            final normalizedData = _normalizeTimestampsInTransaction(data);
+            return {
+              'id': doc.id,
+              ...normalizedData,
+            };
+          })
           .toList();
     });
+  }
+
+  /// Normaliza todos los campos de timestamp en una transacción
+  Map<String, dynamic> _normalizeTimestampsInTransaction(Map<String, dynamic> data) {
+    final normalized = Map<String, dynamic>.from(data);
+    
+    // Normalizar timestamps a nivel de documento
+    final timestampFields = [
+      'creation',
+      'upgrade',
+      'documentCreation',
+      'documentUpgrade',
+      'timestamp_actualizacion',
+      'timestamp_creation',
+      'timestamp_creation_document',
+      'timestamp_upgrade_document',
+    ];
+    
+    for (final field in timestampFields) {
+      if (normalized.containsKey(field) && normalized[field] is int) {
+        normalized[field] = Timestamp.fromMillisecondsSinceEpoch(normalized[field] as int);
+      }
+    }
+    
+    // Normalizar timestamps en productos (array)
+    if (normalized.containsKey('products') && normalized['products'] is List) {
+      final products = normalized['products'] as List;
+      normalized['products'] = products.map((product) {
+        if (product is Map<String, dynamic>) {
+          final normalizedProduct = Map<String, dynamic>.from(product);
+          for (final field in timestampFields) {
+            if (normalizedProduct.containsKey(field) && normalizedProduct[field] is int) {
+              normalizedProduct[field] = Timestamp.fromMillisecondsSinceEpoch(normalizedProduct[field] as int);
+            }
+          }
+          return normalizedProduct;
+        }
+        return product;
+      }).toList();
+    }
+    
+    return normalized;
   }
 
   @override

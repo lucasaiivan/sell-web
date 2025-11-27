@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 
@@ -257,52 +258,19 @@ class TransactionListItem extends StatelessWidget {
 
   /// Obtiene label legible del método de pago
   String _getPaymentMethodLabel(String payMode) {
-    switch (payMode.toLowerCase()) {
-      case 'effective':
-      case 'efective':
-        return 'Efectivo';
-      case 'mercadopago':
-        return 'Mercado Pago';
-      case 'card':
-        return 'Tarjeta';
-      case 'transfer':
-        return 'Transferencia';
-      default:
-        return payMode;
-    }
+    final method = PaymentMethod.fromCode(payMode);
+    return method.displayName;
   }
 
   /// Obtiene el icono del método de pago
   IconData _getPaymentIcon(String payMode) {
-    switch (payMode.toLowerCase()) {
-      case 'effective':
-      case 'efective':
-        return Icons.attach_money;
-      case 'mercadopago':
-        return Icons.qr_code_rounded;
-      case 'card':
-        return Icons.credit_card_rounded;
-      case 'transfer':
-        return Icons.account_balance_rounded;
-      default:
-        return Icons.payments_rounded;
-    }
+    final method = PaymentMethod.fromCode(payMode);
+    return method.icon;
   }
 
   /// Obtiene el color del método de pago
   Color _getPaymentColor(String payMode) {
-    switch (payMode.toLowerCase()) {
-      case 'effective':
-      case 'efective':
-        return Colors.green;
-      case 'mercadopago':
-        return Colors.blue;
-      case 'card':
-        return Colors.orange;
-      case 'transfer':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
+    final method = PaymentMethod.fromCode(payMode);
+    return method.color;
   }
 }

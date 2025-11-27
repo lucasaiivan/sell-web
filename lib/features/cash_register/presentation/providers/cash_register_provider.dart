@@ -868,6 +868,7 @@ class CashRegisterProvider extends ChangeNotifier {
   /// Stream de tickets para una caja registradora específica
   ///
   /// Usado por dialogs para mostrar tickets en tiempo real
+  /// Filtra las transacciones por cashRegisterId desde la apertura de la caja
   Stream<List<TicketModel>> getCashRegisterTicketsStream({
     required String accountId,
     required String cashRegisterId,
@@ -879,15 +880,69 @@ class CashRegisterProvider extends ChangeNotifier {
           .firstOrNull;
 
       if (activeCashRegister != null) {
-        // Si es caja activa, usar stream de hoy
+        // Si es caja activa, cargar por rango de fechas desde apertura hasta ahora
+        // Emitir una carga inicial
+        final start = activeCashRegister.opening;
+        final end = DateTime.now();
+        
+        final result = await _getTransactionsByDateRangeUseCase(
+          GetTransactionsByDateRangeParams(
+            accountId: accountId,
+            startDate: start,
+            endDate: end,
+          ),
+        );
+
+        final tickets = result.fold(
+          (failure) => <TicketModel>[],
+          (data) => data
+              .where((t) => t['cashRegisterId'] == cashRegisterId)
+              .map((t) => TicketModel.fromMap(t))
+              .toList(),
+        );
+
+        yield tickets;
+        
+        // Luego escuchar cambios en tiempo real solo para hoy
+        // (las transacciones nuevas siempre serán de hoy)
         yield* _getTodayTransactionsStreamUseCase(
           accountId: accountId,
           cashRegisterId: cashRegisterId,
-        ).map((transactions) =>
-            transactions.map((t) => TicketModel.fromMap(t)).toList());
+        ).asyncMap((todayTransactions) async {
+          // Combinar con transacciones históricas si la caja no se abrió hoy
+          final today = DateTime.now();
+          final isOpenedToday = activeCashRegister.opening.year == today.year &&
+              activeCashRegister.opening.month == today.month &&
+              activeCashRegister.opening.day == today.day;
+
+          if (isOpenedToday) {
+            // Si se abrió hoy, solo mostrar las de hoy
+            return todayTransactions.map((t) => TicketModel.fromMap(t)).toList();
+          } else {
+            // Si se abrió en días anteriores, combinar históricas + hoy
+            final historicalResult = await _getTransactionsByDateRangeUseCase(
+              GetTransactionsByDateRangeParams(
+                accountId: accountId,
+                startDate: start,
+                endDate: today.subtract(const Duration(days: 1, hours: 12)),
+              ),
+            );
+            
+            final historicalTickets = historicalResult.fold(
+              (failure) => <TicketModel>[],
+              (data) => data
+                  .where((t) => t['cashRegisterId'] == cashRegisterId)
+                  .map((t) => TicketModel.fromMap(t))
+                  .toList(),
+            );
+            
+            final todayTickets = todayTransactions.map((t) => TicketModel.fromMap(t)).toList();
+            
+            return [...historicalTickets, ...todayTickets];
+          }
+        });
       } else {
         // Si es caja histórica, cargar por rango de fechas
-        // Por ahora emitimos una lista vacía y luego cargamos
         final end = DateTime.now();
         final start = end.subtract(const Duration(days: 30));
         final result = await _getTransactionsByDateRangeUseCase(
@@ -979,7 +1034,9 @@ class CashRegisterProvider extends ChangeNotifier {
           );
           result.fold(
             (failure) => transactions = [],
-            (data) => transactions = data,
+            (data) => transactions = data
+                .where((t) => t['cashRegisterId'] == cashRegisterId)
+                .toList(),
           );
         } else {
           // Si es una caja histórica, deberíamos buscarla para saber sus fechas

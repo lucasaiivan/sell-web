@@ -1,3 +1,4 @@
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import '../../domain/entities/sales_analytics.dart';
 
@@ -37,8 +38,10 @@ class SalesAnalyticsModel extends SalesAnalytics {
     for (var ticket in sortedTickets) {
       totalProfit += ticket.getProfit;
       
-      // Normalizar payMode si es necesario o usarlo directo
-      final payMode = ticket.payMode.isEmpty ? 'Desconocido' : ticket.payMode;
+      // Normalizar payMode con códigos legacy (mercadopago → transfer, etc)
+      final rawPayMode = ticket.payMode.isEmpty ? '' : ticket.payMode;
+      final normalizedPayMode = PaymentMethod.migrateLegacyCode(rawPayMode);
+      final payMode = normalizedPayMode.isEmpty ? 'Desconocido' : normalizedPayMode;
       
       // Acumular total vendido por medio de pago
       paymentMethodsBreakdown[payMode] = (paymentMethodsBreakdown[payMode] ?? 0.0) + ticket.priceTotal;

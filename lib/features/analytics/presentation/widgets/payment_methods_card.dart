@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 
 class PaymentMethodsCard extends StatelessWidget {
@@ -76,28 +77,10 @@ class PaymentMethodsCard extends StatelessWidget {
                     children: sortedMethods.map((entry) {
                 final percentage = totalSales > 0 ? entry.value / totalSales : 0.0;
                 
-                // Mapeo de nombres amigables
-                String displayName = entry.key;
-                IconData methodIcon = Icons.money;
-                
-                switch (entry.key.toLowerCase()) {
-                  case 'efective':
-                  case 'efectivo':
-                    displayName = 'Efectivo';
-                    methodIcon = Icons.attach_money;
-                    break;
-                  case 'mercadopago':
-                    displayName = 'Mercado Pago';
-                    methodIcon = Icons.qr_code;
-                    break;
-                  case 'card':
-                  case 'tarjeta':
-                    displayName = 'Tarjeta';
-                    methodIcon = Icons.credit_card;
-                    break;
-                  default:
-                    displayName = entry.key;
-                }
+                // Obtener información del método de pago desde el enum
+                final paymentMethod = PaymentMethod.fromCode(entry.key);
+                final displayName = paymentMethod.displayName;
+                final methodIcon = paymentMethod.icon;
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),

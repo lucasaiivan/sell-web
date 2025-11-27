@@ -242,26 +242,23 @@ class TicketModel {
 
     // Acumular estadísticas
     for (var ticket in validTickets) {
-      final rawPayMode = ticket.payMode;
+      final payMode = ticket.payMode;
       final amount = ticket.getTotalPrice;
 
-      // Normalizar el código de pago antes de agrupar
-      final normalizedPayMode = PaymentMethod.migrateLegacyCode(rawPayMode);
-
       // Si el medio de pago no existe en el mapa, inicializarlo
-      if (!paymentStats.containsKey(normalizedPayMode)) {
-        paymentStats[normalizedPayMode] = {
-          'description': getFormatPayMode(id: normalizedPayMode),
+      if (!paymentStats.containsKey(payMode)) {
+        paymentStats[payMode] = {
+          'description': getFormatPayMode(id: payMode),
           'amount': 0.0,
           'count': 0,
         };
       }
 
       // Acumular datos
-      paymentStats[normalizedPayMode]!['amount'] =
-          (paymentStats[normalizedPayMode]!['amount'] as double) + amount;
-      paymentStats[normalizedPayMode]!['count'] =
-          (paymentStats[normalizedPayMode]!['count'] as int) + 1;
+      paymentStats[payMode]!['amount'] =
+          (paymentStats[payMode]!['amount'] as double) + amount;
+      paymentStats[payMode]!['count'] =
+          (paymentStats[payMode]!['count'] as int) + 1;
       totalAmount += amount;
     }
 

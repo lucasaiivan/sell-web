@@ -1,3 +1,4 @@
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -735,34 +736,24 @@ class _TicketContent extends StatelessWidget {
                   spacing: 5,
                   alignment: WrapAlignment.center,
                   runSpacing: 5,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Efectivo'),
-                      selected: provider.ticket.payMode == 'effective',
+                  children: PaymentMethod.getValidMethods().map((method) {
+                    final isSelected = provider.ticket.payMode == method.code;
+                    return ChoiceChip(
+                      avatar: Icon(
+                        method.icon,
+                        size: 18,
+                        color: isSelected ? Colors.white : null,
+                      ),
+                      label: Text(method.displayName),
+                      selected: isSelected,
                       onSelected: (bool selected) {
-                        if (selected && onCashPaymentSelected != null) {
+                        if (selected && method == PaymentMethod.cash && onCashPaymentSelected != null) {
                           onCashPaymentSelected();
                         }
-                        provider.setPayMode(
-                            payMode: selected ? 'effective' : '');
+                        provider.setPayMode(payMode: selected ? method.code : '');
                       },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Mercado Pago'),
-                      selected: provider.ticket.payMode == 'mercadopago',
-                      onSelected: (bool selected) {
-                        provider.setPayMode(
-                            payMode: selected ? 'mercadopago' : '');
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Tarjeta Deb/Cred'),
-                      selected: provider.ticket.payMode == 'card',
-                      onSelected: (bool selected) {
-                        provider.setPayMode(payMode: selected ? 'card' : '');
-                      },
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 );
               },
             ),
@@ -1322,30 +1313,16 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
 
   /// Obtiene el texto a mostrar para el método de pago
   String _getPaymentMethodDisplayText(String payMode) {
-    switch (payMode) {
-      case 'effective':
-        return 'Efectivo';
-      case 'mercadopago':
-        return 'Mercado Pago';
-      case 'card':
-        return 'Tarjeta';
-      default:
-        return 'Sin especificar';
-    }
+    // Normalizar código y obtener el método de pago desde el enum
+    final paymentMethod = PaymentMethod.fromCode(payMode);
+    return paymentMethod.displayName;
   }
 
   /// Obtiene el icono correspondiente al método de pago
   IconData _getPaymentMethodIcon(String payMode) {
-    switch (payMode) {
-      case 'effective':
-        return Icons.payments_rounded;
-      case 'mercadopago':
-        return Icons.account_balance_wallet_rounded;
-      case 'card':
-        return Icons.credit_card_rounded;
-      default:
-        return Icons.help_outline_rounded;
-    }
+    // Normalizar código y obtener el método de pago desde el enum
+    final paymentMethod = PaymentMethod.fromCode(payMode);
+    return paymentMethod.icon;
   }
 }
 

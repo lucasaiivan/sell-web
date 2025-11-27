@@ -1,17 +1,80 @@
-/// Excepción lanzada cuando falla una llamada al servidor
-class ServerException implements Exception {
+/// Excepción base sealed para la capa de datos
+/// 
+/// **Patrón:** Todas las excepciones de infraestructura heredan de aquí
+/// **Mapeo:** DataSource lanza estas → Repository las convierte a [Failure]
+sealed class DataException implements Exception {
   final String message;
-  ServerException([this.message = 'Error de servidor']);
+  final String? code;
+  final StackTrace? stackTrace;
+
+  const DataException(
+    this.message, {
+    this.code,
+    this.stackTrace,
+  });
+
+  @override
+  String toString() => 'DataException: $message (code: $code)';
 }
 
-/// Excepción lanzada cuando falla una operación de caché
-class CacheException implements Exception {
-  final String message;
-  CacheException([this.message = 'Error de caché']);
+// ==========================================
+// INFRASTRUCTURE EXCEPTIONS
+// ==========================================
+
+/// Excepción de servidor/backend
+final class ServerException extends DataException {
+  const ServerException(
+    super.message, {
+    super.code = 'server-error',
+    super.stackTrace,
+  });
 }
 
-/// Excepción lanzada cuando no hay conexión a internet
-class NetworkException implements Exception {
-  final String message;
-  NetworkException([this.message = 'Error de red']);
+/// Excepción de caché local
+final class CacheException extends DataException {
+  const CacheException(
+    super.message, {
+    super.code = 'cache-error',
+    super.stackTrace,
+  });
+}
+
+/// Excepción de red/conectividad
+final class NetworkException extends DataException {
+  const NetworkException(
+    super.message, {
+    super.code = 'network-error',
+    super.stackTrace,
+  });
+}
+
+// ==========================================
+// FIREBASE EXCEPTIONS
+// ==========================================
+
+/// Excepción de Firestore
+final class FirestoreException extends DataException {
+  const FirestoreException(
+    super.message, {
+    super.code = 'firestore-error',
+    super.stackTrace,
+  });
+}
+
+/// Excepción de autenticación Firebase
+final class FirebaseAuthException extends DataException {
+  const FirebaseAuthException(
+    super.message, {
+    super.code = 'auth-error',
+    super.stackTrace,
+  });
+}
+
+/// Excepción de Firebase Storage
+final class FirebaseStorageException extends DataException {
+  const FirebaseStorageException(
+    super.message, {
+    super.code = 'storage-error',
+    super.stackTrace,
+  });
 }

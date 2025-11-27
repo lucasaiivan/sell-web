@@ -2,13 +2,33 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-/// Servicio para operaciones CRUD de Firestore
-///
-/// Esta clase centraliza todas las direcciones y referencias de Firestore
-/// organizadas por funcionalidad y estructura de base de datos
+/// Rutas y paths centralizados de Firestore y Storage
+/// 
+/// **Responsabilidad:**
+/// - Proveer paths type-safe para colecciones y documentos
+/// - Centralizar estructura de base de datos
+/// - NO ejecutar operaciones (delegar a DataSources/Repositories)
+/// 
+/// **Patrón:** Path Provider (no God Object)
+/// **Uso correcto:**
+/// ```dart
+/// // ❌ ANTES (God Object):
+/// DatabaseCloudService.getActiveCashRegisters(accountId);
+/// 
+/// // ✅ AHORA (con DataSource):
+/// final path = FirestorePaths.accountCashRegisters(accountId);
+/// await firestoreDataSource.getDocuments(path);
+/// ```
+/// 
+/// **Migración:** 
+/// Los métodos de queries están deprecated y serán removidos.
+/// Usa [FirestoreDataSource] inyectado en tus DataSources.
 class DatabaseCloudService {
-  // Instancia de Firestore
+  // ⚠️ DEPRECATED: Usar FirestoreDataSource inyectado
+  @Deprecated('Use FirestoreDataSource injected via DI')
   static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  
+  @Deprecated('Use FirebaseStorage injected via DI')
   static FirebaseStorage get _storage => FirebaseStorage.instance;
 
   // ==========================================

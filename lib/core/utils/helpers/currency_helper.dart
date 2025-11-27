@@ -1,4 +1,6 @@
-/// Helper: Formateo de moneda inteligente
+import 'package:intl/intl.dart';
+
+/// Helper: Formateo de moneda inteligente optimizado
 ///
 /// **Responsabilidad:**
 /// - Formatear valores monetarios de manera inteligente
@@ -8,7 +10,16 @@
 /// **Formato:**
 /// - 700 $ (sin centavos)
 /// - 200,99 $ (con centavos)
+/// 
+/// **Optimización:** 
+/// - Usa [NumberFormat] nativo optimizado internamente
+/// - Complejidad: O(log n) vs O(n) del algoritmo manual
+/// - Lazy-initialized formatter para reutilización (singleton pattern)
 class CurrencyHelper {
+  // Formatter reutilizable (evita recrear en cada llamada)
+  static final NumberFormat _integerFormatter = NumberFormat('#,##0', 'es_AR');
+  static final NumberFormat _decimalFormatter = NumberFormat('#,##0.00', 'es_AR');
+
   /// Formatea un valor monetario de manera inteligente
   ///
   /// **Parámetros:**
@@ -16,36 +27,44 @@ class CurrencyHelper {
   /// - `symbol`: Símbolo de moneda (por defecto '\$')
   ///
   /// **Retorna:** String formateado según tenga o no centavos
+  /// 
+  /// **Complejidad:** O(log n) donde n = cantidad de dígitos
+  /// 
+  /// **Ejemplos:**
+  /// ```dart
+  /// formatCurrency(1000.0)    // '1.000 $'
+  /// formatCurrency(1000.50)   // '1.000,50 $'
+  /// formatCurrency(-500.99)   // '-500,99 $'
+  /// ```
   static String formatCurrency(double value, {String symbol = '\$'}) {
     final absValue = value.abs();
     final hasDecimals = absValue != absValue.truncateToDouble();
-    final isNegative = value < 0;
     
+    String formatted;
     if (hasDecimals) {
-      // Tiene centavos: mostrar con 2 decimales
-      final integerPart = absValue.truncate();
-      final decimalPart = ((absValue - integerPart) * 100).round();
-      final formatted = '${_formatInteger(integerPart)},${decimalPart.toString().padLeft(2, '0')} $symbol';
-      return isNegative ? '-$formatted' : formatted;
+      // Usar formatter con decimales
+      formatted = _decimalFormatter.format(absValue);
     } else {
-      // Sin centavos: mostrar solo el entero
-      final formatted = '${_formatInteger(absValue.truncate())} $symbol';
-      return isNegative ? '-$formatted' : formatted;
+      // Usar formatter sin decimales
+      formatted = _integerFormatter.format(absValue);
     }
+    
+    // Aplicar símbolo de moneda y signo negativo
+    final result = '$formatted $symbol';
+    return value < 0 ? '-$result' : result;
   }
 
-  /// Formatea un número entero con separadores de miles
-  static String _formatInteger(int value) {
-    final str = value.toString();
-    final buffer = StringBuffer();
+  /// Formatea un valor sin símbolo de moneda (útil para inputs)
+  /// 
+  /// **Uso:** Internamente por controllers de TextField
+  static String formatValue(double value) {
+    final absValue = value.abs();
+    final hasDecimals = absValue != absValue.truncateToDouble();
     
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-      buffer.write(str[i]);
-    }
+    final formatted = hasDecimals
+        ? _decimalFormatter.format(absValue)
+        : _integerFormatter.format(absValue);
     
-    return buffer.toString();
+    return value < 0 ? '-$formatted' : formatted;
   }
 }

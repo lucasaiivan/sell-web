@@ -9,6 +9,10 @@ import 'package:sellweb/core/presentation/theme/theme_service.dart';
 /// - Persiste configuración con AppDataPersistenceService
 /// - No contiene lógica de negocio, solo coordinación
 ///
+/// **Memory Safety:** 
+/// - Listeners dispuestos en [dispose] para evitar leaks
+/// - Referencias guardadas para poder removerlas
+/// 
 /// **Uso:**
 /// ```dart
 /// final themeProvider = Provider.of<ThemeDataAppProvider>(context);
@@ -20,15 +24,29 @@ class ThemeDataAppProvider extends ChangeNotifier {
   final AppDataPersistenceService _persistenceService =
       AppDataPersistenceService.instance;
 
+  // Referencias a listeners para poder removerlos
+  late final VoidCallback _themeModeListener;
+  late final VoidCallback _seedColorListener;
+
   ThemeDataAppProvider() {
     _loadTheme();
     _loadSeedColor();
-    _themeService.themeModeNotifier.addListener(() {
-      notifyListeners();
-    });
-    _themeService.seedColorNotifier.addListener(() {
-      notifyListeners();
-    });
+    
+    // Guardar referencias a listeners
+    _themeModeListener = () => notifyListeners();
+    _seedColorListener = () => notifyListeners();
+    
+    // Registrar listeners
+    _themeService.themeModeNotifier.addListener(_themeModeListener);
+    _themeService.seedColorNotifier.addListener(_seedColorListener);
+  }
+
+  @override
+  void dispose() {
+    // CRÍTICO: Remover listeners para evitar memory leaks
+    _themeService.themeModeNotifier.removeListener(_themeModeListener);
+    _themeService.seedColorNotifier.removeListener(_seedColorListener);
+    super.dispose();
   }
 
   ThemeMode get themeMode => _themeService.themeMode;

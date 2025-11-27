@@ -11,7 +11,7 @@ import 'core/config/firebase_options.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'features/catalogue/data/repositories/catalogue_repository_impl.dart';
+import 'features/catalogue/domain/repositories/catalogue_repository.dart';
 import 'features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
@@ -45,8 +45,8 @@ void main() async {
 }
 
 void _runApp() {
-  // Inicializar repositorios
-  final catalogueRepository = CatalogueRepositoryImpl();
+  // ✅ Obtener repositorio desde DI usando la interfaz (registrado como CatalogueRepository)
+  final catalogueRepository = getIt<CatalogueRepository>();
 
   runApp(
     MultiProvider(

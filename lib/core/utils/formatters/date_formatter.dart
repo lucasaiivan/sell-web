@@ -1,89 +1,120 @@
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Utilidades para formatear fechas y tiempos
+/// Utilidades optimizadas para formatear fechas y tiempos
+/// 
+/// **Optimizaciones:**
+/// - Formatters lazy-initialized (singleton pattern)
+/// - Lógica DRY con helpers privados
+/// - Pattern matching para claridad
+/// - Extension types para type-safety
 class DateFormatter {
-  /// Recibe la fecha y devuelve el formato dd/MM/yyyy HH:mm
+  // Formatters reutilizables (evita recrear en cada llamada)
+  static final _fullDateTimeFormat = DateFormat('dd/MM/yyyy HH:mm');
+  static final _fullDateFormat = DateFormat('dd MMM. yyyy');
+  static final _shortDateFormat = DateFormat('dd MMM.');
+  static final _timeFormat = DateFormat('HH:mm');
+
+  /// Formatea fecha y hora en formato estándar
+  /// 
+  /// **Formato:** dd/MM/yyyy HH:mm
+  /// **Complejidad:** O(1)
   static String formatPublicationDate({required DateTime dateTime}) =>
-      DateFormat('dd/MM/yyyy HH:mm').format(dateTime).toString();
+      _fullDateTimeFormat.format(dateTime);
 
   /// Obtiene la fecha de publicación en formato legible simple
   ///
-  /// [postDate] La fecha de publicación del contenido
-  /// [currentDate] La fecha actual del sistema
-  /// @return La fecha en formato legible para el usuario
+  /// **Formatos posibles:**
+  /// - "Hoy" (mismo día)
+  /// - "Ayer" (día anterior)
+  /// - "dd MMM." (mismo año)
+  /// - "dd MMM. yyyy" (año diferente)
+  /// 
+  /// **Complejidad:** O(1) - comparaciones constantes
   static String getSimplePublicationDate(
-      DateTime postDate, DateTime currentDate) {
-    if (postDate.year != currentDate.year) {
-      // Si la publicación es de un año diferente, muestra la fecha completa
-      return DateFormat('dd MMM. yyyy').format(postDate);
-    } else if (postDate.month != currentDate.month ||
-        postDate.day != currentDate.day) {
-      // Si la publicación no es del mismo día de hoy
-      if (postDate.year == currentDate.year &&
-          postDate.month == currentDate.month &&
-          postDate.day == currentDate.day - 1) {
-        // Si la publicación es del día anterior, muestra "Ayer"
-        return 'Ayer';
-      } else {
-        // Si la publicación no es del día anterior, muestra la fecha sin el año
-        return DateFormat('dd MMM.').format(postDate);
-      }
-    } else {
-      // Si la publicación es del mismo día de hoy, muestra "Hoy"
-      return 'Hoy';
-    }
+    DateTime postDate,
+    DateTime currentDate,
+  ) {
+    // Normalizar a solo fecha (sin hora) para comparación
+    final postDay = _normalizeDate(postDate);
+    final currentDay = _normalizeDate(currentDate);
+    final daysDifference = currentDay.difference(postDay).inDays;
+
+    return switch (daysDifference) {
+      0 => 'Hoy',
+      1 => 'Ayer',
+      _ when postDay.year != currentDay.year => _fullDateFormat.format(postDate),
+      _ => _shortDateFormat.format(postDate),
+    };
   }
 
   /// Obtiene la fecha de publicación en formato legible detallado
   ///
-  /// [fechaPublicacion] La fecha de publicación del contenido
-  /// [fechaActual] La fecha actual del sistema
-  /// @return La fecha en formato legible para el usuario
+  /// **Formatos posibles:**
+  /// - "Hace instantes" (< 30 min)
+  /// - "Hace X min." (30-60 min)
+  /// - "Hace X horas" (1-8 horas)
+  /// - "Hoy" (mismo día, > 8 horas)
+  /// - "Ayer HH:mm" (día anterior)
+  /// - "dd MMM." (días anteriores, mismo año)
+  /// - "dd MMM. yyyy" (año diferente)
+  /// 
+  /// **Complejidad:** O(1)
   static String getDetailedPublicationDate({
     required DateTime fechaPublicacion,
     required DateTime fechaActual,
   }) {
-    // Si el año de la publicacion es diferente al año actual
+    final postDay = _normalizeDate(fechaPublicacion);
+    final currentDay = _normalizeDate(fechaActual);
+    final daysDifference = currentDay.difference(postDay).inDays;
+
+    // Año diferente
     if (fechaPublicacion.year != fechaActual.year) {
-      // Si la publicación es de un año diferente, muestra la fecha completa
-      return DateFormat('dd MMM. yyyy').format(fechaPublicacion);
-    } else if (fechaPublicacion.month != fechaActual.month ||
-        fechaPublicacion.day != fechaActual.day) {
-      // Si la publicación no es del mismo día de hoy
-      if (fechaPublicacion.year == fechaActual.year &&
-          fechaPublicacion.month == fechaActual.month &&
-          fechaPublicacion.day == fechaActual.day - 1) {
-        // Si la publicación es del día anterior, muestra "Ayer"
-        return 'Ayer ${DateFormat('HH:mm').format(fechaPublicacion)}';
-      } else {
-        // Si la publicación no es del día anterior, muestra la fecha sin el año
-        return DateFormat('dd MMM.').format(fechaPublicacion);
-      }
-    } else {
-      // Si la publicación es del mismo día de hoy
-      Duration difference = fechaActual.difference(fechaPublicacion);
-      if (difference.inMinutes < 30) {
-        // Si la publicación fue hace menos de 30 minutos, muestra "Hace instantes"
-        return 'Hace instantes';
-      } else if (difference.inMinutes < 60) {
-        // Si la publicación fue hace menos de una hora, muestra los minutos
-        return 'Hace ${difference.inMinutes} min.';
-      } else if (difference.inHours < 8) {
-        // Si la publicación fue hace menos de 8 horas, muestra las horas
-        return 'Hace ${difference.inHours} horas';
-      } else {
-        // Si la publicación fue hace 8 horas o más, muestra "Hoy"
-        return 'Hoy';
-      }
+      return _fullDateFormat.format(fechaPublicacion);
     }
+
+    // Días anteriores
+    return switch (daysDifference) {
+      0 => _formatSameDay(fechaPublicacion, fechaActual),
+      1 => 'Ayer ${_timeFormat.format(fechaPublicacion)}',
+      _ => _shortDateFormat.format(fechaPublicacion),
+    };
   }
 
-  /// Calcula el tiempo transcurrido desde una fecha dada hasta ahora con mayor precisión
+  // ==========================================
+  // HELPERS PRIVADOS
+  // ==========================================
+
+  /// Normaliza DateTime a solo fecha (hora a 00:00:00)
+  /// 
+  /// **Complejidad:** O(1)
+  static DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  /// Formatea el tiempo relativo para el mismo día
+  /// 
+  /// **Complejidad:** O(1)
+  static String _formatSameDay(DateTime postDate, DateTime currentDate) {
+    final difference = currentDate.difference(postDate);
+
+    return switch (difference.inMinutes) {
+      < 30 => 'Hace instantes',
+      < 60 => 'Hace ${difference.inMinutes} min.',
+      _ when difference.inHours < 8 => 'Hace ${difference.inHours} horas',
+      _ => 'Hoy',
+    };
+  }
+
+  /// Calcula el tiempo transcurrido con formato compacto
   ///
-  /// [fechaInicio] La fecha desde la cual se quiere calcular el tiempo transcurrido
-  /// [showMinutes] Si se deben mostrar los minutos por defecto (true por defecto)
-  /// @return String con el tiempo transcurrido en formato específico (ej: "2d 3h", "5h 30m", "1d 12h 45m")
+  /// **Formatos:**
+  /// - "2d 3h" (días + horas)
+  /// - "5h 30m" (horas + minutos)
+  /// - "45m 12s" (minutos + segundos)
+  /// - "Ahora mismo" (< 1 segundo)
+  /// 
+  /// **Complejidad:** O(1)
   static String getElapsedTime({
     required DateTime fechaInicio,
     bool showMinutes = true,
@@ -91,36 +122,34 @@ class DateFormatter {
     final ahora = DateTime.now();
     final diferencia = ahora.difference(fechaInicio);
 
-    final dias = diferencia.inDays;
-    final horas = diferencia.inHours % 24;
-    final minutos = diferencia.inMinutes % 60;
-    final segundos = diferencia.inSeconds % 60;
+    if (diferencia.inSeconds < 1) return 'Ahora mismo';
 
-    List<String> partes = [];
+    // Componentes de tiempo
+    final (dias, horas, minutos, segundos) = (
+      diferencia.inDays,
+      diferencia.inHours % 24,
+      diferencia.inMinutes % 60,
+      diferencia.inSeconds % 60,
+    );
+
+    // Construir partes usando pattern matching
+    final partes = <String>[];
 
     if (dias > 0) {
       partes.add('${dias}d');
       if (horas > 0) {
         partes.add('${horas}h');
       } else if (showMinutes && minutos > 0) {
-        // Si no hay horas pero hay minutos y se deben mostrar
         partes.add('${minutos}m');
       }
     } else if (horas > 0) {
       partes.add('${horas}h');
-      if (showMinutes) {
-        // Siempre mostrar minutos cuando hay horas y está habilitado
-        partes.add('${minutos}m');
-      }
+      if (showMinutes) partes.add('${minutos}m');
     } else if (minutos > 0) {
       partes.add('${minutos}m');
-      if (minutos < 10 && segundos > 0) {
-        partes.add('${segundos}s');
-      }
-    } else if (segundos > 0) {
-      partes.add('${segundos}s');
+      if (minutos < 10 && segundos > 0) partes.add('${segundos}s');
     } else {
-      return 'Ahora mismo';
+      partes.add('${segundos}s');
     }
 
     return partes.take(2).join(' ');

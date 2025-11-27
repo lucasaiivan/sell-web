@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/services/database/database_cloud.dart';
+import '../../../../core/services/database/firestore_paths.dart';
+import '../../../../core/services/database/i_firestore_datasource.dart';
 import '../../../auth/data/models/admin_profile_model.dart';
 import '../../../auth/domain/entities/admin_profile.dart';
 
@@ -13,9 +13,15 @@ abstract class MultiUserRemoteDataSource {
 
 @LazySingleton(as: MultiUserRemoteDataSource)
 class MultiUserRemoteDataSourceImpl implements MultiUserRemoteDataSource {
+  final IFirestoreDataSource _dataSource;
+
+  const MultiUserRemoteDataSourceImpl(this._dataSource);
+
   @override
   Stream<List<AdminProfileModel>> getUsers(String accountId) {
-    return DatabaseCloudService.accountUsersStream(accountId).map((snapshot) {
+    return _dataSource
+        .collectionStream(FirestorePaths.accountUsers(accountId))
+        .map((snapshot) {
       return snapshot.docs
           .map((doc) => AdminProfileModel.fromDocument(doc))
           .toList();
@@ -27,20 +33,19 @@ class MultiUserRemoteDataSourceImpl implements MultiUserRemoteDataSource {
     final userModel = AdminProfileModel.fromEntity(user);
     final userJson = userModel.toJson();
 
-    // Reference to the user in the account's users list
-    final accountUserRef =
-        DatabaseCloudService.accountUsers(accountId).doc(user.email);
-
-    // Reference to the account in the user's managed accounts list
-    final userAccountRef =
-        DatabaseCloudService.userManagedAccounts(user.email).doc(accountId);
-
-    final batch = FirebaseFirestore.instance.batch();
-
-    batch.set(accountUserRef, userJson);
-    batch.set(userAccountRef, userJson);
-
-    await batch.commit();
+    // Create user in both account users and user managed accounts atomically
+    await _dataSource.batchWrite([
+      (
+        path: FirestorePaths.accountUser(accountId, user.email),
+        data: userJson,
+        operation: 'set',
+      ),
+      (
+        path: FirestorePaths.userManagedAccount(user.email, accountId),
+        data: userJson,
+        operation: 'set',
+      ),
+    ]);
   }
 
   @override
@@ -48,37 +53,35 @@ class MultiUserRemoteDataSourceImpl implements MultiUserRemoteDataSource {
     final userModel = AdminProfileModel.fromEntity(user);
     final userJson = userModel.toJson();
 
-    // Reference to the user in the account's users list
-    final accountUserRef =
-        DatabaseCloudService.accountUsers(accountId).doc(user.email);
-
-    // Reference to the account in the user's managed accounts list
-    final userAccountRef =
-        DatabaseCloudService.userManagedAccounts(user.email).doc(accountId);
-
-    final batch = FirebaseFirestore.instance.batch();
-
-    batch.update(accountUserRef, userJson);
-    batch.update(userAccountRef, userJson);
-
-    await batch.commit();
+    // Update user in both account users and user managed accounts atomically
+    await _dataSource.batchWrite([
+      (
+        path: FirestorePaths.accountUser(accountId, user.email),
+        data: userJson,
+        operation: 'update',
+      ),
+      (
+        path: FirestorePaths.userManagedAccount(user.email, accountId),
+        data: userJson,
+        operation: 'update',
+      ),
+    ]);
   }
 
   @override
   Future<void> deleteUser(AdminProfile user, String accountId) async {
-    // Reference to the user in the account's users list
-    final accountUserRef =
-        DatabaseCloudService.accountUsers(accountId).doc(user.email);
-
-    // Reference to the account in the user's managed accounts list
-    final userAccountRef =
-        DatabaseCloudService.userManagedAccounts(user.email).doc(accountId);
-
-    final batch = FirebaseFirestore.instance.batch();
-
-    batch.delete(accountUserRef);
-    batch.delete(userAccountRef);
-
-    await batch.commit();
+    // Delete user from both account users and user managed accounts atomically
+    await _dataSource.batchWrite([
+      (
+        path: FirestorePaths.accountUser(accountId, user.email),
+        data: {}, // No data needed for delete operation
+        operation: 'delete',
+      ),
+      (
+        path: FirestorePaths.userManagedAccount(user.email, accountId),
+        data: {}, // No data needed for delete operation
+        operation: 'delete',
+      ),
+    ]);
   }
 }

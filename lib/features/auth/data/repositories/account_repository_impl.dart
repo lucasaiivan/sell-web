@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/admin_profile.dart';
 import '../../domain/entities/account_profile.dart';
@@ -6,16 +5,22 @@ import '../../domain/repositories/account_repository.dart';
 import '../models/admin_profile_model.dart';
 import '../models/account_profile_model.dart';
 import '../../../../core/services/storage/app_data_persistence_service.dart';
+import '../../../../core/services/database/i_firestore_datasource.dart';
+import '../../../../core/services/database/firestore_paths.dart';
 
 /// Implementación del repositorio de cuentas
 ///
+/// **Refactorizado:** Usa [FirestoreDataSource] en lugar de FirebaseFirestore directo
+/// 
 /// Utiliza Firestore para obtener datos de cuentas y administradores.
 /// Utiliza [AppDataPersistenceService] para persistencia local.
 @LazySingleton(as: AccountRepository)
 class AccountRepositoryImpl implements AccountRepository {
   final AppDataPersistenceService _persistenceService;
+  final IFirestoreDataSource _dataSource;
 
-  AccountRepositoryImpl({
+  AccountRepositoryImpl(
+    this._dataSource, {
     AppDataPersistenceService? persistenceService,
   }) : _persistenceService =
             persistenceService ?? AppDataPersistenceService.instance;
@@ -24,10 +29,13 @@ class AccountRepositoryImpl implements AccountRepository {
   Future<List<AdminProfile>> getUserAccounts(String email) async {
     print('🔍 [AccountRepositoryImpl] getUserAccounts - email: $email');
     try {
-      final ref =
-          FirebaseFirestore.instance.collection('/USERS/$email/ACCOUNTS/');
-      print('📡 [AccountRepositoryImpl] Consultando Firestore: ${ref.path}');
-      final snapshot = await ref.get();
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.userManagedAccounts(email);
+      final collection = _dataSource.collection(path);
+      
+      print('📡 [AccountRepositoryImpl] Consultando Firestore: $path');
+      final snapshot = await _dataSource.getDocuments(collection);
+      
       print('📊 [AccountRepositoryImpl] Documentos encontrados: ${snapshot.docs.length}');
       final adminProfiles = snapshot.docs
           .map((doc) {
@@ -48,10 +56,10 @@ class AccountRepositoryImpl implements AccountRepository {
   @override
   Future<AccountProfile?> getAccount(String accountId) async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('/ACCOUNTS')
-          .doc(accountId)
-          .get();
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.account(accountId);
+      final docRef = _dataSource.document(path);
+      final doc = await docRef.get();
       
       if (!doc.exists) return null;
       return AccountProfileModel.fromDocument(doc);

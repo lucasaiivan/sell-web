@@ -3,8 +3,10 @@
 > **Sistema POS moderno desarrollado con Flutter Web para gestión integral de ventas, inventario y análisis de negocio.**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.3.0+-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.3.0+-0175C2?logo=dart)](https://dart.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Enabled-FFCA28?logo=firebase)](https://firebase.google.com)
-[![Clean Architecture](https://img.shields.io/badge/Architecture-Clean-00D9FF)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+[![Clean Architecture](https://img.shields.io/badge/Architecture-Feature--First-00D9FF)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+[![Provider](https://img.shields.io/badge/State-Provider-blueviolet)](https://pub.dev/packages/provider)
 [![License](https://img.shields.io/badge/License-Proprietary-red)]()
 
 ---
@@ -51,63 +53,67 @@
 
 ### Feature-First + Clean Architecture
 
-Este proyecto implementa **arquitectura por features** donde cada módulo de negocio es **autónomo** y sigue **Clean Architecture** internamente:
+Este proyecto implementa **arquitectura por features** donde cada módulo de negocio es **autónomo** y sigue **Clean Architecture** internamente. La arquitectura está optimizada para:
+
+- ✅ **Escalabilidad**: Agregar features sin afectar el código existente
+- ✅ **Mantenibilidad**: Cambios localizados en sus respectivos features
+- ✅ **Testabilidad**: Cada capa es independiente y testeable
+- ✅ **Reutilización**: Código compartido en `core/` con DI
+
+**Estructura del Proyecto:**
 
 ```
 lib/
-├── 📱 app/                      # Configuración de la aplicación
-│   ├── router/                  # AppRouter (GoRouter/Navigator)
-│   └── app.dart                 # MaterialApp + Providers globales
+├── 📱 main.dart                 # Punto de entrada + Configuración de DI
 │
 ├── 🏗️ core/                     # Infraestructura transversal
-│   ├── config/                  # Firebase, OAuth, Environment
+│   ├── config/                  # Firebase, OAuth, App config
 │   ├── constants/               # Constantes compartidas
 │   ├── di/                      # Dependency Injection (get_it + injectable)
 │   ├── errors/                  # Failures, Exceptions
-│   ├── presentation/            # UI Components reutilizables
+│   ├── mixins/                  # Mixins reutilizables
+│   ├── presentation/            # UI Components compartidos
 │   │   ├── theme/               # AppTheme, Material 3
-│   │   ├── widgets/             # Botones, Inputs, Cards
-│   │   └── helpers/             # DialogHelper, Formatters
-│   ├── services/                # Servicios externos
+│   │   ├── widgets/             # Botones, Inputs, Cards, Dialogs
+│   │   ├── dialogs/             # Sistema modular de diálogos
+│   │   ├── modals/              # Bottom sheets y overlays
+│   │   └── helpers/             # Helpers de UI
+│   ├── services/                # Servicios de infraestructura
 │   │   ├── database/            # FirestoreService
 │   │   ├── storage/             # SharedPreferences
-│   │   └── printing/            # PrintingService
+│   │   ├── printing/            # PrintingService
+│   │   └── external/            # APIs externas
 │   ├── usecases/                # UseCase<Type, Params> base
-│   └── utils/                   # Date, String, Number helpers
+│   └── utils/                   # Formatters, Helpers, Validators
+│
+├── 💾 data/                     # Implementaciones de repositorios (Legacy)
+│   ├── auth_repository_impl.dart
+│   ├── catalogue_repository_impl.dart
+│   ├── cash_register_repository_impl.dart
+│   └── account_repository_impl.dart
+│
+├── 🎯 domain/                   # Entidades y contratos compartidos (Legacy)
+│   ├── entities/                # CashRegister, Ticket, Product, User
+│   ├── repositories/            # Contratos de repositorios
+│   └── usecases/                # UseCases compartidos
+│
+├── 🎨 presentation/             # Providers y páginas globales (Legacy)
+│   ├── providers/               # AuthProvider, CashRegisterProvider, etc.
+│   ├── pages/                   # SellPage, CataloguePage (en transición)
+│   └── widgets/                 # Widgets compartidos (migrados a core/)
 │
 └── ✨ features/                 # Módulos de negocio (Feature-First)
-    │
-    ├── 🔐 auth/                 # Autenticación
-    │   ├── domain/              # User, AuthRepository, UseCases
-    │   ├── data/                # UserModel, AuthDataSource, RepoImpl
-    │   └── presentation/        # AuthProvider, LoginPage, Widgets
-    │
-    ├── 📦 catalogue/            # Gestión de Productos
-    │   ├── domain/              # Product, Category, Supplier
-    │   ├── data/                # ProductModel, FirestoreDataSource
-    │   └── presentation/        # CatalogueProvider, CataloguePage
-    │
-    ├── 💰 sales/                # Proceso de Ventas (POS)
-    │   ├── domain/              # Sale, SaleItem, PaymentMethod
-    │   ├── data/                # SaleModel, SalesDataSource
-    │   └── presentation/        # SalesProvider, POSPage, Widgets
-    │
-    ├── 💵 cash_register/        # Control de Caja
-    │   ├── domain/              # CashRegister, CashMovement
-    │   ├── data/                # CashRegisterModel
-    │   └── presentation/        # CashRegisterProvider, CashPage
-    │
-    ├── 📊 analytics/            # Métricas y Reportes
-    │   ├── domain/              # Transaction, AnalyticsMetrics
-    │   ├── data/                # TransactionModel, AnalyticsDataSource
-    │   └── presentation/        # AnalyticsProvider, AnalyticsPage
-    │
-    ├── 🏠 home/                 # Dashboard Principal
-    │   └── presentation/        # HomePage, Navigation
-    │
-    └── 🚪 landing/              # Página de Bienvenida
-        └── presentation/        # LandingPage
+    ├── 🔐 auth/                 # Autenticación [EN DESARROLLO]
+    ├── 🏠 home/                 # Dashboard Principal [COMPLETO]
+    ├── 🚪 landing/              # Landing Page [COMPLETO]
+    ├── 📦 catalogue/            # Catálogo de Productos [EN DESARROLLO]
+    ├── 💰 sales/                # Proceso de Ventas (POS) [EN DESARROLLO]
+    ├── 💵 cash_register/        # Control de Caja [EN DESARROLLO]
+    ├── 📊 analytics/            # Métricas y Reportes [COMPLETO]
+    └── 👥 multiuser/            # Gestión Multiusuario [PLANEADO]
 ```
+
+**Nota sobre la estructura Legacy**: Este proyecto está en proceso de migración de arquitectura tradicional (domain/data/presentation en raíz) hacia **Feature-First**. Los features nuevos (`analytics/`, `multiuser/`) siguen la estructura completa de Clean Architecture, mientras que los existentes comparten `domain/` y `data/` en la raíz.
 
 ### Principios SOLID
 
@@ -128,41 +134,74 @@ UI → Provider → UseCase → Repository → DataSource → Firebase
 
 ## 🛠 Tech Stack
 
-### Framework & Lenguaje
+### Core Framework
 | Tecnología | Versión | Propósito |
 |-----------|---------|-----------|
-| **Dart** | 3.0+ | Lenguaje de programación |
+| **Dart** | 3.3.0+ | Lenguaje de programación |
 | **Flutter** | 3.3.0+ | Framework UI multiplataforma |
-| **Flutter Web** | Latest | Target de deployment |
+| **Flutter Web** | Latest | Target principal de deployment |
 
-### State Management & DI
-| Paquete | Propósito |
-|---------|-----------|
-| `provider` | Gestión de estado con ChangeNotifier |
-| `get_it` | Service Locator para DI |
-| `injectable` | Generación automática de código DI (`@injectable`, `@lazySingleton`) |
+### State Management & Architecture
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `provider` | 6.1.5 | State management con ChangeNotifier |
+| `get_it` | 7.7.0 | Service Locator para DI |
+| `injectable` | 2.4.4 | Code generation para DI |
+| `fpdart` | 1.1.0 | Programación funcional (Either, Option) |
+| `equatable` | 2.0.5 | Value equality para entities |
 
 ### Backend as a Service (Firebase)
-| Servicio | Uso |
-|----------|-----|
-| **Firebase Auth** | Autenticación con Google |
-| **Cloud Firestore** | Base de datos NoSQL en tiempo real |
-| **Firebase Storage** | Almacenamiento de imágenes de productos |
-| **Firebase Hosting** | Deployment de la aplicación web |
+| Servicio | Versión | Uso |
+|----------|---------|-----|
+| `firebase_core` | 3.13.1 | Inicialización de Firebase |
+| `firebase_auth` | 5.5.4 | Autenticación (Google, Anónima) |
+| `cloud_firestore` | 5.6.8 | Base de datos NoSQL en tiempo real |
+| `firebase_storage` | 12.4.7 | Almacenamiento de imágenes |
+| `google_sign_in` | 6.3.0 | OAuth con Google |
 
-### UI & Utilities
-| Paquete | Propósito |
-|---------|-----------|
-| `flutter_animate` | Animaciones declarativas |
-| `intl` | Formateo de fechas y moneda |
-| `google_fonts` | Tipografías (Montserrat, etc.) |
-| `shared_preferences` | Persistencia local |
-| `pdf` | Generación de tickets PDF para impresión |
+### UI/UX Libraries
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `flutter_animate` | 4.5.2 | Animaciones declarativas |
+| `lottie` | 3.3.1 | Animaciones JSON (Lottie) |
+| `shimmer` | 3.0.0 | Efectos de carga tipo skeleton |
+| `cached_network_image` | 3.4.1 | Caché de imágenes de red |
+| `flutter_staggered_grid_view` | 0.7.0 | Grids con staggered layout |
 
-### Testing (Configurado)
-- `flutter_test` - Unit & Widget Tests
-- `mockito` - Mocking de dependencias
-- `build_runner` - Code generation
+### Utilities & Tools
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `intl` | 0.20.2 | Formateo i18n (fechas, moneda) |
+| `shared_preferences` | 2.5.3 | Persistencia local key-value |
+| `pdf` | 3.11.3 | Generación de PDFs (tickets) |
+| `screenshot` | 3.0.0 | Captura de widgets como imagen |
+| `share_plus` | 11.0.0 | Compartir contenido |
+| `url_launcher` | 6.3.1 | Abrir URLs externas |
+| `image_picker` | 1.2.1 | Selector de imágenes |
+| `path_provider` | 2.1.4 | Acceso a directorios del sistema |
+| `cross_file` | 0.3.4+2 | Abstracción de archivos |
+| `http` | 1.2.0 | Cliente HTTP |
+
+### Server-Side (Opcional)
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `shelf` | 1.4.0 | HTTP server |
+| `shelf_router` | 1.1.4 | Routing para servidor |
+| `shelf_cors_headers` | 0.1.5 | CORS para APIs |
+
+### Development & Testing
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `flutter_test` | SDK | Testing framework |
+| `mockito` | 5.4.4 | Mocking de dependencias |
+| `mocktail` | 1.0.4 | Mocking alternativo |
+| `fake_async` | 1.3.1 | Control de async en tests |
+| `build_runner` | 2.4.0 | Code generation |
+| `injectable_generator` | 2.4.4 | Generación de DI |
+| `freezed` | 2.4.0 | Generación de data classes |
+| `json_serializable` | 6.7.0 | Serialización JSON |
+| `flutter_launcher_icons` | 0.14.4 | Generación de iconos |
+| `flutter_lints` | 6.0.0 | Linting rules
 
 ---
 
@@ -231,95 +270,217 @@ flutter build web --release
 ## ✨ Features Implementadas
 
 ### 🔐 Auth (Autenticación)
-**Responsabilidad**: Gestión de autenticación y sesión de usuarios.
+**Estado**: ✅ Completo | **Última actualización**: Nov 2025
 
-**Capas**:
-- **Domain**: `User` entity, `AuthRepository`, `LoginUseCase`, `LogoutUseCase`
-- **Data**: `FirebaseAuthDataSource`, `UserModel` con serialización
-- **Presentation**: `AuthProvider`, `LoginPage`
+Gestión completa de autenticación y autorización de usuarios.
 
-**Stack**: Firebase Auth + Google Sign-In
+**Funcionalidades principales**:
+- ✅ Autenticación con Google (OAuth 2.0)
+- ✅ Inicio de sesión anónimo (modo invitado)
+- ✅ Inicio de sesión silencioso (persistencia de sesión)
+- ✅ Gestión de cuentas asociadas al usuario
+- ✅ Sistema de roles (Admin, Super Admin)
+- ✅ Cierre de sesión seguro
+
+**Stack técnico**:
+- Firebase Auth
+- Google Sign-In
+- SharedPreferences (persistencia de sesión)
+
+**Arquitectura**:
+- `domain/entities/user.dart` - Entidad `UserAuth`
+- `domain/repositories/auth_repository.dart` - Contrato
+- `domain/usecases/auth_usecases.dart` - Casos de uso
+- `data/auth_repository_impl.dart` - Implementación con Firebase
+- `presentation/providers/auth_provider.dart` - State management
+
+---
+
+### 🏠 Home (Dashboard Principal)
+**Estado**: ✅ Completo | **Última actualización**: Nov 2025
+
+Dashboard principal con navegación adaptativa y acceso a todos los módulos.
+
+**Funcionalidades principales**:
+- ✅ Navegación principal (NavigationRail/Drawer responsive)
+- ✅ Acceso rápido a Ventas, Catálogo y Analytics
+- ✅ Barra superior con avatar de usuario y controles
+- ✅ Adaptativo a mobile/tablet/desktop
+- ✅ Integración con tema claro/oscuro
+
+**Arquitectura**:
+- `features/home/presentation/` - Páginas y widgets de navegación
+- Integración con providers globales (Auth, Theme)
+
+---
+
+### 🚪 Landing (Página de Bienvenida)
+**Estado**: ✅ Completo | **Última actualización**: Nov 2025
+
+Landing page pública con información del producto y call-to-action.
+
+**Funcionalidades principales**:
+- ✅ Diseño atractivo y responsive
+- ✅ Showcase de características principales
+- ✅ Call-to-action para registro/login
+- ✅ Galería de screenshots
+- ✅ Secciones de beneficios y planes
+
+**Arquitectura**:
+- `features/landing/presentation/` - Landing page y widgets
 
 ---
 
 ### 📦 Catalogue (Catálogo de Productos)
-**Responsabilidad**: CRUD de productos, categorías y proveedores.
+**Estado**: ⚠️ En desarrollo activo | **Última actualización**: Nov 2025
 
-**Capas**:
-- **Domain**: `Product`, `Category`, `Supplier` entities
-- **Data**: Firestore collections: `products`, `categories`, `suppliers`
-- **Presentation**: `CatalogueProvider`, `CataloguePage`, `ProductDialog`
+Gestión completa del catálogo de productos, categorías y proveedores.
 
-**Features**:
-- ✅ Búsqueda en tiempo real
-- ✅ Filtrado por categoría/proveedor
-- ✅ Control de stock (alertas de stock bajo)
+**Funcionalidades principales**:
+- ✅ CRUD completo de productos
+- ✅ Gestión de categorías y proveedores
+- ✅ Búsqueda en tiempo real con filtros
+- ✅ Control de stock con alertas
 - ✅ Carga de imágenes a Firebase Storage
 - ✅ Productos favoritos
+- ✅ Códigos de barras y SKUs
+- ✅ Precios de compra/venta
+- ⚠️ Integración con escáner (en desarrollo)
+
+**Stack técnico**:
+- Firestore (colecciones: `products`, `categories`, `suppliers`)
+- Firebase Storage (imágenes de productos)
+- Stream real-time updates
+
+**Arquitectura (Legacy + en migración)**:
+- `domain/entities/catalogue.dart` - Entidades compartidas
+- `domain/usecases/catalogue_usecases.dart` - Casos de uso
+- `data/catalogue_repository_impl.dart` - Implementación Firestore
+- `presentation/providers/catalogue_provider.dart` - State management
+- `presentation/pages/catalogue_page.dart` - UI principal
 
 ---
 
-### 💰 Sales (Punto de Venta)
-**Responsabilidad**: Proceso completo de ventas (POS).
+### 💰 Sales (Punto de Venta / POS)
+**Estado**: ✅ Funcional | **Última actualización**: Nov 2025
 
-**Capas**:
-- **Domain**: `Sale`, `SaleItem`, `PaymentMethod`, `Ticket`
-- **Data**: Firestore collection: `sales`
-- **Presentation**: `SalesProvider`, `POSPage`, Ticket widgets
+Sistema completo de punto de venta con gestión de tickets y cobros.
 
-**Features**:
+**Funcionalidades principales**:
 - ✅ Carrito de compras dinámico
-- ✅ Métodos de pago múltiples (Efectivo, Transferencia, Tarjeta)
+- ✅ Búsqueda rápida de productos
+- ✅ Múltiples métodos de pago (Efectivo, Transferencia, Tarjeta)
 - ✅ Cálculo automático de cambio
-- ✅ Generación de tickets imprimibles
-- ✅ Descuento de stock automático
-- ✅ Historial de últimas ventas
+- ✅ Sistema de descuentos
+- ✅ Generación de tickets con formato personalizado
+- ✅ Impresión de tickets (térmicas y PDF)
+- ✅ Historial de ventas recientes
+- ✅ Anulación de tickets
+- ✅ Descuento automático de stock
+- ✅ Integración con caja registradora
+
+**Stack técnico**:
+- Firestore colección `ACCOUNTS/{accountId}/TRANSACTIONS`
+- PDF generation para tickets
+- Printing service para impresoras térmicas
+
+**Arquitectura**:
+- `domain/entities/ticket_model.dart` - Entity principal
+- `domain/usecases/sell_usecases.dart` - Lógica de negocio de tickets
+- `presentation/providers/sell_provider.dart` - State management
+- `presentation/pages/sell_page.dart` - UI del POS
+
+**Mejoras recientes**:
+- 🎯 Separación de responsabilidades (SellUsecases vs CashRegisterUsecases)
+- 🎯 Sincronización automática de contadores
+- 🎯 Validación de consistencia de datos
 
 ---
 
-### 💵 Cash Register (Caja)
-**Responsabilidad**: Control de arqueo de caja y turnos.
+### 💵 Cash Register (Caja Registradora)
+**Estado**: ✅ Funcional | **Última actualización**: Nov 2025
 
-**Capas**:
-- **Domain**: `CashRegister`, `CashMovement`
-- **Data**: Firestore collection: `cash_registers`
-- **Presentation**: `CashRegisterProvider`, Apertura/Cierre de caja
+Sistema completo de gestión de caja registradora con arqueos y control de flujos.
 
-**Features**:
-- ✅ Apertura/cierre de turno
-- ✅ Movimientos de ingreso/egreso
-- ✅ Conciliación de efectivo
-- ✅ Historial de arqueos
+**Funcionalidades principales**:
+- ✅ Apertura/Cierre de caja con validaciones
+- ✅ Registro automático de ventas
+- ✅ Movimientos de caja (ingresos/egresos)
+- ✅ Arqueo de caja (conciliación)
+- ✅ Historial de cajas con filtros
+- ✅ Múltiples cajas activas por cuenta
+- ✅ Descriptores fijos para aperturas
+- ✅ Sincronización en tiempo real
+- ✅ Visualización de transacciones del día
+- ✅ Validación de consistencia de contadores
+
+**Stack técnico**:
+- Firestore colección `ACCOUNTS/{accountId}/CASH_REGISTERS`
+- Stream subscriptions para actualizaciones en tiempo real
+- AppDataPersistenceService para estado local
+
+**Arquitectura**:
+- `domain/entities/cash_register_model.dart` - Entity principal
+- `domain/usecases/cash_register_usecases.dart` - Operaciones de caja
+- `domain/usecases/sell_usecases.dart` - Operaciones de tickets (separado)
+- `data/cash_register_repository_impl.dart` - Implementación Firestore
+- `presentation/providers/cash_register_provider.dart` - State management
+
+**Mejoras recientes**:
+- 🎯 Refactorización completa con estado inmutable
+- 🎯 Separación de responsabilidades (caja vs tickets)
+- 🎯 Sincronización automática de contadores
+- 🎯 Corrección automática de desincronizaciones
+- 🎯 Dialog de gestión optimizado con callbacks
 
 ---
 
 ### 📊 Analytics (Métricas y Reportes)
-**Responsabilidad**: Dashboard de métricas de negocio.
+**Estado**: ✅ Completo | **Última actualización**: Nov 2025
 
-**Capas**:
-- **Domain**: `Transaction`, `AnalyticsMetrics`
-- **Data**: Agregación desde `sales` collection
-- **Presentation**: `AnalyticsProvider`, `AnalyticsPage`
+Dashboard de análisis y métricas de negocio en tiempo real.
 
-**Features**:
-- ✅ Total de transacciones
-- ✅ Ganancias totales
-- ✅ Historial de transacciones con detalle
-- ✅ Filtros por fecha
-- ✅ Visualización de tickets desde el historial
+**Funcionalidades principales**:
+- ✅ Total de transacciones por período
+- ✅ Ganancias totales acumuladas
+- ✅ Promedio por transacción
+- ✅ Filtros por período (Hoy, Ayer, Este mes, Mes pasado, Este año, Año pasado)
+- ✅ Historial detallado de transacciones
+- ✅ Visualización de tickets desde historial
+- ✅ Estados de carga/error
+
+**Stack técnico**:
+- Firestore queries con filtros temporales
+- Agregación de datos en el cliente
+- Formateo de moneda con `intl`
+
+**Arquitectura (Feature-First completo)**:
+- `features/analytics/domain/` - Entities, Repository contracts, UseCases
+- `features/analytics/data/` - Models, DataSources, Repository impl
+- `features/analytics/presentation/` - Provider, Page, Widgets
+
+**Futuras mejoras planeadas**:
+- 📊 Gráficas de tendencias
+- 📊 Productos más vendidos
+- 📊 Análisis por categoría
+- 📊 Comparativas entre períodos
+- 📊 Exportación de reportes
 
 ---
 
-### 🏠 Home (Dashboard)
-**Responsabilidad**: Navegación principal y overview.
+### 👥 Multiuser (Gestión Multiusuario)
+**Estado**: 📋 Planeado | **Última actualización**: Nov 2025
 
-**Capas**:
-- **Presentation**: `HomePage` con NavigationRail/Drawer
+Sistema de gestión de múltiples usuarios y permisos granulares.
 
-**Features**:
-- ✅ Acceso rápido a todos los módulos
-- ✅ Resumen de métricas principales
-- ✅ Diseño adaptive (responsive)
+**Funcionalidades planeadas**:
+- 📋 Invitación de usuarios a cuentas
+- 📋 Sistema de roles y permisos
+- 📋 Control de acceso por módulo
+- 📋 Auditoría de acciones por usuario
+- 📋 Gestión de equipos y sucursales
+
+**Nota**: Feature en fase de diseño, no implementado aún.
 
 ---
 

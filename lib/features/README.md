@@ -34,14 +34,23 @@ feature_name/
 
 ## Features Actuales
 
-| Feature | Bounded Context | Dominio Principal |
-|---------|----------------|-------------------|
-| **[auth](auth/)** | Autenticación y autorización | Seguridad, sesiones, permisos |
-| **[landing](landing/)** | Marketing público | Presentación, showcase, CTA |
-| **[home](home/)** | Navegación principal | Dashboard, coordinación |
-| **[catalogue](catalogue/)** | Gestión de productos | Inventario, categorías, CRUD |
-| **[sales](sales/)** | Proceso de venta | Tickets, cobros, transacciones |
-| **[cash_register](cash_register/)** | Gestión financiera | Cajas, arqueos, flujos de caja |
+| Feature | Estado | Bounded Context | Dominio Principal |
+|---------|--------|----------------|-------------------|
+| **[auth](auth/)** | ⚠️ En desarrollo | Autenticación y autorización | Seguridad, sesiones, permisos, roles |
+| **[home](home/)** | ✅ Completo | Navegación principal | Dashboard, coordinación, menú principal |
+| **[landing](landing/)** | ✅ Completo | Marketing público | Presentación, showcase, CTA |
+| **[catalogue](catalogue/)** | ⚠️ En desarrollo | Gestión de productos | Inventario, categorías, CRUD, proveedores |
+| **[sales](sales/)** | ✅ Funcional | Proceso de venta | POS, tickets, cobros, transacciones |
+| **[cash_register](cash_register/)** | ✅ Funcional | Gestión financiera | Cajas, arqueos, flujos de caja |
+| **[analytics](analytics/)** | ✅ Completo | Métricas y reportes | Transacciones, ganancias, análisis |
+| **[multiuser](multiuser/)** | 📋 Planeado | Gestión multiusuario | Roles, permisos, equipos, sucursales |
+
+### Leyenda de Estados
+
+- ✅ **Completo**: Feature completamente funcional con todas las características planeadas
+- ✅ **Funcional**: Operativo y estable, puede recibir mejoras
+- ⚠️ **En desarrollo**: En proceso activo de implementación o mejora
+- 📋 **Planeado**: Diseñado pero no implementado aún
 
 ## Reglas de Oro
 
@@ -125,26 +134,40 @@ abstract class CatalogueModule {
      │ links to
      ▼
 ┌──────────┐
-│   Auth   │ (autenticación)
-└────┬─────┘
-     │ autentica a
-     ▼
-┌──────────┐      ┌────────────┐
-│   Home   │─────▶│ Catalogue  │
-└────┬─────┘      └─────┬──────┘
-     │                  │
-     │ coordina         │ consume
-     ▼                  ▼
+│   Auth   │ (autenticación) ───────────┐
+└────┬─────┘                            │
+     │ autentica a                      │ usuario activo
+     ▼                                  │
+┌──────────┐      ┌────────────┐       │
+│   Home   │─────▶│ Catalogue  │       │
+└────┬─────┘      └─────┬──────┘       │
+     │                  │               │
+     │ coordina         │ consume       │
+     ▼                  ▼               ▼
+┌──────────┐      ┌────────────────┐   │
+│  Sales   │─────▶│ Cash Register  │◀──┘
+└────┬─────┘ usa  └────────┬───────┘
+     │                     │
+     │ registra            │ agrupa
+     ▼                     ▼
 ┌──────────┐      ┌────────────────┐
-│  Sales   │─────▶│ Cash Register  │
-└──────────┘ usa  └────────────────┘
+│Analytics │◀─────│  Transactions  │
+└──────────┘ lee  └────────────────┘
 ```
 
-**Relaciones:**
-- **Home** coordina Sales y Catalogue
-- **Sales** consume productos de Catalogue
-- **Sales** actualiza Cash Register en cada venta
-- **Auth** es usado por todos (usuario activo)
+**Relaciones principales:**
+- **Landing** → **Auth**: Landing page enlaza al login
+- **Auth** → Todos: Proporciona usuario autenticado a todos los features
+- **Home** → **Sales**, **Catalogue**, **Analytics**: Dashboard coordina navegación
+- **Catalogue** → **Sales**: Sales consume productos del catálogo
+- **Sales** → **Cash Register**: Cada venta se registra en caja activa
+- **Cash Register** → **Transactions**: Genera transacciones en Firestore
+- **Analytics** → **Transactions**: Lee y analiza transacciones
+
+**Nota importante**: Features NO se importan directamente entre sí. La comunicación se realiza a través de:
+- Providers compartidos (en `presentation/providers/`)
+- Navegación por rutas
+- Entidades compartidas (en `domain/entities/`)
 
 ## Agregar un Nuevo Feature
 
@@ -199,15 +222,56 @@ test/
         └── presentation/
 ```
 
-## Documentación
+## Documentación por Feature
 
-Cada feature **DEBE** tener:
-- ✅ `README.md` - Documentación del feature
-- ✅ Docstrings en clases principales
-- ✅ Comentarios en lógica compleja
+Cada feature **DEBE** tener su propio README con:
+- 🎯 Propósito y responsabilidades
+- 📦 Componentes principales (Entities, UseCases, Providers)
+- 🔄 Flujos principales de usuario
+- 🔌 Integración con otros features
+- ⚙️ Configuración específica
+- ✅ Estado actual y roadmap
 
-## Referencias
+### READMEs Disponibles
 
-- Ver [README de cada feature](.) para detalles específicos
-- Arquitectura base en `/core/README.md`
-- Configuración DI en `/core/di/README.md`
+| Feature | README | Estado Documentación |
+|---------|--------|---------------------|
+| Analytics | [analytics/README.md](analytics/README.md) | ✅ Completo |
+| Auth | ⚠️ Pendiente | ⚠️ Por crear |
+| Home | ⚠️ Pendiente | ⚠️ Por crear |
+| Landing | ⚠️ Pendiente | ⚠️ Por crear |
+| Catalogue | ⚠️ Pendiente | ⚠️ Por crear |
+| Sales | ⚠️ Pendiente | ⚠️ Por crear |
+| Cash Register | ⚠️ Pendiente | ⚠️ Por crear |
+| Multiuser | 📋 No aplica | 📋 Feature no implementado |
+
+## Referencias de Arquitectura
+
+- [Arquitectura General](../README.md) - Visión completa del proyecto
+- [Core Infrastructure](../core/README.md) - Servicios y utilities
+- [Instrucciones Light](.github/instructions/ligh_intructions.instructions.md) - Guías de desarrollo
+- [Testing Guide](../test/README.md) - Convenciones de testing
+
+## Mejores Prácticas de Features
+
+### Documentación Obligatoria
+- ✅ `README.md` por feature con estructura estándar
+- ✅ Docstrings en clases principales (Providers, UseCases, Repositories)
+- ✅ Comentarios en lógica compleja o no obvia
+- ✅ Ejemplos de uso cuando sea necesario
+
+### Organización de Código
+- ✅ Separar claramente capas (domain, data, presentation)
+- ✅ Un archivo por clase (excepto clases muy pequeñas relacionadas)
+- ✅ Nombres descriptivos para archivos y clases
+- ✅ Exportar públicamente solo lo necesario
+
+### Testing
+- ✅ Tests unitarios para UseCases críticos
+- ✅ Tests de integración para Providers
+- ✅ Mocks generados con Mockito
+- ✅ Cobertura mínima del 70% en lógica de negocio
+
+---
+
+**Última actualización**: Noviembre 2025

@@ -1,6 +1,8 @@
-# Testing Guide
+# 🧪 Testing Guide - SellWeb
 
-Guía completa para escribir y ejecutar tests en Flutter Web Sell App.
+Guía completa para escribir y ejecutar tests en Flutter Web Sell App siguiendo Clean Architecture.
+
+**Última actualización**: Noviembre 2025
 
 ## Estructura de Testing
 
@@ -370,9 +372,58 @@ flutter pub run build_runner build --delete-conflicting-outputs
 - [FpDart (Either)](https://pub.dev/packages/fpdart)
 - [Clean Architecture Testing](https://resocoder.com/flutter-clean-architecture-tdd/)
 
-## Contacto
+## Stack de Testing
 
-Para preguntas sobre testing, consultar:
-- `implementation_plan.md` - Plan completo de testing
-- `walkthrough.md` - Walkthrough de implementación
-- Tests existentes en `test/features/sales/domain/usecases/` - Ejemplos de referencia
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `flutter_test` | SDK | Framework de testing de Flutter |
+| `mockito` | 5.4.4 | Generación de mocks |
+| `mocktail` | 1.0.4 | Mocking alternativo |
+| `fake_async` | 1.3.1 | Control de operaciones asíncronas |
+| `build_runner` | 2.4.0 | Generación de código |
+
+## Estado Actual de Tests
+
+### Cobertura por Feature
+
+| Feature | Tests Unitarios | Tests de Integración | Cobertura |
+|---------|----------------|---------------------|-----------|
+| Sales | ✅ Completo | ⚠️ Parcial | ~75% |
+| Catalogue | ⚠️ Pendiente | ❌ No | ~20% |
+| Cash Register | ⚠️ Pendiente | ❌ No | ~30% |
+| Analytics | ⚠️ Pendiente | ❌ No | ~10% |
+| Auth | ⚠️ Pendiente | ❌ No | ~15% |
+
+### Áreas Críticas con Tests
+- ✅ Sales UseCases (add_product, remove_product, prepare_sale)
+- ✅ TestHelpers (fixtures y builders)
+- ⚠️ Providers (parcialmente testeados)
+- ❌ Repositories (pendiente)
+- ❌ DataSources (pendiente)
+
+## Referencias y Recursos
+
+### Documentación Interna
+- Tests de referencia: `test/features/sales/domain/usecases/` 
+- Test helpers: `test/helpers/test_helpers.dart`
+- Mock annotations: `test/helpers/mock_annotations.dart`
+- Configuración: `test/test_config.dart`
+
+### Documentación Externa
+- [Flutter Testing Documentation](https://docs.flutter.dev/testing)
+- [Mockito Package](https://pub.dev/packages/mockito)
+- [FpDart (Either)](https://pub.dev/packages/fpdart) - Para manejo de Failures
+- [Clean Architecture Testing](https://resocoder.com/flutter-clean-architecture-tdd/)
+
+## Roadmap de Testing
+
+### Próximos Pasos
+1. Completar tests unitarios de UseCases de Catalogue
+2. Implementar tests de Repositories
+3. Agregar tests de Providers críticos
+4. Incrementar cobertura general al 80%
+5. Implementar tests de integración E2E
+
+---
+
+**Última actualización**: Noviembre 2025

@@ -559,13 +559,52 @@ UI → Providers → UseCases → Repository (interface) → DataSource → Fire
   - `FirestorePaths.userManagedAccount(email, accountId)`
 - **Estado:** 100% migrado con operaciones batch
 
+### 4. CashRegister Feature (19/19 métodos) ✅
+- **Repository:** `CashRegisterRepositoryImpl`
+- **Métodos migrados:**
+  - CRUD de cajas registradoras activas (4)
+  - Historial de arqueos con queries por fecha (6)
+  - Descripciones fijas (3)
+  - Operaciones de caja (2)
+  - Transacciones históricas (4)
+- **Queries complejas:**
+  - `getCashRegisterByDays()` - where + orderBy
+  - `getCashRegisterByDateRange()` - where múltiple + orderBy
+  - `getTodayCashRegisters()` - where con fecha actual
+  - `getTransactionsByDateRange()` - where con timestamps
+- **Estado:** 100% migrado con queries avanzadas
+
+### 5. Analytics Feature (1/1 método) ✅
+- **DataSource:** `AnalyticsRemoteDataSource`
+- **Método migrado:**
+  - `getTransactions()` - Stream con filtros de fecha opcionales
+- **Queries complejas:**
+  - Where con timestamps (isGreaterThanOrEqualTo, isLessThan)
+  - OrderBy descending
+  - Stream en tiempo real con snapshots
+- **Estado:** 100% migrado
+
+### 6. Catalogue DataSource (8/8 métodos) ✅
+- **DataSource:** `CatalogueRemoteDataSourceImpl`
+- **Métodos migrados:**
+  - CRUD completo de productos (5)
+  - Búsqueda global de productos (1)
+  - Obtener categorías (1)
+  - Actualizar stock (1)
+- **Mejoras:**
+  - Corregidas rutas de colecciones (de 'cuentas'/'catalogo' a FirestorePaths)
+  - Query de búsqueda con where + limit
+- **Estado:** 100% migrado
+
 ### Resumen de Migración
-| Feature | Archivos | Métodos | Estado | Batch Ops |
-|---------|----------|---------|--------|-----------|
-| Catalogue | 1 repository | 17 | ✅ 100% | 3 |
-| Auth | 1 repository | 2 | ✅ 100% | 0 |
-| MultiUser | 1 datasource | 4 | ✅ 100% | 3 |
-| **Total** | **3** | **23** | **✅ 100%** | **6** |
+| Feature | Archivos | Métodos | Estado | Queries Complejas |
+|---------|----------|---------|--------|-------------------|
+| Catalogue | 1 repository + 1 datasource | 17 + 8 | ✅ 100% | Batch (3) + Where |
+| Auth | 1 repository | 2 | ✅ 100% | Streams |
+| MultiUser | 1 datasource | 4 | ✅ 100% | Batch (3) |
+| CashRegister | 1 repository | 19 | ✅ 100% | Where + OrderBy (4) |
+| Analytics | 1 datasource | 1 | ✅ 100% | Where + OrderBy + Stream |
+| **Total** | **6** | **51** | **✅ 100%** | **12** |
 
 ---
 
@@ -586,4 +625,4 @@ UI → Providers → UseCases → Repository (interface) → DataSource → Fire
 **Autor:** Senior Flutter Architect + GDE Firebase  
 **Fecha:** 27/11/2025  
 **Versión Core:** 2.0.0 (World-Class Standards)  
-**Features Migradas:** Catalogue ✅ | Auth ✅ | MultiUser ✅ (23 métodos totales)
+**Features Migradas:** Catalogue ✅ | Auth ✅ | MultiUser ✅ | CashRegister ✅ | Analytics ✅ (51 métodos totales)

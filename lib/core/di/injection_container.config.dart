@@ -290,8 +290,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i329.GetDemoProductsUseCase());
     gh.lazySingleton<_i377.GetProductByCodeUseCase>(
         () => _i377.GetProductByCodeUseCase());
-    gh.lazySingleton<_i818.CashRegisterRepository>(
-        () => _i1059.CashRegisterRepositoryImpl());
     gh.lazySingleton<_i276.ClearLastSoldTicketUseCase>(() =>
         _i276.ClearLastSoldTicketUseCase(
             gh<_i581.AppDataPersistenceService>()));
@@ -303,19 +301,75 @@ extension GetItInjectableX on _i174.GetIt {
         _i556.HasLastSoldTicketUseCase(gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i76.SellUsecases>(() => _i76.SellUsecases(
         persistenceService: gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i983.CatalogueRemoteDataSource>(() =>
-        _i983.CatalogueRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()));
     gh.lazySingleton<_i823.AddDemoAccountIfAnonymousUseCase>(() =>
         _i823.AddDemoAccountIfAnonymousUseCase(
             gh<_i612.GetDemoAccountUseCase>()));
     gh.lazySingleton<_i943.IsProductScannedUseCase>(() =>
         _i943.IsProductScannedUseCase(gh<_i377.GetProductByCodeUseCase>()));
-    gh.lazySingleton<_i577.AnalyticsRemoteDataSource>(
-        () => _i577.AnalyticsRemoteDataSource(gh<_i974.FirebaseFirestore>()));
-    gh.lazySingleton<_i732.AnalyticsRepository>(() =>
-        _i164.AnalyticsRepositoryImpl(gh<_i577.AnalyticsRemoteDataSource>()));
     gh.lazySingleton<_i562.IFirestoreDataSource>(
         () => _i485.FirestoreDataSource(gh<_i974.FirebaseFirestore>()));
+    gh.lazySingleton<_i577.AnalyticsRemoteDataSource>(() =>
+        _i577.AnalyticsRemoteDataSource(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i818.CashRegisterRepository>(() =>
+        _i1059.CashRegisterRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i348.AuthRepository>(() => _i566.AuthRepositoryImpl(
+          gh<_i59.FirebaseAuth>(),
+          gh<_i116.GoogleSignIn>(),
+        ));
+    gh.lazySingleton<_i769.LoadAdminProfileUseCase>(() =>
+        _i769.LoadAdminProfileUseCase(
+            persistenceService: gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i465.ClearAdminProfileUseCase>(() =>
+        _i465.ClearAdminProfileUseCase(
+            persistenceService: gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i475.SaveAdminProfileUseCase>(() =>
+        _i475.SaveAdminProfileUseCase(
+            persistenceService: gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i1071.IProductRepository>(
+        () => _i1071.ProductRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i1071.GetProductsUseCase>(
+        () => _i1071.GetProductsUseCase(gh<_i1071.IProductRepository>()));
+    gh.lazySingleton<_i840.AccountRepository>(() => _i166.AccountRepositoryImpl(
+          gh<_i562.IFirestoreDataSource>(),
+          persistenceService: gh<_i581.AppDataPersistenceService>(),
+        ));
+    gh.lazySingleton<_i654.GetSelectedAccountIdUseCase>(
+        () => _i654.GetSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
+    gh.lazySingleton<_i695.SaveSelectedAccountIdUseCase>(() =>
+        _i695.SaveSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
+    gh.lazySingleton<_i134.GetAccountUseCase>(
+        () => _i134.GetAccountUseCase(gh<_i840.AccountRepository>()));
+    gh.lazySingleton<_i563.GetAccountAdminsUseCase>(
+        () => _i563.GetAccountAdminsUseCase(gh<_i840.AccountRepository>()));
+    gh.lazySingleton<_i2.RemoveSelectedAccountIdUseCase>(() =>
+        _i2.RemoveSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
+    gh.factory<_i1071.ProductProvider>(
+        () => _i1071.ProductProvider(gh<_i1071.GetProductsUseCase>()));
+    gh.lazySingleton<_i33.FetchAdminProfileUseCase>(() =>
+        _i33.FetchAdminProfileUseCase(gh<_i563.GetAccountAdminsUseCase>()));
+    gh.lazySingleton<_i817.GetProfilesAccountsAssociatedUseCase>(
+        () => _i817.GetProfilesAccountsAssociatedUseCase(
+              gh<_i563.GetAccountAdminsUseCase>(),
+              gh<_i134.GetAccountUseCase>(),
+            ));
+    gh.lazySingleton<_i83.CatalogueRepository>(
+        () => _i576.CatalogueRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i925.MultiUserRemoteDataSource>(() =>
+        _i925.MultiUserRemoteDataSourceImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i983.CatalogueRemoteDataSource>(() =>
+        _i983.CatalogueRemoteDataSourceImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i732.AnalyticsRepository>(() =>
+        _i164.AnalyticsRepositoryImpl(gh<_i577.AnalyticsRemoteDataSource>()));
+    gh.lazySingleton<_i557.GetUserStreamUseCase>(
+        () => _i557.GetUserStreamUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i1046.SignInSilentlyUseCase>(
+        () => _i1046.SignInSilentlyUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i253.SignInWithGoogleUseCase>(
+        () => _i253.SignInWithGoogleUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i380.SignInAnonymouslyUseCase>(
+        () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i158.SignOutUseCase>(
+        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -389,81 +443,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i223.SaveTicketToTransactionHistoryUseCase>(() =>
         _i223.SaveTicketToTransactionHistoryUseCase(
             gh<_i818.CashRegisterRepository>()));
-    gh.lazySingleton<_i348.AuthRepository>(() => _i566.AuthRepositoryImpl(
-          gh<_i59.FirebaseAuth>(),
-          gh<_i116.GoogleSignIn>(),
-        ));
-    gh.lazySingleton<_i769.LoadAdminProfileUseCase>(() =>
-        _i769.LoadAdminProfileUseCase(
-            persistenceService: gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i465.ClearAdminProfileUseCase>(() =>
-        _i465.ClearAdminProfileUseCase(
-            persistenceService: gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i475.SaveAdminProfileUseCase>(() =>
-        _i475.SaveAdminProfileUseCase(
-            persistenceService: gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i1071.IProductRepository>(
-        () => _i1071.ProductRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
-    gh.lazySingleton<_i1071.GetProductsUseCase>(
-        () => _i1071.GetProductsUseCase(gh<_i1071.IProductRepository>()));
-    gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
-          gh<_i512.OpenCashRegisterUseCase>(),
-          gh<_i202.CloseCashRegisterUseCase>(),
-          gh<_i216.GetActiveCashRegistersUseCase>(),
-          gh<_i797.GetActiveCashRegistersStreamUseCase>(),
-          gh<_i457.AddCashInflowUseCase>(),
-          gh<_i9.AddCashOutflowUseCase>(),
-          gh<_i90.UpdateSalesAndBillingUseCase>(),
-          gh<_i95.GetCashRegisterHistoryUseCase>(),
-          gh<_i522.GetCashRegisterByDaysUseCase>(),
-          gh<_i760.GetCashRegisterByDateRangeUseCase>(),
-          gh<_i547.ProcessTicketAnnullmentUseCase>(),
-          gh<_i23.CreateCashRegisterFixedDescriptionUseCase>(),
-          gh<_i322.GetCashRegisterFixedDescriptionsUseCase>(),
-          gh<_i264.DeleteCashRegisterFixedDescriptionUseCase>(),
-          gh<_i34.GetTodayTransactionsStreamUseCase>(),
-          gh<_i466.GetTransactionsByDateRangeUseCase>(),
-          gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
-        ));
-    gh.lazySingleton<_i840.AccountRepository>(() => _i166.AccountRepositoryImpl(
-          gh<_i562.IFirestoreDataSource>(),
-          persistenceService: gh<_i581.AppDataPersistenceService>(),
-        ));
-    gh.lazySingleton<_i654.GetSelectedAccountIdUseCase>(
-        () => _i654.GetSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
-    gh.lazySingleton<_i695.SaveSelectedAccountIdUseCase>(() =>
-        _i695.SaveSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
-    gh.lazySingleton<_i134.GetAccountUseCase>(
-        () => _i134.GetAccountUseCase(gh<_i840.AccountRepository>()));
-    gh.lazySingleton<_i563.GetAccountAdminsUseCase>(
-        () => _i563.GetAccountAdminsUseCase(gh<_i840.AccountRepository>()));
-    gh.lazySingleton<_i2.RemoveSelectedAccountIdUseCase>(() =>
-        _i2.RemoveSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
-    gh.factory<_i1071.ProductProvider>(
-        () => _i1071.ProductProvider(gh<_i1071.GetProductsUseCase>()));
-    gh.lazySingleton<_i33.FetchAdminProfileUseCase>(() =>
-        _i33.FetchAdminProfileUseCase(gh<_i563.GetAccountAdminsUseCase>()));
-    gh.lazySingleton<_i817.GetProfilesAccountsAssociatedUseCase>(
-        () => _i817.GetProfilesAccountsAssociatedUseCase(
-              gh<_i563.GetAccountAdminsUseCase>(),
-              gh<_i134.GetAccountUseCase>(),
-            ));
-    gh.lazySingleton<_i83.CatalogueRepository>(
-        () => _i576.CatalogueRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
-    gh.lazySingleton<_i925.MultiUserRemoteDataSource>(() =>
-        _i925.MultiUserRemoteDataSourceImpl(gh<_i562.IFirestoreDataSource>()));
-    gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
-        () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
-    gh.lazySingleton<_i557.GetUserStreamUseCase>(
-        () => _i557.GetUserStreamUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i1046.SignInSilentlyUseCase>(
-        () => _i1046.SignInSilentlyUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i253.SignInWithGoogleUseCase>(
-        () => _i253.SignInWithGoogleUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i380.SignInAnonymouslyUseCase>(
-        () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i158.SignOutUseCase>(
-        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i651.RegisterProductPriceUseCase>(() =>
         _i651.RegisterProductPriceUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i55.UpdateProductFavoriteUseCase>(() =>
@@ -494,6 +473,25 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i453.GetProductsUseCase>(
         () => _i453.GetProductsUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
+          gh<_i512.OpenCashRegisterUseCase>(),
+          gh<_i202.CloseCashRegisterUseCase>(),
+          gh<_i216.GetActiveCashRegistersUseCase>(),
+          gh<_i797.GetActiveCashRegistersStreamUseCase>(),
+          gh<_i457.AddCashInflowUseCase>(),
+          gh<_i9.AddCashOutflowUseCase>(),
+          gh<_i90.UpdateSalesAndBillingUseCase>(),
+          gh<_i95.GetCashRegisterHistoryUseCase>(),
+          gh<_i522.GetCashRegisterByDaysUseCase>(),
+          gh<_i760.GetCashRegisterByDateRangeUseCase>(),
+          gh<_i547.ProcessTicketAnnullmentUseCase>(),
+          gh<_i23.CreateCashRegisterFixedDescriptionUseCase>(),
+          gh<_i322.GetCashRegisterFixedDescriptionsUseCase>(),
+          gh<_i264.DeleteCashRegisterFixedDescriptionUseCase>(),
+          gh<_i34.GetTodayTransactionsStreamUseCase>(),
+          gh<_i466.GetTransactionsByDateRangeUseCase>(),
+          gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
+        ));
     gh.lazySingleton<_i754.MultiUserRepository>(() =>
         _i431.MultiUserRepositoryImpl(gh<_i925.MultiUserRemoteDataSource>()));
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
@@ -531,8 +529,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i557.GetUserStreamUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
         ));
-    gh.factory<_i975.AnalyticsProvider>(
-        () => _i975.AnalyticsProvider(gh<_i161.GetSalesAnalyticsUseCase>()));
     gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
           getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
           addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
@@ -552,6 +548,8 @@ extension GetItInjectableX on _i174.GetIt {
           getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
           catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
         ));
+    gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
+        () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
     gh.factory<_i564.MultiUserProvider>(() => _i564.MultiUserProvider(
           gh<_i353.GetUsersUseCase>(),
           gh<_i442.CreateUserUseCase>(),
@@ -559,6 +557,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i799.DeleteUserUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
         ));
+    gh.factory<_i975.AnalyticsProvider>(
+        () => _i975.AnalyticsProvider(gh<_i161.GetSalesAnalyticsUseCase>()));
     return this;
   }
 }

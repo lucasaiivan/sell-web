@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
+import 'package:sellweb/core/services/database/firestore_paths.dart';
 import '../models/category_model.dart';
 import '../models/product_catalogue_model.dart';
 import '../models/product_model.dart';
 
 /// DataSource remoto para operaciones de catálogo en Firestore.
+/// 
+/// **Refactorizado:** Usa [IFirestoreDataSource] + [FirestorePaths]
 /// 
 /// Encapsula toda la lógica de acceso a Firebase Cloud Firestore
 /// para productos y categorías.
@@ -37,18 +41,16 @@ abstract class CatalogueRemoteDataSource {
 /// Implementación de [CatalogueRemoteDataSource] usando Firestore.
 @LazySingleton(as: CatalogueRemoteDataSource)
 class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
-  final FirebaseFirestore firestore;
+  final IFirestoreDataSource _dataSource;
 
-  CatalogueRemoteDataSourceImpl(this.firestore);
+  CatalogueRemoteDataSourceImpl(this._dataSource);
 
   @override
   Future<List<ProductCatalogueModel>> getProducts(String accountId) async {
     try {
-      final snapshot = await firestore
-          .collection('cuentas')
-          .doc(accountId)
-          .collection('catalogo')
-          .get();
+      final path = FirestorePaths.accountCatalogue(accountId);
+      final collection = _dataSource.collection(path);
+      final snapshot = await _dataSource.getDocuments(collection);
 
       return snapshot.docs
           .map((doc) => ProductCatalogueModel.fromMap(doc.data()))
@@ -62,12 +64,9 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   Future<ProductCatalogueModel?> getProductById(
       String accountId, String productId) async {
     try {
-      final doc = await firestore
-          .collection('cuentas')
-          .doc(accountId)
-          .collection('catalogo')
-          .doc(productId)
-          .get();
+      final path = FirestorePaths.accountProduct(accountId, productId);
+      final docRef = _dataSource.document(path);
+      final doc = await docRef.get();
 
       if (!doc.exists) return null;
 
@@ -81,12 +80,8 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   Future<void> createProduct(
       String accountId, ProductCatalogueModel product) async {
     try {
-      await firestore
-          .collection('cuentas')
-          .doc(accountId)
-          .collection('catalogo')
-          .doc(product.id)
-          .set(product.toMap());
+      final path = FirestorePaths.accountProduct(accountId, product.id);
+      await _dataSource.setDocument(path, product.toMap());
     } catch (e) {
       throw Exception('Error al crear producto: $e');
     }
@@ -96,12 +91,8 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   Future<void> updateProduct(
       String accountId, ProductCatalogueModel product) async {
     try {
-      await firestore
-          .collection('cuentas')
-          .doc(accountId)
-          .collection('catalogo')
-          .doc(product.id)
-          .update(product.toMap());
+      final path = FirestorePaths.accountProduct(accountId, product.id);
+      await _dataSource.updateDocument(path, product.toMap());
     } catch (e) {
       throw Exception('Error al actualizar producto: $e');
     }
@@ -110,12 +101,8 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   @override
   Future<void> deleteProduct(String accountId, String productId) async {
     try {
-      await firestore
-          .collection('cuentas')
-          .doc(accountId)
-          .collection('catalogo')
-          .doc(productId)
-          .delete();
+      final path = FirestorePaths.accountProduct(accountId, productId);
+      await _dataSource.deleteDocument(path);
     } catch (e) {
       throw Exception('Error al eliminar producto: $e');
     }
@@ -125,12 +112,13 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   Future<List<ProductModel>> searchGlobalProducts(String query) async {
     try {
       // Búsqueda simple por descripción (puedes mejorar con índices)
-      final snapshot = await firestore
-          .collection('productos')
+      final path = FirestorePaths.publicProducts();
+      final collection = _dataSource.collection(path);
+      final firestoreQuery = collection
           .where('description', isGreaterThanOrEqualTo: query)
           .where('description', isLessThan: '${query}z')
-          .limit(50)
-          .get();
+          .limit(50);
+      final snapshot = await _dataSource.getDocuments(firestoreQuery);
 
       return snapshot.docs
           .map((doc) => ProductModel.fromMap(doc.data()))
@@ -143,7 +131,9 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   @override
   Future<List<CategoryModel>> getCategories() async {
     try {
-      final snapshot = await firestore.collection('categorias').get();
+      final path = FirestorePaths.accountCategories('DEFAULT'); // Categories globales
+      final collection = _dataSource.collection(path);
+      final snapshot = await _dataSource.getDocuments(collection);
 
       return snapshot.docs
           .map((doc) => CategoryModel.fromMap(doc.data()))
@@ -157,12 +147,8 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   Future<void> updateStock(
       String accountId, String productId, int newStock) async {
     try {
-      await firestore
-          .collection('cuentas')
-          .doc(accountId)
-          .collection('catalogo')
-          .doc(productId)
-          .update({
+      final path = FirestorePaths.accountProduct(accountId, productId);
+      await _dataSource.updateDocument(path, {
         'quantityStock': newStock,
         'stock': newStock > 0,
         'upgrade': Timestamp.now(),

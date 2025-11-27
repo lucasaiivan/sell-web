@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
+import 'package:sellweb/core/services/database/firestore_paths.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import '../../domain/entities/date_filter.dart';
 import '../models/sales_analytics_model.dart';
 
 /// DataSource: Analíticas Remoto
 ///
+/// **Refactorizado:** Usa [IFirestoreDataSource] en lugar de FirebaseFirestore directo
+/// 
 /// **Responsabilidad:**
 /// - Consultar Firestore para obtener datos de tickets
 /// - Filtrar tickets por rango de fechas
@@ -15,9 +19,9 @@ import '../models/sales_analytics_model.dart';
 /// **Inyección DI:** @lazySingleton
 @lazySingleton
 class AnalyticsRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final IFirestoreDataSource _dataSource;
 
-  AnalyticsRemoteDataSource(this._firestore);
+  AnalyticsRemoteDataSource(this._dataSource);
 
   /// Obtiene las transacciones desde Firestore con actualización en tiempo real
   ///
@@ -41,10 +45,9 @@ class AnalyticsRemoteDataSource {
       print('   AccountId: $accountId');
       print('   DateFilter: ${dateFilter?.name ?? "null (todas las transacciones)"}');
 
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('/ACCOUNTS')
-          .doc(accountId)
-          .collection('TRANSACTIONS');
+      final path = FirestorePaths.accountTransactions(accountId);
+      final collection = _dataSource.collection(path);
+      Query<Map<String, dynamic>> query = collection;
 
       // Aplicar filtro de fecha si existe
       if (dateFilter != null) {
@@ -70,7 +73,7 @@ class AnalyticsRemoteDataSource {
       print('📊 [Analytics] Suscribiendo a listener de Firestore...');
       
       // Retornar stream con snapshots en tiempo real
-      return query.snapshots().map((querySnapshot) {
+      return _dataSource.streamDocuments(query).map((querySnapshot) {
         print('📊 [Analytics] Nuevo snapshot recibido: ${querySnapshot.docs.length} documentos');
 
         if (querySnapshot.docs.isEmpty) {

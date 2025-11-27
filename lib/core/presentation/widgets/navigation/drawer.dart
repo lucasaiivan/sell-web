@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/auth/presentation/dialogs/account_selection_dialog.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
-import '../core_widgets.dart';
+import '../widgets.dart';
 import '../../../../features/multiuser/presentation/pages/multi_user_page.dart';
 
 /// Widget reutilizable del Drawer para las pantallas principales

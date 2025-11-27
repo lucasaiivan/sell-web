@@ -7,21 +7,17 @@ export 'buttons/buttons.dart';
 // 📝 Campos de entrada y formularios
 export 'inputs/inputs.dart';
 
-// 💬 Diálogos y modales
-export 'dialogs/dialogs.dart';
-
 // 🎨 Componentes de interfaz básicos
-export 'components/components.dart';
+export 'ui/ui.dart';
 
-// 🖼️ Componentes multimedia - Exportaciones directas
-export 'components/image.dart';
-export 'components/avatar_user.dart';
+// 🎯 Componentes base de diálogos
+export 'dialogs/dialogs.dart';
 
 // 📢 Feedback y notificaciones
 export 'feedback/feedback.dart';
 
-// 📱 Vistas completas y pantallas especializadas
-export 'views/views.dart';
+// 📊 Gráficos y visualización
+export 'graphics/graphics.dart';
 
 // 🧭 Widgets de navegación
 export 'navigation/navigation.dart';

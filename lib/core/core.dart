@@ -29,6 +29,15 @@ export 'presentation/theme/theme.dart';
 // Presentation - Helpers
 export 'presentation/helpers/helpers.dart';
 
+// Presentation - Dialogs
+export 'presentation/dialogs/dialogs.dart';
+
+// Presentation - Modals
+export 'presentation/modals/modals.dart';
+
+// Presentation - Views
+export 'presentation/views/views.dart';
+
 // Presentation - Widgets y Providers
-export 'presentation/widgets/core_widgets.dart';
+export 'presentation/widgets/widgets.dart';
 export 'presentation/providers/theme_provider.dart';

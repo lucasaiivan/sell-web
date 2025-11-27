@@ -376,7 +376,7 @@ Para features modulares, incluir además:
 | Diálogo nuevo dominio | `presentation/widgets/dialogs/[dominio]/` | `InventoryDialog` | `dialogs.dart` | Absoluta |
 | Card/Lista genérica | `presentation/widgets/component/` | `GenericCard` | `ui.dart` | Absoluta |
 | Feedback especializado | `presentation/widgets/feedback/` | `SalesFeedback` | `feedback.dart` | Absoluta |
-| Vista compleja compartida | `presentation/widgets/views/` | `DashboardView` | `views.dart` | Absoluta |
+| Vista compleja compartida | `presentation/views/` | `DashboardView` | `views.dart` | Absoluta |
 | Servicio global | `core/services/[categoria]/` | `NotificationService` | `core.dart` | Absoluta |
 | Utilidad específica | `core/utils/[categoria]/` | `CurrencyFormatter` | Crear exportador | Absoluta |
 

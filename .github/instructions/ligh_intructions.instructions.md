@@ -73,8 +73,8 @@ lib/features/[feature_name]/
 **Componentes UI:**
 - [ ] ¿Botón? → Revisar `presentation/widgets/buttons/`
 - [ ] ¿Input? → Revisar `presentation/widgets/inputs/`
-- [ ] ¿Diálogo? → Revisar `presentation/widgets/dialogs/`
-- [ ] ¿Card/Avatar? → Revisar `presentation/widgets/component/`
+- [ ] ¿Diálogo? → Revisar `presentation/dialogs/`
+- [ ] ¿Card/Avatar? → Revisar `presentation/widgets/ui/`
 - [ ] ¿Feedback/Loading? → Revisar `presentation/widgets/feedback/`
 - [ ] ¿Específico del feature? → Crear en `features/[feature]/presentation/widgets/`
 
@@ -596,8 +596,9 @@ Consumer<MyProvider>(
 |-----------|-----------|-------------|
 | Botón | `presentation/widgets/buttons/` | Reutilizable en múltiples features |
 | Input | `presentation/widgets/inputs/` | Campo de entrada genérico |
-| Diálogo | `presentation/widgets/dialogs/[tipo]/` | Modal compartido |
-| Card/Avatar | `presentation/widgets/component/` | Componente básico UI |
+| Diálogo | `presentation/dialogs/` | Modal compartido |
+| Modal | `presentation/modals/` | Bottom sheets y overlays |
+| Card/Avatar | `presentation/widgets/ui/` | Componente básico UI |
 | Feedback | `presentation/widgets/feedback/` | Loading/Error states |
 | Servicio | `core/services/[categoria]/` | Lógica compartida cross-cutting |
 | Utilidad | `core/utils/[categoria]/` | Helpers y formatters |
@@ -619,16 +620,19 @@ Consumer<MyProvider>(
 - `MoneyInputTextField`: Input especializado para moneda
 - `ProductSearchField`: Búsqueda de productos con autocompletado
 
-### Componentes (`presentation/widgets/component/`)
+### Componentes UI (`presentation/widgets/ui/`)
 - `UserAvatar`: Avatar de usuario con imagen/iniciales
 - `AvatarProduct`: Avatar de producto con placeholder
 - `ImageWidget`: Imagen con loading y error handling
 - `ProgressIndicators`: Indicadores de progreso customizados
 - `Dividers`: Separadores visuales
 
-### Diálogos (`presentation/widgets/dialogs/`)
+### Diálogos (`presentation/dialogs/`)
 - Sistema completo modular con `BaseDialog`
-- Subcategorías: catalogue, sales, tickets, configuration, feedback
+- Subcategorías: base, catalogue, sales, tickets, configuration, feedback
+
+### Modales (`presentation/modals/`)
+- `SelectionModal`: Modal de selección tipo bottom sheet
 
 ---
 

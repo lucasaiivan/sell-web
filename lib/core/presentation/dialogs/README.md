@@ -50,25 +50,23 @@ Diálogos de ejemplo y demostración
 
 ### **Importación Simple**
 ```dart
-// Importar todos los diálogos
-import 'package:sellweb/core/widgets/dialogs/dialogs.dart';
+// Importar todos los diálogos (incluye base y components automáticamente)
+import 'package:sellweb/core/presentation/dialogs/dialogs.dart';
 
-// O importar específicos por carpeta
-import 'package:sellweb/core/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/core/widgets/dialogs/catalogue/add_product_dialog.dart';
+// O importar componentes base específicos
+import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart';
+import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
 ```
 
 ### **Estructura por Función - Navegación Rápida**
 ```
-dialogs/
-├── base/              # 🔧 Componentes fundamentales
-├── components/        # 🎨 UI reutilizable  
-├── catalogue/         # 📦 Gestión de productos
-├── sales/            # 💰 Proceso de ventas
-├── tickets/          # 🧾 Gestión de tickets
-├── configuration/    # ⚙️ Configuración del sistema
-├── account/          # 👤 Gestión de cuentas y usuarios
-└── examples/         # 💡 Ejemplos y testing
+presentation/
+├── dialogs/           # 🎯 UI completas de diálogos específicos
+│   └── views/         # Vistas de diálogos (configuration, feedback, tickets)
+└── widgets/
+    └── dialogs/       # 🔧 Componentes base reutilizables
+        ├── base/      # BaseDialog, StandardDialogs
+        └── components/ # DialogComponents (UI elements)
 ```
 
 ### **Nuevos Estándares Implementados**

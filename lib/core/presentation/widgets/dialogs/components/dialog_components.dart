@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../widgets/inputs/money_input_text_field.dart';
+import '../../inputs/money_input_text_field.dart';
 
 /// Componentes de UI estandarizados para diálogos siguiendo Material Design 3
 class DialogComponents {

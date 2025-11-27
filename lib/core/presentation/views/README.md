@@ -5,6 +5,6 @@ Vistas especializadas que proporcionan interfaces completas para funcionalidades
 ```
 views/
 ├── views.dart - Archivo de barril que exporta todas las vistas
-├── search_catalogue_full_screen_view.dart - Vista de búsqueda de catálogo en pantalla completa
+├── premiun_view.dart - ejemplo de futura UI comprata reutilizable
 
 ```

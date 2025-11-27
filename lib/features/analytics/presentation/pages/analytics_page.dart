@@ -228,18 +228,55 @@ class AnalyticsPage extends StatelessWidget {
         Consumer<AnalyticsProvider>(
           builder: (context, provider, _) {
             final hasActiveFilter = provider.selectedFilter != DateFilter.today;
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                PopupMenuButton<DateFilter>(
-                  icon: Icon(
-                    Icons.filter_list_rounded,
-                    color: Theme.of(context).colorScheme.onSurface,
+            final filterLabel = provider.selectedFilter.label;
+            
+            return PopupMenuButton<DateFilter>(
+              tooltip: 'Filtrar por fecha',
+              offset: const Offset(0, 50),
+              splashRadius: 24,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IgnorePointer(
+                    child: AppBarButtonCircle(
+                      icon: Icons.filter_list_rounded,
+                      text: filterLabel,
+                      tooltip: 'Filtrar por fecha',
+                      onPressed: () {},
+                      backgroundColor: hasActiveFilter
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : null,
+                      colorAccent: hasActiveFilter
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
                   ),
-                  tooltip: 'Filtrar por fecha',
-                  onSelected: (DateFilter filter) {
-                    provider.setDateFilter(filter);
-                  },
+                  // Badge indicador de filtro activo sobre el ícono
+                  if (hasActiveFilter)
+                    Positioned(
+                      left: 8,
+                      top: 8,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.surface,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              onSelected: (DateFilter filter) {
+                provider.setDateFilter(filter);
+              },
               itemBuilder: (BuildContext context) {
                 return DateFilter.values.map((DateFilter filter) {
                   final isSelected = filter == provider.selectedFilter;
@@ -270,26 +307,6 @@ class AnalyticsPage extends StatelessWidget {
                   );
                 }).toList();
               },
-            ),
-                // Badge indicador de filtro activo
-                if (hasActiveFilter)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.surface,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
             );
           },
         ),

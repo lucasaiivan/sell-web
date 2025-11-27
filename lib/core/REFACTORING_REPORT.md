@@ -608,21 +608,67 @@ UI → Providers → UseCases → Repository (interface) → DataSource → Fire
 
 ---
 
+## 🚀 Storage Abstraction (Firebase Storage) ✅
+
+### Componentes Creados
+
+**1. IStorageDataSource** - Interface abstrac ta
+- `uploadFile()` - Sube archivo y retorna URL
+- `deleteFile()` - Elimina archivo
+- `getDownloadUrl()` - Obtiene URL de descarga
+- `fileExists()` - Verifica existencia
+
+**2. StorageDataSource** - Implementación inyectable
+- Registrado como `@LazySingleton(as: IStorageDataSource)`
+- Wrapper de FirebaseStorage
+- Manejo de metadata y errores
+
+**3. StoragePaths** - Rutas centralizadas
+- `productImage()` - Producto en cuenta
+- `publicProductImage()` - Producto público
+- `publicBrandImage()` - Marca pública
+- `accountProfileImage()` - Perfil de cuenta
+- `userProfileImage()` - Avatar de usuario
+
+**4. StorageService** - Wrapper de compatibilidad
+- Métodos estáticos para código legacy
+- Usa IStorageDataSource internamente
+- Marcado como `@Deprecated` para migración futura
+
+### Migración de Uploads
+
+**Archivos actualizados:**
+- `product_edit_catalogue_view.dart`:
+  - `DatabaseCloudService.uploadProductImage()` → `StorageService.uploadProductImage()`
+  - `DatabaseCloudService.uploadBrandImage()` → `StorageService.uploadBrandImage()`
+
+**Estado:** ✅ Storage completamente abstraído y funcionando
+
+---
+
 ## 🔜 Próximos Pasos Recomendados
 
 1. ~~**Migrar features existentes** a usar `FirestoreDataSource` + `ErrorMapper`~~ ✅ **COMPLETADO**
    - ✅ Catalogue: 17 métodos migrados
    - ✅ Auth: 2 métodos migrados
    - ✅ MultiUser: 4 métodos con batch operations migrados
-2. **Agregar Either<Failure, T>** en repositories (return types)
-3. **Tests unitarios** para ErrorMapper, FirestoreDataSource y repositories migrados
-4. **Deprecar métodos** de `DatabaseCloudService` progresivamente
-5. **Logging centralizado** con stack traces preservados
-6. **Analytics** de errores con códigos específicos
+   - ✅ CashRegister: 19 métodos migrados
+   - ✅ Analytics: 1 método migrado
+2. ~~**Abstraer Firebase Storage**~~ ✅ **COMPLETADO**
+   - ✅ IStorageDataSource creado
+   - ✅ StorageDataSource implementado
+   - ✅ StoragePaths centralizado
+   - ✅ Widgets migrados
+3. **Agregar Either<Failure, T>** en repositories (return types)
+4. **Tests unitarios** para ErrorMapper, DataSources y repositories migrados
+5. **Deprecar métodos** de `DatabaseCloudService` completamente
+6. **Logging centralizado** con stack traces preservados
+7. **Analytics** de errores con códigos específicos
 
 ---
 
 **Autor:** Senior Flutter Architect + GDE Firebase  
 **Fecha:** 27/11/2025  
 **Versión Core:** 2.0.0 (World-Class Standards)  
-**Features Migradas:** Catalogue ✅ | Auth ✅ | MultiUser ✅ | CashRegister ✅ | Analytics ✅ (51 métodos totales)
+**Features Migradas:** Catalogue ✅ | Auth ✅ | MultiUser ✅ | CashRegister ✅ | Analytics ✅  
+**Abstracciones:** Firestore ✅ | Storage ✅ (51 métodos + 2 uploads migrados)

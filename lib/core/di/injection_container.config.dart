@@ -11,6 +11,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:cloud_firestore/cloud_firestore.dart' as _i974;
 import 'package:firebase_auth/firebase_auth.dart' as _i59;
+import 'package:firebase_storage/firebase_storage.dart' as _i457;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:google_sign_in/google_sign_in.dart' as _i116;
 import 'package:injectable/injectable.dart' as _i526;
@@ -21,6 +22,9 @@ import 'package:sellweb/core/services/database/i_firestore_datasource.dart'
     as _i562;
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
     as _i581;
+import 'package:sellweb/core/services/storage/i_storage_datasource.dart'
+    as _i283;
+import 'package:sellweb/core/services/storage/storage_datasource.dart' as _i390;
 import 'package:sellweb/core/USAGE_EXAMPLES.dart' as _i1071;
 import 'package:sellweb/features/analytics/data/datasources/analytics_remote_datasource.dart'
     as _i577;
@@ -254,6 +258,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final externalModule = _$ExternalModule();
     gh.lazySingleton<_i974.FirebaseFirestore>(() => externalModule.firestore);
+    gh.lazySingleton<_i457.FirebaseStorage>(() => externalModule.storage);
     gh.lazySingleton<_i581.AppDataPersistenceService>(
         () => externalModule.appDataPersistenceService);
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
@@ -290,6 +295,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i329.GetDemoProductsUseCase());
     gh.lazySingleton<_i377.GetProductByCodeUseCase>(
         () => _i377.GetProductByCodeUseCase());
+    gh.lazySingleton<_i283.IStorageDataSource>(
+        () => _i390.StorageDataSource(gh<_i457.FirebaseStorage>()));
     gh.lazySingleton<_i276.ClearLastSoldTicketUseCase>(() =>
         _i276.ClearLastSoldTicketUseCase(
             gh<_i581.AppDataPersistenceService>()));

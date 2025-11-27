@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellweb/core/core.dart';
+import 'package:sellweb/core/services/storage/storage_service.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
@@ -187,7 +188,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
       // Subir imagen si se seleccionó una nueva
       if (_newImageBytes != null) {
-        final imageUrl = await DatabaseCloudService.uploadProductImage(
+        final imageUrl = await StorageService.uploadProductImage(
             widget.product.id, _newImageBytes!);
         updatedProduct = updatedProduct.copyWith(image: imageUrl);
       }
@@ -417,7 +418,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     // Upload image if provided
                     String imageUrl = '';
                     if (brandImageBytes != null) {
-                      imageUrl = await DatabaseCloudService.uploadBrandImage(
+                      imageUrl = await StorageService.uploadBrandImage(
                         brandId,
                         brandImageBytes!,
                       );

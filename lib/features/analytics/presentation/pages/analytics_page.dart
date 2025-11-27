@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
+import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
@@ -65,11 +65,6 @@ class AnalyticsPage extends StatelessWidget {
   /// Construye el estado de éxito con las métricas y lista
   Widget _buildSuccessState(BuildContext context, AnalyticsProvider provider) {
     final analytics = provider.analytics!;
-    final currencyFormat = NumberFormat.currency(
-      locale: 'es_AR',
-      symbol: '\$',
-      decimalDigits: 2,
-    );
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -96,21 +91,21 @@ class AnalyticsPage extends StatelessWidget {
                 // 2. Facturación (Ventas Totales)
                 MetricCard(
                   title: 'Facturación',
-                  value: currencyFormat.format(analytics.totalSales),
+                  value: CurrencyHelper.formatCurrency(analytics.totalSales),
                   icon: Icons.attach_money,
                   color: Colors.green,
                 ),
                 // 3. Ganancia
                 MetricCard(
                   title: 'Ganancia',
-                  value: currencyFormat.format(analytics.totalProfit),
+                  value: CurrencyHelper.formatCurrency(analytics.totalProfit),
                   icon: Icons.trending_up,
                   color: Colors.blue,
                 ),
                 // 4. Ticket Promedio
                 MetricCard(
                   title: 'Ticket Promedio',
-                  value: currencyFormat.format(analytics.averageProfitPerTransaction),
+                  value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
                   icon: Icons.analytics,
                   color: Colors.purple,
                 ),
@@ -164,12 +159,23 @@ class AnalyticsPage extends StatelessWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final transaction = analytics.transactions[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: TransactionListItem(
-                        ticket: transaction,
-                        onTap: () => _showTransactionDetail(context, transaction),
-                      ),
+                    final isLast = index == analytics.transactions.length - 1;
+                    return Column(
+                      children: [
+                        TransactionListItem(
+                          ticket: transaction,
+                          onTap: () => _showTransactionDetail(context, transaction),
+                        ),
+                        if (!isLast)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            ),
+                          ),
+                      ],
                     );
                   },
                   childCount: analytics.transactions.length,
@@ -221,15 +227,19 @@ class AnalyticsPage extends StatelessWidget {
         // PopupMenu de filtros
         Consumer<AnalyticsProvider>(
           builder: (context, provider, _) {
-            return PopupMenuButton<DateFilter>(
-              icon: Icon(
-                Icons.filter_list_rounded,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              tooltip: 'Filtrar por fecha',
-              onSelected: (DateFilter filter) {
-                provider.setDateFilter(filter);
-              },
+            final hasActiveFilter = provider.selectedFilter != DateFilter.today;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                PopupMenuButton<DateFilter>(
+                  icon: Icon(
+                    Icons.filter_list_rounded,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  tooltip: 'Filtrar por fecha',
+                  onSelected: (DateFilter filter) {
+                    provider.setDateFilter(filter);
+                  },
               itemBuilder: (BuildContext context) {
                 return DateFilter.values.map((DateFilter filter) {
                   final isSelected = filter == provider.selectedFilter;
@@ -260,6 +270,26 @@ class AnalyticsPage extends StatelessWidget {
                   );
                 }).toList();
               },
+            ),
+                // Badge indicador de filtro activo
+                if (hasActiveFilter)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.surface,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),

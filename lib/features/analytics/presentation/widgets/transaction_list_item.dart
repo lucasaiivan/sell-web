@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 
 /// Widget: Item de Lista de Transacción
 ///
@@ -32,15 +32,10 @@ class TransactionListItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final currencyFormat = NumberFormat.currency(
-      locale: 'es_AR',
-      symbol: ticket.currencySymbol,
-      decimalDigits: 2,
-    );
-
     final isAnnulled = ticket.annulled;
     final profit = ticket.getProfit;
     final profitPercentage = ticket.getPercentageProfit;
+    final itemsCount = ticket.totalProductCount;
 
     return Card(
       elevation: 0,
@@ -149,17 +144,14 @@ class TransactionListItem extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    // Fila 3: Total de venta
+                    // Fila 3: Cantidad de artículos y estado anulado
                     Row(
                       children: [ 
                         Text(
-                          currencyFormat.format(ticket.priceTotal),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            decoration: isAnnulled ? TextDecoration.lineThrough : null,
-                            color: isAnnulled
-                                ? colorScheme.onSurfaceVariant
-                                : colorScheme.onSurface,
+                          '$itemsCount ${itemsCount == 1 ? "artículo" : "artículos"}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         if (isAnnulled) ...[
@@ -184,50 +176,65 @@ class TransactionListItem extends StatelessWidget {
                   ],
                 ),
               ),
-              // Columna derecha: Ganancia
+              // Columna derecha: Todos los montos
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Ganancia
-                  if (profit != 0)
-                    Text(
-                      currencyFormat.format(profit),
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  // Total de venta
+                  Text(
+                    CurrencyHelper.formatCurrency(ticket.priceTotal, symbol: ticket.currencySymbol),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      decoration: isAnnulled ? TextDecoration.lineThrough : null,
+                      decorationThickness: isAnnulled ? 2.5 : null, 
+                      color:  colorScheme.onSurface,
                     ),
-                  // Porcentaje
-                  if (profitPercentage != 0) ...[
-                    const SizedBox(height: 2),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          profitPercentage > 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                          size: 14,
+                  ),
+                  // Ganancia y porcentaje (solo si NO está anulado)
+                  if (!isAnnulled) ...[
+                    const SizedBox(height: 4),
+                    // Ganancia
+                    if (profit != 0)
+                      Text(
+                        CurrencyHelper.formatCurrency(profit, symbol: ticket.currencySymbol),
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(width: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: profit > 0 
-                                ? Colors.green.withValues(alpha: 0.15)
-                                : colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(4),
+                      ),
+                    // Porcentaje
+                    if (profitPercentage != 0) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            profitPercentage > 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                            size: 14,
+                            color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
                           ),
-                          child: Text(
-                            '$profitPercentage%',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: profit > 0 ? Colors.green.shade700 : colorScheme.onErrorContainer,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: profit > 0 
+                                  ? Colors.green.withValues(alpha: 0.15)
+                                  : colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '$profitPercentage%',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: profit > 0 ? Colors.green.shade700 : colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ],
                 ],
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 
 class PaymentMethodsCard extends StatelessWidget {
   final Map<String, double> paymentMethodsBreakdown;
@@ -117,7 +118,7 @@ class PaymentMethodsCard extends StatelessWidget {
                             ],
                           ),
                           Text(
-                            '\$${entry.value.toStringAsFixed(2)}',
+                            CurrencyHelper.formatCurrency(entry.value),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),

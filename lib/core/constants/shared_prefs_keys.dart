@@ -31,4 +31,7 @@ class SharedPrefsKeys {
   static const String printerName = 'thermal_printer_name';
   static const String printerVendorId = 'thermal_printer_vendor_id';
   static const String printerProductId = 'thermal_printer_product_id';
+  static const String printerHost = 'thermal_printer_host';
+  static const String printerPort = 'thermal_printer_port';
+  static const String printerConfig = 'thermal_printer_config';
 }

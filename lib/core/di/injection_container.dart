@@ -13,8 +13,8 @@ final getIt = GetIt.instance;
 
 /// Configura todas las dependencias usando injectable
 @InjectableInit()
-void configureDependencies() {
-  getIt.init();
+Future<void> configureDependencies() async {
+  await getIt.init();
 }
 
 /// Módulo para registrar dependencias externas (Firebase, SharedPreferences, etc.)

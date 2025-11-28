@@ -41,7 +41,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // ← NUEVO: Configurar inyección de dependencias para Clean Architecture
-  configureDependencies();
+  await configureDependencies();
 
   // Run app initialization
   _runApp();
@@ -78,6 +78,7 @@ void _runApp() {
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
               persistenceService: getIt<AppDataPersistenceService>(),
+              printerService: getIt<ThermalPrinterHttpService>(),
               addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
               removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
               createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
@@ -97,6 +98,8 @@ void _runApp() {
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
+              persistenceService: getIt<AppDataPersistenceService>(),
+              printerService: getIt<ThermalPrinterHttpService>(),
               addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
               removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
               createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
@@ -108,7 +111,6 @@ void _runApp() {
               prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
               saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
               getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
-              persistenceService: getIt<AppDataPersistenceService>(),
               catalogueUseCases: catalogueUseCases,
             );
           },

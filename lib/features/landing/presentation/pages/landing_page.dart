@@ -902,12 +902,17 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   }
 
   Widget _buildCTABenefit(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.95),
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
+    return RepaintBoundary(
+      child: Text(
+        text,
+        key: ValueKey(text),
+        softWrap: true,
+        textScaler: TextScaler.noScaling,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.95),
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
       ),
     );
   }

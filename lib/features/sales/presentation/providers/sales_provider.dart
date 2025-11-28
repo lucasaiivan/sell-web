@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/constants/payment_methods.dart'; 
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
@@ -151,6 +150,7 @@ class SalesProvider extends ChangeNotifier {
   
   final CatalogueUseCases? _catalogueUseCases;
   final AppDataPersistenceService _persistenceService;
+  final ThermalPrinterHttpService _printerService;
 
   // Estado encapsulado para optimizar notificaciones
   late var _state = _SalesProviderState(
@@ -184,8 +184,10 @@ class SalesProvider extends ChangeNotifier {
     required SaveLastSoldTicketUseCase saveLastSoldTicketUseCase,
     required GetLastSoldTicketUseCase getLastSoldTicketUseCase,
     required AppDataPersistenceService persistenceService,
+    required ThermalPrinterHttpService printerService,
     CatalogueUseCases? catalogueUseCases,
   })  : _persistenceService = persistenceService,
+        _printerService = printerService,
         _addProductToTicketUseCase = addProductToTicketUseCase,
         _removeProductFromTicketUseCase = removeProductFromTicketUseCase,
         _createQuickProductUseCase = createQuickProductUseCase,
@@ -976,12 +978,11 @@ class SalesProvider extends ChangeNotifier {
   /// Maneja la impresión o generación de ticket según la configuración
   Future<void> _handleTicketPrintingOrGeneration(BuildContext context) async {
     // Verificar si hay impresora conectada
-    final printerService = getIt<ThermalPrinterHttpService>();
-    await printerService.initialize();
+    await _printerService.initialize();
 
-    if (printerService.isConnected) {
+    if (_printerService.isConnected) {
       // Si hay impresora conectada, imprimir directamente
-      await _printTicketDirectly(context, printerService);
+      await _printTicketDirectly(context, _printerService);
     } else {
       // Si no hay impresora, mostrar diálogo de opciones
       await _showTicketOptionsDialog(context);

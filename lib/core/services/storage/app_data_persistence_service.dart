@@ -330,6 +330,60 @@ class AppDataPersistenceService {
     }
   }
 
+  /// Guarda el host del servidor de impresión
+  Future<void> savePrinterServerHost(String host) async {
+    try {
+      await _prefs.setString(SharedPrefsKeys.printerHost, host);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene el host del servidor de impresión
+  Future<String?> getPrinterServerHost() async {
+    try {
+      return _prefs.getString(SharedPrefsKeys.printerHost);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Guarda el puerto del servidor de impresión
+  Future<void> savePrinterServerPort(int port) async {
+    try {
+      await _prefs.setInt(SharedPrefsKeys.printerPort, port);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene el puerto del servidor de impresión
+  Future<int?> getPrinterServerPort() async {
+    try {
+      return _prefs.getInt(SharedPrefsKeys.printerPort);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Guarda la configuración JSON de la impresora
+  Future<void> savePrinterConfig(String configJson) async {
+    try {
+      await _prefs.setString(SharedPrefsKeys.printerConfig, configJson);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene la configuración JSON de la impresora
+  Future<String?> getPrinterConfig() async {
+    try {
+      return _prefs.getString(SharedPrefsKeys.printerConfig);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Elimina todas las configuraciones de impresora
   Future<void> clearPrinterSettings() async {
     try {
@@ -338,6 +392,9 @@ class AppDataPersistenceService {
         _prefs.remove(SharedPrefsKeys.printerName),
         _prefs.remove(SharedPrefsKeys.printerVendorId),
         _prefs.remove(SharedPrefsKeys.printerProductId),
+        _prefs.remove(SharedPrefsKeys.printerHost),
+        _prefs.remove(SharedPrefsKeys.printerPort),
+        _prefs.remove(SharedPrefsKeys.printerConfig),
       ]);
     } catch (e) {
       rethrow;

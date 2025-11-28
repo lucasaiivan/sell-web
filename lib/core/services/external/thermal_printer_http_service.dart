@@ -57,13 +57,12 @@ class ThermalPrinterHttpService {
   Future<void> initialize() async {
     try {
       _configuredPrinterName = await _persistence.getPrinterName();
-      // TODO: Agregar métodos para serverPort y serverHost en AppDataPersistenceService
-      _serverPort = 8080; // Temporal: usar valor por defecto
-      _serverHost = 'localhost'; // Temporal: usar valor por defecto
+      
+      _serverPort = await _persistence.getPrinterServerPort() ?? 8080;
+      _serverHost = await _persistence.getPrinterServerHost() ?? 'localhost';
 
       // Cargar configuración de impresora
-      // TODO: Agregar método getPrinterConfig en AppDataPersistenceService
-      final configString = null as String?; // Temporal
+      final configString = await _persistence.getPrinterConfig();
       if (configString != null) {
         _printerConfig = jsonDecode(configString);
       }
@@ -502,14 +501,12 @@ class ThermalPrinterHttpService {
         await _persistence.savePrinterName(_configuredPrinterName!);
       }
 
-      // TODO: Agregar métodos para guardar serverPort y serverHost en AppDataPersistenceService
-      // await _persistence.savePrinterServerPort(_serverPort);
-      // await _persistence.savePrinterServerHost(_serverHost);
+      await _persistence.savePrinterServerPort(_serverPort);
+      await _persistence.savePrinterServerHost(_serverHost);
 
-      // TODO: Agregar método savePrinterConfig en AppDataPersistenceService
-      // if (_printerConfig != null) {
-      //   await _persistence.savePrinterConfig(jsonEncode(_printerConfig));
-      // }
+      if (_printerConfig != null) {
+        await _persistence.savePrinterConfig(jsonEncode(_printerConfig));
+      }
     } catch (e) {
       if (kDebugMode) print('Error al guardar configuración: $e');
     }
@@ -519,7 +516,6 @@ class ThermalPrinterHttpService {
   Future<void> _clearConfiguration() async {
     try {
       await _persistence.clearPrinterSettings();
-      // TODO: Agregar métodos para limpiar serverPort, serverHost y config en AppDataPersistenceService
     } catch (e) {
       if (kDebugMode) print('Error al limpiar configuración: $e');
     }

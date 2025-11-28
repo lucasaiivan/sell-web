@@ -86,12 +86,24 @@ import 'package:sell_web/core/utils/functions.dart';
 ```
 
 ### Servicios Singleton
+Utilizamos el paquete `injectable` para generar singletons automáticamente.
+
 ```dart
-// Los servicios core típicamente siguen el patrón singleton
+// ✅ Forma correcta con Injectable
+@lazySingleton
+class ThemeService {
+  final AppDataPersistenceService _persistence;
+  
+  ThemeService(this._persistence);
+}
+```
+
+❌ **Evitar Singletons Manuales:**
+```dart
+// Evitar este patrón antiguo
 class ThemeService {
   static final ThemeService _instance = ThemeService._internal();
   factory ThemeService() => _instance;
-  ThemeService._internal();
 }
 ```
 

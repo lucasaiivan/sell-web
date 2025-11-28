@@ -108,6 +108,32 @@ import 'package:sellweb/core/services/theme/theme_service.dart';
 
 ## Dependency Injection
 
+El proyecto utiliza **`injectable`** y **`get_it`** para la inyección de dependencias.
+
+### Regla de Oro: Constructor Injection
+**NUNCA** usar `getIt<T>()` dentro de clases (Providers, Repositories, UseCases). Siempre inyectar las dependencias por constructor.
+
+✅ **Correcto:**
+```dart
+@injectable
+class SalesProvider extends ChangeNotifier {
+  final ThermalPrinterHttpService _printerService;
+
+  SalesProvider(this._printerService); // Inyectado
+}
+```
+
+❌ **Incorrecto:**
+```dart
+class SalesProvider extends ChangeNotifier {
+  void print() {
+    final printer = getIt<ThermalPrinterHttpService>(); // Prohibido
+    printer.print();
+  }
+}
+```
+
+### Registro de Módulos
 Cada feature registra sus dependencias en `core/di/`:
 
 ```dart
@@ -122,6 +148,41 @@ abstract class CatalogueModule {
   
   @injectable
   CatalogueProvider catalogueProvider(GetProductsUseCase useCase);
+}
+```
+
+## Backend & Data Layer
+
+### Patrón de Comunicación
+1. **Datasources**: Encargados de la comunicación directa con la fuente de datos (Firestore, API, Local Storage).
+   - Deben inyectar las instancias de terceros (ej. `FirebaseFirestore`, `SharedPreferences`).
+   - Manejan excepciones de la fuente (ej. `FirebaseException`).
+   - Retornan `Models` (DTOs).
+
+2. **Repositories**: Implementan el contrato del dominio.
+   - Inyectan los Datasources.
+   - Mapean `Models` a `Entities`.
+   - Manejan errores y retornan `Either<Failure, T>`.
+
+### Ejemplo Estándar
+```dart
+// Datasource
+@lazySingleton
+class ProductRemoteDataSource {
+  final FirebaseFirestore _firestore;
+  ProductRemoteDataSource(this._firestore);
+  
+  Future<List<ProductModel>> getProducts() async { ... }
+}
+
+// Repository
+@LazySingleton(as: ProductRepository)
+class ProductRepositoryImpl implements ProductRepository {
+  final ProductRemoteDataSource _dataSource;
+  ProductRepositoryImpl(this._dataSource);
+  
+  @override
+  Future<Either<Failure, List<Product>>> getProducts() async { ... }
 }
 ```
 

@@ -3,7 +3,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
-import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
@@ -142,6 +141,7 @@ class CashRegisterProvider extends ChangeNotifier {
   final GetTodayTransactionsStreamUseCase _getTodayTransactionsStreamUseCase;
   final GetTransactionsByDateRangeUseCase _getTransactionsByDateRangeUseCase;
   final SaveTicketToTransactionHistoryUseCase _saveTicketToTransactionHistoryUseCase;
+  final AppDataPersistenceService _persistenceService;
 
   // Stream subscriptions
   StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
@@ -203,6 +203,7 @@ class CashRegisterProvider extends ChangeNotifier {
     this._getTodayTransactionsStreamUseCase,
     this._getTransactionsByDateRangeUseCase,
     this._saveTicketToTransactionHistoryUseCase,
+    this._persistenceService,
   );
 
   @override
@@ -228,9 +229,6 @@ class CashRegisterProvider extends ChangeNotifier {
   Future<void> initializeFromPersistence(String accountId) async {
     if (accountId.isEmpty) return;
 
-    // TODO: Inyectar AppDataPersistenceService en el constructor (parte de estrategia gradual DI)
-    final persistenceService = getIt<AppDataPersistenceService>();
-
     try {
       await _loadActiveCashRegistersAndWait(accountId);
 
@@ -255,7 +253,7 @@ class CashRegisterProvider extends ChangeNotifier {
       }
 
       final savedCashRegisterId =
-          await persistenceService.getSelectedCashRegisterId();
+          await _persistenceService.getSelectedCashRegisterId();
 
       if (savedCashRegisterId != null && savedCashRegisterId.isNotEmpty) {
         final savedCashRegister = _state.activeCashRegisters
@@ -265,7 +263,7 @@ class CashRegisterProvider extends ChangeNotifier {
           _state = _state.copyWith(selectedCashRegister: savedCashRegister);
           notifyListeners();
         } else {
-          await persistenceService.clearSelectedCashRegisterId();
+          await _persistenceService.clearSelectedCashRegisterId();
         }
       }
     } catch (e) {
@@ -353,13 +351,11 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   Future<void> selectCashRegister(CashRegister cashRegister) async {
-    final persistenceService = getIt<AppDataPersistenceService>();
-
     try {
       clearTicketsCache();
       _state = _state.copyWith(selectedCashRegister: cashRegister);
       notifyListeners();
-      await persistenceService.saveSelectedCashRegisterId(cashRegister.id);
+      await _persistenceService.saveSelectedCashRegisterId(cashRegister.id);
     } catch (e) {
       _state = _state.copyWith(clearSelectedCashRegister: true);
       notifyListeners();
@@ -368,13 +364,11 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   Future<void> clearSelectedCashRegister() async {
-    final persistenceService = getIt<AppDataPersistenceService>();
-
     try {
       _state = _state.copyWith(clearSelectedCashRegister: true);
       clearTicketsCache();
       notifyListeners();
-      await persistenceService.clearSelectedCashRegisterId();
+      await _persistenceService.clearSelectedCashRegisterId();
     } catch (e) {
       _state = _state.copyWith(errorMessage: 'Error al limpiar selección: $e');
       notifyListeners();

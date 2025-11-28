@@ -504,47 +504,8 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i840.AccountRepository>(),
               gh<_i581.AppDataPersistenceService>(),
             ));
-    gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
-          gh<_i512.OpenCashRegisterUseCase>(),
-          gh<_i202.CloseCashRegisterUseCase>(),
-          gh<_i216.GetActiveCashRegistersUseCase>(),
-          gh<_i797.GetActiveCashRegistersStreamUseCase>(),
-          gh<_i457.AddCashInflowUseCase>(),
-          gh<_i9.AddCashOutflowUseCase>(),
-          gh<_i90.UpdateSalesAndBillingUseCase>(),
-          gh<_i95.GetCashRegisterHistoryUseCase>(),
-          gh<_i522.GetCashRegisterByDaysUseCase>(),
-          gh<_i760.GetCashRegisterByDateRangeUseCase>(),
-          gh<_i547.ProcessTicketAnnullmentUseCase>(),
-          gh<_i23.CreateCashRegisterFixedDescriptionUseCase>(),
-          gh<_i322.GetCashRegisterFixedDescriptionsUseCase>(),
-          gh<_i264.DeleteCashRegisterFixedDescriptionUseCase>(),
-          gh<_i34.GetTodayTransactionsStreamUseCase>(),
-          gh<_i466.GetTransactionsByDateRangeUseCase>(),
-          gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
-        ));
     gh.lazySingleton<_i754.MultiUserRepository>(() =>
         _i431.MultiUserRepositoryImpl(gh<_i925.MultiUserRemoteDataSource>()));
-    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
-          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
-          addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
-          removeProductFromTicketUseCase:
-              gh<_i449.RemoveProductFromTicketUseCase>(),
-          createQuickProductUseCase: gh<_i853.CreateQuickProductUseCase>(),
-          setTicketPaymentModeUseCase: gh<_i953.SetTicketPaymentModeUseCase>(),
-          setTicketDiscountUseCase: gh<_i240.SetTicketDiscountUseCase>(),
-          setTicketReceivedCashUseCase:
-              gh<_i519.SetTicketReceivedCashUseCase>(),
-          associateTicketWithCashRegisterUseCase:
-              gh<_i1056.AssociateTicketWithCashRegisterUseCase>(),
-          prepareSaleTicketUseCase: gh<_i399.PrepareSaleTicketUseCase>(),
-          prepareTicketForTransactionUseCase:
-              gh<_i220.PrepareTicketForTransactionUseCase>(),
-          saveLastSoldTicketUseCase: gh<_i401.SaveLastSoldTicketUseCase>(),
-          getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
-          persistenceService: gh<_i581.AppDataPersistenceService>(),
-          catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
-        ));
     gh.lazySingleton<_i442.CreateUserUseCase>(
         () => _i442.CreateUserUseCase(gh<_i754.MultiUserRepository>()));
     gh.lazySingleton<_i353.GetUsersUseCase>(
@@ -574,6 +535,47 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i158.SignOutUseCase>(),
           gh<_i557.GetUserStreamUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
+        ));
+    gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
+          gh<_i512.OpenCashRegisterUseCase>(),
+          gh<_i202.CloseCashRegisterUseCase>(),
+          gh<_i216.GetActiveCashRegistersUseCase>(),
+          gh<_i797.GetActiveCashRegistersStreamUseCase>(),
+          gh<_i457.AddCashInflowUseCase>(),
+          gh<_i9.AddCashOutflowUseCase>(),
+          gh<_i90.UpdateSalesAndBillingUseCase>(),
+          gh<_i95.GetCashRegisterHistoryUseCase>(),
+          gh<_i522.GetCashRegisterByDaysUseCase>(),
+          gh<_i760.GetCashRegisterByDateRangeUseCase>(),
+          gh<_i547.ProcessTicketAnnullmentUseCase>(),
+          gh<_i23.CreateCashRegisterFixedDescriptionUseCase>(),
+          gh<_i322.GetCashRegisterFixedDescriptionsUseCase>(),
+          gh<_i264.DeleteCashRegisterFixedDescriptionUseCase>(),
+          gh<_i34.GetTodayTransactionsStreamUseCase>(),
+          gh<_i466.GetTransactionsByDateRangeUseCase>(),
+          gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
+          gh<_i581.AppDataPersistenceService>(),
+        ));
+    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
+          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
+          addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
+          removeProductFromTicketUseCase:
+              gh<_i449.RemoveProductFromTicketUseCase>(),
+          createQuickProductUseCase: gh<_i853.CreateQuickProductUseCase>(),
+          setTicketPaymentModeUseCase: gh<_i953.SetTicketPaymentModeUseCase>(),
+          setTicketDiscountUseCase: gh<_i240.SetTicketDiscountUseCase>(),
+          setTicketReceivedCashUseCase:
+              gh<_i519.SetTicketReceivedCashUseCase>(),
+          associateTicketWithCashRegisterUseCase:
+              gh<_i1056.AssociateTicketWithCashRegisterUseCase>(),
+          prepareSaleTicketUseCase: gh<_i399.PrepareSaleTicketUseCase>(),
+          prepareTicketForTransactionUseCase:
+              gh<_i220.PrepareTicketForTransactionUseCase>(),
+          saveLastSoldTicketUseCase: gh<_i401.SaveLastSoldTicketUseCase>(),
+          getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
+          persistenceService: gh<_i581.AppDataPersistenceService>(),
+          printerService: gh<_i897.ThermalPrinterHttpService>(),
+          catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
         ));
     gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
         () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));

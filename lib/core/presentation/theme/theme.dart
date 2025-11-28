@@ -2,4 +2,4 @@
 // THEME EXPORTS
 // ==========================================
 
-export 'theme_service.dart';
+export '../../services/theme/theme_service.dart';

@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/shared_prefs_keys.dart';
 
@@ -10,14 +11,11 @@ import '../../constants/shared_prefs_keys.dart';
 /// - Persistencia de tickets (actual y último vendido)
 /// - Persistencia de configuraciones de impresión
 /// - Otras configuraciones locales de la aplicación
+@lazySingleton
 class AppDataPersistenceService {
-  static AppDataPersistenceService? _instance;
-  static AppDataPersistenceService get instance {
-    _instance ??= AppDataPersistenceService._();
-    return _instance!;
-  }
-
-  AppDataPersistenceService._();
+  final SharedPreferences _prefs;
+  
+  AppDataPersistenceService(this._prefs);
 
   // ==========================================
   // GESTIÓN DE CUENTAS
@@ -26,8 +24,7 @@ class AppDataPersistenceService {
   /// Guarda el ID de la cuenta seleccionada
   Future<void> saveSelectedAccountId(String accountId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.selectedAccountId, accountId);
+      await _prefs.setString(SharedPrefsKeys.selectedAccountId, accountId);
     } catch (e) {
       rethrow;
     }
@@ -36,8 +33,7 @@ class AppDataPersistenceService {
   /// Obtiene el ID de la cuenta seleccionada
   Future<String?> getSelectedAccountId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.selectedAccountId);
+      return _prefs.getString(SharedPrefsKeys.selectedAccountId);
     } catch (e) {
       return null;
     }
@@ -46,8 +42,7 @@ class AppDataPersistenceService {
   /// Elimina el ID de la cuenta seleccionada
   Future<void> clearSelectedAccountId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.selectedAccountId);
+      await _prefs.remove(SharedPrefsKeys.selectedAccountId);
     } catch (e) {
       rethrow;
     }
@@ -62,8 +57,7 @@ class AppDataPersistenceService {
   /// Guarda el AdminProfile actual en formato JSON
   Future<void> saveCurrentAdminProfile(String adminProfileJson) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
+      await _prefs.setString(
           SharedPrefsKeys.currentAdminProfile, adminProfileJson);
     } catch (e) {
       rethrow;
@@ -73,8 +67,7 @@ class AppDataPersistenceService {
   /// Obtiene el AdminProfile actual desde persistencia
   Future<String?> getCurrentAdminProfile() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.currentAdminProfile);
+      return _prefs.getString(SharedPrefsKeys.currentAdminProfile);
     } catch (e) {
       return null;
     }
@@ -83,8 +76,7 @@ class AppDataPersistenceService {
   /// Elimina el AdminProfile guardado
   Future<void> clearCurrentAdminProfile() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.currentAdminProfile);
+      await _prefs.remove(SharedPrefsKeys.currentAdminProfile);
     } catch (e) {
       rethrow;
     }
@@ -97,8 +89,7 @@ class AppDataPersistenceService {
   /// Guarda el ID de la caja registradora seleccionada
   Future<void> saveSelectedCashRegisterId(String cashRegisterId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
+      await _prefs.setString(
           SharedPrefsKeys.selectedCashRegisterId, cashRegisterId);
     } catch (e) {
       rethrow;
@@ -108,8 +99,7 @@ class AppDataPersistenceService {
   /// Obtiene el ID de la caja registradora seleccionada
   Future<String?> getSelectedCashRegisterId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.selectedCashRegisterId);
+      return _prefs.getString(SharedPrefsKeys.selectedCashRegisterId);
     } catch (e) {
       return null;
     }
@@ -118,8 +108,7 @@ class AppDataPersistenceService {
   /// Elimina el ID de la caja registradora seleccionada
   Future<void> clearSelectedCashRegisterId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.selectedCashRegisterId);
+      await _prefs.remove(SharedPrefsKeys.selectedCashRegisterId);
     } catch (e) {
       rethrow;
     }
@@ -138,8 +127,7 @@ class AppDataPersistenceService {
   /// Guarda el modo del tema de la aplicación
   Future<void> saveThemeMode(String themeMode) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.themeMode, themeMode);
+      await _prefs.setString(SharedPrefsKeys.themeMode, themeMode);
     } catch (e) {
       rethrow;
     }
@@ -148,8 +136,7 @@ class AppDataPersistenceService {
   /// Obtiene el modo del tema de la aplicación
   Future<String?> getThemeMode() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.themeMode);
+      return _prefs.getString(SharedPrefsKeys.themeMode);
     } catch (e) {
       return null;
     }
@@ -158,8 +145,8 @@ class AppDataPersistenceService {
   /// Elimina la configuración del tema
   Future<void> clearThemeMode() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.themeMode);
+      // Using injected _prefs
+      await _prefs.remove(SharedPrefsKeys.themeMode);
     } catch (e) {
       rethrow;
     }
@@ -168,8 +155,8 @@ class AppDataPersistenceService {
   /// Guarda el color semilla del tema
   Future<void> saveSeedColor(int colorValue) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(SharedPrefsKeys.seedColor, colorValue);
+      // Using injected _prefs
+      await _prefs.setInt(SharedPrefsKeys.seedColor, colorValue);
     } catch (e) {
       rethrow;
     }
@@ -178,8 +165,8 @@ class AppDataPersistenceService {
   /// Obtiene el color semilla del tema
   Future<int?> getSeedColor() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getInt(SharedPrefsKeys.seedColor);
+      // Using injected _prefs
+      return _prefs.getInt(SharedPrefsKeys.seedColor);
     } catch (e) {
       return null;
     }
@@ -188,8 +175,8 @@ class AppDataPersistenceService {
   /// Elimina la configuración del color semilla
   Future<void> clearSeedColor() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.seedColor);
+      // Using injected _prefs
+      await _prefs.remove(SharedPrefsKeys.seedColor);
     } catch (e) {
       rethrow;
     }
@@ -202,8 +189,8 @@ class AppDataPersistenceService {
   /// Guarda el ticket actual en progreso
   Future<void> saveCurrentTicket(String ticketJson) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.currentTicket, ticketJson);
+      // Using injected _prefs
+      await _prefs.setString(SharedPrefsKeys.currentTicket, ticketJson);
     } catch (e) {
       rethrow;
     }
@@ -212,8 +199,8 @@ class AppDataPersistenceService {
   /// Obtiene el ticket actual en progreso
   Future<String?> getCurrentTicket() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.currentTicket);
+      // Using injected _prefs
+      return _prefs.getString(SharedPrefsKeys.currentTicket);
     } catch (e) {
       return null;
     }
@@ -222,8 +209,8 @@ class AppDataPersistenceService {
   /// Elimina el ticket actual
   Future<void> clearCurrentTicket() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.currentTicket);
+      // Using injected _prefs
+      await _prefs.remove(SharedPrefsKeys.currentTicket);
     } catch (e) {
       rethrow;
     }
@@ -232,8 +219,8 @@ class AppDataPersistenceService {
   /// Guarda el último ticket vendido
   Future<void> saveLastSoldTicket(String ticketJson) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.lastSoldTicket, ticketJson);
+      // Using injected _prefs
+      await _prefs.setString(SharedPrefsKeys.lastSoldTicket, ticketJson);
     } catch (e) {
       rethrow;
     }
@@ -242,8 +229,8 @@ class AppDataPersistenceService {
   /// Obtiene el último ticket vendido
   Future<String?> getLastSoldTicket() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.lastSoldTicket);
+      // Using injected _prefs
+      return _prefs.getString(SharedPrefsKeys.lastSoldTicket);
     } catch (e) {
       return null;
     }
@@ -252,8 +239,8 @@ class AppDataPersistenceService {
   /// Elimina el último ticket vendido
   Future<void> clearLastSoldTicket() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.lastSoldTicket);
+      // Using injected _prefs
+      await _prefs.remove(SharedPrefsKeys.lastSoldTicket);
     } catch (e) {
       rethrow;
     }
@@ -266,8 +253,8 @@ class AppDataPersistenceService {
   /// Guarda el estado de si se debe imprimir ticket automáticamente
   Future<void> saveShouldPrintTicket(bool shouldPrint) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(SharedPrefsKeys.shouldPrintTicket, shouldPrint);
+      // Using injected _prefs
+      await _prefs.setBool(SharedPrefsKeys.shouldPrintTicket, shouldPrint);
     } catch (e) {
       rethrow;
     }
@@ -276,8 +263,8 @@ class AppDataPersistenceService {
   /// Obtiene el estado de si se debe imprimir ticket automáticamente
   Future<bool> getShouldPrintTicket() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
+      // Using injected _prefs
+      return _prefs.getBool(SharedPrefsKeys.shouldPrintTicket) ?? false;
     } catch (e) {
       return false;
     }
@@ -286,8 +273,8 @@ class AppDataPersistenceService {
   /// Guarda el nombre de la impresora térmica
   Future<void> savePrinterName(String printerName) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.printerName, printerName);
+      // Using injected _prefs
+      await _prefs.setString(SharedPrefsKeys.printerName, printerName);
     } catch (e) {
       rethrow;
     }
@@ -296,8 +283,8 @@ class AppDataPersistenceService {
   /// Obtiene el nombre de la impresora térmica
   Future<String?> getPrinterName() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.printerName);
+      // Using injected _prefs
+      return _prefs.getString(SharedPrefsKeys.printerName);
     } catch (e) {
       return null;
     }
@@ -306,8 +293,8 @@ class AppDataPersistenceService {
   /// Guarda el vendor ID de la impresora térmica
   Future<void> savePrinterVendorId(String vendorId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.printerVendorId, vendorId);
+      // Using injected _prefs
+      await _prefs.setString(SharedPrefsKeys.printerVendorId, vendorId);
     } catch (e) {
       rethrow;
     }
@@ -316,8 +303,8 @@ class AppDataPersistenceService {
   /// Obtiene el vendor ID de la impresora térmica
   Future<String?> getPrinterVendorId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.printerVendorId);
+      // Using injected _prefs
+      return _prefs.getString(SharedPrefsKeys.printerVendorId);
     } catch (e) {
       return null;
     }
@@ -326,8 +313,8 @@ class AppDataPersistenceService {
   /// Guarda el product ID de la impresora térmica
   Future<void> savePrinterProductId(String productId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(SharedPrefsKeys.printerProductId, productId);
+      // Using injected _prefs
+      await _prefs.setString(SharedPrefsKeys.printerProductId, productId);
     } catch (e) {
       rethrow;
     }
@@ -336,8 +323,8 @@ class AppDataPersistenceService {
   /// Obtiene el product ID de la impresora térmica
   Future<String?> getPrinterProductId() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(SharedPrefsKeys.printerProductId);
+      // Using injected _prefs
+      return _prefs.getString(SharedPrefsKeys.printerProductId);
     } catch (e) {
       return null;
     }
@@ -346,11 +333,11 @@ class AppDataPersistenceService {
   /// Elimina todas las configuraciones de impresora
   Future<void> clearPrinterSettings() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      // Using injected _prefs
       await Future.wait([
-        prefs.remove(SharedPrefsKeys.printerName),
-        prefs.remove(SharedPrefsKeys.printerVendorId),
-        prefs.remove(SharedPrefsKeys.printerProductId),
+        _prefs.remove(SharedPrefsKeys.printerName),
+        _prefs.remove(SharedPrefsKeys.printerVendorId),
+        _prefs.remove(SharedPrefsKeys.printerProductId),
       ]);
     } catch (e) {
       rethrow;
@@ -364,8 +351,8 @@ class AppDataPersistenceService {
   /// Limpia todas las configuraciones almacenadas (útil para logout completo)
   Future<void> clearAllData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      // Using injected _prefs
+      await _prefs.clear();
     } catch (e) {
       rethrow;
     }
@@ -374,13 +361,13 @@ class AppDataPersistenceService {
   /// Limpia solo los datos de sesión (mantiene configuraciones generales como tema)
   Future<void> clearSessionData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      // Using injected _prefs
       await Future.wait([
-        prefs.remove(SharedPrefsKeys.selectedAccountId),
-        prefs.remove(SharedPrefsKeys.currentAdminProfile),
-        prefs.remove(SharedPrefsKeys.selectedCashRegisterId),
-        prefs.remove(SharedPrefsKeys.currentTicket),
-        prefs.remove(SharedPrefsKeys.lastSoldTicket),
+        _prefs.remove(SharedPrefsKeys.selectedAccountId),
+        _prefs.remove(SharedPrefsKeys.currentAdminProfile),
+        _prefs.remove(SharedPrefsKeys.selectedCashRegisterId),
+        _prefs.remove(SharedPrefsKeys.currentTicket),
+        _prefs.remove(SharedPrefsKeys.lastSoldTicket),
       ]);
     } catch (e) {
       rethrow;
@@ -390,8 +377,8 @@ class AppDataPersistenceService {
   /// Obtiene todas las claves almacenadas (útil para debugging)
   Future<Set<String>> getAllKeys() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getKeys();
+      // Using injected _prefs
+      return _prefs.getKeys();
     } catch (e) {
       return <String>{};
     }
@@ -400,8 +387,8 @@ class AppDataPersistenceService {
   /// Verifica si existe una clave específica
   Future<bool> containsKey(String key) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.containsKey(key);
+      // Using injected _prefs
+      return _prefs.containsKey(key);
     } catch (e) {
       return false;
     }

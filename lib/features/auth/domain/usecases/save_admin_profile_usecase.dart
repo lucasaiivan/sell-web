@@ -22,8 +22,7 @@ class SaveAdminProfileParams {
 class SaveAdminProfileUseCase extends UseCase<void, SaveAdminProfileParams> {
   final AppDataPersistenceService _persistenceService;
 
-  SaveAdminProfileUseCase({AppDataPersistenceService? persistenceService})
-      : _persistenceService = persistenceService ?? AppDataPersistenceService.instance;
+  SaveAdminProfileUseCase(this._persistenceService);
 
   /// Ejecuta el guardado del AdminProfile
   ///

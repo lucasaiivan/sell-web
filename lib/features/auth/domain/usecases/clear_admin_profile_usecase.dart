@@ -12,8 +12,7 @@ import '../../../../core/services/storage/app_data_persistence_service.dart';
 class ClearAdminProfileUseCase extends UseCase<void, NoParams> {
   final AppDataPersistenceService _persistenceService;
 
-  ClearAdminProfileUseCase({AppDataPersistenceService? persistenceService})
-      : _persistenceService = persistenceService ?? AppDataPersistenceService.instance;
+  ClearAdminProfileUseCase(this._persistenceService);
 
   /// Ejecuta la limpieza del AdminProfile
   ///

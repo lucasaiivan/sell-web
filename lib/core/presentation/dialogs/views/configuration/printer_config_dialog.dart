@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import '../../../widgets/dialogs/base/base_dialog.dart';
 import '../../../widgets/dialogs/base/standard_dialogs.dart';
@@ -18,7 +19,7 @@ class PrinterConfigDialog extends StatefulWidget {
 
 class _PrinterConfigDialogState extends State<PrinterConfigDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _printerService = ThermalPrinterHttpService();
+  final _printerService = getIt<ThermalPrinterHttpService>();
   final _serverHostController = TextEditingController();
   final _serverPortController = TextEditingController();
   final _devicePathController = TextEditingController();

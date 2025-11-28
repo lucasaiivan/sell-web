@@ -1,6 +1,7 @@
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
+import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
@@ -36,7 +37,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
   }
 
   Future<void> _checkPrinterAndSetDefaults() async {
-    final printerService = ThermalPrinterHttpService();
+    final printerService = getIt<ThermalPrinterHttpService>();
     await printerService.initialize();
 
     setState(() {
@@ -319,7 +320,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     setState(() => _isProcessing = true);
 
     try {
-      final printerService = ThermalPrinterHttpService();
+      final printerService = getIt<ThermalPrinterHttpService>();
       await printerService.initialize();
 
       // Preparar datos del ticket

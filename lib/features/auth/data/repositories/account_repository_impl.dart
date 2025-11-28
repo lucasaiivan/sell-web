@@ -20,10 +20,9 @@ class AccountRepositoryImpl implements AccountRepository {
   final IFirestoreDataSource _dataSource;
 
   AccountRepositoryImpl(
-    this._dataSource, {
-    AppDataPersistenceService? persistenceService,
-  }) : _persistenceService =
-            persistenceService ?? AppDataPersistenceService.instance;
+    this._dataSource,
+    this._persistenceService,
+  );
 
   @override
   Future<List<AdminProfile>> getUserAccounts(String email) async {

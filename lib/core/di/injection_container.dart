@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
-import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'injection_container.config.dart';
 
@@ -28,9 +28,10 @@ abstract class ExternalModule {
   @lazySingleton
   FirebaseStorage get storage => FirebaseStorage.instance;
 
-  /// Instancia de AppDataPersistenceService
+  /// Instancia de SharedPreferences (async precomputed)
+  @preResolve
   @lazySingleton
-  AppDataPersistenceService get appDataPersistenceService => AppDataPersistenceService.instance;
+  Future<SharedPreferences> get sharedPreferences => SharedPreferences.getInstance();
 
   @lazySingleton
   FirebaseAuth get firebaseAuth => FirebaseAuth.instance;

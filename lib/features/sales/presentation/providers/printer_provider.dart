@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 
 /// Provider para gestionar el estado de conexión de impresora térmica
@@ -14,11 +15,14 @@ import 'package:sellweb/core/services/external/thermal_printer_http_service.dart
 /// await printerProvider.initialize(); // Inicializar conexión
 /// await printerProvider.connectPrinter(serverHost: '192.168.1.100');
 /// ```
+@injectable
 class PrinterProvider extends ChangeNotifier {
-  final ThermalPrinterHttpService _printerService = ThermalPrinterHttpService();
+  final ThermalPrinterHttpService _printerService;
 
   bool _isConnected = false;
   String? _lastError;
+
+  PrinterProvider(this._printerService);
 
   bool get isConnected => _isConnected;
   String? get lastError => _lastError;

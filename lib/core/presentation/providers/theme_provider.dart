@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
-import 'package:sellweb/core/presentation/theme/theme_service.dart';
+import 'package:sellweb/core/services/theme/theme_service.dart';
 
 /// Provider para gestionar el tema de la aplicación
 ///
@@ -19,16 +20,16 @@ import 'package:sellweb/core/presentation/theme/theme_service.dart';
 /// themeProvider.toggleTheme(); // Alternar entre claro/oscuro
 /// themeProvider.changeSeedColor(Colors.blue); // Cambiar color semilla
 /// ```
+@injectable
 class ThemeDataAppProvider extends ChangeNotifier {
-  final ThemeService _themeService = ThemeService.instance;
-  final AppDataPersistenceService _persistenceService =
-      AppDataPersistenceService.instance;
+  final ThemeService _themeService;
+  final AppDataPersistenceService _persistenceService;
 
   // Referencias a listeners para poder removerlos
   late final VoidCallback _themeModeListener;
   late final VoidCallback _seedColorListener;
 
-  ThemeDataAppProvider() {
+  ThemeDataAppProvider(this._themeService, this._persistenceService) {
     _loadTheme();
     _loadSeedColor();
     

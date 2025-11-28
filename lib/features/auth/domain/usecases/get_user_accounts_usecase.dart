@@ -25,10 +25,9 @@ class GetUserAccountsUseCase {
   final AppDataPersistenceService _persistenceService;
 
   GetUserAccountsUseCase(
-    this._repository, {
-    AppDataPersistenceService? persistenceService,
-  }) : _persistenceService =
-            persistenceService ?? AppDataPersistenceService.instance;
+    this._repository,
+    this._persistenceService,
+  );
 
   // ==========================================
   // OPERACIONES DE REPOSITORIO

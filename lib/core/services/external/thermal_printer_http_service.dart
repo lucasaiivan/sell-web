@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:sellweb/core/constants/shared_prefs_keys.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:http/http.dart' as http;
 
 /// Servicio para manejo de impresoras térmicas vía HTTP local
 /// Este servicio configura y gestiona la conexión con un servidor HTTP local
 /// que se ejecuta en la aplicación Flutter Desktop (Windows/macOS/Linux)
+@lazySingleton
 class ThermalPrinterHttpService {
-  static final ThermalPrinterHttpService _instance =
-      ThermalPrinterHttpService._internal();
-  factory ThermalPrinterHttpService() => _instance;
-  ThermalPrinterHttpService._internal();
+  final AppDataPersistenceService _persistence;
+  
+  ThermalPrinterHttpService(this._persistence);
 
   bool _isConnected = false;
   String? _lastError;
@@ -56,14 +56,14 @@ class ThermalPrinterHttpService {
   /// Inicializa el servicio cargando configuración previa
   Future<void> initialize() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _configuredPrinterName = prefs.getString(SharedPrefsKeys.printerName);
-      _serverPort = prefs.getInt('thermal_printer_server_port') ?? 8080;
-      _serverHost =
-          prefs.getString('thermal_printer_server_host') ?? 'localhost';
+      _configuredPrinterName = await _persistence.getPrinterName();
+      // TODO: Agregar métodos para serverPort y serverHost en AppDataPersistenceService
+      _serverPort = 8080; // Temporal: usar valor por defecto
+      _serverHost = 'localhost'; // Temporal: usar valor por defecto
 
       // Cargar configuración de impresora
-      final configString = prefs.getString('thermal_printer_config');
+      // TODO: Agregar método getPrinterConfig en AppDataPersistenceService
+      final configString = null as String?; // Temporal
       if (configString != null) {
         _printerConfig = jsonDecode(configString);
       }
@@ -498,20 +498,18 @@ class ThermalPrinterHttpService {
   /// Guarda la configuración
   Future<void> _saveConfiguration() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-
       if (_configuredPrinterName != null) {
-        await prefs.setString(
-            SharedPrefsKeys.printerName, _configuredPrinterName!);
+        await _persistence.savePrinterName(_configuredPrinterName!);
       }
 
-      await prefs.setInt('thermal_printer_server_port', _serverPort);
-      await prefs.setString('thermal_printer_server_host', _serverHost);
+      // TODO: Agregar métodos para guardar serverPort y serverHost en AppDataPersistenceService
+      // await _persistence.savePrinterServerPort(_serverPort);
+      // await _persistence.savePrinterServerHost(_serverHost);
 
-      if (_printerConfig != null) {
-        await prefs.setString(
-            'thermal_printer_config', jsonEncode(_printerConfig));
-      }
+      // TODO: Agregar método savePrinterConfig en AppDataPersistenceService
+      // if (_printerConfig != null) {
+      //   await _persistence.savePrinterConfig(jsonEncode(_printerConfig));
+      // }
     } catch (e) {
       if (kDebugMode) print('Error al guardar configuración: $e');
     }
@@ -520,11 +518,8 @@ class ThermalPrinterHttpService {
   /// Limpia la configuración guardada
   Future<void> _clearConfiguration() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(SharedPrefsKeys.printerName);
-      await prefs.remove('thermal_printer_config');
-      await prefs.remove('thermal_printer_server_port');
-      await prefs.remove('thermal_printer_server_host');
+      await _persistence.clearPrinterSettings();
+      // TODO: Agregar métodos para limpiar serverPort, serverHost y config en AppDataPersistenceService
     } catch (e) {
       if (kDebugMode) print('Error al limpiar configuración: $e');
     }

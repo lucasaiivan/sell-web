@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
@@ -227,7 +228,8 @@ class CashRegisterProvider extends ChangeNotifier {
   Future<void> initializeFromPersistence(String accountId) async {
     if (accountId.isEmpty) return;
 
-    final persistenceService = AppDataPersistenceService.instance;
+    // TODO: Inyectar AppDataPersistenceService en el constructor (parte de estrategia gradual DI)
+    final persistenceService = getIt<AppDataPersistenceService>();
 
     try {
       await _loadActiveCashRegistersAndWait(accountId);
@@ -351,7 +353,7 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   Future<void> selectCashRegister(CashRegister cashRegister) async {
-    final persistenceService = AppDataPersistenceService.instance;
+    final persistenceService = getIt<AppDataPersistenceService>();
 
     try {
       clearTicketsCache();
@@ -366,7 +368,7 @@ class CashRegisterProvider extends ChangeNotifier {
   }
 
   Future<void> clearSelectedCashRegister() async {
-    final persistenceService = AppDataPersistenceService.instance;
+    final persistenceService = getIt<AppDataPersistenceService>();
 
     try {
       _state = _state.copyWith(clearSelectedCashRegister: true);

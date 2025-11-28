@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/features/home/presentation/pages/home_page.dart';
-import 'package:sellweb/core/services/printing/printer_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
@@ -29,6 +29,9 @@ import 'package:sellweb/features/sales/domain/usecases/prepare_sale_ticket_useca
 import 'package:sellweb/features/sales/domain/usecases/prepare_ticket_for_transaction_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/save_last_sold_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usecase.dart';
+import 'package:sellweb/core/services/theme/theme_service.dart';
+import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 
 void main() async {
   // CRITICAL: Initialize bindings FIRST in the main zone, synchronously
@@ -52,8 +55,15 @@ void _runApp() {
     MultiProvider(
       providers: [
         // Providers globales que no dependen del estado de autenticación
-        ChangeNotifierProvider(create: (_) => ThemeDataAppProvider()),
-        ChangeNotifierProvider(create: (_) => PrinterProvider()..initialize()),
+        ChangeNotifierProvider(
+          create: (_) => ThemeDataAppProvider(
+            getIt<ThemeService>(),
+            getIt<AppDataPersistenceService>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PrinterProvider(getIt<ThermalPrinterHttpService>())..initialize(),
+        ),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
 
         // AuthProvider - gestiona el estado de autenticación
@@ -67,6 +77,7 @@ void _runApp() {
             final catalogueUseCases = CatalogueUseCases(catalogueRepository);
             return SalesProvider(
               getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
+              persistenceService: getIt<AppDataPersistenceService>(),
               addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
               removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
               createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
@@ -97,6 +108,7 @@ void _runApp() {
               prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
               saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
               getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
+              persistenceService: getIt<AppDataPersistenceService>(),
               catalogueUseCases: catalogueUseCases,
             );
           },

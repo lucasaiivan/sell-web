@@ -15,8 +15,7 @@ import '../entities/admin_profile.dart';
 class LoadAdminProfileUseCase extends UseCase<AdminProfile?, NoParams> {
   final AppDataPersistenceService _persistenceService;
 
-  LoadAdminProfileUseCase({AppDataPersistenceService? persistenceService})
-      : _persistenceService = persistenceService ?? AppDataPersistenceService.instance;
+  LoadAdminProfileUseCase(this._persistenceService);
 
   /// Ejecuta la carga del AdminProfile local
   ///

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 
 /// Servicio para manejar el tema dinámico de la app y configuración de estilos
+@lazySingleton
 class ThemeService {
-  static ThemeService? _instance;
-  static ThemeService get instance {
-    _instance ??= ThemeService._();
-    return _instance!;
-  }
-
-  ThemeService._();
+  // ignore: unused_field
+  final AppDataPersistenceService _persistence;
+  
+  ThemeService(this._persistence);
 
   final ValueNotifier<ThemeMode> _themeMode = ValueNotifier(ThemeMode.system);
   final ValueNotifier<Color> _seedColor = ValueNotifier(Colors.blue);

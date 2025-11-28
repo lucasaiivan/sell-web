@@ -16,15 +16,20 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:google_sign_in/google_sign_in.dart' as _i116;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:sellweb/core/di/injection_container.dart' as _i220;
+import 'package:sellweb/core/presentation/providers/theme_provider.dart'
+    as _i984;
 import 'package:sellweb/core/services/database/firestore_datasource.dart'
     as _i485;
 import 'package:sellweb/core/services/database/i_firestore_datasource.dart'
     as _i562;
+import 'package:sellweb/core/services/external/thermal_printer_http_service.dart'
+    as _i897;
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
     as _i581;
 import 'package:sellweb/core/services/storage/i_storage_datasource.dart'
     as _i283;
 import 'package:sellweb/core/services/storage/storage_datasource.dart' as _i390;
+import 'package:sellweb/core/services/theme/theme_service.dart' as _i750;
 import 'package:sellweb/core/USAGE_EXAMPLES.dart' as _i1071;
 import 'package:sellweb/features/analytics/data/datasources/analytics_remote_datasource.dart'
     as _i577;
@@ -242,15 +247,18 @@ import 'package:sellweb/features/sales/domain/usecases/set_ticket_received_cash_
     as _i519;
 import 'package:sellweb/features/sales/domain/usecases/update_ticket_fields_usecase.dart'
     as _i382;
+import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart'
+    as _i178;
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart'
     as _i454;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(
       this,
       environment,
@@ -259,8 +267,10 @@ extension GetItInjectableX on _i174.GetIt {
     final externalModule = _$ExternalModule();
     gh.lazySingleton<_i974.FirebaseFirestore>(() => externalModule.firestore);
     gh.lazySingleton<_i457.FirebaseStorage>(() => externalModule.storage);
-    gh.lazySingleton<_i581.AppDataPersistenceService>(
-        () => externalModule.appDataPersistenceService);
+    await gh.lazySingletonAsync<_i460.SharedPreferences>(
+      () => externalModule.sharedPreferences,
+      preResolve: true,
+    );
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn);
     gh.lazySingleton<_i853.CreateQuickProductUseCase>(
@@ -297,6 +307,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i377.GetProductByCodeUseCase());
     gh.lazySingleton<_i283.IStorageDataSource>(
         () => _i390.StorageDataSource(gh<_i457.FirebaseStorage>()));
+    gh.lazySingleton<_i581.AppDataPersistenceService>(
+        () => _i581.AppDataPersistenceService(gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i276.ClearLastSoldTicketUseCase>(() =>
         _i276.ClearLastSoldTicketUseCase(
             gh<_i581.AppDataPersistenceService>()));
@@ -306,6 +318,20 @@ extension GetItInjectableX on _i174.GetIt {
         _i162.GetLastSoldTicketUseCase(gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i556.HasLastSoldTicketUseCase>(() =>
         _i556.HasLastSoldTicketUseCase(gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i769.LoadAdminProfileUseCase>(() =>
+        _i769.LoadAdminProfileUseCase(gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i465.ClearAdminProfileUseCase>(() =>
+        _i465.ClearAdminProfileUseCase(gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i475.SaveAdminProfileUseCase>(() =>
+        _i475.SaveAdminProfileUseCase(gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i897.ThermalPrinterHttpService>(() =>
+        _i897.ThermalPrinterHttpService(gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i750.ThemeService>(
+        () => _i750.ThemeService(gh<_i581.AppDataPersistenceService>()));
+    gh.factory<_i984.ThemeDataAppProvider>(() => _i984.ThemeDataAppProvider(
+          gh<_i750.ThemeService>(),
+          gh<_i581.AppDataPersistenceService>(),
+        ));
     gh.lazySingleton<_i76.SellUsecases>(() => _i76.SellUsecases(
         persistenceService: gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i823.AddDemoAccountIfAnonymousUseCase>(() =>
@@ -315,6 +341,8 @@ extension GetItInjectableX on _i174.GetIt {
         _i943.IsProductScannedUseCase(gh<_i377.GetProductByCodeUseCase>()));
     gh.lazySingleton<_i562.IFirestoreDataSource>(
         () => _i485.FirestoreDataSource(gh<_i974.FirebaseFirestore>()));
+    gh.factory<_i178.PrinterProvider>(
+        () => _i178.PrinterProvider(gh<_i897.ThermalPrinterHttpService>()));
     gh.lazySingleton<_i577.AnalyticsRemoteDataSource>(() =>
         _i577.AnalyticsRemoteDataSource(gh<_i562.IFirestoreDataSource>()));
     gh.lazySingleton<_i818.CashRegisterRepository>(() =>
@@ -323,22 +351,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i59.FirebaseAuth>(),
           gh<_i116.GoogleSignIn>(),
         ));
-    gh.lazySingleton<_i769.LoadAdminProfileUseCase>(() =>
-        _i769.LoadAdminProfileUseCase(
-            persistenceService: gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i465.ClearAdminProfileUseCase>(() =>
-        _i465.ClearAdminProfileUseCase(
-            persistenceService: gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i475.SaveAdminProfileUseCase>(() =>
-        _i475.SaveAdminProfileUseCase(
-            persistenceService: gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i1071.IProductRepository>(
         () => _i1071.ProductRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
     gh.lazySingleton<_i1071.GetProductsUseCase>(
         () => _i1071.GetProductsUseCase(gh<_i1071.IProductRepository>()));
     gh.lazySingleton<_i840.AccountRepository>(() => _i166.AccountRepositoryImpl(
           gh<_i562.IFirestoreDataSource>(),
-          persistenceService: gh<_i581.AppDataPersistenceService>(),
+          gh<_i581.AppDataPersistenceService>(),
         ));
     gh.lazySingleton<_i654.GetSelectedAccountIdUseCase>(
         () => _i654.GetSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
@@ -480,6 +499,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i453.GetProductsUseCase>(
         () => _i453.GetProductsUseCase(gh<_i83.CatalogueRepository>()));
+    gh.lazySingleton<_i644.GetUserAccountsUseCase>(
+        () => _i644.GetUserAccountsUseCase(
+              gh<_i840.AccountRepository>(),
+              gh<_i581.AppDataPersistenceService>(),
+            ));
     gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
           gh<_i512.OpenCashRegisterUseCase>(),
           gh<_i202.CloseCashRegisterUseCase>(),
@@ -501,11 +525,26 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i754.MultiUserRepository>(() =>
         _i431.MultiUserRepositoryImpl(gh<_i925.MultiUserRemoteDataSource>()));
-    gh.lazySingleton<_i644.GetUserAccountsUseCase>(
-        () => _i644.GetUserAccountsUseCase(
-              gh<_i840.AccountRepository>(),
-              persistenceService: gh<_i581.AppDataPersistenceService>(),
-            ));
+    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
+          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
+          addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
+          removeProductFromTicketUseCase:
+              gh<_i449.RemoveProductFromTicketUseCase>(),
+          createQuickProductUseCase: gh<_i853.CreateQuickProductUseCase>(),
+          setTicketPaymentModeUseCase: gh<_i953.SetTicketPaymentModeUseCase>(),
+          setTicketDiscountUseCase: gh<_i240.SetTicketDiscountUseCase>(),
+          setTicketReceivedCashUseCase:
+              gh<_i519.SetTicketReceivedCashUseCase>(),
+          associateTicketWithCashRegisterUseCase:
+              gh<_i1056.AssociateTicketWithCashRegisterUseCase>(),
+          prepareSaleTicketUseCase: gh<_i399.PrepareSaleTicketUseCase>(),
+          prepareTicketForTransactionUseCase:
+              gh<_i220.PrepareTicketForTransactionUseCase>(),
+          saveLastSoldTicketUseCase: gh<_i401.SaveLastSoldTicketUseCase>(),
+          getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
+          persistenceService: gh<_i581.AppDataPersistenceService>(),
+          catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
+        ));
     gh.lazySingleton<_i442.CreateUserUseCase>(
         () => _i442.CreateUserUseCase(gh<_i754.MultiUserRepository>()));
     gh.lazySingleton<_i353.GetUsersUseCase>(
@@ -535,25 +574,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i158.SignOutUseCase>(),
           gh<_i557.GetUserStreamUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
-        ));
-    gh.factory<_i454.SalesProvider>(() => _i454.SalesProvider(
-          getUserAccountsUseCase: gh<_i644.GetUserAccountsUseCase>(),
-          addProductToTicketUseCase: gh<_i60.AddProductToTicketUseCase>(),
-          removeProductFromTicketUseCase:
-              gh<_i449.RemoveProductFromTicketUseCase>(),
-          createQuickProductUseCase: gh<_i853.CreateQuickProductUseCase>(),
-          setTicketPaymentModeUseCase: gh<_i953.SetTicketPaymentModeUseCase>(),
-          setTicketDiscountUseCase: gh<_i240.SetTicketDiscountUseCase>(),
-          setTicketReceivedCashUseCase:
-              gh<_i519.SetTicketReceivedCashUseCase>(),
-          associateTicketWithCashRegisterUseCase:
-              gh<_i1056.AssociateTicketWithCashRegisterUseCase>(),
-          prepareSaleTicketUseCase: gh<_i399.PrepareSaleTicketUseCase>(),
-          prepareTicketForTransactionUseCase:
-              gh<_i220.PrepareTicketForTransactionUseCase>(),
-          saveLastSoldTicketUseCase: gh<_i401.SaveLastSoldTicketUseCase>(),
-          getLastSoldTicketUseCase: gh<_i162.GetLastSoldTicketUseCase>(),
-          catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
         ));
     gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
         () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/constants/payment_methods.dart'; 
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
@@ -149,8 +150,7 @@ class SalesProvider extends ChangeNotifier {
   final GetLastSoldTicketUseCase _getLastSoldTicketUseCase;
   
   final CatalogueUseCases? _catalogueUseCases;
-  final AppDataPersistenceService _persistenceService =
-      AppDataPersistenceService.instance;
+  final AppDataPersistenceService _persistenceService;
 
   // Estado encapsulado para optimizar notificaciones
   late var _state = _SalesProviderState(
@@ -183,8 +183,10 @@ class SalesProvider extends ChangeNotifier {
     required PrepareTicketForTransactionUseCase prepareTicketForTransactionUseCase,
     required SaveLastSoldTicketUseCase saveLastSoldTicketUseCase,
     required GetLastSoldTicketUseCase getLastSoldTicketUseCase,
+    required AppDataPersistenceService persistenceService,
     CatalogueUseCases? catalogueUseCases,
-  })  : _addProductToTicketUseCase = addProductToTicketUseCase,
+  })  : _persistenceService = persistenceService,
+        _addProductToTicketUseCase = addProductToTicketUseCase,
         _removeProductFromTicketUseCase = removeProductFromTicketUseCase,
         _createQuickProductUseCase = createQuickProductUseCase,
         _setTicketPaymentModeUseCase = setTicketPaymentModeUseCase,
@@ -974,7 +976,7 @@ class SalesProvider extends ChangeNotifier {
   /// Maneja la impresión o generación de ticket según la configuración
   Future<void> _handleTicketPrintingOrGeneration(BuildContext context) async {
     // Verificar si hay impresora conectada
-    final printerService = ThermalPrinterHttpService();
+    final printerService = getIt<ThermalPrinterHttpService>();
     await printerService.initialize();
 
     if (printerService.isConnected) {

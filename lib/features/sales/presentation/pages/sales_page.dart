@@ -16,7 +16,7 @@ import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import 'package:sellweb/core/services/printing/printer_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';

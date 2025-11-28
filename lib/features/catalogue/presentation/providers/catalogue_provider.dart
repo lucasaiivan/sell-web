@@ -10,6 +10,7 @@ import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
+import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 
 // UseCases
 import '../../domain/usecases/get_catalogue_stream_usecase.dart';
@@ -111,7 +112,7 @@ class _CatalogueState {
 
 /// Provider para gestionar el estado del catálogo de productos
 @injectable
-class CatalogueProvider extends ChangeNotifier {
+class CatalogueProvider extends ChangeNotifier implements InitializableProvider {
   bool _shouldNotifyListeners = true;
 
   set shouldNotifyListeners(bool value) {
@@ -637,6 +638,28 @@ class CatalogueProvider extends ChangeNotifier {
     _catalogueSubscription?.cancel();
     _searchDebounceTimer?.cancel();
     super.dispose();
+  }
+
+  /// Implementación de InitializableProvider: Inicializa el provider para una cuenta
+  @override
+  Future<void> initialize(String accountId) async {
+    initCatalogue(accountId);
+  }
+
+  /// Implementación de InitializableProvider: Limpia recursos y cancela suscripciones
+  @override
+  void cleanup() {
+    _catalogueSubscription?.cancel();
+    _catalogueSubscription = null;
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = null;
+    _state = const _CatalogueState(products: []);
+    
+    try {
+      notifyListeners();
+    } catch (e) {
+      debugPrint('⚠️ CatalogueProvider.cleanup: Provider ya disposed');
+    }
   }
 
   @override

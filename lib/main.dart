@@ -11,12 +11,12 @@ import 'core/config/firebase_options.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'features/catalogue/domain/repositories/catalogue_repository.dart';
 import 'features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 import 'package:sellweb/features/analytics/presentation/providers/analytics_provider.dart';
+import 'package:sellweb/core/presentation/providers/account_scope_provider.dart';
 // Sales UseCases imports
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
 import 'package:sellweb/features/sales/domain/usecases/remove_product_from_ticket_usecase.dart';
@@ -48,9 +48,6 @@ void main() async {
 }
 
 void _runApp() {
-  // ✅ Obtener repositorio desde DI usando la interfaz (registrado como CatalogueRepository)
-  final catalogueRepository = getIt<CatalogueRepository>();
-
   runApp(
     MultiProvider(
       providers: [
@@ -73,46 +70,21 @@ void _runApp() {
 
         // SalesProvider - creado una sola vez y reutilizado
         ChangeNotifierProxyProvider<AuthProvider, SalesProvider>(
-          create: (_) {
-            final catalogueUseCases = CatalogueUseCases(catalogueRepository);
-            return SalesProvider(
-              getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
-              persistenceService: getIt<AppDataPersistenceService>(),
-              printerService: getIt<ThermalPrinterHttpService>(),
-              addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
-              removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
-              createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
-              setTicketPaymentModeUseCase: getIt<SetTicketPaymentModeUseCase>(),
-              setTicketDiscountUseCase: getIt<SetTicketDiscountUseCase>(),
-              setTicketReceivedCashUseCase: getIt<SetTicketReceivedCashUseCase>(),
-              associateTicketWithCashRegisterUseCase: getIt<AssociateTicketWithCashRegisterUseCase>(),
-              prepareSaleTicketUseCase: getIt<PrepareSaleTicketUseCase>(),
-              prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
-              saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
-              getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
-              catalogueUseCases: catalogueUseCases,
-            );
-          },
+          create: (_) => _createSalesProvider(),
           update: (_, auth, previousSell) {
-            if (previousSell != null) return previousSell;
-            final catalogueUseCases = CatalogueUseCases(catalogueRepository);
-            return SalesProvider(
-              getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
-              persistenceService: getIt<AppDataPersistenceService>(),
-              printerService: getIt<ThermalPrinterHttpService>(),
-              addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
-              removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
-              createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
-              setTicketPaymentModeUseCase: getIt<SetTicketPaymentModeUseCase>(),
-              setTicketDiscountUseCase: getIt<SetTicketDiscountUseCase>(),
-              setTicketReceivedCashUseCase: getIt<SetTicketReceivedCashUseCase>(),
-              associateTicketWithCashRegisterUseCase: getIt<AssociateTicketWithCashRegisterUseCase>(),
-              prepareSaleTicketUseCase: getIt<PrepareSaleTicketUseCase>(),
-              prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
-              saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
-              getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
-              catalogueUseCases: catalogueUseCases,
-            );
+            // Preservar instancia existente para mantener estado del ticket
+            if (previousSell != null) {
+              // Sincronizar AdminProfile cuando hay usuario autenticado y cuenta seleccionada
+              if (auth.user?.email != null &&
+                  previousSell.profileAccountSelected.id.isNotEmpty &&
+                  previousSell.currentAdminProfile == null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  previousSell.initializeAdminProfile(auth.user!.email!);
+                });
+              }
+              return previousSell;
+            }
+            return _createSalesProvider();
           },
         ),
       ],
@@ -124,35 +96,7 @@ void _runApp() {
             theme: themeProvider.lightTheme,
             darkTheme: themeProvider.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: Consumer<AuthProvider>(
-              builder: (context, authProvider, _) {
-                if (authProvider.user == null) {
-                  return const AppPresentationPage();
-                }
-
-                return Consumer<SalesProvider>(
-                  builder: (context, sellProvider, _) {
-                    // 🆕 Inicializar AdminProfile cuando hay usuario autenticado y cuenta seleccionada
-                    // Esto maneja el caso cuando el usuario recarga la app con una sesión activa
-                    if (authProvider.user?.email != null &&
-                        sellProvider.profileAccountSelected.id.isNotEmpty &&
-                        sellProvider.currentAdminProfile == null) {
-                      // Ejecutar en el siguiente frame para evitar setState durante build
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        sellProvider
-                            .initializeAdminProfile(authProvider.user!.email!);
-                      });
-                    }
-
-                    // Providers específicos de la cuenta seleccionada
-                    return _buildAccountSpecificProviders(
-                      accountId: sellProvider.profileAccountSelected.id,
-                      sellProvider: sellProvider,
-                    );
-                  },
-                );
-              },
-            ),
+            home: const _AppNavigator(),
           );
         },
       ),
@@ -160,43 +104,116 @@ void _runApp() {
   );
 }
 
+/// Widget navegador que maneja la transición entre login y home
+///
+/// **Responsabilidad:**
+/// - Mostrar AppPresentationPage cuando no hay usuario autenticado
+/// - Mostrar HomePage con providers de cuenta cuando hay usuario
+/// - Gestionar ciclo de vida de providers sin destruirlos al hacer logout
+class _AppNavigator extends StatefulWidget {
+  const _AppNavigator();
+
+  @override
+  State<_AppNavigator> createState() => _AppNavigatorState();
+}
+
+class _AppNavigatorState extends State<_AppNavigator> {
+  AccountScopeProvider? _accountScope;
+  String? _lastAccountId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        // Usuario no autenticado: mostrar landing page
+        if (authProvider.user == null) {
+          // Limpiar providers si había sesión anterior
+          if (_accountScope != null) {
+            _accountScope!.reset();
+          }
+          return const AppPresentationPage();
+        }
+
+        // Usuario autenticado: mostrar home con providers
+        final sellProvider = context.watch<SalesProvider>();
+        final accountId = sellProvider.profileAccountSelected.id;
+
+        // Crear o reutilizar AccountScopeProvider
+        if (_accountScope == null) {
+          _accountScope = getIt<AccountScopeProvider>();
+        }
+
+        // Inicializar para nueva cuenta si cambió
+        if (accountId.isNotEmpty && accountId != _lastAccountId) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _accountScope!.initializeForAccount(accountId);
+            _lastAccountId = accountId;
+          });
+        }
+
+        return _buildAccountSpecificProviders(
+          accountScope: _accountScope!,
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _accountScope?.reset();
+    super.dispose();
+  }
+}
+
 Widget _buildAccountSpecificProviders({
-  required String accountId,
-  required SalesProvider sellProvider,
+  required AccountScopeProvider accountScope,
 }) {
   return MultiProvider(
-    key: ValueKey('account_providers_$accountId'),
     providers: [
-      // Providers específicos de la cuenta actual
-      ChangeNotifierProvider(
-        create: (_) {
-          final catalogueProvider = getIt<CatalogueProvider>();
-
-          if (accountId.isNotEmpty) {
-            catalogueProvider.initCatalogue(accountId);
-          }
-
-          return catalogueProvider;
-        },
+      // Reutilizar AccountScopeProvider existente
+      ChangeNotifierProvider.value(
+        value: accountScope,
       ),
-      ChangeNotifierProvider(
-        create: (_) {
-          final cashRegisterProvider = getIt<CashRegisterProvider>();
-          cashRegisterProvider.initializeFromPersistence(accountId);
-          return cashRegisterProvider;
-        },
+      // Exponer providers individuales para acceso directo desde widgets
+      ChangeNotifierProxyProvider<AccountScopeProvider, CatalogueProvider>(
+        create: (_) => accountScope.catalogueProvider,
+        update: (_, scope, __) => scope.catalogueProvider,
       ),
-      // AnalyticsProvider - métricas de ventas
-      ChangeNotifierProvider(
-        create: (_) {
-          final analyticsProvider = getIt<AnalyticsProvider>();
-          if (accountId.isNotEmpty) {
-            analyticsProvider.subscribeToAnalytics(accountId);
-          }
-          return analyticsProvider;
-        },
+      ChangeNotifierProxyProvider<AccountScopeProvider, CashRegisterProvider>(
+        create: (_) => accountScope.cashRegisterProvider,
+        update: (_, scope, __) => scope.cashRegisterProvider,
+      ),
+      ChangeNotifierProxyProvider<AccountScopeProvider, AnalyticsProvider>(
+        create: (_) => accountScope.analyticsProvider,
+        update: (_, scope, __) => scope.analyticsProvider,
       ),
     ],
     child: const HomePage(),
+  );
+}
+
+/// Factory para crear SalesProvider con todas sus dependencias
+///
+/// **Ventajas:**
+/// - Elimina duplicación de código
+/// - Centraliza configuración de dependencias
+/// - Facilita mantenimiento
+SalesProvider _createSalesProvider() {
+  return SalesProvider(
+    getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
+    persistenceService: getIt<AppDataPersistenceService>(),
+    printerService: getIt<ThermalPrinterHttpService>(),
+    addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
+    removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
+    createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),
+    setTicketPaymentModeUseCase: getIt<SetTicketPaymentModeUseCase>(),
+    setTicketDiscountUseCase: getIt<SetTicketDiscountUseCase>(),
+    setTicketReceivedCashUseCase: getIt<SetTicketReceivedCashUseCase>(),
+    associateTicketWithCashRegisterUseCase: getIt<AssociateTicketWithCashRegisterUseCase>(),
+    prepareSaleTicketUseCase: getIt<PrepareSaleTicketUseCase>(),
+    prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
+    saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
+    getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
+    catalogueUseCases: getIt<CatalogueUseCases>(),
   );
 }

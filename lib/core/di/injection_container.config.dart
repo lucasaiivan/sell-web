@@ -16,6 +16,8 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:google_sign_in/google_sign_in.dart' as _i116;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:sellweb/core/di/injection_container.dart' as _i220;
+import 'package:sellweb/core/presentation/providers/account_scope_provider.dart'
+    as _i185;
 import 'package:sellweb/core/presentation/providers/theme_provider.dart'
     as _i984;
 import 'package:sellweb/core/services/database/firestore_datasource.dart'
@@ -493,10 +495,10 @@ extension GetItInjectableX on _i174.GetIt {
         _i878.IncrementProductSalesUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i690.GetCategoriesStreamUseCase>(
         () => _i690.GetCategoriesStreamUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i1012.CatalogueUseCases>(
+        () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i226.UpdateStockUseCase>(
         () => _i226.UpdateStockUseCase(gh<_i83.CatalogueRepository>()));
-    gh.lazySingleton<_i1012.CatalogueUseCases>(
-        () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i453.GetProductsUseCase>(
         () => _i453.GetProductsUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
@@ -588,6 +590,11 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i975.AnalyticsProvider>(
         () => _i975.AnalyticsProvider(gh<_i161.GetSalesAnalyticsUseCase>()));
+    gh.factory<_i185.AccountScopeProvider>(() => _i185.AccountScopeProvider(
+          gh<_i127.CatalogueProvider>(),
+          gh<_i306.CashRegisterProvider>(),
+          gh<_i975.AnalyticsProvider>(),
+        ));
     return this;
   }
 }

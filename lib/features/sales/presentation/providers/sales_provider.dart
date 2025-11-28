@@ -327,6 +327,14 @@ class SalesProvider extends ChangeNotifier {
   }
 
   /// Carga el AdminProfile desde SharedPreferences al inicializar el provider
+  /// Carga AdminProfile desde persistencia local o Firebase
+  ///
+  /// **Flujo:**
+  /// 1. Intenta cargar desde SharedPreferences
+  /// 2. Si no existe en persistencia, se debe llamar initializeAdminProfile(email) externamente
+  ///
+  /// **NOTA:** Esta es una carga inicial optimista. La sincronización con Firebase
+  /// se maneja mediante initializeAdminProfile() cuando hay usuario autenticado.
   Future<void> _loadAdminProfile() async {
     try {
       final adminProfile = await getUserAccountsUseCase.loadAdminProfile();

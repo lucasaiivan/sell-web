@@ -7,6 +7,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 
 // UseCases
 import '../../domain/usecases/open_cash_register_usecase.dart';
@@ -119,7 +120,7 @@ class _CashRegisterState {
 
 /// Provider para gestionar el estado de cajas registradoras
 @injectable
-class CashRegisterProvider extends ChangeNotifier {
+class CashRegisterProvider extends ChangeNotifier implements InitializableProvider {
   // UseCases
   final OpenCashRegisterUseCase _openCashRegisterUseCase;
   final CloseCashRegisterUseCase _closeCashRegisterUseCase;
@@ -207,6 +208,7 @@ class CashRegisterProvider extends ChangeNotifier {
   );
 
   @override
+  @override
   void dispose() {
     _activeCashRegistersSubscription?.cancel();
     openDescriptionController.dispose();
@@ -215,6 +217,37 @@ class CashRegisterProvider extends ChangeNotifier {
     movementDescriptionController.dispose();
     movementAmountController.dispose();
     super.dispose();
+  }
+
+  /// Implementación de InitializableProvider: Inicializa el provider para una cuenta
+  @override
+  Future<void> initialize(String accountId) async {
+    return initializeFromPersistence(accountId);
+  }
+
+  /// Implementación de InitializableProvider: Limpia recursos y cancela suscripciones
+  ///
+  /// **CRÍTICO:** Cancela suscripciones activas para evitar
+  /// errores de "used after being disposed" al cambiar de cuenta o cerrar sesión
+  @override
+  void cleanup() {
+    // Cancelar suscripción a cajas activas
+    _activeCashRegistersSubscription?.cancel();
+    _activeCashRegistersSubscription = null;
+
+    // Resetear estado pero mantener controllers (se reutilizarán)
+    _state = const _CashRegisterState();
+    _currentAccountId = null;
+    _cashRegisterTickets = null;
+    _cachedCashRegisterId = null;
+    _isLoadingTickets = false;
+
+    // No notificar listeners si ya está disposed
+    try {
+      notifyListeners();
+    } catch (e) {
+      debugPrint('⚠️ CashRegisterProvider.cleanup: Provider ya disposed');
+    }
   }
 
   void clearError() {

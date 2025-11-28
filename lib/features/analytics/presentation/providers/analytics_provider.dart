@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
 import '../../domain/usecases/get_sales_analytics_usecase.dart';
@@ -47,7 +48,7 @@ class _AnalyticsState {
 /// **Dependencias:** [GetSalesAnalyticsUseCase]
 /// **Inyección DI:** @injectable
 @injectable
-class AnalyticsProvider extends ChangeNotifier {
+class AnalyticsProvider extends ChangeNotifier implements InitializableProvider {
   final GetSalesAnalyticsUseCase _getSalesAnalyticsUseCase;
 
   _AnalyticsState _state = const _AnalyticsState();
@@ -149,5 +150,26 @@ class AnalyticsProvider extends ChangeNotifier {
   void dispose() {
     _subscription?.cancel();
     super.dispose();
+  }
+
+  /// Implementación de InitializableProvider: Inicializa el provider para una cuenta
+  @override
+  Future<void> initialize(String accountId) async {
+    subscribeToAnalytics(accountId);
+  }
+
+  /// Implementación de InitializableProvider: Limpia recursos y cancela suscripciones
+  @override
+  void cleanup() {
+    _subscription?.cancel();
+    _subscription = null;
+    _state = const _AnalyticsState();
+    _currentAccountId = '';
+    
+    try {
+      notifyListeners();
+    } catch (e) {
+      debugPrint('⚠️ AnalyticsProvider.cleanup: Provider ya disposed');
+    }
   }
 }

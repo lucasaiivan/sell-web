@@ -17,7 +17,9 @@ import '../entities/provider.dart';
 /// - Actualizar estadísticas (ventas, stock)
 /// - Actualizar estado de favoritos
 /// - Gestionar productos públicos
-@lazySingleton
+///
+/// **Inyección DI:** @injectable (factory)
+@injectable
 class CatalogueUseCases {
   final CatalogueRepository repository;
 

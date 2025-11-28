@@ -30,12 +30,15 @@ class HomeProvider extends ChangeNotifier {
   /// Indica si la página actual es la de analíticas
   bool get isAnalyticsPage => _currentPageIndex == 2;
 
+  /// Indica si la página actual es la de historial de caja
+  bool get isHistoryCashRegisterPage => _currentPageIndex == 3;
+
   // --- Métodos públicos ---
 
   /// Cambia la página actual según el índice proporcionado
-  /// @param index Índice de la página (0: Ventas, 1: Catálogo, 2: Analíticas)
+  /// @param index Índice de la página (0: Ventas, 1: Catálogo, 2: Analíticas, 3: Historial Caja)
   void setPageIndex(int index) {
-    if (_currentPageIndex != index && index >= 0 && index <= 2) {
+    if (_currentPageIndex != index && index >= 0 && index <= 4) {
       _currentPageIndex = index;
       notifyListeners();
     }
@@ -54,6 +57,11 @@ class HomeProvider extends ChangeNotifier {
   /// Navega a la página de analíticas
   void navigateToAnalytics() {
     setPageIndex(2);
+  }
+
+  /// Navega a la página de historial de caja
+  void navigateToHistoryCashRegister() {
+    setPageIndex(3);
   }
 
   /// Resetea el estado del provider a sus valores iniciales

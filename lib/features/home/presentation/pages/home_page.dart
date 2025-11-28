@@ -8,6 +8,8 @@ import 'package:sellweb/features/auth/presentation/pages/welcome_selected_accoun
 import 'package:sellweb/features/sales/presentation/pages/sales_page.dart';
 import 'package:sellweb/features/catalogue/presentation/pages/catalogue_page.dart';
 import 'package:sellweb/features/analytics/presentation/pages/analytics_page.dart';
+import 'package:sellweb/features/cash_register/presentation/pages/history_cash_register_page.dart';
+import 'package:sellweb/features/multiuser/presentation/pages/multi_user_page.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 /// Controla el flujo entre: selección de cuenta, ventas y catálogo
@@ -81,6 +83,8 @@ class _HomePageState extends State<HomePage> {
               SalesPage(),
               CataloguePage(),
               AnalyticsPage(),
+              HistoryCashRegisterPage(),
+              MultiUserPage(),
             ],
           ),
         ),

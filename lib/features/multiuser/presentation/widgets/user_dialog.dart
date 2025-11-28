@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/presentation/widgets/inputs/input_text_field.dart';
+import 'package:sellweb/core/core.dart';
 import '../../../auth/domain/entities/admin_profile.dart';
 import '../provider/multi_user_provider.dart';
 
@@ -109,56 +109,66 @@ class _UserDialogState extends State<UserDialog> {
     final isEditing = widget.user != null;
     final theme = Theme.of(context);
 
-    return Dialog(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(isEditing ? 'Editar Usuario' : 'Nuevo Usuario'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-          body: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildBasicInfoSection(),
-                const SizedBox(height: 24),
-                _buildPermissionTypeSection(),
-                const SizedBox(height: 24),
-                if (_isPersonalized) ...[
-                  _buildGranularPermissionsSection(),
-                  const SizedBox(height: 24),
-                ],
-                if (!_isSuperAdmin) ...[
-                  _buildAccessControlSection(theme),
-                  const SizedBox(height: 24),
-                ],
-              ],
-            ),
-          ),
-          bottomNavigationBar: _buildActionButtons(context, isEditing),
+    return BaseDialog(
+      title: isEditing ? 'Editar Usuario' : 'Nuevo Usuario',
+      icon: isEditing ? Icons.edit_rounded : Icons.person_add_rounded,
+      width: 550,
+      maxHeight: 700,
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildBasicInfoSection(),
+            const SizedBox(height: 20),
+            _buildPermissionTypeSection(),
+            if (_isPersonalized) ...[
+              const SizedBox(height: 20),
+              _buildGranularPermissionsSection(),
+            ],
+            if (!_isSuperAdmin) ...[
+              const SizedBox(height: 20),
+              _buildAccessControlSection(theme),
+            ],
+          ],
         ),
       ),
+      actions: [
+        if (isEditing && !widget.user!.superAdmin)
+          TextButton.icon(
+            icon: Icon(Icons.delete_rounded, color: theme.colorScheme.error),
+            label: Text('Eliminar', style: TextStyle(color: theme.colorScheme.error)),
+            onPressed: () => _confirmDelete(context),
+          ),
+        const Spacer(),
+        AppButton.text(
+          text: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        const SizedBox(width: 8),
+        AppButton.primary(
+          text: isEditing ? 'Actualizar' : 'Crear',
+          onPressed: _saveUser,
+        ),
+      ],
     );
   }
 
   Widget _buildBasicInfoSection() {
     final isEditing = widget.user != null;
+    final theme = Theme.of(context);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Información Básica',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+          style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         FormInputTextField(
           controller: _emailController,
           labelText: 'Email',
@@ -174,23 +184,26 @@ class _UserDialogState extends State<UserDialog> {
           },
           enabled: !isEditing,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         FormInputTextField(
           controller: _nameController,
-          labelText: 'Nombre',
+          labelText: 'Nombre (opcional)',
         ),
       ],
     );
   }
 
   Widget _buildPermissionTypeSection() {
+    final theme = Theme.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Tipo de Permiso',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+          style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
         ),
         const SizedBox(height: 8),
@@ -265,13 +278,16 @@ class _UserDialogState extends State<UserDialog> {
   }
 
   Widget _buildGranularPermissionsSection() {
+    final theme = Theme.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Permisos',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+          'Permisos Específicos',
+          style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
         ),
         const SizedBox(height: 8),
@@ -367,20 +383,29 @@ class _UserDialogState extends State<UserDialog> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, bool isEditing) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.warning_rounded, color: Theme.of(context).colorScheme.error, size: 32),
+        title: const Text('Eliminar Usuario'),
+        content: Text('¿Estás seguro de que deseas eliminar a ${widget.user!.email}?\n\nEsta acción no se puede deshacer.'),
+        actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancelar'),
           ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _saveUser,
-            child: Text(isEditing ? 'Actualizar' : 'Crear'),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pop(); // Close user dialog
+              Provider.of<MultiUserProvider>(context, listen: false)
+                  .deleteUser(widget.user!);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Eliminar'),
           ),
         ],
       ),

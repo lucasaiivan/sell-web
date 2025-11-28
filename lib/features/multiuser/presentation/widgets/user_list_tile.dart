@@ -11,80 +11,125 @@ class UserListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          child: Icon(
-            user.superAdmin
-                ? Icons.security
-                : user.admin
-                    ? Icons.admin_panel_settings
-                    : Icons.person,
-          ),
-        ),
-        title: Text(user.name.isNotEmpty ? user.name : user.email),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (user.name.isNotEmpty) Text(user.email),
-            Text(
-              user.superAdmin
-                  ? 'Super Administrador'
-                  : user.admin
-                      ? 'Administrador'
-                      : 'Personalizado',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                final provider = Provider.of<MultiUserProvider>(context, listen: false);
-                showDialog(
-                  context: context,
-                  builder: (_) => ChangeNotifierProvider.value(
-                    value: provider,
-                    child: UserDialog(user: user),
-                  ),
-                );
-              },
-            ),
-            if (!user.superAdmin) // Prevent deleting super admin if needed, or just allow it.
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _confirmDelete(context),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    final roleText = user.superAdmin
+        ? 'Super Administrador'
+        : user.admin
+            ? 'Administrador'
+            : 'Personalizado';
+    
+    final roleIcon = user.superAdmin
+        ? Icons.security_rounded
+        : user.admin
+            ? Icons.admin_panel_settings_rounded
+            : Icons.person_rounded;
+    
+    final roleColor = user.superAdmin
+        ? Colors.purple
+        : user.admin
+            ? Colors.blue
+            : colorScheme.onSurfaceVariant;
 
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar Usuario'),
-        content: Text('¿Estás seguro de que deseas eliminar a ${user.email}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
+    return InkWell(
+      onTap: () {
+        final provider = Provider.of<MultiUserProvider>(context, listen: false);
+        showDialog(
+          context: context,
+          builder: (_) => ChangeNotifierProvider.value(
+            value: provider,
+            child: UserDialog(user: user),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              Provider.of<MultiUserProvider>(context, listen: false)
-                  .deleteUser(user);
-            },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            // Icono de rol
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: roleColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                roleIcon,
+                color: roleColor,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            
+            // Info Principal
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Nombre o email principal
+                  Text(
+                    user.name.isNotEmpty ? user.name : user.email,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 3),
+                  // Email (si el nombre no está vacío) y badge de rol
+                  Row(
+                    children: [
+                      if (user.name.isNotEmpty) ...[
+                        Flexible(
+                          child: Text(
+                            user.email,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                              fontSize: 12,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                      Text(
+                        roleText,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: roleColor.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(width: 8),
+            
+            // Icono de acción
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+            ),
+          ],
+        ),
       ),
     );
   }

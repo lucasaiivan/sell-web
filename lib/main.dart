@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/features/home/presentation/pages/home_page.dart';
 import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart';
@@ -14,6 +15,7 @@ import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
+import 'package:sellweb/core/presentation/providers/connectivity_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 import 'package:sellweb/features/analytics/presentation/providers/analytics_provider.dart';
 import 'package:sellweb/core/presentation/providers/account_scope_provider.dart';
@@ -40,6 +42,17 @@ void main() async {
   // Firebase initialization in the SAME zone as runApp
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // ✅ NUEVO: Habilitar Persistencia Offline para todas las plataformas
+  try {
+    await FirebaseFirestore.instance.enablePersistence(
+      const PersistenceSettings(synchronizeTabs: true),
+    );
+    debugPrint('✅ Persistencia offline habilitada correctamente');
+  } catch (e) {
+    // Común en modo incógnito o cuando ya está habilitada
+    debugPrint('⚠️ No se pudo habilitar persistencia offline: $e');
+  }
+
   // ← NUEVO: Configurar inyección de dependencias para Clean Architecture
   await configureDependencies();
 
@@ -57,6 +70,9 @@ void _runApp() {
             getIt<ThemeService>(),
             getIt<AppDataPersistenceService>(),
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ConnectivityProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => PrinterProvider(getIt<ThermalPrinterHttpService>())..initialize(),

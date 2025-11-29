@@ -20,6 +20,7 @@ import 'package:sellweb/features/sales/presentation/providers/printer_provider.d
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
+import 'package:sellweb/core/presentation/widgets/connectivity_indicator.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -471,6 +472,8 @@ class _SalesPageState extends State<SalesPage> {
                 ),
               ),
               const Spacer(),
+              // Indicador de conectividad
+              const ConnectivityIndicator(),
               // view : botones de la barra de acciones
               Row(
                 children: [

@@ -7,6 +7,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
+import 'package:sellweb/core/presentation/widgets/connectivity_indicator.dart';
 import '../widgets/product_catalogue_view.dart';
 import '../widgets/product_edit_catalogue_view.dart';
 
@@ -99,6 +100,8 @@ class _CataloguePageState extends State<CataloguePage> {
                 ),
               ),
               const SizedBox(width: 12),
+              // Indicador de conectividad
+              const ConnectivityIndicator(),
               Consumer<CatalogueProvider>(
                 builder: (context, catalogueProvider, _) {
                   return PopupMenuButton<CatalogueFilter>(

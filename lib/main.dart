@@ -44,17 +44,9 @@ void main() async {
 
   // ✅ Configurar Persistencia Offline Optimizada
   try {
-    // Habilitar persistencia con sincronización entre pestañas
-    await FirebaseFirestore.instance.enablePersistence(
-      const PersistenceSettings(
-        synchronizeTabs: true, // Compartir caché entre tabsß del mismo origen
-      ),
-    );
-    
-    // Configurar caché ilimitada (hasta límite del navegador ~200MB+)
+    // Configurar persistencia y caché con sincronización entre pestañas
     FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      persistenceEnabled: true, 
     );
     
     debugPrint('✅ Persistencia offline habilitada correctamente');

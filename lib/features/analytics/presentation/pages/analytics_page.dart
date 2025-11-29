@@ -11,6 +11,7 @@ import '../providers/analytics_provider.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/payment_methods_card.dart';
 import '../widgets/transaction_list_item.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 /// Página: Analíticas
 ///
@@ -70,53 +71,87 @@ class AnalyticsPage extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
 
-          // Grid de Métricas Principales
+
+
+          // Grid de Métricas (Bento Box Layout)
           SliverPadding(
             padding: const EdgeInsets.all(16),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 300,
-                mainAxisSpacing: 6,
-                crossAxisSpacing: 6,
-                childAspectRatio: 1.3,
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: StaggeredGrid.count(
+                crossAxisCount: 4,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: [
+                  // 1. Facturación (Ventas Totales) - La estrella (2x2)
+                  StaggeredGridTile.count(
+                    crossAxisCellCount: 2,
+                    mainAxisCellCount: 2,
+                    child: MetricCard(
+                      title: 'Facturación Total',
+                      value: CurrencyHelper.formatCurrency(analytics.totalSales),
+                      icon: Icons.attach_money_rounded,
+                      color: const Color(0xFF059669), // Emerald 600: Más saturado, mejor contraste
+                      isPrimary: true,
+                      subtitle: 'Ingresos brutos',
+                    ),
+                  ),
+
+                  // 2. Ganancia - El objetivo (2x1)
+                  StaggeredGridTile.count(
+                    crossAxisCellCount: 2,
+                    mainAxisCellCount: 1,
+                    child: MetricCard(
+                      title: 'Ganancia Neta',
+                      value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+                      icon: Icons.trending_up_rounded,
+                      color: const Color(0xFF7C3AED), // Violet 600: Más vibrante, premium
+                      subtitle: 'Rentabilidad real',
+                    ),
+                  ),
+
+                  // 3. Transacciones - Operativo (1x1)
+                  StaggeredGridTile.count(
+                    crossAxisCellCount: 1,
+                    mainAxisCellCount: 1,
+                    child: MetricCard(
+                      title: 'Ventas',
+                      value: analytics.totalTransactions.toString(),
+                      icon: Icons.receipt_long_rounded,
+                      color: const Color(0xFF2563EB), // Blue 600: Más profundo, confiable
+                    ),
+                  ),
+
+                  // 4. Ticket Promedio - Eficiencia (1x1)
+                  StaggeredGridTile.count(
+                    crossAxisCellCount: 1,
+                    mainAxisCellCount: 1,
+                    child: MetricCard(
+                      title: 'Ticket Prom.',
+                      value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
+                      icon: Icons.analytics_rounded,
+                      color: const Color(0xFF0891B2), // Cyan 600: Más intenso, profesional
+                    ),
+                  ),
+
+                  // 5. Productos Vendidos - Inventario (4x1)
+                  StaggeredGridTile.count(
+                    crossAxisCellCount: 4,
+                    mainAxisCellCount: 1,
+                    child: MetricCard(
+                      title: 'Productos Vendidos',
+                      value: analytics.totalProductsSold.toString(),
+                      icon: Icons.inventory_2_rounded,
+                      color: const Color(0xFFD97706), // Amber 600: Más cálido, energético
+                      subtitle: 'Movimiento de inventario',
+                    ),
+                  ),
+                ],
               ),
-              delegate: SliverChildListDelegate([
-                // 1. Transacciones
-                MetricCard(
-                  title: 'Transacciones',
-                  value: analytics.totalTransactions.toString(),
-                  icon: Icons.receipt_long,
-                  color: Colors.orange,
                 ),
-                // 2. Facturación (Ventas Totales)
-                MetricCard(
-                  title: 'Facturación',
-                  value: CurrencyHelper.formatCurrency(analytics.totalSales),
-                  icon: Icons.attach_money,
-                  color: Colors.green,
-                ),
-                // 3. Ganancia
-                MetricCard(
-                  title: 'Ganancia',
-                  value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-                  icon: Icons.trending_up,
-                  color: Colors.blue,
-                ),
-                // 4. Ticket Promedio
-                MetricCard(
-                  title: 'Ticket Promedio',
-                  value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
-                  icon: Icons.analytics,
-                  color: Colors.purple,
-                ),
-                // 5. Productos Vendidos
-                MetricCard(
-                  title: 'Productos Vendidos',
-                  value: analytics.totalProductsSold.toString(),
-                  icon: Icons.inventory_2,
-                  color: Colors.teal,
-                ),
-              ]),
+              ),
             ),
           ),
 

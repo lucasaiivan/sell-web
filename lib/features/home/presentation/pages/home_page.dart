@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
@@ -10,6 +11,8 @@ import 'package:sellweb/features/catalogue/presentation/pages/catalogue_page.dar
 import 'package:sellweb/features/analytics/presentation/pages/analytics_page.dart';
 import 'package:sellweb/features/cash_register/presentation/pages/history_cash_register_page.dart';
 import 'package:sellweb/features/multiuser/presentation/pages/multi_user_page.dart';
+import 'package:sellweb/core/utils/helpers/user_access_validator.dart';
+import 'package:sellweb/features/auth/presentation/dialogs/access_denied_dialog.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 /// Controla el flujo entre: selección de cuenta, ventas y catálogo
@@ -21,10 +24,78 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Timer? _accessCheckTimer;
+  bool _isShowingAccessDeniedDialog = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Verificar acceso al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUserAccess();
+    });
+    
+    // Configurar verificación periódica cada minuto
+    _accessCheckTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _checkUserAccess(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _accessCheckTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Verifica si el usuario actual tiene acceso permitido
+  Future<void> _checkUserAccess() async {
+    if (!mounted || _isShowingAccessDeniedDialog) return;
+
+    final sellProvider = context.read<SalesProvider>();
+    final adminProfile = sellProvider.currentAdminProfile;
+
+    // Si no hay AdminProfile o es cuenta demo, no verificar
+    if (adminProfile == null || 
+        sellProvider.profileAccountSelected.id == 'demo') {
+      return;
+    }
+
+    // Validar acceso
+    final accessResult = UserAccessValidator.validateAccess(adminProfile);
+
+    // Si no tiene acceso, mostrar diálogo
+    if (!accessResult.hasAccess && mounted) {
+      _isShowingAccessDeniedDialog = true;
+      await AccessDeniedDialog.show(
+        context: context,
+        accessResult: accessResult,
+        onSignOut: () async {
+          Navigator.of(context).pop(); // Cerrar diálogo
+          final authProvider = context.read<AuthProvider>();
+          await authProvider.signOut();
+          _isShowingAccessDeniedDialog = false;
+        },
+        onChangeAccount: () async {
+          Navigator.of(context).pop(); // Cerrar diálogo
+          final sellProvider = context.read<SalesProvider>();
+          sellProvider.cleanData();
+          _isShowingAccessDeniedDialog = false;
+        },
+      );
+      _isShowingAccessDeniedDialog = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Obtener SalesProvider de forma segura
     final sellProvider = context.watch<SalesProvider>();
+
+    // Verificar acceso cuando cambia el AdminProfile
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUserAccess();
+    });
 
     // Si no hay cuenta seleccionada, mostrar la pantalla de bienvenida
     if (sellProvider.profileAccountSelected.id.isEmpty) {

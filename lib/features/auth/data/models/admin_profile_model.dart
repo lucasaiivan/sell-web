@@ -8,6 +8,7 @@ class AdminProfileModel extends AdminProfile {
   const AdminProfileModel({
     super.id,
     super.inactivate,
+    super.inactivateNote,
     super.account,
     super.email,
     super.name,
@@ -32,6 +33,7 @@ class AdminProfileModel extends AdminProfile {
     return AdminProfileModel(
       id: doc.id,
       inactivate: data.containsKey("inactivate") ? doc["inactivate"] : false,
+      inactivateNote: data.containsKey("inactivateNote") ? doc["inactivateNote"] : '',
       account: doc["account"],
       email: data.containsKey("email") ? doc["email"] : '',
       name: data.containsKey('name') ? doc['name'] : '',
@@ -66,6 +68,7 @@ class AdminProfileModel extends AdminProfile {
   Map<String, dynamic> toJson() => {
         "id": id,
         "inactivate": inactivate,
+        "inactivateNote": inactivateNote,
         "account": account,
         "email": email,
         'name': name,
@@ -89,6 +92,7 @@ class AdminProfileModel extends AdminProfile {
     return AdminProfileModel(
       id: data['id'] ?? '',
       inactivate: data['inactivate'] ?? false,
+      inactivateNote: data['inactivateNote'] ?? '',
       account: data['account'] ?? '',
       email: data['email'] ?? '',
       name: data['name'] ?? '',
@@ -117,6 +121,7 @@ class AdminProfileModel extends AdminProfile {
     return AdminProfileModel(
       id: entity.id,
       inactivate: entity.inactivate,
+      inactivateNote: entity.inactivateNote,
       account: entity.account,
       email: entity.email,
       name: entity.name,

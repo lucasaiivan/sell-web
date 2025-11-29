@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/domain/entities/admin_profile.dart';
 import '../provider/multi_user_provider.dart';
-import 'user_dialog.dart';
+import 'useradmin_dialog.dart';
 
 class UserListTile extends StatelessWidget {
   final AdminProfile user;
@@ -78,45 +78,39 @@ class UserListTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
-                  const SizedBox(height: 3),
-                  // Email (si el nombre no está vacío) y badge de rol
-                  Row(
-                    children: [
-                      if (user.name.isNotEmpty) ...[
-                        Flexible(
-                          child: Text(
-                            user.email,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
-                              fontSize: 12,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: Container(
-                            width: 3,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                      Text(
-                        roleText,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: roleColor.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
+                  if (user.name.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    // Email (solo si el nombre no está vacío)
+                    Text(
+                      user.email,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                        fontSize: 12,
                       ),
-                    ],
-                  ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
                 ],
+              ),
+            ),
+            
+            const SizedBox(width: 12),
+            
+            // Badge de rol en el extremo derecho
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: roleColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                roleText,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: roleColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
               ),
             ),
             

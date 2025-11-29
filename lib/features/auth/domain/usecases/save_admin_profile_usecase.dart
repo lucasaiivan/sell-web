@@ -43,6 +43,7 @@ class SaveAdminProfileUseCase extends UseCase<void, SaveAdminProfileParams> {
     return {
       'id': admin.id,
       'inactivate': admin.inactivate,
+      'inactivateNote': admin.inactivateNote,
       'account': admin.account,
       'email': admin.email,
       'name': admin.name,

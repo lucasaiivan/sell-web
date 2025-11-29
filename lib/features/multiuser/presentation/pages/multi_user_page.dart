@@ -5,7 +5,7 @@ import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../../../core/di/injection_container.dart';
 import '../provider/multi_user_provider.dart';
-import '../widgets/user_dialog.dart';
+import '../widgets/useradmin_dialog.dart';
 import '../widgets/user_list_tile.dart';
 
 class MultiUserPage extends StatefulWidget {

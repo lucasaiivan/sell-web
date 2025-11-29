@@ -26,6 +26,7 @@
 class AdminProfile {
   final String id;
   final bool inactivate;
+  final String inactivateNote;
   final String account;
   final String email;
   final String name;
@@ -49,6 +50,7 @@ class AdminProfile {
   const AdminProfile({
     this.id = "",
     this.inactivate = false,
+    this.inactivateNote = '',
     this.account = "",
     this.email = '',
     this.name = '',
@@ -72,6 +74,7 @@ class AdminProfile {
   AdminProfile copyWith({
     String? id,
     bool? inactivate,
+    String? inactivateNote,
     String? account,
     String? email,
     String? name,
@@ -93,6 +96,7 @@ class AdminProfile {
     return AdminProfile(
       id: id ?? this.id,
       inactivate: inactivate ?? this.inactivate,
+      inactivateNote: inactivateNote ?? this.inactivateNote,
       account: account ?? this.account,
       email: email ?? this.email,
       name: name ?? this.name,

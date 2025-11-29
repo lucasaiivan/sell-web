@@ -45,6 +45,7 @@ class LoadAdminProfileUseCase extends UseCase<AdminProfile?, NoParams> {
     return AdminProfile(
       id: data['id'] ?? '',
       inactivate: data['inactivate'] ?? false,
+      inactivateNote: data['inactivateNote'] ?? '',
       account: data['account'] ?? '',
       email: data['email'] ?? '',
       name: data['name'] ?? '',

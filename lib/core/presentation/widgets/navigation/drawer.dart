@@ -6,6 +6,8 @@ import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
 import 'package:sellweb/features/auth/presentation/dialogs/account_selection_dialog.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
+import 'package:sellweb/core/utils/helpers/user_access_validator.dart';
+import 'package:sellweb/features/auth/presentation/dialogs/access_denied_dialog.dart';
 import '../widgets.dart';
 
 /// Widget reutilizable del Drawer para las pantallas principales
@@ -297,6 +299,7 @@ class _DrawerNavTile extends StatelessWidget {
     );
   }
 }
+
 
 class _DrawerFooter extends StatelessWidget {
   const _DrawerFooter();

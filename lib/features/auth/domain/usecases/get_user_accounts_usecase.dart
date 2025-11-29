@@ -268,6 +268,7 @@ class GetUserAccountsUseCase {
     return {
       'id': admin.id,
       'inactivate': admin.inactivate,
+      'inactivateNote': admin.inactivateNote,
       'account': admin.account,
       'email': admin.email,
       'name': admin.name,
@@ -293,6 +294,7 @@ class GetUserAccountsUseCase {
     return AdminProfile(
       id: data['id'] ?? '',
       inactivate: data['inactivate'] ?? false,
+      inactivateNote: data['inactivateNote'] ?? '',
       account: data['account'] ?? '',
       email: data['email'] ?? '',
       name: data['name'] ?? '',

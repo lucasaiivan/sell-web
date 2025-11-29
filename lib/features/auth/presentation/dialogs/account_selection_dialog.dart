@@ -69,37 +69,20 @@ class _AccountSelectionContent extends StatelessWidget {
     final theme = Theme.of(context);
 
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.user;
+    final adminProfile = sellProvider.currentAdminProfile;
 
     return DialogComponents.infoSection(
       context: context,
       title: 'Identificación',
       showBorder: false,
       content: InkWell(
-        onTap: user?.email != null
+        onTap: adminProfile != null
             ? () async {
                 try {
-                  // Obtener AdminProfile desde SalesProvider
-                  final adminProfile = sellProvider.currentAdminProfile;
-
-                  if (adminProfile != null) {
-                    await showAdminProfileInfoDialog(
-                      context: context,
-                      admin: adminProfile,
-                    );
-                  } else if (context.mounted) {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    final uniqueKey = UniqueKey();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        key: uniqueKey,
-                        behavior: SnackBarBehavior.floating,
-                        content: const Text('No se encontró información del administrador'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
+                  await showAdminProfileInfoDialog(
+                    context: context,
+                    admin: adminProfile,
+                  );
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).clearSnackBars();
@@ -122,21 +105,21 @@ class _AccountSelectionContent extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              // Avatar del usuario
+              // Avatar del administrador
               UserAvatar(
-                imageUrl: user?.photoUrl,
-                text: user?.displayName ?? user?.email,
+                imageUrl: null,
+                text: adminProfile?.name ?? adminProfile?.email,
                 radius: 24,
               ),
               const SizedBox(width: 12),
 
-              // Información del usuario
+              // Información del administrador
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user?.displayName ?? 'Usuario',
+                      adminProfile?.name ?? 'Usuario',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -144,7 +127,7 @@ class _AccountSelectionContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      user?.email ?? 'Sin email',
+                      adminProfile?.email ?? 'Sin email',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

@@ -45,12 +45,12 @@ class _MultiUserPageState extends State<MultiUserPage> {
                   context: context,
                   builder: (_) => ChangeNotifierProvider.value(
                     value: provider,
-                    child: const UserDialog(),
+                    child: const UserAdminDialog(),
                   ),
                 );
               },
               icon: const Icon(Icons.person_add_rounded),
-              label: const Text('Nuevo Usuario'),
+              label: const Text('Agregar'),
             );
           },
         ),

@@ -70,7 +70,7 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Historial de Cajas',
+              'Historial',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

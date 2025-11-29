@@ -39,7 +39,7 @@ class UserListTile extends StatelessWidget {
           context: context,
           builder: (_) => ChangeNotifierProvider.value(
             value: provider,
-            child: UserDialog(user: user),
+            child: UserAdminDialog(user: user),
           ),
         );
       },

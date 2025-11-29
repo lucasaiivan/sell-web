@@ -15,16 +15,16 @@ enum DayOfWeek {
   sunday,
 }
 
-class UserDialog extends StatefulWidget {
+class UserAdminDialog extends StatefulWidget {
   final AdminProfile? user;
 
-  const UserDialog({super.key, this.user});
+  const UserAdminDialog({super.key, this.user});
 
   @override
-  State<UserDialog> createState() => _UserDialogState();
+  State<UserAdminDialog> createState() => _UserAdminDialogState();
 }
 
-class _UserDialogState extends State<UserDialog> {
+class _UserAdminDialogState extends State<UserAdminDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _emailController;
   late TextEditingController _nameController;
@@ -135,17 +135,16 @@ class _UserDialogState extends State<UserDialog> {
       ),
       actions: [
         if (isEditing && !widget.user!.superAdmin)
-          TextButton.icon(
-            icon: Icon(Icons.delete_rounded, color: theme.colorScheme.error),
-            label: Text('Eliminar', style: TextStyle(color: theme.colorScheme.error)),
+          AppButton.text(
+            text: 'Eliminar',
             onPressed: () => _confirmDelete(context),
+            foregroundColor: theme.colorScheme.error,
           ),
-        const Spacer(),
+        if (isEditing && !widget.user!.superAdmin) 
         AppButton.text(
           text: 'Cancelar',
           onPressed: () => Navigator.of(context).pop(),
-        ),
-        const SizedBox(width: 8),
+        ), 
         AppButton.primary(
           text: isEditing ? 'Actualizar' : 'Crear',
           onPressed: _saveUser,
@@ -196,6 +195,66 @@ class _UserDialogState extends State<UserDialog> {
   Widget _buildPermissionTypeSection() {
     final theme = Theme.of(context);
     
+    // Si es superusuario, mostrar info estática sin permitir edición
+    if (_isSuperAdmin) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tipo de Permiso',
+            style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.purple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.purple.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.shield_rounded,
+                  color: Colors.purple,
+                  size: 32,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Super Administrador',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.purple,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Propietario de la cuenta con acceso completo sin restricciones',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    
+    // Para usuarios normales, mostrar opciones de Admin y Personalizado
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -206,72 +265,89 @@ class _UserDialogState extends State<UserDialog> {
                 color: theme.colorScheme.primary,
               ),
         ),
-        const SizedBox(height: 8),
-        RadioListTile<String>(
-          title: const Text('Super Administrador'),
-          subtitle: const Text('Acceso completo sin restricciones'),
-          value: 'super',
-          groupValue: _isSuperAdmin
-              ? 'super'
-              : _isAdmin
-                  ? 'admin'
-                  : _isPersonalized
-                      ? 'personalized'
-                      : '',
-          onChanged: (value) {
-            setState(() {
-              _isSuperAdmin = true;
-              _isAdmin = false;
-              _isPersonalized = false;
-              // Super admin gets all permissions
-              _arqueo = true;
-              _historyArqueo = true;
-              _transactions = true;
-              _catalogue = true;
-              _multiuser = true;
-              _editAccount = true;
-              // Super admin has no time restrictions
-              _selectedDays = DayOfWeek.values.toSet();
-            });
-          },
-        ),
-        RadioListTile<String>(
-          title: const Text('Administrador'),
-          subtitle: const Text('Permisos administrativos estándar'),
-          value: 'admin',
-          groupValue: _isSuperAdmin
-              ? 'super'
-              : _isAdmin
-                  ? 'admin'
-                  : _isPersonalized
-                      ? 'personalized'
-                      : '',
-          onChanged: (value) {
-            setState(() {
-              _isSuperAdmin = false;
-              _isAdmin = true;
-              _isPersonalized = false;
-            });
-          },
-        ),
-        RadioListTile<String>(
-          title: const Text('Personalizado'),
-          subtitle: const Text('Configurar permisos específicos'),
-          value: 'personalized',
-          groupValue: _isSuperAdmin
-              ? 'super'
-              : _isAdmin
-                  ? 'admin'
-                  : _isPersonalized
-                      ? 'personalized'
-                      : '',
-          onChanged: (value) {
-            setState(() {
-              _isSuperAdmin = false;
-              _isAdmin = false;
-              _isPersonalized = true;
-            });
-          },
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+              width: 1,
+            ),
+          ),
+          child: RadioGroup<String>(
+            groupValue: _isAdmin ? 'admin' : _isPersonalized ? 'personalized' : '',
+            onChanged: (value) {
+              setState(() {
+                if (value == 'admin') {
+                  _isAdmin = true;
+                  _isPersonalized = false;
+                  // Admin gets all permissions
+                  _arqueo = true;
+                  _historyArqueo = true;
+                  _transactions = true;
+                  _catalogue = true;
+                  _multiuser = true;
+                  _editAccount = true;
+                } else if (value == 'personalized') {
+                  _isAdmin = false;
+                  _isPersonalized = true;
+                  // Reset personalized permissions
+                  _arqueo = false;
+                  _historyArqueo = false;
+                  _transactions = false;
+                  _catalogue = false;
+                  _multiuser = false;
+                  _editAccount = false;
+                }
+              });
+            },
+            child: Column(
+              children: [
+                RadioListTile<String>(
+                  secondary: Icon(
+                    Icons.admin_panel_settings_rounded,
+                    color: _isAdmin ? Colors.blue : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    size: 28,
+                  ),
+                  title: Text(
+                    'Administrador',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Permisos administrativos completos',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  value: 'admin',
+                ),
+                Divider(height: 1, color: theme.colorScheme.outlineVariant.withOpacity(0.3)),
+                RadioListTile<String>(
+                  secondary: Icon(
+                    Icons.tune_rounded,
+                    color: _isPersonalized ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    size: 28,
+                  ),
+                  title: Text(
+                    'Personalizado',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Configurar permisos específicos',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  value: 'personalized',
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -351,6 +427,7 @@ class _UserDialogState extends State<UserDialog> {
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
+          runSpacing: 8,
           children: DayOfWeek.values.map((day) {
             return FilterChip(
               label: Text(_translateDay(day)),

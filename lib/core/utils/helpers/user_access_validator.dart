@@ -98,7 +98,7 @@ class UserAccessResult {
       case UserAccessDeniedReason.none:
         return '';
       case UserAccessDeniedReason.userBlocked:
-        return 'Cuenta Bloqueada';
+        return 'Acceso Bloqueado';
       case UserAccessDeniedReason.dayNotAllowed:
         return 'Acceso Restringido';
       case UserAccessDeniedReason.outsideAllowedHours:

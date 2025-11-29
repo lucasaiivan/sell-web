@@ -42,15 +42,28 @@ void main() async {
   // Firebase initialization in the SAME zone as runApp
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // ✅ NUEVO: Habilitar Persistencia Offline para todas las plataformas
+  // ✅ Configurar Persistencia Offline Optimizada
   try {
+    // Habilitar persistencia con sincronización entre pestañas
     await FirebaseFirestore.instance.enablePersistence(
-      const PersistenceSettings(synchronizeTabs: true),
+      const PersistenceSettings(
+        synchronizeTabs: true, // Compartir caché entre tabsß del mismo origen
+      ),
     );
+    
+    // Configurar caché ilimitada (hasta límite del navegador ~200MB+)
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+    
     debugPrint('✅ Persistencia offline habilitada correctamente');
+    debugPrint('   - Caché: Ilimitada (hasta límite del navegador)');
+    debugPrint('   - Multi-tab: Habilitado');
   } catch (e) {
     // Común en modo incógnito o cuando ya está habilitada
     debugPrint('⚠️ No se pudo habilitar persistencia offline: $e');
+    debugPrint('   Esto es normal en modo incógnito o si ya estaba habilitada');
   }
 
   // ← NUEVO: Configurar inyección de dependencias para Clean Architecture

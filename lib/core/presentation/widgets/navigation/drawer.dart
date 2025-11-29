@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
+import 'package:sellweb/core/presentation/providers/connectivity_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/auth/presentation/dialogs/account_selection_dialog.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
-import 'package:sellweb/core/utils/helpers/user_access_validator.dart';
-import 'package:sellweb/features/auth/presentation/dialogs/access_denied_dialog.dart';
 import '../widgets.dart';
 
 /// Widget reutilizable del Drawer para las pantallas principales
@@ -70,81 +69,94 @@ class _AccountsAssociatedsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usar Consumer2 para escuchar cambios en AuthProvider y SalesProvider
-    return Consumer2<AuthProvider, SalesProvider>(
-      builder: (context, authProvider, sellProvider, child) {
+    // Usar Consumer3 para escuchar cambios en AuthProvider, SalesProvider y ConnectivityProvider
+    return Consumer3<AuthProvider, SalesProvider, ConnectivityProvider>(
+      builder: (context, authProvider, sellProvider, connectivity, child) {
         final selectedAccount = sellProvider.profileAccountSelected;
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
+        final isOffline = connectivity.isOffline;
 
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Avatar del comercio
-                  if (selectedAccount.id.isNotEmpty)
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colorScheme.primary,
-                          width: 2.0,
-                        ),
-                      ),
-                      child: UserAvatar(
-                        imageUrl: selectedAccount.image,
-                        text: selectedAccount.name.isNotEmpty
-                            ? selectedAccount.name[0].toUpperCase()
-                            : '?',
-                        radius: 16,
-                        backgroundColor:
-                            colorScheme.primaryContainer.withValues(
-                          alpha: 0.9,
-                        ),
-                        foregroundColor: colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-
-                  // Información de la cuenta seleccionada
-                  if (selectedAccount.id.isNotEmpty) ...[
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            selectedAccount.name,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+        return Opacity(
+          opacity: isOffline ? 0.5 : 1.0, // Reducir opacidad si está offline
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: isOffline ? null : onTap, // Deshabilitar si está offline
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Avatar del comercio
+                    if (selectedAccount.id.isNotEmpty)
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: colorScheme.primary,
+                            width: 2.0,
                           ),
-                          if (sellProvider.currentAdminProfile?.email != null &&
-                              sellProvider
-                                  .currentAdminProfile!.email.isNotEmpty)
+                        ),
+                        child: UserAvatar(
+                          imageUrl: selectedAccount.image,
+                          text: selectedAccount.name.isNotEmpty
+                              ? selectedAccount.name[0].toUpperCase()
+                              : '?',
+                          radius: 16,
+                          backgroundColor:
+                              colorScheme.primaryContainer.withValues(
+                            alpha: 0.9,
+                          ),
+                          foregroundColor: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+
+                    // Información de la cuenta seleccionada
+                    if (selectedAccount.id.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              sellProvider.currentAdminProfile!.email,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 10,
+                              selectedAccount.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                        ],
+                            if (sellProvider.currentAdminProfile?.email != null &&
+                                sellProvider
+                                    .currentAdminProfile!.email.isNotEmpty)
+                              Text(
+                                sellProvider.currentAdminProfile!.email,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 10,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
+                      // Icono de offline si está deshabilitado
+                      if (isOffline) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.cloud_off,
+                          size: 16,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                      ],
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -162,8 +174,10 @@ class _NavigationMenu extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Consumer<HomeProvider>(
-      builder: (context, homeProvider, _) {
+    return Consumer2<HomeProvider, ConnectivityProvider>(
+      builder: (context, homeProvider, connectivity, _) {
+        final isOffline = connectivity.isOffline;
+        
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Material(
@@ -171,6 +185,7 @@ class _NavigationMenu extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Ventas - SIEMPRE habilitado (funciona offline)
                 _DrawerNavTile(
                   icon: Icons.point_of_sale,
                   label: 'Ventas',
@@ -183,58 +198,71 @@ class _NavigationMenu extends StatelessWidget {
                     Navigator.of(context).pop();
                   },
                   colorScheme: colorScheme,
+                  isEnabled: true, // Siempre habilitado
                 ),
-                _DrawerNavTile(
-                  icon: Icons.inventory_2,
-                  label: 'Catálogo',
-                  index: 1,
-                  currentIndex: homeProvider.currentPageIndex,
-                  onSelected: () {
-                    if (homeProvider.currentPageIndex != 1) {
-                      homeProvider.setPageIndex(1);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  colorScheme: colorScheme,
-                ),
+                // Analíticas - Deshabilitado offline
                 _DrawerNavTile(
                   icon: Icons.analytics,
                   label: 'Analíticas',
                   index: 2,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
+                    if (isOffline) return; // No hacer nada si está offline
                     if (homeProvider.currentPageIndex != 2) {
                       homeProvider.setPageIndex(2);
                     }
                     Navigator.of(context).pop();
                   },
                   colorScheme: colorScheme,
+                  isEnabled: !isOffline,
                 ),
+                // Catálogo - Deshabilitado offline
                 _DrawerNavTile(
-                  icon: Icons.history,
-                  label: 'Historial Caja',
-                  index: 3,
+                  icon: Icons.inventory_2,
+                  label: 'Catálogo',
+                  index: 1,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
-                    if (homeProvider.currentPageIndex != 3) {
-                      homeProvider.setPageIndex(3);
+                    if (isOffline) return; // No hacer nada si está offline
+                    if (homeProvider.currentPageIndex != 1) {
+                      homeProvider.setPageIndex(1);
                     }
                     Navigator.of(context).pop();
                   },
                   colorScheme: colorScheme,
+                  isEnabled: !isOffline,
                 ),
+                // Usuarios - Deshabilitado offline
                 _DrawerNavTile(
                   icon: Icons.people,
                   label: 'Usuarios',
                   index: 4,
                   currentIndex: homeProvider.currentPageIndex,
                   onSelected: () {
+                    if (isOffline) return; // No hacer nada si está offline
                     if (homeProvider.currentPageIndex != 4) {
                       homeProvider.setPageIndex(4);
                     }
                     Navigator.of(context).pop();
                   },
                   colorScheme: colorScheme,
+                  isEnabled: !isOffline,
+                ),
+                // Historial Caja - Deshabilitado offline
+                _DrawerNavTile(
+                  icon: Icons.history,
+                  label: 'Historial Caja',
+                  index: 3,
+                  currentIndex: homeProvider.currentPageIndex,
+                  onSelected: () {
+                    if (isOffline) return; // No hacer nada si está offline
+                    if (homeProvider.currentPageIndex != 3) {
+                      homeProvider.setPageIndex(3);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  colorScheme: colorScheme,
+                  isEnabled: !isOffline,
                 ),
               ],
             ),
@@ -252,6 +280,7 @@ class _DrawerNavTile extends StatelessWidget {
   final int currentIndex;
   final VoidCallback onSelected;
   final ColorScheme colorScheme;
+  final bool isEnabled; // ← NUEVO parámetro
 
   const _DrawerNavTile({
     required this.icon,
@@ -260,41 +289,59 @@ class _DrawerNavTile extends StatelessWidget {
     required this.currentIndex,
     required this.onSelected,
     required this.colorScheme,
+    this.isEnabled = true, // Por defecto habilitado
   });
 
   @override
   Widget build(BuildContext context) {
     final isSelected = index == currentIndex;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color:
-              isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.4, // Reducir opacidad si está deshabilitado
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: ListTile(
+          enabled: isEnabled, // Deshabilitar interacción
+          leading: Icon(
+            icon,
+            color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
+          title: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Círculo indicador si está seleccionado
+              if (isSelected)
+                Icon(
+                  Icons.circle,
+                  color: colorScheme.primary,
+                  size: 16,
+                ),
+              // Icono de offline si está deshabilitado
+              if (!isEnabled) ...[
+                if (isSelected) const SizedBox(width: 8),
+                Icon(
+                  Icons.cloud_off,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ],
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          tileColor: isSelected
+              ? colorScheme.primaryContainer.withValues(alpha: 0.8)
+              : null,
+          onTap: isEnabled ? onSelected : null, // Solo ejecutar si está habilitado
         ),
-        trailing: isSelected
-            ? Icon(
-                Icons.circle,
-                color: colorScheme.primary,
-                size: 16,
-              )
-            : null,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        tileColor: isSelected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.8)
-            : null,
-        onTap: onSelected,
       ),
     );
   }
@@ -314,7 +361,7 @@ class _DrawerFooter extends StatelessWidget {
           Divider(thickness: 0.1, color: Colors.grey.shade300),
           const SizedBox(height: 8),
           Text(
-            '¡Más funciones en nuestra app móvil!',
+            'Disponible para móvil',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.blueGrey.shade700,

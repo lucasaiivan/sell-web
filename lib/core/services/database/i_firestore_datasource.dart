@@ -15,9 +15,15 @@ abstract interface class IFirestoreDataSource {
   DocumentReference<Map<String, dynamic>> document(String path);
 
   /// Obtiene documentos de una query
+  /// 
+  /// [source] controla la estrategia de obtención:
+  /// - `Source.serverAndCache`: Intenta servidor primero, luego caché (default)
+  /// - `Source.cache`: Solo caché local (útil para offline-first)
+  /// - `Source.server`: Solo servidor (útil para datos críticos)
   Future<QuerySnapshot<Map<String, dynamic>>> getDocuments(
-    Query<Map<String, dynamic>> query,
-  );
+    Query<Map<String, dynamic>> query, {
+    Source source = Source.serverAndCache,
+  });
 
   /// Stream de documentos de una query
   Stream<QuerySnapshot<Map<String, dynamic>>> streamDocuments(
@@ -54,4 +60,10 @@ abstract interface class IFirestoreDataSource {
     String field,
     num value,
   );
+
+  /// Limpia toda la persistencia offline (útil para debugging)
+  /// 
+  /// ⚠️ ADVERTENCIA: Esto eliminará todos los datos cacheados.
+  /// Solo usar en desarrollo o para resolver problemas de sincronización.
+  Future<void> clearPersistence();
 }

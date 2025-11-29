@@ -28,9 +28,10 @@ class FirestoreDataSource implements IFirestoreDataSource {
 
   @override
   Future<QuerySnapshot<Map<String, dynamic>>> getDocuments(
-    Query<Map<String, dynamic>> query,
-  ) async {
-    return await query.get();
+    Query<Map<String, dynamic>> query, {
+    Source source = Source.serverAndCache,
+  }) async {
+    return await query.get(GetOptions(source: source));
   }
 
   @override
@@ -102,5 +103,18 @@ class FirestoreDataSource implements IFirestoreDataSource {
     await _firestore.doc(path).update({
       field: FieldValue.increment(value),
     });
+  }
+
+  @override
+  Future<void> clearPersistence() async {
+    try {
+      await _firestore.clearPersistence();
+    } catch (e) {
+      // Solo funciona cuando no hay listeners activos
+      throw Exception(
+        'No se puede limpiar la persistencia mientras hay listeners activos. '
+        'Cierra todas las conexiones primero. Error: $e',
+      );
+    }
   }
 }

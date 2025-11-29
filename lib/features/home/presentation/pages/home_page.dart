@@ -12,6 +12,7 @@ import 'package:sellweb/features/analytics/presentation/pages/analytics_page.dar
 import 'package:sellweb/features/cash_register/presentation/pages/history_cash_register_page.dart';
 import 'package:sellweb/features/multiuser/presentation/pages/multi_user_page.dart';
 import 'package:sellweb/core/utils/helpers/user_access_validator.dart';
+import 'package:sellweb/core/presentation/widgets/widgets.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 /// Controla el flujo entre: selección de cuenta, ventas y catálogo
@@ -300,6 +301,8 @@ class _HomePageState extends State<HomePage> {
               textAlign: TextAlign.center,
             ),
           ),
+        // Banner de conectividad (muestra cuando está offline)
+        const ConnectivityBanner(),
         Expanded(
           child: IndexedStack(
             index: homeProvider.currentPageIndex,

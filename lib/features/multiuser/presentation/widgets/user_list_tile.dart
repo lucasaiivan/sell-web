@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/domain/entities/admin_profile.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../provider/multi_user_provider.dart';
 import 'useradmin_dialog.dart';
 
@@ -13,6 +14,11 @@ class UserListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    // Verificar si este usuario es la cuenta actual (comparar por email o id de Firebase Auth)
+    final isCurrentAccount = authProvider.user?.email == user.email || 
+                            authProvider.user?.uid == user.id;
     
     final roleText = user.superAdmin
         ? 'Super Administrador'
@@ -34,11 +40,11 @@ class UserListTile extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        final provider = Provider.of<MultiUserProvider>(context, listen: false);
+        final multiUserProvider = Provider.of<MultiUserProvider>(context, listen: false);
         showDialog(
           context: context,
           builder: (_) => ChangeNotifierProvider.value(
-            value: provider,
+            value: multiUserProvider,
             child: UserAdminDialog(user: user),
           ),
         );
@@ -96,6 +102,37 @@ class UserListTile extends StatelessWidget {
             ),
             
             const SizedBox(width: 12),
+            
+            // Indicador de cuenta actual
+            if (isCurrentAccount) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      size: 14,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Actual',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             
             // Badge de rol en el extremo derecho
             Container(

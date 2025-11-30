@@ -21,7 +21,7 @@ class CataloguePage extends StatefulWidget {
 }
 
 class _CataloguePageState extends State<CataloguePage> {
-  bool _isGridView = true;
+  bool _isGridView = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 

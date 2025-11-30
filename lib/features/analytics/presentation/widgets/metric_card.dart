@@ -12,7 +12,6 @@ class MetricCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? subtitle;
-  final bool isPrimary;
 
   const MetricCard({
     super.key,
@@ -21,7 +20,6 @@ class MetricCard extends StatelessWidget {
     required this.icon,
     required this.color,
     this.subtitle,
-    this.isPrimary = false,
   });
 
   @override
@@ -29,152 +27,144 @@ class MetricCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Colores dinámicos
-    final backgroundColor = isDark
+    // Sistema de colores Material 3 con tinte de la métrica
+    final containerColor = isDark
         ? color.withValues(alpha: 0.15)
         : color.withValues(alpha: 0.08);
     
-    final iconBackgroundColor = isDark
-        ? color.withValues(alpha: 0.25)
-        : color.withValues(alpha: 0.15);
+    final onContainerColor = theme.colorScheme.onSurface;
+    
+    // Icon container más sutil
+    final iconContainerColor = color.withValues(alpha: 0.2);
 
-    final textColor = isDark ? Colors.white : theme.colorScheme.onSurface;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
+    return Card(
+      elevation: 0,
+      color: containerColor,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: color.withValues(alpha: 0.1),
-          width: 1.5,
+        side: BorderSide(
+          color: color.withValues(alpha: 0.15),
+          width: 1,
         ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(24),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculamos tamaños dinámicos basados en el espacio disponible
-              final availableWidth = constraints.maxWidth;
-              final availableHeight = constraints.maxHeight;
-              
-              // Tamaños de fuente adaptativos
-              final titleFontSize = isPrimary 
-                  ? (availableWidth * 0.05).clamp(14.0, 18.0)
-                  : (availableWidth * 0.08).clamp(12.0, 14.0);
-              
-              final valueFontSize = isPrimary
-                  ? (availableHeight * 0.15).clamp(28.0, 48.0)
-                  : (availableHeight * 0.20).clamp(20.0, 32.0);
-              
-              final subtitleFontSize = (availableWidth * 0.04).clamp(10.0, 12.0);
-              final iconSize = isPrimary ? 28.0 : 20.0;
-              final padding = isPrimary ? 24.0 : 16.0;
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {},
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final h = constraints.maxHeight;
+            final minDim = w < h ? w : h;
+            
+            // 1. Cálculos de escala base
+            // Usamos la dimensión más pequeña para elementos UI (iconos, padding)
+            // Usamos el ancho para textos largos
+            // Usamos el alto para el valor numérico
+            
+            final padding = (minDim * 0.05).clamp(12.0, 24.0);
+            
+            // Icono
+            final iconSize = (minDim * 0.01).clamp(20.0, 32.0);
+            final iconBoxSize = (iconSize * 1).clamp(36.0, 56.0);
+            
+            // Textos
+            final titleSize = (w * 0.08).clamp(12.0, 16.0);
+            final subtitleSize = (w * 0.05).clamp(10.0, 13.0);
+            
+            // El valor debe ser GRANDE. Calculamos basado en altura disponible.
+            // Estimamos espacio ocupado por header y footer
+            final estimatedHeaderH = iconBoxSize;
+            final estimatedFooterH = subtitle != null ? 20.0 : 0.0;
+            final availableH = h - (padding * 2) - estimatedHeaderH - estimatedFooterH;
+            
+            // El valor usa ~60-70% del espacio restante vertical
+            final valueSizeHeightBase = availableH * 0.7;
+            
+            final valueFontSize = valueSizeHeightBase.clamp(24.0, 64.0);
 
-              return Padding(
-                padding: EdgeInsets.all(padding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    // Header: Icono (y título si es primary)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(isPrimary ? 12 : 8),
-                          decoration: BoxDecoration(
-                            color: iconBackgroundColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            icon,
-                            color: color,
-                            size: iconSize,
-                          ),
+            return Padding(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- Header: Icono y Título ---
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: iconBoxSize,
+                        height: iconBoxSize,
+                        decoration: BoxDecoration(
+                          color: iconContainerColor,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        if (isPrimary) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: titleFontSize,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    
-                    const Spacer(),
-                    
-                    // Content: Valor
-                    if (!isPrimary) ...[
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                          fontSize: titleFontSize,
+                        child: Icon(
+                          icon,
+                          color: color,
+                          size: iconSize,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                    ],
-                    
-                    // Valor principal con escala dinámica
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: availableWidth - (padding * 2),
-                          ),
+                      SizedBox(width: padding * 0.8),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            value,
+                            title,
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                              fontSize: valueFontSize,
-                              height: 1.0,
+                              color: onContainerColor.withValues(alpha: 0.8),
+                              fontSize: titleSize,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.visible,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
-                    ),
-                    
-                    // Subtítulo opcional
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                          fontSize: subtitleFontSize,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
                     ],
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // --- Valor Principal ---
+                  // Usamos FittedBox para asegurar que quepa horizontalmente
+                  // y calculamos el tamaño de fuente para que llene verticalmente
+                  Flexible(
+                    flex: 2,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: onContainerColor,
+                          fontSize: valueFontSize,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // --- Subtítulo ---
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        color: onContainerColor.withValues(alpha: 0.6),
+                        fontSize: subtitleSize,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
-                ),
-              );
-            },
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

@@ -15,127 +15,162 @@ class PaymentMethodsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final iconColor = theme.colorScheme.tertiary;
-    final cardColor = iconColor.withValues(alpha: 0.08);
+    final isDark = theme.brightness == Brightness.dark;
     
-    // Ordenar métodos por monto descendente
+    // Color principal de la tarjeta (Tertiary - igual que otras métricas)
+    final color = theme.colorScheme.tertiary;
+    final containerColor = isDark
+        ? color.withValues(alpha: 0.15)
+        : color.withValues(alpha: 0.08);
+    final iconContainerColor = color.withValues(alpha: 0.2);
+    
+    // Ordenar métodos por monto descendente, con 'Sin Especificar' (string vacío) al final
     final sortedMethods = paymentMethodsBreakdown.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+      ..sort((a, b) {
+        // String vacío (Sin Especificar) siempre va al final (retorna valor positivo)
+        if (a.key.isEmpty) return 1;
+        if (b.key.isEmpty) return -1;
+        // Los demás se ordenan por monto descendente
+        return b.value.compareTo(a.value);
+      });
 
     return Card(
       elevation: 0,
+      color: containerColor,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: color.withValues(alpha: 0.15),
+          width: 1,
+        ),
       ),
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Material(
-                  color: iconColor.withValues(alpha: 0.15),
-                  shape: const CircleBorder(),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: iconContainerColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Icon(
-                      Icons.payment,
-                      color: iconColor,
-                      size: 20,
+                      Icons.payment_rounded,
+                      color: color,
+                      size: 24,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Medios de Pago',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Medios de Pago',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            sortedMethods.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Center(
-                      child: Text(
-                        'Sin datos',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                ],
+              ),
+              const SizedBox(height: 20),
+              sortedMethods.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Center(
+                        child: Text(
+                          'Sin datos',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : Column(
-                    children: sortedMethods.map((entry) {
-                final percentage = totalSales > 0 ? entry.value / totalSales : 0.0;
-                
-                // Obtener información del método de pago desde el enum
-                final paymentMethod = PaymentMethod.fromCode(entry.key);
-                final displayName = paymentMethod.displayName;
-                final methodIcon = paymentMethod.icon;
+                    )
+                  : Column(
+                      children: sortedMethods.map((entry) {
+                        final percentage = totalSales > 0 ? entry.value / totalSales : 0.0;
+                        
+                        // Obtener información del método de pago desde el enum
+                        final paymentMethod = PaymentMethod.fromCode(entry.key);
+                        final displayName = paymentMethod.displayName;
+                        final methodIcon = paymentMethod.icon;
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(methodIcon, size: 18, color: theme.colorScheme.onSurfaceVariant),
-                              const SizedBox(width: 8),
-                              Text(
-                                displayName,
-                                style: theme.textTheme.bodyMedium,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        methodIcon,
+                                        size: 20,
+                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        displayName,
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    CurrencyHelper.formatCurrency(entry.value),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: LinearProgressIndicator(
+                                        value: percentage,
+                                        backgroundColor: color.withValues(alpha: 0.15),
+                                        color: color,
+                                        minHeight: 8,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  SizedBox(
+                                    width: 48,
+                                    child: Text(
+                                      '${(percentage * 100).toStringAsFixed(1)}%',
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          Text(
-                            CurrencyHelper.formatCurrency(entry.value),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: LinearProgressIndicator(
-                              value: percentage,
-                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                              color: theme.colorScheme.tertiary,
-                              borderRadius: BorderRadius.circular(4),
-                              minHeight: 6,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${(percentage * 100).toStringAsFixed(1)}%',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-                  ),
-          ],
+                        );
+                      }).toList(),
+                    ),
+            ],
+          ),
         ),
       ),
     );

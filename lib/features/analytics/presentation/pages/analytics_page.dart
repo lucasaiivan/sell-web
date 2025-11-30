@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/utils/helpers/currency_helper.dart';
+import 'package:sellweb/core/core.dart'; 
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
@@ -73,84 +72,162 @@ class AnalyticsPage extends StatelessWidget {
 
 
 
-          // Grid de Métricas (Bento Box Layout)
+          // Grid de Métricas (Responsive Layout)
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1200),
-                  child: StaggeredGrid.count(
-                crossAxisCount: 4,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: [
-                  // 1. Facturación (Ventas Totales) - La estrella (2x2)
-                  StaggeredGridTile.count(
-                    crossAxisCellCount: 2,
-                    mainAxisCellCount: 2,
-                    child: MetricCard(
-                      title: 'Facturación Total',
-                      value: CurrencyHelper.formatCurrency(analytics.totalSales),
-                      icon: Icons.attach_money_rounded,
-                      color: const Color(0xFF059669), // Emerald 600: Más saturado, mejor contraste
-                      isPrimary: true,
-                      subtitle: 'Ingresos brutos',
-                    ),
-                  ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final screenWidth = constraints.maxWidth;
+                  
+                  // Punto de quiebre: < 900px = Bento Box, >= 900px = Fila horizontal
+                  if (screenWidth < 900) {
+                    // DISEÑO BENTO BOX (pantallas pequeñas/medianas)
+                    return StaggeredGrid.count(
+                      crossAxisCount: 4,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      children: [
+                            // 1. Facturación (Ventas Totales) - La estrella (2x2)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 2,
+                              child: MetricCard(
+                                title: 'Facturación',
+                                value: CurrencyHelper.formatCurrency(analytics.totalSales),
+                                icon: Icons.attach_money_rounded,
+                                color: const Color(0xFF059669),
+                                subtitle: 'Ingresos brutos',
+                              ),
+                            ),
 
-                  // 2. Ganancia - El objetivo (2x1)
-                  StaggeredGridTile.count(
-                    crossAxisCellCount: 2,
-                    mainAxisCellCount: 1,
-                    child: MetricCard(
-                      title: 'Ganancia Neta',
-                      value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-                      icon: Icons.trending_up_rounded,
-                      color: const Color(0xFF7C3AED), // Violet 600: Más vibrante, premium
-                      subtitle: 'Rentabilidad real',
-                    ),
-                  ),
+                            // 2. Ganancia - El objetivo (2x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: MetricCard(
+                                title: 'Ganancia',
+                                value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+                                icon: Icons.trending_up_rounded,
+                                color: const Color(0xFF7C3AED),
+                                subtitle: 'Rentabilidad real',
+                              ),
+                            ),
 
-                  // 3. Transacciones - Operativo (1x1)
-                  StaggeredGridTile.count(
-                    crossAxisCellCount: 1,
-                    mainAxisCellCount: 1,
-                    child: MetricCard(
-                      title: 'Ventas',
-                      value: analytics.totalTransactions.toString(),
-                      icon: Icons.receipt_long_rounded,
-                      color: const Color(0xFF2563EB), // Blue 600: Más profundo, confiable
-                    ),
-                  ),
+                            // 3. Transacciones - Operativo (1x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: MetricCard(
+                                title: 'Ventas',
+                                value: analytics.totalTransactions.toString(),
+                                icon: Icons.receipt_long_rounded,
+                                color: const Color(0xFF2563EB),
+                              ),
+                            ),
 
-                  // 4. Ticket Promedio - Eficiencia (1x1)
-                  StaggeredGridTile.count(
-                    crossAxisCellCount: 1,
-                    mainAxisCellCount: 1,
-                    child: MetricCard(
-                      title: 'Ticket Prom.',
-                      value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
-                      icon: Icons.analytics_rounded,
-                      color: const Color(0xFF0891B2), // Cyan 600: Más intenso, profesional
-                    ),
-                  ),
+                            // 4. Ticket Promedio - Eficiencia (1x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: MetricCard(
+                                title: 'Ticket Prom.',
+                                value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
+                                icon: Icons.analytics_rounded,
+                                color: const Color(0xFF0891B2),
+                              ),
+                            ),
 
-                  // 5. Productos Vendidos - Inventario (4x1)
-                  StaggeredGridTile.count(
-                    crossAxisCellCount: 4,
-                    mainAxisCellCount: 1,
-                    child: MetricCard(
-                      title: 'Productos Vendidos',
-                      value: analytics.totalProductsSold.toString(),
-                      icon: Icons.inventory_2_rounded,
-                      color: const Color(0xFFD97706), // Amber 600: Más cálido, energético
-                      subtitle: 'Movimiento de inventario',
-                    ),
-                  ),
-                ],
-              ),
-                ),
+                            // 5. Productos Vendidos - Inventario (4x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: MetricCard(
+                                title: 'Productos Vendidos',
+                                value: analytics.totalProductsSold.toString(),
+                                icon: Icons.inventory_2_rounded,
+                                color: const Color(0xFFD97706),
+                                subtitle: 'Movimiento de inventario',
+                              ),
+                            ),
+                          ],
+                    );
+                  } else {
+                    // DISEÑO FILA HORIZONTAL (pantallas grandes)
+                    // Todas las tarjetas en una sola fila
+                    const spacing = 12.0;
+                    const maxCardHeight = 180.0; // Altura fija más compacta
+                    
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1400),
+                        child: SizedBox(
+                          height: maxCardHeight,
+                          child: Row(
+                            children: [
+                              // 1. Facturación (Ventas Totales)
+                              Expanded(
+                                child: MetricCard(
+                                  title: 'Facturación',
+                                  value: CurrencyHelper.formatCurrency(analytics.totalSales),
+                                  icon: Icons.attach_money_rounded,
+                                  color: const Color(0xFF059669),
+                                  subtitle: 'Ingresos brutos',
+                                ),
+                              ),
+                              const SizedBox(width: spacing),
+
+                              // 2. Ganancia Neta
+                              Expanded(
+                                child: MetricCard(
+                                  title: 'Ganancia',
+                                  value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+                                  icon: Icons.trending_up_rounded,
+                                  color: const Color(0xFF7C3AED),
+                                  subtitle: 'Rentabilidad real',
+                                ),
+                              ),
+                              const SizedBox(width: spacing),
+
+                              // 3. Transacciones
+                              Expanded(
+                                child: MetricCard(
+                                  title: 'Ventas',
+                                  value: analytics.totalTransactions.toString(),
+                                  icon: Icons.receipt_long_rounded,
+                                  color: const Color(0xFF2563EB),
+                                ),
+                              ),
+                              const SizedBox(width: spacing),
+
+                              // 4. Ticket Promedio
+                              Expanded(
+                                child: MetricCard(
+                                  title: 'Ticket Prom.',
+                                  value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
+                                  icon: Icons.analytics_rounded,
+                                  color: const Color(0xFF0891B2),
+                                ),
+                              ),
+                              const SizedBox(width: spacing),
+
+                              // 5. Productos Vendidos
+                              Expanded(
+                                child: MetricCard(
+                                  title: 'Productos Vendidos',
+                                  value: analytics.totalProductsSold.toString(),
+                                  icon: Icons.inventory_2_rounded,
+                                  color: const Color(0xFFD97706),
+                                  subtitle: 'Movimiento de inventario',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
             ),
           ),

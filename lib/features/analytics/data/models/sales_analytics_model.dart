@@ -41,7 +41,8 @@ class SalesAnalyticsModel extends SalesAnalytics {
       // Normalizar payMode con códigos legacy (mercadopago → transfer, etc)
       final rawPayMode = ticket.payMode.isEmpty ? '' : ticket.payMode;
       final normalizedPayMode = PaymentMethod.migrateLegacyCode(rawPayMode);
-      final payMode = normalizedPayMode.isEmpty ? 'Desconocido' : normalizedPayMode;
+      // Mantener estándar: string vacío representa 'Sin Especificar'
+      final payMode = normalizedPayMode.isEmpty ? '' : normalizedPayMode;
       
       // Acumular total vendido por medio de pago
       paymentMethodsBreakdown[payMode] = (paymentMethodsBreakdown[payMode] ?? 0.0) + ticket.priceTotal;

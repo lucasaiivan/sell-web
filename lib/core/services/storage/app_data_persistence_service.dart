@@ -14,7 +14,7 @@ import '../../constants/shared_prefs_keys.dart';
 @lazySingleton
 class AppDataPersistenceService {
   final SharedPreferences _prefs;
-  
+
   AppDataPersistenceService(this._prefs);
 
   // ==========================================

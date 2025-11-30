@@ -13,7 +13,8 @@ class Provider {
     this.email,
   });
 
-  factory Provider.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
+  factory Provider.fromDocumentSnapshot(
+      {required DocumentSnapshot documentSnapshot}) {
     final data = documentSnapshot.data() as Map<String, dynamic>;
     return Provider(
       id: documentSnapshot.id,

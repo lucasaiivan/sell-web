@@ -20,6 +20,7 @@ import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 ///   businessName: 'Mi Negocio',
 ///   title: 'Detalle de Transacción',
 ///   onTicketAnnulled: () => handleAnnulment(),
+///   fullView: true, // Opcional: ocupa toda la pantalla
 /// );
 /// ```
 class TicketDetailDialog extends StatefulWidget {
@@ -29,12 +30,14 @@ class TicketDetailDialog extends StatefulWidget {
     required this.businessName,
     this.title = 'Ticket',
     this.onTicketAnnulled,
+    this.fullView = false,
   });
 
   final TicketModel ticket;
   final String businessName;
   final String title;
   final VoidCallback? onTicketAnnulled;
+  final bool fullView;
 
   @override
   State<TicketDetailDialog> createState() => _TicketDetailDialogState();
@@ -51,6 +54,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // BaseDialog ahora maneja automáticamente el fullView
     return BaseDialog(
       title: widget.ticket.annulled ? '${widget.title} Anulado' : widget.title,
       icon: widget.ticket.annulled
@@ -60,7 +64,14 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
       headerColor: widget.ticket.annulled
           ? Theme.of(context).colorScheme.errorContainer
           : null,
-      content: Column(
+      content: _buildContent(context),
+      actions: _buildDialogActions(context),
+      fullView: widget.fullView,
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Información del negocio y fecha
@@ -262,53 +273,56 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
           ),
           DialogComponents.sectionSpacing,
         ],
-      ),
-      actions: [
-        if (!widget.ticket.annulled) ...[
-          DialogComponents.secondaryActionButton(
-            context: context,
-            text: 'Anular',
-            onPressed: () => _showAnnullConfirmation(),
-          ),
-          DialogComponents.primaryActionButton(
-            context: context,
-            text: 'Imprimir',
-            onPressed: () => _showTicketOptions(),
-          ),
-        ] else ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onErrorContainer,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Ticket Anulado',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    );
+  }
+
+  /// Construye las acciones para el modo diálogo
+  List<Widget> _buildDialogActions(BuildContext context) {
+    return [
+      if (!widget.ticket.annulled) ...[
         DialogComponents.secondaryActionButton(
           context: context,
-          text: 'ok',
-          onPressed: () => Navigator.of(context).pop(),
+          text: 'Anular',
+          onPressed: () => _showAnnullConfirmation(),
+        ),
+        DialogComponents.primaryActionButton(
+          context: context,
+          text: 'Imprimir',
+          onPressed: () => _showTicketOptions(),
+        ),
+      ] else ...[
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.errorContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 16,
+                color: Theme.of(context).colorScheme.onErrorContainer,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Ticket Anulado',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ],
+          ),
         ),
       ],
-    );
+      DialogComponents.secondaryActionButton(
+        context: context,
+        text: 'ok',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    ];
   }
 
   void _showTicketOptions() {
@@ -359,6 +373,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
 /// - `businessName`: Nombre del negocio a mostrar
 /// - `title`: Título personalizado del diálogo (default: 'Ticket')
 /// - `onTicketAnnulled`: Callback opcional que se ejecuta al anular el ticket
+/// - `fullView`: Si es true, el diálogo ocupa toda la pantalla (default: false)
 ///
 /// **Ejemplo:**
 /// ```dart
@@ -367,6 +382,7 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
 ///   ticket: transaction,
 ///   businessName: 'Mi Tienda',
 ///   title: 'Detalle de Transacción',
+///   fullView: true, // Opcional
 /// );
 /// ```
 Future<void> showTicketDetailDialog({
@@ -375,7 +391,27 @@ Future<void> showTicketDetailDialog({
   required String businessName,
   String title = 'Ticket',
   VoidCallback? onTicketAnnulled,
+  bool fullView = false,
 }) {
+  final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
+  // Si es vista completa Y pantalla pequeña, usar Navigator.push para pantalla completa
+  if (fullView && isSmallScreen) {
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => TicketDetailDialog(
+          ticket: ticket,
+          businessName: businessName,
+          title: title,
+          onTicketAnnulled: onTicketAnnulled,
+          fullView: fullView,
+        ),
+      ),
+    );
+  }
+
+  // Vista normal como diálogo (pantallas grandes o fullView = false)
   return showDialog(
     context: context,
     builder: (context) => TicketDetailDialog(
@@ -383,6 +419,7 @@ Future<void> showTicketDetailDialog({
       businessName: businessName,
       title: title,
       onTicketAnnulled: onTicketAnnulled,
+      fullView: fullView,
     ),
   );
 }

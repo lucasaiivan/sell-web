@@ -35,7 +35,8 @@ class UserAccessValidator {
     }
 
     // 4. Verificar horario de acceso
-    if (adminProfile.hasAccessTimeConfiguration && !adminProfile.hasAccessHour) {
+    if (adminProfile.hasAccessTimeConfiguration &&
+        !adminProfile.hasAccessHour) {
       return UserAccessResult(
         hasAccess: false,
         reason: UserAccessDeniedReason.outsideAllowedHours,
@@ -54,13 +55,13 @@ class UserAccessValidator {
 enum UserAccessDeniedReason {
   /// Sin restricciones, acceso permitido
   none,
-  
+
   /// Usuario bloqueado por administrador
   userBlocked,
-  
+
   /// Día de la semana no permitido
   dayNotAllowed,
-  
+
   /// Fuera del horario permitido
   outsideAllowedHours,
 }
@@ -69,7 +70,7 @@ enum UserAccessDeniedReason {
 class UserAccessResult {
   /// Indica si el usuario tiene acceso
   final bool hasAccess;
-  
+
   /// Razón de denegación (si aplica)
   final UserAccessDeniedReason reason;
 

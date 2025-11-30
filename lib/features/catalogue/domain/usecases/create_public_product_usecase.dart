@@ -18,7 +18,8 @@ class CreatePublicProductParams {
 /// - Crea un nuevo producto en la base de datos pública
 /// - Delega la operación al repositorio
 @lazySingleton
-class CreatePublicProductUseCase extends UseCase<void, CreatePublicProductParams> {
+class CreatePublicProductUseCase
+    extends UseCase<void, CreatePublicProductParams> {
   final CatalogueRepository _repository;
 
   CreatePublicProductUseCase(this._repository);
@@ -32,7 +33,8 @@ class CreatePublicProductUseCase extends UseCase<void, CreatePublicProductParams
       await _repository.createPublicProduct(params.product);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al crear producto público: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al crear producto público: ${e.toString()}'));
     }
   }
 }

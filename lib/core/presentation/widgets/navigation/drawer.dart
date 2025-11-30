@@ -130,7 +130,8 @@ class _AccountsAssociatedsButton extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            if (sellProvider.currentAdminProfile?.email != null &&
+                            if (sellProvider.currentAdminProfile?.email !=
+                                    null &&
                                 sellProvider
                                     .currentAdminProfile!.email.isNotEmpty)
                               Text(
@@ -151,7 +152,8 @@ class _AccountsAssociatedsButton extends StatelessWidget {
                         Icon(
                           Icons.cloud_off,
                           size: 16,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                       ],
                     ],
@@ -177,7 +179,7 @@ class _NavigationMenu extends StatelessWidget {
     return Consumer2<HomeProvider, ConnectivityProvider>(
       builder: (context, homeProvider, connectivity, _) {
         final isOffline = connectivity.isOffline;
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Material(
@@ -304,7 +306,8 @@ class _DrawerNavTile extends StatelessWidget {
           enabled: isEnabled, // Deshabilitar interacción
           leading: Icon(
             icon,
-            color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            color:
+                isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
           title: Text(
             label,
@@ -340,13 +343,13 @@ class _DrawerNavTile extends StatelessWidget {
           tileColor: isSelected
               ? colorScheme.primaryContainer.withValues(alpha: 0.8)
               : null,
-          onTap: isEnabled ? onSelected : null, // Solo ejecutar si está habilitado
+          onTap:
+              isEnabled ? onSelected : null, // Solo ejecutar si está habilitado
         ),
       ),
     );
   }
 }
-
 
 class _DrawerFooter extends StatelessWidget {
   const _DrawerFooter();

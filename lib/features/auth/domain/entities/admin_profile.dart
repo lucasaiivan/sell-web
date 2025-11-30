@@ -38,7 +38,7 @@ class AdminProfile {
   final Map<String, dynamic> startTime;
   final Map<String, dynamic> endTime;
   final List<String> daysOfWeek;
-  
+
   // Permisos personalizados
   final bool arqueo;
   final bool historyArqueo;
@@ -157,12 +157,19 @@ class AdminProfile {
     if (daysOfWeek.isEmpty) return false;
 
     final now = DateTime.now();
-    final dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final dayNames = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday'
+    ];
     final currentDay = dayNames[now.weekday - 1];
 
-    return daysOfWeek.any((day) => 
-      day.toLowerCase().replaceAll(' ', '') == currentDay
-    );
+    return daysOfWeek
+        .any((day) => day.toLowerCase().replaceAll(' ', '') == currentDay);
   }
 
   /// Verifica si hay configuración de horarios de acceso

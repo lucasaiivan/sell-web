@@ -127,7 +127,8 @@ class _TermsCheckboxState extends State<TermsCheckbox>
                 context,
                 mobile: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 tablet: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                desktop: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                desktop:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               ),
               decoration: BoxDecoration(
                 border: Border.all(
@@ -185,9 +186,12 @@ class _TermsCheckboxState extends State<TermsCheckbox>
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: getResponsivePadding(
                   context,
-                  mobile: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  desktop: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  mobile:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  tablet:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  desktop:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),

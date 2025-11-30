@@ -22,13 +22,12 @@ class DeleteCashRegisterFixedDescriptionUseCase
       DeleteCashRegisterFixedDescriptionParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.descriptionId.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ID de descripción no puede estar vacío'));
+        return Left(
+            ValidationFailure('El ID de descripción no puede estar vacío'));
       }
 
       await _repository.deleteCashRegisterFixedDescription(
@@ -38,8 +37,7 @@ class DeleteCashRegisterFixedDescriptionUseCase
 
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure(
-          'Error al eliminar descripción fija: $e'));
+      return Left(ServerFailure('Error al eliminar descripción fija: $e'));
     }
   }
 }

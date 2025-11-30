@@ -366,7 +366,8 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             key: uniqueKey,
-                            content: const Text('Error al guardar el nombre frecuente'),
+                            content: const Text(
+                                'Error al guardar el nombre frecuente'),
                             backgroundColor: theme.colorScheme.error,
                             behavior: SnackBarBehavior.floating,
                           ),

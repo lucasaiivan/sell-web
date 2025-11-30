@@ -90,7 +90,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
   _AppBarColors _calculateAppBarColors(ColorScheme colorScheme, bool isDark) {
     final isScrolled = _isScrolled;
-    
+
     return _AppBarColors(
       background: isScrolled
           ? (isDark
@@ -100,9 +100,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
       accent: isScrolled
           ? colorScheme.primary
           : (isDark ? Colors.white : Colors.white), // Always white on hero
-      iconColor: isScrolled
-          ? (isDark ? Colors.white : Colors.black)
-          : Colors.white,
+      iconColor:
+          isScrolled ? (isDark ? Colors.white : Colors.black) : Colors.white,
     );
   }
 
@@ -124,15 +123,16 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
   Widget _buildResponsiveContent(BuildContext context, double width) {
     final isMobile = width < ResponsiveHelper.mobile;
-    
+
     return Container(
-      color: Theme.of(context).brightness == Brightness.dark 
-          ? const Color(0xFF0F172A) 
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
           : const Color(0xFFF8FAFC),
       child: Column(
         children: [
           const SizedBox(height: 100),
-          _buildFeaturesSection(context, axis: isMobile ? Axis.vertical : Axis.horizontal),
+          _buildFeaturesSection(context,
+              axis: isMobile ? Axis.vertical : Axis.horizontal),
           const SizedBox(height: 100),
           _buildCallToActionSection(context),
           const SizedBox(height: 100),
@@ -156,27 +156,29 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           Positioned.fill(
             child: CustomPaint(
               painter: _PremiumBackgroundPainter(
-                scrollOffset: _scrollController.hasClients ? _scrollController.offset : 0,
+                scrollOffset:
+                    _scrollController.hasClients ? _scrollController.offset : 0,
                 isDark: isDark,
                 primaryColor: theme.colorScheme.primary,
               ),
             ),
           ),
-          
+
           // Content - contenido centrado de la página de presentación
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1400),
               child: SafeArea(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40, vertical: 40),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 40, vertical: 40),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 40),
                       _buildHeroText(context, isMobile),
                       const SizedBox(height: 40),
-                      _buildHeroButtons(context), 
+                      _buildHeroButtons(context),
                       _buildHeroDevices(context, isMobile),
                       const SizedBox(height: 20),
                     ],
@@ -216,9 +218,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
             ],
           ),
         ).animate().fadeIn().slideY(begin: -0.5),
-        
         const SizedBox(height: 24),
-        
         Text(
           'GESTIONA TUS VENTAS\nE INVENTARIO',
           textAlign: TextAlign.center,
@@ -238,9 +238,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
             ],
           ),
         ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.2),
-        
         const SizedBox(height: 24),
-        
         SizedBox(
           height: 40,
           child: TypewriterText(
@@ -294,7 +292,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
   Widget _buildFeaturesSection(BuildContext context, {required Axis axis}) {
     final theme = Theme.of(context);
-    final isMobile = MediaQuery.of(context).size.width < ResponsiveHelper.mobile;
+    final isMobile =
+        MediaQuery.of(context).size.width < ResponsiveHelper.mobile;
 
     return Center(
       child: ConstrainedBox(
@@ -331,13 +330,15 @@ class _AppPresentationPageState extends State<AppPresentationPage>
 
   Widget _buildFeaturesGrid(ThemeData theme, bool isMobile) {
     final features = _getFeatureData();
-    
+
     if (isMobile) {
       return Column(
-        children: features.map((f) => Padding(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: _GlassFeatureCard(feature: f),
-        )).toList(),
+        children: features
+            .map((f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: _GlassFeatureCard(feature: f),
+                ))
+            .toList(),
       );
     }
 
@@ -345,16 +346,18 @@ class _AppPresentationPageState extends State<AppPresentationPage>
       spacing: 30,
       runSpacing: 30,
       alignment: WrapAlignment.center,
-      children: features.map((f) => SizedBox(
-        width: 350,
-        child: _GlassFeatureCard(feature: f),
-      )).toList(),
+      children: features
+          .map((f) => SizedBox(
+                width: 350,
+                child: _GlassFeatureCard(feature: f),
+              ))
+          .toList(),
     );
   }
 
   Widget _buildCallToActionSection(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
@@ -381,7 +384,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           ),
           child: Column(
             children: [
-              const Icon(Icons.rocket_launch_outlined, size: 64, color: Colors.white),
+              const Icon(Icons.rocket_launch_outlined,
+                  size: 64, color: Colors.white),
               const SizedBox(height: 24),
               Text(
                 '¿Listo para transformar tu negocio?',
@@ -406,7 +410,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: theme.colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -416,8 +421,10 @@ class _AppPresentationPageState extends State<AppPresentationPage>
                   'Comenzar Gratis',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ).animate(onPlay: (c) => c.repeat(reverse: true))
-               .scale(begin: const Offset(1, 1), end: const Offset(1.05, 1.05), duration: 1.seconds),
+              ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.05, 1.05),
+                  duration: 1.seconds),
             ],
           ),
         ),
@@ -463,7 +470,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
         _FeatureData(
           icon: Icons.point_of_sale_rounded,
           title: 'Punto de Venta y Control de Arqueo',
-          description:'Sistema completo de ventas con gestión profesional de caja',
+          description:
+              'Sistema completo de ventas con gestión profesional de caja',
           features: [
             'Escaneo eficiente de códigos de barras',
             'Múltiples métodos de pago (efectivo, tarjeta, transferencia y qr)',
@@ -500,8 +508,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
         _FeatureData(
           icon: Icons.people_alt_rounded,
           title: 'Multiusuario',
-          description:
-              'Colabora con tu equipo de forma segura y organizada.',
+          description: 'Colabora con tu equipo de forma segura y organizada.',
           features: [
             'Sistema de roles y permisos',
             'Múltiples usuarios simultáneos',
@@ -519,7 +526,8 @@ class _AppPresentationPageState extends State<AppPresentationPage>
   }
 
   Future<void> _launchPlayStore() async {
-    const url = 'https://play.google.com/store/apps/details?id=com.logicabooleana.sell&pcampaignid=web_share';
+    const url =
+        'https://play.google.com/store/apps/details?id=com.logicabooleana.sell&pcampaignid=web_share';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
@@ -558,9 +566,8 @@ class _GlassButtonState extends State<_GlassButton> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           decoration: BoxDecoration(
-            color: widget.isPrimary 
-                ? Colors.white 
-                : Colors.white.withOpacity(0.1),
+            color:
+                widget.isPrimary ? Colors.white : Colors.white.withOpacity(0.1),
             borderRadius: BorderRadius.circular(50),
             border: Border.all(
               color: Colors.white.withOpacity(widget.isPrimary ? 1 : 0.3),
@@ -581,14 +588,16 @@ class _GlassButtonState extends State<_GlassButton> {
             children: [
               Icon(
                 widget.icon,
-                color: widget.isPrimary ? const Color(0xFF4F46E5) : Colors.white,
+                color:
+                    widget.isPrimary ? const Color(0xFF4F46E5) : Colors.white,
                 size: 20,
               ),
               const SizedBox(width: 12),
               Text(
                 widget.text,
                 style: TextStyle(
-                  color: widget.isPrimary ? const Color(0xFF4F46E5) : Colors.white,
+                  color:
+                      widget.isPrimary ? const Color(0xFF4F46E5) : Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -612,15 +621,16 @@ class _AnimatedDeviceShowcase extends StatefulWidget {
   });
 
   @override
-  State<_AnimatedDeviceShowcase> createState() => _AnimatedDeviceShowcaseState();
+  State<_AnimatedDeviceShowcase> createState() =>
+      _AnimatedDeviceShowcaseState();
 }
 
 class _AnimatedDeviceShowcaseState extends State<_AnimatedDeviceShowcase> {
   bool _webHovered = false;
   bool _mobileHovered = false;
 
-  double get _scrollOffset => widget.scrollController.hasClients 
-      ? widget.scrollController.offset.clamp(0, 500) 
+  double get _scrollOffset => widget.scrollController.hasClients
+      ? widget.scrollController.offset.clamp(0, 500)
       : 0;
 
   @override
@@ -672,7 +682,8 @@ class _AnimatedDeviceShowcaseState extends State<_AnimatedDeviceShowcase> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(_webHovered ? 0.4 : 0.3),
+                          color:
+                              Colors.black.withOpacity(_webHovered ? 0.4 : 0.3),
                           blurRadius: _webHovered ? 40 : 30,
                           spreadRadius: _webHovered ? 8 : 5,
                           offset: Offset(0, _webHovered ? 25 : 20),
@@ -714,7 +725,8 @@ class _AnimatedDeviceShowcaseState extends State<_AnimatedDeviceShowcase> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(_mobileHovered ? 0.5 : 0.4),
+                          color: Colors.black
+                              .withOpacity(_mobileHovered ? 0.5 : 0.4),
                           blurRadius: _mobileHovered ? 25 : 20,
                           spreadRadius: _mobileHovered ? 4 : 2,
                           offset: Offset(0, _mobileHovered ? 15 : 10),
@@ -739,7 +751,6 @@ class _AnimatedDeviceShowcaseState extends State<_AnimatedDeviceShowcase> {
   }
 }
 
-
 class _GlassFeatureCard extends StatefulWidget {
   final _FeatureData feature;
 
@@ -755,7 +766,7 @@ class _GlassFeatureCardState extends State<_GlassFeatureCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -764,13 +775,11 @@ class _GlassFeatureCardState extends State<_GlassFeatureCard> {
         transform: Matrix4.identity()..translate(0.0, _isHovered ? -10.0 : 0.0),
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: isDark 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.white,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isDark 
-                ? Colors.white.withOpacity(0.1) 
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
                 : Colors.grey.withOpacity(0.1),
           ),
           boxShadow: [
@@ -809,63 +818,71 @@ class _GlassFeatureCardState extends State<_GlassFeatureCard> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Título con badge
             Text(
-                  widget.feature.title,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
+              widget.feature.title,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
             const SizedBox(height: 16),
-            
+
             // Descripción principal
             Text(
               widget.feature.description,
               style: TextStyle(
                 fontSize: 15,
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withOpacity(0.7),
                 height: 1.6,
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Lista de características
             ...widget.feature.features.map((feat) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: widget.feature.color!.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check,
-                      size: 14,
-                      color: widget.feature.color,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      feat,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
-                        height: 1.4,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: widget.feature.color!.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          size: 14,
+                          color: widget.feature.color,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          feat,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.color
+                                ?.withOpacity(0.8),
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
           ],
         ),
       ),
@@ -903,7 +920,7 @@ class _PremiumBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    
+
     // 1. Background Gradient
     final bgPaint = Paint()
       ..shader = LinearGradient(
@@ -921,32 +938,35 @@ class _PremiumBackgroundPainter extends CustomPainter {
                 const Color(0xFF2563EB),
               ],
       ).createShader(rect);
-    
+
     canvas.drawRect(rect, bgPaint);
 
     // 2. Animated Orbs
 
+    _drawOrb(
+        canvas,
+        size,
+        Offset(size.width * 0.8, size.height * 0.2 - scrollOffset * 0.5),
+        200,
+        Colors.purpleAccent.withOpacity(0.3));
 
-    _drawOrb(canvas, size, 
-      Offset(size.width * 0.8, size.height * 0.2 - scrollOffset * 0.5), 
-      200, 
-      Colors.purpleAccent.withOpacity(0.3)
-    );
+    _drawOrb(
+        canvas,
+        size,
+        Offset(size.width * 0.2, size.height * 0.5 - scrollOffset * 0.3),
+        300,
+        Colors.blueAccent.withOpacity(0.3));
 
-    _drawOrb(canvas, size, 
-      Offset(size.width * 0.2, size.height * 0.5 - scrollOffset * 0.3), 
-      300, 
-      Colors.blueAccent.withOpacity(0.3)
-    );
-
-    _drawOrb(canvas, size, 
-      Offset(size.width * 0.9, size.height * 0.8 - scrollOffset * 0.8), 
-      150, 
-      Colors.pinkAccent.withOpacity(0.2)
-    );
+    _drawOrb(
+        canvas,
+        size,
+        Offset(size.width * 0.9, size.height * 0.8 - scrollOffset * 0.8),
+        150,
+        Colors.pinkAccent.withOpacity(0.2));
   }
 
-  void _drawOrb(Canvas canvas, Size size, Offset center, double radius, Color color) {
+  void _drawOrb(
+      Canvas canvas, Size size, Offset center, double radius, Color color) {
     final paint = Paint()
       ..color = color
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
@@ -955,7 +975,8 @@ class _PremiumBackgroundPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _PremiumBackgroundPainter oldDelegate) {
-    return scrollOffset != oldDelegate.scrollOffset || isDark != oldDelegate.isDark;
+    return scrollOffset != oldDelegate.scrollOffset ||
+        isDark != oldDelegate.isDark;
   }
 }
 
@@ -976,7 +997,8 @@ class TypewriterText extends StatefulWidget {
   State<TypewriterText> createState() => _TypewriterTextState();
 }
 
-class _TypewriterTextState extends State<TypewriterText> with SingleTickerProviderStateMixin {
+class _TypewriterTextState extends State<TypewriterText>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   int _currentIndex = 0;
 
@@ -1001,8 +1023,9 @@ class _TypewriterTextState extends State<TypewriterText> with SingleTickerProvid
       animation: _controller,
       builder: (context, child) {
         final text = widget.texts[_currentIndex];
-        final len = (text.length * _controller.value * 2).clamp(0, text.length).toInt();
-        
+        final len =
+            (text.length * _controller.value * 2).clamp(0, text.length).toInt();
+
         if (_controller.value > 0.9 && len == text.length) {
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -1038,7 +1061,8 @@ class _TypewriterTextState extends State<TypewriterText> with SingleTickerProvid
   }
 }
 
-class _PresentationAppBar extends StatelessWidget implements PreferredSizeWidget {
+class _PresentationAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final bool isScrolled;
   final bool isDark;
   final ColorScheme colorScheme;

@@ -25,7 +25,8 @@ class CloseCashRegisterParams {
 /// - Cierra la caja registradora activa
 /// - Delega la operación al repositorio
 @lazySingleton
-class CloseCashRegisterUseCase extends UseCase<CashRegister, CloseCashRegisterParams> {
+class CloseCashRegisterUseCase
+    extends UseCase<CashRegister, CloseCashRegisterParams> {
   final CashRegisterRepository _repository;
 
   CloseCashRegisterUseCase(this._repository);
@@ -34,7 +35,8 @@ class CloseCashRegisterUseCase extends UseCase<CashRegister, CloseCashRegisterPa
   ///
   /// Retorna [Right(CashRegister)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, CashRegister>> call(CloseCashRegisterParams params) async {
+  Future<Either<Failure, CashRegister>> call(
+      CloseCashRegisterParams params) async {
     // Validación de negocio
     if (params.finalBalance < 0) {
       return Left(ValidationFailure('El balance final no puede ser negativo'));

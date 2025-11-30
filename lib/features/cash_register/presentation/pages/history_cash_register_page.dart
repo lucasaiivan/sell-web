@@ -12,7 +12,8 @@ class HistoryCashRegisterPage extends StatefulWidget {
   const HistoryCashRegisterPage({super.key});
 
   @override
-  State<HistoryCashRegisterPage> createState() => _HistoryCashRegisterPageState();
+  State<HistoryCashRegisterPage> createState() =>
+      _HistoryCashRegisterPageState();
 }
 
 class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
@@ -28,7 +29,8 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
     final sellProvider = context.read<SalesProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     if (sellProvider.profileAccountSelected.id.isNotEmpty) {
-      cashRegisterProvider.loadCashRegisterHistory(sellProvider.profileAccountSelected.id);
+      cashRegisterProvider
+          .loadCashRegisterHistory(sellProvider.profileAccountSelected.id);
     }
   }
 
@@ -102,7 +104,8 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
                 ),
               ),
               onSelected: (String newValue) {
-                provider.setHistoryFilter(newValue, sellProvider.profileAccountSelected.id);
+                provider.setHistoryFilter(
+                    newValue, sellProvider.profileAccountSelected.id);
               },
               itemBuilder: (BuildContext context) {
                 return <String>[
@@ -117,15 +120,19 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
                     child: Row(
                       children: [
                         if (isSelected)
-                          Icon(Icons.check_rounded, size: 18, color: theme.colorScheme.primary)
+                          Icon(Icons.check_rounded,
+                              size: 18, color: theme.colorScheme.primary)
                         else
                           const SizedBox(width: 18),
                         const SizedBox(width: 12),
                         Text(
                           value,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? theme.colorScheme.primary : null,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color:
+                                isSelected ? theme.colorScheme.primary : null,
                           ),
                         ),
                       ],
@@ -158,25 +165,31 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
 
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-      itemCount: (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0) + 
-                  historyItems.length,
+      itemCount:
+          (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0) +
+              historyItems.length,
       separatorBuilder: (context, index) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Divider(
           height: 0.5,
           thickness: 0.5,
-          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
+          color: Theme.of(context)
+              .colorScheme
+              .outlineVariant
+              .withValues(alpha: 0.3),
         ),
       ),
       itemBuilder: (context, index) {
         // Mostrar cajas activas al principio
-        if (hasActiveCashRegisters && index < provider.activeCashRegisters.length) {
+        if (hasActiveCashRegisters &&
+            index < provider.activeCashRegisters.length) {
           final cashRegister = provider.activeCashRegisters[index];
           return _CashRegisterItem(cashRegister: cashRegister);
         }
-        
+
         // Luego mostrar historial cerrado
-        final historyIndex = index - (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0);
+        final historyIndex = index -
+            (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0);
         final cashRegister = historyItems[historyIndex];
         return _CashRegisterItem(cashRegister: cashRegister);
       },
@@ -221,7 +234,8 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: theme.colorScheme.error),
+            Icon(Icons.error_outline_rounded,
+                size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text(
               'Error al cargar el historial',
@@ -231,7 +245,8 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.error),
             ),
             const SizedBox(height: 24),
             AppButton.primary(
@@ -254,10 +269,10 @@ class _CashRegisterItem extends StatelessWidget {
   String _getActiveHours(bool isOpen) {
     final endTime = isOpen ? DateTime.now() : cashRegister.closure;
     final duration = endTime.difference(cashRegister.opening);
-    
+
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    
+
     if (hours == 0) {
       return '$minutes min';
     } else if (minutes == 0) {
@@ -274,10 +289,12 @@ class _CashRegisterItem extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth >= 600;
     final isOpen = cashRegister.closure.year == 1970;
-    
+
     // Mostrar balance esperado si: caja está abierta O balance contabilizado es 0
     final shouldShowExpected = isOpen || cashRegister.balance == 0;
-    final displayBalance = shouldShowExpected ? cashRegister.getExpectedBalance : cashRegister.balance;
+    final displayBalance = shouldShowExpected
+        ? cashRegister.getExpectedBalance
+        : cashRegister.balance;
     final balanceLabel = shouldShowExpected ? 'Balance' : 'Contabilizado';
 
     return InkWell(
@@ -286,14 +303,17 @@ class _CashRegisterItem extends StatelessWidget {
           context: context,
           builder: (context) => CashRegisterDetailDialog(
             cashRegister: cashRegister,
+            fullView: true,
           ),
         );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: isLargeScreen
-            ? _buildLargeScreenLayout(context, theme, colorScheme, isOpen, displayBalance, balanceLabel)
-            : _buildSmallScreenLayout(context, theme, colorScheme, isOpen, displayBalance, balanceLabel),
+            ? _buildLargeScreenLayout(context, theme, colorScheme, isOpen,
+                displayBalance, balanceLabel)
+            : _buildSmallScreenLayout(context, theme, colorScheme, isOpen,
+                displayBalance, balanceLabel),
       ),
     );
   }
@@ -313,8 +333,8 @@ class _CashRegisterItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: isOpen 
-                ? Colors.green.withValues(alpha: 0.1) 
+            color: isOpen
+                ? Colors.green.withValues(alpha: 0.1)
                 : colorScheme.surfaceContainerHighest,
             shape: BoxShape.circle,
           ),
@@ -325,7 +345,7 @@ class _CashRegisterItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        
+
         // Info Principal
         Expanded(
           child: Column(
@@ -345,17 +365,20 @@ class _CashRegisterItem extends StatelessWidget {
                     DateFormat('HH:mm').format(cashRegister.opening),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w400,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                     ),
                   ),
                   if (isOpen) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                        border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.2)),
                       ),
                       child: Text(
                         'ABIERTA',
@@ -375,7 +398,8 @@ class _CashRegisterItem extends StatelessWidget {
                   Text(
                     _getActiveHours(isOpen),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -384,7 +408,8 @@ class _CashRegisterItem extends StatelessWidget {
                     width: 4,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -392,7 +417,8 @@ class _CashRegisterItem extends StatelessWidget {
                   Text(
                     '${cashRegister.getEffectiveSales} ${cashRegister.getEffectiveSales == 1 ? "venta" : "ventas"}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -423,7 +449,7 @@ class _CashRegisterItem extends StatelessWidget {
               ),
             ),
           ],
-        ), 
+        ),
       ],
     );
   }
@@ -448,8 +474,8 @@ class _CashRegisterItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: isOpen 
-                      ? Colors.green.withValues(alpha: 0.1) 
+                  color: isOpen
+                      ? Colors.green.withValues(alpha: 0.1)
                       : colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
@@ -460,7 +486,7 @@ class _CashRegisterItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,7 +495,8 @@ class _CashRegisterItem extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          DateFormat('dd MMM yyyy').format(cashRegister.opening),
+                          DateFormat('dd MMM yyyy')
+                              .format(cashRegister.opening),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -479,17 +506,20 @@ class _CashRegisterItem extends StatelessWidget {
                           DateFormat('HH:mm').format(cashRegister.opening),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w400,
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                            color: colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.8),
                           ),
                         ),
                         if (isOpen) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.green.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                              border: Border.all(
+                                  color: Colors.green.withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               'ABIERTA',
@@ -507,7 +537,8 @@ class _CashRegisterItem extends StatelessWidget {
                     Text(
                       _getActiveHours(isOpen),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -561,12 +592,13 @@ class _CashRegisterItem extends StatelessWidget {
                   Text(
                     balanceLabel,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
-              ), 
+              ),
             ],
           ),
         ),

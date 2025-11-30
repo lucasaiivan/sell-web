@@ -18,8 +18,7 @@ class SetTicketDiscountUseCase
       SetTicketDiscountParams params) async {
     try {
       if (params.discount < 0) {
-        return Left(
-            ValidationFailure('El descuento no puede ser negativo'));
+        return Left(ValidationFailure('El descuento no puede ser negativo'));
       }
 
       final updatedTicket = params.currentTicket.copyWith(

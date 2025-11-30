@@ -11,7 +11,7 @@ import '../../../../core/services/database/firestore_paths.dart';
 /// Implementación del repositorio de cuentas
 ///
 /// **Refactorizado:** Usa [FirestoreDataSource] en lugar de FirebaseFirestore directo
-/// 
+///
 /// Utiliza Firestore para obtener datos de cuentas y administradores.
 /// Utiliza [AppDataPersistenceService] para persistencia local.
 @LazySingleton(as: AccountRepository)
@@ -31,18 +31,18 @@ class AccountRepositoryImpl implements AccountRepository {
       // ✅ Usar FirestorePaths + DataSource
       final path = FirestorePaths.userManagedAccounts(email);
       final collection = _dataSource.collection(path);
-      
+
       print('📡 [AccountRepositoryImpl] Consultando Firestore: $path');
       final snapshot = await _dataSource.getDocuments(collection);
-      
-      print('📊 [AccountRepositoryImpl] Documentos encontrados: ${snapshot.docs.length}');
-      final adminProfiles = snapshot.docs
-          .map((doc) {
-            print('   - Doc ID: ${doc.id}, Data: ${doc.data()}');
-            return AdminProfileModel.fromDocument(doc);
-          })
-          .toList();
-      print('✅ [AccountRepositoryImpl] AdminProfiles parseados: ${adminProfiles.length}');
+
+      print(
+          '📊 [AccountRepositoryImpl] Documentos encontrados: ${snapshot.docs.length}');
+      final adminProfiles = snapshot.docs.map((doc) {
+        print('   - Doc ID: ${doc.id}, Data: ${doc.data()}');
+        return AdminProfileModel.fromDocument(doc);
+      }).toList();
+      print(
+          '✅ [AccountRepositoryImpl] AdminProfiles parseados: ${adminProfiles.length}');
       return adminProfiles;
     } catch (e, stackTrace) {
       print('❌ [AccountRepositoryImpl] Error en getUserAccounts: $e');
@@ -59,7 +59,7 @@ class AccountRepositoryImpl implements AccountRepository {
       final path = FirestorePaths.account(accountId);
       final docRef = _dataSource.document(path);
       final doc = await docRef.get();
-      
+
       if (!doc.exists) return null;
       return AccountProfileModel.fromDocument(doc);
     } catch (e) {

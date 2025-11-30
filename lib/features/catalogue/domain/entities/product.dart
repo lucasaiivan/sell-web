@@ -6,46 +6,46 @@ import 'product_catalogue.dart';
 class Product {
   /// ID único del producto
   final String id;
-  
+
   /// ID de la marca asociada
   final String idMark;
-  
+
   /// Nombre de la marca
   final String nameMark;
-  
+
   /// URL de la imagen de la marca
   final String imageMark;
-  
+
   /// Descripción del producto
   final String description;
-  
+
   /// URL de la imagen del producto
   final String image;
-  
+
   /// Código del producto
   final String code;
-  
+
   /// Número de seguidores del producto
   final int followers;
-  
+
   /// Indica si el producto está marcado como favorito
   final bool favorite;
-  
+
   /// Indica si el producto ha sido verificado por un moderador
   final bool verified;
-  
+
   /// Indica si el producto ha sido revisado por un moderador
   final bool reviewed;
-  
+
   /// Fecha y hora de creación del producto
   final DateTime creation;
-  
+
   /// Fecha y hora de la última actualización
   final DateTime upgrade;
-  
+
   /// ID del usuario que creó el producto
   final String idUserCreation;
-  
+
   /// ID del usuario que actualizó el producto
   final String idUserUpgrade;
 
@@ -110,11 +110,11 @@ class Product {
       favorite: map['favorite'] ?? false,
       verified: map['verified'] ?? false,
       reviewed: map['reviewed'] ?? false,
-      creation: map['creation'] is Timestamp 
-          ? (map['creation'] as Timestamp).toDate() 
+      creation: map['creation'] is Timestamp
+          ? (map['creation'] as Timestamp).toDate()
           : DateTime.now(),
-      upgrade: map['upgrade'] is Timestamp 
-          ? (map['upgrade'] as Timestamp).toDate() 
+      upgrade: map['upgrade'] is Timestamp
+          ? (map['upgrade'] as Timestamp).toDate()
           : DateTime.now(),
       idUserCreation: map['idUserCreation'] ?? '',
       idUserUpgrade: map['idUserUpgrade'] ?? '',

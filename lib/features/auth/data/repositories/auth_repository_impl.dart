@@ -41,14 +41,15 @@ class AuthRepositoryImpl implements AuthRepository {
       final userCredential =
           await _firebaseAuth.signInWithCredential(credential);
       final fbUser = userCredential.user;
-      
+
       if (fbUser == null) {
         return Left(ServerFailure('Error al obtener datos del usuario'));
       }
-      
+
       return Right(AuthProfileModel.fromFirebaseUser(fbUser).toEntity());
     } catch (e) {
-      return Left(ServerFailure('Error en inicio de sesión con Google: ${e.toString()}'));
+      return Left(ServerFailure(
+          'Error en inicio de sesión con Google: ${e.toString()}'));
     }
   }
 
@@ -66,13 +67,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Stream<AuthProfile?> get user =>
       _firebaseAuth.authStateChanges().map((fbUser) {
-        print('🔔 [AuthRepositoryImpl] authStateChanges - fbUser: ${fbUser?.email}, uid: ${fbUser?.uid}');
+        print(
+            '🔔 [AuthRepositoryImpl] authStateChanges - fbUser: ${fbUser?.email}, uid: ${fbUser?.uid}');
         if (fbUser == null) {
           print('❌ [AuthRepositoryImpl] Usuario es null');
           return null;
         }
-        final authProfile = AuthProfileModel.fromFirebaseUser(fbUser).toEntity();
-        print('✅ [AuthRepositoryImpl] AuthProfile creado: ${authProfile.email}');
+        final authProfile =
+            AuthProfileModel.fromFirebaseUser(fbUser).toEntity();
+        print(
+            '✅ [AuthRepositoryImpl] AuthProfile creado: ${authProfile.email}');
         return authProfile;
       });
 
@@ -81,14 +85,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final userCredential = await _firebaseAuth.signInAnonymously();
       final fbUser = userCredential.user;
-      
+
       if (fbUser == null) {
         return Left(ServerFailure('Error al crear usuario anónimo'));
       }
-      
+
       return Right(AuthProfileModel.fromFirebaseUser(fbUser).toEntity());
     } catch (e) {
-      return Left(ServerFailure('Error en inicio de sesión anónimo: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error en inicio de sesión anónimo: ${e.toString()}'));
     }
   }
 
@@ -97,7 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final GoogleSignInAccount? googleUser =
           await _googleSignIn.signInSilently();
-      
+
       if (googleUser == null) {
         return Left(ServerFailure('No hay sesión guardada'));
       }
@@ -112,14 +117,15 @@ class AuthRepositoryImpl implements AuthRepository {
       final userCredential =
           await _firebaseAuth.signInWithCredential(credential);
       final fbUser = userCredential.user;
-      
+
       if (fbUser == null) {
         return Left(ServerFailure('Error al obtener datos del usuario'));
       }
-      
+
       return Right(AuthProfileModel.fromFirebaseUser(fbUser).toEntity());
     } catch (e) {
-      return Left(ServerFailure('Error en inicio de sesión silencioso: ${e.toString()}'));
+      return Left(ServerFailure(
+          'Error en inicio de sesión silencioso: ${e.toString()}'));
     }
   }
 }

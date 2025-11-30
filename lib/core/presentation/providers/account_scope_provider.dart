@@ -96,7 +96,7 @@ class AccountScopeProvider extends ChangeNotifier {
       catalogueProvider.cleanup();
       cashRegisterProvider.cleanup();
       analyticsProvider.cleanup();
-      
+
       if (kDebugMode) {
         print('✅ AccountScopeProvider: Providers limpiados correctamente');
       }

@@ -28,7 +28,8 @@ class UpdateBillingOnAnnullmentParams {
 /// - Valida que los montos no sean negativos
 /// - Delega la operación al repositorio
 @lazySingleton
-class UpdateBillingOnAnnullmentUseCase extends UseCase<void, UpdateBillingOnAnnullmentParams> {
+class UpdateBillingOnAnnullmentUseCase
+    extends UseCase<void, UpdateBillingOnAnnullmentParams> {
   final CashRegisterRepository _repository;
 
   UpdateBillingOnAnnullmentUseCase(this._repository);
@@ -37,14 +38,17 @@ class UpdateBillingOnAnnullmentUseCase extends UseCase<void, UpdateBillingOnAnnu
   ///
   /// Retorna [Right(void)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, void>> call(UpdateBillingOnAnnullmentParams params) async {
+  Future<Either<Failure, void>> call(
+      UpdateBillingOnAnnullmentParams params) async {
     // Validaciones de negocio
     if (params.billingDecrement < 0) {
-      return Left(ValidationFailure('El decremento de facturación no puede ser negativo'));
+      return Left(ValidationFailure(
+          'El decremento de facturación no puede ser negativo'));
     }
-    
+
     if (params.discountDecrement < 0) {
-      return Left(ValidationFailure('El decremento de descuento no puede ser negativo'));
+      return Left(ValidationFailure(
+          'El decremento de descuento no puede ser negativo'));
     }
 
     try {
@@ -56,7 +60,8 @@ class UpdateBillingOnAnnullmentUseCase extends UseCase<void, UpdateBillingOnAnnu
       );
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al actualizar anulación: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al actualizar anulación: ${e.toString()}'));
     }
   }
 }

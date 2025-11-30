@@ -36,10 +36,10 @@ class MultiUserProvider extends ChangeNotifier {
 
   StreamSubscription? _usersSubscription;
   String? _currentAccountId;
-  
+
   AdminProfile? _currentUser;
   AdminProfile? get currentUser => _currentUser;
-  
+
   /// Check if current user has permission to create/manage users
   bool get canCreateUsers => _currentUser?.multiuser ?? false;
 
@@ -56,7 +56,7 @@ class MultiUserProvider extends ChangeNotifier {
 
     try {
       _currentAccountId = await _getUserAccountsUseCase.getSelectedAccountId();
-      
+
       // Load current user from persistence
       _currentUser = await _getUserAccountsUseCase.loadAdminProfile();
 

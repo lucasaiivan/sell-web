@@ -27,7 +27,8 @@ class UpdateSalesAndBillingParams {
 /// - Valida que los montos no sean negativos
 /// - Delega la operación al repositorio
 @lazySingleton
-class UpdateSalesAndBillingUseCase extends UseCase<void, UpdateSalesAndBillingParams> {
+class UpdateSalesAndBillingUseCase
+    extends UseCase<void, UpdateSalesAndBillingParams> {
   final CashRegisterRepository _repository;
 
   UpdateSalesAndBillingUseCase(this._repository);
@@ -39,11 +40,13 @@ class UpdateSalesAndBillingUseCase extends UseCase<void, UpdateSalesAndBillingPa
   Future<Either<Failure, void>> call(UpdateSalesAndBillingParams params) async {
     // Validaciones de negocio
     if (params.billingIncrement < 0) {
-      return Left(ValidationFailure('El incremento de facturación no puede ser negativo'));
+      return Left(ValidationFailure(
+          'El incremento de facturación no puede ser negativo'));
     }
-    
+
     if (params.discountIncrement < 0) {
-      return Left(ValidationFailure('El incremento de descuento no puede ser negativo'));
+      return Left(ValidationFailure(
+          'El incremento de descuento no puede ser negativo'));
     }
 
     try {

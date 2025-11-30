@@ -4,7 +4,7 @@ import 'package:shimmer/shimmer.dart';
 
 /// Imagen de producto cuadrada 1:1 con soporte para red y fallback local
 /// Optimizada para carga rápida, mejor UX offline, y retry automático
-/// 
+///
 /// **Mejoras Offline:**
 /// - Retry automático con exponential backoff
 /// - Shimmer effect mientras carga
@@ -93,7 +93,8 @@ class ProductImage extends StatelessWidget {
         maxHeightDiskCache: size != null ? (size! * 3).round() : null,
         // Error listener para debugging
         errorListener: (error) {
-          debugPrint('⚠️ Error cargando imagen: $imageUrl - ${error.toString()}');
+          debugPrint(
+              '⚠️ Error cargando imagen: $imageUrl - ${error.toString()}');
           onImageError?.call(error.toString());
         },
         // Manejo de errores con fallback elegante

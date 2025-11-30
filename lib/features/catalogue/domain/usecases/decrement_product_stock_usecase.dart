@@ -24,7 +24,8 @@ class DecrementProductStockParams {
 /// - Valida que la cantidad sea positiva
 /// - Delega la operación al repositorio
 @lazySingleton
-class DecrementProductStockUseCase extends UseCase<void, DecrementProductStockParams> {
+class DecrementProductStockUseCase
+    extends UseCase<void, DecrementProductStockParams> {
   final CatalogueRepository _repository;
 
   DecrementProductStockUseCase(this._repository);
@@ -40,7 +41,8 @@ class DecrementProductStockUseCase extends UseCase<void, DecrementProductStockPa
     }
 
     try {
-      await _repository.decrementStock(params.accountId, params.productId, params.quantity);
+      await _repository.decrementStock(
+          params.accountId, params.productId, params.quantity);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure('Error al decrementar stock: ${e.toString()}'));

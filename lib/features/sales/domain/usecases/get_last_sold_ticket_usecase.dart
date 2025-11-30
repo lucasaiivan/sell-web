@@ -14,8 +14,7 @@ import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 /// - Deserializar JSON a TicketModel
 /// - Manejar casos de ticket corrupto o inexistente
 @lazySingleton
-class GetLastSoldTicketUseCase
-    implements UseCase<TicketModel?, NoParams> {
+class GetLastSoldTicketUseCase implements UseCase<TicketModel?, NoParams> {
   final AppDataPersistenceService _persistenceService;
 
   GetLastSoldTicketUseCase(this._persistenceService);

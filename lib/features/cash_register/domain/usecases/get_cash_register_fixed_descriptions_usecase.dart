@@ -24,19 +24,16 @@ class GetCashRegisterFixedDescriptionsUseCase
       GetCashRegisterFixedDescriptionsParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
-      final descriptions =
-          await _repository.getCashRegisterFixedDescriptions(
+      final descriptions = await _repository.getCashRegisterFixedDescriptions(
         params.accountId,
       );
 
       return Right(descriptions);
     } catch (e) {
-      return Left(ServerFailure(
-          'Error al obtener descripciones fijas: $e'));
+      return Left(ServerFailure('Error al obtener descripciones fijas: $e'));
     }
   }
 }

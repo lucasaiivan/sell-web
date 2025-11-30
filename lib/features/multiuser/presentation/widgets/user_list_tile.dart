@@ -17,23 +17,23 @@ class UserListTile extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth >= 600;
-    
+
     // Verificar si este usuario es la cuenta actual (comparar por email o id de Firebase Auth)
-    final isCurrentAccount = authProvider.user?.email == user.email || 
-                            authProvider.user?.uid == user.id;
-    
+    final isCurrentAccount = authProvider.user?.email == user.email ||
+        authProvider.user?.uid == user.id;
+
     final roleText = user.superAdmin
         ? 'Super Administrador'
         : user.admin
             ? 'Administrador'
             : 'Personalizado';
-    
+
     final roleIcon = user.superAdmin
         ? Icons.security_rounded
         : user.admin
             ? Icons.admin_panel_settings_rounded
             : Icons.person_rounded;
-    
+
     final roleColor = user.superAdmin
         ? Colors.purple
         : user.admin
@@ -42,20 +42,23 @@ class UserListTile extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        final multiUserProvider = Provider.of<MultiUserProvider>(context, listen: false);
+        final multiUserProvider =
+            Provider.of<MultiUserProvider>(context, listen: false);
         showDialog(
           context: context,
           builder: (_) => ChangeNotifierProvider.value(
             value: multiUserProvider,
-            child: UserAdminDialog(user: user),
+            child: UserAdminDialog(user: user, fullView: true),
           ),
         );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: isLargeScreen
-            ? _buildLargeScreenLayout(context, theme, colorScheme, isCurrentAccount, roleText, roleIcon, roleColor)
-            : _buildSmallScreenLayout(context, theme, colorScheme, isCurrentAccount, roleText, roleIcon, roleColor),
+            ? _buildLargeScreenLayout(context, theme, colorScheme,
+                isCurrentAccount, roleText, roleIcon, roleColor)
+            : _buildSmallScreenLayout(context, theme, colorScheme,
+                isCurrentAccount, roleText, roleIcon, roleColor),
       ),
     );
   }
@@ -86,7 +89,7 @@ class UserListTile extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 14),
-        
+
         // Info Principal
         Expanded(
           child: Column(
@@ -119,9 +122,9 @@ class UserListTile extends StatelessWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(width: 12),
-        
+
         // Indicador de cuenta actual
         if (isCurrentAccount) ...[
           Container(
@@ -152,7 +155,7 @@ class UserListTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
         ],
-        
+
         // Badge de rol en el extremo derecho
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -169,9 +172,9 @@ class UserListTile extends StatelessWidget {
             ),
           ),
         ),
-        
+
         const SizedBox(width: 8),
-        
+
         // Icono de acción
         Icon(
           Icons.chevron_right_rounded,
@@ -213,7 +216,7 @@ class UserListTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
-              
+
               // Info Principal
               Expanded(
                 child: Column(
@@ -236,7 +239,8 @@ class UserListTile extends StatelessWidget {
                       Text(
                         user.email,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.75),
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -261,7 +265,8 @@ class UserListTile extends StatelessWidget {
             children: [
               if (isCurrentAccount)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
@@ -299,7 +304,8 @@ class UserListTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: roleColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),

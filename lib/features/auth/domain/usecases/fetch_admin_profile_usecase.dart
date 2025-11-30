@@ -23,7 +23,8 @@ class FetchAdminProfileParams {
 /// - Si no hay accountId, retorna el primer perfil encontrado
 /// - Si hay accountId, busca el perfil específico de esa cuenta
 @lazySingleton
-class FetchAdminProfileUseCase extends UseCase<AdminProfile?, FetchAdminProfileParams> {
+class FetchAdminProfileUseCase
+    extends UseCase<AdminProfile?, FetchAdminProfileParams> {
   final GetAccountAdminsUseCase _getAccountAdminsUseCase;
 
   FetchAdminProfileUseCase(this._getAccountAdminsUseCase);
@@ -33,9 +34,11 @@ class FetchAdminProfileUseCase extends UseCase<AdminProfile?, FetchAdminProfileP
   /// Retorna [Right(AdminProfile?)] con el perfil o null si no existe,
   /// [Left(Failure)] si falla
   @override
-  Future<Either<Failure, AdminProfile?>> call(FetchAdminProfileParams params) async {
-    final adminsResult = await _getAccountAdminsUseCase(GetAccountAdminsParams(params.email));
-    
+  Future<Either<Failure, AdminProfile?>> call(
+      FetchAdminProfileParams params) async {
+    final adminsResult =
+        await _getAccountAdminsUseCase(GetAccountAdminsParams(params.email));
+
     return adminsResult.fold(
       (failure) => Left(failure),
       (adminProfiles) {

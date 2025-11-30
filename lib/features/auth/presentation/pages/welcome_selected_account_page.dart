@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
-import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'; 
+import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 
 class WelcomeSelectedAccountPage extends StatelessWidget {
   final Future<void> Function(AccountProfile) onSelectAccount;
@@ -187,7 +187,7 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
                     ),
                   // view : lista de cuentas asociadas al usuario usando DialogComponents.itemList
                   if (accounts.isNotEmpty)
-                    ConstrainedBox( 
+                    ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: DialogComponents.itemList(
                         padding: const EdgeInsets.all(0),

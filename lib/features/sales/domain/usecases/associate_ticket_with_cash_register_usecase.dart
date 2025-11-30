@@ -19,8 +19,8 @@ class AssociateTicketWithCashRegisterUseCase
       AssociateTicketWithCashRegisterParams params) async {
     try {
       if (params.cashRegister.id.isEmpty) {
-        return Left(ValidationFailure(
-            'La caja registradora debe tener un ID válido'));
+        return Left(
+            ValidationFailure('La caja registradora debe tener un ID válido'));
       }
 
       if (params.cashRegister.description.trim().isEmpty) {
@@ -35,8 +35,8 @@ class AssociateTicketWithCashRegisterUseCase
 
       return Right(updatedTicket);
     } catch (e) {
-      return Left(ServerFailure(
-          'Error al asociar ticket con caja registradora: $e'));
+      return Left(
+          ServerFailure('Error al asociar ticket con caja registradora: $e'));
     }
   }
 }

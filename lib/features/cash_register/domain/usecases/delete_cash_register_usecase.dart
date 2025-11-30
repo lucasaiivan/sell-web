@@ -18,17 +18,14 @@ class DeleteCashRegisterUseCase
   DeleteCashRegisterUseCase(this._repository);
 
   @override
-  Future<Either<Failure, void>> call(
-      DeleteCashRegisterParams params) async {
+  Future<Either<Failure, void>> call(DeleteCashRegisterParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.cashRegisterId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de caja no puede estar vacío'));
+        return Left(ValidationFailure('El ID de caja no puede estar vacío'));
       }
 
       await _repository.deleteCashRegister(

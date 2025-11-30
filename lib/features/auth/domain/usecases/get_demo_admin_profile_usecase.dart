@@ -34,10 +34,11 @@ class GetDemoAdminProfileUseCase extends UseCase<AdminProfile, NoParams> {
         multiuser: true,
         editAccount: true,
       );
-      
+
       return Right(demoAdmin);
     } catch (e) {
-      return Left(ServerFailure('Error al generar AdminProfile demo: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al generar AdminProfile demo: ${e.toString()}'));
     }
   }
 }

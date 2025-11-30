@@ -31,7 +31,8 @@ abstract class ExternalModule {
   /// Instancia de SharedPreferences (async precomputed)
   @preResolve
   @lazySingleton
-  Future<SharedPreferences> get sharedPreferences => SharedPreferences.getInstance();
+  Future<SharedPreferences> get sharedPreferences =>
+      SharedPreferences.getInstance();
 
   @lazySingleton
   FirebaseAuth get firebaseAuth => FirebaseAuth.instance;

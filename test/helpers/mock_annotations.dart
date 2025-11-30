@@ -12,22 +12,22 @@ import 'package:sellweb/features/auth/domain/repositories/auth_repository.dart';
 import 'package:sellweb/features/auth/domain/repositories/account_repository.dart';
 
 /// Anotaciones de Mockito para generar mocks automáticamente
-/// 
+///
 /// Ejecutar: flutter pub run build_runner build --delete-conflicting-outputs
-/// 
+///
 /// Esto generará: test/helpers/mock_annotations.mocks.dart
 @GenerateMocks([
   // External Dependencies
   FirebaseFirestore,
   FirebaseAuth,
   SharedPreferences,
-  
+
   // Catalogue Feature - Repositories
   CatalogueRepository,
-  
+
   // Catalogue Feature - DataSources
   CatalogueRemoteDataSource,
-  
+
   // Auth Feature - Repositories
   AuthRepository,
   AccountRepository,

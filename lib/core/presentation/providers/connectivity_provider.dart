@@ -43,15 +43,13 @@ class ConnectivityProvider extends ChangeNotifier {
           .doc('ping');
 
       // Intentar leer desde el servidor (no desde caché)
-      await docRef
-          .get(const GetOptions(source: Source.server))
-          .timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-              // Si el timeout expira, asumir offline
-              throw TimeoutException('Connection check timeout');
-            },
-          );
+      await docRef.get(const GetOptions(source: Source.server)).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          // Si el timeout expira, asumir offline
+          throw TimeoutException('Connection check timeout');
+        },
+      );
 
       // Si llegamos aquí, hay conexión
       final wasOnline = _isOnline;

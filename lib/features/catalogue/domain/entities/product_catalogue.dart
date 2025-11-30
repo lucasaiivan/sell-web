@@ -260,7 +260,8 @@ class ProductCatalogue {
       subcategory: data['subcategory'] ?? data['subcategoria'] ?? '',
       nameSubcategory:
           data['nameSubcategory'] ?? data['subcategoriaName'] ?? '',
-      upgrade: parseDateTime(data['upgrade'] ?? data['timestamp_actualizacion']),
+      upgrade:
+          parseDateTime(data['upgrade'] ?? data['timestamp_actualizacion']),
       creation: parseDateTime(data['creation'] ?? data['timestamp_creation']),
       documentCreation: parseDateTime(
           data['documentCreation'] ?? data['timestamp_creation_document']),

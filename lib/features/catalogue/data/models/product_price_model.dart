@@ -25,7 +25,8 @@ class ProductPriceModel extends ProductPrice {
           : data['urlImageAccount'] ?? '',
       nameAccount: data['nameAccount'] ?? '',
       price: data.containsKey('price') ? data['price'] : data['precio'] ?? 0.0,
-      time: _parseTimestamp(data.containsKey('time') ? data['time'] : data['timestamp']),
+      time: _parseTimestamp(
+          data.containsKey('time') ? data['time'] : data['timestamp']),
       currencySign: data.containsKey('currencySign')
           ? data['currencySign']
           : data['moneda'] ?? '',

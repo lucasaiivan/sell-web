@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUserAccess();
     });
-    
+
     // Configurar verificación periódica cada minuto
     _accessCheckTimer = Timer.periodic(
       const Duration(minutes: 1),
@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage> {
     final adminProfile = sellProvider.currentAdminProfile;
 
     // Si no hay AdminProfile o es cuenta demo, no verificar
-    if (adminProfile == null || 
+    if (adminProfile == null ||
         sellProvider.profileAccountSelected.id == 'demo') {
       if (_currentAccessResult != null) {
         setState(() {
@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> {
 
         // Reinicia la navegación principal para comenzar en la pestaña de ventas
         context.read<HomeProvider>().reset();
-        
+
         // Forzar verificación inmediata después de seleccionar cuenta
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _checkUserAccess();
@@ -149,7 +149,7 @@ class _HomePageState extends State<HomePage> {
     final colorScheme = theme.colorScheme;
     final adminProfile = sellProvider.currentAdminProfile;
     final accountProfile = sellProvider.profileAccountSelected;
-    
+
     // Configuración visual según el tipo de restricción
     final blockConfig = _getBlockConfiguration(colorScheme);
 
@@ -193,15 +193,18 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 24),
 
                 // Información específica según el tipo de restricción
-                if ((_currentAccessResult!.reason == UserAccessDeniedReason.outsideAllowedHours ||
-                    _currentAccessResult!.reason == UserAccessDeniedReason.dayNotAllowed) &&
+                if ((_currentAccessResult!.reason ==
+                            UserAccessDeniedReason.outsideAllowedHours ||
+                        _currentAccessResult!.reason ==
+                            UserAccessDeniedReason.dayNotAllowed) &&
                     adminProfile != null) ...[
                   _buildAvailabilityInfo(context, adminProfile, blockConfig),
                   const SizedBox(height: 24),
                 ],
 
                 // Nota personalizada de bloqueo (si está disponible)
-                if (_currentAccessResult!.reason == UserAccessDeniedReason.userBlocked &&
+                if (_currentAccessResult!.reason ==
+                        UserAccessDeniedReason.userBlocked &&
                     adminProfile?.inactivateNote.isNotEmpty == true) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -236,19 +239,19 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                      onPressed: () async {
-                        // Limpiar todo el estado de verificación
-                        setState(() {
-                          _currentAccessResult = null;
-                          _lastCheckedAdminId = null;
-                        });
-                        // Limpiar datos del provider
-                        sellProvider.cleanData();
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: blockConfig.buttonColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
+                        onPressed: () async {
+                          // Limpiar todo el estado de verificación
+                          setState(() {
+                            _currentAccessResult = null;
+                            _lastCheckedAdminId = null;
+                          });
+                          // Limpiar datos del provider
+                          sellProvider.cleanData();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: blockConfig.buttonColor,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                         child: const Text('Cambiar de Cuenta'),
                       ),
                     ),
@@ -278,7 +281,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Construye la navegación principal manteniendo ambas pantallas montadas
-  Widget _buildMainNavigation(BuildContext context, SalesProvider sellProvider) {
+  Widget _buildMainNavigation(
+      BuildContext context, SalesProvider sellProvider) {
     // Manejar productos demo si aplica
     _handleDemoProducts(context, sellProvider);
 
@@ -375,7 +379,8 @@ class _HomePageState extends State<HomePage> {
           iconColor: colorScheme.error,
           backgroundColor: colorScheme.errorContainer.withOpacity(0.3),
           titleColor: colorScheme.error,
-          infoBackgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          infoBackgroundColor:
+              colorScheme.surfaceContainerHighest.withOpacity(0.5),
           infoTextColor: colorScheme.onSurfaceVariant,
           buttonColor: colorScheme.error,
         );
@@ -390,7 +395,7 @@ class _HomePageState extends State<HomePage> {
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Obtener texto de horario
     String scheduleText = '';
     try {
@@ -433,12 +438,12 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
-        
+
         // Separador si hay ambos
         if (scheduleText != 'No configurado' && daysInSpanish.isNotEmpty) ...[
           const SizedBox(height: 20),
         ],
-        
+
         // Días
         if (daysInSpanish.isNotEmpty) ...[
           Text(
@@ -454,7 +459,8 @@ class _HomePageState extends State<HomePage> {
             alignment: WrapAlignment.center,
             children: daysInSpanish.map((day) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: config.iconColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),

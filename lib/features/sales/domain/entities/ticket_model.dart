@@ -382,7 +382,8 @@ class TicketModel {
       };
 
   /// Helper para normalizar campos Timestamp que pueden venir como int
-  static void _normalizeTimestampField(Map<String, dynamic> map, String fieldName) {
+  static void _normalizeTimestampField(
+      Map<String, dynamic> map, String fieldName) {
     if (map.containsKey(fieldName) && map[fieldName] != null) {
       if (map[fieldName] is int) {
         map[fieldName] = Timestamp.fromMillisecondsSinceEpoch(map[fieldName]);
@@ -409,53 +410,53 @@ class TicketModel {
         creationTimestamp = Timestamp.now();
       }
 
-    // Procesar la lista de productos
-    List<Map<String, dynamic>> processedProducts = [];
-    if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
-      final productList = data['listPoduct'] as List;
-      processedProducts = productList.map((item) {
-        Map<String, dynamic> productMap = item is Map<String, dynamic>
-            ? Map<String, dynamic>.from(item)
-            : Map<String, dynamic>.from(item as Map);
-        
-        // Normalizar todos los campos timestamp conocidos dentro de los productos
-        _normalizeTimestampField(productMap, 'creation');
-        _normalizeTimestampField(productMap, 'upgrade');
-        _normalizeTimestampField(productMap, 'documentCreation');
-        _normalizeTimestampField(productMap, 'documentUpgrade');
-        // Normalizar también timestamps con nombres legacy
-        _normalizeTimestampField(productMap, 'timestamp_actualizacion');
-        _normalizeTimestampField(productMap, 'timestamp_creation');
-        _normalizeTimestampField(productMap, 'timestamp_creation_document');
-        _normalizeTimestampField(productMap, 'timestamp_upgrade_document');
-        
-        return productMap;
-      }).toList();
-    }
+      // Procesar la lista de productos
+      List<Map<String, dynamic>> processedProducts = [];
+      if (data.containsKey('listPoduct') && data['listPoduct'] != null) {
+        final productList = data['listPoduct'] as List;
+        processedProducts = productList.map((item) {
+          Map<String, dynamic> productMap = item is Map<String, dynamic>
+              ? Map<String, dynamic>.from(item)
+              : Map<String, dynamic>.from(item as Map);
 
-    // Normalizar payMode al cargar desde Firestore (migración automática)
-    final rawPayMode = data['payMode'] ?? '';
-    final normalizedPayMode = PaymentMethod.migrateLegacyCode(rawPayMode);
+          // Normalizar todos los campos timestamp conocidos dentro de los productos
+          _normalizeTimestampField(productMap, 'creation');
+          _normalizeTimestampField(productMap, 'upgrade');
+          _normalizeTimestampField(productMap, 'documentCreation');
+          _normalizeTimestampField(productMap, 'documentUpgrade');
+          // Normalizar también timestamps con nombres legacy
+          _normalizeTimestampField(productMap, 'timestamp_actualizacion');
+          _normalizeTimestampField(productMap, 'timestamp_creation');
+          _normalizeTimestampField(productMap, 'timestamp_creation_document');
+          _normalizeTimestampField(productMap, 'timestamp_upgrade_document');
 
-    return TicketModel(
-      id: data['id'] ?? '',
-      payMode: normalizedPayMode,
-      sellerName: data['sellerName'] ?? '',
-      sellerId: data['sellerId'] ?? '',
-      currencySymbol: data['currencySymbol'] ?? '\$',
-      cashRegisterName: data['cashRegisterName'] ??
-          data['cashRegister'] ??
-          '', // Soporte para ambos nombres de campo
-      cashRegisterId: data['cashRegisterId'] ?? '',
-      priceTotal: (data['priceTotal'] ?? 0.0).toDouble(),
-      valueReceived: (data['valueReceived'] ?? 0.0).toDouble(),
-      discount: (data['discount'] ?? 0.0).toDouble(),
-      discountIsPercentage: data['discountIsPercentage'] ?? false,
-      transactionType: data['transactionType'] ?? 'sale',
-      annulled: data['annulled'] ?? false,
-      listPoduct: processedProducts,
-      creation: creationTimestamp,
-    );
+          return productMap;
+        }).toList();
+      }
+
+      // Normalizar payMode al cargar desde Firestore (migración automática)
+      final rawPayMode = data['payMode'] ?? '';
+      final normalizedPayMode = PaymentMethod.migrateLegacyCode(rawPayMode);
+
+      return TicketModel(
+        id: data['id'] ?? '',
+        payMode: normalizedPayMode,
+        sellerName: data['sellerName'] ?? '',
+        sellerId: data['sellerId'] ?? '',
+        currencySymbol: data['currencySymbol'] ?? '\$',
+        cashRegisterName: data['cashRegisterName'] ??
+            data['cashRegister'] ??
+            '', // Soporte para ambos nombres de campo
+        cashRegisterId: data['cashRegisterId'] ?? '',
+        priceTotal: (data['priceTotal'] ?? 0.0).toDouble(),
+        valueReceived: (data['valueReceived'] ?? 0.0).toDouble(),
+        discount: (data['discount'] ?? 0.0).toDouble(),
+        discountIsPercentage: data['discountIsPercentage'] ?? false,
+        transactionType: data['transactionType'] ?? 'sale',
+        annulled: data['annulled'] ?? false,
+        listPoduct: processedProducts,
+        creation: creationTimestamp,
+      );
     } catch (e, stackTrace) {
       // Log detallado del error para debugging
       if (kDebugMode) {
@@ -467,8 +468,10 @@ class TicketModel {
           print('   Products count: ${(data['listPoduct'] as List?)?.length}');
           final products = data['listPoduct'] as List?;
           if (products != null && products.isNotEmpty) {
-            print('   First product keys: ${(products[0] as Map).keys.toList()}');
-            print('   First product creation type: ${(products[0] as Map)['creation']?.runtimeType}');
+            print(
+                '   First product keys: ${(products[0] as Map).keys.toList()}');
+            print(
+                '   First product creation type: ${(products[0] as Map)['creation']?.runtimeType}');
           }
         }
         print('   Stack: $stackTrace');

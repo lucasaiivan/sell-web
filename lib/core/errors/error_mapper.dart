@@ -5,12 +5,12 @@ import 'exceptions.dart';
 import 'failures.dart';
 
 /// Utilidad para mapear excepciones de Firebase a [DataException] y [Failure]
-/// 
+///
 /// **Responsabilidad:**
 /// - Traducir excepciones técnicas de Firebase a excepciones de dominio
 /// - Preservar información de debug (stack trace, códigos)
 /// - Proveer mensajes user-friendly en español
-/// 
+///
 /// **Uso en Repositories:**
 /// ```dart
 /// try {
@@ -19,7 +19,7 @@ import 'failures.dart';
 ///   throw ErrorMapper.mapFirebaseException(e, stack);
 /// }
 /// ```
-/// 
+///
 /// **Complejidad:** O(1) - Mapeo directo por código de error
 class ErrorMapper {
   ErrorMapper._();
@@ -36,11 +36,11 @@ class ErrorMapper {
     if (exception is firestore.FirebaseException) {
       return _mapFirestoreException(exception, stackTrace);
     }
-    
+
     if (exception is auth.FirebaseAuthException) {
       return _mapAuthException(exception, stackTrace);
     }
-    
+
     if (exception is storage.FirebaseException) {
       return _mapStorageException(exception, stackTrace);
     }
@@ -139,7 +139,7 @@ class ErrorMapper {
   // ==========================================
 
   /// Convierte [DataException] a [Failure] para el dominio
-  /// 
+  ///
   /// **Uso en Repositories:**
   /// ```dart
   /// return Left(ErrorMapper.exceptionToFailure(exception));
@@ -180,9 +180,9 @@ class ErrorMapper {
   }
 
   /// Wrapper completo: Exception raw → Failure
-  /// 
+  ///
   /// Combina mapeo de Firebase + conversión a Failure
-  /// 
+  ///
   /// **Uso simplificado:**
   /// ```dart
   /// try {

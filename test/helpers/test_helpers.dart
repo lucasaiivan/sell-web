@@ -3,12 +3,12 @@ import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 /// Helpers reutilizables para todos los tests
-/// 
+///
 /// Proporciona fixtures y builders para crear datos de prueba
 
 class TestHelpers {
   // ==================== SALES FIXTURES ====================
-  
+
   /// Ticket vacío para testing
   static TicketModel get emptyTicket => TicketModel(
         id: 'test-ticket-001',
@@ -33,7 +33,7 @@ class TestHelpers {
       testProduct1.toMap(),
       testProduct2.toMap(),
     ];
-    
+
     return TicketModel(
       id: 'test-ticket-002',
       payMode: 'effective',
@@ -53,7 +53,7 @@ class TestHelpers {
   }
 
   // ==================== CATALOGUE FIXTURES ====================
-  
+
   /// Producto de prueba 1
   static ProductCatalogue get testProduct1 => ProductCatalogue(
         id: 'prod-001',
@@ -115,7 +115,7 @@ class TestHelpers {
       );
 
   // ==================== BUILDERS ====================
-  
+
   /// Builder para crear tickets personalizados
   static TicketModel buildTicket({
     String? id,
@@ -178,16 +178,18 @@ class TestHelpers {
   }
 
   // ==================== UTILITIES ====================
-  
+
   /// Convierte un producto a formato JSON para ticket
-  static Map<String, dynamic> productToTicketJson(ProductCatalogue product, {int quantity = 1}) {
+  static Map<String, dynamic> productToTicketJson(ProductCatalogue product,
+      {int quantity = 1}) {
     final productMap = product.toMap();
     productMap['quantity'] = quantity;
     return productMap;
   }
 
   /// Calcula el total de un ticket basado en productos
-  static double calculateTicketTotal(List<Map<String, dynamic>> products, {double discount = 0.0}) {
+  static double calculateTicketTotal(List<Map<String, dynamic>> products,
+      {double discount = 0.0}) {
     final subtotal = products.fold<double>(
       0.0,
       (sum, product) {

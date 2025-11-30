@@ -45,7 +45,8 @@ void main() {
       );
     });
 
-    test('debe incrementar cantidad si el producto ya existe en el ticket', () async {
+    test('debe incrementar cantidad si el producto ya existe en el ticket',
+        () async {
       // Arrange
       final ticketWithProduct = TestHelpers.ticketWithProducts;
       final existingProduct = TestHelpers.testProduct1;
@@ -118,7 +119,8 @@ void main() {
       );
     });
 
-    test('debe retornar ValidationFailure si el producto no tiene ID', () async {
+    test('debe retornar ValidationFailure si el producto no tiene ID',
+        () async {
       // Arrange
       final emptyTicket = TestHelpers.emptyTicket;
       final invalidProduct = TestHelpers.testProduct1.copyWith(id: '');
@@ -144,7 +146,8 @@ void main() {
     test('debe retornar ValidationFailure si el precio es negativo', () async {
       // Arrange
       final emptyTicket = TestHelpers.emptyTicket;
-      final invalidProduct = TestHelpers.testProduct1.copyWith(salePrice: -10.0);
+      final invalidProduct =
+          TestHelpers.testProduct1.copyWith(salePrice: -10.0);
       final params = AddProductToTicketParams(
         currentTicket: emptyTicket,
         product: invalidProduct,
@@ -158,7 +161,8 @@ void main() {
       result.fold(
         (failure) {
           expect(failure, isA<ValidationFailure>());
-          expect(failure.message, contains('precio de venta no puede ser negativo'));
+          expect(failure.message,
+              contains('precio de venta no puede ser negativo'));
         },
         (ticket) => fail('Debería retornar un Failure'),
       );

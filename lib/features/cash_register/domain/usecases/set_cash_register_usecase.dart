@@ -12,8 +12,7 @@ import 'package:sellweb/features/cash_register/domain/repositories/cash_register
 /// - Crear nueva caja activa
 /// - Actualizar caja existente
 @lazySingleton
-class SetCashRegisterUseCase
-    implements UseCase<void, SetCashRegisterParams> {
+class SetCashRegisterUseCase implements UseCase<void, SetCashRegisterParams> {
   final CashRegisterRepository _repository;
 
   SetCashRegisterUseCase(this._repository);
@@ -22,13 +21,12 @@ class SetCashRegisterUseCase
   Future<Either<Failure, void>> call(SetCashRegisterParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.cashRegister.id.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'La caja registradora debe tener un ID válido'));
+        return Left(
+            ValidationFailure('La caja registradora debe tener un ID válido'));
       }
 
       await _repository.setCashRegister(

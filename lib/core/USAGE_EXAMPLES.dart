@@ -26,12 +26,14 @@ import 'package:sellweb/core/services/database/firestore_paths.dart';
 /// Contrato del repositorio (domain layer)
 abstract interface class IProductRepository {
   Future<Either<Failure, List<Product>>> getProducts(String accountId);
-  Future<Either<Failure, Product>> getProductById(String accountId, String productId);
-  Future<Either<Failure, void>> updateProduct(String accountId, Product product);
+  Future<Either<Failure, Product>> getProductById(
+      String accountId, String productId);
+  Future<Either<Failure, void>> updateProduct(
+      String accountId, Product product);
 }
 
 /// Implementación del repositorio (data layer)
-/// 
+///
 /// **Patrón:** Clean Architecture con abstracción de Firebase
 /// **Beneficios:**
 /// - Testeable con mocks
@@ -49,15 +51,15 @@ class ProductRepositoryImpl implements IProductRepository {
       // ✅ Usar FirestorePaths para type-safety
       final path = FirestorePaths.accountCatalogue(accountId);
       final collection = _dataSource.collection(path);
-      
+
       // ✅ Usar DataSource inyectado
       final snapshot = await _dataSource.getDocuments(collection);
-      
+
       // Mapear a entidades de dominio
       final products = snapshot.docs
           .map((doc) => ProductModel.fromFirestore(doc).toEntity())
           .toList();
-      
+
       return Right(products);
     } catch (e, stack) {
       // ✅ ErrorMapper traduce Firebase → Domain automáticamente
@@ -74,13 +76,13 @@ class ProductRepositoryImpl implements IProductRepository {
       // ✅ Path type-safe
       final path = FirestorePaths.accountProduct(accountId, productId);
       final docRef = _dataSource.document(path);
-      
+
       final snapshot = await docRef.get();
-      
+
       if (!snapshot.exists) {
         return const Left(NotFoundFailure('Producto no encontrado'));
       }
-      
+
       final product = ProductModel.fromFirestore(snapshot).toEntity();
       return Right(product);
     } catch (e, stack) {
@@ -96,10 +98,10 @@ class ProductRepositoryImpl implements IProductRepository {
     try {
       final path = FirestorePaths.accountProduct(accountId, product.id);
       final data = ProductModel.fromEntity(product).toFirestore();
-      
+
       // ✅ Operación atómica
       await _dataSource.updateDocument(path, data);
-      
+
       return const Right(null);
     } catch (e, stack) {
       return Left(ErrorMapper.handleException(e, stack));
@@ -121,7 +123,7 @@ class ProductsPage extends StatelessWidget {
         // ✅ Pattern matching exhaustivo con sealed classes
         // En tu app real, usa el state pattern de tu provider
         return const CircularProgressIndicator(); // Placeholder
-        
+
         /* Ejemplo conceptual:
         return provider.state.when(
           loading: () => const CircularProgressIndicator(),
@@ -171,9 +173,9 @@ class ProductsPage extends StatelessWidget {
 class _ErrorWidget extends StatelessWidget {
   final String message;
   final IconData icon;
-  
+
   const _ErrorWidget({required this.message, required this.icon});
-  
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -191,13 +193,14 @@ class _ErrorWidget extends StatelessWidget {
 
 class _ValidationErrorWidget extends StatelessWidget {
   final Map<String, String> errors;
-  
+
   const _ValidationErrorWidget({required this.errors});
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: errors.entries.map((e) => Text('${e.key}: ${e.value}')).toList(),
+      children:
+          errors.entries.map((e) => Text('${e.key}: ${e.value}')).toList(),
     );
   }
 }
@@ -237,11 +240,11 @@ class GetProductsUseCase {
 @injectable
 class ProductProvider extends ChangeNotifier {
   final GetProductsUseCase _getProductsUseCase;
-  
+
   List<Product> _products = [];
   Failure? _failure;
   bool _isLoading = false;
-  
+
   ProductProvider(this._getProductsUseCase);
 
   List<Product> get products => _products;
@@ -259,15 +262,15 @@ class ProductProvider extends ChangeNotifier {
     _isLoading = true;
     _failure = null;
     notifyListeners();
-    
+
     final result = await _getProductsUseCase(accountId);
-    
+
     // ✅ Manejo exhaustivo con fold
     result.fold(
       (failure) => _handleFailure(failure),
       (products) => _handleSuccess(products),
     );
-    
+
     _isLoading = false;
     notifyListeners();
   }
@@ -277,7 +280,7 @@ class ProductProvider extends ChangeNotifier {
     if (failure.stackTrace != null) {
       debugPrint('Error: ${failure.message}\n${failure.stackTrace}');
     }
-    
+
     _failure = failure;
     _products = [];
   }

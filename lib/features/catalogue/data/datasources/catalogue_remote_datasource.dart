@@ -7,9 +7,9 @@ import '../models/product_catalogue_model.dart';
 import '../models/product_model.dart';
 
 /// DataSource remoto para operaciones de catálogo en Firestore.
-/// 
+///
 /// **Refactorizado:** Usa [IFirestoreDataSource] + [FirestorePaths]
-/// 
+///
 /// Encapsula toda la lógica de acceso a Firebase Cloud Firestore
 /// para productos y categorías.
 abstract class CatalogueRemoteDataSource {
@@ -17,7 +17,8 @@ abstract class CatalogueRemoteDataSource {
   Future<List<ProductCatalogueModel>> getProducts(String accountId);
 
   /// Obtiene un producto específico por ID
-  Future<ProductCatalogueModel?> getProductById(String accountId, String productId);
+  Future<ProductCatalogueModel?> getProductById(
+      String accountId, String productId);
 
   /// Crea un producto en el catálogo
   Future<void> createProduct(String accountId, ProductCatalogueModel product);
@@ -131,7 +132,8 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
   @override
   Future<List<CategoryModel>> getCategories() async {
     try {
-      final path = FirestorePaths.accountCategories('DEFAULT'); // Categories globales
+      final path =
+          FirestorePaths.accountCategories('DEFAULT'); // Categories globales
       final collection = _dataSource.collection(path);
       final snapshot = await _dataSource.getDocuments(collection);
 

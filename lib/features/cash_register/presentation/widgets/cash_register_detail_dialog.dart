@@ -4,12 +4,16 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 
 /// Diálogo de detalle de arqueo de caja
+///
+/// En pantallas pequeñas (< 600px) con fullView=true, se muestra en pantalla completa.
 class CashRegisterDetailDialog extends StatelessWidget {
   final CashRegister cashRegister;
+  final bool fullView;
 
   const CashRegisterDetailDialog({
     super.key,
     required this.cashRegister,
+    this.fullView = false,
   });
 
   @override
@@ -23,6 +27,7 @@ class CashRegisterDetailDialog extends StatelessWidget {
       icon: Icons.point_of_sale_rounded,
       width: 550,
       maxHeight: 700,
+      fullView: fullView,
       content: _buildContent(context, isOpen),
       actions: [
         TextButton.icon(
@@ -64,16 +69,17 @@ class CashRegisterDetailDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(ThemeData theme, ColorScheme colorScheme, bool isOpen) {
+  Widget _buildStatusBadge(
+      ThemeData theme, ColorScheme colorScheme, bool isOpen) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isOpen 
+        color: isOpen
             ? Colors.green.withValues(alpha: 0.1)
             : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isOpen 
+          color: isOpen
               ? Colors.green.withValues(alpha: 0.2)
               : colorScheme.outlineVariant,
         ),
@@ -90,7 +96,8 @@ class CashRegisterDetailDialog extends StatelessWidget {
           Text(
             isOpen ? 'CAJA ABIERTA' : 'CAJA CERRADA',
             style: theme.textTheme.labelSmall?.copyWith(
-              color: isOpen ? Colors.green.shade700 : colorScheme.onSurfaceVariant,
+              color:
+                  isOpen ? Colors.green.shade700 : colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -99,13 +106,15 @@ class CashRegisterDetailDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildCashInfoSection(ThemeData theme, ColorScheme colorScheme, bool isOpen) {
+  Widget _buildCashInfoSection(
+      ThemeData theme, ColorScheme colorScheme, bool isOpen) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+        border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +149,9 @@ class CashRegisterDetailDialog extends StatelessWidget {
                 child: _CompactInfoItem(
                   icon: Icons.access_time_filled,
                   label: 'Cierre',
-                  value: isOpen ? '-' : DateFormat('HH:mm').format(cashRegister.closure),
+                  value: isOpen
+                      ? '-'
+                      : DateFormat('HH:mm').format(cashRegister.closure),
                 ),
               ),
             ],
@@ -152,8 +163,8 @@ class CashRegisterDetailDialog extends StatelessWidget {
                 child: _CompactInfoItem(
                   icon: Icons.person_outline,
                   label: 'Cajero',
-                  value: cashRegister.nameUser.isNotEmpty 
-                      ? cashRegister.nameUser.split('@')[0] 
+                  value: cashRegister.nameUser.isNotEmpty
+                      ? cashRegister.nameUser.split('@')[0]
                       : 'N/A',
                 ),
               ),
@@ -162,12 +173,13 @@ class CashRegisterDetailDialog extends StatelessWidget {
                 child: _CompactInfoItem(
                   icon: Icons.receipt_long,
                   label: 'Ventas',
-                  value: '${cashRegister.getEffectiveSales}/${cashRegister.sales}',
+                  value:
+                      '${cashRegister.getEffectiveSales}/${cashRegister.sales}',
                 ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 16),
@@ -175,7 +187,8 @@ class CashRegisterDetailDialog extends StatelessWidget {
           // Detalles de ventas
           _InfoRow(
             label: 'Caja Inicial',
-            value: CurrencyFormatter.formatPrice(value: cashRegister.initialCash),
+            value:
+                CurrencyFormatter.formatPrice(value: cashRegister.initialCash),
             theme: theme,
             isBold: true,
           ),
@@ -203,7 +216,7 @@ class CashRegisterDetailDialog extends StatelessWidget {
   Widget _buildCashMovementsSection(ThemeData theme, ColorScheme colorScheme) {
     final hasInflows = cashRegister.cashInFlowList.isNotEmpty;
     final hasOutflows = cashRegister.cashOutFlowList.isNotEmpty;
-    
+
     if (!hasInflows && !hasOutflows) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -213,7 +226,8 @@ class CashRegisterDetailDialog extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.info_outline, size: 20, color: colorScheme.onSurfaceVariant),
+            Icon(Icons.info_outline,
+                size: 20, color: colorScheme.onSurfaceVariant),
             const SizedBox(width: 12),
             Text(
               'Sin movimientos de caja registrados',
@@ -285,7 +299,8 @@ class CashRegisterDetailDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildFinancialSummary(ThemeData theme, ColorScheme colorScheme, bool isOpen) {
+  Widget _buildFinancialSummary(
+      ThemeData theme, ColorScheme colorScheme, bool isOpen) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -297,7 +312,8 @@ class CashRegisterDetailDialog extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.account_balance_wallet, size: 20, color: colorScheme.primary),
+              Icon(Icons.account_balance_wallet,
+                  size: 20, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
                 'Resumen Financiero',
@@ -312,10 +328,11 @@ class CashRegisterDetailDialog extends StatelessWidget {
           // Balance esperado
           _InfoRow(
             label: 'Balance Esperado',
-            value: CurrencyFormatter.formatPrice(value: cashRegister.getExpectedBalance),
+            value: CurrencyFormatter.formatPrice(
+                value: cashRegister.getExpectedBalance),
             theme: theme,
           ),
-          
+
           // Balance contabilizado (solo cajas cerradas)
           if (!isOpen) ...[
             const SizedBox(height: 12),
@@ -328,18 +345,22 @@ class CashRegisterDetailDialog extends StatelessWidget {
               isBold: true,
               valueColor: colorScheme.primary,
             ),
-            
+
             // Diferencia
             if (cashRegister.getDifference != 0) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (cashRegister.getDifference > 0 ? Colors.green : Colors.red)
+                  color: (cashRegister.getDifference > 0
+                          ? Colors.green
+                          : Colors.red)
                       .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: (cashRegister.getDifference > 0 ? Colors.green : Colors.red)
+                    color: (cashRegister.getDifference > 0
+                            ? Colors.green
+                            : Colors.red)
                         .withValues(alpha: 0.3),
                   ),
                 ),
@@ -349,12 +370,12 @@ class CashRegisterDetailDialog extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          cashRegister.getDifference > 0 
-                              ? Icons.trending_up 
+                          cashRegister.getDifference > 0
+                              ? Icons.trending_up
                               : Icons.trending_down,
                           size: 20,
-                          color: cashRegister.getDifference > 0 
-                              ? Colors.green.shade700 
+                          color: cashRegister.getDifference > 0
+                              ? Colors.green.shade700
                               : Colors.red.shade700,
                         ),
                         const SizedBox(width: 8),
@@ -362,19 +383,20 @@ class CashRegisterDetailDialog extends StatelessWidget {
                           'Diferencia',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: cashRegister.getDifference > 0 
-                                ? Colors.green.shade700 
+                            color: cashRegister.getDifference > 0
+                                ? Colors.green.shade700
                                 : Colors.red.shade700,
                           ),
                         ),
                       ],
                     ),
                     Text(
-                      CurrencyFormatter.formatPrice(value: cashRegister.getDifference),
+                      CurrencyFormatter.formatPrice(
+                          value: cashRegister.getDifference),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: cashRegister.getDifference > 0 
-                            ? Colors.green.shade700 
+                        color: cashRegister.getDifference > 0
+                            ? Colors.green.shade700
                             : Colors.red.shade700,
                       ),
                     ),
@@ -518,7 +540,8 @@ class _MovementCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(11)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -536,7 +559,8 @@ class _MovementCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -562,7 +586,7 @@ class _MovementCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Lista de items
           Padding(
             padding: const EdgeInsets.all(12),

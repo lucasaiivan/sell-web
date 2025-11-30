@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/inputs/inputs.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/core/presentation/widgets/buttons/app_button.dart';
 
 /// Diálogo para registrar ingresos o egresos de caja
+///
+/// En pantallas pequeñas (< 600px) con fullView=true, se muestra en pantalla completa.
 class CashFlowDialog extends StatefulWidget {
   final bool isInflow;
   final String cashRegisterId;
   final String accountId;
   final String userId;
+  final bool fullView;
 
   const CashFlowDialog({
     super.key,
@@ -17,6 +21,7 @@ class CashFlowDialog extends StatefulWidget {
     required this.cashRegisterId,
     required this.accountId,
     required this.userId,
+    this.fullView = false,
   });
 
   @override
@@ -52,59 +57,54 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
         widget.isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
     final buttonText =
         widget.isInflow ? 'Registrar Ingreso' : 'Registrar Egreso';
-    final Widget iconTitle = widget.isInflow
-        ? const Icon(Icons.arrow_downward, color: Colors.green)
-        : const Icon(Icons.arrow_outward_rounded, color: Colors.red);
+    final icon = widget.isInflow
+        ? Icons.arrow_downward
+        : Icons.arrow_outward_rounded;
+    final headerColor = widget.isInflow
+        ? Colors.green.withValues(alpha: 0.1)
+        : Colors.red.withValues(alpha: 0.1);
 
-    return AlertDialog(
-      title: Row(
+    return BaseDialog(
+      title: title,
+      icon: icon,
+      headerColor: headerColor,
+      width: 450,
+      fullView: widget.fullView,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          iconTitle,
-          const SizedBox(width: 8),
-          Text(title),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
+          const SizedBox(height: 8),
+          // input : Monto
+          MoneyInputTextField(
+            controller: cashRegisterProvider.movementAmountController,
+            labelText: 'Monto',
+            errorText: _amountError,
+            onTextChanged: (value) {
+              if (_amountError != null) {
+                setState(() {
+                  _amountError = null;
+                });
+              }
+            },
           ),
+          const SizedBox(height: 16),
+          // input : Descripción de ingreso/egreso en la caja
+          InputTextField(
+            controller: cashRegisterProvider.movementDescriptionController,
+            labelText: 'Descripción',
+            hintText: 'Motivo del ${widget.isInflow ? "ingreso" : "egreso"}',
+            errorText: _descriptionError,
+            onChanged: (value) {
+              if (_descriptionError != null) {
+                setState(() {
+                  _descriptionError = null;
+                });
+              }
+            },
+          ),
+          const SizedBox(height: 8),
         ],
-      ),
-      content: SizedBox(
-        width: 400,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // input : Monto
-            MoneyInputTextField(
-              controller: cashRegisterProvider.movementAmountController,
-              labelText: 'Monto',
-              errorText: _amountError,
-              onTextChanged: (value) {
-                if (_amountError != null) {
-                  setState(() {
-                    _amountError = null;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            // input : Descripción de ingreso/egreso en la caja
-            InputTextField(
-              controller: cashRegisterProvider.movementDescriptionController,
-              labelText: 'Descripción',
-              hintText: 'Motivo del ${widget.isInflow ? "ingreso" : "egreso"}',
-              errorText: _descriptionError,
-              onChanged: (value) {
-                if (_descriptionError != null) {
-                  setState(() {
-                    _descriptionError = null;
-                  });
-                }
-              },
-            ),
-          ],
-        ),
       ),
       actions: [
         TextButton(

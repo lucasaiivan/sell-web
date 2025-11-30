@@ -19,13 +19,13 @@ class AssignSellerToTicketUseCase
       AssignSellerToTicketParams params) async {
     try {
       if (params.sellerId.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ID del vendedor no puede estar vacío'));
+        return Left(
+            ValidationFailure('El ID del vendedor no puede estar vacío'));
       }
 
       if (params.sellerName.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El nombre del vendedor no puede estar vacío'));
+        return Left(
+            ValidationFailure('El nombre del vendedor no puede estar vacío'));
       }
 
       final updatedTicket = params.currentTicket.copyWith(
@@ -35,8 +35,7 @@ class AssignSellerToTicketUseCase
 
       return Right(updatedTicket);
     } catch (e) {
-      return Left(
-          ServerFailure('Error al asignar vendedor al ticket: $e'));
+      return Left(ServerFailure('Error al asignar vendedor al ticket: $e'));
     }
   }
 }

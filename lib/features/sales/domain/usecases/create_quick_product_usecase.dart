@@ -26,8 +26,7 @@ class CreateQuickProductUseCase
       }
 
       if (params.description.trim().isEmpty) {
-        return Left(
-            ValidationFailure('La descripción no puede estar vacía'));
+        return Left(ValidationFailure('La descripción no puede estar vacía'));
       }
 
       return Right(ProductCatalogue(

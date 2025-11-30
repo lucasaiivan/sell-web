@@ -747,10 +747,13 @@ class _TicketContent extends StatelessWidget {
                       label: Text(method.displayName),
                       selected: isSelected,
                       onSelected: (bool selected) {
-                        if (selected && method == PaymentMethod.cash && onCashPaymentSelected != null) {
+                        if (selected &&
+                            method == PaymentMethod.cash &&
+                            onCashPaymentSelected != null) {
                           onCashPaymentSelected();
                         }
-                        provider.setPayMode(payMode: selected ? method.code : '');
+                        provider.setPayMode(
+                            payMode: selected ? method.code : '');
                       },
                     );
                   }).toList(),

@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/presentation/providers/connectivity_provider.dart';
 
 /// Banner de conectividad que muestra el estado offline/online
-/// 
+///
 /// **Características:**
-/// - Se integra con [ConnectivityProvider]  
+/// - Se integra con [ConnectivityProvider]
 /// - Aparece automáticamente cuando se pierde conexión
 /// - Se oculta automáticamente al recuperar conexión
 /// - Deslizable para ocultar temporalmente
 /// - Diseño Material 3
-/// 
+///
 /// **Uso:**
 /// ```dart
 /// // En el árbol de widgets principal (ya incluido en MaterialApp)
@@ -94,7 +94,7 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
                 size: 20,
               ),
               const SizedBox(width: 12),
-              
+
               // Texto informativo
               Expanded(
                 child: Column(
@@ -112,14 +112,15 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
                     Text(
                       'Trabajando en modo offline con datos guardados',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onErrorContainer.withValues(alpha: 0.8),
+                        color:
+                            colorScheme.onErrorContainer.withValues(alpha: 0.8),
                         fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-              
+
               // Botón cerrar
               IconButton(
                 icon: Icon(

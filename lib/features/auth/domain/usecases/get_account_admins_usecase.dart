@@ -18,7 +18,8 @@ class GetAccountAdminsParams {
 /// - Obtiene los AdminProfile de las cuentas donde el usuario tiene acceso
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetAccountAdminsUseCase extends UseCase<List<AdminProfile>, GetAccountAdminsParams> {
+class GetAccountAdminsUseCase
+    extends UseCase<List<AdminProfile>, GetAccountAdminsParams> {
   final AccountRepository _repository;
 
   GetAccountAdminsUseCase(this._repository);
@@ -27,12 +28,14 @@ class GetAccountAdminsUseCase extends UseCase<List<AdminProfile>, GetAccountAdmi
   ///
   /// Retorna [Right(List<AdminProfile>)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, List<AdminProfile>>> call(GetAccountAdminsParams params) async {
+  Future<Either<Failure, List<AdminProfile>>> call(
+      GetAccountAdminsParams params) async {
     try {
       final admins = await _repository.getUserAccounts(params.email);
       return Right(admins);
     } catch (e) {
-      return Left(ServerFailure('Error al obtener administradores: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al obtener administradores: ${e.toString()}'));
     }
   }
 }

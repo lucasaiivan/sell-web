@@ -21,7 +21,8 @@ class GetProductByCodeParams {
 /// - Busca un producto por código de barra en una lista en memoria
 /// - No accede al repositorio, opera sobre datos ya cargados
 @lazySingleton
-class GetProductByCodeUseCase extends UseCase<ProductCatalogue?, GetProductByCodeParams> {
+class GetProductByCodeUseCase
+    extends UseCase<ProductCatalogue?, GetProductByCodeParams> {
   GetProductByCodeUseCase();
 
   /// Ejecuta la búsqueda del producto por código
@@ -29,7 +30,8 @@ class GetProductByCodeUseCase extends UseCase<ProductCatalogue?, GetProductByCod
   /// Retorna [Right(ProductCatalogue?)] con el producto o null si no existe,
   /// [Left(Failure)] si falla
   @override
-  Future<Either<Failure, ProductCatalogue?>> call(GetProductByCodeParams params) async {
+  Future<Either<Failure, ProductCatalogue?>> call(
+      GetProductByCodeParams params) async {
     try {
       final product = params.products.firstWhere((p) => p.code == params.code);
       return Right(product);

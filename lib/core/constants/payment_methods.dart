@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 /// Define los códigos internos, nombres legibles, colores e iconos
 enum PaymentMethod {
   cash('cash', 'Efectivo', Color(0xFF4CAF50), Icons.payments_rounded),
-  transfer('transfer', 'Transferencia', Color(0xFF2196F3), Icons.account_balance_rounded),
-  card('card', 'Tarjeta Déb/Créd', Color(0xFFFF9800), Icons.credit_card_rounded),
+  transfer('transfer', 'Transferencia', Color(0xFF2196F3),
+      Icons.account_balance_rounded),
+  card(
+      'card', 'Tarjeta Déb/Créd', Color(0xFFFF9800), Icons.credit_card_rounded),
   qr('qr', 'QR', Color(0xFF9C27B0), Icons.qr_code_2_rounded),
-  unspecified('', 'Sin Especificar', Color(0xFF9E9E9E), Icons.help_outline_rounded);
+  unspecified(
+      '', 'Sin Especificar', Color(0xFF9E9E9E), Icons.help_outline_rounded);
 
   final String code;
   final String displayName;
@@ -21,7 +24,7 @@ enum PaymentMethod {
   static PaymentMethod fromCode(String code) {
     // Normalizar código legacy primero
     final normalizedCode = _normalizeLegacyCode(code);
-    
+
     return PaymentMethod.values.firstWhere(
       (method) => method.code == normalizedCode,
       orElse: () => PaymentMethod.unspecified,
@@ -51,7 +54,7 @@ enum PaymentMethod {
 
   /// Normaliza códigos legacy a códigos nuevos
   /// Este método permite compatibilidad con tickets antiguos sin migración
-  /// 
+  ///
   /// Mapeo:
   /// - 'effective'/'efective'/'efectivo' → 'cash'
   /// - 'mercadopago'/'mercado pago'/'transferencia'/'transferencias' → 'transfer'
@@ -59,30 +62,30 @@ enum PaymentMethod {
   /// - Cualquier otro código se mantiene igual
   static String _normalizeLegacyCode(String oldCode) {
     if (oldCode.isEmpty) return '';
-    
+
     final normalized = oldCode.toLowerCase().trim();
-    
+
     switch (normalized) {
       case 'effective':
       case 'efective':
       case 'efectivo':
         return PaymentMethod.cash.code;
-      
+
       case 'mercadopago':
       case 'mercado pago':
       case 'transferencia':
       case 'transferencias':
         return PaymentMethod.transfer.code;
-      
+
       case 'card':
       case 'tarjeta':
         return PaymentMethod.card.code;
-      
+
       case 'cash':
       case 'transfer':
       case 'qr':
         return normalized;
-      
+
       default:
         return oldCode;
     }

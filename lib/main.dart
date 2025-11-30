@@ -46,9 +46,9 @@ void main() async {
   try {
     // Configurar persistencia y caché con sincronización entre pestañas
     FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true, 
+      persistenceEnabled: true,
     );
-    
+
     debugPrint('✅ Persistencia offline habilitada correctamente');
     debugPrint('   - Caché: Ilimitada (hasta límite del navegador)');
     debugPrint('   - Multi-tab: Habilitado');
@@ -80,7 +80,8 @@ void _runApp() {
           create: (_) => ConnectivityProvider(),
         ),
         ChangeNotifierProvider(
-          create: (_) => PrinterProvider(getIt<ThermalPrinterHttpService>())..initialize(),
+          create: (_) =>
+              PrinterProvider(getIt<ThermalPrinterHttpService>())..initialize(),
         ),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
 
@@ -230,9 +231,11 @@ SalesProvider _createSalesProvider() {
     setTicketPaymentModeUseCase: getIt<SetTicketPaymentModeUseCase>(),
     setTicketDiscountUseCase: getIt<SetTicketDiscountUseCase>(),
     setTicketReceivedCashUseCase: getIt<SetTicketReceivedCashUseCase>(),
-    associateTicketWithCashRegisterUseCase: getIt<AssociateTicketWithCashRegisterUseCase>(),
+    associateTicketWithCashRegisterUseCase:
+        getIt<AssociateTicketWithCashRegisterUseCase>(),
     prepareSaleTicketUseCase: getIt<PrepareSaleTicketUseCase>(),
-    prepareTicketForTransactionUseCase: getIt<PrepareTicketForTransactionUseCase>(),
+    prepareTicketForTransactionUseCase:
+        getIt<PrepareTicketForTransactionUseCase>(),
     saveLastSoldTicketUseCase: getIt<SaveLastSoldTicketUseCase>(),
     getLastSoldTicketUseCase: getIt<GetLastSoldTicketUseCase>(),
     catalogueUseCases: getIt<CatalogueUseCases>(),

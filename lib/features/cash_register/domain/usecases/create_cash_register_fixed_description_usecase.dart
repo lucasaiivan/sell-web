@@ -22,13 +22,11 @@ class CreateCashRegisterFixedDescriptionUseCase
       CreateCashRegisterFixedDescriptionParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.description.trim().isEmpty) {
-        return Left(
-            ValidationFailure('La descripción no puede estar vacía'));
+        return Left(ValidationFailure('La descripción no puede estar vacía'));
       }
 
       await _repository.createCashRegisterFixedDescription(
@@ -38,8 +36,7 @@ class CreateCashRegisterFixedDescriptionUseCase
 
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure(
-          'Error al crear descripción fija: $e'));
+      return Left(ServerFailure('Error al crear descripción fija: $e'));
     }
   }
 }

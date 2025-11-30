@@ -12,8 +12,7 @@ import 'package:sellweb/features/cash_register/domain/repositories/cash_register
 /// - Retornar detalle completo
 @lazySingleton
 class GetTransactionDetailUseCase
-    implements
-        UseCase<Map<String, dynamic>?, GetTransactionDetailParams> {
+    implements UseCase<Map<String, dynamic>?, GetTransactionDetailParams> {
   final CashRegisterRepository _repository;
 
   GetTransactionDetailUseCase(this._repository);
@@ -23,13 +22,12 @@ class GetTransactionDetailUseCase
       GetTransactionDetailParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.transactionId.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ID de transacción no puede estar vacío'));
+        return Left(
+            ValidationFailure('El ID de transacción no puede estar vacío'));
       }
 
       final transaction = await _repository.getTransactionDetail(
@@ -39,8 +37,7 @@ class GetTransactionDetailUseCase
 
       return Right(transaction);
     } catch (e) {
-      return Left(ServerFailure(
-          'Error al obtener detalle de transacción: $e'));
+      return Left(ServerFailure('Error al obtener detalle de transacción: $e'));
     }
   }
 }

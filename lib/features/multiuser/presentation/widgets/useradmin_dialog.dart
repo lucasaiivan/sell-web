@@ -44,11 +44,15 @@ enum DayOfWeek {
 /// - Permisos granulares: arqueo, historial, transacciones, catálogo, multiusuario, editar cuenta
 /// - Control de acceso: días de la semana y rango horario
 /// - Validación en tiempo real con feedback visual
+/// - Pantalla completa en dispositivos pequeños cuando fullView=true
 class UserAdminDialog extends StatefulWidget {
   /// Perfil de usuario a editar (null para crear nuevo)
   final AdminProfile? user;
+  
+  /// Si es true, se muestra en pantalla completa en dispositivos pequeños
+  final bool fullView;
 
-  const UserAdminDialog({super.key, this.user});
+  const UserAdminDialog({super.key, this.user, this.fullView = false});
 
   @override
   State<UserAdminDialog> createState() => _UserAdminDialogState();
@@ -64,63 +68,63 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   late TextEditingController _emailController;
   late TextEditingController _nameController;
   late TextEditingController _inactivateNoteController;
-  
+
   // ==================== Permission Type ====================
   /// Indica si el usuario tiene permisos de administrador completo
   bool _isAdmin = false;
-  
+
   /// Indica si el usuario es el super administrador (propietario)
   bool _isSuperAdmin = false;
-  
+
   /// Indica si el usuario tiene permisos personalizados
   bool _isPersonalized = false;
-  
+
   // ==================== User Status ====================
   /// Indica si el usuario está inactivado (bloqueado)
   bool _inactivate = false;
-  
+
   // ==================== Granular Permissions ====================
   /// Permiso para realizar arqueo (cierre de caja)
   bool _arqueo = false;
-  
+
   /// Permiso para ver y eliminar historial de arqueos
   bool _historyArqueo = false;
-  
+
   /// Permiso para ver y eliminar transacciones
   bool _transactions = false;
-  
+
   /// Permiso para gestionar catálogo de productos
   bool _catalogue = false;
-  
+
   /// Permiso para gestionar usuarios
   bool _multiuser = false;
-  
+
   /// Permiso para editar configuración de la cuenta
   bool _editAccount = false;
-  
+
   // ==================== Access Control ====================
   /// Días de la semana en los que el usuario tiene acceso
   Set<DayOfWeek> _selectedDays = {};
-  
+
   /// Hora de inicio del rango de acceso permitido
   TimeOfDay? _startTime;
-  
+
   /// Hora de fin del rango de acceso permitido
   TimeOfDay? _endTime;
-  
+
   // ==================== Validation Flags ====================
   /// Activa la visualización de errores de validación en el formulario
   bool _showValidationErrors = false;
-  
+
   /// Indica error al no seleccionar tipo de permiso
   bool _permissionTypeError = false;
-  
+
   /// Indica error al no seleccionar permisos específicos en modo personalizado
   bool _personalizedPermissionsError = false;
-  
+
   /// Indica error al no seleccionar días de la semana
   bool _daysOfWeekError = false;
-  
+
   /// Indica error al no configurar horario de acceso
   bool _accessTimeError = false;
 
@@ -132,23 +136,24 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   void initState() {
     super.initState();
     final user = widget.user;
-    
+
     _emailController = TextEditingController(text: user?.email ?? '');
     _nameController = TextEditingController(text: user?.name ?? '');
-    _inactivateNoteController = TextEditingController(text: user?.inactivateNote ?? '');
-    
+    _inactivateNoteController =
+        TextEditingController(text: user?.inactivateNote ?? '');
+
     _inactivate = user?.inactivate ?? false;
     _isAdmin = user?.admin ?? false;
     _isSuperAdmin = user?.superAdmin ?? false;
     _isPersonalized = user?.personalized ?? false;
-    
+
     _arqueo = user?.arqueo ?? false;
     _historyArqueo = user?.historyArqueo ?? false;
     _transactions = user?.transactions ?? false;
     _catalogue = user?.catalogue ?? false;
     _multiuser = user?.multiuser ?? false;
     _editAccount = user?.editAccount ?? false;
-    
+
     // Load days of week
     if (user != null && user.daysOfWeek.isNotEmpty) {
       _selectedDays = user.daysOfWeek
@@ -156,7 +161,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
           .whereType<DayOfWeek>()
           .toSet();
     }
-    
+
     // Load access times
     if (user != null && user.startTime.isNotEmpty) {
       _startTime = TimeOfDay(
@@ -179,7 +184,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     _inactivateNoteController.dispose();
     super.dispose();
   }
-  
+
   // ==========================================================================
   // HELPER METHODS
   // ==========================================================================
@@ -194,15 +199,19 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       orElse: () => DayOfWeek.monday,
     );
   }
-  
+
   /// Limpia el error de permisos personalizados si al menos uno está activo
   void _clearPersonalizedPermissionsError() {
-    if (_arqueo || _historyArqueo || _transactions || 
-        _catalogue || _multiuser || _editAccount) {
+    if (_arqueo ||
+        _historyArqueo ||
+        _transactions ||
+        _catalogue ||
+        _multiuser ||
+        _editAccount) {
       _personalizedPermissionsError = false;
     }
   }
-  
+
   /// Traduce enum DayOfWeek a abreviatura en español
   String _translateDay(DayOfWeek day) {
     const translations = {
@@ -234,6 +243,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       icon: isEditing ? Icons.edit_rounded : Icons.person_add_rounded,
       width: 550,
       maxHeight: 700,
+      fullView: widget.fullView,
       content: Form(
         key: _formKey,
         child: Column(
@@ -264,11 +274,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             onPressed: () => _confirmDelete(context),
             foregroundColor: theme.colorScheme.error,
           ),
-        if (isEditing && !widget.user!.superAdmin) 
-        AppButton.text(
-          text: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(),
-        ), 
+        if (isEditing && !widget.user!.superAdmin)
+          AppButton.text(
+            text: 'Cancelar',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         AppButton.primary(
           text: isEditing ? 'Actualizar' : 'Crear',
           onPressed: _saveUser,
@@ -287,16 +297,16 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   Widget _buildBasicInfoSection() {
     final isEditing = widget.user != null;
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Información Básica',
           style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.primary,
+          ),
         ),
         const SizedBox(height: 12),
         FormInputTextField(
@@ -333,9 +343,9 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         Text(
           'Estado del Usuario',
           style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.primary,
+          ),
         ),
         const SizedBox(height: 12),
         Container(
@@ -355,19 +365,17 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             children: [
               SwitchListTile(
                 secondary: Icon(
-                  _inactivate ? Icons.block_rounded : Icons.check_circle_rounded,
-                  color: _inactivate
-                      ? theme.colorScheme.error
-                      : Colors.green,
+                  _inactivate
+                      ? Icons.block_rounded
+                      : Icons.check_circle_rounded,
+                  color: _inactivate ? theme.colorScheme.error : Colors.green,
                   size: 28,
                 ),
                 title: Text(
                   _inactivate ? 'Usuario Inactivo' : 'Usuario Activo',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: _inactivate
-                        ? theme.colorScheme.error
-                        : Colors.green,
+                    color: _inactivate ? theme.colorScheme.error : Colors.green,
                   ),
                 ),
                 subtitle: Text(
@@ -443,7 +451,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   /// entre Admin y Personalizado para usuarios normales
   Widget _buildPermissionTypeSection() {
     final theme = Theme.of(context);
-    
+
     // Si es superusuario, mostrar info estática sin permitir edición
     if (_isSuperAdmin) {
       return Column(
@@ -452,9 +460,9 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
           Text(
             'Tipo de Permiso',
             style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.primary,
-                ),
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -502,7 +510,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         ],
       );
     }
-    
+
     // Para usuarios normales, mostrar opciones de Admin y Personalizado
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,11 +520,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             Text(
               'Tipo de Permiso',
               style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: _showValidationErrors && _permissionTypeError
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.primary,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: _showValidationErrors && _permissionTypeError
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+              ),
             ),
             if (_showValidationErrors && _permissionTypeError) ...[
               const SizedBox(width: 8),
@@ -543,7 +551,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             ),
           ),
           child: RadioGroup<String>(
-            groupValue: _isAdmin ? 'admin' : _isPersonalized ? 'personalized' : '',
+            groupValue: _isAdmin
+                ? 'admin'
+                : _isPersonalized
+                    ? 'personalized'
+                    : '',
             onChanged: (value) {
               setState(() {
                 if (value == 'admin') {
@@ -577,7 +589,9 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                 RadioListTile<String>(
                   secondary: Icon(
                     Icons.admin_panel_settings_rounded,
-                    color: _isAdmin ? Colors.blue : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    color: _isAdmin
+                        ? Colors.blue
+                        : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
                     size: 28,
                   ),
                   title: Text(
@@ -594,11 +608,15 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                   ),
                   value: 'admin',
                 ),
-                Divider(height: 1, color: theme.colorScheme.outlineVariant.withOpacity(0.3)),
+                Divider(
+                    height: 1,
+                    color: theme.colorScheme.outlineVariant.withOpacity(0.3)),
                 RadioListTile<String>(
                   secondary: Icon(
                     Icons.tune_rounded,
-                    color: _isPersonalized ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    color: _isPersonalized
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
                     size: 28,
                   ),
                   title: Text(
@@ -629,7 +647,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   /// catálogo, multiusuario y edición de cuenta
   Widget _buildGranularPermissionsSection() {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -638,11 +656,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             Text(
               'Permisos Específicos',
               style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: _showValidationErrors && _personalizedPermissionsError
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.primary,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: _showValidationErrors && _personalizedPermissionsError
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+              ),
             ),
             if (_showValidationErrors && _personalizedPermissionsError) ...[
               const SizedBox(width: 8),
@@ -783,8 +801,8 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         Text(
           'Control de Acceso',
           style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -792,11 +810,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             Text(
               'Días de la Semana',
               style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: _showValidationErrors && _daysOfWeekError
-                        ? theme.colorScheme.error
-                        : null,
-                  ),
+                fontWeight: FontWeight.w500,
+                color: _showValidationErrors && _daysOfWeekError
+                    ? theme.colorScheme.error
+                    : null,
+              ),
             ),
             if (_showValidationErrors && _daysOfWeekError) ...[
               const SizedBox(width: 8),
@@ -866,9 +884,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.warning_rounded, color: Theme.of(context).colorScheme.error, size: 32),
+        icon: Icon(Icons.warning_rounded,
+            color: Theme.of(context).colorScheme.error, size: 32),
         title: const Text('Eliminar Usuario'),
-        content: Text('¿Estás seguro de que deseas eliminar a ${widget.user!.email}?\n\nEsta acción no se puede deshacer.'),
+        content: Text(
+            '¿Estás seguro de que deseas eliminar a ${widget.user!.email}?\n\nEsta acción no se puede deshacer.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -926,7 +946,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     setState(() {
       _showValidationErrors = true;
     });
-    
+
     // Validar formulario
     if (!_formKey.currentState!.validate()) {
       // Scroll al principio para ver el error
@@ -948,18 +968,23 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       );
       return;
     }
-    
+
     // Validation: at least one permission selected for personalized users
     if (_isPersonalized) {
-      final hasAnyPermission = _arqueo || _historyArqueo || _transactions || 
-                               _catalogue || _multiuser || _editAccount;
+      final hasAnyPermission = _arqueo ||
+          _historyArqueo ||
+          _transactions ||
+          _catalogue ||
+          _multiuser ||
+          _editAccount;
       if (!hasAnyPermission) {
         setState(() {
           _personalizedPermissionsError = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Debes seleccionar al menos un permiso específico'),
+            content:
+                const Text('Debes seleccionar al menos un permiso específico'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -999,7 +1024,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       );
       return;
     }
-    
+
     // Reiniciar flags de error
     setState(() {
       _permissionTypeError = false;
@@ -1012,9 +1037,8 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     final now = DateTime.now();
 
     // Build days of week list
-    final daysOfWeek = _selectedDays
-        .map((day) => day.toString().split('.').last)
-        .toList();
+    final daysOfWeek =
+        _selectedDays.map((day) => day.toString().split('.').last).toList();
 
     // Build time maps
     final startTime = _startTime != null
@@ -1037,7 +1061,8 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       lastUpdate: now,
       account: widget.user?.account ?? '',
       arqueo: _isPersonalized ? _arqueo : _isAdmin || _isSuperAdmin,
-      historyArqueo: _isPersonalized ? _historyArqueo : _isAdmin || _isSuperAdmin,
+      historyArqueo:
+          _isPersonalized ? _historyArqueo : _isAdmin || _isSuperAdmin,
       transactions: _isPersonalized ? _transactions : _isAdmin || _isSuperAdmin,
       catalogue: _isPersonalized ? _catalogue : _isAdmin || _isSuperAdmin,
       multiuser: _isPersonalized ? _multiuser : _isAdmin || _isSuperAdmin,

@@ -33,7 +33,8 @@ class AdminProfileModel extends AdminProfile {
     return AdminProfileModel(
       id: doc.id,
       inactivate: data.containsKey("inactivate") ? doc["inactivate"] : false,
-      inactivateNote: data.containsKey("inactivateNote") ? doc["inactivateNote"] : '',
+      inactivateNote:
+          data.containsKey("inactivateNote") ? doc["inactivateNote"] : '',
       account: doc["account"],
       email: data.containsKey("email") ? doc["email"] : '',
       name: data.containsKey('name') ? doc['name'] : '',
@@ -51,9 +52,15 @@ class AdminProfileModel extends AdminProfile {
               ? (doc["lastUpdate"] as Timestamp).toDate()
               : doc["lastUpdate"] as DateTime)
           : DateTime.now(),
-      startTime: data.containsKey("startTime") ? Map<String, dynamic>.from(doc["startTime"]) : {},
-      endTime: data.containsKey("endTime") ? Map<String, dynamic>.from(doc["endTime"]) : {},
-      daysOfWeek: data.containsKey("daysOfWeek") ? List<String>.from(doc["daysOfWeek"]) : [],
+      startTime: data.containsKey("startTime")
+          ? Map<String, dynamic>.from(doc["startTime"])
+          : {},
+      endTime: data.containsKey("endTime")
+          ? Map<String, dynamic>.from(doc["endTime"])
+          : {},
+      daysOfWeek: data.containsKey("daysOfWeek")
+          ? List<String>.from(doc["daysOfWeek"])
+          : [],
       arqueo: data.containsKey("arqueo") ? doc["arqueo"] : false,
       historyArqueo:
           data.containsKey("historyArqueo") ? doc["historyArqueo"] : false,
@@ -105,9 +112,15 @@ class AdminProfileModel extends AdminProfile {
       lastUpdate: data['lastUpdate'] is String
           ? DateTime.parse(data['lastUpdate'])
           : (data['lastUpdate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      startTime: data['startTime'] != null ? Map<String, dynamic>.from(data['startTime']) : {},
-      endTime: data['endTime'] != null ? Map<String, dynamic>.from(data['endTime']) : {},
-      daysOfWeek: data['daysOfWeek'] != null ? List<String>.from(data['daysOfWeek']) : [],
+      startTime: data['startTime'] != null
+          ? Map<String, dynamic>.from(data['startTime'])
+          : {},
+      endTime: data['endTime'] != null
+          ? Map<String, dynamic>.from(data['endTime'])
+          : {},
+      daysOfWeek: data['daysOfWeek'] != null
+          ? List<String>.from(data['daysOfWeek'])
+          : [],
       arqueo: data['arqueo'] ?? false,
       historyArqueo: data['historyArqueo'] ?? false,
       transactions: data['transactions'] ?? false,

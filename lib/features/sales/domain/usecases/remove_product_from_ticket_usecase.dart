@@ -19,8 +19,7 @@ class RemoveProductFromTicketUseCase
       RemoveProductFromTicketParams params) async {
     try {
       if (params.product.id.isEmpty) {
-        return Left(
-            ValidationFailure('El producto debe tener un ID válido'));
+        return Left(ValidationFailure('El producto debe tener un ID válido'));
       }
 
       final updatedProducts = params.currentTicket.products

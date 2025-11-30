@@ -23,7 +23,8 @@ class UpdateProductFavoriteParams {
 /// - Actualiza el estado de favorito de un producto
 /// - Delega la operación al repositorio
 @lazySingleton
-class UpdateProductFavoriteUseCase extends UseCase<void, UpdateProductFavoriteParams> {
+class UpdateProductFavoriteUseCase
+    extends UseCase<void, UpdateProductFavoriteParams> {
   final CatalogueRepository _repository;
 
   UpdateProductFavoriteUseCase(this._repository);
@@ -41,7 +42,8 @@ class UpdateProductFavoriteUseCase extends UseCase<void, UpdateProductFavoritePa
       );
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al actualizar favorito: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al actualizar favorito: ${e.toString()}'));
     }
   }
 }

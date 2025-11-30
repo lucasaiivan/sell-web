@@ -22,8 +22,7 @@ class AddProductToTicketUseCase
     try {
       // Validaciones
       if (params.product.id.isEmpty) {
-        return Left(
-            ValidationFailure('El producto debe tener un ID válido'));
+        return Left(ValidationFailure('El producto debe tener un ID válido'));
       }
 
       if (params.product.salePrice < 0) {

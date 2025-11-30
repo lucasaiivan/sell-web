@@ -16,14 +16,13 @@ class PaymentMethodsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Color principal de la tarjeta (Tertiary - igual que otras métricas)
     final color = theme.colorScheme.tertiary;
-    final containerColor = isDark
-        ? color.withValues(alpha: 0.15)
-        : color.withValues(alpha: 0.08);
+    final containerColor =
+        isDark ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08);
     final iconContainerColor = color.withValues(alpha: 0.2);
-    
+
     // Ordenar métodos por monto descendente, con 'Sin Especificar' (string vacío) al final
     final sortedMethods = paymentMethodsBreakdown.entries.toList()
       ..sort((a, b) {
@@ -89,15 +88,17 @@ class PaymentMethodsCard extends StatelessWidget {
                         child: Text(
                           'Sin datos',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.6),
                           ),
                         ),
                       ),
                     )
                   : Column(
                       children: sortedMethods.map((entry) {
-                        final percentage = totalSales > 0 ? entry.value / totalSales : 0.0;
-                        
+                        final percentage =
+                            totalSales > 0 ? entry.value / totalSales : 0.0;
+
                         // Obtener información del método de pago desde el enum
                         final paymentMethod = PaymentMethod.fromCode(entry.key);
                         final displayName = paymentMethod.displayName;
@@ -109,19 +110,22 @@ class PaymentMethodsCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
                                       Icon(
                                         methodIcon,
                                         size: 20,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.7),
                                       ),
                                       const SizedBox(width: 10),
                                       Text(
                                         displayName,
-                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -144,7 +148,8 @@ class PaymentMethodsCard extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                       child: LinearProgressIndicator(
                                         value: percentage,
-                                        backgroundColor: color.withValues(alpha: 0.15),
+                                        backgroundColor:
+                                            color.withValues(alpha: 0.15),
                                         color: color,
                                         minHeight: 8,
                                       ),
@@ -155,8 +160,10 @@ class PaymentMethodsCard extends StatelessWidget {
                                     width: 48,
                                     child: Text(
                                       '${(percentage * 100).toStringAsFixed(1)}%',
-                                      style: theme.textTheme.labelMedium?.copyWith(
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                      style:
+                                          theme.textTheme.labelMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.7),
                                         fontWeight: FontWeight.w600,
                                       ),
                                       textAlign: TextAlign.end,

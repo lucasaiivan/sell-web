@@ -91,7 +91,8 @@ class _AccountSelectionContent extends StatelessWidget {
                       SnackBar(
                         key: uniqueKey,
                         behavior: SnackBarBehavior.floating,
-                        content: Text('Error al cargar la información: ${e.toString()}'),
+                        content: Text(
+                            'Error al cargar la información: ${e.toString()}'),
                         backgroundColor: Colors.red,
                         duration: const Duration(seconds: 3),
                       ),

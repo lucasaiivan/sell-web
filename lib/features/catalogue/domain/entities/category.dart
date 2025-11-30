@@ -11,7 +11,8 @@ class Category {
     this.subcategories = const {},
   });
 
-  factory Category.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
+  factory Category.fromDocumentSnapshot(
+      {required DocumentSnapshot documentSnapshot}) {
     final data = documentSnapshot.data() as Map<String, dynamic>;
     return Category(
       id: documentSnapshot.id,

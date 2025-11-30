@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/constants/payment_methods.dart'; 
+import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -96,8 +96,6 @@ class _SalesProviderState {
       lastSoldTicket.hashCode;
 }
 
-
-
 /// Provider para gestionar el proceso de ventas
 ///
 /// **Responsabilidad:** Coordinar UI y casos de uso de ventas
@@ -134,7 +132,7 @@ class _SalesProviderState {
 @injectable
 class SalesProvider extends ChangeNotifier {
   final GetUserAccountsUseCase getUserAccountsUseCase;
-  
+
   // Sales UseCases
   final AddProductToTicketUseCase _addProductToTicketUseCase;
   final RemoveProductFromTicketUseCase _removeProductFromTicketUseCase;
@@ -142,12 +140,13 @@ class SalesProvider extends ChangeNotifier {
   final SetTicketPaymentModeUseCase _setTicketPaymentModeUseCase;
   final SetTicketDiscountUseCase _setTicketDiscountUseCase;
   final SetTicketReceivedCashUseCase _setTicketReceivedCashUseCase;
-  final AssociateTicketWithCashRegisterUseCase _associateTicketWithCashRegisterUseCase;
+  final AssociateTicketWithCashRegisterUseCase
+      _associateTicketWithCashRegisterUseCase;
   final PrepareSaleTicketUseCase _prepareSaleTicketUseCase;
   final PrepareTicketForTransactionUseCase _prepareTicketForTransactionUseCase;
   final SaveLastSoldTicketUseCase _saveLastSoldTicketUseCase;
   final GetLastSoldTicketUseCase _getLastSoldTicketUseCase;
-  
+
   final CatalogueUseCases? _catalogueUseCases;
   final AppDataPersistenceService _persistenceService;
   final ThermalPrinterHttpService _printerService;
@@ -178,9 +177,11 @@ class SalesProvider extends ChangeNotifier {
     required SetTicketPaymentModeUseCase setTicketPaymentModeUseCase,
     required SetTicketDiscountUseCase setTicketDiscountUseCase,
     required SetTicketReceivedCashUseCase setTicketReceivedCashUseCase,
-    required AssociateTicketWithCashRegisterUseCase associateTicketWithCashRegisterUseCase,
+    required AssociateTicketWithCashRegisterUseCase
+        associateTicketWithCashRegisterUseCase,
     required PrepareSaleTicketUseCase prepareSaleTicketUseCase,
-    required PrepareTicketForTransactionUseCase prepareTicketForTransactionUseCase,
+    required PrepareTicketForTransactionUseCase
+        prepareTicketForTransactionUseCase,
     required SaveLastSoldTicketUseCase saveLastSoldTicketUseCase,
     required GetLastSoldTicketUseCase getLastSoldTicketUseCase,
     required AppDataPersistenceService persistenceService,
@@ -194,9 +195,11 @@ class SalesProvider extends ChangeNotifier {
         _setTicketPaymentModeUseCase = setTicketPaymentModeUseCase,
         _setTicketDiscountUseCase = setTicketDiscountUseCase,
         _setTicketReceivedCashUseCase = setTicketReceivedCashUseCase,
-        _associateTicketWithCashRegisterUseCase = associateTicketWithCashRegisterUseCase,
+        _associateTicketWithCashRegisterUseCase =
+            associateTicketWithCashRegisterUseCase,
         _prepareSaleTicketUseCase = prepareSaleTicketUseCase,
-        _prepareTicketForTransactionUseCase = prepareTicketForTransactionUseCase,
+        _prepareTicketForTransactionUseCase =
+            prepareTicketForTransactionUseCase,
         _saveLastSoldTicketUseCase = saveLastSoldTicketUseCase,
         _getLastSoldTicketUseCase = getLastSoldTicketUseCase,
         _catalogueUseCases = catalogueUseCases {
@@ -614,7 +617,8 @@ class SalesProvider extends ChangeNotifier {
   ///
   /// RESPONSABILIDAD: Coordinar UI y persistencia
   /// La lógica de negocio (validar descuento no negativo) está en SetTicketDiscountUseCase
-  Future<void> setDiscount({required double discount, bool isPercentage = false}) async {
+  Future<void> setDiscount(
+      {required double discount, bool isPercentage = false}) async {
     final result = await _setTicketDiscountUseCase(
       SetTicketDiscountParams(
         currentTicket: _state.ticket,
@@ -1133,7 +1137,8 @@ class SalesProvider extends ChangeNotifier {
     result.fold(
       (failure) {
         if (kDebugMode) {
-          print('❌ Error preparando ticket para transacción: ${failure.message}');
+          print(
+              '❌ Error preparando ticket para transacción: ${failure.message}');
         }
         throw Exception(failure.message);
       },

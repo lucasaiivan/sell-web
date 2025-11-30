@@ -9,7 +9,7 @@ import '../models/sales_analytics_model.dart';
 /// DataSource: Analíticas Remoto
 ///
 /// **Refactorizado:** Usa [IFirestoreDataSource] en lugar de FirebaseFirestore directo
-/// 
+///
 /// **Responsabilidad:**
 /// - Consultar Firestore para obtener datos de tickets
 /// - Filtrar tickets por rango de fechas
@@ -41,9 +41,11 @@ class AnalyticsRemoteDataSource {
     DateFilter? dateFilter,
   }) {
     try {
-      print('📊 [Analytics] Iniciando listener de transacciones en tiempo real');
+      print(
+          '📊 [Analytics] Iniciando listener de transacciones en tiempo real');
       print('   AccountId: $accountId');
-      print('   DateFilter: ${dateFilter?.name ?? "null (todas las transacciones)"}');
+      print(
+          '   DateFilter: ${dateFilter?.name ?? "null (todas las transacciones)"}');
 
       final path = FirestorePaths.accountTransactions(accountId);
       final collection = _dataSource.collection(path);
@@ -52,29 +54,32 @@ class AnalyticsRemoteDataSource {
       // Aplicar filtro de fecha si existe
       if (dateFilter != null) {
         final (startDate, endDate) = dateFilter.getDateRange();
-        
+
         // Log detallado para debugging
         print('📊 [Analytics] Aplicando filtro de fecha:');
         print('   Desde: $startDate');
         print('   Hasta: $endDate');
         print('   Timestamp Start: ${Timestamp.fromDate(startDate)}');
         print('   Timestamp End: ${Timestamp.fromDate(endDate)}');
-        
+
         query = query
-            .where('creation', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+            .where('creation',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
             .where('creation', isLessThan: Timestamp.fromDate(endDate))
             .orderBy('creation', descending: true);
       } else {
         // Sin filtro, solo ordenar
-        print('📊 [Analytics] Sin filtro de fecha, obteniendo todas las transacciones');
+        print(
+            '📊 [Analytics] Sin filtro de fecha, obteniendo todas las transacciones');
         query = query.orderBy('creation', descending: true);
       }
 
       print('📊 [Analytics] Suscribiendo a listener de Firestore...');
-      
+
       // Retornar stream con snapshots en tiempo real
       return _dataSource.streamDocuments(query).map((querySnapshot) {
-        print('📊 [Analytics] Nuevo snapshot recibido: ${querySnapshot.docs.length} documentos');
+        print(
+            '📊 [Analytics] Nuevo snapshot recibido: ${querySnapshot.docs.length} documentos');
 
         if (querySnapshot.docs.isEmpty) {
           print('⚠️ [Analytics] No se encontraron transacciones');
@@ -91,27 +96,30 @@ class AnalyticsRemoteDataSource {
           }
         }).toList();
 
-        print('✅ [Analytics] Tickets procesados correctamente: ${tickets.length}');
+        print(
+            '✅ [Analytics] Tickets procesados correctamente: ${tickets.length}');
 
         // Calcular métricas y retornar modelo
         final analyticsModel = SalesAnalyticsModel.fromTickets(tickets);
         print('📊 [Analytics] Métricas calculadas:');
         print('   Total Transacciones: ${analyticsModel.totalTransactions}');
         print('   Total Ventas: ${analyticsModel.totalSales}');
-        
+
         return analyticsModel;
       });
     } catch (e, stackTrace) {
       print('❌ [Analytics] Error configurando listener: $e');
       print('❌ [Analytics] StackTrace: $stackTrace');
-      
+
       // Verificar si es un error de índice de Firestore
-      if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+      if (e.toString().contains('index') ||
+          e.toString().contains('FAILED_PRECONDITION')) {
         print('⚠️ [Analytics] Error de índice detectado:');
-        print('   Asegúrate de que los índices de Firestore estén desplegados correctamente.');
+        print(
+            '   Asegúrate de que los índices de Firestore estén desplegados correctamente.');
         print('   Ejecuta: firebase deploy --only firestore:indexes');
       }
-      
+
       rethrow;
     }
   }

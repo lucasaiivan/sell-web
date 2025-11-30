@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 ///
 /// Proporciona una estructura estándar para todos los diálogos de la aplicación
 /// siguiendo las especificaciones de Material Design 3
+///
+/// Soporta modo pantalla completa en dispositivos pequeños cuando fullView = true
 class BaseDialog extends StatelessWidget {
   const BaseDialog({
     super.key,
@@ -17,6 +19,7 @@ class BaseDialog extends StatelessWidget {
     this.headerColor,
     this.showCloseButton = true,
     this.scrollable = true,
+    this.fullView = false,
   });
 
   /// Título del diálogo que aparece en el header
@@ -49,10 +52,27 @@ class BaseDialog extends StatelessWidget {
   /// Hacer el contenido scrollable
   final bool scrollable;
 
+  /// Si es true en pantallas pequeñas (< 600px), se muestra como pantalla completa
+  final bool fullView;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
 
+    // Si fullView es true Y es pantalla pequeña, mostrar como pantalla completa
+    if (fullView && isSmallScreen) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        appBar: _buildAppBar(context, theme),
+        body: _buildFullScreenContent(context, theme),
+        bottomNavigationBar: actions != null && actions!.isNotEmpty
+            ? _buildFullScreenActions(context, theme)
+            : null,
+      );
+    }
+
+    // Vista normal como diálogo
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
@@ -90,6 +110,56 @@ class BaseDialog extends StatelessWidget {
             // Acciones/botones
             if (actions != null && actions!.isNotEmpty)
               _buildActions(context, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Construye el AppBar para el modo pantalla completa
+  PreferredSizeWidget _buildAppBar(BuildContext context, ThemeData theme) {
+    final effectiveHeaderColor =
+        headerColor ?? theme.colorScheme.primaryContainer;
+    final textColor = theme.colorScheme.onPrimaryContainer;
+
+    return AppBar(
+      title: Text(title),
+      leading: showCloseButton
+          ? IconButton(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          : null,
+      backgroundColor: effectiveHeaderColor,
+      foregroundColor: textColor,
+    );
+  }
+
+  /// Construye el contenido para el modo pantalla completa
+  Widget _buildFullScreenContent(BuildContext context, ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: content,
+    );
+  }
+
+  /// Construye las acciones para el modo pantalla completa
+  Widget _buildFullScreenActions(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+      ),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            for (int i = 0; i < actions!.length; i++) ...[
+              if (i > 0) const SizedBox(width: 12),
+              Flexible(
+                child: actions![i],
+              ),
+            ],
           ],
         ),
       ),
@@ -244,6 +314,9 @@ class BaseDialog extends StatelessWidget {
 }
 
 /// Helper function para mostrar un diálogo base
+///
+/// Si fullView es true y la pantalla es pequeña (< 600px), se mostrará como pantalla completa.
+/// En pantallas grandes, siempre se muestra como diálogo modal.
 Future<T?> showBaseDialog<T>({
   required BuildContext context,
   required String title,
@@ -256,9 +329,34 @@ Future<T?> showBaseDialog<T>({
   Color? headerColor,
   bool showCloseButton = true,
   bool scrollable = true,
-  bool barrierDismissible =
-      false, // Por defecto no se cierra al hacer click fuera
+  bool barrierDismissible = false,
+  bool fullView = true,
 }) {
+  final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
+  // Si es vista completa Y pantalla pequeña, usar Navigator.push para pantalla completa
+  if (fullView && isSmallScreen) {
+    return Navigator.of(context).push<T>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => BaseDialog(
+          title: title,
+          subtitle: subtitle,
+          content: content,
+          icon: icon,
+          actions: actions,
+          width: width,
+          maxHeight: maxHeight,
+          headerColor: headerColor,
+          showCloseButton: showCloseButton,
+          scrollable: scrollable,
+          fullView: fullView,
+        ),
+      ),
+    );
+  }
+
+  // Vista normal como diálogo
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
@@ -273,6 +371,7 @@ Future<T?> showBaseDialog<T>({
       headerColor: headerColor,
       showCloseButton: showCloseButton,
       scrollable: scrollable,
+      fullView: fullView,
     ),
   );
 }

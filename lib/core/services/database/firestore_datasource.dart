@@ -3,12 +3,12 @@ import 'package:injectable/injectable.dart';
 import 'i_firestore_datasource.dart';
 
 /// Implementación de Firestore DataSource
-/// 
+///
 /// **Responsabilidad:**
 /// - Wrapper type-safe de FirebaseFirestore
 /// - Implementa contrato [IFirestoreDataSource]
 /// - Maneja errores de Firebase en capa de datos
-/// 
+///
 /// **Inyección DI:** @LazySingleton (registrado como interfaz)
 @LazySingleton(as: IFirestoreDataSource)
 class FirestoreDataSource implements IFirestoreDataSource {

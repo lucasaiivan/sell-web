@@ -1620,6 +1620,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
           cashRegisterId: cashRegister.id,
           accountId: sellProvider.profileAccountSelected.id,
           userId: authProvider.user?.email ?? '',
+          fullView: true,
         ),
       ),
     );

@@ -18,7 +18,8 @@ class GetCashRegisterHistoryParams {
 /// - Obtiene el historial completo de cajas registradoras
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetCashRegisterHistoryUseCase extends UseCase<List<CashRegister>, GetCashRegisterHistoryParams> {
+class GetCashRegisterHistoryUseCase
+    extends UseCase<List<CashRegister>, GetCashRegisterHistoryParams> {
   final CashRegisterRepository _repository;
 
   GetCashRegisterHistoryUseCase(this._repository);
@@ -27,9 +28,11 @@ class GetCashRegisterHistoryUseCase extends UseCase<List<CashRegister>, GetCashR
   ///
   /// Retorna [Right(List<CashRegister>)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, List<CashRegister>>> call(GetCashRegisterHistoryParams params) async {
+  Future<Either<Failure, List<CashRegister>>> call(
+      GetCashRegisterHistoryParams params) async {
     try {
-      final history = await _repository.getCashRegisterHistory(params.accountId);
+      final history =
+          await _repository.getCashRegisterHistory(params.accountId);
       return Right(history);
     } catch (e) {
       return Left(ServerFailure('Error al obtener historial: ${e.toString()}'));

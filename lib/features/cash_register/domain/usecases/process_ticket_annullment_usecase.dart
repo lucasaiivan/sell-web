@@ -19,13 +19,15 @@ class ProcessTicketAnnullmentParams {
 }
 
 @lazySingleton
-class ProcessTicketAnnullmentUseCase extends UseCase<TicketModel, ProcessTicketAnnullmentParams> {
+class ProcessTicketAnnullmentUseCase
+    extends UseCase<TicketModel, ProcessTicketAnnullmentParams> {
   final CashRegisterRepository _repository;
 
   ProcessTicketAnnullmentUseCase(this._repository);
 
   @override
-  Future<Either<Failure, TicketModel>> call(ProcessTicketAnnullmentParams params) async {
+  Future<Either<Failure, TicketModel>> call(
+      ProcessTicketAnnullmentParams params) async {
     if (params.ticket.annulled) {
       return Left(ValidationFailure('El ticket ya está anulado'));
     }

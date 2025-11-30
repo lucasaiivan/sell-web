@@ -9,7 +9,7 @@ import 'package:sellweb/features/cash_register/domain/repositories/cash_register
 /// Implementación del repositorio de caja registradora usando Firebase
 ///
 /// **Refactorizado:** Usa [IFirestoreDataSource] en lugar de DatabaseCloudService
-/// 
+///
 /// Maneja todas las operaciones CRUD para:
 /// - Cajas registradoras activas
 /// - Historial de arqueos
@@ -43,8 +43,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   @override
   Stream<List<CashRegister>> getActiveCashRegistersStream(String accountId) {
     final path = FirestorePaths.accountCashRegisters(accountId);
-    return _dataSource.collectionStream(path)
-        .map((querySnapshot) {
+    return _dataSource.collectionStream(path).map((querySnapshot) {
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -56,7 +55,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       String accountId, CashRegister cashRegister) async {
     // procede a guardar o actualizar la caja registradora
     try {
-      final path = FirestorePaths.accountCashRegister(accountId, cashRegister.id);
+      final path =
+          FirestorePaths.accountCashRegister(accountId, cashRegister.id);
       await _dataSource.setDocument(
         path,
         cashRegister.toJson(),
@@ -71,7 +71,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> deleteCashRegister(
       String accountId, String cashRegisterId) async {
     try {
-      final path = FirestorePaths.accountCashRegister(accountId, cashRegisterId);
+      final path =
+          FirestorePaths.accountCashRegister(accountId, cashRegisterId);
       await _dataSource.deleteDocument(path);
     } catch (e) {
       throw Exception('Error al eliminar caja registradora: $e');
@@ -102,8 +103,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     final path = FirestorePaths.accountCashRegisterHistory(accountId);
     final collection = _dataSource.collection(path);
     final query = collection.orderBy('opening', descending: true);
-    return _dataSource.streamDocuments(query)
-        .map((querySnapshot) {
+    return _dataSource.streamDocuments(query).map((querySnapshot) {
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
       }).toList();
@@ -157,7 +157,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       final path = FirestorePaths.accountCashRegisterHistory(accountId);
       final collection = _dataSource.collection(path);
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      final query = collection.where('opening', isGreaterThanOrEqualTo: yesterday);
+      final query =
+          collection.where('opening', isGreaterThanOrEqualTo: yesterday);
       final querySnapshot = await _dataSource.getDocuments(query);
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
@@ -171,7 +172,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> addCashRegisterToHistory(
       String accountId, CashRegister cashRegister) async {
     try {
-      final path = '${FirestorePaths.accountCashRegisterHistory(accountId)}/${cashRegister.id}';
+      final path =
+          '${FirestorePaths.accountCashRegisterHistory(accountId)}/${cashRegister.id}';
       await _dataSource.setDocument(path, cashRegister.toJson());
     } catch (e) {
       throw Exception('Error al agregar arqueo al historial: $e');
@@ -182,7 +184,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> deleteCashRegisterFromHistory(
       String accountId, CashRegister cashRegister) async {
     try {
-      final path = '${FirestorePaths.accountCashRegisterHistory(accountId)}/${cashRegister.id}';
+      final path =
+          '${FirestorePaths.accountCashRegisterHistory(accountId)}/${cashRegister.id}';
       await _dataSource.deleteDocument(path);
     } catch (e) {
       throw Exception('Error al eliminar arqueo del historial: $e');
@@ -197,7 +200,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> createCashRegisterFixedDescription(
       String accountId, String description) async {
     try {
-      final path = '${FirestorePaths.accountFixedDescriptions(accountId)}/$description';
+      final path =
+          '${FirestorePaths.accountFixedDescriptions(accountId)}/$description';
       await _dataSource.setDocument(path, {'description': description});
     } catch (e) {
       throw Exception('Error al crear descripción fija: $e');
@@ -223,7 +227,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> deleteCashRegisterFixedDescription(
       String accountId, String descriptionId) async {
     try {
-      final path = '${FirestorePaths.accountFixedDescriptions(accountId)}/$descriptionId';
+      final path =
+          '${FirestorePaths.accountFixedDescriptions(accountId)}/$descriptionId';
       final docRef = _dataSource.document(path);
 
       // Verificar si el documento existe antes de eliminar
@@ -462,11 +467,12 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       print('   TicketId: $ticketId');
       print('   Creation: ${transactionData['creation']}');
       print('   PriceTotal: ${transactionData['priceTotal']}');
-      print('   Products: ${(transactionData['listPoduct'] as List?)?.length ?? 0}');
-      
+      print(
+          '   Products: ${(transactionData['listPoduct'] as List?)?.length ?? 0}');
+
       final path = FirestorePaths.accountTransaction(accountId, ticketId);
       await _dataSource.setDocument(path, transactionData, merge: true);
-      
+
       print('✅ [CashRegister] Transacción guardada exitosamente en Firestore');
       print('   Ruta: /ACCOUNTS/$accountId/TRANSACTIONS/$ticketId');
     } catch (e, stackTrace) {
@@ -510,26 +516,24 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   @override
   Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
     final path = FirestorePaths.accountTransactions(accountId);
-    return _dataSource.collectionStream(path)
-        .map((querySnapshot) {
-      return querySnapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            // Normalizar timestamps en el documento
-            final normalizedData = _normalizeTimestampsInTransaction(data);
-            return {
-              'id': doc.id,
-              ...normalizedData,
-            };
-          })
-          .toList();
+    return _dataSource.collectionStream(path).map((querySnapshot) {
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        // Normalizar timestamps en el documento
+        final normalizedData = _normalizeTimestampsInTransaction(data);
+        return {
+          'id': doc.id,
+          ...normalizedData,
+        };
+      }).toList();
     });
   }
 
   /// Normaliza todos los campos de timestamp en una transacción
-  Map<String, dynamic> _normalizeTimestampsInTransaction(Map<String, dynamic> data) {
+  Map<String, dynamic> _normalizeTimestampsInTransaction(
+      Map<String, dynamic> data) {
     final normalized = Map<String, dynamic>.from(data);
-    
+
     // Normalizar timestamps a nivel de documento
     final timestampFields = [
       'creation',
@@ -541,13 +545,14 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       'timestamp_creation_document',
       'timestamp_upgrade_document',
     ];
-    
+
     for (final field in timestampFields) {
       if (normalized.containsKey(field) && normalized[field] is int) {
-        normalized[field] = Timestamp.fromMillisecondsSinceEpoch(normalized[field] as int);
+        normalized[field] =
+            Timestamp.fromMillisecondsSinceEpoch(normalized[field] as int);
       }
     }
-    
+
     // Normalizar timestamps en productos (array)
     if (normalized.containsKey('products') && normalized['products'] is List) {
       final products = normalized['products'] as List;
@@ -555,8 +560,10 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         if (product is Map<String, dynamic>) {
           final normalizedProduct = Map<String, dynamic>.from(product);
           for (final field in timestampFields) {
-            if (normalizedProduct.containsKey(field) && normalizedProduct[field] is int) {
-              normalizedProduct[field] = Timestamp.fromMillisecondsSinceEpoch(normalizedProduct[field] as int);
+            if (normalizedProduct.containsKey(field) &&
+                normalizedProduct[field] is int) {
+              normalizedProduct[field] = Timestamp.fromMillisecondsSinceEpoch(
+                  normalizedProduct[field] as int);
             }
           }
           return normalizedProduct;
@@ -564,7 +571,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         return product;
       }).toList();
     }
-    
+
     return normalized;
   }
 

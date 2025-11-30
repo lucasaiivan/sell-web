@@ -16,14 +16,16 @@ class GetDemoProductsParams {
 /// **Responsabilidad:**
 /// - Genera una lista de productos de prueba para la cuenta demo
 @lazySingleton
-class GetDemoProductsUseCase extends UseCase<List<ProductCatalogue>, GetDemoProductsParams> {
+class GetDemoProductsUseCase
+    extends UseCase<List<ProductCatalogue>, GetDemoProductsParams> {
   GetDemoProductsUseCase();
 
   /// Ejecuta la generación de productos demo
   ///
   /// Retorna [Right(List<ProductCatalogue>)] con los productos demo
   @override
-  Future<Either<Failure, List<ProductCatalogue>>> call(GetDemoProductsParams params) async {
+  Future<Either<Failure, List<ProductCatalogue>>> call(
+      GetDemoProductsParams params) async {
     try {
       final products = List.generate(
         params.count,
@@ -47,7 +49,8 @@ class GetDemoProductsUseCase extends UseCase<List<ProductCatalogue>, GetDemoProd
 
       return Right(products);
     } catch (e) {
-      return Left(ServerFailure('Error al generar productos demo: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al generar productos demo: ${e.toString()}'));
     }
   }
 }

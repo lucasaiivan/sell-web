@@ -27,15 +27,18 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
     DateFilter? dateFilter,
   }) {
     try {
-      return _remoteDataSource.getTransactions(
-        accountId,
-        dateFilter: dateFilter,
-      ).map((analyticsModel) => Right<Failure, SalesAnalytics>(analyticsModel.toEntity()))
-       .handleError((error) => Left<Failure, SalesAnalytics>(
-         ServerFailure('Error al obtener analíticas: ${error.toString()}')
-       ));
+      return _remoteDataSource
+          .getTransactions(
+            accountId,
+            dateFilter: dateFilter,
+          )
+          .map((analyticsModel) =>
+              Right<Failure, SalesAnalytics>(analyticsModel.toEntity()))
+          .handleError((error) => Left<Failure, SalesAnalytics>(ServerFailure(
+              'Error al obtener analíticas: ${error.toString()}')));
     } catch (e) {
-      return Stream.value(Left(ServerFailure('Error al obtener analíticas: ${e.toString()}')));
+      return Stream.value(
+          Left(ServerFailure('Error al obtener analíticas: ${e.toString()}')));
     }
   }
 }

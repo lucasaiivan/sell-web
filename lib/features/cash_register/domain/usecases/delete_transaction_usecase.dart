@@ -18,17 +18,15 @@ class DeleteTransactionUseCase
   DeleteTransactionUseCase(this._repository);
 
   @override
-  Future<Either<Failure, void>> call(
-      DeleteTransactionParams params) async {
+  Future<Either<Failure, void>> call(DeleteTransactionParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.transactionId.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ID de transacción no puede estar vacío'));
+        return Left(
+            ValidationFailure('El ID de transacción no puede estar vacío'));
       }
 
       await _repository.deleteTransaction(
@@ -38,8 +36,7 @@ class DeleteTransactionUseCase
 
       return Right(null);
     } catch (e) {
-      return Left(
-          ServerFailure('Error al eliminar transacción: $e'));
+      return Left(ServerFailure('Error al eliminar transacción: $e'));
     }
   }
 }

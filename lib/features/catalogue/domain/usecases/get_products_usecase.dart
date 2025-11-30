@@ -13,21 +13,23 @@ class GetProductsParams {
 }
 
 /// Caso de uso: Obtener todos los productos del catálogo
-/// 
+///
 /// **Responsabilidad:**
 /// - Recupera productos de una cuenta específica
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetProductsUseCase extends UseCase<List<ProductCatalogue>, GetProductsParams> {
+class GetProductsUseCase
+    extends UseCase<List<ProductCatalogue>, GetProductsParams> {
   final CatalogueRepository repository;
 
   GetProductsUseCase(this.repository);
 
   /// Ejecuta la obtención de productos
-  /// 
+  ///
   /// Retorna [Right(List<ProductCatalogue>)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, List<ProductCatalogue>>> call(GetProductsParams params) async {
+  Future<Either<Failure, List<ProductCatalogue>>> call(
+      GetProductsParams params) async {
     try {
       final products = await repository.getProducts(params.accountId);
       return Right(products);

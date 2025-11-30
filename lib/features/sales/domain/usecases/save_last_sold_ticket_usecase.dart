@@ -21,22 +21,21 @@ class SaveLastSoldTicketUseCase
   SaveLastSoldTicketUseCase(this._persistenceService);
 
   @override
-  Future<Either<Failure, void>> call(
-      SaveLastSoldTicketParams params) async {
+  Future<Either<Failure, void>> call(SaveLastSoldTicketParams params) async {
     try {
       if (params.ticket.id.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ticket debe tener un ID para ser guardado'));
+        return Left(
+            ValidationFailure('El ticket debe tener un ID para ser guardado'));
       }
 
       if (params.ticket.products.isEmpty) {
-        return Left(ValidationFailure(
-            'El ticket debe tener al menos un producto'));
+        return Left(
+            ValidationFailure('El ticket debe tener al menos un producto'));
       }
 
       if (params.ticket.priceTotal <= 0) {
-        return Left(ValidationFailure(
-            'El ticket debe tener un precio total válido'));
+        return Left(
+            ValidationFailure('El ticket debe tener un precio total válido'));
       }
 
       final ticketJson = jsonEncode(params.ticket.toJson());
@@ -44,8 +43,7 @@ class SaveLastSoldTicketUseCase
 
       return Right(null);
     } catch (e) {
-      return Left(
-          CacheFailure('Error al guardar último ticket: $e'));
+      return Left(CacheFailure('Error al guardar último ticket: $e'));
     }
   }
 }

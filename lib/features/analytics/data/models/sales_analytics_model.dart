@@ -37,16 +37,17 @@ class SalesAnalyticsModel extends SalesAnalytics {
 
     for (var ticket in sortedTickets) {
       totalProfit += ticket.getProfit;
-      
+
       // Normalizar payMode con códigos legacy (mercadopago → transfer, etc)
       final rawPayMode = ticket.payMode.isEmpty ? '' : ticket.payMode;
       final normalizedPayMode = PaymentMethod.migrateLegacyCode(rawPayMode);
       // Mantener estándar: string vacío representa 'Sin Especificar'
       final payMode = normalizedPayMode.isEmpty ? '' : normalizedPayMode;
-      
+
       // Acumular total vendido por medio de pago
-      paymentMethodsBreakdown[payMode] = (paymentMethodsBreakdown[payMode] ?? 0.0) + ticket.priceTotal;
-      
+      paymentMethodsBreakdown[payMode] =
+          (paymentMethodsBreakdown[payMode] ?? 0.0) + ticket.priceTotal;
+
       // Contar transacciones por medio de pago
       paymentMethodsCount[payMode] = (paymentMethodsCount[payMode] ?? 0) + 1;
     }

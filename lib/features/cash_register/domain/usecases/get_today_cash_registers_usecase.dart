@@ -18,7 +18,8 @@ class GetTodayCashRegistersParams {
 /// - Obtiene los arqueos de caja del día actual
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetTodayCashRegistersUseCase extends UseCase<List<CashRegister>, GetTodayCashRegistersParams> {
+class GetTodayCashRegistersUseCase
+    extends UseCase<List<CashRegister>, GetTodayCashRegistersParams> {
   final CashRegisterRepository _repository;
 
   GetTodayCashRegistersUseCase(this._repository);
@@ -27,12 +28,15 @@ class GetTodayCashRegistersUseCase extends UseCase<List<CashRegister>, GetTodayC
   ///
   /// Retorna [Right(List<CashRegister>)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, List<CashRegister>>> call(GetTodayCashRegistersParams params) async {
+  Future<Either<Failure, List<CashRegister>>> call(
+      GetTodayCashRegistersParams params) async {
     try {
-      final cashRegisters = await _repository.getTodayCashRegisters(params.accountId);
+      final cashRegisters =
+          await _repository.getTodayCashRegisters(params.accountId);
       return Right(cashRegisters);
     } catch (e) {
-      return Left(ServerFailure('Error al obtener cajas del día: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al obtener cajas del día: ${e.toString()}'));
     }
   }
 }

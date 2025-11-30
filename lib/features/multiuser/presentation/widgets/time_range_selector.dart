@@ -466,10 +466,10 @@ class _TimeRangePickerDialogState extends State<TimeRangePickerDialog> {
 
   bool _canSave() {
     if (_startTime == null || _endTime == null) return false;
-    
+
     final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
     final endMinutes = _endTime!.hour * 60 + _endTime!.minute;
-    
+
     return startMinutes < endMinutes;
   }
 

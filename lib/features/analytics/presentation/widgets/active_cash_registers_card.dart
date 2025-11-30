@@ -20,12 +20,11 @@ class ActiveCashRegistersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Color principal de la tarjeta
     final color = theme.colorScheme.tertiary;
-    final containerColor = isDark
-        ? color.withValues(alpha: 0.15)
-        : color.withValues(alpha: 0.08);
+    final containerColor =
+        isDark ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08);
     final iconContainerColor = color.withValues(alpha: 0.2);
 
     return Card(
@@ -79,7 +78,8 @@ class ActiveCashRegistersCard extends StatelessWidget {
                         Text(
                           '${activeCashRegisters.length} ${activeCashRegisters.length == 1 ? 'caja abierta' : 'cajas abiertas'}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -88,13 +88,13 @@ class ActiveCashRegistersCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              
+
               // Lista de cajas
               Column(
                 children: activeCashRegisters.map((cashRegister) {
-                  final isLast = activeCashRegisters.indexOf(cashRegister) == 
-                                 activeCashRegisters.length - 1;
-                  
+                  final isLast = activeCashRegisters.indexOf(cashRegister) ==
+                      activeCashRegisters.length - 1;
+
                   return Column(
                     children: [
                       _buildCashRegisterItem(context, cashRegister),
@@ -118,9 +118,10 @@ class ActiveCashRegistersCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCashRegisterItem(BuildContext context, CashRegister cashRegister) {
+  Widget _buildCashRegisterItem(
+      BuildContext context, CashRegister cashRegister) {
     final theme = Theme.of(context);
-    
+
     return Row(
       children: [
         // Indicador visual de caja activa
@@ -133,15 +134,15 @@ class ActiveCashRegistersCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        
+
         // Información de la caja
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                cashRegister.description.isNotEmpty 
-                    ? cashRegister.description 
+                cashRegister.description.isNotEmpty
+                    ? cashRegister.description
                     : 'Caja sin nombre',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
@@ -161,11 +162,12 @@ class ActiveCashRegistersCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      cashRegister.nameUser.isNotEmpty 
-                          ? cashRegister.nameUser 
+                      cashRegister.nameUser.isNotEmpty
+                          ? cashRegister.nameUser
                           : 'Sin operador',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -176,9 +178,9 @@ class ActiveCashRegistersCard extends StatelessWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(width: 16),
-        
+
         // Métricas (Balance y Transacciones)
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,

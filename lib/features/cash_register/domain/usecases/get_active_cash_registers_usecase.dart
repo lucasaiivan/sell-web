@@ -18,7 +18,8 @@ class GetActiveCashRegistersParams {
 /// - Obtiene las cajas registradoras actualmente abiertas
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetActiveCashRegistersUseCase extends UseCase<List<CashRegister>, GetActiveCashRegistersParams> {
+class GetActiveCashRegistersUseCase
+    extends UseCase<List<CashRegister>, GetActiveCashRegistersParams> {
   final CashRegisterRepository _repository;
 
   GetActiveCashRegistersUseCase(this._repository);
@@ -27,12 +28,15 @@ class GetActiveCashRegistersUseCase extends UseCase<List<CashRegister>, GetActiv
   ///
   /// Retorna [Right(List<CashRegister>)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, List<CashRegister>>> call(GetActiveCashRegistersParams params) async {
+  Future<Either<Failure, List<CashRegister>>> call(
+      GetActiveCashRegistersParams params) async {
     try {
-      final cashRegisters = await _repository.getActiveCashRegisters(params.accountId);
+      final cashRegisters =
+          await _repository.getActiveCashRegisters(params.accountId);
       return Right(cashRegisters);
     } catch (e) {
-      return Left(ServerFailure('Error al obtener cajas activas: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al obtener cajas activas: ${e.toString()}'));
     }
   }
 }

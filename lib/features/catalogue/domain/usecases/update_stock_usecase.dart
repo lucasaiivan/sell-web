@@ -18,7 +18,7 @@ class UpdateStockParams {
 }
 
 /// Caso de uso: Actualizar stock de un producto
-/// 
+///
 /// **Responsabilidad:**
 /// - Valida que el stock no sea negativo
 /// - Actualiza la cantidad en stock del producto
@@ -30,7 +30,7 @@ class UpdateStockUseCase extends UseCase<void, UpdateStockParams> {
   UpdateStockUseCase(this.repository);
 
   /// Ejecuta la actualización de stock
-  /// 
+  ///
   /// Retorna [Right(void)] si es exitoso, [Left(Failure)] si falla o el stock es negativo
   @override
   Future<Either<Failure, void>> call(UpdateStockParams params) async {
@@ -40,7 +40,8 @@ class UpdateStockUseCase extends UseCase<void, UpdateStockParams> {
     }
 
     try {
-      await repository.updateStock(params.accountId, params.productId, params.newStock);
+      await repository.updateStock(
+          params.accountId, params.productId, params.newStock);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure('Error al actualizar stock: ${e.toString()}'));

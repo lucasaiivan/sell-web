@@ -39,7 +39,7 @@ class AddCashOutflowUseCase extends UseCase<void, AddCashOutflowParams> {
     if (params.cashFlow.amount <= 0) {
       return Left(ValidationFailure('El monto debe ser mayor a cero'));
     }
-    
+
     if (params.cashFlow.description.trim().isEmpty) {
       return Left(ValidationFailure('La descripción es obligatoria'));
     }

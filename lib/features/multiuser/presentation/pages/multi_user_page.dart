@@ -38,14 +38,14 @@ class _MultiUserPageState extends State<MultiUserPage> {
             if (!provider.canCreateUsers) {
               return const SizedBox.shrink();
             }
-            
+
             return FloatingActionButton.extended(
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (_) => ChangeNotifierProvider.value(
                     value: provider,
-                    child: const UserAdminDialog(),
+                    child: const UserAdminDialog(fullView: true),
                   ),
                 );
               },
@@ -76,7 +76,10 @@ class _MultiUserPageState extends State<MultiUserPage> {
                 child: Divider(
                   height: 0.5,
                   thickness: 0.5,
-                  color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outlineVariant
+                      .withValues(alpha: 0.3),
                 ),
               ),
               itemBuilder: (context, index) {

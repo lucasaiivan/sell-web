@@ -25,7 +25,8 @@ class GetSelectedAccountIdUseCase extends UseCase<String?, NoParams> {
       final accountId = await _repository.getSelectedAccountId();
       return Right(accountId);
     } catch (e) {
-      return Left(CacheFailure('Error al obtener cuenta seleccionada: ${e.toString()}'));
+      return Left(CacheFailure(
+          'Error al obtener cuenta seleccionada: ${e.toString()}'));
     }
   }
 }

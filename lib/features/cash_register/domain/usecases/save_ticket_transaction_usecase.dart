@@ -24,7 +24,8 @@ class SaveTicketTransactionParams {
 /// - Valida que los datos no estén vacíos
 /// - Delega la operación al repositorio
 @lazySingleton
-class SaveTicketTransactionUseCase extends UseCase<void, SaveTicketTransactionParams> {
+class SaveTicketTransactionUseCase
+    extends UseCase<void, SaveTicketTransactionParams> {
   final CashRegisterRepository _repository;
 
   SaveTicketTransactionUseCase(this._repository);
@@ -38,9 +39,10 @@ class SaveTicketTransactionUseCase extends UseCase<void, SaveTicketTransactionPa
     if (params.ticketId.trim().isEmpty) {
       return Left(ValidationFailure('El ID del ticket es obligatorio'));
     }
-    
+
     if (params.transactionData.isEmpty) {
-      return Left(ValidationFailure('Los datos de la transacción son obligatorios'));
+      return Left(
+          ValidationFailure('Los datos de la transacción son obligatorios'));
     }
 
     try {
@@ -51,7 +53,8 @@ class SaveTicketTransactionUseCase extends UseCase<void, SaveTicketTransactionPa
       );
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al guardar transacción: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al guardar transacción: ${e.toString()}'));
     }
   }
 }

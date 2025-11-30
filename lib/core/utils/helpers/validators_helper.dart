@@ -49,7 +49,7 @@ class ValidatorsHelper {
     }
     // Eliminar espacios, guiones y paréntesis
     final cleanPhone = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    
+
     // Debe tener al menos 10 dígitos (puede empezar con +)
     final phoneRegex = RegExp(r'^\+?[0-9]{10,15}$');
     return phoneRegex.hasMatch(cleanPhone);

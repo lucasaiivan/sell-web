@@ -18,8 +18,8 @@ class SetTicketReceivedCashUseCase
       SetTicketReceivedCashParams params) async {
     try {
       if (params.value < 0) {
-        return Left(ValidationFailure(
-            'El valor recibido no puede ser negativo'));
+        return Left(
+            ValidationFailure('El valor recibido no puede ser negativo'));
       }
 
       final updatedTicket = params.currentTicket.copyWith(
@@ -28,8 +28,7 @@ class SetTicketReceivedCashUseCase
 
       return Right(updatedTicket);
     } catch (e) {
-      return Left(
-          ServerFailure('Error al configurar valor recibido: $e'));
+      return Left(ServerFailure('Error al configurar valor recibido: $e'));
     }
   }
 }

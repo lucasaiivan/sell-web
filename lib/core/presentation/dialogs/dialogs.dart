@@ -50,10 +50,14 @@ export '../widgets/dialogs/base/standard_dialogs.dart'
         showLoadingDialog;
 
 // Re-exportar funciones helper específicas
-export 'package:sellweb/features/catalogue/presentation/dialogs/product_edit_dialog.dart' show showProductEditDialog;
-export 'package:sellweb/features/catalogue/presentation/dialogs/add_product_dialog.dart' show showAddProductDialog;
-export 'package:sellweb/features/sales/presentation/dialogs/quick_sale_dialog.dart' show showQuickSaleDialog;
-export 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart' show showTicketOptionsDialog;
+export 'package:sellweb/features/catalogue/presentation/dialogs/product_edit_dialog.dart'
+    show showProductEditDialog;
+export 'package:sellweb/features/catalogue/presentation/dialogs/add_product_dialog.dart'
+    show showAddProductDialog;
+export 'package:sellweb/features/sales/presentation/dialogs/quick_sale_dialog.dart'
+    show showQuickSaleDialog;
+export 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart'
+    show showTicketOptionsDialog;
 export 'views/configuration/theme_color_selector_dialog.dart'
     show ThemeColorSelectorDialog;
 

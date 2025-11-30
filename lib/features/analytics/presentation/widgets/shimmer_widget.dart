@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 class ShimmerWidget extends StatefulWidget {
   final Widget child;
   final Duration duration;
-  
+
   const ShimmerWidget({
     super.key,
     required this.child,
@@ -42,7 +42,7 @@ class _ShimmerWidgetState extends State<ShimmerWidget>
       vsync: this,
       duration: widget.duration,
     )..repeat();
-    
+
     _animation = Tween<double>(begin: -2.0, end: 2.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
     );

@@ -30,16 +30,33 @@ class AccountProfileModel extends AccountProfile {
     return AccountProfileModel(
       id: doc.id,
       username: data["username"] ?? '',
-      image: data.containsKey('image') ? data['image'] : data["imagen_perfil"] ?? '',
-      name: data.containsKey('name') ? data['name'] : data["nombre_negocio"] ?? 'null',
-      currencySign: data.containsKey('currencySign') ? data['currencySign'] : data["signo_moneda"] ?? '',
-      blockingAccount: data.containsKey('blockingAccount') ? data['blockingAccount'] : data["bloqueo"] ?? false,
-      blockingMessage: data.containsKey('blockingMessage') ? data['blockingMessage'] : data["mensaje_bloqueo"] ?? '',
-      verifiedAccount: data.containsKey('verifiedAccount') ? data['verifiedAccount'] : data["cuenta_verificada"] ?? false,
+      image: data.containsKey('image')
+          ? data['image']
+          : data["imagen_perfil"] ?? '',
+      name: data.containsKey('name')
+          ? data['name']
+          : data["nombre_negocio"] ?? 'null',
+      currencySign: data.containsKey('currencySign')
+          ? data['currencySign']
+          : data["signo_moneda"] ?? '',
+      blockingAccount: data.containsKey('blockingAccount')
+          ? data['blockingAccount']
+          : data["bloqueo"] ?? false,
+      blockingMessage: data.containsKey('blockingMessage')
+          ? data['blockingMessage']
+          : data["mensaje_bloqueo"] ?? '',
+      verifiedAccount: data.containsKey('verifiedAccount')
+          ? data['verifiedAccount']
+          : data["cuenta_verificada"] ?? false,
       pin: data.containsKey('pin') ? data['pin'] : '',
-      countrycode: data.containsKey('countrycode') ? data['countrycode'] : data["codigo_pais"] ?? '',
-      country: data.containsKey('country') ? data['country'] : data["pais"] ?? '',
-      province: data.containsKey('province') ? data['province'] : data["provincia"] ?? '',
+      countrycode: data.containsKey('countrycode')
+          ? data['countrycode']
+          : data["codigo_pais"] ?? '',
+      country:
+          data.containsKey('country') ? data['country'] : data["pais"] ?? '',
+      province: data.containsKey('province')
+          ? data['province']
+          : data["provincia"] ?? '',
       town: data.containsKey('town') ? data['town'] : data["ciudad"] ?? '',
       trial: data.containsKey('trial') ? data['trial'] : false,
       trialStart: data.containsKey('trialStart')
@@ -84,20 +101,40 @@ class AccountProfileModel extends AccountProfile {
     return AccountProfileModel(
       id: data['id'] ?? '',
       username: data['username'] ?? '',
-      image: data.containsKey('image') ? data['image'] : data['imagen_perfil'] ?? '',
-      name: data.containsKey('name') ? data['name'] : data['nombre_negocio'] ?? '',
+      image: data.containsKey('image')
+          ? data['image']
+          : data['imagen_perfil'] ?? '',
+      name: data.containsKey('name')
+          ? data['name']
+          : data['nombre_negocio'] ?? '',
       creation: data.containsKey('creation')
-          ? (data['creation'] is String ? DateTime.parse(data['creation']) : (data['creation'] as Timestamp).toDate())
-          : (data['timestamp_creation'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      currencySign: data.containsKey('currencySign') ? data['currencySign'] : data['signo_moneda'] ?? "\$",
-      blockingAccount: data.containsKey('blockingAccount') ? data['blockingAccount'] : data['bloqueo'] ?? false,
-      blockingMessage: data.containsKey('blockingMessage') ? data['blockingMessage'] : data['mensaje_bloqueo'] ?? '',
-      verifiedAccount: data.containsKey('verifiedAccount') ? data['verifiedAccount'] : data['cuenta_verificada'] ?? false,
+          ? (data['creation'] is String
+              ? DateTime.parse(data['creation'])
+              : (data['creation'] as Timestamp).toDate())
+          : (data['timestamp_creation'] as Timestamp?)?.toDate() ??
+              DateTime.now(),
+      currencySign: data.containsKey('currencySign')
+          ? data['currencySign']
+          : data['signo_moneda'] ?? "\$",
+      blockingAccount: data.containsKey('blockingAccount')
+          ? data['blockingAccount']
+          : data['bloqueo'] ?? false,
+      blockingMessage: data.containsKey('blockingMessage')
+          ? data['blockingMessage']
+          : data['mensaje_bloqueo'] ?? '',
+      verifiedAccount: data.containsKey('verifiedAccount')
+          ? data['verifiedAccount']
+          : data['cuenta_verificada'] ?? false,
       pin: data.containsKey('pin') ? data['pin'] : '',
-      countrycode: data.containsKey('countrycode') ? data['countrycode'] : data['codigo_pais'] ?? '',
+      countrycode: data.containsKey('countrycode')
+          ? data['countrycode']
+          : data['codigo_pais'] ?? '',
       town: data.containsKey('town') ? data['town'] : data['ciudad'] ?? '',
-      province: data.containsKey('province') ? data['province'] : data['provincia'] ?? '',
-      country: data.containsKey('country') ? data['country'] : data['pais'] ?? '',
+      province: data.containsKey('province')
+          ? data['province']
+          : data['provincia'] ?? '',
+      country:
+          data.containsKey('country') ? data['country'] : data['pais'] ?? '',
       trial: data.containsKey('trial') ? data['trial'] : false,
       trialStart: data.containsKey('trialStart')
           ? (data['trialStart'] as Timestamp).toDate()

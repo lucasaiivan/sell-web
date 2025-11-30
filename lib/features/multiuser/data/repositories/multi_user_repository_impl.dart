@@ -16,16 +16,16 @@ class MultiUserRepositoryImpl implements MultiUserRepository {
   @override
   Stream<Either<Failure, List<AdminProfile>>> getUsers(String accountId) {
     return remoteDataSource.getUsers(accountId).transform(
-      StreamTransformer<List<AdminProfileModel>,
-          Either<Failure, List<AdminProfile>>>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(Right(data));
-        },
-        handleError: (error, stackTrace, sink) {
-          sink.add(Left(ServerFailure(error.toString())));
-        },
-      ),
-    );
+          StreamTransformer<List<AdminProfileModel>,
+              Either<Failure, List<AdminProfile>>>.fromHandlers(
+            handleData: (data, sink) {
+              sink.add(Right(data));
+            },
+            handleError: (error, stackTrace, sink) {
+              sink.add(Left(ServerFailure(error.toString())));
+            },
+          ),
+        );
   }
 
   @override

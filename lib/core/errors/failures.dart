@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 
 /// Clase base sealed para todos los fallos de dominio
-/// 
+///
 /// **Patrón:** Sealed Class (Dart 3.x) para garantizar exhaustividad en pattern matching
 /// **Beneficio:** El compilador fuerza manejar todos los casos en switch/when
-/// 
+///
 /// Usa [sealed] para que el compilador detecte casos no manejados:
 /// ```dart
 /// switch (failure) {

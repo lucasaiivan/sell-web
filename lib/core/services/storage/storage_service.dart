@@ -4,22 +4,22 @@ import 'i_storage_datasource.dart';
 import 'storage_paths.dart';
 
 /// Servicio de Storage con métodos estáticos
-/// 
+///
 /// **Deprecado:** Usar [IStorageDataSource] directamente con DI
-/// 
+///
 /// Este servicio existe para mantener compatibilidad con código legacy
 /// que usa métodos estáticos. Gradualmente migrar a inyección de dependencias.
-/// 
+///
 /// **Patrón de migración:**
 /// ```dart
 /// // ❌ ANTES (legacy)
 /// final url = await StorageService.uploadProductImage(id, bytes);
-/// 
+///
 /// // ✅ DESPUÉS (recomendado)
 /// class MyRepository {
 ///   final IStorageDataSource _storage;
 ///   MyRepository(this._storage);
-///   
+///
 ///   Future<String> uploadImage(String id, Uint8List bytes) {
 ///     final path = StoragePaths.productImage(accountId, id);
 ///     return _storage.uploadFile(path, bytes);
@@ -37,7 +37,7 @@ class StorageService {
   // ==========================================
 
   /// Sube imagen de producto público y retorna URL
-  /// 
+  ///
   /// **Deprecado:** Usar `IStorageDataSource.uploadFile()` con DI
   @Deprecated('Usar IStorageDataSource.uploadFile() con DI')
   static Future<String> uploadProductImage(
@@ -56,7 +56,7 @@ class StorageService {
   }
 
   /// Sube imagen de marca pública y retorna URL
-  /// 
+  ///
   /// **Deprecado:** Usar `IStorageDataSource.uploadFile()` con DI
   @Deprecated('Usar IStorageDataSource.uploadFile() con DI')
   static Future<String> uploadBrandImage(

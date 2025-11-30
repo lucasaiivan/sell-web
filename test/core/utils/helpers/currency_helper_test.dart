@@ -23,7 +23,8 @@ void main() {
 
       test('debe respetar el símbolo de moneda personalizado', () {
         expect(CurrencyHelper.formatCurrency(700, symbol: '€'), '700 €');
-        expect(CurrencyHelper.formatCurrency(200.99, symbol: 'USD'), '200,99 USD');
+        expect(
+            CurrencyHelper.formatCurrency(200.99, symbol: 'USD'), '200,99 USD');
       });
 
       test('debe manejar números negativos', () {

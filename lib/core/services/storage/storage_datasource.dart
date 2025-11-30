@@ -4,12 +4,12 @@ import 'package:injectable/injectable.dart';
 import 'i_storage_datasource.dart';
 
 /// Implementación de Storage DataSource
-/// 
+///
 /// **Responsabilidad:**
 /// - Wrapper type-safe de FirebaseStorage
 /// - Implementa contrato [IStorageDataSource]
 /// - Maneja errores de Firebase Storage en capa de datos
-/// 
+///
 /// **Inyección DI:** @LazySingleton
 @LazySingleton(as: IStorageDataSource)
 class StorageDataSource implements IStorageDataSource {
@@ -25,7 +25,7 @@ class StorageDataSource implements IStorageDataSource {
   }) async {
     try {
       final ref = _storage.ref(path);
-      
+
       // Configurar metadata si existe
       SettableMetadata? uploadMetadata;
       if (metadata != null) {
@@ -41,7 +41,7 @@ class StorageDataSource implements IStorageDataSource {
           : ref.putData(fileBytes);
 
       final snapshot = await uploadTask;
-      
+
       // Obtener URL de descarga
       final downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;

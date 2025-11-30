@@ -53,8 +53,10 @@ class TransactionListItem extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: isLargeScreen
-              ? _buildLargeScreenLayout(context, theme, colorScheme, isAnnulled, profit, profitPercentage, itemsCount)
-              : _buildSmallScreenLayout(context, theme, colorScheme, isAnnulled, profit, profitPercentage, itemsCount),
+              ? _buildLargeScreenLayout(context, theme, colorScheme, isAnnulled,
+                  profit, profitPercentage, itemsCount)
+              : _buildSmallScreenLayout(context, theme, colorScheme, isAnnulled,
+                  profit, profitPercentage, itemsCount),
         ),
       ),
     );
@@ -82,23 +84,27 @@ class TransactionListItem extends StatelessWidget {
                 children: [
                   // Badge método de pago
                   Material(
-                    color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
+                    color:
+                        _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             _getPaymentIcon(ticket.payMode),
                             size: 14,
-                            color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.8),
+                            color: _getPaymentColor(ticket.payMode)
+                                .withValues(alpha: 0.8),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _getPaymentMethodLabel(ticket.payMode),
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.8),
+                              color: _getPaymentColor(ticket.payMode)
+                                  .withValues(alpha: 0.8),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -112,7 +118,8 @@ class TransactionListItem extends StatelessWidget {
                     width: 4,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -122,7 +129,8 @@ class TransactionListItem extends StatelessWidget {
                     child: Text(
                       _formatDateTime(ticket.creation.toDate()),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w400,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -147,7 +155,8 @@ class TransactionListItem extends StatelessWidget {
                     width: 4,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -171,14 +180,16 @@ class TransactionListItem extends StatelessWidget {
                   Text(
                     '$itemsCount ${itemsCount == 1 ? "artículo" : "artículos"}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   if (isAnnulled) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: colorScheme.errorContainer,
                         borderRadius: BorderRadius.circular(4),
@@ -204,7 +215,8 @@ class TransactionListItem extends StatelessWidget {
           children: [
             // Total de venta
             Text(
-              CurrencyHelper.formatCurrency(ticket.priceTotal, symbol: ticket.currencySymbol),
+              CurrencyHelper.formatCurrency(ticket.priceTotal,
+                  symbol: ticket.currencySymbol),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -219,9 +231,11 @@ class TransactionListItem extends StatelessWidget {
               // Ganancia
               if (profit != 0)
                 Text(
-                  CurrencyHelper.formatCurrency(profit, symbol: ticket.currencySymbol),
+                  CurrencyHelper.formatCurrency(profit,
+                      symbol: ticket.currencySymbol),
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                    color:
+                        profit > 0 ? Colors.green.shade600 : colorScheme.error,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -232,13 +246,18 @@ class TransactionListItem extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      profitPercentage > 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                      profitPercentage > 0
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
                       size: 14,
-                      color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                      color: profit > 0
+                          ? Colors.green.shade600
+                          : colorScheme.error,
                     ),
                     const SizedBox(width: 2),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: profit > 0
                             ? Colors.green.withValues(alpha: 0.15)
@@ -248,7 +267,9 @@ class TransactionListItem extends StatelessWidget {
                       child: Text(
                         '$profitPercentage%',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: profit > 0 ? Colors.green.shade700 : colorScheme.onErrorContainer,
+                          color: profit > 0
+                              ? Colors.green.shade700
+                              : colorScheme.onErrorContainer,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -286,20 +307,23 @@ class TransactionListItem extends StatelessWidget {
                 color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         _getPaymentIcon(ticket.payMode),
                         size: 14,
-                        color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.8),
+                        color: _getPaymentColor(ticket.payMode)
+                            .withValues(alpha: 0.8),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _getPaymentMethodLabel(ticket.payMode),
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.8),
+                          color: _getPaymentColor(ticket.payMode)
+                              .withValues(alpha: 0.8),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -379,7 +403,8 @@ class TransactionListItem extends StatelessWidget {
               if (isAnnulled) ...[
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: colorScheme.errorContainer,
                     borderRadius: BorderRadius.circular(4),
@@ -408,7 +433,8 @@ class TransactionListItem extends StatelessWidget {
             children: [
               // Total de venta
               Text(
-                CurrencyHelper.formatCurrency(ticket.priceTotal, symbol: ticket.currencySymbol),
+                CurrencyHelper.formatCurrency(ticket.priceTotal,
+                    symbol: ticket.currencySymbol),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -423,9 +449,12 @@ class TransactionListItem extends StatelessWidget {
                 // Ganancia
                 if (profit != 0)
                   Text(
-                    CurrencyHelper.formatCurrency(profit, symbol: ticket.currencySymbol),
+                    CurrencyHelper.formatCurrency(profit,
+                        symbol: ticket.currencySymbol),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                      color: profit > 0
+                          ? Colors.green.shade600
+                          : colorScheme.error,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -436,13 +465,18 @@ class TransactionListItem extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        profitPercentage > 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                        profitPercentage > 0
+                            ? Icons.trending_up_rounded
+                            : Icons.trending_down_rounded,
                         size: 14,
-                        color: profit > 0 ? Colors.green.shade600 : colorScheme.error,
+                        color: profit > 0
+                            ? Colors.green.shade600
+                            : colorScheme.error,
                       ),
                       const SizedBox(width: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
                           color: profit > 0
                               ? Colors.green.withValues(alpha: 0.15)
@@ -452,7 +486,9 @@ class TransactionListItem extends StatelessWidget {
                         child: Text(
                           '$profitPercentage%',
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: profit > 0 ? Colors.green.shade700 : colorScheme.onErrorContainer,
+                            color: profit > 0
+                                ? Colors.green.shade700
+                                : colorScheme.onErrorContainer,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

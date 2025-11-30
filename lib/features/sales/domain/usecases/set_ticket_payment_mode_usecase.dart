@@ -20,11 +20,11 @@ class SetTicketPaymentModeUseCase
     try {
       // Normalizar el código de entrada (por si viene de código legacy)
       final normalizedPayMode = PaymentMethod.migrateLegacyCode(params.payMode);
-      
+
       final allowedPayModes = PaymentMethod.getValidCodes();
       if (!allowedPayModes.contains(normalizedPayMode)) {
-        return Left(ValidationFailure(
-            'Forma de pago no válida: ${params.payMode}'));
+        return Left(
+            ValidationFailure('Forma de pago no válida: ${params.payMode}'));
       }
 
       final valueReceived = normalizedPayMode != PaymentMethod.cash.code
@@ -38,8 +38,7 @@ class SetTicketPaymentModeUseCase
 
       return Right(updatedTicket);
     } catch (e) {
-      return Left(
-          ServerFailure('Error al configurar forma de pago: $e'));
+      return Left(ServerFailure('Error al configurar forma de pago: $e'));
     }
   }
 }

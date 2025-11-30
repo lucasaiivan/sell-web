@@ -23,13 +23,11 @@ class AddCashRegisterToHistoryUseCase
       AddCashRegisterToHistoryParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.cashRegister.id.trim().isEmpty) {
-        return Left(
-            ValidationFailure('La caja debe tener un ID válido'));
+        return Left(ValidationFailure('La caja debe tener un ID válido'));
       }
 
       await _repository.addCashRegisterToHistory(

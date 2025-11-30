@@ -46,30 +46,37 @@ class GetUserAccountsUseCase {
   /// Retorna lista de [AccountProfile] de las cuentas que administra
   Future<List<AccountProfile>> getProfilesAccountsAssociated(
       String email) async {
-    print('🔍 [GetUserAccountsUseCase] getProfilesAccountsAssociated - Iniciando para email: $email');
-    
+    print(
+        '🔍 [GetUserAccountsUseCase] getProfilesAccountsAssociated - Iniciando para email: $email');
+
     // Obtiene los AdminProfile de las cuentas asociadas
     final accounts = await _repository.getUserAccounts(email);
-    print('📋 [GetUserAccountsUseCase] AdminProfiles obtenidos: ${accounts.length}');
+    print(
+        '📋 [GetUserAccountsUseCase] AdminProfiles obtenidos: ${accounts.length}');
     for (var admin in accounts) {
-      print('   - AdminProfile: account=${admin.account}, superAdmin=${admin.superAdmin}');
+      print(
+          '   - AdminProfile: account=${admin.account}, superAdmin=${admin.superAdmin}');
     }
-    
+
     // Para cada cuenta, obtiene el perfil completo
     final profiles = <AccountProfile>[];
     for (final admin in accounts) {
       try {
-        print('🔄 [GetUserAccountsUseCase] Obteniendo perfil para cuenta: ${admin.account}');
+        print(
+            '🔄 [GetUserAccountsUseCase] Obteniendo perfil para cuenta: ${admin.account}');
         final profile = await getAccount(idAccount: admin.account);
         profiles.add(profile);
-        print('✅ [GetUserAccountsUseCase] Perfil agregado: ${profile.name} (${profile.id})');
+        print(
+            '✅ [GetUserAccountsUseCase] Perfil agregado: ${profile.name} (${profile.id})');
       } catch (e) {
-        print('⚠️ [GetUserAccountsUseCase] Error obteniendo perfil para ${admin.account}: $e');
+        print(
+            '⚠️ [GetUserAccountsUseCase] Error obteniendo perfil para ${admin.account}: $e');
         // Si alguna cuenta no existe o falla, la omite
         continue;
       }
     }
-    print('🏁 [GetUserAccountsUseCase] Total de perfiles obtenidos: ${profiles.length}');
+    print(
+        '🏁 [GetUserAccountsUseCase] Total de perfiles obtenidos: ${profiles.length}');
     return profiles;
   }
 

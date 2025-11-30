@@ -120,12 +120,14 @@ class _CashRegisterState {
 
 /// Provider para gestionar el estado de cajas registradoras
 @injectable
-class CashRegisterProvider extends ChangeNotifier implements InitializableProvider {
+class CashRegisterProvider extends ChangeNotifier
+    implements InitializableProvider {
   // UseCases
   final OpenCashRegisterUseCase _openCashRegisterUseCase;
   final CloseCashRegisterUseCase _closeCashRegisterUseCase;
   final GetActiveCashRegistersUseCase _getActiveCashRegistersUseCase;
-  final GetActiveCashRegistersStreamUseCase _getActiveCashRegistersStreamUseCase;
+  final GetActiveCashRegistersStreamUseCase
+      _getActiveCashRegistersStreamUseCase;
   final AddCashInflowUseCase _addCashInflowUseCase;
   final AddCashOutflowUseCase _addCashOutflowUseCase;
   final UpdateSalesAndBillingUseCase _updateSalesAndBillingUseCase;
@@ -141,7 +143,8 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
       _deleteCashRegisterFixedDescriptionUseCase;
   final GetTodayTransactionsStreamUseCase _getTodayTransactionsStreamUseCase;
   final GetTransactionsByDateRangeUseCase _getTransactionsByDateRangeUseCase;
-  final SaveTicketToTransactionHistoryUseCase _saveTicketToTransactionHistoryUseCase;
+  final SaveTicketToTransactionHistoryUseCase
+      _saveTicketToTransactionHistoryUseCase;
   final AppDataPersistenceService _persistenceService;
 
   // Stream subscriptions
@@ -486,8 +489,8 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
 
     return result.fold(
       (failure) {
-        _state = _state.copyWith(
-            isProcessing: false, errorMessage: failure.message);
+        _state =
+            _state.copyWith(isProcessing: false, errorMessage: failure.message);
         notifyListeners();
         return false;
       },
@@ -592,8 +595,8 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
 
     return result.fold(
       (failure) {
-        _state = _state.copyWith(
-            isProcessing: false, errorMessage: failure.message);
+        _state =
+            _state.copyWith(isProcessing: false, errorMessage: failure.message);
         notifyListeners();
         return false;
       },
@@ -627,8 +630,8 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
 
     return result.fold(
       (failure) {
-        _state = _state.copyWith(
-            isProcessing: false, errorMessage: failure.message);
+        _state =
+            _state.copyWith(isProcessing: false, errorMessage: failure.message);
         notifyListeners();
         return false;
       },
@@ -913,7 +916,7 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
         // Emitir una carga inicial
         final start = activeCashRegister.opening;
         final end = DateTime.now();
-        
+
         final result = await _getTransactionsByDateRangeUseCase(
           GetTransactionsByDateRangeParams(
             accountId: accountId,
@@ -931,7 +934,7 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
         );
 
         yield tickets;
-        
+
         // Luego escuchar cambios en tiempo real solo para hoy
         // (las transacciones nuevas siempre serán de hoy)
         yield* _getTodayTransactionsStreamUseCase(
@@ -946,7 +949,9 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
 
           if (isOpenedToday) {
             // Si se abrió hoy, solo mostrar las de hoy
-            return todayTransactions.map((t) => TicketModel.fromMap(t)).toList();
+            return todayTransactions
+                .map((t) => TicketModel.fromMap(t))
+                .toList();
           } else {
             // Si se abrió en días anteriores, combinar históricas + hoy
             final historicalResult = await _getTransactionsByDateRangeUseCase(
@@ -956,7 +961,7 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
                 endDate: today.subtract(const Duration(days: 1, hours: 12)),
               ),
             );
-            
+
             final historicalTickets = historicalResult.fold(
               (failure) => <TicketModel>[],
               (data) => data
@@ -964,9 +969,10 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
                   .map((t) => TicketModel.fromMap(t))
                   .toList(),
             );
-            
-            final todayTickets = todayTransactions.map((t) => TicketModel.fromMap(t)).toList();
-            
+
+            final todayTickets =
+                todayTransactions.map((t) => TicketModel.fromMap(t)).toList();
+
             return [...historicalTickets, ...todayTickets];
           }
         });
@@ -999,7 +1005,6 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
       yield [];
     }
   }
-
 
   // ==========================================
   // HELPERS PRIVADOS
@@ -1111,8 +1116,8 @@ class CashRegisterProvider extends ChangeNotifier implements InitializableProvid
 
     result.fold(
       (failure) {
-        _state = _state.copyWith(
-            isProcessing: false, errorMessage: failure.message);
+        _state =
+            _state.copyWith(isProcessing: false, errorMessage: failure.message);
       },
       (annulledTicket) {
         _state = _state.copyWith(isProcessing: false);

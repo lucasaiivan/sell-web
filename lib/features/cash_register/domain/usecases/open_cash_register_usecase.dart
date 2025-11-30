@@ -29,7 +29,8 @@ class OpenCashRegisterParams {
 /// - Abre una nueva caja registradora para el día
 /// - Delega la operación al repositorio
 @lazySingleton
-class OpenCashRegisterUseCase extends UseCase<CashRegister, OpenCashRegisterParams> {
+class OpenCashRegisterUseCase
+    extends UseCase<CashRegister, OpenCashRegisterParams> {
   final CashRegisterRepository _repository;
 
   OpenCashRegisterUseCase(this._repository);
@@ -38,12 +39,14 @@ class OpenCashRegisterUseCase extends UseCase<CashRegister, OpenCashRegisterPara
   ///
   /// Retorna [Right(CashRegister)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, CashRegister>> call(OpenCashRegisterParams params) async {
+  Future<Either<Failure, CashRegister>> call(
+      OpenCashRegisterParams params) async {
     // Validaciones de negocio
     if (params.initialCash < 0) {
-      return Left(ValidationFailure('El efectivo inicial no puede ser negativo'));
+      return Left(
+          ValidationFailure('El efectivo inicial no puede ser negativo'));
     }
-    
+
     if (params.description.trim().isEmpty) {
       return Left(ValidationFailure('La descripción es obligatoria'));
     }

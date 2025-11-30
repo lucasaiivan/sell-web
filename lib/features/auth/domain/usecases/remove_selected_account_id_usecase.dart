@@ -24,7 +24,8 @@ class RemoveSelectedAccountIdUseCase extends UseCase<void, NoParams> {
       await _repository.removeSelectedAccountId();
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Error al remover cuenta seleccionada: ${e.toString()}'));
+      return Left(CacheFailure(
+          'Error al remover cuenta seleccionada: ${e.toString()}'));
     }
   }
 }

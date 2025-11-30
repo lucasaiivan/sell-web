@@ -1,16 +1,16 @@
 /// Rutas centralizadas de Firebase Storage
-/// 
+///
 /// **Responsabilidad:**
 /// - Proveer paths type-safe de Storage
 /// - Evitar hardcoding de rutas en features
 /// - Documentar estructura de Storage
-/// 
+///
 /// **Uso:**
 /// ```dart
 /// final path = StoragePaths.productImage(accountId, productId);
 /// final url = await storageDataSource.uploadFile(path, bytes);
 /// ```
-/// 
+///
 /// **Beneficios:**
 /// - Refactor-safe: cambiar estructura en un solo lugar
 /// - Type-safe: parámetros requeridos en compile-time
@@ -29,7 +29,8 @@ class StoragePaths {
 
   /// Imagen de producto público
   /// Ruta: APP/ARG/PRODUCTOS/{productId}.jpg
-  static String publicProductImage(String productId, {String country = 'ARG'}) =>
+  static String publicProductImage(String productId,
+          {String country = 'ARG'}) =>
       'APP/$country/PRODUCTOS/$productId.jpg';
 
   // ==========================================

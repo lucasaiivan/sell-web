@@ -112,7 +112,8 @@ class _CatalogueState {
 
 /// Provider para gestionar el estado del catálogo de productos
 @injectable
-class CatalogueProvider extends ChangeNotifier implements InitializableProvider {
+class CatalogueProvider extends ChangeNotifier
+    implements InitializableProvider {
   bool _shouldNotifyListeners = true;
 
   set shouldNotifyListeners(bool value) {
@@ -245,8 +246,8 @@ class CatalogueProvider extends ChangeNotifier implements InitializableProvider 
   }
 
   Future<Product?> getPublicProductByCode(String code) async {
-    final result =
-        await _getPublicProductByCodeUseCase(GetPublicProductByCodeParams(code));
+    final result = await _getPublicProductByCodeUseCase(
+        GetPublicProductByCodeParams(code));
     return result.fold(
       (failure) => null,
       (product) => product,
@@ -661,7 +662,7 @@ class CatalogueProvider extends ChangeNotifier implements InitializableProvider 
     _searchDebounceTimer?.cancel();
     _searchDebounceTimer = null;
     _state = const _CatalogueState(products: []);
-    
+
     try {
       notifyListeners();
     } catch (e) {

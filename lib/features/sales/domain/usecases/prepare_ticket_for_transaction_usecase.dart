@@ -22,8 +22,8 @@ class PrepareTicketForTransactionUseCase
       PrepareTicketForTransactionParams params) async {
     try {
       if (params.ticket.products.isEmpty) {
-        return Left(ValidationFailure(
-            'El ticket debe contener al menos un producto'));
+        return Left(
+            ValidationFailure('El ticket debe contener al menos un producto'));
       }
 
       final ticketId = params.ticket.id.trim().isEmpty
@@ -49,8 +49,8 @@ class PrepareTicketForTransactionUseCase
           : params.ticket.cashRegisterId;
 
       if (params.ticket.sellerId.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ID del vendedor no puede estar vacío'));
+        return Left(
+            ValidationFailure('El ID del vendedor no puede estar vacío'));
       }
 
       final preparedTicket = params.ticket.copyWith(
@@ -62,8 +62,8 @@ class PrepareTicketForTransactionUseCase
 
       return Right(preparedTicket);
     } catch (e) {
-      return Left(ServerFailure(
-          'Error al preparar ticket para transacción: $e'));
+      return Left(
+          ServerFailure('Error al preparar ticket para transacción: $e'));
     }
   }
 }

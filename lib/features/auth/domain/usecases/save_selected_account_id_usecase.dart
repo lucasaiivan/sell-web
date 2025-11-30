@@ -17,7 +17,8 @@ class SaveSelectedAccountIdParams {
 /// - Guarda el ID de la cuenta actualmente seleccionada por el usuario
 /// - Delega la persistencia al repositorio
 @lazySingleton
-class SaveSelectedAccountIdUseCase extends UseCase<void, SaveSelectedAccountIdParams> {
+class SaveSelectedAccountIdUseCase
+    extends UseCase<void, SaveSelectedAccountIdParams> {
   final AccountRepository _repository;
 
   SaveSelectedAccountIdUseCase(this._repository);
@@ -31,7 +32,8 @@ class SaveSelectedAccountIdUseCase extends UseCase<void, SaveSelectedAccountIdPa
       await _repository.saveSelectedAccountId(params.accountId);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Error al guardar cuenta seleccionada: ${e.toString()}'));
+      return Left(CacheFailure(
+          'Error al guardar cuenta seleccionada: ${e.toString()}'));
     }
   }
 }

@@ -1137,8 +1137,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Muestra modal personalizado de selección de marca con botón para crear nueva
-  Future<Mark?> _showBrandSelectionModal(
-      List<Mark> brands) async {
+  Future<Mark?> _showBrandSelectionModal(List<Mark> brands) async {
     return showModalBottomSheet<Mark>(
       context: context,
       isScrollControlled: true,

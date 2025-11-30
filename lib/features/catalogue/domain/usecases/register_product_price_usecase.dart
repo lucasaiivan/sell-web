@@ -22,7 +22,8 @@ class RegisterProductPriceParams {
 /// - Registra el precio de un producto en la base de datos pública
 /// - Delega la operación al repositorio
 @lazySingleton
-class RegisterProductPriceUseCase extends UseCase<void, RegisterProductPriceParams> {
+class RegisterProductPriceUseCase
+    extends UseCase<void, RegisterProductPriceParams> {
   final CatalogueRepository _repository;
 
   RegisterProductPriceUseCase(this._repository);
@@ -33,10 +34,12 @@ class RegisterProductPriceUseCase extends UseCase<void, RegisterProductPricePara
   @override
   Future<Either<Failure, void>> call(RegisterProductPriceParams params) async {
     try {
-      await _repository.registerProductPrice(params.productPrice, params.productCode);
+      await _repository.registerProductPrice(
+          params.productPrice, params.productCode);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al registrar precio del producto: ${e.toString()}'));
+      return Left(ServerFailure(
+          'Error al registrar precio del producto: ${e.toString()}'));
     }
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 
 /// Configuración global para todos los tests
-/// 
+///
 /// Proporciona setup y teardown comunes para mantener tests aislados
 
 class TestConfig {

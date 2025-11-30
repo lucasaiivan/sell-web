@@ -24,7 +24,6 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-
     return Center(
       child: AnimatedBuilder(
         animation: widget.authProvider,
@@ -68,11 +67,12 @@ class _LoginFormState extends State<LoginForm> {
                   width: double.infinity,
                   child: Builder(
                     builder: (context) {
-                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      final isDark =
+                          Theme.of(context).brightness == Brightness.dark;
                       final isDisabled = !_acceptPolicy ||
                           widget.authProvider.isSigningInWithGoogle ||
                           widget.authProvider.isSigningInAsGuest;
-                      
+
                       return Opacity(
                         opacity: isDisabled ? 0.5 : 1.0,
                         child: AppButton(
@@ -81,10 +81,14 @@ class _LoginFormState extends State<LoginForm> {
                               horizontal: 20, vertical: 20),
                           backgroundColor: isDisabled
                               ? Colors.grey.shade400
-                              : (isDark ? Colors.white : const Color(0xFF1976D2)),
+                              : (isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1976D2)),
                           foregroundColor: isDisabled
                               ? Colors.grey.shade700
-                              : (isDark ? const Color(0xFF1976D2) : Colors.white),
+                              : (isDark
+                                  ? const Color(0xFF1976D2)
+                                  : Colors.white),
                           elevation: isDisabled ? 0 : 3,
                           text: "CONTINUAR CON GOOGLE",
                           icon: Image.network(
@@ -96,7 +100,9 @@ class _LoginFormState extends State<LoginForm> {
                                 size: 20,
                                 color: isDisabled
                                     ? Colors.grey.shade700
-                                    : (isDark ? const Color(0xFF1976D2) : Colors.white)),
+                                    : (isDark
+                                        ? const Color(0xFF1976D2)
+                                        : Colors.white)),
                           ),
                           isLoading: widget.authProvider.isSigningInWithGoogle,
                           onPressed: isDisabled

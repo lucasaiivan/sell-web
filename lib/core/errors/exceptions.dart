@@ -1,5 +1,5 @@
 /// Excepción base sealed para la capa de datos
-/// 
+///
 /// **Patrón:** Todas las excepciones de infraestructura heredan de aquí
 /// **Mapeo:** DataSource lanza estas → Repository las convierte a [Failure]
 sealed class DataException implements Exception {

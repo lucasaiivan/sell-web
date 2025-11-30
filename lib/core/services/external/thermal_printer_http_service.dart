@@ -11,7 +11,7 @@ import 'package:http/http.dart' as http;
 @lazySingleton
 class ThermalPrinterHttpService {
   final AppDataPersistenceService _persistence;
-  
+
   ThermalPrinterHttpService(this._persistence);
 
   bool _isConnected = false;
@@ -57,7 +57,7 @@ class ThermalPrinterHttpService {
   Future<void> initialize() async {
     try {
       _configuredPrinterName = await _persistence.getPrinterName();
-      
+
       _serverPort = await _persistence.getPrinterServerPort() ?? 8080;
       _serverHost = await _persistence.getPrinterServerHost() ?? 'localhost';
 

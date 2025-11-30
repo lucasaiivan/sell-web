@@ -30,10 +30,11 @@ class GetDemoAccountUseCase extends UseCase<AccountProfile, NoParams> {
         trialStart: DateTime.now(),
         trialEnd: DateTime.now().add(const Duration(days: 30)),
       );
-      
+
       return Right(demoAccount);
     } catch (e) {
-      return Left(ServerFailure('Error al generar cuenta demo: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al generar cuenta demo: ${e.toString()}'));
     }
   }
 }

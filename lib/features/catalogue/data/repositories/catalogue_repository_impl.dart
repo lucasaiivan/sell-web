@@ -11,19 +11,19 @@ import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
 import 'package:sellweb/core/services/database/firestore_paths.dart';
 
 /// Repository implementation usando nuevo sistema refactorizado
-/// 
+///
 /// **Cambios principales:**
 /// - Usa [FirestoreDataSource] inyectado (no FirebaseFirestore directo)
 /// - Usa [FirestorePaths] para rutas type-safe
 /// - ErrorMapper se aplicará cuando se agregue Either<Failure, T>
-/// 
+///
 /// **Próximos pasos:**
 /// - Migrar a Either<Failure, T> en lugar de Future<T>
 /// - Aplicar ErrorMapper en catch blocks
 @LazySingleton(as: CatalogueRepository)
 class CatalogueRepositoryImpl implements CatalogueRepository {
   final IFirestoreDataSource _dataSource;
-  
+
   CatalogueRepositoryImpl(this._dataSource);
 
   // stream : Devolverá un stream de productos del catálogo  de la cuenta del negocio seleccionada.
@@ -32,11 +32,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     if (accountId.isEmpty) {
       return const Stream.empty();
     }
-    
+
     // ✅ Usar FirestorePaths para rutas type-safe
     final path = FirestorePaths.accountCatalogue(accountId);
     final collection = _dataSource.collection(path);
-    
+
     return collection.snapshots();
   }
 
@@ -46,13 +46,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     // ✅ Usar FirestorePaths
     final path = FirestorePaths.publicProducts();
     final collection = _dataSource.collection(path);
-    
-    final query = collection
-        .where('code', isEqualTo: code)
-        .limit(1);
-    
+
+    final query = collection.where('code', isEqualTo: code).limit(1);
+
     final snapshot = await _dataSource.getDocuments(query);
-    
+
     if (snapshot.docs.isNotEmpty) {
       return Product.fromMap(snapshot.docs.first.data());
     }
@@ -71,7 +69,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       // ✅ Usar FirestorePaths + DataSource
       final path = FirestorePaths.accountProduct(accountId, product.id);
       final productMap = product.toMap();
-      
+
       await _dataSource.setDocument(path, productMap, merge: true);
     } catch (e) {
       throw Exception('Error al guardar en Firestore: $e');
@@ -89,7 +87,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final path = FirestorePaths.publicProducts();
       final docPath = '$path/${product.id}';
       final productMap = product.toJson();
-      
+
       await _dataSource.setDocument(docPath, productMap, merge: false);
     } catch (e) {
       throw Exception('Error al crear producto público en Firestore: $e');
@@ -111,9 +109,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     try {
       // ✅ Usar método optimizado de DataSource
       final path = FirestorePaths.accountProduct(accountId, productId);
-      
+
       await _dataSource.incrementField(path, 'sales', quantity);
-      
+
       // Actualizar timestamp
       await _dataSource.updateDocument(path, {
         'upgrade': Timestamp.now(),
@@ -138,9 +136,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     try {
       // ✅ Usar método optimizado de DataSource
       final path = FirestorePaths.accountProduct(accountId, productId);
-      
+
       await _dataSource.incrementField(path, 'quantityStock', -quantity);
-      
+
       // Actualizar timestamp
       await _dataSource.updateDocument(path, {
         'upgrade': Timestamp.now(),
@@ -167,7 +165,8 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final path = FirestorePaths.productPrices(productId: productCode);
       final docPath = '$path${productPrice.idAccount}';
 
-      await _dataSource.setDocument(docPath, productPrice.toJson(), merge: true);
+      await _dataSource.setDocument(docPath, productPrice.toJson(),
+          merge: true);
     } catch (e) {
       throw Exception('Error al registrar precio del producto: $e');
     }
@@ -199,11 +198,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     // ✅ Usar FirestorePaths + DataSource
     final path = FirestorePaths.accountCategories(accountId);
     final collection = _dataSource.collection(path);
-    
-    return _dataSource.streamDocuments(collection)
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
-            .toList());
+
+    return _dataSource.streamDocuments(collection).map((snapshot) => snapshot
+        .docs
+        .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
+        .toList());
   }
 
   @override
@@ -211,11 +210,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     // ✅ Usar FirestorePaths + DataSource
     final path = FirestorePaths.accountProviders(accountId);
     final collection = _dataSource.collection(path);
-    
-    return _dataSource.streamDocuments(collection)
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Provider.fromDocumentSnapshot(documentSnapshot: doc))
-            .toList());
+
+    return _dataSource.streamDocuments(collection).map((snapshot) => snapshot
+        .docs
+        .map((doc) => Provider.fromDocumentSnapshot(documentSnapshot: doc))
+        .toList());
   }
 
   @override
@@ -223,10 +222,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     // ✅ Usar FirestorePaths + DataSource
     final path = FirestorePaths.brands(country: country);
     final collection = _dataSource.collection(path);
-    
-    return _dataSource.streamDocuments(collection)
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList());
+
+    return _dataSource.streamDocuments(collection).map((snapshot) =>
+        snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList());
   }
 
   @override
@@ -240,7 +238,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final path = FirestorePaths.brands(country: country);
       final docPath = '$path/${brand.id}';
       final brandMap = brand.toJson();
-      
+
       await _dataSource.setDocument(docPath, brandMap, merge: false);
     } catch (e) {
       throw Exception('Error al crear marca en Firestore: $e');
@@ -253,19 +251,20 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     final path = FirestorePaths.accountCatalogue(accountId);
     final collection = _dataSource.collection(path);
     final snapshot = await _dataSource.getDocuments(collection);
-    
+
     return snapshot.docs
         .map((doc) => ProductCatalogue.fromMap(doc.data()))
         .toList();
   }
 
   @override
-  Future<ProductCatalogue?> getProductById(String accountId, String productId) async {
+  Future<ProductCatalogue?> getProductById(
+      String accountId, String productId) async {
     // ✅ Usar FirestorePaths + DataSource
     final path = FirestorePaths.accountProduct(accountId, productId);
     final docRef = _dataSource.document(path);
     final doc = await docRef.get();
-    
+
     if (doc.exists) {
       return ProductCatalogue.fromMap(doc.data()!);
     }
@@ -296,7 +295,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     final collection = _dataSource.collection(path);
     final queryRef = collection.where('code', isEqualTo: query);
     final snapshot = await _dataSource.getDocuments(queryRef);
-    
+
     return snapshot.docs.map((doc) => Product.fromMap(doc.data())).toList();
   }
 
@@ -307,19 +306,20 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final path = FirestorePaths.accountCategories(accountId);
       final collection = _dataSource.collection(path);
       final snapshot = await _dataSource.getDocuments(collection);
-      
+
       return snapshot.docs
-        .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
-        .toList();
+          .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
+          .toList();
     }
     return [];
   }
 
   @override
-  Future<void> updateStock(String accountId, String productId, int newStock) async {
+  Future<void> updateStock(
+      String accountId, String productId, int newStock) async {
     // ✅ Usar FirestorePaths + DataSource
     final path = FirestorePaths.accountProduct(accountId, productId);
-    
+
     await _dataSource.updateDocument(path, {
       'quantityStock': newStock,
       'upgrade': Timestamp.now(),

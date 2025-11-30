@@ -7,7 +7,7 @@ import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
 class ThemeService {
   // ignore: unused_field
   final AppDataPersistenceService _persistence;
-  
+
   ThemeService(this._persistence);
 
   final ValueNotifier<ThemeMode> _themeMode = ValueNotifier(ThemeMode.system);

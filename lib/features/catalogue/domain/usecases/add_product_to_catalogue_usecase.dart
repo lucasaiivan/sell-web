@@ -22,7 +22,8 @@ class AddProductToCatalogueParams {
 /// - Agrega un producto al catálogo de la cuenta del negocio
 /// - Delega la operación al repositorio
 @lazySingleton
-class AddProductToCatalogueUseCase extends UseCase<void, AddProductToCatalogueParams> {
+class AddProductToCatalogueUseCase
+    extends UseCase<void, AddProductToCatalogueParams> {
   final CatalogueRepository _repository;
 
   AddProductToCatalogueUseCase(this._repository);
@@ -36,7 +37,8 @@ class AddProductToCatalogueUseCase extends UseCase<void, AddProductToCataloguePa
       await _repository.addProductToCatalogue(params.product, params.accountId);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al agregar producto al catálogo: ${e.toString()}'));
+      return Left(ServerFailure(
+          'Error al agregar producto al catálogo: ${e.toString()}'));
     }
   }
 }

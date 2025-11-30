@@ -10,10 +10,10 @@ import 'package:sellweb/core/services/theme/theme_service.dart';
 /// - Persiste configuración con AppDataPersistenceService
 /// - No contiene lógica de negocio, solo coordinación
 ///
-/// **Memory Safety:** 
+/// **Memory Safety:**
 /// - Listeners dispuestos en [dispose] para evitar leaks
 /// - Referencias guardadas para poder removerlas
-/// 
+///
 /// **Uso:**
 /// ```dart
 /// final themeProvider = Provider.of<ThemeDataAppProvider>(context);
@@ -32,11 +32,11 @@ class ThemeDataAppProvider extends ChangeNotifier {
   ThemeDataAppProvider(this._themeService, this._persistenceService) {
     _loadTheme();
     _loadSeedColor();
-    
+
     // Guardar referencias a listeners
     _themeModeListener = () => notifyListeners();
     _seedColorListener = () => notifyListeners();
-    
+
     // Registrar listeners
     _themeService.themeModeNotifier.addListener(_themeModeListener);
     _themeService.seedColorNotifier.addListener(_seedColorListener);

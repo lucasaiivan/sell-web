@@ -7,7 +7,7 @@ class ProductPrice {
   final String currencySign;
   final String province;
   final String town;
-  
+
   // Data account
   final String idAccount;
   final String imageAccount;

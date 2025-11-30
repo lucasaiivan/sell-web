@@ -4,7 +4,7 @@ import '../../domain/entities/product_catalogue.dart';
 import 'product_model.dart';
 
 /// Modelo de datos para ProductCatalogue con lógica de serialización.
-/// 
+///
 /// Maneja la conversión desde/hacia Firestore, incluyendo compatibilidad
 /// con nombres de campos legacy y conversión de tipos primitivos.
 class ProductCatalogueModel extends ProductCatalogue {
@@ -64,7 +64,8 @@ class ProductCatalogueModel extends ProductCatalogue {
       favorite: data.containsKey('favorite')
           ? data['favorite']
           : data['favorito'] ?? false,
-      idMark: data.containsKey('idMark') ? data['idMark'] : data['id_marca'] ?? '',
+      idMark:
+          data.containsKey('idMark') ? data['idMark'] : data['id_marca'] ?? '',
       nameMark: data.containsKey('nameMark')
           ? data['nameMark']
           : data['nombre_marca'] ?? '',
@@ -94,7 +95,8 @@ class ProductCatalogueModel extends ProductCatalogue {
       nameSubcategory: data.containsKey('nameSubcategory')
           ? data['nameSubcategory']
           : data['subcategoriaName'] ?? '',
-      upgrade: _parseTimestamp(data['upgrade'] ?? data['timestamp_actualizacion']),
+      upgrade:
+          _parseTimestamp(data['upgrade'] ?? data['timestamp_actualizacion']),
       creation: _parseTimestamp(data['creation'] ?? data['timestamp_creation']),
       documentCreation: _parseTimestamp(data['documentCreation']),
       documentUpgrade: _parseTimestamp(data['documentUpgrade']),
@@ -117,7 +119,8 @@ class ProductCatalogueModel extends ProductCatalogue {
       currencySign: data.containsKey('currencySign')
           ? data['currencySign']
           : data['signo_moneda'] ?? '',
-      quantityStock: data.containsKey('quantityStock') ? data['quantityStock'] : 0,
+      quantityStock:
+          data.containsKey('quantityStock') ? data['quantityStock'] : 0,
       sales: data.containsKey('sales') ? data['sales'] : 0,
       stock: data.containsKey('stock') ? data['stock'] : false,
       alertStock: data.containsKey('alertStock') ? data['alertStock'] : 5,

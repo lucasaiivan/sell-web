@@ -48,7 +48,8 @@ class _AnalyticsState {
 /// **Dependencias:** [GetSalesAnalyticsUseCase]
 /// **Inyección DI:** @injectable
 @injectable
-class AnalyticsProvider extends ChangeNotifier implements InitializableProvider {
+class AnalyticsProvider extends ChangeNotifier
+    implements InitializableProvider {
   final GetSalesAnalyticsUseCase _getSalesAnalyticsUseCase;
 
   _AnalyticsState _state = const _AnalyticsState();
@@ -165,7 +166,7 @@ class AnalyticsProvider extends ChangeNotifier implements InitializableProvider 
     _subscription = null;
     _state = const _AnalyticsState();
     _currentAccountId = '';
-    
+
     try {
       notifyListeners();
     } catch (e) {

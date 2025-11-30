@@ -86,7 +86,8 @@ void main() {
       );
     });
 
-    test('debe retornar ValidationFailure si el descuento es negativo', () async {
+    test('debe retornar ValidationFailure si el descuento es negativo',
+        () async {
       // Arrange
       final ticket = TestHelpers.ticketWithProducts;
       final params = SetTicketDiscountParams(
@@ -109,7 +110,8 @@ void main() {
       );
     });
 
-    test('debe mantener los productos del ticket al aplicar descuento', () async {
+    test('debe mantener los productos del ticket al aplicar descuento',
+        () async {
       // Arrange
       final ticket = TestHelpers.ticketWithProducts;
       final initialProductCount = ticket.products.length;

@@ -43,7 +43,7 @@ class AccessDeniedDialog extends StatelessWidget {
             style: const TextStyle(fontSize: 64),
           ),
           const SizedBox(height: 16),
-          
+
           // Mensaje principal
           Text(
             accessResult.message,
@@ -54,7 +54,7 @@ class AccessDeniedDialog extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          
+
           // Nota personalizada de bloqueo (si está disponible)
           if (accessResult.reason == UserAccessDeniedReason.userBlocked &&
               adminProfile?.inactivateNote.isNotEmpty == true) ...[
@@ -100,7 +100,7 @@ class AccessDeniedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
-          
+
           // Información adicional según el tipo de restricción
           _buildAdditionalInfo(context),
         ],
@@ -129,11 +129,13 @@ class AccessDeniedDialog extends StatelessWidget {
 
     switch (accessResult.reason) {
       case UserAccessDeniedReason.userBlocked:
-        infoText = 'Contacta con el administrador de la cuenta para más información.';
+        infoText =
+            'Contacta con el administrador de la cuenta para más información.';
         infoIcon = Icons.person_outline;
         break;
       case UserAccessDeniedReason.dayNotAllowed:
-        infoText = 'Tu cuenta tiene restricciones de acceso por día de la semana.';
+        infoText =
+            'Tu cuenta tiene restricciones de acceso por día de la semana.';
         infoIcon = Icons.event_busy_rounded;
         break;
       case UserAccessDeniedReason.outsideAllowedHours:

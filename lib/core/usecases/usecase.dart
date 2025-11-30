@@ -8,7 +8,6 @@ abstract class UseCase<T, Params> {
   Future<Either<Failure, T>> call(Params params);
 }
 
-
 /// Clase para casos de uso sin parámetros
 class NoParams {
   const NoParams();

@@ -41,7 +41,8 @@ void main() {
           (failure) => fail('No debería fallar'),
           (ticket) {
             expect(ticket.payMode, PaymentMethod.cash.code);
-            expect(ticket.valueReceived, 1500.0); // Mantiene el valor para efectivo
+            expect(ticket.valueReceived,
+                1500.0); // Mantiene el valor para efectivo
           },
         );
       });
@@ -139,7 +140,9 @@ void main() {
         );
       });
 
-      test('debe aceptar y normalizar método de pago legacy "effective" a "cash"', () async {
+      test(
+          'debe aceptar y normalizar método de pago legacy "effective" a "cash"',
+          () async {
         // Arrange
         final params = SetTicketPaymentModeParams(
           currentTicket: testTicket,
@@ -155,12 +158,15 @@ void main() {
           (failure) => fail('No debería fallar con código legacy'),
           (ticket) {
             expect(ticket.payMode, PaymentMethod.cash.code);
-            expect(ticket.valueReceived, 1500.0); // Mantiene valor para efectivo
+            expect(
+                ticket.valueReceived, 1500.0); // Mantiene valor para efectivo
           },
         );
       });
 
-      test('debe aceptar y normalizar método de pago legacy "mercadopago" a "transfer"', () async {
+      test(
+          'debe aceptar y normalizar método de pago legacy "mercadopago" a "transfer"',
+          () async {
         // Arrange
         final params = SetTicketPaymentModeParams(
           currentTicket: testTicket.copyWith(valueReceived: 2000.0),
@@ -176,7 +182,8 @@ void main() {
           (failure) => fail('No debería fallar con código legacy'),
           (ticket) {
             expect(ticket.payMode, PaymentMethod.transfer.code);
-            expect(ticket.valueReceived, 0.0); // Se resetea porque no es efectivo
+            expect(
+                ticket.valueReceived, 0.0); // Se resetea porque no es efectivo
           },
         );
       });
@@ -339,7 +346,8 @@ void main() {
         expect(PaymentMethod.qr.code, 'qr');
       });
 
-      test('PaymentMethod.getValidCodes() debe contener todos los métodos válidos',
+      test(
+          'PaymentMethod.getValidCodes() debe contener todos los métodos válidos',
           () {
         // Act
         final validCodes = PaymentMethod.getValidCodes();
@@ -361,7 +369,7 @@ void main() {
             payMode: method.code,
           );
           final result = await useCase(params);
-          
+
           expect(
             result.isRight(),
             true,

@@ -23,7 +23,8 @@ class ClearAdminProfileUseCase extends UseCase<void, NoParams> {
       await _persistenceService.clearCurrentAdminProfile();
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Error al limpiar AdminProfile: ${e.toString()}'));
+      return Left(
+          CacheFailure('Error al limpiar AdminProfile: ${e.toString()}'));
     }
   }
 }

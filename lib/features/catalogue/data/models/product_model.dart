@@ -3,7 +3,7 @@ import '../../domain/entities/product.dart';
 
 /// Modelo de datos que extiende [Product] y maneja la serialización
 /// desde/hacia Firestore y JSON.
-/// 
+///
 /// Esta clase pertenece a la capa de datos y contiene toda la lógica
 /// de conversión y mapeo de datos externos.
 class ProductModel extends Product {
@@ -30,8 +30,10 @@ class ProductModel extends Product {
     return ProductModel(
       id: data.containsKey('id') ? data['id'] : '',
       followers: data.containsKey('followers') ? data['followers'] : 0,
-      idUserCreation: data.containsKey('idUserCreation') ? data['idUserCreation'] : '',
-      idUserUpgrade: data.containsKey('idUserUpgrade') ? data['idUserUpgrade'] : '',
+      idUserCreation:
+          data.containsKey('idUserCreation') ? data['idUserCreation'] : '',
+      idUserUpgrade:
+          data.containsKey('idUserUpgrade') ? data['idUserUpgrade'] : '',
       verified: data.containsKey('verified') ? data['verified'] : false,
       reviewed: data.containsKey('reviewed') ? data['reviewed'] : false,
       favorite: data.containsKey('favorite') ? data['favorite'] : false,

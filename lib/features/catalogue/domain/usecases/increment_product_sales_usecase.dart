@@ -24,7 +24,8 @@ class IncrementProductSalesParams {
 /// - Valida que la cantidad sea positiva
 /// - Delega la operación al repositorio
 @lazySingleton
-class IncrementProductSalesUseCase extends UseCase<void, IncrementProductSalesParams> {
+class IncrementProductSalesUseCase
+    extends UseCase<void, IncrementProductSalesParams> {
   final CatalogueRepository _repository;
 
   IncrementProductSalesUseCase(this._repository);
@@ -40,10 +41,12 @@ class IncrementProductSalesUseCase extends UseCase<void, IncrementProductSalesPa
     }
 
     try {
-      await _repository.incrementSales(params.accountId, params.productId, params.quantity);
+      await _repository.incrementSales(
+          params.accountId, params.productId, params.quantity);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure('Error al incrementar ventas: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al incrementar ventas: ${e.toString()}'));
     }
   }
 }

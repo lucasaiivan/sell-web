@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Utilidades optimizadas para formatear fechas y tiempos
-/// 
+///
 /// **Optimizaciones:**
 /// - Formatters lazy-initialized (singleton pattern)
 /// - Lógica DRY con helpers privados
@@ -16,7 +16,7 @@ class DateFormatter {
   static final _timeFormat = DateFormat('HH:mm');
 
   /// Formatea fecha y hora en formato estándar
-  /// 
+  ///
   /// **Formato:** dd/MM/yyyy HH:mm
   /// **Complejidad:** O(1)
   static String formatPublicationDate({required DateTime dateTime}) =>
@@ -29,7 +29,7 @@ class DateFormatter {
   /// - "Ayer" (día anterior)
   /// - "dd MMM." (mismo año)
   /// - "dd MMM. yyyy" (año diferente)
-  /// 
+  ///
   /// **Complejidad:** O(1) - comparaciones constantes
   static String getSimplePublicationDate(
     DateTime postDate,
@@ -43,7 +43,8 @@ class DateFormatter {
     return switch (daysDifference) {
       0 => 'Hoy',
       1 => 'Ayer',
-      _ when postDay.year != currentDay.year => _fullDateFormat.format(postDate),
+      _ when postDay.year != currentDay.year =>
+        _fullDateFormat.format(postDate),
       _ => _shortDateFormat.format(postDate),
     };
   }
@@ -58,7 +59,7 @@ class DateFormatter {
   /// - "Ayer HH:mm" (día anterior)
   /// - "dd MMM." (días anteriores, mismo año)
   /// - "dd MMM. yyyy" (año diferente)
-  /// 
+  ///
   /// **Complejidad:** O(1)
   static String getDetailedPublicationDate({
     required DateTime fechaPublicacion,
@@ -86,14 +87,14 @@ class DateFormatter {
   // ==========================================
 
   /// Normaliza DateTime a solo fecha (hora a 00:00:00)
-  /// 
+  ///
   /// **Complejidad:** O(1)
   static DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
 
   /// Formatea el tiempo relativo para el mismo día
-  /// 
+  ///
   /// **Complejidad:** O(1)
   static String _formatSameDay(DateTime postDate, DateTime currentDate) {
     final difference = currentDate.difference(postDate);
@@ -113,7 +114,7 @@ class DateFormatter {
   /// - "5h 30m" (horas + minutos)
   /// - "45m 12s" (minutos + segundos)
   /// - "Ahora mismo" (< 1 segundo)
-  /// 
+  ///
   /// **Complejidad:** O(1)
   static String getElapsedTime({
     required DateTime fechaInicio,

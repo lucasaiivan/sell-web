@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sellweb/core/core.dart'; 
+import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
@@ -70,55 +70,50 @@ class AnalyticsPage extends StatelessWidget {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
+        // Grid de Métricas (Responsive Layout)
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverToBoxAdapter(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenWidth = constraints.maxWidth;
 
+                // DISEÑO COMPACTO VERTICAL (pantallas muy pequeñas < 600px)
+                if (screenWidth < 600) {
+                  return Column(
+                    children: [
+                      // 1. Facturación - Métrica principal destacada (mismo tamaño que desktop)
+                      SizedBox(
+                        height: 180,
+                        child: MetricCard(
+                          title: 'Facturación',
+                          value: CurrencyHelper.formatCurrency(
+                              analytics.totalSales),
+                          icon: Icons.attach_money_rounded,
+                          color: const Color(0xFF059669),
+                          subtitle: 'Ingresos brutos',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-
-          // Grid de Métricas (Responsive Layout)
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverToBoxAdapter(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenWidth = constraints.maxWidth;
-                  
-                  // Punto de quiebre: < 900px = Bento Box, >= 900px = Fila horizontal
-                  if (screenWidth < 900) {
-                    // DISEÑO BENTO BOX (pantallas pequeñas/medianas)
-                    return StaggeredGrid.count(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      children: [
-                            // 1. Facturación (Ventas Totales) - La estrella (2x2)
-                            StaggeredGridTile.count(
-                              crossAxisCellCount: 2,
-                              mainAxisCellCount: 2,
-                              child: MetricCard(
-                                title: 'Facturación',
-                                value: CurrencyHelper.formatCurrency(analytics.totalSales),
-                                icon: Icons.attach_money_rounded,
-                                color: const Color(0xFF059669),
-                                subtitle: 'Ingresos brutos',
-                              ),
-                            ),
-
-                            // 2. Ganancia - El objetivo (2x1)
-                            StaggeredGridTile.count(
-                              crossAxisCellCount: 2,
-                              mainAxisCellCount: 1,
+                      // Grid 2x2 para métricas secundarias
+                      AspectRatio(
+                        aspectRatio: 2.1,
+                        child: Row(
+                          children: [
+                            // 2. Ganancia
+                            Expanded(
                               child: MetricCard(
                                 title: 'Ganancia',
-                                value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+                                value: CurrencyHelper.formatCurrency(
+                                    analytics.totalProfit),
                                 icon: Icons.trending_up_rounded,
                                 color: const Color(0xFF7C3AED),
-                                subtitle: 'Rentabilidad real',
                               ),
                             ),
-
-                            // 3. Transacciones - Operativo (1x1)
-                            StaggeredGridTile.count(
-                              crossAxisCellCount: 2,
-                              mainAxisCellCount: 1,
+                            const SizedBox(width: 12),
+                            // 3. Ventas
+                            Expanded(
                               child: MetricCard(
                                 title: 'Ventas',
                                 value: analytics.totalTransactions.toString(),
@@ -126,23 +121,179 @@ class AnalyticsPage extends StatelessWidget {
                                 color: const Color(0xFF2563EB),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-                            // 4. Ticket Promedio - Eficiencia (1x1)
-                            StaggeredGridTile.count(
-                              crossAxisCellCount: 2,
-                              mainAxisCellCount: 1,
+                      AspectRatio(
+                        aspectRatio: 2.1,
+                        child: Row(
+                          children: [
+                            // 4. Ticket Promedio
+                            Expanded(
                               child: MetricCard(
                                 title: 'Ticket Prom.',
-                                value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
+                                value: CurrencyHelper.formatCurrency(
+                                    analytics.averageProfitPerTransaction),
                                 icon: Icons.analytics_rounded,
                                 color: const Color(0xFF0891B2),
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            // 5. Productos Vendidos
+                            Expanded(
+                              child: MetricCard(
+                                title: 'Productos',
+                                value: analytics.totalProductsSold.toString(),
+                                icon: Icons.inventory_2_rounded,
+                                color: const Color(0xFFD97706),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                // DISEÑO BENTO BOX (pantallas medianas 600-900px)
+                else if (screenWidth < 900) {
+                  return StaggeredGrid.count(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    children: [
+                      // 1. Facturación (Ventas Totales) - La estrella (2x2)
+                      StaggeredGridTile.count(
+                        crossAxisCellCount: 2,
+                        mainAxisCellCount: 2,
+                        child: MetricCard(
+                          title: 'Facturación',
+                          value: CurrencyHelper.formatCurrency(
+                              analytics.totalSales),
+                          icon: Icons.attach_money_rounded,
+                          color: const Color(0xFF059669),
+                          subtitle: 'Ingresos brutos',
+                        ),
+                      ),
 
-                            // 5. Productos Vendidos - Inventario (4x1)
-                            StaggeredGridTile.count(
-                              crossAxisCellCount: 2,
-                              mainAxisCellCount: 1,
+                      // 2. Ganancia - El objetivo (2x1)
+                      StaggeredGridTile.count(
+                        crossAxisCellCount: 2,
+                        mainAxisCellCount: 1,
+                        child: MetricCard(
+                          title: 'Ganancia',
+                          value: CurrencyHelper.formatCurrency(
+                              analytics.totalProfit),
+                          icon: Icons.trending_up_rounded,
+                          color: const Color(0xFF7C3AED),
+                          subtitle: 'Rentabilidad real',
+                        ),
+                      ),
+
+                      // 3. Transacciones - Operativo (1x1)
+                      StaggeredGridTile.count(
+                        crossAxisCellCount: 2,
+                        mainAxisCellCount: 1,
+                        child: MetricCard(
+                          title: 'Ventas',
+                          value: analytics.totalTransactions.toString(),
+                          icon: Icons.receipt_long_rounded,
+                          color: const Color(0xFF2563EB),
+                        ),
+                      ),
+
+                      // 4. Ticket Promedio - Eficiencia (1x1)
+                      StaggeredGridTile.count(
+                        crossAxisCellCount: 2,
+                        mainAxisCellCount: 1,
+                        child: MetricCard(
+                          title: 'Ticket Prom.',
+                          value: CurrencyHelper.formatCurrency(
+                              analytics.averageProfitPerTransaction),
+                          icon: Icons.analytics_rounded,
+                          color: const Color(0xFF0891B2),
+                        ),
+                      ),
+
+                      // 5. Productos Vendidos - Inventario (4x1)
+                      StaggeredGridTile.count(
+                        crossAxisCellCount: 2,
+                        mainAxisCellCount: 1,
+                        child: MetricCard(
+                          title: 'Productos Vendidos',
+                          value: analytics.totalProductsSold.toString(),
+                          icon: Icons.inventory_2_rounded,
+                          color: const Color(0xFFD97706),
+                          subtitle: 'Movimiento de inventario',
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  // DISEÑO FILA HORIZONTAL (pantallas grandes)
+                  // Todas las tarjetas en una sola fila
+                  const spacing = 12.0;
+                  const maxCardHeight = 180.0; // Altura fija más compacta
+
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1400),
+                      child: SizedBox(
+                        height: maxCardHeight,
+                        child: Row(
+                          children: [
+                            // 1. Facturación (Ventas Totales)
+                            Expanded(
+                              child: MetricCard(
+                                title: 'Facturación',
+                                value: CurrencyHelper.formatCurrency(
+                                    analytics.totalSales),
+                                icon: Icons.attach_money_rounded,
+                                color: const Color(0xFF059669),
+                                subtitle: 'Ingresos brutos',
+                              ),
+                            ),
+                            const SizedBox(width: spacing),
+
+                            // 2. Ganancia Neta
+                            Expanded(
+                              child: MetricCard(
+                                title: 'Ganancia',
+                                value: CurrencyHelper.formatCurrency(
+                                    analytics.totalProfit),
+                                icon: Icons.trending_up_rounded,
+                                color: const Color(0xFF7C3AED),
+                                subtitle: 'Rentabilidad real',
+                              ),
+                            ),
+                            const SizedBox(width: spacing),
+
+                            // 3. Transacciones
+                            Expanded(
+                              child: MetricCard(
+                                title: 'Ventas',
+                                value: analytics.totalTransactions.toString(),
+                                icon: Icons.receipt_long_rounded,
+                                color: const Color(0xFF2563EB),
+                              ),
+                            ),
+                            const SizedBox(width: spacing),
+
+                            // 4. Ticket Promedio
+                            Expanded(
+                              child: MetricCard(
+                                title: 'Ticket Prom.',
+                                value: CurrencyHelper.formatCurrency(
+                                    analytics.averageProfitPerTransaction),
+                                icon: Icons.analytics_rounded,
+                                color: const Color(0xFF0891B2),
+                              ),
+                            ),
+                            const SizedBox(width: spacing),
+
+                            // 5. Productos Vendidos
+                            Expanded(
                               child: MetricCard(
                                 title: 'Productos Vendidos',
                                 value: analytics.totalProductsSold.toString(),
@@ -152,172 +303,107 @@ class AnalyticsPage extends StatelessWidget {
                               ),
                             ),
                           ],
-                    );
-                  } else {
-                    // DISEÑO FILA HORIZONTAL (pantallas grandes)
-                    // Todas las tarjetas en una sola fila
-                    const spacing = 12.0;
-                    const maxCardHeight = 180.0; // Altura fija más compacta
-                    
-                    return Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1400),
-                        child: SizedBox(
-                          height: maxCardHeight,
-                          child: Row(
-                            children: [
-                              // 1. Facturación (Ventas Totales)
-                              Expanded(
-                                child: MetricCard(
-                                  title: 'Facturación',
-                                  value: CurrencyHelper.formatCurrency(analytics.totalSales),
-                                  icon: Icons.attach_money_rounded,
-                                  color: const Color(0xFF059669),
-                                  subtitle: 'Ingresos brutos',
-                                ),
-                              ),
-                              const SizedBox(width: spacing),
-
-                              // 2. Ganancia Neta
-                              Expanded(
-                                child: MetricCard(
-                                  title: 'Ganancia',
-                                  value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-                                  icon: Icons.trending_up_rounded,
-                                  color: const Color(0xFF7C3AED),
-                                  subtitle: 'Rentabilidad real',
-                                ),
-                              ),
-                              const SizedBox(width: spacing),
-
-                              // 3. Transacciones
-                              Expanded(
-                                child: MetricCard(
-                                  title: 'Ventas',
-                                  value: analytics.totalTransactions.toString(),
-                                  icon: Icons.receipt_long_rounded,
-                                  color: const Color(0xFF2563EB),
-                                ),
-                              ),
-                              const SizedBox(width: spacing),
-
-                              // 4. Ticket Promedio
-                              Expanded(
-                                child: MetricCard(
-                                  title: 'Ticket Prom.',
-                                  value: CurrencyHelper.formatCurrency(analytics.averageProfitPerTransaction),
-                                  icon: Icons.analytics_rounded,
-                                  color: const Color(0xFF0891B2),
-                                ),
-                              ),
-                              const SizedBox(width: spacing),
-
-                              // 5. Productos Vendidos
-                              Expanded(
-                                child: MetricCard(
-                                  title: 'Productos Vendidos',
-                                  value: analytics.totalProductsSold.toString(),
-                                  icon: Icons.inventory_2_rounded,
-                                  color: const Color(0xFFD97706),
-                                  subtitle: 'Movimiento de inventario',
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
-                    );
-                  }
-                },
-              ),
+                    ),
+                  );
+                }
+              },
             ),
           ),
+        ),
 
-          // Sección: Medios de Pago
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            sliver: SliverToBoxAdapter(
-              child: PaymentMethodsCard(
-                paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-                totalSales: analytics.totalSales,
-              ),
+        // Sección: Medios de Pago
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          sliver: SliverToBoxAdapter(
+            child: PaymentMethodsCard(
+              paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
+              totalSales: analytics.totalSales,
             ),
           ),
+        ),
 
-          // Sección: Cajas Registradoras Activas (solo si hay cajas activas)
-          Consumer<CashRegisterProvider>(
-            builder: (context, cashRegisterProvider, _) {
-              final activeCashRegisters = cashRegisterProvider.activeCashRegisters;
-              
-              // No mostrar la tarjeta si no hay cajas activas
-              if (activeCashRegisters.isEmpty) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }
-              
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                sliver: SliverToBoxAdapter(
-                  child: ActiveCashRegistersCard(
-                    activeCashRegisters: activeCashRegisters,
+        // Sección: Cajas Registradoras Activas (solo si hay cajas activas)
+        Consumer<CashRegisterProvider>(
+          builder: (context, cashRegisterProvider, _) {
+            final activeCashRegisters =
+                cashRegisterProvider.activeCashRegisters;
+
+            // No mostrar la tarjeta si no hay cajas activas
+            if (activeCashRegisters.isEmpty) {
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }
+
+            return SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: ActiveCashRegistersCard(
+                  activeCashRegisters: activeCashRegisters,
+                ),
+              ),
+            );
+          },
+        ),
+
+        // Título de Lista
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'Últimas Transacciones',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                ),
-              );
-            },
+            ),
           ),
+        ),
 
-          // Título de Lista
-          SliverToBoxAdapter(
+        // Lista de Transacciones
+        if (analytics.transactions.isEmpty)
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Últimas Transacciones',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.all(32.0),
+              child:
+                  Center(child: Text('No hay transacciones en este período')),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final transaction = analytics.transactions[index];
+                  final isLast = index == analytics.transactions.length - 1;
+                  return Column(
+                    children: [
+                      TransactionListItem(
+                        ticket: transaction,
+                        onTap: () =>
+                            _showTransactionDetail(context, transaction),
+                      ),
+                      if (!isLast)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outlineVariant
+                                .withValues(alpha: 0.3),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+                childCount: analytics.transactions.length,
               ),
             ),
           ),
-
-          // Lista de Transacciones
-          if (analytics.transactions.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(child: Text('No hay transacciones en este período')),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final transaction = analytics.transactions[index];
-                    final isLast = index == analytics.transactions.length - 1;
-                    return Column(
-                      children: [
-                        TransactionListItem(
-                          ticket: transaction,
-                          onTap: () => _showTransactionDetail(context, transaction),
-                        ),
-                        if (!isLast)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                  childCount: analytics.transactions.length,
-                ),
-              ),
-            ),
-        ],
-      );
+      ],
+    );
   }
 
   /// Construye el AppBar personalizado
@@ -333,7 +419,6 @@ class AnalyticsPage extends StatelessWidget {
       title: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
-
           children: [
             // Avatar y botón de drawer
             Builder(
@@ -350,8 +435,8 @@ class AnalyticsPage extends StatelessWidget {
             Text(
               'Analíticas',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -363,7 +448,7 @@ class AnalyticsPage extends StatelessWidget {
           builder: (context, provider, _) {
             final hasActiveFilter = provider.selectedFilter != DateFilter.today;
             final filterLabel = provider.selectedFilter.label;
-            
+
             return PopupMenuButton<DateFilter>(
               tooltip: 'Filtrar por fecha',
               offset: const Offset(0, 50),
@@ -430,7 +515,9 @@ class AnalyticsPage extends StatelessWidget {
                         Text(
                           filter.label,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                             color: isSelected
                                 ? Theme.of(context).colorScheme.primary
                                 : null,
@@ -513,50 +600,54 @@ class AnalyticsPage extends StatelessWidget {
   void _showTransactionDetail(BuildContext context, TicketModel transaction) {
     final salesProvider = context.read<SalesProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
-    
+
     // Capturar referencias necesarias antes del callback asíncrono
     final accountId = salesProvider.profileAccountSelected.id;
     final messenger = ScaffoldMessenger.of(context);
 
     showTicketDetailDialog(
+      fullView: true,
       context: context,
       ticket: transaction,
       businessName: salesProvider.profileAccountSelected.name.isNotEmpty
           ? salesProvider.profileAccountSelected.name
           : 'PUNTO DE VENTA',
       title: 'Detalle de Transacción',
-      onTicketAnnulled: transaction.annulled ? null : () async {
-        // El diálogo ya se cierra automáticamente desde ticket_detail_dialog.dart
-        // No necesitamos hacer Navigator.pop() aquí
-        
-        // Anular el ticket usando CashRegisterProvider
-        final success = await cashRegisterProvider.annullTicket(
-          accountId: accountId,
-          ticket: transaction,
-        );
-        
-        if (success) {
-          // Mostrar mensaje de éxito
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text('Ticket anulado exitosamente'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          
-          // Las analíticas se actualizarán automáticamente con el listener en tiempo real
-        } else {
-          // Mostrar mensaje de error
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text('Error al anular el ticket. Inténtalo nuevamente'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      },
+      onTicketAnnulled: transaction.annulled
+          ? null
+          : () async {
+              // El diálogo ya se cierra automáticamente desde ticket_detail_dialog.dart
+              // No necesitamos hacer Navigator.pop() aquí
+
+              // Anular el ticket usando CashRegisterProvider
+              final success = await cashRegisterProvider.annullTicket(
+                accountId: accountId,
+                ticket: transaction,
+              );
+
+              if (success) {
+                // Mostrar mensaje de éxito
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Ticket anulado exitosamente'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+
+                // Las analíticas se actualizarán automáticamente con el listener en tiempo real
+              } else {
+                // Mostrar mensaje de error
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content:
+                        Text('Error al anular el ticket. Inténtalo nuevamente'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
     );
   }
 }

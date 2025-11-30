@@ -283,7 +283,7 @@ class _CashRegisterManagementDialogState
   /// Carga los tickets usando el provider solo cuando sea necesario
   void _loadTicketsIfNeeded() {
     if (!mounted) return; // ← Verificar si está montado
-    
+
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
@@ -296,7 +296,7 @@ class _CashRegisterManagementDialogState
   /// Recarga los tickets manualmente (llamado después de acciones como anular ticket)
   void _reloadTickets() {
     if (!mounted) return; // ← Verificar si está montado
-    
+
     final cashRegisterProvider = context.read<CashRegisterProvider>();
     final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
@@ -1193,6 +1193,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
           cashRegisterId: cashRegister.id,
           accountId: sellProvider.profileAccountSelected.id,
           userId: authProvider.user?.email ?? '',
+          fullView: true,
         ),
       ),
     );

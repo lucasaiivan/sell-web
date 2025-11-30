@@ -23,13 +23,11 @@ class GetCashRegisterByDaysUseCase
       GetCashRegisterByDaysParams params) async {
     try {
       if (params.accountId.trim().isEmpty) {
-        return Left(
-            ValidationFailure('El ID de cuenta no puede estar vacío'));
+        return Left(ValidationFailure('El ID de cuenta no puede estar vacío'));
       }
 
       if (params.days <= 0) {
-        return Left(
-            ValidationFailure('El número de días debe ser mayor a 0'));
+        return Left(ValidationFailure('El número de días debe ser mayor a 0'));
       }
 
       final cashRegisters = await _repository.getCashRegisterByDays(

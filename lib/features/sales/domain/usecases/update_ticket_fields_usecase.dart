@@ -21,18 +21,16 @@ class UpdateTicketFieldsUseCase
     try {
       // Validaciones
       if (params.discount != null && params.discount! < 0) {
-        return Left(
-            ValidationFailure('El descuento no puede ser negativo'));
+        return Left(ValidationFailure('El descuento no puede ser negativo'));
       }
 
       if (params.valueReceived != null && params.valueReceived! < 0) {
-        return Left(ValidationFailure(
-            'El valor recibido no puede ser negativo'));
+        return Left(
+            ValidationFailure('El valor recibido no puede ser negativo'));
       }
 
       if (params.priceTotal != null && params.priceTotal! < 0) {
-        return Left(ValidationFailure(
-            'El precio total no puede ser negativo'));
+        return Left(ValidationFailure('El precio total no puede ser negativo'));
       }
 
       final newTicket = TicketModel(
@@ -63,8 +61,7 @@ class UpdateTicketFieldsUseCase
 
       return Right(newTicket);
     } catch (e) {
-      return Left(
-          ServerFailure('Error al actualizar ticket: $e'));
+      return Left(ServerFailure('Error al actualizar ticket: $e'));
     }
   }
 }

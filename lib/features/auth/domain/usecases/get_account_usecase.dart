@@ -30,11 +30,11 @@ class GetAccountUseCase extends UseCase<AccountProfile, GetAccountParams> {
   Future<Either<Failure, AccountProfile>> call(GetAccountParams params) async {
     try {
       final profile = await _repository.getAccount(params.accountId);
-      
+
       if (profile == null) {
         return Left(ServerFailure('Cuenta no encontrada'));
       }
-      
+
       return Right(profile);
     } catch (e) {
       return Left(ServerFailure('Error al obtener cuenta: ${e.toString()}'));

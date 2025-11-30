@@ -25,7 +25,8 @@ class GetCashRegisterByDateRangeParams {
 /// - Valida que la fecha inicial no sea posterior a la final
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetCashRegisterByDateRangeUseCase extends UseCase<List<CashRegister>, GetCashRegisterByDateRangeParams> {
+class GetCashRegisterByDateRangeUseCase
+    extends UseCase<List<CashRegister>, GetCashRegisterByDateRangeParams> {
   final CashRegisterRepository _repository;
 
   GetCashRegisterByDateRangeUseCase(this._repository);
@@ -34,10 +35,12 @@ class GetCashRegisterByDateRangeUseCase extends UseCase<List<CashRegister>, GetC
   ///
   /// Retorna [Right(List<CashRegister>)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, List<CashRegister>>> call(GetCashRegisterByDateRangeParams params) async {
+  Future<Either<Failure, List<CashRegister>>> call(
+      GetCashRegisterByDateRangeParams params) async {
     // Validación de negocio
     if (params.startDate.isAfter(params.endDate)) {
-      return Left(ValidationFailure('La fecha inicial no puede ser posterior a la fecha final'));
+      return Left(ValidationFailure(
+          'La fecha inicial no puede ser posterior a la fecha final'));
     }
 
     try {
@@ -48,7 +51,8 @@ class GetCashRegisterByDateRangeUseCase extends UseCase<List<CashRegister>, GetC
       );
       return Right(cashRegisters);
     } catch (e) {
-      return Left(ServerFailure('Error al obtener cajas por rango: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al obtener cajas por rango: ${e.toString()}'));
     }
   }
 }

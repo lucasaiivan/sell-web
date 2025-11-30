@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Contrato para operaciones de base de datos
-/// 
+///
 /// **Patrón:** Repository Pattern con abstracción de Firestore
 /// **Beneficio:** Testeable, mockeable, intercambiable
-/// 
+///
 /// Define operaciones CRUD genéricas sin acoplar a Firebase.
 /// Permite implementar con Firestore, mock local, o cualquier backend.
 abstract interface class IFirestoreDataSource {
@@ -15,7 +15,7 @@ abstract interface class IFirestoreDataSource {
   DocumentReference<Map<String, dynamic>> document(String path);
 
   /// Obtiene documentos de una query
-  /// 
+  ///
   /// [source] controla la estrategia de obtención:
   /// - `Source.serverAndCache`: Intenta servidor primero, luego caché (default)
   /// - `Source.cache`: Solo caché local (útil para offline-first)
@@ -51,7 +51,8 @@ abstract interface class IFirestoreDataSource {
 
   /// Operación de batch (transaccional)
   Future<void> batchWrite(
-    List<({String path, Map<String, dynamic> data, String operation})> operations,
+    List<({String path, Map<String, dynamic> data, String operation})>
+        operations,
   );
 
   /// Incrementa un campo numérico
@@ -62,7 +63,7 @@ abstract interface class IFirestoreDataSource {
   );
 
   /// Limpia toda la persistencia offline (útil para debugging)
-  /// 
+  ///
   /// ⚠️ ADVERTENCIA: Esto eliminará todos los datos cacheados.
   /// Solo usar en desarrollo o para resolver problemas de sincronización.
   Future<void> clearPersistence();

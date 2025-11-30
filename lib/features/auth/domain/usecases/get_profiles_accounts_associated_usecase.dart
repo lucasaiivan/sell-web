@@ -20,7 +20,8 @@ class GetProfilesAccountsAssociatedParams {
 /// - Coordina múltiples llamadas para obtener datos completos
 /// - Omite cuentas que no existan o fallen
 @lazySingleton
-class GetProfilesAccountsAssociatedUseCase extends UseCase<List<AccountProfile>, GetProfilesAccountsAssociatedParams> {
+class GetProfilesAccountsAssociatedUseCase
+    extends UseCase<List<AccountProfile>, GetProfilesAccountsAssociatedParams> {
   final GetAccountAdminsUseCase _getAccountAdminsUseCase;
   final GetAccountUseCase _getAccountUseCase;
 
@@ -34,41 +35,51 @@ class GetProfilesAccountsAssociatedUseCase extends UseCase<List<AccountProfile>,
   /// Retorna [Right(List<AccountProfile>)] con los perfiles disponibles,
   /// [Left(Failure)] si falla completamente
   @override
-  Future<Either<Failure, List<AccountProfile>>> call(GetProfilesAccountsAssociatedParams params) async {
-    print('🔍 [GetProfilesAccountsAssociatedUseCase] Iniciando para email: ${params.email}');
-    
+  Future<Either<Failure, List<AccountProfile>>> call(
+      GetProfilesAccountsAssociatedParams params) async {
+    print(
+        '🔍 [GetProfilesAccountsAssociatedUseCase] Iniciando para email: ${params.email}');
+
     // Obtiene los AdminProfile
-    final adminsResult = await _getAccountAdminsUseCase(GetAccountAdminsParams(params.email));
-    
+    final adminsResult =
+        await _getAccountAdminsUseCase(GetAccountAdminsParams(params.email));
+
     return adminsResult.fold(
       (failure) {
-        print('❌ [GetProfilesAccountsAssociatedUseCase] Error obteniendo AdminProfiles: $failure');
+        print(
+            '❌ [GetProfilesAccountsAssociatedUseCase] Error obteniendo AdminProfiles: $failure');
         return Left(failure);
       },
       (admins) async {
-        print('📋 [GetProfilesAccountsAssociatedUseCase] AdminProfiles obtenidos: ${admins.length}');
-        
+        print(
+            '📋 [GetProfilesAccountsAssociatedUseCase] AdminProfiles obtenidos: ${admins.length}');
+
         final profiles = <AccountProfile>[];
-        
+
         // Para cada admin, obtiene el perfil completo
         for (final admin in admins) {
-          print('🔄 [GetProfilesAccountsAssociatedUseCase] Obteniendo perfil para cuenta: ${admin.account}');
-          
-          final profileResult = await _getAccountUseCase(GetAccountParams(admin.account));
-          
+          print(
+              '🔄 [GetProfilesAccountsAssociatedUseCase] Obteniendo perfil para cuenta: ${admin.account}');
+
+          final profileResult =
+              await _getAccountUseCase(GetAccountParams(admin.account));
+
           profileResult.fold(
             (failure) {
-              print('⚠️ [GetProfilesAccountsAssociatedUseCase] Error obteniendo perfil para ${admin.account}: $failure');
+              print(
+                  '⚠️ [GetProfilesAccountsAssociatedUseCase] Error obteniendo perfil para ${admin.account}: $failure');
               // Continúa con la siguiente cuenta
             },
             (profile) {
               profiles.add(profile);
-              print('✅ [GetProfilesAccountsAssociatedUseCase] Perfil agregado: ${profile.name} (${profile.id})');
+              print(
+                  '✅ [GetProfilesAccountsAssociatedUseCase] Perfil agregado: ${profile.name} (${profile.id})');
             },
           );
         }
-        
-        print('🏁 [GetProfilesAccountsAssociatedUseCase] Total de perfiles obtenidos: ${profiles.length}');
+
+        print(
+            '🏁 [GetProfilesAccountsAssociatedUseCase] Total de perfiles obtenidos: ${profiles.length}');
         return Right(profiles);
       },
     );

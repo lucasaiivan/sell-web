@@ -42,8 +42,12 @@ class Mark {
       description: map['description'] ?? '',
       image: map['image'] ?? '',
       verified: map['verified'] ?? false,
-      creation: map['creation'] is Timestamp ? (map['creation'] as Timestamp).toDate() : null,
-      upgrade: map['upgrade'] is Timestamp ? (map['upgrade'] as Timestamp).toDate() : null,
+      creation: map['creation'] is Timestamp
+          ? (map['creation'] as Timestamp).toDate()
+          : null,
+      upgrade: map['upgrade'] is Timestamp
+          ? (map['upgrade'] as Timestamp).toDate()
+          : null,
     );
   }
 }

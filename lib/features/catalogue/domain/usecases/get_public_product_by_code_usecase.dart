@@ -18,7 +18,8 @@ class GetPublicProductByCodeParams {
 /// - Busca un producto en la base de datos pública por código de barra
 /// - Delega la operación al repositorio
 @lazySingleton
-class GetPublicProductByCodeUseCase extends UseCase<Product?, GetPublicProductByCodeParams> {
+class GetPublicProductByCodeUseCase
+    extends UseCase<Product?, GetPublicProductByCodeParams> {
   final CatalogueRepository _repository;
 
   GetPublicProductByCodeUseCase(this._repository);
@@ -28,12 +29,14 @@ class GetPublicProductByCodeUseCase extends UseCase<Product?, GetPublicProductBy
   /// Retorna [Right(Product?)] con el producto o null si no existe,
   /// [Left(Failure)] si falla
   @override
-  Future<Either<Failure, Product?>> call(GetPublicProductByCodeParams params) async {
+  Future<Either<Failure, Product?>> call(
+      GetPublicProductByCodeParams params) async {
     try {
       final product = await _repository.getPublicProductByCode(params.code);
       return Right(product);
     } catch (e) {
-      return Left(ServerFailure('Error al buscar producto público: ${e.toString()}'));
+      return Left(
+          ServerFailure('Error al buscar producto público: ${e.toString()}'));
     }
   }
 }

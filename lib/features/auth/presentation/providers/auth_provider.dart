@@ -35,20 +35,20 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProfile? _user;
   AuthProfile? get user => _user;
-  
+
   List<AccountProfile> _accountsAssociateds = [];
   List<AccountProfile> get accountsAssociateds => _accountsAssociateds;
-  
+
   bool _isLoadingAccounts = false;
   bool get isLoadingAccounts => _isLoadingAccounts;
 
   // Estados para manejar el proceso de autenticación
   bool _isSigningInWithGoogle = false;
   bool get isSigningInWithGoogle => _isSigningInWithGoogle;
-  
+
   bool _isSigningInAsGuest = false;
   bool get isSigningInAsGuest => _isSigningInAsGuest;
-  
+
   String? _authError;
   String? get authError => _authError;
 
@@ -72,17 +72,19 @@ class AuthProvider extends ChangeNotifier {
     this._getUserAccountsUseCase,
   ) {
     debugPrint('🚀 [AuthProvider] Constructor - Inicializando...');
-    
+
     // Escucha los cambios en el usuario autenticado y actualiza el estado
     _userStreamSubscription = _getUserStreamUseCase().listen((user) async {
-      debugPrint('👤 [AuthProvider] Stream - Usuario actualizado: ${user?.email}');
-      
+      debugPrint(
+          '👤 [AuthProvider] Stream - Usuario actualizado: ${user?.email}');
+
       // Verificar si el provider fue disposed antes de actualizar
       if (_isDisposed) {
-        debugPrint('⚠️ [AuthProvider] Provider disposed, ignorando actualización de stream');
+        debugPrint(
+            '⚠️ [AuthProvider] Provider disposed, ignorando actualización de stream');
         return;
       }
-      
+
       _user = user;
       if (_user != null) {
         // Notifica a los listeners que el usuario ha cambiado
@@ -95,11 +97,11 @@ class AuthProvider extends ChangeNotifier {
         }
       }
     });
-    
+
     // Inicializar estado del usuario actual (si ya está autenticado)
     _initializeCurrentUser();
   }
-  
+
   @override
   void dispose() {
     debugPrint('🗑️ [AuthProvider] Disposing provider...');
@@ -107,10 +109,11 @@ class AuthProvider extends ChangeNotifier {
     _userStreamSubscription?.cancel();
     super.dispose();
   }
-  
+
   /// Inicializa el estado si el usuario ya está autenticado
   void _initializeCurrentUser() async {
-    debugPrint('🔄 [AuthProvider] _initializeCurrentUser - Verificando usuario actual...');
+    debugPrint(
+        '🔄 [AuthProvider] _initializeCurrentUser - Verificando usuario actual...');
     // El stream ya maneja la inicialización, este método es un placeholder
     // por si se necesita lógica adicional en el futuro
   }
@@ -126,7 +129,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _signInWithGoogleUseCase(const NoParams());
-    
+
     result.fold(
       (failure) {
         _authError = failure.message;
@@ -137,7 +140,7 @@ class AuthProvider extends ChangeNotifier {
         debugPrint('✅ Inicio de sesión con Google exitoso: ${user.email}');
       },
     );
-    
+
     _isSigningInWithGoogle = false;
     notifyListeners();
   }
@@ -145,7 +148,7 @@ class AuthProvider extends ChangeNotifier {
   // Cierra sesión usando el caso de uso
   Future<void> signOut() async {
     final result = await _signOutUseCase(const NoParams());
-    
+
     result.fold(
       (failure) {
         _authError = failure.message;
@@ -159,23 +162,24 @@ class AuthProvider extends ChangeNotifier {
         debugPrint('✅ Cierre de sesión exitoso');
       },
     );
-    
+
     notifyListeners();
   }
 
   // Obtiene las cuentas asociadas al usuario actual, incluyendo demo si es anónimo
   Future<void> getUserAssociatedAccount() async {
     debugPrint('🔍 [AuthProvider] getUserAssociatedAccount - Iniciando...');
-    debugPrint('🔍 [AuthProvider] Usuario: ${_user?.email}, Anónimo: ${_user?.isAnonymous}');
-    
+    debugPrint(
+        '🔍 [AuthProvider] Usuario: ${_user?.email}, Anónimo: ${_user?.isAnonymous}');
+
     if (_user == null) {
       debugPrint('⚠️ [AuthProvider] Usuario es null, abortando');
       return;
     }
-    
+
     _isLoadingAccounts = true;
     notifyListeners();
-    
+
     if (_user!.isAnonymous == true) {
       debugPrint('👤 [AuthProvider] Usuario anónimo detectado, sin cuentas');
       _accountsAssociateds = [];
@@ -183,19 +187,21 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    
+
     if (_user?.email == null) {
       debugPrint('⚠️ [AuthProvider] Email es null, abortando');
       _isLoadingAccounts = false;
       notifyListeners();
       return;
     }
-    
+
     try {
-      debugPrint('📡 [AuthProvider] Llamando a getProfilesAccountsAssociated con email: ${_user!.email}');
+      debugPrint(
+          '📡 [AuthProvider] Llamando a getProfilesAccountsAssociated con email: ${_user!.email}');
       _accountsAssociateds = await _getUserAccountsUseCase
           .getProfilesAccountsAssociated(_user!.email!);
-      debugPrint('✅ [AuthProvider] Cuentas obtenidas: ${_accountsAssociateds.length}');
+      debugPrint(
+          '✅ [AuthProvider] Cuentas obtenidas: ${_accountsAssociateds.length}');
       for (var account in _accountsAssociateds) {
         debugPrint('   - ${account.name} (${account.id})');
       }
@@ -221,7 +227,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _signInAnonymouslyUseCase(const NoParams());
-    
+
     result.fold(
       (failure) {
         _authError = failure.message;
@@ -233,7 +239,7 @@ class AuthProvider extends ChangeNotifier {
         debugPrint('✅ Inicio de sesión como invitado exitoso');
       },
     );
-    
+
     _isSigningInAsGuest = false;
     notifyListeners();
   }
@@ -247,7 +253,7 @@ class AuthProvider extends ChangeNotifier {
   // Intenta iniciar sesión silenciosamente con Google
   Future<void> signInSilently() async {
     final result = await _signInSilentlyUseCase(const NoParams());
-    
+
     result.fold(
       (failure) {
         debugPrint('signInSilently falló: ${failure.message}');

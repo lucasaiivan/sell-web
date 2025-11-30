@@ -24,19 +24,21 @@ class LoadAdminProfileUseCase extends UseCase<AdminProfile?, NoParams> {
   @override
   Future<Either<Failure, AdminProfile?>> call(NoParams params) async {
     try {
-      final adminProfileJson = await _persistenceService.getCurrentAdminProfile();
-      
+      final adminProfileJson =
+          await _persistenceService.getCurrentAdminProfile();
+
       if (adminProfileJson == null || adminProfileJson.isEmpty) {
         return const Right(null);
       }
 
       final Map<String, dynamic> jsonMap =
           const JsonDecoder().convert(adminProfileJson) as Map<String, dynamic>;
-      
+
       final adminProfile = _adminProfileFromMap(jsonMap);
       return Right(adminProfile);
     } catch (e) {
-      return Left(CacheFailure('Error al cargar AdminProfile: ${e.toString()}'));
+      return Left(
+          CacheFailure('Error al cargar AdminProfile: ${e.toString()}'));
     }
   }
 

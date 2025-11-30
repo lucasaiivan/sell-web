@@ -24,13 +24,13 @@ class PrepareSaleTicketUseCase
     try {
       // Validar vendedor
       if (params.sellerId.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El ID del vendedor no puede estar vacío'));
+        return Left(
+            ValidationFailure('El ID del vendedor no puede estar vacío'));
       }
 
       if (params.sellerName.trim().isEmpty) {
-        return Left(ValidationFailure(
-            'El nombre del vendedor no puede estar vacío'));
+        return Left(
+            ValidationFailure('El nombre del vendedor no puede estar vacío'));
       }
 
       // Asignar vendedor
@@ -66,19 +66,18 @@ class PrepareSaleTicketUseCase
 
       // Validar ticket completo
       if (updatedTicket.products.isEmpty) {
-        return Left(ValidationFailure(
-            'El ticket debe tener al menos un producto'));
+        return Left(
+            ValidationFailure('El ticket debe tener al menos un producto'));
       }
 
       if (updatedTicket.priceTotal <= 0) {
-        return Left(ValidationFailure(
-            'El ticket debe tener un precio total válido'));
+        return Left(
+            ValidationFailure('El ticket debe tener un precio total válido'));
       }
 
       return Right(updatedTicket);
     } catch (e) {
-      return Left(
-          ServerFailure('Error al preparar ticket para venta: $e'));
+      return Left(ServerFailure('Error al preparar ticket para venta: $e'));
     }
   }
 }

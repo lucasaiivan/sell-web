@@ -28,12 +28,11 @@ class MetricCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Sistema de colores Material 3 con tinte de la métrica
-    final containerColor = isDark
-        ? color.withValues(alpha: 0.15)
-        : color.withValues(alpha: 0.08);
-    
+    final containerColor =
+        isDark ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08);
+
     final onContainerColor = theme.colorScheme.onSurface;
-    
+
     // Icon container más sutil
     final iconContainerColor = color.withValues(alpha: 0.2);
 
@@ -56,31 +55,32 @@ class MetricCard extends StatelessWidget {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
             final minDim = w < h ? w : h;
-            
+
             // 1. Cálculos de escala base
             // Usamos la dimensión más pequeña para elementos UI (iconos, padding)
             // Usamos el ancho para textos largos
             // Usamos el alto para el valor numérico
-            
+
             final padding = (minDim * 0.05).clamp(12.0, 24.0);
-            
+
             // Icono
             final iconSize = (minDim * 0.01).clamp(20.0, 32.0);
             final iconBoxSize = (iconSize * 1).clamp(36.0, 56.0);
-            
+
             // Textos
             final titleSize = (w * 0.08).clamp(12.0, 16.0);
             final subtitleSize = (w * 0.05).clamp(10.0, 13.0);
-            
+
             // El valor debe ser GRANDE. Calculamos basado en altura disponible.
             // Estimamos espacio ocupado por header y footer
             final estimatedHeaderH = iconBoxSize;
             final estimatedFooterH = subtitle != null ? 20.0 : 0.0;
-            final availableH = h - (padding * 2) - estimatedHeaderH - estimatedFooterH;
-            
+            final availableH =
+                h - (padding * 2) - estimatedHeaderH - estimatedFooterH;
+
             // El valor usa ~60-70% del espacio restante vertical
             final valueSizeHeightBase = availableH * 0.7;
-            
+
             final valueFontSize = valueSizeHeightBase.clamp(24.0, 64.0);
 
             return Padding(
@@ -124,9 +124,9 @@ class MetricCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // --- Valor Principal ---
                   // Usamos FittedBox para asegurar que quepa horizontalmente
                   // y calculamos el tamaño de fuente para que llene verticalmente
@@ -147,7 +147,7 @@ class MetricCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   // --- Subtítulo ---
                   if (subtitle != null) ...[
                     const SizedBox(height: 4),

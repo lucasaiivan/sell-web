@@ -21,7 +21,8 @@ class AddDemoAccountIfAnonymousParams {
 /// **Responsabilidad:**
 /// - Añade la cuenta demo a la lista de cuentas si el usuario es invitado
 @lazySingleton
-class AddDemoAccountIfAnonymousUseCase extends UseCase<List<AccountProfile>, AddDemoAccountIfAnonymousParams> {
+class AddDemoAccountIfAnonymousUseCase
+    extends UseCase<List<AccountProfile>, AddDemoAccountIfAnonymousParams> {
   final GetDemoAccountUseCase _getDemoAccountUseCase;
 
   AddDemoAccountIfAnonymousUseCase(this._getDemoAccountUseCase);
@@ -30,12 +31,13 @@ class AddDemoAccountIfAnonymousUseCase extends UseCase<List<AccountProfile>, Add
   ///
   /// Retorna [Right(List<AccountProfile>)] con la lista actualizada
   @override
-  Future<Either<Failure, List<AccountProfile>>> call(AddDemoAccountIfAnonymousParams params) async {
+  Future<Either<Failure, List<AccountProfile>>> call(
+      AddDemoAccountIfAnonymousParams params) async {
     final result = List<AccountProfile>.from(params.accounts);
-    
+
     if (params.isAnonymous) {
       final demoResult = await _getDemoAccountUseCase(const NoParams());
-      
+
       return demoResult.fold(
         (failure) => Left(failure),
         (demoAccount) {
@@ -44,7 +46,7 @@ class AddDemoAccountIfAnonymousUseCase extends UseCase<List<AccountProfile>, Add
         },
       );
     }
-    
+
     return Right(result);
   }
 }

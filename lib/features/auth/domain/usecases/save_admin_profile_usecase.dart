@@ -34,7 +34,8 @@ class SaveAdminProfileUseCase extends UseCase<void, SaveAdminProfileParams> {
       await _persistenceService.saveCurrentAdminProfile(jsonEncode(json));
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Error al guardar AdminProfile: ${e.toString()}'));
+      return Left(
+          CacheFailure('Error al guardar AdminProfile: ${e.toString()}'));
     }
   }
 

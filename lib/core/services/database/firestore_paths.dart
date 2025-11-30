@@ -1,16 +1,16 @@
 /// Rutas centralizadas de Firestore
-/// 
+///
 /// **Responsabilidad:**
 /// - Proveer paths type-safe de colecciones
 /// - Evitar hardcoding de rutas en features
 /// - Documentar estructura de base de datos
-/// 
+///
 /// **Uso:**
 /// ```dart
 /// final cataloguePath = FirestorePaths.accountCatalogue(accountId);
 /// final ref = firestore.collection(cataloguePath);
 /// ```
-/// 
+///
 /// **Beneficios:**
 /// - Refactor-safe: cambiar estructura en un solo lugar
 /// - Type-safe: parámetros requeridos en compile-time
@@ -86,8 +86,7 @@ class FirestorePaths {
       '/ACCOUNTS/$accountId/TRANSACTIONS/$transactionId';
 
   /// Administradores y usuarios
-  static String accountUsers(String accountId) =>
-      '/ACCOUNTS/$accountId/USERS/';
+  static String accountUsers(String accountId) => '/ACCOUNTS/$accountId/USERS/';
 
   /// Usuario específico de una cuenta
   static String accountUser(String accountId, String email) =>
@@ -124,8 +123,7 @@ class FirestorePaths {
   static String user(String email) => '/USERS/$email';
 
   /// Cuentas administradas por un usuario
-  static String userManagedAccounts(String email) =>
-      '/USERS/$email/ACCOUNTS/';
+  static String userManagedAccounts(String email) => '/USERS/$email/ACCOUNTS/';
 
   /// Cuenta específica administrada por un usuario
   static String userManagedAccount(String email, String accountId) =>

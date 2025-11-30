@@ -543,7 +543,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
       if (_checkAddCatalogue) {
         // Obtener perfil de la cuenta para registrar precio
-        final accountProfile = authProvider.getProfileAccountById(sellProvider.profileAccountSelected.id);
+        final accountProfile = authProvider
+            .getProfileAccountById(sellProvider.profileAccountSelected.id);
 
         final finalProduct = updatedProduct.copyWith(id: publicProduct.id);
         await catalogueProvider.addAndUpdateProductToCatalogue(

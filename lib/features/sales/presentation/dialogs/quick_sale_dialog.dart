@@ -3,13 +3,18 @@ import '../../../../../core/core.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo modernizado para venta rápida siguiendo Material Design 3
+///
+/// En pantallas pequeñas (< 600px) con fullView=true, se muestra en pantalla completa.
+/// En pantallas grandes, siempre se muestra como diálogo modal.
 class QuickSaleDialog extends StatefulWidget {
   const QuickSaleDialog({
     super.key,
     required this.provider,
+    this.fullView = false,
   });
 
   final SalesProvider provider;
+  final bool fullView;
 
   @override
   State<QuickSaleDialog> createState() => _QuickSaleDialogState();
@@ -41,23 +46,31 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
     final theme = Theme.of(context);
 
     return BaseDialog(
-      title: 'Venta Rápida',
+      title: 'Venta Rápida', 
       icon: Icons.flash_on_rounded,
-      headerColor: theme.colorScheme.tertiaryContainer,
-      content: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DialogComponents.sectionSpacing,
-            DialogComponents.moneyField(
+      headerColor: theme.colorScheme.primaryContainer,
+      fullView: widget.fullView,
+      content: _buildContent(context),
+      actions: _buildActions(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DialogComponents.sectionSpacing,
+          DialogComponents.moneyField(
               autofocus: true,
               context: context,
               controller: _priceController,
               focusNode: _priceFocusNode,
               nextFocusNode: _descriptionFocusNode,
               textInputAction: TextInputAction.next,
-              label: 'Precio de Venta',
+              label: 'Ingresá el monto',
               hint: '\$0.0',
               errorText: _showPriceError &&
                       (_priceController.text.isEmpty ||
@@ -89,22 +102,24 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
             ),
             DialogComponents.sectionSpacing,
           ],
-        ),
       ),
-      actions: [
-        DialogComponents.secondaryActionButton(
-          context: context,
-          text: 'Cancelar',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        DialogComponents.primaryActionButton(
-          context: context,
-          text: 'Agregar',
-          onPressed: _processQuickSale,
-          isLoading: _isProcessing,
-        ),
-      ],
     );
+  }
+
+  List<Widget> _buildActions(BuildContext context) {
+    return [
+      DialogComponents.secondaryActionButton(
+        context: context,
+        text: 'Cancelar',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      DialogComponents.primaryActionButton(
+        context: context,
+        text: 'Agregar',
+        onPressed: _processQuickSale,
+        isLoading: _isProcessing,
+      ),
+    ];
   }
 
   Future<void> _processQuickSale() async {
@@ -156,14 +171,46 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 }
 
 /// Helper function para mostrar el diálogo de venta rápida
+///
+/// **Parámetros:**
+/// - `context`: BuildContext necesario para mostrar el diálogo
+/// - `provider`: SalesProvider para agregar el producto de venta rápida
+/// - `fullView`: Si es true, se muestra en pantalla completa en dispositivos pequeños (default: true)
+///
+/// **Ejemplo:**
+/// ```dart
+/// await showQuickSaleDialog(
+///   context,
+///   provider: salesProvider,
+///   fullView: true,
+/// );
+/// ```
 Future<void> showQuickSaleDialog(
   BuildContext context, {
   required SalesProvider provider,
+  bool fullView = true,
 }) {
+  final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
+  // Si es vista completa Y pantalla pequeña, usar Navigator.push
+  if (fullView && isSmallScreen) {
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => QuickSaleDialog(
+          provider: provider,
+          fullView: fullView,
+        ),
+      ),
+    );
+  }
+
+  // Vista normal como diálogo
   return showDialog(
     context: context,
     builder: (context) => QuickSaleDialog(
       provider: provider,
+      fullView: fullView,
     ),
   );
 }

@@ -25,6 +25,11 @@ landing/
 - **Animaciones** - Flutter Animate para transiciones suaves
 - **Lazy Loading** - Optimización de performance
 - **Theme Switching** - Modo claro/oscuro
+- **Showcase de Funcionalidades**:
+    - Punto de Venta y control de arqueo
+    - Gestion de productos y Inventario
+    - Analiticas 
+    - Multiusuario 
 
 ## Dependencias
 

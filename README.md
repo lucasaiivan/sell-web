@@ -2,6 +2,8 @@
 
 > **Sistema POS moderno desarrollado con Flutter Web para gestión integral de ventas, inventario y análisis de negocio.**
 
+📘 **[Ver Informe Técnico Detallado](INFORME_PROYECTO.md)**
+
 [![Flutter](https://img.shields.io/badge/Flutter-3.3.0+-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.3.0+-0175C2?logo=dart)](https://dart.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Enabled-FFCA28?logo=firebase)](https://firebase.google.com)
@@ -45,7 +47,18 @@
 ### 🔒 Seguridad y Roles
 - 👤 **Sistema de Roles**: Admin, Super Admin con permisos granulares
 - 🛡️ **Firestore Rules**: Reglas de seguridad a nivel de base de datos
-- 🔐 **Autenticación Persistente**: Sesión mantenida con tokens seguros
+### 🔐 Autenticación Persistente: Sesión mantenida con tokens seguros
+
+---
+
+## 🧠 Filosofía del Proyecto
+
+SellWeb no es solo un CRUD; es una plataforma diseñada con principios sólidos:
+
+1.  **Feature-First Architecture**: Modularidad extrema para permitir escalabilidad sin deuda técnica.
+2.  **UX Obsession**: Micro-interacciones, animaciones fluidas y diseño adaptativo (Material 3) para una experiencia de usuario superior.
+3.  **Robustez Financiera**: Lógica de negocio estricta para manejo de dinero, caja y stock.
+4.  **Developer Experience**: Uso de herramientas modernas (`injectable`, `build_runner`) para un desarrollo ágil y seguro.
 
 ---
 

@@ -9,6 +9,7 @@ import '../../domain/entities/date_filter.dart';
 import '../providers/analytics_provider.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/payment_methods_card.dart';
+import '../widgets/active_cash_registers_card.dart';
 import '../widgets/transaction_list_item.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -241,6 +242,27 @@ class AnalyticsPage extends StatelessWidget {
                 totalSales: analytics.totalSales,
               ),
             ),
+          ),
+
+          // Sección: Cajas Registradoras Activas (solo si hay cajas activas)
+          Consumer<CashRegisterProvider>(
+            builder: (context, cashRegisterProvider, _) {
+              final activeCashRegisters = cashRegisterProvider.activeCashRegisters;
+              
+              // No mostrar la tarjeta si no hay cajas activas
+              if (activeCashRegisters.isEmpty) {
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              }
+              
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: SliverToBoxAdapter(
+                  child: ActiveCashRegistersCard(
+                    activeCashRegisters: activeCashRegisters,
+                  ),
+                ),
+              );
+            },
           ),
 
           // Título de Lista

@@ -187,9 +187,10 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
                     ),
                   // view : lista de cuentas asociadas al usuario usando DialogComponents.itemList
                   if (accounts.isNotEmpty)
-                    ConstrainedBox(
+                    ConstrainedBox( 
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: DialogComponents.itemList(
+                        padding: const EdgeInsets.all(0),
                         context: context,
                         items: accounts
                             .map((account) =>

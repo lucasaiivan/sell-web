@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sellweb/core/core.dart';
 
 class OnboardingIntroductionApp extends StatefulWidget {
-  // ignore: prefer_const_constructors_in_immutables
-  OnboardingIntroductionApp(
-      {this.colorAccent = Colors.deepPurple,
-      this.colorText = Colors.white,
-      super.key});
+  const OnboardingIntroductionApp({
+    this.colorAccent = Colors.deepPurple,
+    this.colorText = Colors.white,
+    super.key,
+  });
 
   final Color colorAccent;
   final Color colorText;
@@ -20,448 +19,338 @@ class OnboardingIntroductionApp extends StatefulWidget {
 }
 
 class _OnboardingIntroductionAppState extends State<OnboardingIntroductionApp> {
-  // source
-  String sellImagen = "assets/sell02.jpeg";
-  String transactionImage = "assets/sell05.jpeg";
-  String catalogueImage = "assets/catalogue02.png";
+  // Datos de las páginas
+  final List<_OnboardingPageModel> _pages = [
+    _OnboardingPageModel(
+      imagePath: "assets/sell02.jpeg",
+      title: "VENTAS",
+      subtitle: "Registra tus ventas de una forma simple 😊",
+      icon: Icons.monetization_on,
+      colorIcon: Colors.orange.shade300,
+    ),
+    _OnboardingPageModel(
+      imagePath: "assets/sell05.jpeg",
+      title: "TRANSACCIONES",
+      subtitle: "Observa las transacciones que has realizado 💰",
+      icon: Icons.analytics_outlined,
+      colorIcon: Colors.teal.shade300,
+    ),
+    _OnboardingPageModel(
+      imagePath: "assets/catalogue02.png",
+      title: "CATÁLOGO",
+      subtitle:
+          "Arma tu catálogo y controla el stock de tus productos \n 🍫🍬🥫🍾",
+      icon: Icons.category,
+      colorIcon: Colors.deepPurple.shade300,
+    ),
+  ];
 
-  // variables para el estilo de la pantalla
-  late bool darkMode;
-  late Size screenSize;
-
-// variables para el manejo de los indicadores de progreso
-  double indicatorProgressItem01 = 0.0;
-  double indicatorProgressItem02 = 0.0;
-  double indicatorProgressItem03 = 0.0;
-  late Timer timer;
-  int index = 0;
-  late List<Widget> widgets;
-
-  // fuction  : maneja el evento de toque IZQUIERDO que cambian los valores de los indicadores de progreso y cambia la vista del item
-  void leftTouch() {
-    //  primer item : si el primer item esta en 0.0 y el segundo y tercer item estan en 0.0 entonces el primer item pasa a 1.0
-    if (indicatorProgressItem01 >= 0.0 &&
-        indicatorProgressItem02 == 0.0 &&
-        indicatorProgressItem03 == 0.0) {
-      indicatorProgressItem01 = 0.0;
-      indicatorProgressItem02 = 0.0;
-      indicatorProgressItem03 = 0.0;
-      index = 0; // siguiente vista
-    }
-    // segundo item : si el primer item esta en 1.0 y el segundo item esta en 0.0 y el tercer item esta en 0.0 entonces el segundo item pasa a 1.0
-    else if (indicatorProgressItem01 == 1.0 &&
-        indicatorProgressItem02 >= 0.0 &&
-        indicatorProgressItem03 == 0.0) {
-      indicatorProgressItem01 = 0.0;
-      indicatorProgressItem02 = 0.0;
-      indicatorProgressItem03 = 0.0;
-      index = 1; //  siguiente vista
-    }
-    //  tercer item : si el primer item esta en 1.0 y el segundo item esta en 1.0 y el tercer item esta en 0.0 entonces el tercer item pasa a 1.0
-    else if (indicatorProgressItem01 == 1.0 &&
-        indicatorProgressItem02 == 1.0 &&
-        indicatorProgressItem03 >= 0.0) {
-      indicatorProgressItem01 = 1.0;
-      indicatorProgressItem02 = 0.0;
-      indicatorProgressItem03 = 0.0;
-      index = 2; //  siguiente vista
-    }
-    // vuelve a la vista al princio
-    else {
-      indicatorProgressItem01 = 0.0;
-      indicatorProgressItem02 = 0.0;
-      indicatorProgressItem03 = 0.0;
-      index = 0;
-    }
-  }
-
-  // fuction  : maneja el evento de toque DERECHO que cambian los valores de los indicadores de progreso
-  void rightTouch() {
-    // primer item : si el primer item esta en 0.0 y el segundo y tercer item estan en 0.0 entonces el primer item pasa a 1.0
-    if (indicatorProgressItem01 <= 1.00 &&
-        indicatorProgressItem02 == 0.0 &&
-        indicatorProgressItem03 == 0.0) {
-      indicatorProgressItem01 = 1.0;
-      indicatorProgressItem02 = 0.0;
-      indicatorProgressItem03 = 0.0;
-      index = 1; // siguiente vista
-    }
-    // segundo item : si el primer item esta en 1.0 y el segundo item esta en 0.0 y el tercer item esta en 0.0 entonces el segundo item pasa a 1.0
-    else if (indicatorProgressItem02 <= 1.00 &&
-        indicatorProgressItem01 > 0.0 &&
-        indicatorProgressItem03 == 0.0) {
-      indicatorProgressItem01 = 1.0;
-      indicatorProgressItem02 = 1.0;
-      indicatorProgressItem03 = 0.0;
-      index = 2; // siguiente vista
-    }
-    // tercer item  : si el primer item esta en 1.0 y el segundo item esta en 1.0 y el tercer item esta en 0.0 entonces el tercer item pasa a 1.0
-    else if (indicatorProgressItem03 <= 1.00 &&
-        indicatorProgressItem01 > 0.0 &&
-        indicatorProgressItem02 > 0.0) {
-      indicatorProgressItem01 = 1.0;
-      indicatorProgressItem02 = 1.0;
-      indicatorProgressItem03 = 1.0;
-      index = 3; // siguiente vista
-    } // vuelve a la vista al principio
-    else {
-      indicatorProgressItem01 = 0.0;
-      indicatorProgressItem02 = 0.0;
-      indicatorProgressItem03 = 0.0;
-      index = 0;
-    }
-  }
-
-  void positionIndicatorLogic() {
-    // logica de los indicadores de posicion que cambiar cada sierto tiempo
-    timer = Timer.periodic(const Duration(microseconds: 50000), (timer) {
-      try {
-        if (mounted) {
-          setState(() {
-            if (indicatorProgressItem01 < 1) {
-              if (indicatorProgressItem01 >= 0.1 &&
-                  indicatorProgressItem01 <= 0.8) {
-                indicatorProgressItem01 += 0.02;
-              } else {
-                indicatorProgressItem01 += 0.01;
-              }
-              index = 0;
-            }
-            if (indicatorProgressItem02 < 1 && indicatorProgressItem01 >= 1) {
-              if (indicatorProgressItem02 >= 0.1 &&
-                  indicatorProgressItem02 <= 0.8) {
-                indicatorProgressItem02 += 0.02;
-              } else {
-                indicatorProgressItem02 += 0.01;
-              }
-              index = 1;
-            }
-            if (indicatorProgressItem03 < 1 && indicatorProgressItem02 >= 1) {
-              if (indicatorProgressItem03 >= 0.1 &&
-                  indicatorProgressItem03 <= 0.8) {
-                indicatorProgressItem03 += 0.02;
-              } else {
-                indicatorProgressItem03 += 0.01;
-              }
-              index = 2;
-            }
-            if (indicatorProgressItem01 >= 1 &&
-                indicatorProgressItem02 >= 1 &&
-                indicatorProgressItem03 >= 1) {
-              indicatorProgressItem01 = 0.0;
-              indicatorProgressItem02 = 0.0;
-              indicatorProgressItem03 = 0.0;
-            }
-          });
-        }
-        // ignore: empty_catches
-      } catch (e) {}
-    });
-  }
+  // Estado
+  late List<double> _progressValues;
+  int _currentIndex = 0;
+  Timer? _timer;
 
   @override
   void initState() {
-    // logicas de los indicadores de posicion
-    positionIndicatorLogic();
-
     super.initState();
+    _progressValues = List.filled(_pages.length, 0.0);
+    _startTimer();
   }
 
   @override
   void dispose() {
-    timer.cancel();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!mounted) return;
+      setState(() {
+        _updateProgress();
+      });
+    });
+  }
+
+  void _updateProgress() {
+    // Si ya completamos todas, reiniciamos
+    if (_currentIndex >= _pages.length) {
+      _resetAll();
+      return;
+    }
+
+    // Incrementamos el progreso actual
+    double currentProgress = _progressValues[_currentIndex];
+
+    // Lógica de velocidad variable: más rápido en el medio (0.1-0.8) para efecto visual
+    double increment =
+        (currentProgress >= 0.1 && currentProgress <= 0.8) ? 0.02 : 0.01;
+    _progressValues[_currentIndex] += increment;
+
+    if (_progressValues[_currentIndex] >= 1.0) {
+      _progressValues[_currentIndex] = 1.0;
+      _currentIndex++;
+      if (_currentIndex >= _pages.length) {
+        _resetAll();
+      }
+    }
+  }
+
+  void _resetAll() {
+    for (int i = 0; i < _progressValues.length; i++) {
+      _progressValues[i] = 0.0;
+    }
+    _currentIndex = 0;
+  }
+
+  void _onLeftTap() {
+    setState(() {
+      if (_currentIndex > 0) {
+        // Si estamos al inicio de la actual (< 20%), volvemos a la anterior
+        if (_progressValues[_currentIndex] < 0.2) {
+          _progressValues[_currentIndex] = 0.0;
+          _currentIndex--;
+          _progressValues[_currentIndex] =
+              0.0; // Reiniciar la anterior para verla desde el inicio
+        } else {
+          // Si ya avanzó algo, solo reiniciamos la actual
+          _progressValues[_currentIndex] = 0.0;
+        }
+      } else {
+        // Estamos en la primera, reiniciamos
+        _progressValues[0] = 0.0;
+      }
+    });
+  }
+
+  void _onRightTap() {
+    setState(() {
+      if (_currentIndex < _pages.length - 1) {
+        // Completamos la actual y pasamos a la siguiente
+        _progressValues[_currentIndex] = 1.0;
+        _currentIndex++;
+      } else {
+        // Estamos en la última, reiniciamos todo (loop)
+        _resetAll();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Obtenemos los valores
-    darkMode = Theme.of(context).brightness == Brightness.dark;
-    screenSize = MediaQuery.of(context).size;
-
-    // lista de widgets con las vistas
-    widgets = [
-      pageView(
-          context: context,
-          colorContent: Colors.transparent,
-          textColor: Colors.white,
-          colorIcon: Colors.orange.shade300,
-          iconData: Icons.monetization_on,
-          titulo: "VENTAS",
-          subtitulo: "Registra tus ventas de una forma simple 😊"),
-      pageView(
-          context: context,
-          colorContent: Colors.transparent,
-          textColor: Colors.white,
-          colorIcon: Colors.teal.shade300,
-          iconData: Icons.analytics_outlined,
-          titulo: "TRANSACCIONES",
-          subtitulo: "Observa las transacciones que has realizado 💰"),
-      pageView(
-          context: context,
-          colorContent: Colors.transparent,
-          textColor: Colors.white,
-          colorIcon: Colors.deepPurple.shade300,
-          iconData: Icons.category,
-          titulo: "CATÁLOGO",
-          subtitulo:
-              "Arma tu catálogo y controla el stock de tus productos \n 🍫🍬🥫🍾"),
-    ];
-
-    String uriImage = index == 0
-        ? sellImagen
-        : index == 1
-            ? transactionImage
-            : catalogueImage;
+    // Aseguramos que el índice sea válido para la vista
+    final int viewIndex = _currentIndex >= _pages.length ? 0 : _currentIndex;
+    final _OnboardingPageModel currentPage = _pages[viewIndex];
 
     return Stack(
       children: [
-        // Imagen background
-        ClipRRect(
+        // Fondo con Imagen
+        Positioned.fill(
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(10.0),
-            child: Opacity(
-                opacity: 0.8,
-                child: Image(
-                    image: AssetImage(uriImage),
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover))),
-        // view : contenidos
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Imagen de fondo
+                Image.asset(
+                  currentPage.imagePath,
+                  fit: BoxFit.cover,
+                  key: ValueKey(currentPage.imagePath),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Contenido
         Column(
           children: [
+            // Indicadores de Progreso
             SafeArea(
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    //  indicador de las vistas
-                    Flexible(
+                  children: List.generate(_pages.length, (index) {
+                    return Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(1.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 2.0),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10.0),
                           child: LinearProgressIndicator(
-                            minHeight: 5,
-                            color: Colors.white,
+                            minHeight: 4,
+                            value: _progressValues[index],
                             backgroundColor:
-                                darkMode ? Colors.white12 : Colors.black12,
-                            value: indicatorProgressItem01,
+                                Colors.white.withValues(alpha: 0.3),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.white),
                           ),
                         ),
                       ),
-                    ),
-                    //  indicador de vista
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.all(1.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.0),
-                          child: LinearProgressIndicator(
-                            minHeight: 5,
-                            color: Colors.white,
-                            backgroundColor:
-                                darkMode ? Colors.white12 : Colors.black12,
-                            value: indicatorProgressItem02,
-                          ),
-                        ),
-                      ),
-                    ),
-                    //  indicador de vista
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.all(1.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.0),
-                          child: LinearProgressIndicator(
-                            minHeight: 5,
-                            color: Colors.white,
-                            backgroundColor:
-                                darkMode ? Colors.white12 : Colors.black12,
-                            value: indicatorProgressItem03,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
               ),
             ),
-            Flexible(child: widgets[index]),
+
+            // Vista de la página (Texto e Icono)
+            Expanded(
+              child: _OnboardingPageView(
+                page: currentPage,
+                textColor: widget.colorText,
+              ),
+            ),
           ],
         ),
-        // controlamos los toques del usuario
+
+        // Detectores de Gestos (Invisibles)
         Row(
           children: [
-            // toque izquierdo
-            Flexible(
-                child: InkWell(
-              onTap: leftTouch,
-              highlightColor: Colors.transparent,
-              splashColor: Colors.transparent,
-              focusColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-            )),
-            //  toque derecho
-            Flexible(
-                child: InkWell(
-              onTap: rightTouch,
-              highlightColor: Colors.transparent,
-              splashColor: Colors.transparent,
-              focusColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-            )),
-            //  touch
+            Expanded(
+              child: GestureDetector(
+                onTap: _onLeftTap,
+                behavior: HitTestBehavior.translucent,
+                child: Container(),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: _onRightTap,
+                behavior: HitTestBehavior.translucent,
+                child: Container(),
+              ),
+            ),
           ],
         ),
       ],
     );
   }
+}
 
-  Widget pageView(
-      {required BuildContext context,
-      Color? colorContent,
-      Color textColor = Colors.black,
-      AssetImage? assetImage,
-      IconData? iconData,
-      Color? colorIcon,
-      String titulo = "",
-      String subtitulo = ""}) {
-    // Definimos los estilos
-    colorContent ??= Theme.of(context).brightness == Brightness.dark
-        ? Colors.white
-        : Colors.black;
-    colorIcon ??= colorContent;
+/// Modelo de datos para cada página del onboarding
+class _OnboardingPageModel {
+  final String imagePath;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color colorIcon;
 
-    // Tamaños de fuente responsivos
-    final double tituloFontSize = getResponsiveValue(
-      context,
-      mobile: 32.0,
-      tablet: 42.0,
-      desktop: 50.0,
+  _OnboardingPageModel({
+    required this.imagePath,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.colorIcon,
+  });
+}
+
+/// Widget para mostrar el contenido de una página
+class _OnboardingPageView extends StatelessWidget {
+  final _OnboardingPageModel page;
+  final Color textColor;
+
+  const _OnboardingPageView({
+    required this.page,
+    required this.textColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
+    // Estilos de texto con sombra para mejor legibilidad sobre imágenes
+    final shadow = Shadow(
+      offset: const Offset(0, 2),
+      blurRadius: 6.0,
+      color: Colors.black.withValues(alpha: 0.8),
     );
 
-    final double subtituloFontSize = getResponsiveValue(
-      context,
-      mobile: 16.0,
-      tablet: 20.0,
-      desktop: 24.0,
+    final titleStyle = TextStyle(
+      fontSize: getResponsiveValue(
+        context,
+        mobile: 40.0,
+        tablet: 50.0,
+        desktop: 60.0,
+      ),
+      fontWeight: FontWeight.bold,
+      color: textColor,
+      shadows: [shadow],
     );
 
-    // Tamaño del icono responsivo
-    final double iconSize = getResponsiveValue(
-      context,
-      mobile: screenSize.height * 0.05,
-      tablet: screenSize.height * 0.06,
-      desktop: screenSize.height * 0.07,
+    final subtitleStyle = TextStyle(
+      fontSize: getResponsiveValue(
+        context,
+        mobile: 24.0,
+        tablet: 30.0,
+        desktop: 40.0,
+      ),
+      fontWeight: FontWeight.w500,
+      color: textColor.withValues(alpha: 0.95),
+      shadows: [shadow],
+      height: 1.2,
     );
 
-    // Padding responsivo para el icono
-    final EdgeInsets iconPadding = getResponsivePadding(
-      context,
-      mobile: const EdgeInsets.all(12.0),
-      tablet: const EdgeInsets.all(16.0),
-      desktop: const EdgeInsets.all(20.0),
-    );
-
-    // Margin responsivo para el icono
-    final EdgeInsets iconMargin = getResponsivePadding(
-      context,
-      mobile: const EdgeInsets.all(12.0),
-      tablet: const EdgeInsets.all(16.0),
-      desktop: const EdgeInsets.all(20.0),
-    );
-
-    // Espaciado responsivo
-    final double topSpacing = getResponsiveValue(
-      context,
-      mobile: 20.0,
-      tablet: 30.0,
-      desktop: 40.0,
-    );
-
-    final double bottomSpacing = getResponsiveValue(
-      context,
-      mobile: 20.0,
-      tablet: 30.0,
-      desktop: 40.0,
-    );
-
-    final estiloTitulo = TextStyle(
-        fontSize: tituloFontSize,
-        fontWeight: FontWeight.bold,
-        color: textColor);
-    final estiloSubTitulo = TextStyle(
-        fontSize: subtituloFontSize,
-        fontWeight: FontWeight.bold,
-        color: textColor.withValues(alpha: 0.8));
-
-    return SafeArea(
-        child: Padding(
+    return Padding(
       padding: getResponsivePadding(
         context,
-        mobile: const EdgeInsets.all(12.0),
-        tablet: const EdgeInsets.all(16.0),
-        desktop: const EdgeInsets.all(20.0),
+        mobile: const EdgeInsets.all(20.0),
+        tablet: const EdgeInsets.all(30.0),
+        desktop: const EdgeInsets.all(40.0),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-                height:
-                    topSpacing), // Espacio para centrar un poco el contenido
-            // view : si existe mostramos una imagen de asset
-            assetImage != null
-                ? Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: CachedNetworkImage(
-                      imageUrl: assetImage.assetName,
-                      width: screenSize.width / 2,
-                      height: screenSize.height / 2,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) =>
-                          const CircularProgressIndicator(),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
-                    ),
-                  )
-                : Container(),
-            // icon : un icono con animación
-            iconData != null
-                ? Container(
-                    padding: iconPadding,
-                    margin: iconMargin,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withValues(alpha: 0.2),
-                    ),
-                    child: Icon(iconData, size: iconSize, color: colorIcon),
-                  )
-                    .animate(key: Key(titulo))
-                    .fadeIn(duration: const Duration(milliseconds: 500))
-                    .slideY(
-                        begin: -0.2,
-                        duration: const Duration(milliseconds: 500))
-                : Container(),
-            Text(titulo, style: estiloTitulo, textAlign: TextAlign.center),
-            SizedBox(
-                height: getResponsiveValue(
-              context,
-              mobile: 8.0,
-              tablet: 10.0,
-              desktop: 12.0,
-            )),
-            // text : un texto con animación
-            Text(subtitulo, style: estiloSubTitulo, textAlign: TextAlign.center)
-                .animate()
-                .fadeIn(duration: const Duration(milliseconds: 500))
-                .slideY(
-                    begin: 0.2, duration: const Duration(milliseconds: 500)),
-            SizedBox(height: bottomSpacing),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Spacer(),
+
+          // Icono animado con fondo
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black.withValues(alpha: 0.3),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2), width: 1),
+            ),
+            child: Icon(
+              page.icon,
+              size: screenSize.height * 0.06,
+              color: page.colorIcon,
+            ),
+          )
+              .animate(key: ValueKey(page.title))
+              .fadeIn(duration: 500.ms)
+              .scale(duration: 500.ms, curve: Curves.easeOutBack),
+
+          const SizedBox(height: 24),
+
+          // Título animado
+          Text(
+            page.title,
+            style: titleStyle,
+            textAlign: TextAlign.center,
+          )
+              .animate(key: ValueKey("${page.title}_t"))
+              .fadeIn(duration: 600.ms)
+              .slideY(
+                  begin: 0.2, end: 0, duration: 600.ms, curve: Curves.easeOut),
+
+          const SizedBox(height: 16),
+
+          // Subtítulo animado
+          Text(
+            page.subtitle,
+            style: subtitleStyle,
+            textAlign: TextAlign.center,
+          )
+              .animate(key: ValueKey("${page.title}_s"))
+              .fadeIn(delay: 200.ms, duration: 600.ms)
+              .slideY(
+                  begin: 0.2, end: 0, duration: 600.ms, curve: Curves.easeOut),
+
+          const Spacer(),
+          const SizedBox(height: 40), // Espacio inferior visual
+        ],
       ),
-    ));
+    );
   }
 }

@@ -337,6 +337,13 @@ class CatalogueProvider extends ChangeNotifier implements InitializableProvider 
     );
   }
 
+  List<ProductCatalogue> searchByProvider(String provider) {
+    return LocalSearchDataSource.searchByProvider(
+      products: _state.products,
+      provider: provider,
+    );
+  }
+
   List<String> getSearchSuggestions({
     required String query,
     int maxSuggestions = 5,

@@ -496,6 +496,8 @@ class _ProductListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLargeScreen = screenWidth >= 600;
 
     return InkWell(
       onTap: onTap,
@@ -527,181 +529,364 @@ class _ProductListTile extends StatelessWidget {
 
             const SizedBox(width: 16),
 
-            // Información del producto
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Descripción
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (product.favorite)
-                        Icon(
-                          Icons.star_rate_rounded,
-                          size: 16,
-                          color: Colors.yellow[700],
-                        ),
-                      if (product.favorite) const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          product.description,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // text : marca del producto y nombre de la categoría
-                  Row(
-                    children: [
-                      if (product.nameMark.isNotEmpty) ...[
-                        if (product.verified)
-                          Icon(
-                            Icons.verified,
-                            size: 14,
-                            color: Colors.blue,
-                          ),
-                        if (product.verified) const SizedBox(width: 4),
-                        Text(
-                          product.nameMark,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: (product.verified)
-                                ? Colors.blue
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (product.category.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              '•',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                      if (product.category.isNotEmpty)
-                        Text(
-                          product.nameCategory,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
+            // Información del producto - Layout responsive
+            if (isLargeScreen)
+              ..._buildLargeScreenLayout(context, theme, colorScheme)
+            else
+              ..._buildSmallScreenLayout(context, theme, colorScheme),
+          ],
+        ),
+      ),
+    );
+  }
 
-                  // text : código
-                  if (product.code.isNotEmpty)
-                    Text(
-                      product.code,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+  /// Layout para pantallas pequeñas (diseño original)
+  List<Widget> _buildSmallScreenLayout(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    return [
+      // Información del producto
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Descripción
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (product.favorite)
+                  Icon(
+                    Icons.star_rate_rounded,
+                    size: 16,
+                    color: Colors.yellow[700],
+                  ),
+                if (product.favorite) const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    product.description,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            // text : marca del producto y nombre de la categoría
+            Row(
+              children: [
+                if (product.nameMark.isNotEmpty) ...[
+                  if (product.verified)
+                    Icon(
+                      Icons.verified,
+                      size: 14,
+                      color: Colors.blue,
+                    ),
+                  if (product.verified) const SizedBox(width: 4),
+                  Text(
+                    product.nameMark,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: (product.verified)
+                          ? Colors.blue
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (product.category.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text(
+                        '•',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 4),
-                  // Precio y fecha de actualización
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        CurrencyFormatter.formatPrice(value: product.salePrice),
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                          fontSize: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          DateFormatter.getSimplePublicationDate(
-                              product.upgrade, DateTime.now()),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 10,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // text : stock
-                  if (product.stock)
-                    _buildStockIndicator(
-                      context: context,
-                      quantityStock: product.quantityStock,
-                      alertStock: product.alertStock,
-                    ),
+                  ],
                 ],
+                if (product.category.isNotEmpty)
+                  Text(
+                    product.nameCategory,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+
+            // text : código
+            if (product.code.isNotEmpty)
+              Text(
+                product.code,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            const SizedBox(height: 4),
+            // Fecha de actualización
+            Text(
+              DateFormatter.getSimplePublicationDate(
+                  product.upgrade, DateTime.now()),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 10,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+
+            // text : stock
+            if (product.stock)
+              _buildStockIndicator(
+                context: context,
+                quantityStock: product.quantityStock,
+                alertStock: product.alertStock,
+              ),
+          ],
+        ),
+      ),
+      // Precio y ganancia en el lado derecho
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // Precio
+          Text(
+            CurrencyFormatter.formatPrice(value: product.salePrice),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+              fontSize: 24,
+            ),
+          ),
+          // Porcentaje de ganancia - Compacto
+          if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.green.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                product.getPorcentageFormat,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.green.shade700,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  height: 1.2,
+                ),
               ),
             ),
-            // Ganancia en monto y porcentaje - Estilo minimalista (solo si hay precio de compra)
+          ],
+        ],
+      ),
+    ];
+  }
+
+  /// Layout para pantallas grandes (3 columnas)
+  List<Widget> _buildLargeScreenLayout(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    return [
+      // Columna 1: Descripción, Marca y Código
+      Expanded(
+        flex: 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Descripción
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (product.favorite)
+                  Icon(
+                    Icons.star_rate_rounded,
+                    size: 16,
+                    color: Colors.yellow[700],
+                  ),
+                if (product.favorite) const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    product.description,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            // Marca/Proveedor
+            if (product.nameMark.isNotEmpty)
+              Row(
+                children: [
+                  if (product.verified)
+                    Icon(
+                      Icons.verified,
+                      size: 14,
+                      color: Colors.blue,
+                    ),
+                  if (product.verified) const SizedBox(width: 4),
+                  Text(
+                    product.nameMark,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: (product.verified)
+                          ? Colors.blue
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            if (product.nameMark.isNotEmpty) const SizedBox(height: 4),
+            // Código
+            if (product.code.isNotEmpty)
+              Text(
+                product.code,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            // Fecha de actualización
+            const SizedBox(height: 4),
+            Text(
+              DateFormatter.getSimplePublicationDate(
+                  product.upgrade, DateTime.now()),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 10,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+
+      const SizedBox(width: 16),
+
+      // Columna 2 (Centro): Categoría, Proveedor y Stock
+      Expanded(
+        flex: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Categoría
+            if (product.category.isNotEmpty)
+              Row(
+                children: [
+                  Icon(
+                    Icons.category_outlined,
+                    size: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      product.nameCategory,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            if (product.category.isNotEmpty) const SizedBox(height: 6),
+            // Proveedor
+            if (product.nameProvider.isNotEmpty)
+              Row(
+                children: [
+                  Icon(
+                    Icons.local_shipping_outlined,
+                    size: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      product.nameProvider,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            if (product.nameProvider.isNotEmpty) const SizedBox(height: 6),
+            // Stock
+            if (product.stock)
+              _buildStockIndicator(
+                context: context,
+                quantityStock: product.quantityStock,
+                alertStock: product.alertStock,
+              ),
+          ],
+        ),
+      ),
+
+      const SizedBox(width: 16),
+
+      // Columna 3: Precio y ganancia
+      Expanded(
+        flex: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Precio
+            Text(
+              CurrencyFormatter.formatPrice(value: product.salePrice),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+                fontSize: 24,
+              ),
+            ),
+            // Porcentaje de ganancia - Compacto
             if (product.purchasePrice > 0 &&
                 product.getBenefits.isNotEmpty) ...[
-              const SizedBox(width: 12),
+              const SizedBox(height: 6),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: Colors.green.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      product.getBenefits,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade700,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.trending_up,
-                          size: 12,
-                          color: Colors.green.shade600,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          product.getPorcentageFormat,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.green.shade600,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: Text(
+                  product.getPorcentageFormat,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.green.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    height: 1.2,
+                  ),
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
-    );
+    ];
   }
 
   /// Construye el indicador de stock con colores adaptativos

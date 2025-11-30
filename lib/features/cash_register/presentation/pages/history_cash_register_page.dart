@@ -250,10 +250,29 @@ class _CashRegisterItem extends StatelessWidget {
 
   const _CashRegisterItem({required this.cashRegister});
 
+  /// Calcula las horas activas de la caja
+  String _getActiveHours(bool isOpen) {
+    final endTime = isOpen ? DateTime.now() : cashRegister.closure;
+    final duration = endTime.difference(cashRegister.opening);
+    
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    
+    if (hours == 0) {
+      return '$minutes min';
+    } else if (minutes == 0) {
+      return '$hours ${hours == 1 ? "hora" : "horas"}';
+    } else {
+      return '$hours ${hours == 1 ? "hora" : "horas"} $minutes min';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLargeScreen = screenWidth >= 600;
     final isOpen = cashRegister.closure.year == 1970;
     
     // Mostrar balance esperado si: caja está abierta O balance contabilizado es 0
@@ -272,129 +291,286 @@ class _CashRegisterItem extends StatelessWidget {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            // Icono de estado
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isOpen 
-                    ? Colors.green.withValues(alpha: 0.1) 
-                    : colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.point_of_sale_rounded,
-                color: isOpen ? Colors.green : colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            
-            // Info Principal
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: isLargeScreen
+            ? _buildLargeScreenLayout(context, theme, colorScheme, isOpen, displayBalance, balanceLabel)
+            : _buildSmallScreenLayout(context, theme, colorScheme, isOpen, displayBalance, balanceLabel),
+      ),
+    );
+  }
+
+  /// Layout para pantallas pequeñas (diseño original)
+  Widget _buildSmallScreenLayout(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    bool isOpen,
+    double displayBalance,
+    String balanceLabel,
+  ) {
+    return Row(
+      children: [
+        // Icono de estado
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: isOpen 
+                ? Colors.green.withValues(alpha: 0.1) 
+                : colorScheme.surfaceContainerHighest,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.point_of_sale_rounded,
+            color: isOpen ? Colors.green : colorScheme.onSurfaceVariant,
+            size: 16,
+          ),
+        ),
+        const SizedBox(width: 12),
+        
+        // Info Principal
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fila 1: Fecha y badge de estado
+              Row(
                 children: [
-                  // Fila 1: Fecha y badge de estado
-                  Row(
-                    children: [
-                      Text(
-                        DateFormat('dd MMM yyyy').format(cashRegister.opening),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (isOpen) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
-                          ),
-                          child: Text(
-                            'ABIERTA',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: Colors.green.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    DateFormat('dd MMM yyyy').format(cashRegister.opening),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  // Fila 2: Metadatos (hora, ventas)
-                  Row(
-                    children: [
-                      Icon(Icons.access_time_rounded, size: 14, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${DateFormat('HH:mm').format(cashRegister.opening)} - ${isOpen ? "Ahora" : DateFormat('HH:mm').format(cashRegister.closure)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  const SizedBox(width: 6),
+                  Text(
+                    DateFormat('HH:mm').format(cashRegister.opening),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w400,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  if (isOpen) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        'ABIERTA',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Separador circular
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.receipt_long, size: 14, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${cashRegister.getEffectiveSales} ${cashRegister.getEffectiveSales == 1 ? "venta" : "ventas"}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Fila 2: Metadatos (horas activas, ventas)
+              Row(
+                children: [
+                  Text(
+                    _getActiveHours(isOpen),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Separador circular
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${cashRegister.getEffectiveSales} ${cashRegister.getEffectiveSales == 1 ? "venta" : "ventas"}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
 
-            // Balance (trailing)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  CurrencyFormatter.formatPrice(value: displayBalance),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  balanceLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+        // Balance (trailing)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              CurrencyFormatter.formatPrice(value: displayBalance),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+                fontSize: 18,
+              ),
             ),
-            
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            const SizedBox(height: 2),
+            Text(
+              balanceLabel,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
+        ), 
+      ],
+    );
+  }
+
+  /// Layout para pantallas grandes (3 columnas)
+  Widget _buildLargeScreenLayout(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    bool isOpen,
+    double displayBalance,
+    String balanceLabel,
+  ) {
+    return Row(
+      children: [
+        // Columna 1: Icono, fecha y horario
+        Expanded(
+          flex: 3,
+          child: Row(
+            children: [
+              // Icono de estado
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isOpen 
+                      ? Colors.green.withValues(alpha: 0.1) 
+                      : colorScheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.point_of_sale_rounded,
+                  color: isOpen ? Colors.green : colorScheme.onSurfaceVariant,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Fecha y badge de estado
+                    Row(
+                      children: [
+                        Text(
+                          DateFormat('dd MMM yyyy').format(cashRegister.opening),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          DateFormat('HH:mm').format(cashRegister.opening),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        if (isOpen) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                            ),
+                            child: Text(
+                              'ABIERTA',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.green.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Horas activas
+                    Text(
+                      _getActiveHours(isOpen),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+
+        const SizedBox(width: 16),
+
+        // Columna 2 (Centro): Cantidad de ventas
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${cashRegister.getEffectiveSales} ${cashRegister.getEffectiveSales == 1 ? "venta" : "ventas"}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 16),
+
+        // Columna 3: Balance
+        Expanded(
+          flex: 2,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    CurrencyFormatter.formatPrice(value: displayBalance),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    balanceLabel,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ), 
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -92,7 +92,7 @@ class DialogComponents {
     Color? borderColor,
     double borderRadius = 12,
     bool useFillStyle = false, // Nueva opción para estilo fill
-    EdgeInsetsGeometry padding = const EdgeInsets.all(12),
+    EdgeInsetsGeometry padding = const EdgeInsets.all(0),
     required BuildContext context,
   }) {
     final theme = Theme.of(context);

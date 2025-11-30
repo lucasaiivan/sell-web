@@ -105,6 +105,17 @@ class LocalSearchDataSource {
     }).toList();
   }
 
+  /// Busca productos por proveedor
+  static List<ProductCatalogue> searchByProvider({
+    required List<ProductCatalogue> products,
+    required String provider,
+  }) {
+    final normalizedProvider = _normalizeText(provider);
+    return products.where((product) {
+      return _normalizeText(product.nameProvider).contains(normalizedProvider);
+    }).toList();
+  }
+
   // =================== FILTROS Y ORDENAMIENTO ===================
 
   /// Obtiene productos más vendidos con prioridad para favoritos
@@ -176,17 +187,24 @@ class LocalSearchDataSource {
         suggestions.add(product.description);
       }
 
+      // Sugerencias de categoría (prioridad alta)
+      final category = _normalizeText(product.nameCategory);
+      if (category.contains(normalizedQuery) &&
+          product.nameCategory.isNotEmpty) {
+        suggestions.add(product.nameCategory);
+      }
+
       // Sugerencias de marca
       final brand = _normalizeText(product.nameMark);
       if (brand.contains(normalizedQuery) && product.nameMark.isNotEmpty) {
         suggestions.add(product.nameMark);
       }
 
-      // Sugerencias de categoría
-      final category = _normalizeText(product.nameCategory);
-      if (category.contains(normalizedQuery) &&
-          product.nameCategory.isNotEmpty) {
-        suggestions.add(product.nameCategory);
+      // Sugerencias de proveedor (prioridad alta)
+      final provider = _normalizeText(product.nameProvider);
+      if (provider.contains(normalizedQuery) &&
+          product.nameProvider.isNotEmpty) {
+        suggestions.add(product.nameProvider);
       }
     }
 
@@ -219,6 +237,7 @@ class LocalSearchDataSource {
     final code = _normalizeText(product.code);
     final brand = _normalizeText(product.nameMark);
     final category = _normalizeText(product.nameCategory);
+    final provider = _normalizeText(product.nameProvider);
 
     double totalScore = 0.0;
     int matchedWords = 0;
@@ -246,17 +265,29 @@ class LocalSearchDataSource {
       else if (description.contains(word)) {
         wordScore = 60.0;
       }
+      // Coincidencia exacta en categoría (prioridad alta)
+      else if (category == word) {
+        wordScore = 55.0;
+      }
+      // Categoría contiene la palabra (prioridad alta)
+      else if (category.contains(word)) {
+        wordScore = 52.0;
+      }
       // Coincidencia exacta en marca
       else if (brand == word) {
         wordScore = 50.0;
       }
       // Marca contiene la palabra
       else if (brand.contains(word)) {
-        wordScore = 40.0;
+        wordScore = 45.0;
       }
-      // Categoría contiene la palabra
-      else if (category.contains(word)) {
-        wordScore = 30.0;
+      // Coincidencia exacta en proveedor (prioridad alta)
+      else if (provider == word) {
+        wordScore = 48.0;
+      }
+      // Proveedor contiene la palabra (prioridad alta)
+      else if (provider.contains(word)) {
+        wordScore = 42.0;
       }
       // Búsqueda difusa en descripción (similar)
       else if (_fuzzyMatch(description, word)) {
@@ -265,6 +296,14 @@ class LocalSearchDataSource {
       // Búsqueda difusa en marca
       else if (_fuzzyMatch(brand, word)) {
         wordScore = 15.0;
+      }
+      // Búsqueda difusa en categoría
+      else if (_fuzzyMatch(category, word)) {
+        wordScore = 18.0;
+      }
+      // Búsqueda difusa en proveedor
+      else if (_fuzzyMatch(provider, word)) {
+        wordScore = 16.0;
       }
 
       if (wordScore > 0) {

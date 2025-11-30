@@ -52,6 +52,7 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
   @override
   Widget build(BuildContext context) {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     final title =
         widget.isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
@@ -69,7 +70,8 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
       icon: icon,
       headerColor: headerColor,
       width: 450,
-      fullView: widget.fullView,
+      // En pantallas grandes siempre mostrar como dialog
+      fullView: widget.fullView && isSmallScreen,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -11,7 +11,8 @@ class ThemeService {
   ThemeService(this._persistence);
 
   final ValueNotifier<ThemeMode> _themeMode = ValueNotifier(ThemeMode.system);
-  final ValueNotifier<Color> _seedColor = ValueNotifier(Colors.blue);
+  // Color azul profesional (Indigo/Blue) para transmitir confianza y profesionalismo
+  final ValueNotifier<Color> _seedColor = ValueNotifier(const Color(0xFF1565C0));
 
   // Configuraciones personalizables para tonalidades de desenfoque
   double _dialogBarrierOpacityLight = 0.2;
@@ -170,7 +171,7 @@ class ThemeService {
         onError: Colors.white,
         errorContainer: Color(0xFFFFDAD6),
         onErrorContainer: Color(0xFF410002),
-        surface: Colors.white,
+        surface: Color(0xFFF2F5F8), // Fondo suave para evitar fatiga visual
         onSurface: Colors.black,
         surfaceContainerHighest: Color(0xFFF3F3F3),
         onSurfaceVariant: Color(0xFF424242),
@@ -266,10 +267,14 @@ class ThemeService {
 
   /// Construye el tema con configuraciones personalizadas de diálogos y drawers
   ThemeData _buildTheme(ColorScheme colorScheme, bool isDark) {
+    // Color de fondo profesional para modo claro (evita fatiga visual)
+    final backgroundColor = isDark ? colorScheme.surface : const Color(0xFFF2F5F8);
+
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
       brightness: isDark ? Brightness.dark : Brightness.light,
+      scaffoldBackgroundColor: backgroundColor,
 
       // Configuración personalizada para diálogos
       dialogTheme: DialogThemeData(

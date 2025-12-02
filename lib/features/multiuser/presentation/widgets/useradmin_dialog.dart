@@ -295,20 +295,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   ///
   /// Contiene campos de email (no editable en modo edición) y nombre opcional
   Widget _buildBasicInfoSection() {
-    final isEditing = widget.user != null;
-    final theme = Theme.of(context);
+    final isEditing = widget.user != null; 
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Información Básica',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        const SizedBox(height: 12),
+      children: [ 
         FormInputTextField(
           controller: _emailController,
           labelText: 'Email',
@@ -324,7 +315,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
           },
           enabled: !isEditing,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         FormInputTextField(
           controller: _nameController,
           labelText: 'Nombre (opcional)',
@@ -409,7 +400,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Nota de Bloqueo',
+                            'Nota de Bloqueo (opcional)',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.error,
@@ -419,10 +410,10 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                       ),
                       const SizedBox(height: 8),
                       FormInputTextField(
-                        controller: _inactivateNoteController,
-                        labelText: 'Motivo del bloqueo (opcional)',
+                        controller: _inactivateNoteController, 
                         hintText: 'Ej: Usuario suspendido temporalmente por...',
-                        maxLines: 3,
+                        minLines: 1,
+                        maxLines: null,
                         keyboardType: TextInputType.multiline,
                       ),
                       const SizedBox(height: 4),
@@ -456,21 +447,13 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     if (_isSuperAdmin) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Tipo de Permiso',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
+        children: [  
           Container(
             decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.1),
+              color: Colors.purple.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.purple.withOpacity(0.3),
+                color: Colors.purple.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -478,7 +461,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
             child: Row(
               children: [
                 Icon(
-                  Icons.shield_rounded,
+                  Icons.security_rounded,
                   color: Colors.purple,
                   size: 32,
                 ),
@@ -795,81 +778,164 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   ///
   /// Permite configurar días de la semana y rango horario de acceso
   Widget _buildAccessControlSection(ThemeData theme) {
+    final allDaysSelected = _selectedDays.length == DayOfWeek.values.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Control de Acceso',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
+        // Header con acción de seleccionar todos
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Días de la Semana',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: _showValidationErrors && _daysOfWeekError
-                    ? theme.colorScheme.error
-                    : null,
+              'Control de Acceso',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
             ),
-            if (_showValidationErrors && _daysOfWeekError) ...[
-              const SizedBox(width: 8),
-              Icon(
-                Icons.error_outline_rounded,
-                size: 18,
-                color: theme.colorScheme.error,
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  if (allDaysSelected) {
+                    _selectedDays.clear();
+                  } else {
+                    _selectedDays.addAll(DayOfWeek.values);
+                    _daysOfWeekError = false;
+                  }
+                });
+              },
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
-            ],
+              child: Text(
+                allDaysSelected ? 'Deseleccionar todo' : 'Seleccionar todo',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
+
+        // Días de la semana
         Container(
-          padding: const EdgeInsets.all(12),
-          decoration: _showValidationErrors && _daysOfWeekError
-              ? BoxDecoration(
-                  color: theme.colorScheme.errorContainer.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.error,
-                    width: 2,
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _showValidationErrors && _daysOfWeekError
+                ? theme.colorScheme.errorContainer.withOpacity(0.1)
+                : theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _showValidationErrors && _daysOfWeekError
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.outlineVariant.withOpacity(0.5),
+              width: _showValidationErrors && _daysOfWeekError ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 16,
+                    color: _showValidationErrors && _daysOfWeekError
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
-                )
-              : null,
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: DayOfWeek.values.map((day) {
-              return FilterChip(
-                label: Text(_translateDay(day)),
-                selected: _selectedDays.contains(day),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedDays.add(day);
-                    } else {
-                      _selectedDays.remove(day);
-                    }
-                    // Limpiar error si hay al menos un día seleccionado
-                    if (_selectedDays.isNotEmpty) {
-                      _daysOfWeekError = false;
-                    }
-                  });
-                },
-              );
-            }).toList(),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Días permitidos',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _showValidationErrors && _daysOfWeekError
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: DayOfWeek.values.map((day) {
+                  final isSelected = _selectedDays.contains(day);
+                  return FilterChip(
+                    label: Text(_translateDay(day)),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedDays.add(day);
+                        } else {
+                          _selectedDays.remove(day);
+                        }
+                        if (_selectedDays.isNotEmpty) {
+                          _daysOfWeekError = false;
+                        }
+                      });
+                    },
+                    showCheckmark: false,
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected
+                          ? theme.colorScheme.onPrimaryContainer
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: Colors.transparent,
+                    selectedColor: theme.colorScheme.primaryContainer,
+                    side: BorderSide(
+                      color: isSelected
+                          ? theme.colorScheme.primaryContainer
+                          : theme.colorScheme.outlineVariant.withOpacity(0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  );
+                }).toList(),
+              ),
+              if (_showValidationErrors && _daysOfWeekError) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Selecciona al menos un día',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 20),
+
+        // Selector de rango horario
         TimeRangeSelector(
           startTime: _startTime,
           endTime: _endTime,
           hasError: _showValidationErrors && _accessTimeError,
           errorMessage: 'Debes configurar el horario de acceso',
-          onTap: _selectAccessTime,
+          onTimeSelected: (start, end) {
+            setState(() {
+              _startTime = start;
+              _endTime = end;
+              _accessTimeError = false;
+            });
+          },
         ),
       ],
     );
@@ -909,26 +975,6 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         ],
       ),
     );
-  }
-
-  /// Muestra diálogo para seleccionar rango de horario de acceso
-  Future<void> _selectAccessTime() async {
-    final result = await showDialog<Map<String, TimeOfDay>>(
-      context: context,
-      builder: (context) => TimeRangePickerDialog(
-        initialStartTime: _startTime,
-        initialEndTime: _endTime,
-      ),
-    );
-
-    if (result != null && mounted) {
-      setState(() {
-        _startTime = result['start'];
-        _endTime = result['end'];
-        // Limpiar error de validación
-        _accessTimeError = false;
-      });
-    }
   }
 
   /// Valida y guarda el usuario (crear o actualizar)

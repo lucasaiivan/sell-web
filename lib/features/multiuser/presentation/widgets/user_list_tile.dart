@@ -127,31 +127,15 @@ class UserListTile extends StatelessWidget {
 
         // Indicador de cuenta actual
         if (isCurrentAccount) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  size: 14,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Actual',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle,
+                size: 14,
+                color: colorScheme.primary,
+              ), 
+            ],
           ),
           const SizedBox(width: 8),
         ],
@@ -171,16 +155,7 @@ class UserListTile extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-        ),
-
-        const SizedBox(width: 8),
-
-        // Icono de acción
-        Icon(
-          Icons.chevron_right_rounded,
-          size: 22,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-        ),
+        ), 
       ],
     );
   }

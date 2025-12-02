@@ -57,7 +57,7 @@ class InputTextField extends StatelessWidget {
     this.validator,
     this.fillColor,
     this.borderColor,
-    this.borderRadius = 12.0,
+    this.borderRadius = 8.0,
     this.style,
     this.contentPadding,
     this.expandHeight = false,
@@ -210,7 +210,7 @@ class FormInputTextField extends StatelessWidget {
     this.validator,
     this.fillColor,
     this.borderColor,
-    this.borderRadius = 12.0,
+    this.borderRadius = 8.0,
     this.style,
     this.contentPadding,
     this.expandHeight = false,
@@ -290,9 +290,8 @@ class FormInputTextField extends StatelessWidget {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
-            width: 1.0,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+            width: 0,
           ),
         ),
       ),

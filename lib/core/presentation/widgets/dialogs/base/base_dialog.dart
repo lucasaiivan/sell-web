@@ -124,6 +124,7 @@ class BaseDialog extends StatelessWidget {
 
     return AppBar(
       title: Text(title),
+      centerTitle: false,
       leading: showCloseButton
           ? IconButton(
               icon: const Icon(Icons.close_rounded),

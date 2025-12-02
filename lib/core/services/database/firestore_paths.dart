@@ -98,7 +98,7 @@ class FirestorePaths {
 
   /// Cajas registradoras activas
   static String accountCashRegisters(String accountId) =>
-      '/ACCOUNTS/$accountId/CASHREGISTERS/';
+      '/ACCOUNTS/$accountId/CASHREGISTERS';
 
   /// Caja registradora específica
   static String accountCashRegister(String accountId, String cashRegisterId) =>
@@ -106,11 +106,16 @@ class FirestorePaths {
 
   /// Historial de arqueos de caja
   static String accountCashRegisterHistory(String accountId) =>
-      '/ACCOUNTS/$accountId/RECORDS/';
+      '/ACCOUNTS/$accountId/RECORDS';
+
+  /// Registro específico en historial de caja
+  static String accountCashRegisterHistoryDoc(
+          String accountId, String recordId) =>
+      '/ACCOUNTS/$accountId/RECORDS/$recordId';
 
   /// Descripciones fijas para nombres de caja
   static String accountFixedDescriptions(String accountId) =>
-      '/ACCOUNTS/$accountId/FIXERDESCRIPTIONS/';
+      '/ACCOUNTS/$accountId/FIXERDESCRIPTIONS';
 
   // ==========================================
   // COLECCIONES DE USUARIOS (/USERS)

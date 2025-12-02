@@ -12,6 +12,7 @@ class MetricCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? subtitle;
+  final bool isZero;
 
   const MetricCard({
     super.key,
@@ -20,6 +21,7 @@ class MetricCard extends StatelessWidget {
     required this.icon,
     required this.color,
     this.subtitle,
+    this.isZero = false,
   });
 
   @override
@@ -28,13 +30,29 @@ class MetricCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Sistema de colores Material 3 con tinte de la métrica
-    final containerColor =
-        isDark ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08);
+    // Si es cero (sin datos), usamos colores neutros/deshabilitados
+    final effectiveColor = isZero ? theme.colorScheme.onSurfaceVariant : color;
+
+    final containerColor = isZero
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+        : (isDark
+            ? color.withValues(alpha: 0.15)
+            : color.withValues(alpha: 0.08));
 
     final onContainerColor = theme.colorScheme.onSurface;
 
     // Icon container más sutil
-    final iconContainerColor = color.withValues(alpha: 0.2);
+    final iconContainerColor = isZero
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
+        : color.withValues(alpha: 0.2);
+
+    final iconColor = isZero
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
+        : color;
+
+    final valueColor = isZero
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
+        : onContainerColor;
 
     return Card(
       elevation: 0,
@@ -43,7 +61,9 @@ class MetricCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
         side: BorderSide(
-          color: color.withValues(alpha: 0.15),
+          color: isZero
+              ? theme.colorScheme.outline.withValues(alpha: 0.1)
+              : color.withValues(alpha: 0.15),
           width: 1,
         ),
       ),
@@ -101,7 +121,7 @@ class MetricCard extends StatelessWidget {
                         ),
                         child: Icon(
                           icon,
-                          color: color,
+                          color: iconColor,
                           size: iconSize,
                         ),
                       ),
@@ -138,7 +158,7 @@ class MetricCard extends StatelessWidget {
                       child: Text(
                         value,
                         style: TextStyle(
-                          color: onContainerColor,
+                          color: valueColor,
                           fontSize: valueFontSize,
                           fontWeight: FontWeight.bold,
                           height: 1.0,

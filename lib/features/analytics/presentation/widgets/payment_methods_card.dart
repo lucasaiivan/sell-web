@@ -83,14 +83,26 @@ class PaymentMethodsCard extends StatelessWidget {
               const SizedBox(height: 20),
               sortedMethods.isEmpty
                   ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(vertical: 32.0),
                       child: Center(
-                        child: Text(
-                          'Sin datos',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.6),
-                          ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.payments_outlined,
+                              size: 48,
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.4),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No hay pagos registrados',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant
+                                    .withValues(alpha: 0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     )

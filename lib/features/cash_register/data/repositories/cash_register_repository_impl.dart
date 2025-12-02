@@ -172,8 +172,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> addCashRegisterToHistory(
       String accountId, CashRegister cashRegister) async {
     try {
-      final path =
-          '${FirestorePaths.accountCashRegisterHistory(accountId)}/${cashRegister.id}';
+      final path = FirestorePaths.accountCashRegisterHistoryDoc(
+          accountId, cashRegister.id);
       await _dataSource.setDocument(path, cashRegister.toJson());
     } catch (e) {
       throw Exception('Error al agregar arqueo al historial: $e');
@@ -184,8 +184,8 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   Future<void> deleteCashRegisterFromHistory(
       String accountId, CashRegister cashRegister) async {
     try {
-      final path =
-          '${FirestorePaths.accountCashRegisterHistory(accountId)}/${cashRegister.id}';
+      final path = FirestorePaths.accountCashRegisterHistoryDoc(
+          accountId, cashRegister.id);
       await _dataSource.deleteDocument(path);
     } catch (e) {
       throw Exception('Error al eliminar arqueo del historial: $e');

@@ -336,6 +336,7 @@ class _CataloguePageState extends State<CataloguePage> {
   /// Botón flotante para agregar productos
   Widget _buildFloatingActionButton(BuildContext context) {
     return FloatingActionButton.extended(
+      heroTag: 'catalogue_add_product_fab',
       onPressed: () {
         // TODO: Implementar diálogo para agregar producto
         ScaffoldMessenger.of(context).clearSnackBars();

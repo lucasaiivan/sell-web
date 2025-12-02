@@ -51,7 +51,7 @@ class CurrencyHelper {
     }
 
     // Aplicar símbolo de moneda y signo negativo
-    final result = '$formatted $symbol';
+    final result = '$symbol $formatted';
     return value < 0 ? '-$result' : result;
   }
 

@@ -38,6 +38,14 @@ class _SalesPageState extends State<SalesPage> {
   BuildContext? _manualDialogContext;
   late final _ScannerInputController _scannerInputController;
 
+  /// Verifica si hay algún diálogo o modal abierto sobre la página actual
+  /// Retorna true si la página de ventas NO es la ruta actual (hay algo encima)
+  bool get _hasModalOnTop {
+    final route = ModalRoute.of(context);
+    // Si no hay ruta o la ruta no es la actual, hay algo encima
+    return route != null && !route.isCurrent;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -190,6 +198,11 @@ class _SalesPageState extends State<SalesPage> {
   // admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
   void _handleRawKeyEvent(RawKeyEvent event) {
     if (event is! RawKeyDownEvent) return;
+    
+    // Ignorar eventos de teclado si hay cualquier diálogo/modal abierto
+    // sobre la página de ventas (excepto el diálogo de búsqueda manual propio)
+    if (_hasModalOnTop && !_isDialogOpen) return;
+    
     _scannerInputController.handleKeyInput(
       logicalKey: event.logicalKey,
       character: event.character,

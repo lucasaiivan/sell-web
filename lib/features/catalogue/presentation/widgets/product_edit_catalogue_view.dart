@@ -1335,6 +1335,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Widget? _buildFab() {
     if (_isSaving) return null;
     return FloatingActionButton.extended(
+      heroTag: 'product_edit_save_fab',
       onPressed: _saveProduct,
       label: const Text('Guardar'),
     );

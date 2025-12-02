@@ -73,7 +73,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
           children: [
             InputTextField(
               controller: cashRegisterProvider.openDescriptionController,
-              labelText: 'Descripción',
+              labelText: 'Nombre',
               hintText: 'Ej: Caja Principal',
             ),
             const SizedBox(height: 16),

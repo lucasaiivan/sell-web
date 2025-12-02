@@ -512,6 +512,7 @@ class _CashRegisterManagementDialogState
     return [
       // button : cierre de caja
       AppButton.fab(
+        heroTag: 'cash_register_close_fab',
         text: 'Cerrar Caja',
         icon: Icons.exit_to_app,
         onPressed: () => _showCloseDialog(context, cashRegister),
@@ -519,6 +520,7 @@ class _CashRegisterManagementDialogState
       SizedBox(width: isMobile ? 8 : 16),
       // button : cancelar el dialog
       AppButton.fab(
+        heroTag: 'cash_register_ok_fab',
         text: 'ok',
         onPressed: () => Navigator.of(context).pop(),
       ),

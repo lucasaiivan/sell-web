@@ -261,6 +261,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'product_catalogue_edit_fab',
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(

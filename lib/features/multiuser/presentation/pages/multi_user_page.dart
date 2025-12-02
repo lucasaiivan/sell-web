@@ -40,6 +40,7 @@ class _MultiUserPageState extends State<MultiUserPage> {
             }
 
             return FloatingActionButton.extended(
+              heroTag: 'multiuser_add_fab',
               onPressed: () {
                 showDialog(
                   context: context,

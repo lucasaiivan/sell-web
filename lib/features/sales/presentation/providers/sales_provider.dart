@@ -917,6 +917,9 @@ class SalesProvider extends ChangeNotifier {
   ///
   /// RESPONSABILIDAD: Coordinar preparación con UseCase
   /// La lógica de validación, transformación y generación de ID está en PrepareSaleTicketUseCase
+  ///
+  /// **NOTA**: El sellerId y sellerName corresponden al usuario administrador
+  /// que realiza la venta (currentAdminProfile), NO a la cuenta del comercio.
   Future<void> _prepareTicketForSale(BuildContext context) async {
     final cashRegisterProvider =
         provider.Provider.of<CashRegisterProvider>(context, listen: false);
@@ -924,11 +927,20 @@ class SalesProvider extends ChangeNotifier {
         ? cashRegisterProvider.currentActiveCashRegister
         : null;
 
+    // Obtener datos del vendedor (usuario admin que realiza la venta)
+    // Si no hay AdminProfile, usar datos de la cuenta como fallback
+    final sellerId = _state.currentAdminProfile?.id.isNotEmpty == true
+        ? _state.currentAdminProfile!.id
+        : _state.profileAccountSelected.id;
+    final sellerName = _state.currentAdminProfile?.name.isNotEmpty == true
+        ? _state.currentAdminProfile!.name
+        : _state.profileAccountSelected.name;
+
     final result = await _prepareSaleTicketUseCase(
       PrepareSaleTicketParams(
         currentTicket: _state.ticket,
-        sellerId: _state.profileAccountSelected.id,
-        sellerName: _state.profileAccountSelected.name,
+        sellerId: sellerId,
+        sellerName: sellerName,
         activeCashRegister: activeCashRegister,
       ),
     );

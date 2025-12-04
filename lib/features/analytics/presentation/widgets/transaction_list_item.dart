@@ -46,12 +46,12 @@ class TransactionListItem extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      color: colorScheme.surface,
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: isLargeScreen
               ? _buildLargeScreenLayout(context, theme, colorScheme, isAnnulled,
                   profit, profitPercentage, itemsCount)
@@ -301,47 +301,51 @@ class TransactionListItem extends StatelessWidget {
           flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Badge método de pago
-              Material(
-                color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getPaymentIcon(ticket.payMode),
-                        size: 14,
-                        color: _getPaymentColor(ticket.payMode)
-                            .withValues(alpha: 0.8),
+            children: [ 
+              Row(
+                children: [
+                  // badge : método de pago
+                  Material(
+                    color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getPaymentIcon(ticket.payMode),
+                            size: 14,
+                            color: _getPaymentColor(ticket.payMode)
+                                .withValues(alpha: 0.8),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getPaymentMethodLabel(ticket.payMode),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: _getPaymentColor(ticket.payMode)
+                                  .withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getPaymentMethodLabel(ticket.payMode),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: _getPaymentColor(ticket.payMode)
-                              .withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              // Fecha
-              Text(
-                _formatDateTime(ticket.creation.toDate()),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w400,
-                ),
+                  const SizedBox(width: 12),
+                  // text : fecha
+                  Text(
+                    _formatDateTime(ticket.creation.toDate()),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
-              // Caja y vendedor
+              // text : Caja y vendedor
               Row(
                 children: [
                   Icon(
@@ -360,6 +364,7 @@ class TransactionListItem extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
+              // text : vendedor
               Row(
                 children: [
                   Icon(
@@ -370,7 +375,7 @@ class TransactionListItem extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      ticket.sellerName.split('@')[0],
+                      ticket.sellerName,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w400,

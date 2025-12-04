@@ -12,12 +12,14 @@ class _AnalyticsState {
   final bool isLoading;
   final String? errorMessage;
   final DateFilter selectedFilter;
+  final Map<String, bool> expandedMonths;
 
   const _AnalyticsState({
     this.analytics,
     this.isLoading = false,
     this.errorMessage,
     this.selectedFilter = DateFilter.today,
+    this.expandedMonths = const {},
   });
 
   _AnalyticsState copyWith({
@@ -25,6 +27,7 @@ class _AnalyticsState {
     bool? isLoading,
     String? errorMessage,
     DateFilter? selectedFilter,
+    Map<String, bool>? expandedMonths,
     bool clearError = false,
     bool clearAnalytics = false,
   }) {
@@ -33,6 +36,7 @@ class _AnalyticsState {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       selectedFilter: selectedFilter ?? this.selectedFilter,
+      expandedMonths: expandedMonths ?? this.expandedMonths,
     );
   }
 }
@@ -75,7 +79,22 @@ class AnalyticsProvider extends ChangeNotifier
   /// Filtro de fecha seleccionado
   DateFilter get selectedFilter => _state.selectedFilter;
 
+  /// Verifica si un mes está expandido
+  bool isMonthExpanded(String monthKey) {
+    return _state.expandedMonths[monthKey] ?? false; // Por defecto colapsado
+  }
+
   // --- Métodos públicos ---
+
+  /// Alterna el estado de expansión de un mes
+  void toggleMonthExpansion(String monthKey) {
+    final currentExpanded = _state.expandedMonths[monthKey] ?? false;
+    final newExpandedMonths = Map<String, bool>.from(_state.expandedMonths);
+    newExpandedMonths[monthKey] = !currentExpanded;
+
+    _state = _state.copyWith(expandedMonths: newExpandedMonths);
+    notifyListeners();
+  }
 
   /// Suscribe a las analíticas para una cuenta específica con actualización en tiempo real
   ///

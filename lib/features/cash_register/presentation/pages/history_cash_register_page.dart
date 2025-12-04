@@ -168,17 +168,65 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
       itemCount:
           (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0) +
               historyItems.length,
-      separatorBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Divider(
-          height: 0.5,
-          thickness: 0.5,
-          color: Theme.of(context)
-              .colorScheme
-              .outlineVariant
-              .withValues(alpha: 0.3),
-        ),
-      ),
+      separatorBuilder: (context, index) {
+        // No mostrar divider si es el último de cajas activas (antes del primer mes del historial)
+        if (hasActiveCashRegisters &&
+            index == provider.activeCashRegisters.length - 1) {
+          return const SizedBox.shrink();
+        }
+
+        // Determinar índices del item actual y siguiente en el historial
+        final currentIndex = index -
+            (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0);
+        final nextIndex = index + 1;
+
+        // Si estamos en la sección de historial
+        if (currentIndex >= 0 && currentIndex < historyItems.length) {
+          final currentCashRegister = historyItems[currentIndex];
+          final currentMonthKey = _getMonthKey(currentCashRegister.opening);
+          final isCurrentExpanded = provider.isMonthExpanded(currentMonthKey);
+
+          // Si el item actual está colapsado, no mostrar divider
+          if (!isCurrentExpanded) {
+            return const SizedBox.shrink();
+          }
+
+          // Si el siguiente item es un header de mes, no mostrar divider
+          final nextHistoryIndex = nextIndex -
+              (hasActiveCashRegisters
+                  ? provider.activeCashRegisters.length
+                  : 0);
+          if (nextHistoryIndex < historyItems.length) {
+            final isNextFirstInMonth = nextHistoryIndex == 0 ||
+                _isDifferentMonth(
+                  historyItems[nextHistoryIndex - 1].opening,
+                  historyItems[nextHistoryIndex].opening,
+                );
+            if (isNextFirstInMonth) {
+              return const SizedBox.shrink();
+            }
+
+            // Si el siguiente item está colapsado, no mostrar divider
+            final nextMonthKey =
+                _getMonthKey(historyItems[nextHistoryIndex].opening);
+            final isNextExpanded = provider.isMonthExpanded(nextMonthKey);
+            if (!isNextExpanded) {
+              return const SizedBox.shrink();
+            }
+          }
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Divider(
+            height: 0.5,
+            color: Theme.of(context)
+                .colorScheme
+                .outlineVariant
+                .withValues(alpha: 0.2),
+          ),
+        );
+      },
       itemBuilder: (context, index) {
         // Mostrar cajas activas al principio
         if (hasActiveCashRegisters &&
@@ -187,10 +235,113 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
           return _CashRegisterItem(cashRegister: cashRegister);
         }
 
-        // Luego mostrar historial cerrado
+        // Luego mostrar historial cerrado con agrupación por mes
         final historyIndex = index -
             (hasActiveCashRegisters ? provider.activeCashRegisters.length : 0);
         final cashRegister = historyItems[historyIndex];
+
+        // Verificar si es el primer item del mes
+        final isFirstInMonth = historyIndex == 0 ||
+            _isDifferentMonth(
+              historyItems[historyIndex - 1].opening,
+              cashRegister.opening,
+            );
+
+        if (isFirstInMonth) {
+          final monthKey = _getMonthKey(cashRegister.opening);
+          final isExpanded = provider.isMonthExpanded(monthKey);
+          final itemsInMonth = _countItemsInMonth(historyItems, historyIndex);
+          final monthBalance = _calculateMonthBalance(historyItems, historyIndex);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header de mes
+              InkWell(
+                onTap: () => provider.toggleMonthExpansion(monthKey),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_down_rounded
+                            : Icons.keyboard_arrow_right_rounded,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _getMonthYearLabel(cashRegister.opening),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$itemsInMonth',
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          CurrencyFormatter.formatPrice(value: monthBalance),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Item de caja (solo si está expandido)
+              if (isExpanded) _CashRegisterItem(cashRegister: cashRegister),
+            ],
+          );
+        }
+
+        // Items regulares (solo si el mes está expandido)
+        final monthKey = _getMonthKey(cashRegister.opening);
+        final isExpanded = provider.isMonthExpanded(monthKey);
+
+        if (!isExpanded) {
+          return const SizedBox.shrink();
+        }
+
         return _CashRegisterItem(cashRegister: cashRegister);
       },
     );
@@ -257,6 +408,69 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
         ),
       ),
     );
+  }
+
+  /// Verifica si dos fechas pertenecen a meses diferentes
+  bool _isDifferentMonth(DateTime date1, DateTime date2) {
+    return date1.year != date2.year || date1.month != date2.month;
+  }
+
+  /// Genera una clave única para un mes (formato: "YYYY-MM")
+  String _getMonthKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+  }
+
+  /// Obtiene el label del mes y año para mostrar en el divisor
+  String _getMonthYearLabel(DateTime date) {
+    final months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  /// Cuenta items en un mes específico
+  int _countItemsInMonth(List<CashRegister> items, int startIndex) {
+    if (startIndex >= items.length) return 0;
+
+    final startDate = items[startIndex].opening;
+    int count = 1;
+
+    for (int i = startIndex + 1; i < items.length; i++) {
+      if (_isDifferentMonth(startDate, items[i].opening)) {
+        break;
+      }
+      count++;
+    }
+
+    return count;
+  }
+
+  /// Calcula el balance total de un mes específico
+  double _calculateMonthBalance(List<CashRegister> items, int startIndex) {
+    if (startIndex >= items.length) return 0.0;
+
+    final startDate = items[startIndex].opening;
+    double balance = items[startIndex].getExpectedBalance;
+
+    for (int i = startIndex + 1; i < items.length; i++) {
+      if (_isDifferentMonth(startDate, items[i].opening)) {
+        break;
+      }
+      balance += items[i].getExpectedBalance;
+    }
+
+    return balance;
   }
 }
 

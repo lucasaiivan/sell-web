@@ -44,6 +44,7 @@ class _CashRegisterState {
   final String? errorMessage;
   final bool isProcessing;
   final List<String> fixedDescriptions;
+  final Map<String, bool> expandedMonths;
 
   const _CashRegisterState({
     this.activeCashRegisters = const [],
@@ -55,6 +56,7 @@ class _CashRegisterState {
     this.errorMessage,
     this.isProcessing = false,
     this.fixedDescriptions = const [],
+    this.expandedMonths = const {},
   });
 
   bool get hasActiveCashRegister => selectedCashRegister != null;
@@ -72,6 +74,7 @@ class _CashRegisterState {
     Object? errorMessage = const Object(),
     bool? isProcessing,
     List<String>? fixedDescriptions,
+    Map<String, bool>? expandedMonths,
   }) {
     return _CashRegisterState(
       activeCashRegisters: activeCashRegisters ?? this.activeCashRegisters,
@@ -87,6 +90,7 @@ class _CashRegisterState {
           : errorMessage as String?,
       isProcessing: isProcessing ?? this.isProcessing,
       fixedDescriptions: fixedDescriptions ?? this.fixedDescriptions,
+      expandedMonths: expandedMonths ?? this.expandedMonths,
     );
   }
 
@@ -189,6 +193,21 @@ class CashRegisterProvider extends ChangeNotifier
   Future<List<TicketModel>?>? get cashRegisterTickets => _cashRegisterTickets;
   bool get isLoadingTickets => _isLoadingTickets;
 
+  /// Verifica si un mes está expandido
+  bool isMonthExpanded(String monthKey) {
+    return _state.expandedMonths[monthKey] ?? false; // Por defecto colapsado
+  }
+
+  /// Alterna el estado de expansión de un mes
+  void toggleMonthExpansion(String monthKey) {
+    final currentExpanded = _state.expandedMonths[monthKey] ?? false;
+    final newExpandedMonths = Map<String, bool>.from(_state.expandedMonths);
+    newExpandedMonths[monthKey] = !currentExpanded;
+
+    _state = _state.copyWith(expandedMonths: newExpandedMonths);
+    notifyListeners();
+  }
+
   CashRegisterProvider(
     this._openCashRegisterUseCase,
     this._closeCashRegisterUseCase,
@@ -209,8 +228,7 @@ class CashRegisterProvider extends ChangeNotifier
     this._saveTicketToTransactionHistoryUseCase,
     this._persistenceService,
   );
-
-  @override
+ 
   @override
   void dispose() {
     _activeCashRegistersSubscription?.cancel();

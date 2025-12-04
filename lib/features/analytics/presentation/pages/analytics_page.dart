@@ -11,6 +11,11 @@ import '../providers/analytics_provider.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/payment_methods_card.dart';
 import '../widgets/active_cash_registers_card.dart';
+import '../widgets/products_metric_card.dart';
+import '../widgets/profitability_metric_card.dart';
+import '../widgets/seller_ranking_card.dart';
+import '../widgets/peak_hours_card.dart';
+import '../widgets/slow_moving_products_card.dart';
 import '../widgets/transaction_list_item.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -85,7 +90,7 @@ class AnalyticsPage extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final screenWidth = constraints.maxWidth;
-      
+
                   // DISEÑO COMPACTO VERTICAL (pantallas muy pequeñas < 600px)
                   if (screenWidth < 600) {
                     return Column(
@@ -104,7 +109,7 @@ class AnalyticsPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-      
+
                         // Grid 2x2 para métricas secundarias
                         AspectRatio(
                           aspectRatio: 2.1,
@@ -136,7 +141,7 @@ class AnalyticsPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-      
+
                         AspectRatio(
                           aspectRatio: 2.1,
                           child: Row(
@@ -150,16 +155,17 @@ class AnalyticsPage extends StatelessWidget {
                                   icon: Icons.analytics_rounded,
                                   color: const Color(0xFF0891B2),
                                   isZero:
-                                      analytics.averageProfitPerTransaction == 0,
+                                      analytics.averageProfitPerTransaction ==
+                                          0,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               // 5. Productos Vendidos
                               Expanded(
-                                child: MetricCard(
-                                  title: 'Productos',
-                                  value: analytics.totalProductsSold.toString(),
-                                  icon: Icons.inventory_2_rounded,
+                                child: ProductsMetricCard(
+                                  totalProducts: analytics.totalProductsSold,
+                                  topSellingProducts:
+                                      analytics.topSellingProducts,
                                   color: const Color(0xFFD97706),
                                   isZero: analytics.totalProductsSold == 0,
                                 ),
@@ -168,15 +174,65 @@ class AnalyticsPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-      
-                        // 6. Medios de Pago
+
+                        // 6. Rentabilidad
+                        AspectRatio(
+                          aspectRatio: 2.1,
+                          child: ProfitabilityMetricCard(
+                            totalProfit: analytics.totalProfit,
+                            mostProfitableProducts:
+                                analytics.mostProfitableProducts,
+                            color: const Color(0xFF10B981),
+                            isZero: analytics.mostProfitableProducts.isEmpty,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 7. Ranking de Vendedores y Horas Pico
+                        AspectRatio(
+                          aspectRatio: 2.1,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SellerRankingCard(
+                                  salesBySeller: analytics.salesBySeller,
+                                  color: const Color(0xFF8B5CF6),
+                                  isZero: analytics.salesBySeller.isEmpty,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: PeakHoursCard(
+                                  salesByHour: analytics.salesByHour,
+                                  peakHours: analytics.peakHours,
+                                  color: const Color(0xFFF59E0B),
+                                  isZero: analytics.peakHours.isEmpty,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 8. Productos de Lenta Rotación
+                        AspectRatio(
+                          aspectRatio: 2.1,
+                          child: SlowMovingProductsCard(
+                            slowMovingProducts: analytics.slowMovingProducts,
+                            color: const Color(0xFFEF4444),
+                            isZero: analytics.slowMovingProducts.isEmpty,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 9. Medios de Pago
                         PaymentMethodsCard(
                           paymentMethodsBreakdown:
                               analytics.paymentMethodsBreakdown,
                           totalSales: analytics.totalSales,
                         ),
-      
-                        // 7. Cajas Activas (si existen)
+
+                        // 10. Cajas Activas (si existen)
                         if (activeCashRegisters.isNotEmpty) ...[
                           const SizedBox(height: 12),
                           ActiveCashRegistersCard(
@@ -191,7 +247,7 @@ class AnalyticsPage extends StatelessWidget {
                     // Ajustamos columnas según ancho
                     final isDesktop = screenWidth >= 1200;
                     final crossAxisCount = isDesktop ? 6 : 4;
-      
+
                     return Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1400),
@@ -214,7 +270,7 @@ class AnalyticsPage extends StatelessWidget {
                                 isZero: analytics.totalSales == 0,
                               ),
                             ),
-      
+
                             // 2. Ganancia - El objetivo (2x1)
                             StaggeredGridTile.count(
                               crossAxisCellCount: 2,
@@ -229,7 +285,7 @@ class AnalyticsPage extends StatelessWidget {
                                 isZero: analytics.totalProfit == 0,
                               ),
                             ),
-      
+
                             // 3. Transacciones - Operativo (1x1)
                             StaggeredGridTile.count(
                               crossAxisCellCount: isDesktop ? 1 : 2,
@@ -242,7 +298,7 @@ class AnalyticsPage extends StatelessWidget {
                                 isZero: analytics.totalTransactions == 0,
                               ),
                             ),
-      
+
                             // 4. Ticket Promedio - Eficiencia (1x1)
                             StaggeredGridTile.count(
                               crossAxisCellCount: isDesktop ? 1 : 2,
@@ -257,22 +313,75 @@ class AnalyticsPage extends StatelessWidget {
                                     analytics.averageProfitPerTransaction == 0,
                               ),
                             ),
-      
+
                             // 5. Productos Vendidos - Inventario (2x1)
                             StaggeredGridTile.count(
                               crossAxisCellCount: 2,
                               mainAxisCellCount: 1,
-                              child: MetricCard(
-                                title: 'Productos Vendidos',
-                                value: analytics.totalProductsSold.toString(),
-                                icon: Icons.inventory_2_rounded,
+                              child: ProductsMetricCard(
+                                totalProducts: analytics.totalProductsSold,
+                                topSellingProducts:
+                                    analytics.topSellingProducts,
                                 color: const Color(0xFFD97706),
-                                subtitle: 'Movimiento de inventario',
                                 isZero: analytics.totalProductsSold == 0,
+                                subtitle: 'Movimiento de inventario',
                               ),
                             ),
-      
-                            // 6. Medios de Pago (2xFit)
+
+                            // 6. Rentabilidad (2x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: ProfitabilityMetricCard(
+                                totalProfit: analytics.totalProfit,
+                                mostProfitableProducts:
+                                    analytics.mostProfitableProducts,
+                                color: const Color(0xFF10B981),
+                                isZero:
+                                    analytics.mostProfitableProducts.isEmpty,
+                                subtitle: 'Productos más rentables',
+                              ),
+                            ),
+
+                            // 7. Ranking de Vendedores (2x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: SellerRankingCard(
+                                salesBySeller: analytics.salesBySeller,
+                                color: const Color(0xFF8B5CF6),
+                                isZero: analytics.salesBySeller.isEmpty,
+                                subtitle: 'Desempeño del equipo',
+                              ),
+                            ),
+
+                            // 8. Horas Pico (2x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: PeakHoursCard(
+                                salesByHour: analytics.salesByHour,
+                                peakHours: analytics.peakHours,
+                                color: const Color(0xFFF59E0B),
+                                isZero: analytics.peakHours.isEmpty,
+                                subtitle: 'Mayor actividad',
+                              ),
+                            ),
+
+                            // 9. Productos de Lenta Rotación (2x1)
+                            StaggeredGridTile.count(
+                              crossAxisCellCount: 2,
+                              mainAxisCellCount: 1,
+                              child: SlowMovingProductsCard(
+                                slowMovingProducts:
+                                    analytics.slowMovingProducts,
+                                color: const Color(0xFFEF4444),
+                                isZero: analytics.slowMovingProducts.isEmpty,
+                                subtitle: 'Requieren atención',
+                              ),
+                            ),
+
+                            // 10. Medios de Pago (2xFit)
                             StaggeredGridTile.fit(
                               crossAxisCellCount: 2,
                               child: PaymentMethodsCard(
@@ -281,8 +390,8 @@ class AnalyticsPage extends StatelessWidget {
                                 totalSales: analytics.totalSales,
                               ),
                             ),
-      
-                            // 7. Cajas Activas (2xFit) - Si existen
+
+                            // 11. Cajas Activas (2xFit) - Si existen
                             if (activeCashRegisters.isNotEmpty)
                               StaggeredGridTile.fit(
                                 crossAxisCellCount: 2,
@@ -307,11 +416,14 @@ class AnalyticsPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 'Transacciones',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold,fontSize: 24),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 24),
               ),
             ),
           ),
-      
+
           // Lista de Transacciones
           if (analytics.transactions.isEmpty)
             SliverToBoxAdapter(
@@ -358,23 +470,25 @@ class AnalyticsPage extends StatelessWidget {
                           analytics.transactions[index - 1].creation,
                           transaction.creation,
                         );
-      
+
                     final monthKey = _getMonthKey(transaction.creation);
                     final isExpanded = provider.isMonthExpanded(monthKey);
-                    final transactionsInMonth =
-                        _countTransactionsInMonth(analytics.transactions, index);
+                    final transactionsInMonth = _countTransactionsInMonth(
+                        analytics.transactions, index);
                     final monthRevenue =
                         _calculateMonthRevenue(analytics.transactions, index);
-      
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header de mes (expandible/colapsable)
                         if (isFirstInMonth)
                           InkWell(
-                            onTap: () => provider.toggleMonthExpansion(monthKey),
+                            onTap: () =>
+                                provider.toggleMonthExpansion(monthKey),
                             child: Padding(
-                              padding: const EdgeInsets.only(top: 20, bottom: 12),
+                              padding:
+                                  const EdgeInsets.only(top: 20, bottom: 12),
                               child: Row(
                                 children: [
                                   Icon(
@@ -433,7 +547,8 @@ class AnalyticsPage extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
-                                      CurrencyHelper.formatCurrency(monthRevenue),
+                                      CurrencyHelper.formatCurrency(
+                                          monthRevenue),
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelSmall
@@ -447,7 +562,7 @@ class AnalyticsPage extends StatelessWidget {
                               ),
                             ),
                           ),
-      
+
                         // Item de transacción (solo si está expandido)
                         if (isExpanded) ...[
                           TransactionListItem(
@@ -455,7 +570,7 @@ class AnalyticsPage extends StatelessWidget {
                             onTap: () =>
                                 _showTransactionDetail(context, transaction),
                           ),
-      
+
                           // Divisor entre items del mismo mes
                           if (!isLast &&
                               !_isDifferentMonth(

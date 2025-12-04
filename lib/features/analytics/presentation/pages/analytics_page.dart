@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
@@ -7,18 +6,19 @@ import 'package:sellweb/features/cash_register/domain/entities/cash_register.dar
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../domain/entities/date_filter.dart';
 import '../providers/analytics_provider.dart';
-import '../widgets/metric_card.dart';
-import '../widgets/payment_methods_card.dart';
 import '../widgets/active_cash_registers_card.dart';
+import '../widgets/analytics_skeleton.dart';
+import '../widgets/metric_card.dart';
+import '../widgets/month_grouped_transactions_list.dart';
+import '../widgets/payment_methods_card.dart';
+import '../widgets/peak_hours_card.dart';
 import '../widgets/products_metric_card.dart';
 import '../widgets/profitability_metric_card.dart';
 import '../widgets/seller_ranking_card.dart';
-import '../widgets/peak_hours_card.dart';
 import '../widgets/slow_moving_products_card.dart';
-import '../widgets/transaction_list_item.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 /// Página: Analíticas
 ///
@@ -49,10 +49,10 @@ class AnalyticsPage extends StatelessWidget {
 
   /// Construye el contenido según el estado
   Widget _buildContent(BuildContext context, AnalyticsProvider provider) {
-    // Estado: Loading inicial
+    // Estado: Loading inicial - usar skeleton animado
     if (provider.isLoading && !provider.hasData) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const SingleChildScrollView(
+        child: AnalyticsSkeleton(),
       );
     }
 
@@ -77,226 +77,65 @@ class AnalyticsPage extends StatelessWidget {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
     final activeCashRegisters = cashRegisterProvider.activeCashRegisters;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 30),
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          //
-          // Grid de Métricas y Tarjetas (Responsive Layout)
-          //
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverToBoxAdapter(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenWidth = constraints.maxWidth;
-
-                  // DISEÑO COMPACTO VERTICAL (pantallas muy pequeñas < 600px)
-                  if (screenWidth < 600) {
-                    return _buildMobileLayout(
-                        context, analytics, activeCashRegisters);
-                  }
-                  // DISEÑO TABLET (600px - 900px)
-                  else if (screenWidth < 900) {
-                    return _buildTabletLayout(
-                        context, analytics, activeCashRegisters);
-                  }
-                  // DISEÑO DESKTOP (≥ 900px)
-                  else {
-                    return _buildDesktopLayout(
-                        context, analytics, activeCashRegisters);
-                  }
-                },
-              ),
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        //
+        // Grid de Métricas y Tarjetas (Responsive Layout)
+        //
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverToBoxAdapter(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenWidth = constraints.maxWidth;
+    
+                // DISEÑO COMPACTO VERTICAL (pantallas muy pequeñas < 600px)
+                if (screenWidth < 600) {
+                  return _buildMobileLayout(
+                      context, analytics, activeCashRegisters);
+                }
+                // DISEÑO TABLET (600px - 900px)
+                else if (screenWidth < 900) {
+                  return _buildTabletLayout(
+                      context, analytics, activeCashRegisters);
+                }
+                // DISEÑO DESKTOP (≥ 900px)
+                else {
+                  return _buildDesktopLayout(
+                      context, analytics, activeCashRegisters);
+                }
+              },
             ),
           ),
-          //
-          // view : lista de transacciones
-          //
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Transacciones',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 24),
-              ),
+        ),
+        //
+        // view : lista de transacciones
+        //
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'Transacciones',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold, fontSize: 24),
             ),
           ),
-
-          // Lista de Transacciones
-          if (analytics.transactions.isEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(48.0),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 48,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withValues(alpha: 0.4),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No hay transacciones en este período',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withValues(alpha: 0.6),
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final transaction = analytics.transactions[index];
-                    final isLast = index == analytics.transactions.length - 1;
-                    final isFirstInMonth = index == 0 ||
-                        _isDifferentMonth(
-                          analytics.transactions[index - 1].creation,
-                          transaction.creation,
-                        );
-
-                    final monthKey = _getMonthKey(transaction.creation);
-                    final isExpanded = provider.isMonthExpanded(monthKey);
-                    final transactionsInMonth = _countTransactionsInMonth(
-                        analytics.transactions, index);
-                    final monthRevenue =
-                        _calculateMonthRevenue(analytics.transactions, index);
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header de mes (expandible/colapsable)
-                        if (isFirstInMonth)
-                          InkWell(
-                            onTap: () =>
-                                provider.toggleMonthExpansion(monthKey),
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 20, bottom: 12),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    isExpanded
-                                        ? Icons.keyboard_arrow_down_rounded
-                                        : Icons.keyboard_arrow_right_rounded,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _getMonthYearLabel(transaction.creation),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.5,
-                                        ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '$transactionsInMonth',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF059669)
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      CurrencyHelper.formatCurrency(
-                                          monthRevenue),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: const Color(0xFF059669),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                        // Item de transacción (solo si está expandido)
-                        if (isExpanded) ...[
-                          TransactionListItem(
-                            ticket: transaction,
-                            onTap: () =>
-                                _showTransactionDetail(context, transaction),
-                          ),
-
-                          // Divisor entre items del mismo mes
-                          if (!isLast &&
-                              !_isDifferentMonth(
-                                transaction.creation,
-                                analytics.transactions[index + 1].creation,
-                              ))
-                            Divider(
-                              height: 1,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .outlineVariant
-                                  .withValues(alpha: 0.2),
-                            ),
-                        ],
-                      ],
-                    );
-                  },
-                  childCount: analytics.transactions.length,
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+    
+        // Lista de Transacciones agrupadas por mes
+        SliverPadding(
+          padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+          sliver: MonthGroupedTransactionsList(
+            transactions: analytics.transactions,
+            isMonthExpanded: provider.isMonthExpanded,
+            onToggleMonth: provider.toggleMonthExpansion,
+            onTransactionTap: (transaction) => _showTransactionDetail(context, transaction),
+          ),
+        ),
+      ],
     );
   }
 
@@ -310,7 +149,7 @@ class AnalyticsPage extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     // Gap dinámico basado en el ancho de pantalla
     final gap = (screenWidth * 0.025).clamp(8.0, 16.0);
-    
+
     // Calcular alturas dinámicas basadas en el ancho de pantalla
     // para mantener proporciones óptimas en diferentes dispositivos
     final primaryCardHeight = (screenWidth * 0.38).clamp(120.0, 180.0);
@@ -466,7 +305,8 @@ class AnalyticsPage extends StatelessWidget {
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
     // Calcular el tamaño base de celda basado en el ancho disponible
-    final availableWidth = (screenWidth - 32 - 36).clamp(0.0, 900.0 - 36); // padding + 3 gaps
+    final availableWidth =
+        (screenWidth - 32 - 36).clamp(0.0, 900.0 - 36); // padding + 3 gaps
     final cellSize = availableWidth / 4;
     final gap = (screenWidth * 0.015).clamp(8.0, 12.0);
 
@@ -626,7 +466,8 @@ class AnalyticsPage extends StatelessWidget {
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
     // Calcular el tamaño base de celda basado en el ancho disponible (max 1400)
-    final availableWidth = (screenWidth - 32 - 60).clamp(0.0, 1400.0 - 60); // padding + 5 gaps
+    final availableWidth =
+        (screenWidth - 32 - 60).clamp(0.0, 1400.0 - 60); // padding + 5 gaps
     final cellSize = availableWidth / 6;
     final gap = (screenWidth * 0.01).clamp(10.0, 14.0);
 
@@ -790,7 +631,7 @@ class AnalyticsPage extends StatelessWidget {
     return AppBar(
       toolbarHeight: 70,
       titleSpacing: 0,
-      elevation: 0,
+      elevation: 0,backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
       title: Padding(
@@ -973,75 +814,6 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
-  /// Verifica si dos timestamps pertenecen a meses diferentes
-  bool _isDifferentMonth(Timestamp date1, Timestamp date2) {
-    final dt1 = date1.toDate();
-    final dt2 = date2.toDate();
-    return dt1.year != dt2.year || dt1.month != dt2.month;
-  }
-
-  /// Genera una clave única para un mes (formato: "YYYY-MM")
-  String _getMonthKey(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}';
-  }
-
-  /// Obtiene el label del mes y año para mostrar en el divisor
-  String _getMonthYearLabel(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    final months = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre'
-    ];
-    return '${months[date.month - 1]} ${date.year}';
-  }
-
-  /// Cuenta transacciones en un mes específico
-  int _countTransactionsInMonth(
-      List<TicketModel> transactions, int startIndex) {
-    if (startIndex >= transactions.length) return 0;
-
-    final startDate = transactions[startIndex].creation;
-    int count = 1;
-
-    for (int i = startIndex + 1; i < transactions.length; i++) {
-      if (_isDifferentMonth(startDate, transactions[i].creation)) {
-        break;
-      }
-      count++;
-    }
-
-    return count;
-  }
-
-  /// Calcula los ingresos totales de un mes específico
-  double _calculateMonthRevenue(
-      List<TicketModel> transactions, int startIndex) {
-    if (startIndex >= transactions.length) return 0.0;
-
-    final startDate = transactions[startIndex].creation;
-    double revenue = transactions[startIndex].priceTotal;
-
-    for (int i = startIndex + 1; i < transactions.length; i++) {
-      if (_isDifferentMonth(startDate, transactions[i].creation)) {
-        break;
-      }
-      revenue += transactions[i].priceTotal;
-    }
-
-    return revenue;
-  }
-
   /// Muestra el diálogo de detalle de transacción
   void _showTransactionDetail(BuildContext context, TicketModel transaction) {
     final salesProvider = context.read<SalesProvider>();
@@ -1062,17 +834,12 @@ class AnalyticsPage extends StatelessWidget {
       onTicketAnnulled: transaction.annulled
           ? null
           : () async {
-              // El diálogo ya se cierra automáticamente desde ticket_detail_dialog.dart
-              // No necesitamos hacer Navigator.pop() aquí
-
-              // Anular el ticket usando CashRegisterProvider
               final success = await cashRegisterProvider.annullTicket(
                 accountId: accountId,
                 ticket: transaction,
               );
 
               if (success) {
-                // Mostrar mensaje de éxito
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('Ticket anulado exitosamente'),
@@ -1080,10 +847,7 @@ class AnalyticsPage extends StatelessWidget {
                     duration: Duration(seconds: 2),
                   ),
                 );
-
-                // Las analíticas se actualizarán automáticamente con el listener en tiempo real
               } else {
-                // Mostrar mensaje de error
                 messenger.showSnackBar(
                   const SnackBar(
                     content:

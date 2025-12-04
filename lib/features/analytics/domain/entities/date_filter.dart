@@ -51,4 +51,42 @@ enum DateFilter {
         return (firstDayOfLastYear, firstDayOfThisYear);
     }
   }
+
+  /// Indica si este filtro debería usar streaming en tiempo real
+  ///
+  /// Los filtros de períodos cortos (hoy, ayer) se benefician del
+  /// tiempo real. Los períodos largos usan consulta única para
+  /// evitar sobrecarga de listeners.
+  bool get shouldUseRealtime {
+    switch (this) {
+      case DateFilter.today:
+      case DateFilter.yesterday:
+        return true;
+      case DateFilter.thisMonth:
+      case DateFilter.lastMonth:
+      case DateFilter.thisYear:
+      case DateFilter.lastYear:
+        return false;
+    }
+  }
+
+  /// Número de días que abarca este filtro (aproximado)
+  int get estimatedDays {
+    switch (this) {
+      case DateFilter.today:
+        return 1;
+      case DateFilter.yesterday:
+        return 1;
+      case DateFilter.thisMonth:
+        return DateTime.now().day; // Días transcurridos del mes
+      case DateFilter.lastMonth:
+        final now = DateTime.now();
+        return DateTime(now.year, now.month, 0).day; // Días del mes anterior
+      case DateFilter.thisYear:
+        final now = DateTime.now();
+        return now.difference(DateTime(now.year, 1, 1)).inDays + 1;
+      case DateFilter.lastYear:
+        return 365;
+    }
+  }
 }

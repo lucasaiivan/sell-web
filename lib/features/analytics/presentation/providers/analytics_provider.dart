@@ -6,7 +6,7 @@ import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
 import '../../domain/usecases/get_sales_analytics_usecase.dart';
 
-/// Estado interno del provider
+/// Estado interno del provider (inmutable)
 class _AnalyticsState {
   final SalesAnalytics? analytics;
   final bool isLoading;
@@ -45,12 +45,13 @@ class _AnalyticsState {
 ///
 /// **Responsabilidad:**
 /// - Gestionar estado de analíticas de ventas
-/// - Gestionar filtro de fecha seleccionado
-/// - Exponer datos calculados y lista de transacciones a la UI
-/// - Coordinar carga de datos mediante UseCase
+/// - Manejar filtro de fecha
+/// - Exponer métricas pre-calculadas a la UI
 ///
-/// **Dependencias:** [GetSalesAnalyticsUseCase]
-/// **Inyección DI:** @injectable
+/// **Estrategia de datos:**
+/// - Carga TODOS los documentos del rango de fecha seleccionado
+/// - Sin límite artificial: las métricas siempre son precisas
+/// - El filtro de fecha controla el volumen de datos
 @injectable
 class AnalyticsProvider extends ChangeNotifier
     implements InitializableProvider {
@@ -62,31 +63,25 @@ class AnalyticsProvider extends ChangeNotifier
 
   AnalyticsProvider(this._getSalesAnalyticsUseCase);
 
-  // --- Getters públicos ---
+  // === Getters públicos ===
 
-  /// Analíticas de ventas actuales
   SalesAnalytics? get analytics => _state.analytics;
-
-  /// Indica si está cargando datos
   bool get isLoading => _state.isLoading;
-
-  /// Mensaje de error si existe
   String? get errorMessage => _state.errorMessage;
-
-  /// Indica si hay datos cargados
   bool get hasData => _state.analytics != null;
-
-  /// Filtro de fecha seleccionado
   DateFilter get selectedFilter => _state.selectedFilter;
 
-  /// Verifica si un mes está expandido
+  /// Número de transacciones cargadas
+  int get transactionCount => _state.analytics?.transactions.length ?? 0;
+
+  /// Verifica si un mes está expandido (por defecto colapsado)
   bool isMonthExpanded(String monthKey) {
-    return _state.expandedMonths[monthKey] ?? false; // Por defecto colapsado
+    return _state.expandedMonths[monthKey] ?? false;
   }
 
-  // --- Métodos públicos ---
+  // === Métodos públicos ===
 
-  /// Alterna el estado de expansión de un mes
+  /// Alterna expansión de un mes en la lista de transacciones
   void toggleMonthExpansion(String monthKey) {
     final currentExpanded = _state.expandedMonths[monthKey] ?? false;
     final newExpandedMonths = Map<String, bool>.from(_state.expandedMonths);
@@ -96,20 +91,15 @@ class AnalyticsProvider extends ChangeNotifier
     notifyListeners();
   }
 
-  /// Suscribe a las analíticas para una cuenta específica con actualización en tiempo real
-  ///
-  /// [accountId] ID de la cuenta
+  /// Suscribe a analíticas con actualización en tiempo real
   void subscribeToAnalytics(String accountId) {
     if (accountId.isEmpty) return;
 
-    // Cancelar suscripción anterior si existe
     _subscription?.cancel();
-
     _currentAccountId = accountId;
     _state = _state.copyWith(isLoading: true, clearError: true);
     notifyListeners();
 
-    // Suscribirse al stream de analíticas
     _subscription = _getSalesAnalyticsUseCase(
       AnalyticsParams(
         accountId: accountId,
@@ -143,13 +133,14 @@ class AnalyticsProvider extends ChangeNotifier
     );
   }
 
-  /// Cambia el filtro de fecha y re-suscribe con el nuevo filtro
+  /// Cambia el filtro de fecha y re-suscribe
   void setDateFilter(DateFilter filter) {
     if (_state.selectedFilter == filter) return;
 
     _state = _state.copyWith(
       selectedFilter: filter,
       clearAnalytics: true,
+      expandedMonths: const {}, // Resetear expansión de meses
     );
     notifyListeners();
 
@@ -172,13 +163,11 @@ class AnalyticsProvider extends ChangeNotifier
     super.dispose();
   }
 
-  /// Implementación de InitializableProvider: Inicializa el provider para una cuenta
   @override
   Future<void> initialize(String accountId) async {
     subscribeToAnalytics(accountId);
   }
 
-  /// Implementación de InitializableProvider: Limpia recursos y cancela suscripciones
   @override
   void cleanup() {
     _subscription?.cancel();
@@ -189,7 +178,9 @@ class AnalyticsProvider extends ChangeNotifier
     try {
       notifyListeners();
     } catch (e) {
-      debugPrint('⚠️ AnalyticsProvider.cleanup: Provider ya disposed');
+      if (kDebugMode) {
+        debugPrint('⚠️ AnalyticsProvider.cleanup: Provider ya disposed');
+      }
     }
   }
 }

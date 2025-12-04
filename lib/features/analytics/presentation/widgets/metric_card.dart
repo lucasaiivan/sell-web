@@ -31,8 +31,6 @@ class MetricCard extends StatelessWidget {
 
     // Sistema de colores Material 3 con tinte de la métrica
     // Si es cero (sin datos), usamos colores neutros/deshabilitados
-    final effectiveColor = isZero ? theme.colorScheme.onSurfaceVariant : color;
-
     final containerColor = isZero
         ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
         : (isDark

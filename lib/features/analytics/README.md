@@ -65,13 +65,19 @@ analytics/
     ├── providers/
     │   └── analytics_provider.dart          # @injectable
     ├── pages/
-    │   └── analytics_page.dart              # Página principal
+    │   └── analytics_page.dart              # Página principal (layout responsivo)
     └── widgets/
-        ├── metric_card.dart                 # Card de métrica
-        ├── date_filter_chips.dart           # Selector de período
-        ├── transaction_list_item.dart       # Item de transacción
+        ├── analytics_base_card.dart         # Widget base para todas las tarjetas
+        ├── metric_card.dart                 # Card de métrica numérica
+        ├── products_metric_card.dart        # Card de productos vendidos
+        ├── profitability_metric_card.dart   # Card de rentabilidad
+        ├── seller_ranking_card.dart         # Card de ranking de vendedores
+        ├── peak_hours_card.dart             # Card de horas pico
+        ├── slow_moving_products_card.dart   # Card de productos de lenta rotación
         ├── payment_methods_card.dart        # Desglose por métodos de pago
         ├── active_cash_registers_card.dart  # Cajas activas
+        ├── date_filter_chips.dart           # Selector de período
+        ├── transaction_list_item.dart       # Item de transacción
         └── shimmer_widget.dart              # Loading placeholder
 ```
 

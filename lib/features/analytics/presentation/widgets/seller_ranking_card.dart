@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
+import 'analytics_base_card.dart';
 
 /// Widget: Tarjeta de Ranking de Vendedores
 ///
@@ -30,169 +31,116 @@ class SellerRankingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final topSeller = salesBySeller.isNotEmpty ? salesBySeller.first : null;
     final topSellerName = topSeller?['sellerName'] as String? ?? 'Sin datos';
+    final topSellerSales = topSeller?['totalSales'] as double? ?? 0.0;
     final totalSellers = salesBySeller.length;
+    final hasData = !isZero && salesBySeller.isNotEmpty;
 
-    return GestureDetector(
-      onTap: salesBySeller.isNotEmpty
-          ? () => _showSellerRankingModal(context)
-          : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
+    return AnalyticsBaseCard(
+      color: color,
+      isZero: isZero || salesBySeller.isEmpty,
+      icon: Icons.emoji_events_rounded,
+      title: 'Vendedores',
+      subtitle: subtitle,
+      showActionIndicator: hasData,
+      onTap: hasData ? () => _showSellerRankingModal(context) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          const Spacer(),
+          if (!hasData)
+            const AnalyticsEmptyState(message: 'Sin datos')
+          else ...[
+            // Vendedor top con badge
+            _buildTopSellerPreview(context, topSellerName, topSellerSales),
+            const SizedBox(height: 8),
+            // Contador de vendedores
+            Text(
+              '$totalSellers vendedor${totalSellers != 1 ? 'es' : ''} activo${totalSellers != 1 ? 's' : ''}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopSellerPreview(
+      BuildContext context, String sellerName, double totalSales) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              // Fondo con gradiente sutil
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withValues(alpha: 0.08),
-                        color.withValues(alpha: 0.02),
-                      ],
-                    ),
+      ),
+      child: Row(
+        children: [
+          // Badge de oro
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+            ),
+            child: const Icon(
+              Icons.workspace_premium_rounded,
+              color: Color(0xFFFFD700),
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Nombre y ventas
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  sellerName,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  CurrencyHelper.formatCurrency(totalSales),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
+                    color: color,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-
-              // Contenido
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header con ícono y título
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.emoji_events_rounded,
-                            color: color,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Vendedores',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                              if (subtitle != null)
-                                Text(
-                                  subtitle!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                            .withValues(alpha: 0.7),
-                                      ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        // Indicador de acción
-                        if (salesBySeller.isNotEmpty)
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.5),
-                            size: 20,
-                          ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // Vendedor top
-                    if (isZero || salesBySeller.isEmpty)
-                      Text(
-                        'Sin datos',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant
-                                      .withValues(alpha: 0.5),
-                                ),
-                      )
-                    else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.workspace_premium_rounded,
-                                color: const Color(0xFFFFD700),
-                                size: 18,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  topSellerName,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$totalSellers vendedor${totalSellers != 1 ? 'es' : ''} activo${totalSellers != 1 ? 's' : ''}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          // Badge "Top"
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              '🏆',
+              style: TextStyle(fontSize: 10),
+            ),
+          ),
+        ],
       ),
     );
   }

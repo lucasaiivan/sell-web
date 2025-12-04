@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'analytics_base_card.dart';
 
 /// Widget: Tarjeta de Productos de Lenta Rotación
 ///
@@ -35,161 +36,130 @@ class SlowMovingProductsCard extends StatelessWidget {
         ? slowMovingProducts.first['product'] as ProductCatalogue
         : null;
     final totalSlowProducts = slowMovingProducts.length;
+    final hasData = !isZero && slowMovingProducts.isNotEmpty;
 
-    return GestureDetector(
-      onTap: slowMovingProducts.isNotEmpty
-          ? () => _showSlowMovingModal(context)
-          : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              // Fondo con gradiente sutil
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withValues(alpha: 0.08),
-                        color.withValues(alpha: 0.02),
-                      ],
+    return AnalyticsBaseCard(
+      color: color,
+      isZero: isZero || slowMovingProducts.isEmpty,
+      icon: Icons.warning_amber_rounded,
+      title: 'Lenta Rotación',
+      subtitle: subtitle,
+      showActionIndicator: hasData,
+      onTap: hasData ? () => _showSlowMovingModal(context) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          const Spacer(),
+          if (!hasData)
+            const AnalyticsEmptyState(message: 'Sin alertas')
+          else ...[
+            // Producto con menos ventas preview
+            _buildSlowProductPreview(context, topProduct!),
+            const SizedBox(height: 8),
+            // Badge de alerta
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$totalSlowProducts producto${totalSlowProducts != 1 ? 's' : ''} con pocas ventas',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
                     ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlowProductPreview(
+      BuildContext context, ProductCatalogue product) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Avatar del producto
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.15),
+              border: Border.all(
+                color: color.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: ClipOval(
+              child: product.image.isNotEmpty
+                  ? ProductImage(
+                      imageUrl: product.image,
+                      size: 28,
+                      borderRadius: 14,
+                    )
+                  : Icon(
+                      Icons.inventory_2_outlined,
+                      size: 14,
+                      color: color.withValues(alpha: 0.7),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Nombre del producto
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  product.description,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Requiere atención',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
+                    color: color,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-
-              // Contenido
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header con ícono y título
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.warning_amber_rounded,
-                            color: color,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Lenta Rotación',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                              if (subtitle != null)
-                                Text(
-                                  subtitle!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                            .withValues(alpha: 0.7),
-                                      ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (slowMovingProducts.isNotEmpty)
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.5),
-                            size: 20,
-                          ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // Producto con menos ventas
-                    if (isZero || slowMovingProducts.isEmpty)
-                      Text(
-                        'Sin alertas',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant
-                                      .withValues(alpha: 0.5),
-                                ),
-                      )
-                    else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            topProduct?.description ?? 'Producto',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '$totalSlowProducts producto${totalSlowProducts != 1 ? 's' : ''} con pocas ventas',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: color,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          // Badge de alerta
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              '⚠️',
+              style: TextStyle(fontSize: 10),
+            ),
+          ),
+        ],
       ),
     );
   }

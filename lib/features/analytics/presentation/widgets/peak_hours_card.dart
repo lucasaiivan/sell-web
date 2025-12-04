@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
+import 'analytics_base_card.dart';
 
 /// Widget: Tarjeta de Horas Pico
 ///
@@ -36,170 +37,105 @@ class PeakHoursCard extends StatelessWidget {
     final peakHourLabel =
         topHour != null ? _formatHour(topHour['hour'] as int) : 'Sin datos';
     final peakSales = topHour?['totalSales'] as double? ?? 0.0;
+    final hasData = !isZero && peakHours.isNotEmpty;
 
-    return GestureDetector(
-      onTap: peakHours.isNotEmpty ? () => _showPeakHoursModal(context) : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
+    return AnalyticsBaseCard(
+      color: color,
+      isZero: isZero || peakHours.isEmpty,
+      icon: Icons.schedule_rounded,
+      title: 'Horas Pico',
+      subtitle: subtitle,
+      showActionIndicator: hasData,
+      onTap: hasData ? () => _showPeakHoursModal(context) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Spacer(),
+          if (!hasData)
+            const AnalyticsEmptyState(message: 'Sin datos')
+          else ...[
+            // Mini gráfico de barras
+            SizedBox(
+              height: 28,
+              child: _buildMiniBarChart(context),
+            ),
+            const SizedBox(height: 10),
+            // Hora pico principal con valor
+            _buildPeakHourPreview(context, peakHourLabel, peakSales),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeakHourPreview(
+      BuildContext context, String hourLabel, double totalSales) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              // Fondo con gradiente sutil
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withValues(alpha: 0.08),
-                        color.withValues(alpha: 0.02),
-                      ],
-                    ),
+      ),
+      child: Row(
+        children: [
+          // Icono de trending
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.2),
+            ),
+            child: Icon(
+              Icons.trending_up_rounded,
+              color: color,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Hora y ventas
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  hourLabel,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-              ),
-
-              // Contenido
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header con ícono y título
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.schedule_rounded,
-                            color: color,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Horas Pico',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                              if (subtitle != null)
-                                Text(
-                                  subtitle!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                            .withValues(alpha: 0.7),
-                                      ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (peakHours.isNotEmpty)
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.5),
-                            size: 20,
-                          ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // Mini gráfico de barras
-                    if (!isZero && peakHours.isNotEmpty)
-                      SizedBox(
-                        height: 32,
-                        child: _buildMiniBarChart(context),
-                      ),
-
-                    const SizedBox(height: 8),
-
-                    // Hora pico principal
-                    if (isZero || peakHours.isEmpty)
-                      Text(
-                        'Sin datos',
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant
-                                      .withValues(alpha: 0.5),
-                                ),
-                      )
-                    else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.trending_up_rounded,
-                                color: color,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                peakHourLabel,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            CurrencyHelper.formatCurrency(peakSales),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ),
-                  ],
+                Text(
+                  CurrencyHelper.formatCurrency(totalSales),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          // Badge "Pico"
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              '⏰',
+              style: TextStyle(fontSize: 10),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -227,7 +163,7 @@ class PeakHoursCard extends StatelessWidget {
         return Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 0.5),
-            height: 32 * normalizedHeight.clamp(0.05, 1.0),
+            height: 28 * normalizedHeight.clamp(0.05, 1.0),
             decoration: BoxDecoration(
               color: isPeak
                   ? color

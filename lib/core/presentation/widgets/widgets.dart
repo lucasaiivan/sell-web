@@ -19,5 +19,6 @@ export 'feedback/feedback.dart';
 // 📊 Gráficos y visualización
 export 'graphics/graphics.dart';
 
-// 🧭 Widgets de navegación
+// 🧭 Navegación y estructura
 export 'navigation/navigation.dart';
+

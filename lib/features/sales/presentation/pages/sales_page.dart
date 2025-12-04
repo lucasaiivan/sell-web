@@ -430,22 +430,13 @@ class _SalesPageState extends State<SalesPage> {
                 : 'Buscar productos';
 
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
-    return AppBar(
+    return CustomAppBar(
       toolbarHeight: 70,
       titleSpacing: 0,
-      // Agregar espacio adicional desde la barra de estado
-      elevation: 0,
-      leading: Container(),
-      scrolledUnderElevation: 0,
-      // Usar flexibleSpace para controlar mejor el espaciado
-      flexibleSpace: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.only(
-              top: 20.0,
-              bottom: 12,
-              left: 12,
-              right: 12), // Espacio adicional desde la barra de estado
-          child: Row(
+      automaticallyImplyLeading: false,
+      titleWidget: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
             children: [
               // avatar : avatar de usuario y botón de abrir drawer
               Builder(
@@ -454,13 +445,12 @@ class _SalesPageState extends State<SalesPage> {
                   child: UserAvatar(
                     imageUrl: provider.profileAccountSelected.image,
                     text: provider.profileAccountSelected.name,
-                    radius: 18,
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
               // button : busqueda de productos
-              Padding(
-                padding: const EdgeInsets.only(left: 20.0, right: 8.0),
+              Expanded(
                 child: SearchButton(
                   height: 40,
                   onPressed: (isLoading || isEmpty)
@@ -484,7 +474,7 @@ class _SalesPageState extends State<SalesPage> {
                       Theme.of(buildContext).colorScheme.onPrimaryContainer,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               // Indicador de conectividad
               const ConnectivityIndicator(),
               // view : botones de la barra de acciones
@@ -539,9 +529,6 @@ class _SalesPageState extends State<SalesPage> {
             ],
           ),
         ),
-      ),
-      // Remover las propiedades leading, title y actions ya que están en flexibleSpace
-      centerTitle: false,
     );
   }
 

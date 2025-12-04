@@ -47,21 +47,13 @@ class _CataloguePageState extends State<CataloguePage> {
     // controllers
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
-    return AppBar(
+    return CustomAppBar(
       toolbarHeight: 70,
       titleSpacing: 0,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      leading: Container(),
-      flexibleSpace: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.only(
-            top: 20.0,
-            bottom: 12,
-            left: 12,
-            right: 12,
-          ),
-          child: Row(
+      automaticallyImplyLeading: false,
+      titleWidget: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
             children: [
               // Avatar y botón de drawer
               Builder(
@@ -139,7 +131,6 @@ class _CataloguePageState extends State<CataloguePage> {
             ],
           ),
         ),
-      ),
     );
   }
 

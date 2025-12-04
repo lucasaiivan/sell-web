@@ -628,13 +628,11 @@ class AnalyticsPage extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final salesProvider = context.read<SalesProvider>();
 
-    return AppBar(
+    return CustomAppBar(
       toolbarHeight: 70,
-      titleSpacing: 0,
-      elevation: 0,backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      scrolledUnderElevation: 0,
+      titleSpacing: 0, 
       automaticallyImplyLeading: false,
-      title: Padding(
+      titleWidget: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
           children: [

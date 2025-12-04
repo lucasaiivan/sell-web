@@ -51,13 +51,11 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
     final sellProvider = context.read<SalesProvider>();
     final theme = Theme.of(context);
 
-    return AppBar(
+    return CustomAppBar(
       toolbarHeight: 70,
       titleSpacing: 0,
-      elevation: 0,
-      scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
-      title: Padding(
+      titleWidget: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
           children: [

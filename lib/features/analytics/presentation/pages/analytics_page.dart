@@ -307,13 +307,21 @@ class AnalyticsPage extends StatelessWidget {
     dynamic analytics,
     List<CashRegister> activeCashRegisters,
   ) {
-    const double gap = 12.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Gap dinámico basado en el ancho de pantalla
+    final gap = (screenWidth * 0.025).clamp(8.0, 16.0);
+    
+    // Calcular alturas dinámicas basadas en el ancho de pantalla
+    // para mantener proporciones óptimas en diferentes dispositivos
+    final primaryCardHeight = (screenWidth * 0.38).clamp(120.0, 180.0);
+    final secondaryCardHeight = (screenWidth * 0.32).clamp(100.0, 150.0);
+    final tertiaryCardHeight = (screenWidth * 0.42).clamp(130.0, 190.0);
 
     return Column(
       children: [
-        // 1. Facturación - Métrica principal destacada (más grande)
-        AspectRatio(
-          aspectRatio: 2.2,
+        // 1. Facturación - Métrica principal destacada
+        SizedBox(
+          height: primaryCardHeight,
           child: MetricCard(
             title: 'Facturación',
             value: CurrencyHelper.formatCurrency(analytics.totalSales),
@@ -323,11 +331,11 @@ class AnalyticsPage extends StatelessWidget {
             isZero: analytics.totalSales == 0,
           ),
         ),
-        const SizedBox(height: gap),
+        SizedBox(height: gap),
 
-        // 2-3. Ganancia y Ventas (fila 2x1) - Tarjetas simples
-        AspectRatio(
-          aspectRatio: 2.5,
+        // 2-3. Ganancia y Ventas (fila 2x1)
+        SizedBox(
+          height: secondaryCardHeight,
           child: Row(
             children: [
               Expanded(
@@ -339,7 +347,7 @@ class AnalyticsPage extends StatelessWidget {
                   isZero: analytics.totalProfit == 0,
                 ),
               ),
-              const SizedBox(width: gap),
+              SizedBox(width: gap),
               Expanded(
                 child: MetricCard(
                   title: 'Ventas',
@@ -352,11 +360,11 @@ class AnalyticsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: gap),
+        SizedBox(height: gap),
 
-        // 4-5. Ticket Promedio y Productos (fila 2x1) - Aspecto 1:1 para más contenido
-        AspectRatio(
-          aspectRatio: 2.0,
+        // 4-5. Ticket Promedio y Productos (fila 2x1)
+        SizedBox(
+          height: tertiaryCardHeight,
           child: Row(
             children: [
               Expanded(
@@ -369,7 +377,7 @@ class AnalyticsPage extends StatelessWidget {
                   isZero: analytics.averageProfitPerTransaction == 0,
                 ),
               ),
-              const SizedBox(width: gap),
+              SizedBox(width: gap),
               Expanded(
                 child: ProductsMetricCard(
                   totalProducts: analytics.totalProductsSold,
@@ -381,11 +389,11 @@ class AnalyticsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: gap),
+        SizedBox(height: gap),
 
         // 6. Rentabilidad (ancho completo)
-        AspectRatio(
-          aspectRatio: 2.2,
+        SizedBox(
+          height: tertiaryCardHeight,
           child: ProfitabilityMetricCard(
             totalProfit: analytics.totalProfit,
             mostProfitableProducts: analytics.mostProfitableProducts,
@@ -393,11 +401,11 @@ class AnalyticsPage extends StatelessWidget {
             isZero: analytics.mostProfitableProducts.isEmpty,
           ),
         ),
-        const SizedBox(height: gap),
+        SizedBox(height: gap),
 
-        // 7-8. Lenta Rotación y Horas Pico (fila 2x1) - Aspecto 1:1
-        AspectRatio(
-          aspectRatio: 2.0,
+        // 7-8. Lenta Rotación y Horas Pico (fila 2x1)
+        SizedBox(
+          height: tertiaryCardHeight,
           child: Row(
             children: [
               Expanded(
@@ -407,7 +415,7 @@ class AnalyticsPage extends StatelessWidget {
                   isZero: analytics.slowMovingProducts.isEmpty,
                 ),
               ),
-              const SizedBox(width: gap),
+              SizedBox(width: gap),
               Expanded(
                 child: PeakHoursCard(
                   salesByHour: analytics.salesByHour,
@@ -419,18 +427,18 @@ class AnalyticsPage extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: gap),
+        SizedBox(height: gap),
 
         // 9. Ranking de Vendedores (ancho completo)
-        AspectRatio(
-          aspectRatio: 2.2,
+        SizedBox(
+          height: tertiaryCardHeight,
           child: SellerRankingCard(
             salesBySeller: analytics.salesBySeller,
             color: const Color(0xFF8B5CF6),
             isZero: analytics.salesBySeller.isEmpty,
           ),
         ),
-        const SizedBox(height: gap),
+        SizedBox(height: gap),
 
         // 10. Medios de Pago (altura dinámica)
         PaymentMethodsCard(
@@ -440,7 +448,7 @@ class AnalyticsPage extends StatelessWidget {
 
         // 11. Cajas Activas (si existen)
         if (activeCashRegisters.isNotEmpty) ...[
-          const SizedBox(height: gap),
+          SizedBox(height: gap),
           ActiveCashRegistersCard(
             activeCashRegisters: activeCashRegisters,
           ),
@@ -450,24 +458,30 @@ class AnalyticsPage extends StatelessWidget {
   }
 
   /// Layout para tablets (600px - 900px)
-  /// Grid de 4 columnas optimizado
+  /// Grid de 4 columnas optimizado con celdas dinámicas
   Widget _buildTabletLayout(
     BuildContext context,
     dynamic analytics,
     List<CashRegister> activeCashRegisters,
   ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Calcular el tamaño base de celda basado en el ancho disponible
+    final availableWidth = (screenWidth - 32 - 36).clamp(0.0, 900.0 - 36); // padding + 3 gaps
+    final cellSize = availableWidth / 4;
+    final gap = (screenWidth * 0.015).clamp(8.0, 12.0);
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 900),
         child: StaggeredGrid.count(
           crossAxisCount: 4,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          mainAxisSpacing: gap,
+          crossAxisSpacing: gap,
           children: [
             // 1. Facturación (2x2) - Destacada
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 2,
+              mainAxisExtent: cellSize * 1.6,
               child: MetricCard(
                 title: 'Facturación',
                 value: CurrencyHelper.formatCurrency(analytics.totalSales),
@@ -479,9 +493,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 2. Ganancia (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.75,
               child: MetricCard(
                 title: 'Ganancia',
                 value: CurrencyHelper.formatCurrency(analytics.totalProfit),
@@ -493,9 +507,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 3-4. Ventas y Ticket Promedio (1x1 cada una)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 1,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: MetricCard(
                 title: 'Ventas',
                 value: analytics.totalTransactions.toString(),
@@ -504,9 +518,9 @@ class AnalyticsPage extends StatelessWidget {
                 isZero: analytics.totalTransactions == 0,
               ),
             ),
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 1,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: MetricCard(
                 title: 'Ticket Prom.',
                 value: CurrencyHelper.formatCurrency(
@@ -518,9 +532,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 5. Productos Vendidos (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: ProductsMetricCard(
                 totalProducts: analytics.totalProductsSold,
                 topSellingProducts: analytics.topSellingProducts,
@@ -531,9 +545,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 6. Rentabilidad (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: ProfitabilityMetricCard(
                 totalProfit: analytics.totalProfit,
                 mostProfitableProducts: analytics.mostProfitableProducts,
@@ -544,9 +558,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 7. Ranking de Vendedores (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: SellerRankingCard(
                 salesBySeller: analytics.salesBySeller,
                 color: const Color(0xFF8B5CF6),
@@ -556,9 +570,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 8. Horas Pico (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: PeakHoursCard(
                 salesByHour: analytics.salesByHour,
                 peakHours: analytics.peakHours,
@@ -569,9 +583,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 9. Productos de Lenta Rotación (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.85,
               child: SlowMovingProductsCard(
                 slowMovingProducts: analytics.slowMovingProducts,
                 color: const Color(0xFFEF4444),
@@ -604,25 +618,31 @@ class AnalyticsPage extends StatelessWidget {
   }
 
   /// Layout para desktop (≥ 900px)
-  /// Grid de 6 columnas para máximo aprovechamiento
+  /// Grid de 6 columnas para máximo aprovechamiento con tamaños dinámicos
   Widget _buildDesktopLayout(
     BuildContext context,
     dynamic analytics,
     List<CashRegister> activeCashRegisters,
   ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Calcular el tamaño base de celda basado en el ancho disponible (max 1400)
+    final availableWidth = (screenWidth - 32 - 60).clamp(0.0, 1400.0 - 60); // padding + 5 gaps
+    final cellSize = availableWidth / 6;
+    final gap = (screenWidth * 0.01).clamp(10.0, 14.0);
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1400),
         child: StaggeredGrid.count(
           crossAxisCount: 6,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          mainAxisSpacing: gap,
+          crossAxisSpacing: gap,
           children: [
             // FILA 1: Métricas principales
             // 1. Facturación (2x2) - Destacada
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 2,
+              mainAxisExtent: cellSize * 1.5,
               child: MetricCard(
                 title: 'Facturación',
                 value: CurrencyHelper.formatCurrency(analytics.totalSales),
@@ -634,9 +654,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 2. Ganancia (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.7,
               child: MetricCard(
                 title: 'Ganancia',
                 value: CurrencyHelper.formatCurrency(analytics.totalProfit),
@@ -648,9 +668,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 3. Ventas (1x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 1,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: MetricCard(
                 title: 'Ventas',
                 value: analytics.totalTransactions.toString(),
@@ -661,9 +681,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 4. Ticket Promedio (1x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 1,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: MetricCard(
                 title: 'Ticket Prom.',
                 value: CurrencyHelper.formatCurrency(
@@ -676,9 +696,9 @@ class AnalyticsPage extends StatelessWidget {
 
             // FILA 2: Productos y Rentabilidad
             // 5. Productos Vendidos (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: ProductsMetricCard(
                 totalProducts: analytics.totalProductsSold,
                 topSellingProducts: analytics.topSellingProducts,
@@ -689,9 +709,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 6. Rentabilidad (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: ProfitabilityMetricCard(
                 totalProfit: analytics.totalProfit,
                 mostProfitableProducts: analytics.mostProfitableProducts,
@@ -703,9 +723,9 @@ class AnalyticsPage extends StatelessWidget {
 
             // FILA 3: Análisis secundarios
             // 7. Ranking de Vendedores (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: SellerRankingCard(
                 salesBySeller: analytics.salesBySeller,
                 color: const Color(0xFF8B5CF6),
@@ -715,9 +735,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 8. Horas Pico (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: PeakHoursCard(
                 salesByHour: analytics.salesByHour,
                 peakHours: analytics.peakHours,
@@ -728,9 +748,9 @@ class AnalyticsPage extends StatelessWidget {
             ),
 
             // 9. Productos de Lenta Rotación (2x1)
-            StaggeredGridTile.count(
+            StaggeredGridTile.extent(
               crossAxisCellCount: 2,
-              mainAxisCellCount: 1,
+              mainAxisExtent: cellSize * 0.8,
               child: SlowMovingProductsCard(
                 slowMovingProducts: analytics.slowMovingProducts,
                 color: const Color(0xFFEF4444),

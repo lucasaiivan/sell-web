@@ -1553,6 +1553,11 @@ class _FinancialInfoSection extends StatelessWidget {
             ? currentCashRegister.calculateTotalProfit(tickets!)
             : 0.0;
 
+        // ✅ Calcular descuentos totales desde los tickets (más preciso que el valor guardado)
+        final totalDiscount = tickets != null && tickets!.isNotEmpty
+            ? currentCashRegister.calculateTotalDiscount(tickets!)
+            : financialData.discount;
+
         final financialItems = [
           // Facturación total - RESALTADA
           {
@@ -1607,13 +1612,13 @@ class _FinancialInfoSection extends StatelessWidget {
               'color': Colors.red,
               'highlight': false,
             },
-          // Descuentos
-          if (financialData.discount > 0)
+          // Descuentos - usar cálculo desde tickets
+          if (totalDiscount > 0)
             {
               'label': 'Descuentos',
               'value':
-                  '-${CurrencyFormatter.formatPrice(value: financialData.discount)}',
-              'rawValue': -financialData.discount,
+                  '-${CurrencyFormatter.formatPrice(value: totalDiscount)}',
+              'rawValue': -totalDiscount,
               'icon': Icons.discount_rounded,
               'color': Colors.red,
               'highlight': false,

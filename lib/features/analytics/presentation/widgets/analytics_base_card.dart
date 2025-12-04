@@ -38,6 +38,11 @@ class AnalyticsBaseCard extends StatelessWidget {
   /// Padding personalizado
   final EdgeInsetsGeometry? padding;
 
+  /// Si es true, el child se expande para llenar el espacio disponible.
+  /// Si es false, el card se ajusta al contenido (shrink-wrap).
+  /// Usar false para tarjetas con altura dinámica (ej: listas).
+  final bool expandChild;
+
   const AnalyticsBaseCard({
     super.key,
     required this.color,
@@ -49,6 +54,7 @@ class AnalyticsBaseCard extends StatelessWidget {
     this.onTap,
     this.showActionIndicator = false,
     this.padding,
+    this.expandChild = true,
   });
 
   @override
@@ -94,7 +100,9 @@ class AnalyticsBaseCard extends StatelessWidget {
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final minDim = w < h ? w : h;
+            // Si la altura es infinita, usamos el ancho como referencia
+            final hasFiniteHeight = h.isFinite;
+            final minDim = hasFiniteHeight ? (w < h ? w : h) : w * 0.5;
 
             final effectivePadding = padding ??
                 EdgeInsets.all((minDim * 0.05).clamp(12.0, 20.0));
@@ -104,10 +112,14 @@ class AnalyticsBaseCard extends StatelessWidget {
             final titleSize = (w * 0.06).clamp(12.0, 14.0);
             final subtitleSize = (w * 0.045).clamp(10.0, 12.0);
 
+            // Determinar si expandir basado en la propiedad y las constraints
+            final shouldExpand = expandChild && hasFiniteHeight;
+
             return Padding(
               padding: effectivePadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: shouldExpand ? MainAxisSize.max : MainAxisSize.min,
                 children: [
                   // --- Header: Icono y Título ---
                   Row(
@@ -171,7 +183,10 @@ class AnalyticsBaseCard extends StatelessWidget {
                   ),
 
                   // --- Contenido ---
-                  Expanded(child: child),
+                  if (shouldExpand)
+                    Expanded(child: child)
+                  else
+                    child,
                 ],
               ),
             );
@@ -212,16 +227,20 @@ class AnalyticsEmptyState extends StatelessWidget {
 }
 
 /// Widget helper para mostrar el valor principal de una métrica
+/// Escala automáticamente el texto para aprovechar el espacio disponible
 class AnalyticsMainValue extends StatelessWidget {
   final String value;
   final bool isZero;
   final double? fontSize;
+  /// Factor de escala adicional (1.0 = normal, 1.5 = 50% más grande)
+  final double scaleFactor;
 
   const AnalyticsMainValue({
     super.key,
     required this.value,
     this.isZero = false,
     this.fontSize,
+    this.scaleFactor = 1.0,
   });
 
   @override
@@ -231,19 +250,59 @@ class AnalyticsMainValue extends StatelessWidget {
         ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
         : theme.colorScheme.onSurface;
 
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Text(
-        value,
-        style: TextStyle(
-          color: valueColor,
-          fontSize: fontSize ?? 32,
-          fontWeight: FontWeight.bold,
-          height: 1.0,
-          letterSpacing: -0.5,
+    // Si se proporciona un fontSize explícito, usarlo
+    if (fontSize != null) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: fontSize! * scaleFactor,
+            fontWeight: FontWeight.bold,
+            height: 1.0,
+            letterSpacing: -0.5,
+          ),
         ),
-      ),
+      );
+    }
+
+    // Sin fontSize explícito: usar LayoutBuilder para escalar dinámicamente
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calcular fontSize basado en el espacio disponible
+        final availableHeight = constraints.maxHeight.isFinite 
+            ? constraints.maxHeight 
+            : 60.0;
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 200.0;
+        
+        // El fontSize base es proporcional a la altura disponible
+        // pero también limitado por el ancho (para valores largos)
+        final heightBasedSize = availableHeight * 0.6;
+        final widthBasedSize = availableWidth / (value.length * 0.5);
+        
+        final calculatedSize = (heightBasedSize < widthBasedSize 
+            ? heightBasedSize 
+            : widthBasedSize).clamp(18.0, 72.0) * scaleFactor;
+
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: calculatedSize,
+              fontWeight: FontWeight.bold,
+              height: 1.0,
+              letterSpacing: -0.5,
+            ),
+          ),
+        );
+      },
     );
   }
 }

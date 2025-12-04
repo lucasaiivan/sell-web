@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'analytics_base_card.dart';
+import 'analytics_modal.dart';
 
 /// Widget: Tarjeta de Horas Pico
 ///
@@ -49,18 +50,19 @@ class PeakHoursCard extends StatelessWidget {
       onTap: hasData ? () => _showPeakHoursModal(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment:
+            hasData ? MainAxisAlignment.end : MainAxisAlignment.center,
         children: [
-          const Spacer(),
           if (!hasData)
-            const AnalyticsEmptyState(message: 'Sin datos')
+            const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
           else ...[
             // Mini gráfico de barras
             SizedBox(
               height: 28,
               child: _buildMiniBarChart(context),
             ),
-            const SizedBox(height: 10),
-            // Hora pico principal con valor
+            const SizedBox(height: 8),
+            // Hora pico principal con valor (simplificado)
             _buildPeakHourPreview(context, peakHourLabel, peakSales),
           ],
         ],
@@ -68,15 +70,16 @@ class PeakHoursCard extends StatelessWidget {
     );
   }
 
+  /// Preview simplificado de la hora pico
   Widget _buildPeakHourPreview(
       BuildContext context, String hourLabel, double totalSales) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: color.withValues(alpha: 0.2),
           width: 1,
@@ -84,55 +87,29 @@ class PeakHoursCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icono de trending
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.2),
+          // Icono de reloj pequeño
+          Icon(
+            Icons.schedule_rounded,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          // Hora
+          Text(
+            hourLabel,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
             ),
-            child: Icon(
-              Icons.trending_up_rounded,
+          ),
+          const Spacer(),
+          // Ventas compacto
+          Text(
+            CurrencyHelper.formatCurrency(totalSales),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 10,
               color: color,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Hora y ventas
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  hourLabel,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                Text(
-                  CurrencyHelper.formatCurrency(totalSales),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 10,
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Badge "Pico"
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text(
-              '⏰',
-              style: TextStyle(fontSize: 10),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -212,10 +189,10 @@ class PeakHoursModal extends StatelessWidget {
     required this.peakHours,
   });
 
+  static const _accentColor = Color(0xFFF59E0B);
+
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.85;
-
     // Encontrar el máximo para normalizar
     double maxSales = 0;
     for (final hourData in salesByHour.values) {
@@ -223,162 +200,125 @@ class PeakHoursModal extends StatelessWidget {
       if (sales > maxSales) maxSales = sales;
     }
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+    return AnalyticsModal(
+      accentColor: _accentColor,
+      icon: Icons.schedule_rounded,
+      title: 'Análisis por Hora',
+      subtitle: 'Distribución de ventas en 24 horas',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
+          // Gráfico de barras grande
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 150,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List.generate(24, (hour) {
+                      final hourData = salesByHour[hour];
+                      final sales = hourData?['totalSales'] as double? ?? 0.0;
+                      final normalizedHeight =
+                          maxSales > 0 ? (sales / maxSales) : 0.0;
+                      final isPeak = peakHours.isNotEmpty &&
+                          peakHours.any((p) => p['hour'] as int == hour);
+
+                      return Expanded(
+                        child: Tooltip(
+                          message:
+                              '${_formatHour(hour)}\n${CurrencyHelper.formatCurrency(sales)}',
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 1),
+                            height: 150 * normalizedHeight.clamp(0.02, 1.0),
+                            decoration: BoxDecoration(
+                              gradient: isPeak
+                                  ? const LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        _accentColor,
+                                        Color(0xFFFFB938),
+                                      ],
+                                    )
+                                  : null,
+                              color: isPeak
+                                  ? null
+                                  : sales > 0
+                                      ? _accentColor.withValues(alpha: 0.3)
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant
+                                          .withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Etiquetas de hora
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: ['00:00', '06:00', '12:00', '18:00', '23:00']
+                      .map((label) => Text(
+                            label,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ))
+                      .toList(),
+                ),
+              ],
             ),
           ),
 
-          // Header
+          // Divider con título
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
+                    color: _accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(
-                    Icons.schedule_rounded,
-                    color: Color(0xFFF59E0B),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      const Icon(Icons.local_fire_department_rounded,
+                          color: _accentColor, size: 16),
+                      const SizedBox(width: 6),
                       Text(
-                        'Análisis por Hora',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      Text(
-                        'Distribución de ventas en 24 horas',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
+                        'Top 5 Horas Pico',
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: _accentColor,
+                                ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // Gráfico de barras grande
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: SizedBox(
-              height: 150,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(24, (hour) {
-                  final hourData = salesByHour[hour];
-                  final sales = hourData?['totalSales'] as double? ?? 0.0;
-                  final normalizedHeight =
-                      maxSales > 0 ? (sales / maxSales) : 0.0;
-                  final isPeak = peakHours.isNotEmpty &&
-                      peakHours.any((p) => p['hour'] as int == hour);
-
-                  return Expanded(
-                    child: Tooltip(
-                      message:
-                          '${_formatHour(hour)}\n${CurrencyHelper.formatCurrency(sales)}',
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        height: 150 * normalizedHeight.clamp(0.02, 1.0),
-                        decoration: BoxDecoration(
-                          color: isPeak
-                              ? const Color(0xFFF59E0B)
-                              : sales > 0
-                                  ? const Color(0xFFF59E0B)
-                                      .withValues(alpha: 0.3)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant
-                                      .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-
-          // Etiquetas de hora
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('00:00',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        )),
-                Text('06:00',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        )),
-                Text('12:00',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        )),
-                Text('18:00',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        )),
-                Text('23:00',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        )),
-              ],
-            ),
-          ),
-
-          const Divider(height: 32),
-
-          // Lista de horas pico
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Text(
-                  'Top 5 Horas Pico',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outlineVariant
+                        .withValues(alpha: 0.3),
+                  ),
                 ),
               ],
             ),
@@ -391,148 +331,94 @@ class PeakHoursModal extends StatelessWidget {
             child: ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: peakHours.length,
+              itemCount: peakHours.length.clamp(0, 5),
               itemBuilder: (context, index) {
                 final hourData = peakHours[index];
                 final hour = hourData['hour'] as int;
                 final totalSales = hourData['totalSales'] as double;
                 final transactionCount = hourData['transactionCount'] as int;
+                final position = index + 1;
+                final percentage =
+                    maxSales > 0 ? (totalSales / maxSales * 100) : 0.0;
 
-                return _buildHourItem(
-                  context: context,
-                  position: index + 1,
-                  hour: hour,
-                  totalSales: totalSales,
-                  transactionCount: transactionCount,
-                  maxSales: maxSales,
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHourItem({
-    required BuildContext context,
-    required int position,
-    required int hour,
-    required double totalSales,
-    required int transactionCount,
-    required double maxSales,
-  }) {
-    final percentage = maxSales > 0 ? (totalSales / maxSales * 100) : 0.0;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: position == 1
-            ? Border.all(
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                width: 1.5)
-            : null,
-      ),
-      child: Row(
-        children: [
-          // Badge de posición
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: position == 1
-                  ? const Color(0xFFF59E0B).withValues(alpha: 0.2)
-                  : Theme.of(context).colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: position == 1
-                  ? const Icon(Icons.schedule_rounded,
-                      color: Color(0xFFF59E0B), size: 22)
-                  : Text(
-                      '$position',
+                return AnalyticsListItem(
+                  position: position,
+                  accentColor: _accentColor,
+                  leading: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: position == 1
+                          ? _accentColor.withValues(alpha: 0.15)
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                      border: Border.all(
+                        color: position == 1
+                            ? _accentColor.withValues(alpha: 0.4)
+                            : Theme.of(context)
+                                .colorScheme
+                                .outlineVariant
+                                .withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        position == 1
+                            ? Icons.whatshot_rounded
+                            : Icons.schedule_rounded,
+                        color: position == 1
+                            ? _accentColor
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  title: _formatHour(hour),
+                  subtitleWidget: Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$transactionCount ventas',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      AnalyticsBadge(
+                        text: '${percentage.toStringAsFixed(0)}%',
+                        color: _accentColor,
+                      ),
+                    ],
+                  ),
+                  trailingWidgets: [
+                    Text(
+                      CurrencyHelper.formatCurrency(totalSales),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: _accentColor,
                           ),
                     ),
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Información de la hora
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _formatHour(hour),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.receipt_long_rounded,
-                      size: 14,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      '$transactionCount ventas',
+                      'vendido',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${percentage.toStringAsFixed(0)}%',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFFF59E0B),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
-          ),
-
-          // Total vendido
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                CurrencyHelper.formatCurrency(totalSales),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFF59E0B),
-                    ),
-              ),
-              Text(
-                'vendido',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
           ),
         ],
       ),

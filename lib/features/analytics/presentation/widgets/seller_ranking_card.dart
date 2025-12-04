@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'analytics_base_card.dart';
+import 'analytics_modal.dart';
 
 /// Widget: Tarjeta de Ranking de Vendedores
 ///
@@ -29,11 +30,10 @@ class SellerRankingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final topSeller = salesBySeller.isNotEmpty ? salesBySeller.first : null;
-    final topSellerName = topSeller?['sellerName'] as String? ?? 'Sin datos';
-    final topSellerSales = topSeller?['totalSales'] as double? ?? 0.0;
     final totalSellers = salesBySeller.length;
     final hasData = !isZero && salesBySeller.isNotEmpty;
+    // Obtener hasta 3 vendedores para preview
+    final previewSellers = salesBySeller.take(3).toList();
 
     return AnalyticsBaseCard(
       color: color,
@@ -45,20 +45,32 @@ class SellerRankingCard extends StatelessWidget {
       onTap: hasData ? () => _showSellerRankingModal(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment:
+            hasData ? MainAxisAlignment.end : MainAxisAlignment.center,
         children: [
-          const Spacer(),
           if (!hasData)
-            const AnalyticsEmptyState(message: 'Sin datos')
+            const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
           else ...[
-            // Vendedor top con badge
-            _buildTopSellerPreview(context, topSellerName, topSellerSales),
-            const SizedBox(height: 8),
-            // Contador de vendedores
+            // Mostrar hasta 3 vendedores
+            ...previewSellers.asMap().entries.map((entry) {
+              final index = entry.key;
+              final seller = entry.value;
+              final sellerName =
+                  seller['sellerName'] as String? ?? 'Sin nombre';
+              final totalSales = seller['totalSales'] as double? ?? 0.0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: _buildSellerPreview(
+                    context, sellerName, totalSales, index + 1),
+              );
+            }),
+            const SizedBox(height: 2),
+            // Contador de vendedores compacto
             Text(
-              '$totalSellers vendedor${totalSellers != 1 ? 'es' : ''} activo${totalSellers != 1 ? 's' : ''}',
+              '$totalSellers vendedor${totalSellers != 1 ? 'es' : ''} 🏆',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: color,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ],
@@ -67,15 +79,40 @@ class SellerRankingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTopSellerPreview(
-      BuildContext context, String sellerName, double totalSales) {
+  /// Preview del vendedor con posición
+  Widget _buildSellerPreview(BuildContext context, String sellerName,
+      double totalSales, int position) {
     final theme = Theme.of(context);
+    // Asegurar que siempre haya un nombre visible
+    final displayName =
+        sellerName.isNotEmpty ? sellerName : 'Vendedor $position';
+
+    // Colores para las posiciones
+    Color badgeColor;
+    IconData? badgeIcon;
+    switch (position) {
+      case 1:
+        badgeColor = const Color(0xFFFFD700); // Oro
+        badgeIcon = Icons.workspace_premium_rounded;
+        break;
+      case 2:
+        badgeColor = const Color(0xFFC0C0C0); // Plata
+        badgeIcon = Icons.workspace_premium_rounded;
+        break;
+      case 3:
+        badgeColor = const Color(0xFFCD7F32); // Bronce
+        badgeIcon = Icons.workspace_premium_rounded;
+        break;
+      default:
+        badgeColor = color;
+        badgeIcon = null;
+    }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: color.withValues(alpha: 0.2),
           width: 1,
@@ -83,61 +120,53 @@ class SellerRankingCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Badge de oro
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFFFD700).withValues(alpha: 0.2),
-              border: Border.all(
-                color: const Color(0xFFFFD700).withValues(alpha: 0.4),
-                width: 1.5,
+          // Icono de medalla o número
+          if (badgeIcon != null)
+            Icon(
+              badgeIcon,
+              size: 14,
+              color: badgeColor,
+            )
+          else
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '$position',
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
               ),
             ),
-            child: const Icon(
-              Icons.workspace_premium_rounded,
-              color: Color(0xFFFFD700),
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Nombre y ventas
+          const SizedBox(width: 6),
+          // Nombre del vendedor
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  sellerName,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  CurrencyHelper.formatCurrency(totalSales),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 10,
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            child: Text(
+              displayName,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          // Badge "Top"
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text(
-              '🏆',
-              style: TextStyle(fontSize: 10),
+          // Ventas compacto
+          Text(
+            CurrencyHelper.formatCurrency(totalSales),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 9,
+              color: color,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -164,86 +193,22 @@ class SellerRankingModal extends StatelessWidget {
     required this.salesBySeller,
   });
 
+  static const _accentColor = Color(0xFF8B5CF6);
+
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.85;
-
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.emoji_events_rounded,
-                    color: Color(0xFF8B5CF6),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ranking de Vendedores',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      Text(
-                        '${salesBySeller.length} vendedores activos',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // Lista de vendedores
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
+    return AnalyticsModal(
+      accentColor: _accentColor,
+      icon: Icons.emoji_events_rounded,
+      title: 'Ranking de Vendedores',
+      subtitle: '${salesBySeller.length} vendedores activos',
+      child: salesBySeller.isEmpty
+          ? const AnalyticsModalEmptyState(
+              icon: Icons.people_outline_rounded,
+              title: 'No hay vendedores',
+              subtitle: 'Aún no hay datos de vendedores',
+            )
+          : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: salesBySeller.length,
               itemBuilder: (context, index) {
@@ -252,159 +217,111 @@ class SellerRankingModal extends StatelessWidget {
                 final totalSales = seller['totalSales'] as double;
                 final transactionCount = seller['transactionCount'] as int;
                 final averageTicket = seller['averageTicket'] as double;
+                final position = index + 1;
 
-                return _buildSellerItem(
-                  context: context,
-                  position: index + 1,
-                  sellerName: sellerName,
-                  totalSales: totalSales,
-                  transactionCount: transactionCount,
-                  averageTicket: averageTicket,
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSellerItem({
-    required BuildContext context,
-    required int position,
-    required String sellerName,
-    required double totalSales,
-    required int transactionCount,
-    required double averageTicket,
-  }) {
-    // Badge de posición con colores especiales para top 3
-    Color badgeColor;
-    IconData? badgeIcon;
-
-    switch (position) {
-      case 1:
-        badgeColor = const Color(0xFFFFD700); // Oro
-        badgeIcon = Icons.workspace_premium_rounded;
-        break;
-      case 2:
-        badgeColor = const Color(0xFFC0C0C0); // Plata
-        badgeIcon = Icons.workspace_premium_rounded;
-        break;
-      case 3:
-        badgeColor = const Color(0xFFCD7F32); // Bronce
-        badgeIcon = Icons.workspace_premium_rounded;
-        break;
-      default:
-        badgeColor = Theme.of(context).colorScheme.surfaceContainerHighest;
-        badgeIcon = null;
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: position <= 3
-            ? Border.all(color: badgeColor.withValues(alpha: 0.3), width: 1.5)
-            : null,
-      ),
-      child: Row(
-        children: [
-          // Badge de posición
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha: position <= 3 ? 0.2 : 1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: badgeIcon != null
-                  ? Icon(badgeIcon, color: badgeColor, size: 22)
-                  : Text(
-                      '$position',
+                return AnalyticsListItem(
+                  position: position,
+                  accentColor: _accentColor,
+                  leading: _buildSellerAvatar(context, sellerName, position),
+                  title: sellerName,
+                  subtitleWidget: Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$transactionCount ventas',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.analytics_rounded,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Prom: ${CurrencyHelper.formatCurrency(averageTicket)}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
+                  trailingWidgets: [
+                    Text(
+                      CurrencyHelper.formatCurrency(totalSales),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: _accentColor,
                           ),
                     ),
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Información del vendedor
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  sellerName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.receipt_long_rounded,
-                      size: 14,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      '$transactionCount ventas',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                    const SizedBox(width: 12),
-                    Icon(
-                      Icons.analytics_rounded,
-                      size: 14,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Prom: ${CurrencyHelper.formatCurrency(averageTicket)}',
+                      'total vendido',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
-          ),
+    );
+  }
 
-          // Total vendido
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                CurrencyHelper.formatCurrency(totalSales),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8B5CF6),
-                    ),
+  Widget _buildSellerAvatar(
+      BuildContext context, String sellerName, int position) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Colores para top 3
+    Color? badgeColor;
+    if (position == 1) {
+      badgeColor = const Color(0xFFFFD700);
+    } else if (position == 2) {
+      badgeColor = const Color(0xFFC0C0C0);
+    } else if (position == 3) {
+      badgeColor = const Color(0xFFCD7F32);
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _accentColor.withValues(alpha: 0.1),
+        border: Border.all(
+          color: badgeColor?.withValues(alpha: 0.5) ??
+              colorScheme.outlineVariant.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Center(
+        child: position <= 3
+            ? Icon(
+                Icons.workspace_premium_rounded,
+                color: badgeColor,
+                size: 24,
+              )
+            : Text(
+                sellerName.isNotEmpty
+                    ? sellerName.substring(0, 1).toUpperCase()
+                    : '?',
+                style: TextStyle(
+                  color: _accentColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Text(
-                'total vendido',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

@@ -64,6 +64,40 @@ class CashRegister {
   // effectiveSales : devuelve el número de ventas efectivas (excluyendo anuladas)
   int get getEffectiveSales => sales - annulledTickets;
 
+  /// Calcula el total de descuentos desde una lista de tickets
+  ///
+  /// Recibe una lista de tickets y calcula la suma total de descuentos
+  /// considerando solo tickets activos (no anulados).
+  ///
+  /// [tickets] - Lista de tickets (TicketModel)
+  ///
+  /// Returns: Total de descuentos, 0.0 si la lista está vacía
+  double calculateTotalDiscount(List<TicketModel> tickets) {
+    if (tickets.isEmpty) return 0.0;
+
+    double totalDiscount = 0.0;
+
+    for (var ticket in tickets) {
+      try {
+        // Verificar si el ticket está anulado
+        if (ticket.annulled == true) continue;
+
+        // Acceder al getter getDiscountAmount
+        final discountAmount = ticket.getDiscountAmount;
+
+        // Asegurarse de que es un número válido y positivo
+        if (discountAmount > 0 && discountAmount.isFinite) {
+          totalDiscount += discountAmount;
+        }
+      } catch (e) {
+        // Si hay error al acceder a las propiedades, continuar con el siguiente
+        continue;
+      }
+    }
+
+    return totalDiscount;
+  }
+
   /// Calcula las ganancias totales desde una lista de tickets
   ///
   /// Recibe una lista de tickets (pueden ser TicketModel o Maps) y calcula

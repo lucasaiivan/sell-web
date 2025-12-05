@@ -6,7 +6,6 @@ import 'package:sellweb/features/cash_register/domain/entities/cash_register.dar
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../domain/entities/date_filter.dart';
 import '../providers/analytics_provider.dart';
 import '../widgets/active_cash_registers_card.dart';
@@ -18,6 +17,7 @@ import '../widgets/payment_methods_card.dart';
 import '../widgets/peak_hours_card.dart';
 import '../widgets/products_metric_card.dart';
 import '../widgets/profitability_metric_card.dart';
+import '../widgets/reorderable_analytics_grid.dart';
 import '../widgets/sales_trend_card.dart';
 import '../widgets/seller_ranking_card.dart';
 import '../widgets/slow_moving_products_card.dart';
@@ -144,596 +144,466 @@ class AnalyticsPage extends StatelessWidget {
   }
 
   /// Layout para pantallas móviles (< 600px)
-  /// Distribución vertical optimizada para espacio limitado
+  /// Grid de 2 columnas con drag-and-drop para reordenar
   Widget _buildMobileLayout(
     BuildContext context,
     dynamic analytics,
     List<CashRegister> activeCashRegisters,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // Gap dinámico basado en el ancho de pantalla
     final gap = (screenWidth * 0.025).clamp(8.0, 16.0);
 
-    // Calcular alturas dinámicas basadas en el ancho de pantalla
-    // para mantener proporciones óptimas en diferentes dispositivos
-    final primaryCardHeight = (screenWidth * 0.38).clamp(120.0, 180.0);
-    final secondaryCardHeight = (screenWidth * 0.32).clamp(100.0, 150.0);
-    final tertiaryCardHeight = (screenWidth * 0.42).clamp(130.0, 190.0);
+    // Lista de tarjetas con keys únicos para el reordering
+    final List<Widget> cards = [
+      // 1. Facturación - Destacada
+      MetricCard(
+        key: const ValueKey('billing'),
+        title: 'Facturación',
+        value: CurrencyHelper.formatCurrency(analytics.totalSales),
+        icon: Icons.attach_money_rounded,
+        color: const Color(0xFF059669),
+        subtitle: 'Ingresos brutos',
+        isZero: analytics.totalSales == 0,
+        moreInformation: true,
+      ),
 
-    return Column(
-      children: [
-        // 1. Facturación - Métrica principal destacada
-        SizedBox(
-          height: primaryCardHeight,
-          child: MetricCard(
-            title: 'Facturación',
-            value: CurrencyHelper.formatCurrency(analytics.totalSales),
-            icon: Icons.attach_money_rounded,
-            color: const Color(0xFF059669),
-            subtitle: 'Ingresos brutos',
-            isZero: analytics.totalSales == 0,
-          ),
+      // 2. Ganancia
+      MetricCard(
+        key: const ValueKey('profit'),
+        title: 'Ganancia',
+        value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+        icon: Icons.trending_up_rounded,
+        color: const Color(0xFF7C3AED),
+        isZero: analytics.totalProfit == 0,
+      ),
+
+      // 3. Ventas
+      MetricCard(
+        key: const ValueKey('sales'),
+        title: 'Ventas',
+        value: analytics.totalTransactions.toString(),
+        icon: Icons.receipt_long_rounded,
+        color: const Color(0xFF2563EB),
+        isZero: analytics.totalTransactions == 0,
+      ),
+
+      // 4. Ticket Promedio
+      MetricCard(
+        key: const ValueKey('averageTicket'),
+        title: 'Ticket Prom.',
+        value: CurrencyHelper.formatCurrency(
+            analytics.averageProfitPerTransaction),
+        icon: Icons.analytics_rounded,
+        color: const Color(0xFF0891B2),
+        isZero: analytics.averageProfitPerTransaction == 0,
+      ),
+
+      // 5. Productos Vendidos
+      ProductsMetricCard(
+        key: const ValueKey('products'),
+        totalProducts: analytics.totalProductsSold,
+        topSellingProducts: analytics.topSellingProducts,
+        color: const Color(0xFFD97706),
+        isZero: analytics.totalProductsSold == 0,
+      ),
+
+      // 6. Rentabilidad
+      ProfitabilityMetricCard(
+        key: const ValueKey('profitability'),
+        totalProfit: analytics.totalProfit,
+        mostProfitableProducts: analytics.mostProfitableProducts,
+        color: const Color(0xFF10B981),
+        isZero: analytics.mostProfitableProducts.isEmpty,
+      ),
+
+      // 7. Lenta Rotación
+      SlowMovingProductsCard(
+        key: const ValueKey('slowMoving'),
+        slowMovingProducts: analytics.slowMovingProducts,
+        color: const Color(0xFFEF4444),
+        isZero: analytics.slowMovingProducts.isEmpty,
+      ),
+
+      // 8. Horas Pico
+      PeakHoursCard(
+        key: const ValueKey('peakHours'),
+        salesByHour: analytics.salesByHour,
+        peakHours: analytics.peakHours,
+        color: const Color(0xFFF59E0B),
+        isZero: analytics.peakHours.isEmpty,
+      ),
+
+      // 9. Ranking de Vendedores
+      SellerRankingCard(
+        key: const ValueKey('sellerRanking'),
+        salesBySeller: analytics.salesBySeller,
+        color: const Color(0xFF8B5CF6),
+        isZero: analytics.salesBySeller.isEmpty,
+      ),
+
+      // 10. Tendencia de Ventas
+      SalesTrendCard(
+        key: const ValueKey('salesTrend'),
+        salesByDay: analytics.salesByDay,
+        color: const Color(0xFF3B82F6),
+        isZero: analytics.salesByDay.isEmpty,
+      ),
+
+      // 11. Distribución por Categorías
+      CategoryDistributionCard(
+        key: const ValueKey('categoryDist'),
+        salesByCategory: analytics.salesByCategory,
+        totalSales: analytics.totalSales,
+        color: const Color(0xFFEC4899),
+        isZero: analytics.salesByCategory.isEmpty,
+      ),
+
+      // 12. Días de Venta
+      WeekdaySalesCard(
+        key: const ValueKey('weekdaySales'),
+        salesByWeekday: analytics.salesByWeekday,
+        color: const Color(0xFF6366F1),
+        isZero: analytics.salesByWeekday.isEmpty,
+      ),
+
+      // 13. Medios de Pago
+      PaymentMethodsCard(
+        key: const ValueKey('paymentMethods'),
+        paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
+        totalSales: analytics.totalSales,
+      ),
+
+      // 14. Cajas Activas (si existen)
+      if (activeCashRegisters.isNotEmpty)
+        ActiveCashRegistersCard(
+          key: const ValueKey('cashRegisters'),
+          activeCashRegisters: activeCashRegisters,
         ),
-        SizedBox(height: gap),
+    ];
 
-        // 2-3. Ganancia y Ventas (fila 2x1)
-        SizedBox(
-          height: secondaryCardHeight,
-          child: Row(
-            children: [
-              Expanded(
-                child: MetricCard(
-                  title: 'Ganancia',
-                  value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-                  icon: Icons.trending_up_rounded,
-                  color: const Color(0xFF7C3AED),
-                  isZero: analytics.totalProfit == 0,
-                ),
-              ),
-              SizedBox(width: gap),
-              Expanded(
-                child: MetricCard(
-                  title: 'Ventas',
-                  value: analytics.totalTransactions.toString(),
-                  icon: Icons.receipt_long_rounded,
-                  color: const Color(0xFF2563EB),
-                  isZero: analytics.totalTransactions == 0,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 4-5. Ticket Promedio y Productos (fila 2x1)
-        SizedBox(
-          height: tertiaryCardHeight,
-          child: Row(
-            children: [
-              Expanded(
-                child: MetricCard(
-                  title: 'Ticket Prom.',
-                  value: CurrencyHelper.formatCurrency(
-                      analytics.averageProfitPerTransaction),
-                  icon: Icons.analytics_rounded,
-                  color: const Color(0xFF0891B2),
-                  isZero: analytics.averageProfitPerTransaction == 0,
-                ),
-              ),
-              SizedBox(width: gap),
-              Expanded(
-                child: ProductsMetricCard(
-                  totalProducts: analytics.totalProductsSold,
-                  topSellingProducts: analytics.topSellingProducts,
-                  color: const Color(0xFFD97706),
-                  isZero: analytics.totalProductsSold == 0,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 6. Rentabilidad (ancho completo)
-        SizedBox(
-          height: tertiaryCardHeight,
-          child: ProfitabilityMetricCard(
-            totalProfit: analytics.totalProfit,
-            mostProfitableProducts: analytics.mostProfitableProducts,
-            color: const Color(0xFF10B981),
-            isZero: analytics.mostProfitableProducts.isEmpty,
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 7-8. Lenta Rotación y Horas Pico (fila 2x1)
-        SizedBox(
-          height: tertiaryCardHeight,
-          child: Row(
-            children: [
-              Expanded(
-                child: SlowMovingProductsCard(
-                  slowMovingProducts: analytics.slowMovingProducts,
-                  color: const Color(0xFFEF4444),
-                  isZero: analytics.slowMovingProducts.isEmpty,
-                ),
-              ),
-              SizedBox(width: gap),
-              Expanded(
-                child: PeakHoursCard(
-                  salesByHour: analytics.salesByHour,
-                  peakHours: analytics.peakHours,
-                  color: const Color(0xFFF59E0B),
-                  isZero: analytics.peakHours.isEmpty,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 9. Ranking de Vendedores (ancho completo)
-        SizedBox(
-          height: tertiaryCardHeight,
-          child: SellerRankingCard(
-            salesBySeller: analytics.salesBySeller,
-            color: const Color(0xFF8B5CF6),
-            isZero: analytics.salesBySeller.isEmpty,
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 10. Tendencia de Ventas (ancho completo)
-        SizedBox(
-          height: tertiaryCardHeight * 1.2,
-          child: SalesTrendCard(
-            salesByDay: analytics.salesByDay,
-            color: const Color(0xFF3B82F6),
-            isZero: analytics.salesByDay.isEmpty,
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 11. Distribución por Categorías (ancho completo)
-        SizedBox(
-          height: tertiaryCardHeight * 1.4,
-          child: CategoryDistributionCard(
-            salesByCategory: analytics.salesByCategory,
-            totalSales: analytics.totalSales,
-            color: const Color(0xFFEC4899),
-            isZero: analytics.salesByCategory.isEmpty,
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 12. Días de Venta (ancho completo)
-        SizedBox(
-          height: tertiaryCardHeight,
-          child: WeekdaySalesCard(
-            salesByWeekday: analytics.salesByWeekday,
-            color: const Color(0xFF6366F1),
-            isZero: analytics.salesByWeekday.isEmpty,
-          ),
-        ),
-        SizedBox(height: gap),
-
-        // 14. Medios de Pago (altura dinámica)
-        PaymentMethodsCard(
-          paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-          totalSales: analytics.totalSales,
-        ),
-
-        // 15. Cajas Activas (si existen)
-        if (activeCashRegisters.isNotEmpty) ...[
-          SizedBox(height: gap),
-          ActiveCashRegistersCard(
-            activeCashRegisters: activeCashRegisters,
-          ),
-        ],
-      ],
+    return ReorderableAnalyticsGrid(
+      layoutType: 'mobile',
+      crossAxisCount: 2,
+      gap: gap,
+      childAspectRatio: 1.1,
+      enableReordering: true,
+      children: cards,
     );
   }
 
   /// Layout para tablets (600px - 900px)
-  /// Grid de 4 columnas optimizado con celdas dinámicas
+  /// Grid de 3 columnas con drag-and-drop para reordenar
   Widget _buildTabletLayout(
     BuildContext context,
     dynamic analytics,
     List<CashRegister> activeCashRegisters,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // Calcular el tamaño base de celda basado en el ancho disponible
-    final availableWidth =
-        (screenWidth - 32 - 36).clamp(0.0, 900.0 - 36); // padding + 3 gaps
-    final cellSize = availableWidth / 4;
     final gap = (screenWidth * 0.015).clamp(8.0, 12.0);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: StaggeredGrid.count(
-          crossAxisCount: 4,
-          mainAxisSpacing: gap,
-          crossAxisSpacing: gap,
-          children: [
-            // 1. Facturación (2x2) - Destacada
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 1.6,
-              child: MetricCard(
-                title: 'Facturación',
-                value: CurrencyHelper.formatCurrency(analytics.totalSales),
-                icon: Icons.attach_money_rounded,
-                color: const Color(0xFF059669),
-                subtitle: 'Ingresos brutos',
-                isZero: analytics.totalSales == 0,
-              ),
-            ),
-
-            // 2. Ganancia (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.75,
-              child: MetricCard(
-                title: 'Ganancia',
-                value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-                icon: Icons.trending_up_rounded,
-                color: const Color(0xFF7C3AED),
-                subtitle: 'Rentabilidad real',
-                isZero: analytics.totalProfit == 0,
-              ),
-            ),
-
-            // 3-4. Ventas y Ticket Promedio (1x1 cada una)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 1,
-              mainAxisExtent: cellSize * 0.85,
-              child: MetricCard(
-                title: 'Ventas',
-                value: analytics.totalTransactions.toString(),
-                icon: Icons.receipt_long_rounded,
-                color: const Color(0xFF2563EB),
-                isZero: analytics.totalTransactions == 0,
-              ),
-            ),
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 1,
-              mainAxisExtent: cellSize * 0.85,
-              child: MetricCard(
-                title: 'Ticket Prom.',
-                value: CurrencyHelper.formatCurrency(
-                    analytics.averageProfitPerTransaction),
-                icon: Icons.analytics_rounded,
-                color: const Color(0xFF0891B2),
-                isZero: analytics.averageProfitPerTransaction == 0,
-              ),
-            ),
-
-            // 5. Productos Vendidos (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.85,
-              child: ProductsMetricCard(
-                totalProducts: analytics.totalProductsSold,
-                topSellingProducts: analytics.topSellingProducts,
-                color: const Color(0xFFD97706),
-                isZero: analytics.totalProductsSold == 0,
-                subtitle: 'Movimiento de inventario',
-              ),
-            ),
-
-            // 6. Rentabilidad (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.85,
-              child: ProfitabilityMetricCard(
-                totalProfit: analytics.totalProfit,
-                mostProfitableProducts: analytics.mostProfitableProducts,
-                color: const Color(0xFF10B981),
-                isZero: analytics.mostProfitableProducts.isEmpty,
-                subtitle: 'Productos más rentables',
-              ),
-            ),
-
-            // 7. Ranking de Vendedores (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.85,
-              child: SellerRankingCard(
-                salesBySeller: analytics.salesBySeller,
-                color: const Color(0xFF8B5CF6),
-                isZero: analytics.salesBySeller.isEmpty,
-                subtitle: 'Desempeño del equipo',
-              ),
-            ),
-
-            // 8. Horas Pico (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.85,
-              child: PeakHoursCard(
-                salesByHour: analytics.salesByHour,
-                peakHours: analytics.peakHours,
-                color: const Color(0xFFF59E0B),
-                isZero: analytics.peakHours.isEmpty,
-                subtitle: 'Mayor actividad',
-              ),
-            ),
-
-            // 9. Productos de Lenta Rotación (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.85,
-              child: SlowMovingProductsCard(
-                slowMovingProducts: analytics.slowMovingProducts,
-                color: const Color(0xFFEF4444),
-                isZero: analytics.slowMovingProducts.isEmpty,
-                subtitle: 'Requieren atención',
-              ),
-            ),
-
-            // 10. Tendencia de Ventas (2x1.2)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 1.2,
-              child: SalesTrendCard(
-                salesByDay: analytics.salesByDay,
-                color: const Color(0xFF3B82F6),
-                isZero: analytics.salesByDay.isEmpty,
-                subtitle: 'Evolución temporal',
-              ),
-            ),
-
-            // 11. Distribución por Categorías (2x1.4) - Más espacio para gráfico
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 1.4,
-              child: CategoryDistributionCard(
-                salesByCategory: analytics.salesByCategory,
-                totalSales: analytics.totalSales,
-                color: const Color(0xFFEC4899),
-                isZero: analytics.salesByCategory.isEmpty,
-                subtitle: 'Ventas por categoría',
-              ),
-            ),
-
-            // 12. Días de Venta (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 1.0,
-              child: WeekdaySalesCard(
-                salesByWeekday: analytics.salesByWeekday,
-                color: const Color(0xFF6366F1),
-                isZero: analytics.salesByWeekday.isEmpty,
-                subtitle: 'Rendimiento semanal',
-              ),
-            ),
-
-            // 14. Medios de Pago (2xFit)
-            StaggeredGridTile.fit(
-              crossAxisCellCount: 2,
-              child: PaymentMethodsCard(
-                paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-                totalSales: analytics.totalSales,
-              ),
-            ),
-
-            // 15. Cajas Activas (2xFit) - Si existen
-            if (activeCashRegisters.isNotEmpty)
-              StaggeredGridTile.fit(
-                crossAxisCellCount: 2,
-                child: ActiveCashRegistersCard(
-                  activeCashRegisters: activeCashRegisters,
-                ),
-              ),
-          ],
-        ),
+    // Lista de tarjetas con keys únicos para el reordering
+    final List<Widget> cards = [
+      // 1. Facturación - Destacada
+      MetricCard(
+        key: const ValueKey('billing'),
+        title: 'Facturación',
+        value: CurrencyHelper.formatCurrency(analytics.totalSales),
+        icon: Icons.attach_money_rounded,
+        color: const Color(0xFF059669),
+        subtitle: 'Ingresos brutos',
+        isZero: analytics.totalSales == 0,
+        moreInformation: true,
       ),
+
+      // 2. Ganancia
+      MetricCard(
+        key: const ValueKey('profit'),
+        title: 'Ganancia',
+        value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+        icon: Icons.trending_up_rounded,
+        color: const Color(0xFF7C3AED),
+        subtitle: 'Rentabilidad real',
+        isZero: analytics.totalProfit == 0,
+      ),
+
+      // 3. Ventas
+      MetricCard(
+        key: const ValueKey('sales'),
+        title: 'Ventas',
+        value: analytics.totalTransactions.toString(),
+        icon: Icons.receipt_long_rounded,
+        color: const Color(0xFF2563EB),
+        isZero: analytics.totalTransactions == 0,
+      ),
+
+      // 4. Ticket Promedio
+      MetricCard(
+        key: const ValueKey('averageTicket'),
+        title: 'Ticket Prom.',
+        value: CurrencyHelper.formatCurrency(
+            analytics.averageProfitPerTransaction),
+        icon: Icons.analytics_rounded,
+        color: const Color(0xFF0891B2),
+        isZero: analytics.averageProfitPerTransaction == 0,
+      ),
+
+      // 5. Productos Vendidos
+      ProductsMetricCard(
+        key: const ValueKey('products'),
+        totalProducts: analytics.totalProductsSold,
+        topSellingProducts: analytics.topSellingProducts,
+        color: const Color(0xFFD97706),
+        isZero: analytics.totalProductsSold == 0,
+        subtitle: 'Movimiento de inventario',
+      ),
+
+      // 6. Rentabilidad
+      ProfitabilityMetricCard(
+        key: const ValueKey('profitability'),
+        totalProfit: analytics.totalProfit,
+        mostProfitableProducts: analytics.mostProfitableProducts,
+        color: const Color(0xFF10B981),
+        isZero: analytics.mostProfitableProducts.isEmpty,
+        subtitle: 'Productos más rentables',
+      ),
+
+      // 7. Ranking de Vendedores
+      SellerRankingCard(
+        key: const ValueKey('sellerRanking'),
+        salesBySeller: analytics.salesBySeller,
+        color: const Color(0xFF8B5CF6),
+        isZero: analytics.salesBySeller.isEmpty,
+        subtitle: 'Desempeño del equipo',
+      ),
+
+      // 8. Horas Pico
+      PeakHoursCard(
+        key: const ValueKey('peakHours'),
+        salesByHour: analytics.salesByHour,
+        peakHours: analytics.peakHours,
+        color: const Color(0xFFF59E0B),
+        isZero: analytics.peakHours.isEmpty,
+        subtitle: 'Mayor actividad',
+      ),
+
+      // 9. Productos de Lenta Rotación
+      SlowMovingProductsCard(
+        key: const ValueKey('slowMoving'),
+        slowMovingProducts: analytics.slowMovingProducts,
+        color: const Color(0xFFEF4444),
+        isZero: analytics.slowMovingProducts.isEmpty,
+        subtitle: 'Requieren atención',
+      ),
+
+      // 10. Tendencia de Ventas
+      SalesTrendCard(
+        key: const ValueKey('salesTrend'),
+        salesByDay: analytics.salesByDay,
+        color: const Color(0xFF3B82F6),
+        isZero: analytics.salesByDay.isEmpty,
+        subtitle: 'Evolución temporal',
+      ),
+
+      // 11. Distribución por Categorías
+      CategoryDistributionCard(
+        key: const ValueKey('categoryDist'),
+        salesByCategory: analytics.salesByCategory,
+        totalSales: analytics.totalSales,
+        color: const Color(0xFFEC4899),
+        isZero: analytics.salesByCategory.isEmpty,
+        subtitle: 'Ventas por categoría',
+      ),
+
+      // 12. Días de Venta
+      WeekdaySalesCard(
+        key: const ValueKey('weekdaySales'),
+        salesByWeekday: analytics.salesByWeekday,
+        color: const Color(0xFF6366F1),
+        isZero: analytics.salesByWeekday.isEmpty,
+        subtitle: 'Rendimiento semanal',
+      ),
+
+      // 13. Medios de Pago
+      PaymentMethodsCard(
+        key: const ValueKey('paymentMethods'),
+        paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
+        totalSales: analytics.totalSales,
+      ),
+
+      // 14. Cajas Activas (si existen)
+      if (activeCashRegisters.isNotEmpty)
+        ActiveCashRegistersCard(
+          key: const ValueKey('cashRegisters'),
+          activeCashRegisters: activeCashRegisters,
+        ),
+    ];
+
+    return ReorderableAnalyticsGrid(
+      layoutType: 'tablet',
+      crossAxisCount: 3,
+      gap: gap,
+      maxWidth: 900,
+      childAspectRatio: 1.2,
+      enableReordering: true,
+      children: cards,
     );
   }
 
   /// Layout para desktop (≥ 900px)
-  /// Grid de 6 columnas para máximo aprovechamiento con tamaños dinámicos
+  /// Grid de 4 columnas uniforme con drag-and-drop para reordenar
   Widget _buildDesktopLayout(
     BuildContext context,
     dynamic analytics,
     List<CashRegister> activeCashRegisters,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // Calcular el tamaño base de celda basado en el ancho disponible (max 1400)
-    final availableWidth =
-        (screenWidth - 32 - 60).clamp(0.0, 1400.0 - 60); // padding + 5 gaps
-    final cellSize = availableWidth / 6;
     final gap = (screenWidth * 0.01).clamp(10.0, 14.0);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1400),
-        child: StaggeredGrid.count(
-          crossAxisCount: 6,
-          mainAxisSpacing: gap,
-          crossAxisSpacing: gap,
-          children: [
-            // FILA 1: Métricas principales
-            // 1. Facturación (2x2) - Destacada
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 1.5,
-              child: MetricCard(
-                title: 'Facturación',
-                value: CurrencyHelper.formatCurrency(analytics.totalSales),
-                icon: Icons.attach_money_rounded,
-                color: const Color(0xFF059669),
-                subtitle: 'Ingresos brutos',
-                isZero: analytics.totalSales == 0,
-              ),
-            ),
-
-            // 2. Ganancia (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.7,
-              child: MetricCard(
-                title: 'Ganancia',
-                value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-                icon: Icons.trending_up_rounded,
-                color: const Color(0xFF7C3AED),
-                subtitle: 'Rentabilidad real',
-                isZero: analytics.totalProfit == 0,
-              ),
-            ),
-
-            // 3. Ventas (1x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 1,
-              mainAxisExtent: cellSize * 0.8,
-              child: MetricCard(
-                title: 'Ventas',
-                value: analytics.totalTransactions.toString(),
-                icon: Icons.receipt_long_rounded,
-                color: const Color(0xFF2563EB),
-                isZero: analytics.totalTransactions == 0,
-              ),
-            ),
-
-            // 4. Ticket Promedio (1x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 1,
-              mainAxisExtent: cellSize * 0.8,
-              child: MetricCard(
-                title: 'Ticket Prom.',
-                value: CurrencyHelper.formatCurrency(
-                    analytics.averageProfitPerTransaction),
-                icon: Icons.analytics_rounded,
-                color: const Color(0xFF0891B2),
-                isZero: analytics.averageProfitPerTransaction == 0,
-              ),
-            ),
-
-            // FILA 2: Productos y Rentabilidad
-            // 5. Productos Vendidos (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.8,
-              child: ProductsMetricCard(
-                totalProducts: analytics.totalProductsSold,
-                topSellingProducts: analytics.topSellingProducts,
-                color: const Color(0xFFD97706),
-                isZero: analytics.totalProductsSold == 0,
-                subtitle: 'Movimiento de inventario',
-              ),
-            ),
-
-            // 6. Rentabilidad (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.8,
-              child: ProfitabilityMetricCard(
-                totalProfit: analytics.totalProfit,
-                mostProfitableProducts: analytics.mostProfitableProducts,
-                color: const Color(0xFF10B981),
-                isZero: analytics.mostProfitableProducts.isEmpty,
-                subtitle: 'Productos más rentables',
-              ),
-            ),
-
-            // FILA 3: Análisis secundarios
-            // 7. Ranking de Vendedores (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.8,
-              child: SellerRankingCard(
-                salesBySeller: analytics.salesBySeller,
-                color: const Color(0xFF8B5CF6),
-                isZero: analytics.salesBySeller.isEmpty,
-                subtitle: 'Desempeño del equipo',
-              ),
-            ),
-
-            // 8. Horas Pico (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.8,
-              child: PeakHoursCard(
-                salesByHour: analytics.salesByHour,
-                peakHours: analytics.peakHours,
-                color: const Color(0xFFF59E0B),
-                isZero: analytics.peakHours.isEmpty,
-                subtitle: 'Mayor actividad por hora',
-              ),
-            ),
-
-            // 9. Productos de Lenta Rotación (2x1)
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 2,
-              mainAxisExtent: cellSize * 0.8,
-              child: SlowMovingProductsCard(
-                slowMovingProducts: analytics.slowMovingProducts,
-                color: const Color(0xFFEF4444),
-                isZero: analytics.slowMovingProducts.isEmpty,
-                subtitle: 'Requieren atención',
-              ),
-            ),
-
-            // FILA 4: Nuevas tarjetas de análisis avanzado
-            // 10. Tendencia de Ventas (3x1.2) - Gráfico de línea
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 3,
-              mainAxisExtent: cellSize * 1.2,
-              child: SalesTrendCard(
-                salesByDay: analytics.salesByDay,
-                color: const Color(0xFF3B82F6),
-                isZero: analytics.salesByDay.isEmpty,
-                subtitle: 'Evolución temporal',
-              ),
-            ),
-
-            // 11. Distribución por Categorías (3x1.4) - Gráfico de dona más grande
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 3,
-              mainAxisExtent: cellSize * 1.4,
-              child: CategoryDistributionCard(
-                salesByCategory: analytics.salesByCategory,
-                totalSales: analytics.totalSales,
-                color: const Color(0xFFEC4899),
-                isZero: analytics.salesByCategory.isEmpty,
-                subtitle: 'Ventas por categoría',
-              ),
-            ),
-
-            // 12. Días de Venta (3x1) - Por día de semana
-            StaggeredGridTile.extent(
-              crossAxisCellCount: 3,
-              mainAxisExtent: cellSize * 1.0,
-              child: WeekdaySalesCard(
-                salesByWeekday: analytics.salesByWeekday,
-                color: const Color(0xFF6366F1),
-                isZero: analytics.salesByWeekday.isEmpty,
-                subtitle: 'Rendimiento semanal',
-              ),
-            ),
-
-            // FILA 5: Tarjetas con contenido dinámico
-            // 14. Medios de Pago (3xFit)
-            StaggeredGridTile.fit(
-              crossAxisCellCount: 3,
-              child: PaymentMethodsCard(
-                paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-                totalSales: analytics.totalSales,
-              ),
-            ),
-
-            // 15. Cajas Activas (3xFit) - Si existen
-            if (activeCashRegisters.isNotEmpty)
-              StaggeredGridTile.fit(
-                crossAxisCellCount: 3,
-                child: ActiveCashRegistersCard(
-                  activeCashRegisters: activeCashRegisters,
-                ),
-              ),
-          ],
-        ),
+    // Lista de tarjetas con keys únicos para el reordering
+    final List<Widget> cards = [
+      // 1. Facturación - Destacada
+      MetricCard(
+        key: const ValueKey('billing'),
+        title: 'Facturación',
+        value: CurrencyHelper.formatCurrency(analytics.totalSales),
+        icon: Icons.attach_money_rounded,
+        color: const Color(0xFF059669),
+        subtitle: 'Ingresos brutos',
+        isZero: analytics.totalSales == 0,
+        moreInformation: true,
       ),
+
+      // 2. Ganancia
+      MetricCard(
+        key: const ValueKey('profit'),
+        title: 'Ganancia',
+        value: CurrencyHelper.formatCurrency(analytics.totalProfit),
+        icon: Icons.trending_up_rounded,
+        color: const Color(0xFF7C3AED),
+        subtitle: 'Rentabilidad real',
+        isZero: analytics.totalProfit == 0,
+      ),
+
+      // 3. Ventas
+      MetricCard(
+        key: const ValueKey('sales'),
+        title: 'Ventas',
+        value: analytics.totalTransactions.toString(),
+        icon: Icons.receipt_long_rounded,
+        color: const Color(0xFF2563EB),
+        isZero: analytics.totalTransactions == 0,
+      ),
+
+      // 4. Ticket Promedio
+      MetricCard(
+        key: const ValueKey('averageTicket'),
+        title: 'Ticket Prom.',
+        value: CurrencyHelper.formatCurrency(
+            analytics.averageProfitPerTransaction),
+        icon: Icons.analytics_rounded,
+        color: const Color(0xFF0891B2),
+        isZero: analytics.averageProfitPerTransaction == 0,
+      ),
+
+      // 5. Productos Vendidos
+      ProductsMetricCard(
+        key: const ValueKey('products'),
+        totalProducts: analytics.totalProductsSold,
+        topSellingProducts: analytics.topSellingProducts,
+        color: const Color(0xFFD97706),
+        isZero: analytics.totalProductsSold == 0,
+        subtitle: 'Movimiento de inventario',
+      ),
+
+      // 6. Rentabilidad
+      ProfitabilityMetricCard(
+        key: const ValueKey('profitability'),
+        totalProfit: analytics.totalProfit,
+        mostProfitableProducts: analytics.mostProfitableProducts,
+        color: const Color(0xFF10B981),
+        isZero: analytics.mostProfitableProducts.isEmpty,
+        subtitle: 'Productos más rentables',
+      ),
+
+      // 7. Ranking de Vendedores
+      SellerRankingCard(
+        key: const ValueKey('sellerRanking'),
+        salesBySeller: analytics.salesBySeller,
+        color: const Color(0xFF8B5CF6),
+        isZero: analytics.salesBySeller.isEmpty,
+        subtitle: 'Desempeño del equipo',
+      ),
+
+      // 8. Horas Pico
+      PeakHoursCard(
+        key: const ValueKey('peakHours'),
+        salesByHour: analytics.salesByHour,
+        peakHours: analytics.peakHours,
+        color: const Color(0xFFF59E0B),
+        isZero: analytics.peakHours.isEmpty,
+        subtitle: 'Mayor actividad por hora',
+      ),
+
+      // 9. Productos de Lenta Rotación
+      SlowMovingProductsCard(
+        key: const ValueKey('slowMoving'),
+        slowMovingProducts: analytics.slowMovingProducts,
+        color: const Color(0xFFEF4444),
+        isZero: analytics.slowMovingProducts.isEmpty,
+        subtitle: 'Requieren atención',
+      ),
+
+      // 10. Tendencia de Ventas
+      SalesTrendCard(
+        key: const ValueKey('salesTrend'),
+        salesByDay: analytics.salesByDay,
+        color: const Color(0xFF3B82F6),
+        isZero: analytics.salesByDay.isEmpty,
+        subtitle: 'Evolución temporal',
+      ),
+
+      // 11. Distribución por Categorías
+      CategoryDistributionCard(
+        key: const ValueKey('categoryDist'),
+        salesByCategory: analytics.salesByCategory,
+        totalSales: analytics.totalSales,
+        color: const Color(0xFFEC4899),
+        isZero: analytics.salesByCategory.isEmpty,
+        subtitle: 'Ventas por categoría',
+      ),
+
+      // 12. Días de Venta
+      WeekdaySalesCard(
+        key: const ValueKey('weekdaySales'),
+        salesByWeekday: analytics.salesByWeekday,
+        color: const Color(0xFF6366F1),
+        isZero: analytics.salesByWeekday.isEmpty,
+        subtitle: 'Rendimiento semanal',
+      ),
+
+      // 13. Medios de Pago
+      PaymentMethodsCard(
+        key: const ValueKey('paymentMethods'),
+        paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
+        totalSales: analytics.totalSales,
+      ),
+
+      // 14. Cajas Activas (si existen)
+      if (activeCashRegisters.isNotEmpty)
+        ActiveCashRegistersCard(
+          key: const ValueKey('cashRegisters'),
+          activeCashRegisters: activeCashRegisters,
+        ),
+    ];
+
+    return ReorderableAnalyticsGrid(
+      layoutType: 'desktop',
+      crossAxisCount: 4,
+      gap: gap,
+      maxWidth: 1400,
+      childAspectRatio: 1.3,
+      enableReordering: true,
+      children: cards,
     );
   }
 

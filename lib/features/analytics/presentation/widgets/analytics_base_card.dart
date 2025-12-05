@@ -43,6 +43,10 @@ class AnalyticsBaseCard extends StatelessWidget {
   /// Usar false para tarjetas con altura dinámica (ej: listas).
   final bool expandChild;
 
+  /// Si es true, muestra información adicional (tarjeta más grande)
+  /// con más padding, iconos más grandes y textos más detallados.
+  final bool moreInformation;
+
   const AnalyticsBaseCard({
     super.key,
     required this.color,
@@ -55,6 +59,7 @@ class AnalyticsBaseCard extends StatelessWidget {
     this.showActionIndicator = false,
     this.padding,
     this.expandChild = true,
+    this.moreInformation = false,
   });
 
   @override
@@ -104,16 +109,39 @@ class AnalyticsBaseCard extends StatelessWidget {
             final hasFiniteHeight = h.isFinite;
             final minDim = hasFiniteHeight ? (w < h ? w : h) : w * 0.5;
 
-            final effectivePadding = padding ??
-                EdgeInsets.all((minDim * 0.05).clamp(12.0, 20.0));
+            // Factor de escala para moreInformation
+            final scaleFactor = moreInformation ? 1.25 : 1.0;
 
-            final iconSize = (minDim * 0.01).clamp(18.0, 24.0);
-            final iconBoxSize = (iconSize * 1).clamp(36.0, 48.0);
-            final titleSize = (w * 0.06).clamp(12.0, 14.0);
-            final subtitleSize = (w * 0.045).clamp(10.0, 12.0);
+            final effectivePadding = padding ??
+                EdgeInsets.all((minDim * 0.05 * scaleFactor).clamp(12.0, 24.0));
+
+            final iconSize = (minDim * 0.01 * scaleFactor).clamp(18.0, 28.0);
+            final iconBoxSize = (iconSize * 1.5).clamp(36.0, 56.0);
+            final titleSize = (w * 0.06 * scaleFactor).clamp(12.0, 16.0);
+            final subtitleSize = (w * 0.045 * scaleFactor).clamp(10.0, 14.0);
 
             // Determinar si expandir basado en la propiedad y las constraints
             final shouldExpand = expandChild && hasFiniteHeight;
+
+            // Widget del contenido: puede ser Expanded, Flexible con clip, o directo
+            Widget contentWidget;
+            if (shouldExpand) {
+              // Expandir para llenar espacio
+              contentWidget = Expanded(child: child);
+            } else if (hasFiniteHeight) {
+              // Altura finita pero no expandir: usar Flexible con clip para evitar overflow
+              contentWidget = Flexible(
+                child: ClipRect(
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: child,
+                  ),
+                ),
+              );
+            } else {
+              // Altura infinita: shrink-wrap normal
+              contentWidget = child;
+            }
 
             return Padding(
               padding: effectivePadding,
@@ -183,10 +211,7 @@ class AnalyticsBaseCard extends StatelessWidget {
                   ),
 
                   // --- Contenido ---
-                  if (shouldExpand)
-                    Expanded(child: child)
-                  else
-                    child,
+                  contentWidget,
                 ],
               ),
             );

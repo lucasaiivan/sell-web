@@ -17,6 +17,9 @@ class MetricCard extends StatelessWidget {
   final String? subtitle;
   final bool isZero;
 
+  /// Si es true, muestra información adicional (tarjeta más grande)
+  final bool moreInformation;
+
   const MetricCard({
     super.key,
     required this.title,
@@ -25,6 +28,7 @@ class MetricCard extends StatelessWidget {
     required this.color,
     this.subtitle,
     this.isZero = false,
+    this.moreInformation = false,
   });
 
   @override
@@ -35,6 +39,7 @@ class MetricCard extends StatelessWidget {
       icon: icon,
       title: title,
       subtitle: subtitle,
+      moreInformation: moreInformation,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,

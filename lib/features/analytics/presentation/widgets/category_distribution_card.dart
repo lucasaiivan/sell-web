@@ -79,7 +79,10 @@ class CategoryDistributionCard extends StatelessWidget {
                 // Leyenda compacta
                 Expanded(
                   flex: 5,
-                  child: _buildLegend(context, displayCategories),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: _buildLegend(context, displayCategories),
+                  ),
                 ),
               ],
             )

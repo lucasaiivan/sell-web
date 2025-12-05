@@ -11,14 +11,17 @@ import '../../domain/entities/date_filter.dart';
 import '../providers/analytics_provider.dart';
 import '../widgets/active_cash_registers_card.dart';
 import '../widgets/analytics_skeleton.dart';
+import '../widgets/category_distribution_card.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/month_grouped_transactions_list.dart';
 import '../widgets/payment_methods_card.dart';
 import '../widgets/peak_hours_card.dart';
 import '../widgets/products_metric_card.dart';
 import '../widgets/profitability_metric_card.dart';
+import '../widgets/sales_trend_card.dart';
 import '../widgets/seller_ranking_card.dart';
 import '../widgets/slow_moving_products_card.dart';
+import '../widgets/weekday_sales_card.dart';
 
 /// Página: Analíticas
 ///
@@ -89,7 +92,7 @@ class AnalyticsPage extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final screenWidth = constraints.maxWidth;
-    
+
                 // DISEÑO COMPACTO VERTICAL (pantallas muy pequeñas < 600px)
                 if (screenWidth < 600) {
                   return _buildMobileLayout(
@@ -124,7 +127,7 @@ class AnalyticsPage extends StatelessWidget {
             ),
           ),
         ),
-    
+
         // Lista de Transacciones agrupadas por mes
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
@@ -132,7 +135,8 @@ class AnalyticsPage extends StatelessWidget {
             transactions: analytics.transactions,
             isMonthExpanded: provider.isMonthExpanded,
             onToggleMonth: provider.toggleMonthExpansion,
-            onTransactionTap: (transaction) => _showTransactionDetail(context, transaction),
+            onTransactionTap: (transaction) =>
+                _showTransactionDetail(context, transaction),
           ),
         ),
       ],
@@ -279,13 +283,47 @@ class AnalyticsPage extends StatelessWidget {
         ),
         SizedBox(height: gap),
 
-        // 10. Medios de Pago (altura dinámica)
+        // 10. Tendencia de Ventas (ancho completo)
+        SizedBox(
+          height: tertiaryCardHeight * 1.2,
+          child: SalesTrendCard(
+            salesByDay: analytics.salesByDay,
+            color: const Color(0xFF3B82F6),
+            isZero: analytics.salesByDay.isEmpty,
+          ),
+        ),
+        SizedBox(height: gap),
+
+        // 11. Distribución por Categorías (ancho completo)
+        SizedBox(
+          height: tertiaryCardHeight * 1.4,
+          child: CategoryDistributionCard(
+            salesByCategory: analytics.salesByCategory,
+            totalSales: analytics.totalSales,
+            color: const Color(0xFFEC4899),
+            isZero: analytics.salesByCategory.isEmpty,
+          ),
+        ),
+        SizedBox(height: gap),
+
+        // 12. Días de Venta (ancho completo)
+        SizedBox(
+          height: tertiaryCardHeight,
+          child: WeekdaySalesCard(
+            salesByWeekday: analytics.salesByWeekday,
+            color: const Color(0xFF6366F1),
+            isZero: analytics.salesByWeekday.isEmpty,
+          ),
+        ),
+        SizedBox(height: gap),
+
+        // 14. Medios de Pago (altura dinámica)
         PaymentMethodsCard(
           paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
           totalSales: analytics.totalSales,
         ),
 
-        // 11. Cajas Activas (si existen)
+        // 15. Cajas Activas (si existen)
         if (activeCashRegisters.isNotEmpty) ...[
           SizedBox(height: gap),
           ActiveCashRegistersCard(
@@ -434,7 +472,44 @@ class AnalyticsPage extends StatelessWidget {
               ),
             ),
 
-            // 10. Medios de Pago (2xFit)
+            // 10. Tendencia de Ventas (2x1.2)
+            StaggeredGridTile.extent(
+              crossAxisCellCount: 2,
+              mainAxisExtent: cellSize * 1.2,
+              child: SalesTrendCard(
+                salesByDay: analytics.salesByDay,
+                color: const Color(0xFF3B82F6),
+                isZero: analytics.salesByDay.isEmpty,
+                subtitle: 'Evolución temporal',
+              ),
+            ),
+
+            // 11. Distribución por Categorías (2x1.4) - Más espacio para gráfico
+            StaggeredGridTile.extent(
+              crossAxisCellCount: 2,
+              mainAxisExtent: cellSize * 1.4,
+              child: CategoryDistributionCard(
+                salesByCategory: analytics.salesByCategory,
+                totalSales: analytics.totalSales,
+                color: const Color(0xFFEC4899),
+                isZero: analytics.salesByCategory.isEmpty,
+                subtitle: 'Ventas por categoría',
+              ),
+            ),
+
+            // 12. Días de Venta (2x1)
+            StaggeredGridTile.extent(
+              crossAxisCellCount: 2,
+              mainAxisExtent: cellSize * 1.0,
+              child: WeekdaySalesCard(
+                salesByWeekday: analytics.salesByWeekday,
+                color: const Color(0xFF6366F1),
+                isZero: analytics.salesByWeekday.isEmpty,
+                subtitle: 'Rendimiento semanal',
+              ),
+            ),
+
+            // 14. Medios de Pago (2xFit)
             StaggeredGridTile.fit(
               crossAxisCellCount: 2,
               child: PaymentMethodsCard(
@@ -443,7 +518,7 @@ class AnalyticsPage extends StatelessWidget {
               ),
             ),
 
-            // 11. Cajas Activas (2xFit) - Si existen
+            // 15. Cajas Activas (2xFit) - Si existen
             if (activeCashRegisters.isNotEmpty)
               StaggeredGridTile.fit(
                 crossAxisCellCount: 2,
@@ -584,7 +659,7 @@ class AnalyticsPage extends StatelessWidget {
                 peakHours: analytics.peakHours,
                 color: const Color(0xFFF59E0B),
                 isZero: analytics.peakHours.isEmpty,
-                subtitle: 'Mayor actividad',
+                subtitle: 'Mayor actividad por hora',
               ),
             ),
 
@@ -600,8 +675,46 @@ class AnalyticsPage extends StatelessWidget {
               ),
             ),
 
-            // FILA 4: Tarjetas con contenido dinámico
-            // 10. Medios de Pago (3xFit)
+            // FILA 4: Nuevas tarjetas de análisis avanzado
+            // 10. Tendencia de Ventas (3x1.2) - Gráfico de línea
+            StaggeredGridTile.extent(
+              crossAxisCellCount: 3,
+              mainAxisExtent: cellSize * 1.2,
+              child: SalesTrendCard(
+                salesByDay: analytics.salesByDay,
+                color: const Color(0xFF3B82F6),
+                isZero: analytics.salesByDay.isEmpty,
+                subtitle: 'Evolución temporal',
+              ),
+            ),
+
+            // 11. Distribución por Categorías (3x1.4) - Gráfico de dona más grande
+            StaggeredGridTile.extent(
+              crossAxisCellCount: 3,
+              mainAxisExtent: cellSize * 1.4,
+              child: CategoryDistributionCard(
+                salesByCategory: analytics.salesByCategory,
+                totalSales: analytics.totalSales,
+                color: const Color(0xFFEC4899),
+                isZero: analytics.salesByCategory.isEmpty,
+                subtitle: 'Ventas por categoría',
+              ),
+            ),
+
+            // 12. Días de Venta (3x1) - Por día de semana
+            StaggeredGridTile.extent(
+              crossAxisCellCount: 3,
+              mainAxisExtent: cellSize * 1.0,
+              child: WeekdaySalesCard(
+                salesByWeekday: analytics.salesByWeekday,
+                color: const Color(0xFF6366F1),
+                isZero: analytics.salesByWeekday.isEmpty,
+                subtitle: 'Rendimiento semanal',
+              ),
+            ),
+
+            // FILA 5: Tarjetas con contenido dinámico
+            // 14. Medios de Pago (3xFit)
             StaggeredGridTile.fit(
               crossAxisCellCount: 3,
               child: PaymentMethodsCard(
@@ -610,7 +723,7 @@ class AnalyticsPage extends StatelessWidget {
               ),
             ),
 
-            // 11. Cajas Activas (3xFit) - Si existen
+            // 15. Cajas Activas (3xFit) - Si existen
             if (activeCashRegisters.isNotEmpty)
               StaggeredGridTile.fit(
                 crossAxisCellCount: 3,
@@ -630,7 +743,7 @@ class AnalyticsPage extends StatelessWidget {
 
     return CustomAppBar(
       toolbarHeight: 70,
-      titleSpacing: 0, 
+      titleSpacing: 0,
       automaticallyImplyLeading: false,
       titleWidget: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),

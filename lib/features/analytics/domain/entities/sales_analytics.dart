@@ -54,6 +54,18 @@ class SalesAnalytics extends Equatable {
   /// Productos con baja rotación
   final List<Map<String, dynamic>> slowMovingProducts;
 
+  /// Tendencia de ventas por día (fecha -> {totalSales, transactionCount, profit})
+  /// Para gráfico de línea temporal
+  final Map<String, Map<String, dynamic>> salesByDay;
+
+  /// Distribución de ventas por categoría de producto
+  /// Estructura: [{ 'category': String, 'totalSales': double, 'percentage': double, 'transactionCount': int }]
+  final List<Map<String, dynamic>> salesByCategory;
+
+  /// Ventas agrupadas por día de la semana (1=Lunes ... 7=Domingo)
+  /// Estructura: { dayOfWeek: { 'dayName': String, 'totalSales': double, 'transactionCount': int, 'averageSales': double } }
+  final Map<int, Map<String, dynamic>> salesByWeekday;
+
   const SalesAnalytics({
     required this.totalTransactions,
     required this.totalProfit,
@@ -69,6 +81,9 @@ class SalesAnalytics extends Equatable {
     this.salesByHour = const {},
     this.peakHours = const [],
     this.slowMovingProducts = const [],
+    this.salesByDay = const {},
+    this.salesByCategory = const [],
+    this.salesByWeekday = const {},
   });
 
   /// Ganancia promedio por transacción
@@ -94,6 +109,9 @@ class SalesAnalytics extends Equatable {
       salesByHour: const {},
       peakHours: const [],
       slowMovingProducts: const [],
+      salesByDay: const {},
+      salesByCategory: const [],
+      salesByWeekday: const {},
     );
   }
 
@@ -112,5 +130,8 @@ class SalesAnalytics extends Equatable {
         salesBySeller,
         peakHours,
         slowMovingProducts,
+        salesByDay,
+        salesByCategory,
+        salesByWeekday,
       ];
 }

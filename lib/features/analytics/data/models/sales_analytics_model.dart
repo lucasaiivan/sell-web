@@ -24,6 +24,9 @@ class SalesAnalyticsModel extends SalesAnalytics {
     super.salesByHour,
     super.peakHours,
     super.slowMovingProducts,
+    super.salesByDay,
+    super.salesByCategory,
+    super.salesByWeekday,
   });
 
   /// Construye el modelo desde una lista de tickets
@@ -52,10 +55,25 @@ class SalesAnalyticsModel extends SalesAnalytics {
     final Map<String, Map<String, dynamic>> sellerStats = {};
     final Map<int, Map<String, dynamic>> hourStats = {};
     final Map<String, Map<String, dynamic>> slowProductStats = {};
+    final Map<String, Map<String, dynamic>> dailyStats = {}; // Tendencia por día
+    final Map<String, Map<String, dynamic>> categoryStats = {}; // Por categoría
+    final Map<int, Map<String, dynamic>> weekdayStats = {}; // Por día de semana
 
     // Inicializar horas (0-23)
     for (int i = 0; i < 24; i++) {
       hourStats[i] = {'hour': i, 'totalSales': 0.0, 'transactionCount': 0};
+    }
+
+    // Inicializar días de la semana (1=Lunes ... 7=Domingo)
+    final weekdayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    for (int i = 1; i <= 7; i++) {
+      weekdayStats[i] = {
+        'dayOfWeek': i,
+        'dayName': weekdayNames[i],
+        'totalSales': 0.0,
+        'transactionCount': 0,
+        'totalProfit': 0.0,
+      };
     }
 
     // === Un solo recorrido para calcular todo ===
@@ -77,6 +95,33 @@ class SalesAnalyticsModel extends SalesAnalytics {
           (hourStats[hour]!['totalSales'] as double) + ticket.priceTotal;
       hourStats[hour]!['transactionCount'] =
           (hourStats[hour]!['transactionCount'] as int) + 1;
+
+      // Tendencia de ventas por día (para gráfico de línea)
+      final ticketDate = ticket.creation.toDate();
+      final dayKey = '${ticketDate.year}-${ticketDate.month.toString().padLeft(2, '0')}-${ticketDate.day.toString().padLeft(2, '0')}';
+      if (!dailyStats.containsKey(dayKey)) {
+        dailyStats[dayKey] = {
+          'date': dayKey,
+          'totalSales': 0.0,
+          'transactionCount': 0,
+          'totalProfit': 0.0,
+        };
+      }
+      dailyStats[dayKey]!['totalSales'] =
+          (dailyStats[dayKey]!['totalSales'] as double) + ticket.priceTotal;
+      dailyStats[dayKey]!['transactionCount'] =
+          (dailyStats[dayKey]!['transactionCount'] as int) + 1;
+      dailyStats[dayKey]!['totalProfit'] =
+          (dailyStats[dayKey]!['totalProfit'] as double) + ticket.getProfit;
+
+      // Ventas por día de la semana (1=Lunes ... 7=Domingo)
+      final weekday = ticketDate.weekday; // 1=Mon, 7=Sun
+      weekdayStats[weekday]!['totalSales'] =
+          (weekdayStats[weekday]!['totalSales'] as double) + ticket.priceTotal;
+      weekdayStats[weekday]!['transactionCount'] =
+          (weekdayStats[weekday]!['transactionCount'] as int) + 1;
+      weekdayStats[weekday]!['totalProfit'] =
+          (weekdayStats[weekday]!['totalProfit'] as double) + ticket.getProfit;
 
       // Ventas por vendedor
       final sellerId = ticket.sellerId.isEmpty ? 'unknown' : ticket.sellerId;
@@ -114,6 +159,25 @@ class SalesAnalyticsModel extends SalesAnalytics {
         productStats[productId]!['totalRevenue'] =
             (productStats[productId]!['totalRevenue'] as double) +
                 (product.salePrice * product.quantity);
+
+        // Ventas por categoría
+        final categoryName = product.nameCategory.isNotEmpty
+            ? product.nameCategory
+            : 'Sin categoría';
+        if (!categoryStats.containsKey(categoryName)) {
+          categoryStats[categoryName] = {
+            'category': categoryName,
+            'totalSales': 0.0,
+            'transactionCount': 0,
+            'quantitySold': 0,
+          };
+        }
+        categoryStats[categoryName]!['totalSales'] =
+            (categoryStats[categoryName]!['totalSales'] as double) +
+                (product.salePrice * product.quantity);
+        categoryStats[categoryName]!['quantitySold'] =
+            (categoryStats[categoryName]!['quantitySold'] as int) +
+                product.quantity;
 
         // Most profitable products
         final profitPerUnit = product.salePrice - product.purchasePrice;
@@ -194,6 +258,31 @@ class SalesAnalyticsModel extends SalesAnalytics {
       ..sort((a, b) =>
           (a['quantitySold'] as int).compareTo(b['quantitySold'] as int));
 
+    // Ventas por categoría (ordenar por ventas y calcular porcentaje)
+    final salesByCategory = categoryStats.values.toList()
+      ..sort((a, b) =>
+          (b['totalSales'] as double).compareTo(a['totalSales'] as double));
+    // Calcular porcentajes
+    for (final cat in salesByCategory) {
+      cat['percentage'] = totalSales > 0
+          ? (cat['totalSales'] as double) / totalSales * 100
+          : 0.0;
+    }
+
+    // Tendencia de ventas por día (ordenar por fecha)
+    final salesByDay = Map<String, Map<String, dynamic>>.fromEntries(
+      dailyStats.entries.toList()
+        ..sort((a, b) => a.key.compareTo(b.key)),
+    );
+
+    // Calcular promedio por día de semana
+    for (final stats in weekdayStats.values) {
+      final count = stats['transactionCount'] as int;
+      stats['averageSales'] = count > 0
+          ? (stats['totalSales'] as double) / count
+          : 0.0;
+    }
+
     return SalesAnalyticsModel(
       totalTransactions: totalTransactions,
       totalProfit: totalProfit,
@@ -209,6 +298,9 @@ class SalesAnalyticsModel extends SalesAnalytics {
       salesByHour: hourStats,
       peakHours: peakHours.take(5).toList(),
       slowMovingProducts: slowMovingProducts,
+      salesByDay: salesByDay,
+      salesByCategory: salesByCategory,
+      salesByWeekday: weekdayStats,
     );
   }
 
@@ -229,6 +321,9 @@ class SalesAnalyticsModel extends SalesAnalytics {
       salesByHour: salesByHour,
       peakHours: peakHours,
       slowMovingProducts: slowMovingProducts,
+      salesByDay: salesByDay,
+      salesByCategory: salesByCategory,
+      salesByWeekday: salesByWeekday,
     );
   }
 
@@ -249,6 +344,9 @@ class SalesAnalyticsModel extends SalesAnalytics {
       salesByHour: const {},
       peakHours: const [],
       slowMovingProducts: const [],
+      salesByDay: const {},
+      salesByCategory: const [],
+      salesByWeekday: const {},
     );
   }
 }

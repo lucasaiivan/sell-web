@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
-import 'analytics_base_card.dart';
-import 'analytics_modal.dart';
+import '../core/widgets.dart';
 
 /// Widget: Card de Métrica de Rentabilidad
 ///

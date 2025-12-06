@@ -6,7 +6,7 @@ import '../../data/services/analytics_preferences_service.dart';
 import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
 import '../../domain/usecases/get_sales_analytics_usecase.dart';
-import '../widgets/analytics_card_registry.dart';
+import '../widgets/analytics_widgets.dart';
 
 /// Estado interno del provider (inmutable)
 class _AnalyticsState {

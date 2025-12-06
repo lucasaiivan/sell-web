@@ -80,61 +80,42 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
 
     return Material(
       color: colorScheme.errorContainer,
-      elevation: 4,
+      elevation: 0,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
             children: [
-              // Icono de offline
               Icon(
                 Icons.cloud_off_rounded,
                 color: colorScheme.onErrorContainer,
-                size: 20,
+                size: 16,
               ),
-              const SizedBox(width: 12),
-
-              // Texto informativo
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sin conexión a internet',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: colorScheme.onErrorContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Trabajando en modo offline con datos guardados',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            colorScheme.onErrorContainer.withValues(alpha: 0.8),
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Sin conexión - Trabajando en modo offline',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onErrorContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-
-              // Botón cerrar
               IconButton(
                 icon: Icon(
                   Icons.close_rounded,
-                  size: 20,
+                  size: 16,
                   color: colorScheme.onErrorContainer,
                 ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
                 onPressed: () {
                   setState(() {
                     _isDismissed = true;
                   });
                 },
-                tooltip: 'Cerrar',
-                visualDensity: VisualDensity.compact,
               ),
             ],
           ),

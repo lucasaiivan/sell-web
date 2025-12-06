@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/analytics_colors.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
-import 'analytics_modal.dart';
+import '../core/widgets.dart';
 
 /// Widget: Modal de Ticket Promedio
 ///

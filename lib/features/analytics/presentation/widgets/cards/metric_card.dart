@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
-import 'analytics_base_card.dart';
+import '../core/widgets.dart';
 
 /// Widget: Card de Métrica (Rediseñado - Sin desbordamiento)
 ///

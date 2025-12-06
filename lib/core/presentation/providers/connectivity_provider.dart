@@ -35,39 +35,48 @@ class ConnectivityProvider extends ChangeNotifier {
 
   /// Verifica el estado de conectividad intentando acceder a Firestore
   Future<void> _checkConnectivity() async {
+    // Primera verificación
+    bool isConnected = await _performConnectivityCheck();
+
+    // Si falla, hacemos doble check para evitar falsos positivos (flickering)
+    if (!isConnected) {
+      await Future.delayed(const Duration(seconds: 2));
+      isConnected = await _performConnectivityCheck();
+    }
+
+    // Actualizar estado
+    if (isConnected) {
+      if (!_isOnline) {
+        _isOnline = true;
+        debugPrint('🌐 Estado de conexión: ONLINE (restablecido)');
+        notifyListeners();
+      }
+    } else {
+      // Solo marcamos offline si fallaron ambos intentos
+      if (_isOnline) {
+        _isOnline = false;
+        debugPrint('🌐 Estado de conexión: OFFLINE (confirmado)');
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Ejecuta un ping a Firestore para verificar conexión real
+  Future<bool> _performConnectivityCheck() async {
     try {
-      // Intentar leer un documento pequeño con timeout corto
-      // Usamos getOptions para forzar lectura desde servidor
       final docRef = FirebaseFirestore.instance
           .collection('_connectivity_check')
           .doc('ping');
 
-      // Intentar leer desde el servidor (no desde caché)
       await docRef.get(const GetOptions(source: Source.server)).timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 3),
         onTimeout: () {
-          // Si el timeout expira, asumir offline
           throw TimeoutException('Connection check timeout');
         },
       );
-
-      // Si llegamos aquí, hay conexión
-      final wasOnline = _isOnline;
-      _isOnline = true;
-
-      if (!wasOnline) {
-        debugPrint('🌐 Estado de conexión: ONLINE (reconectado)');
-        notifyListeners();
-      }
+      return true;
     } catch (e) {
-      // Error o timeout = sin conexión
-      final wasOnline = _isOnline;
-      _isOnline = false;
-
-      if (wasOnline) {
-        debugPrint('🌐 Estado de conexión: OFFLINE');
-        notifyListeners();
-      }
+      return false;
     }
   }
 

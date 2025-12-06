@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/features/analytics/domain/entities/analytics_card_definition.dart';
-import '../widgets/analytics_card_registry.dart';
+import '../registry/widgets.dart';
 
 /// Modal para personalizar las tarjetas visibles en el dashboard
 ///

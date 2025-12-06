@@ -1,8 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
-import 'analytics_base_card.dart';
-import 'analytics_modal.dart';
+import '../core/widgets.dart';
 
 /// Widget: Tarjeta de Distribución por Categorías
 ///

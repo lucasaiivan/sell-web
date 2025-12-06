@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
-import 'analytics_base_card.dart';
+import '../core/widgets.dart';
 
 /// Widget: Tarjeta de Métodos de Pago
 ///

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+import 'date_filter.dart';
 
 /// Entity: Analíticas de Ventas
 ///
@@ -115,6 +116,192 @@ class SalesAnalytics extends Equatable {
     );
   }
 
+
+  /// Totales calculados para un rango de fechas específico
+  /// Retorna un Record con los valores agregados
+  ({
+    double totalSales,
+    double totalProfit,
+    int totalTransactions,
+    double averageProfitPerTransaction
+  }) getTotalsForFilter(DateFilter filter) {
+    // Determinar rango de fechas
+    final now = DateTime.now();
+    DateTime rangeStart;
+    DateTime rangeEnd; // Exclusivo
+
+    switch (filter) {
+      case DateFilter.today:
+        rangeStart = DateTime(now.year, now.month, now.day);
+        rangeEnd = rangeStart.add(const Duration(days: 1));
+        break;
+      case DateFilter.yesterday:
+        rangeStart = DateTime(now.year, now.month, now.day - 1);
+        rangeEnd = DateTime(now.year, now.month, now.day);
+        break;
+      case DateFilter.thisMonth:
+        rangeStart = DateTime(now.year, now.month, 1);
+        rangeEnd = DateTime(now.year, now.month + 1, 1);
+        break;
+      case DateFilter.lastMonth:
+        rangeStart = DateTime(now.year, now.month - 1, 1);
+        rangeEnd = DateTime(now.year, now.month, 1);
+        break;
+      case DateFilter.thisYear:
+        rangeStart = DateTime(now.year, 1, 1);
+        rangeEnd = DateTime(now.year + 1, 1, 1);
+        break;
+      case DateFilter.lastYear:
+        rangeStart = DateTime(now.year - 1, 1, 1);
+        rangeEnd = DateTime(now.year, 1, 1);
+        break;
+    }
+
+    double totalSales = 0.0;
+    double totalProfit = 0.0;
+    int totalTransactions = 0;
+
+    bool inRange(DateTime d) =>
+        !d.isBefore(rangeStart) && d.isBefore(rangeEnd);
+
+    for (final entry in salesByDay.entries) {
+      final dayDate = DateTime.parse(entry.key);
+      if (!inRange(dayDate)) continue;
+
+      final data = entry.value;
+      totalSales += data['totalSales'] as double? ?? 0.0;
+      totalProfit += data['totalProfit'] as double? ?? 0.0;
+      totalTransactions += data['transactionCount'] as int? ?? 0;
+    }
+
+    final avgProfitPerTx =
+        totalTransactions > 0 ? totalProfit / totalTransactions : 0.0;
+
+    return (
+      totalSales: totalSales,
+      totalProfit: totalProfit,
+      totalTransactions: totalTransactions,
+      averageProfitPerTransaction: avgProfitPerTx,
+    );
+  }
+
+  /// Calcula la comparación con el periodo anterior
+  /// Retorna un map con el porcentaje y label, o null si no aplica
+  Map<String, dynamic>? getPeriodComparison(
+    DateFilter currentFilter,
+    double Function(Map<String, dynamic>) valueExtractor,
+  ) {
+    if (salesByDay.isEmpty) return null;
+
+    // No calcular para filtros anuales
+    if (currentFilter == DateFilter.thisYear ||
+        currentFilter == DateFilter.lastYear) {
+      return null;
+    }
+
+    final sortedDays = salesByDay.keys.toList()..sort();
+    if (sortedDays.isEmpty) return null;
+
+    String comparisonLabel;
+    switch (currentFilter) {
+      case DateFilter.today:
+        comparisonLabel = 'ayer';
+        break;
+      case DateFilter.yesterday:
+        comparisonLabel = 'anteayer';
+        break;
+      case DateFilter.thisMonth:
+        comparisonLabel = 'el mes pasado';
+        break;
+      case DateFilter.lastMonth:
+        comparisonLabel = 'el mes anterior';
+        break;
+      default:
+        comparisonLabel = 'antes';
+    }
+
+    // Lógica para días (today/yesterday)
+    if (currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday) {
+      if (sortedDays.length < 2) return null;
+
+      final lastDay = sortedDays.last;
+      final previousDay = sortedDays[sortedDays.length - 2];
+
+      final lastDayData = salesByDay[lastDay];
+      final previousDayData = salesByDay[previousDay];
+
+      if (lastDayData == null || previousDayData == null) return null;
+
+      final currentValue = valueExtractor(lastDayData);
+      final previousValue = valueExtractor(previousDayData);
+
+      return _buildComparisonResult(
+          currentValue, previousValue, comparisonLabel);
+    }
+
+    // Lógica para meses (thisMonth/lastMonth)
+    if (currentFilter == DateFilter.thisMonth ||
+        currentFilter == DateFilter.lastMonth) {
+      final now = DateTime.now();
+
+      final DateTime targetStart = currentFilter == DateFilter.thisMonth
+          ? DateTime(now.year, now.month, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final DateTime targetEnd = currentFilter == DateFilter.thisMonth
+          ? DateTime(now.year, now.month + 1, 1)
+          : DateTime(now.year, now.month, 1);
+
+      final DateTime prevStart = currentFilter == DateFilter.thisMonth
+          ? DateTime(now.year, now.month - 1, 1)
+          : DateTime(now.year, now.month - 2, 1);
+      final DateTime prevEnd = currentFilter == DateFilter.thisMonth
+          ? DateTime(now.year, now.month, 1)
+          : DateTime(now.year, now.month - 1, 1);
+
+      double targetTotal = 0.0;
+      double previousTotal = 0.0;
+
+      bool inRange(DateTime d, DateTime start, DateTime end) =>
+          !d.isBefore(start) && d.isBefore(end);
+
+      for (final dayKey in sortedDays) {
+        final dayDate = DateTime.parse(dayKey);
+        final data = salesByDay[dayKey];
+        if (data == null) continue;
+
+        if (inRange(dayDate, targetStart, targetEnd)) {
+          targetTotal += valueExtractor(data);
+        } else if (inRange(dayDate, prevStart, prevEnd)) {
+          previousTotal += valueExtractor(data);
+        }
+      }
+
+      if (previousTotal == 0) return null;
+
+      return _buildComparisonResult(
+          targetTotal, previousTotal, comparisonLabel);
+    }
+
+    return null;
+  }
+
+  Map<String, dynamic>? _buildComparisonResult(
+    double currentValue,
+    double previousValue,
+    String label,
+  ) {
+    if (previousValue == 0) return null;
+
+    final percentage = ((currentValue - previousValue) / previousValue) * 100;
+    
+    return {
+      'percentage': percentage,
+      'label': label,
+      'isPositive': percentage >= 0,
+    };
+  }
+
   @override
   List<Object?> get props => [
         totalTransactions,
@@ -135,3 +322,4 @@ class SalesAnalytics extends Equatable {
         salesByWeekday,
       ];
 }
+

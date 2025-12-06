@@ -9,11 +9,7 @@ import 'package:sellweb/features/sales/presentation/providers/sales_provider.dar
 import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
 import '../providers/analytics_provider.dart';
-import '../widgets/analytics_card_registry.dart';
-import '../widgets/analytics_skeleton.dart';
-import '../widgets/customize_cards_dialog.dart';
-import '../widgets/reorderable_analytics_grid.dart';
-import '../widgets/transactions_dialog.dart';
+import '../widgets/analytics_widgets.dart';
 
 /// Página: Analíticas
 ///

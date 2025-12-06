@@ -4,7 +4,7 @@ import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 import 'package:sellweb/core/utils/helpers/number_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
-import 'analytics_modal.dart';
+import '../core/widgets.dart';
 
 /// Widget: Modal de Ganancia Detallada
 ///

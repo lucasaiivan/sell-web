@@ -7,8 +7,7 @@ import 'package:sellweb/features/cash_register/domain/entities/cash_register.dar
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'analytics_base_card.dart';
-import 'analytics_modal.dart';
+import '../core/widgets.dart';
 
 /// Widget: Tarjeta de Cajas Registradoras Activas
 ///

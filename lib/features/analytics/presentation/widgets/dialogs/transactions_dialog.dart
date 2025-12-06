@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
-import '../../domain/entities/date_filter.dart';
-import 'month_grouped_transactions_list.dart';
+import '../../../domain/entities/date_filter.dart';
+import '../transactions/widgets.dart';
 
 /// Diálogo para mostrar la lista completa de transacciones
 ///

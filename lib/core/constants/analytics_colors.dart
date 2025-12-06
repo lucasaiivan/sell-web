@@ -45,8 +45,8 @@ class AnalyticsColors {
   /// Rojo Coral - Horas Pico (Intensidad)
   static const Color peakHours = Color(0xFFF43F5E);
 
-  /// Verde Lima - Cajas Activas (Estado Online)
-  static const Color cashRegisters = Color(0xFF84CC16);
+  /// Azul - Cajas Activas (Estado Online)
+  static const Color cashRegisters = Color.fromARGB(255, 74, 92, 171);
 
   // ========== 🟡 CLASIFICACIÓN (Categorías y Tiempo) ==========
   /// Amarillo Oro - Ranking de Vendedores

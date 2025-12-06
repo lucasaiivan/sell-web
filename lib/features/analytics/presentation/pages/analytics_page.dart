@@ -7,33 +7,26 @@ import 'package:sellweb/features/cash_register/presentation/providers/cash_regis
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../domain/entities/date_filter.dart';
+import '../../domain/entities/sales_analytics.dart';
 import '../providers/analytics_provider.dart';
-import '../widgets/active_cash_registers_card.dart';
+import '../widgets/analytics_card_registry.dart';
 import '../widgets/analytics_skeleton.dart';
-import '../widgets/category_distribution_card.dart';
-import '../widgets/metric_card.dart';
-import '../widgets/month_grouped_transactions_list.dart';
-import '../widgets/payment_methods_card.dart';
-import '../widgets/peak_hours_card.dart';
-import '../widgets/products_metric_card.dart';
-import '../widgets/profitability_metric_card.dart';
+import '../widgets/customize_cards_dialog.dart';
 import '../widgets/reorderable_analytics_grid.dart';
-import '../widgets/sales_trend_card.dart';
-import '../widgets/seller_ranking_card.dart';
-import '../widgets/slow_moving_products_card.dart';
-import '../widgets/weekday_sales_card.dart';
+import '../widgets/transactions_dialog.dart';
 
 /// Página: Analíticas
 ///
 /// **Responsabilidad:**
 /// - Mostrar métricas de ventas del negocio
 /// - Filtrar transacciones por período de tiempo
-/// - Mostrar lista de transacciones
+/// - Permitir PERSONALIZACIÓN de tarjetas visibles
 /// - Gestionar estados: loading, error, success
 ///
-/// **Métricas mostradas:**
-/// - Total de transacciones
-/// - Ganancia total (formateada con NumberFormat.currency)
+/// **Dashboard Personalizable:**
+/// - Por defecto solo muestra "Facturación"
+/// - El usuario agrega más tarjetas desde el botón de personalización
+/// - Las preferencias se persisten localmente
 class AnalyticsPage extends StatelessWidget {
   const AnalyticsPage({super.key});
 
@@ -45,6 +38,15 @@ class AnalyticsPage extends StatelessWidget {
       body: Consumer<AnalyticsProvider>(
         builder: (context, provider, _) {
           return _buildContent(context, provider);
+        },
+      ),
+      floatingActionButton: Consumer<AnalyticsProvider>(
+        builder: (context, provider, _) {
+          return FloatingActionButton(
+            onPressed: () => _showCustomizeDialog(context, provider),
+            tooltip: 'Agregar tarjetas',
+            child: const Icon(Icons.add_rounded),
+          );
         },
       ),
     );
@@ -73,19 +75,21 @@ class AnalyticsPage extends StatelessWidget {
     return _buildEmptyState(context);
   }
 
-  /// Construye el estado de éxito con las métricas y lista
+  /// Construye el estado de éxito con las métricas
   Widget _buildSuccessState(BuildContext context, AnalyticsProvider provider) {
     final analytics = provider.analytics!;
-    // Obtenemos el provider de cajas para mostrar las cajas activas
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
     final activeCashRegisters = cashRegisterProvider.activeCashRegisters;
+
+    // Si no hay tarjetas visibles, mostrar mensaje para añadir
+    if (provider.visibleCardIds.isEmpty) {
+      return _buildNoCardsState(context, provider);
+    }
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        //
         // Grid de Métricas y Tarjetas (Responsive Layout)
-        //
         SliverPadding(
           padding: const EdgeInsets.all(16),
           sliver: SliverToBoxAdapter(
@@ -95,516 +99,141 @@ class AnalyticsPage extends StatelessWidget {
 
                 // DISEÑO COMPACTO VERTICAL (pantallas muy pequeñas < 600px)
                 if (screenWidth < 600) {
-                  return _buildMobileLayout(
-                      context, analytics, activeCashRegisters);
+                  return _buildResponsiveLayout(
+                    context: context,
+                    analytics: analytics,
+                    activeCashRegisters: activeCashRegisters,
+                    provider: provider,
+                    layoutType: 'mobile',
+                    crossAxisCount: 2,
+                    childAspectRatio: 1.1,
+                    maxWidth: null,
+                  );
                 }
                 // DISEÑO TABLET (600px - 900px)
                 else if (screenWidth < 900) {
-                  return _buildTabletLayout(
-                      context, analytics, activeCashRegisters);
+                  return _buildResponsiveLayout(
+                    context: context,
+                    analytics: analytics,
+                    activeCashRegisters: activeCashRegisters,
+                    provider: provider,
+                    layoutType: 'tablet',
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.2,
+                    maxWidth: 900,
+                  );
                 }
                 // DISEÑO DESKTOP (≥ 900px)
                 else {
-                  return _buildDesktopLayout(
-                      context, analytics, activeCashRegisters);
+                  return _buildResponsiveLayout(
+                    context: context,
+                    analytics: analytics,
+                    activeCashRegisters: activeCashRegisters,
+                    provider: provider,
+                    layoutType: 'desktop',
+                    crossAxisCount: 4,
+                    childAspectRatio: 1.3,
+                    maxWidth: 1400,
+                  );
                 }
               },
             ),
-          ),
-        ),
-        //
-        // view : lista de transacciones
-        //
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              'Transacciones',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold, fontSize: 24),
-            ),
-          ),
-        ),
-
-        // Lista de Transacciones agrupadas por mes
-        SliverPadding(
-          padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
-          sliver: MonthGroupedTransactionsList(
-            transactions: analytics.transactions,
-            isMonthExpanded: provider.isMonthExpanded,
-            onToggleMonth: provider.toggleMonthExpansion,
-            onTransactionTap: (transaction) =>
-                _showTransactionDetail(context, transaction),
           ),
         ),
       ],
     );
   }
 
-  /// Layout para pantallas móviles (< 600px)
-  /// Grid de 2 columnas con drag-and-drop para reordenar
-  Widget _buildMobileLayout(
-    BuildContext context,
-    dynamic analytics,
-    List<CashRegister> activeCashRegisters,
-  ) {
+  /// Construye el layout responsivo usando el registro de tarjetas
+  Widget _buildResponsiveLayout({
+    required BuildContext context,
+    required SalesAnalytics analytics,
+    required List<CashRegister> activeCashRegisters,
+    required AnalyticsProvider provider,
+    required String layoutType,
+    required int crossAxisCount,
+    required double childAspectRatio,
+    double? maxWidth,
+  }) {
+    final salesProvider = context.read<SalesProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
-    final gap = (screenWidth * 0.025).clamp(8.0, 16.0);
+    final gap = layoutType == 'mobile'
+        ? (screenWidth * 0.025).clamp(8.0, 16.0)
+        : layoutType == 'tablet'
+            ? (screenWidth * 0.015).clamp(8.0, 12.0)
+            : (screenWidth * 0.01).clamp(10.0, 14.0);
 
-    // Lista de tarjetas con keys únicos para el reordering
-    final List<Widget> cards = [
-      // 1. Facturación - Destacada
-      MetricCard(
-        key: const ValueKey('billing'),
-        title: 'Facturación',
-        value: CurrencyHelper.formatCurrency(analytics.totalSales),
-        icon: Icons.attach_money_rounded,
-        color: const Color(0xFF059669),
-        subtitle: 'Ingresos brutos',
-        isZero: analytics.totalSales == 0,
-        moreInformation: true,
-      ),
-
-      // 2. Ganancia
-      MetricCard(
-        key: const ValueKey('profit'),
-        title: 'Ganancia',
-        value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-        icon: Icons.trending_up_rounded,
-        color: const Color(0xFF7C3AED),
-        isZero: analytics.totalProfit == 0,
-      ),
-
-      // 3. Ventas
-      MetricCard(
-        key: const ValueKey('sales'),
-        title: 'Ventas',
-        value: analytics.totalTransactions.toString(),
-        icon: Icons.receipt_long_rounded,
-        color: const Color(0xFF2563EB),
-        isZero: analytics.totalTransactions == 0,
-      ),
-
-      // 4. Ticket Promedio
-      MetricCard(
-        key: const ValueKey('averageTicket'),
-        title: 'Ticket Prom.',
-        value: CurrencyHelper.formatCurrency(
-            analytics.averageProfitPerTransaction),
-        icon: Icons.analytics_rounded,
-        color: const Color(0xFF0891B2),
-        isZero: analytics.averageProfitPerTransaction == 0,
-      ),
-
-      // 5. Productos Vendidos
-      ProductsMetricCard(
-        key: const ValueKey('products'),
-        totalProducts: analytics.totalProductsSold,
-        topSellingProducts: analytics.topSellingProducts,
-        color: const Color(0xFFD97706),
-        isZero: analytics.totalProductsSold == 0,
-      ),
-
-      // 6. Rentabilidad
-      ProfitabilityMetricCard(
-        key: const ValueKey('profitability'),
-        totalProfit: analytics.totalProfit,
-        mostProfitableProducts: analytics.mostProfitableProducts,
-        color: const Color(0xFF10B981),
-        isZero: analytics.mostProfitableProducts.isEmpty,
-      ),
-
-      // 7. Lenta Rotación
-      SlowMovingProductsCard(
-        key: const ValueKey('slowMoving'),
-        slowMovingProducts: analytics.slowMovingProducts,
-        color: const Color(0xFFEF4444),
-        isZero: analytics.slowMovingProducts.isEmpty,
-      ),
-
-      // 8. Horas Pico
-      PeakHoursCard(
-        key: const ValueKey('peakHours'),
-        salesByHour: analytics.salesByHour,
-        peakHours: analytics.peakHours,
-        color: const Color(0xFFF59E0B),
-        isZero: analytics.peakHours.isEmpty,
-      ),
-
-      // 9. Ranking de Vendedores
-      SellerRankingCard(
-        key: const ValueKey('sellerRanking'),
-        salesBySeller: analytics.salesBySeller,
-        color: const Color(0xFF8B5CF6),
-        isZero: analytics.salesBySeller.isEmpty,
-      ),
-
-      // 10. Tendencia de Ventas
-      SalesTrendCard(
-        key: const ValueKey('salesTrend'),
-        salesByDay: analytics.salesByDay,
-        color: const Color(0xFF3B82F6),
-        isZero: analytics.salesByDay.isEmpty,
-      ),
-
-      // 11. Distribución por Categorías
-      CategoryDistributionCard(
-        key: const ValueKey('categoryDist'),
-        salesByCategory: analytics.salesByCategory,
-        totalSales: analytics.totalSales,
-        color: const Color(0xFFEC4899),
-        isZero: analytics.salesByCategory.isEmpty,
-      ),
-
-      // 12. Días de Venta
-      WeekdaySalesCard(
-        key: const ValueKey('weekdaySales'),
-        salesByWeekday: analytics.salesByWeekday,
-        color: const Color(0xFF6366F1),
-        isZero: analytics.salesByWeekday.isEmpty,
-      ),
-
-      // 13. Medios de Pago
-      PaymentMethodsCard(
-        key: const ValueKey('paymentMethods'),
-        paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-        totalSales: analytics.totalSales,
-      ),
-
-      // 14. Cajas Activas (si existen)
-      if (activeCashRegisters.isNotEmpty)
-        ActiveCashRegistersCard(
-          key: const ValueKey('cashRegisters'),
-          activeCashRegisters: activeCashRegisters,
-        ),
-    ];
+    // Construir tarjetas dinámicamente desde el registro
+    // NOTA: Todas las tarjetas usan datos filtrados de 'analytics',
+    // EXCEPTO 'cashRegisters' que usa 'activeCashRegisters' (estado operacional actual)
+    final List<Widget> cards = _buildCardsFromRegistry(
+      context: context,
+      provider: provider,
+      visibleCardIds: provider.visibleCardIds,
+      analytics: analytics,
+      activeCashRegisters: activeCashRegisters,
+    );
 
     return ReorderableAnalyticsGrid(
-      layoutType: 'mobile',
-      crossAxisCount: 2,
+      layoutType: layoutType,
+      crossAxisCount: crossAxisCount,
       gap: gap,
-      childAspectRatio: 1.1,
+      maxWidth: maxWidth,
+      childAspectRatio: childAspectRatio,
       enableReordering: true,
+      onReorder: (reorderedIndices) {
+        // reorderedIndices contiene los índices en el nuevo orden
+        // Mapear los índices a los IDs de tarjetas correspondientes
+        final currentCardIds = provider.visibleCardIds;
+        final reorderedCardIds = reorderedIndices
+            .where((index) => index >= 0 && index < currentCardIds.length)
+            .map((index) => currentCardIds[index])
+            .toList();
+
+        // Guardar el nuevo orden si es válido
+        if (reorderedCardIds.length == currentCardIds.length) {
+          provider.saveVisibleCards(
+            salesProvider.profileAccountSelected.id,
+            reorderedCardIds,
+          );
+        }
+      },
       children: cards,
     );
   }
 
-  /// Layout para tablets (600px - 900px)
-  /// Grid de 3 columnas con drag-and-drop para reordenar
-  Widget _buildTabletLayout(
-    BuildContext context,
-    dynamic analytics,
-    List<CashRegister> activeCashRegisters,
-  ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final gap = (screenWidth * 0.015).clamp(8.0, 12.0);
+  /// Construye las tarjetas visibles desde el registro
+  List<Widget> _buildCardsFromRegistry({
+    required BuildContext context,
+    required AnalyticsProvider provider,
+    required List<String> visibleCardIds,
+    required SalesAnalytics analytics,
+    required List<CashRegister> activeCashRegisters,
+  }) {
+    final List<Widget> cards = [];
 
-    // Lista de tarjetas con keys únicos para el reordering
-    final List<Widget> cards = [
-      // 1. Facturación - Destacada
-      MetricCard(
-        key: const ValueKey('billing'),
-        title: 'Facturación',
-        value: CurrencyHelper.formatCurrency(analytics.totalSales),
-        icon: Icons.attach_money_rounded,
-        color: const Color(0xFF059669),
-        subtitle: 'Ingresos brutos',
-        isZero: analytics.totalSales == 0,
-        moreInformation: true,
-      ),
-
-      // 2. Ganancia
-      MetricCard(
-        key: const ValueKey('profit'),
-        title: 'Ganancia',
-        value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-        icon: Icons.trending_up_rounded,
-        color: const Color(0xFF7C3AED),
-        subtitle: 'Rentabilidad real',
-        isZero: analytics.totalProfit == 0,
-      ),
-
-      // 3. Ventas
-      MetricCard(
-        key: const ValueKey('sales'),
-        title: 'Ventas',
-        value: analytics.totalTransactions.toString(),
-        icon: Icons.receipt_long_rounded,
-        color: const Color(0xFF2563EB),
-        isZero: analytics.totalTransactions == 0,
-      ),
-
-      // 4. Ticket Promedio
-      MetricCard(
-        key: const ValueKey('averageTicket'),
-        title: 'Ticket Prom.',
-        value: CurrencyHelper.formatCurrency(
-            analytics.averageProfitPerTransaction),
-        icon: Icons.analytics_rounded,
-        color: const Color(0xFF0891B2),
-        isZero: analytics.averageProfitPerTransaction == 0,
-      ),
-
-      // 5. Productos Vendidos
-      ProductsMetricCard(
-        key: const ValueKey('products'),
-        totalProducts: analytics.totalProductsSold,
-        topSellingProducts: analytics.topSellingProducts,
-        color: const Color(0xFFD97706),
-        isZero: analytics.totalProductsSold == 0,
-        subtitle: 'Movimiento de inventario',
-      ),
-
-      // 6. Rentabilidad
-      ProfitabilityMetricCard(
-        key: const ValueKey('profitability'),
-        totalProfit: analytics.totalProfit,
-        mostProfitableProducts: analytics.mostProfitableProducts,
-        color: const Color(0xFF10B981),
-        isZero: analytics.mostProfitableProducts.isEmpty,
-        subtitle: 'Productos más rentables',
-      ),
-
-      // 7. Ranking de Vendedores
-      SellerRankingCard(
-        key: const ValueKey('sellerRanking'),
-        salesBySeller: analytics.salesBySeller,
-        color: const Color(0xFF8B5CF6),
-        isZero: analytics.salesBySeller.isEmpty,
-        subtitle: 'Desempeño del equipo',
-      ),
-
-      // 8. Horas Pico
-      PeakHoursCard(
-        key: const ValueKey('peakHours'),
-        salesByHour: analytics.salesByHour,
-        peakHours: analytics.peakHours,
-        color: const Color(0xFFF59E0B),
-        isZero: analytics.peakHours.isEmpty,
-        subtitle: 'Mayor actividad',
-      ),
-
-      // 9. Productos de Lenta Rotación
-      SlowMovingProductsCard(
-        key: const ValueKey('slowMoving'),
-        slowMovingProducts: analytics.slowMovingProducts,
-        color: const Color(0xFFEF4444),
-        isZero: analytics.slowMovingProducts.isEmpty,
-        subtitle: 'Requieren atención',
-      ),
-
-      // 10. Tendencia de Ventas
-      SalesTrendCard(
-        key: const ValueKey('salesTrend'),
-        salesByDay: analytics.salesByDay,
-        color: const Color(0xFF3B82F6),
-        isZero: analytics.salesByDay.isEmpty,
-        subtitle: 'Evolución temporal',
-      ),
-
-      // 11. Distribución por Categorías
-      CategoryDistributionCard(
-        key: const ValueKey('categoryDist'),
-        salesByCategory: analytics.salesByCategory,
-        totalSales: analytics.totalSales,
-        color: const Color(0xFFEC4899),
-        isZero: analytics.salesByCategory.isEmpty,
-        subtitle: 'Ventas por categoría',
-      ),
-
-      // 12. Días de Venta
-      WeekdaySalesCard(
-        key: const ValueKey('weekdaySales'),
-        salesByWeekday: analytics.salesByWeekday,
-        color: const Color(0xFF6366F1),
-        isZero: analytics.salesByWeekday.isEmpty,
-        subtitle: 'Rendimiento semanal',
-      ),
-
-      // 13. Medios de Pago
-      PaymentMethodsCard(
-        key: const ValueKey('paymentMethods'),
-        paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-        totalSales: analytics.totalSales,
-      ),
-
-      // 14. Cajas Activas (si existen)
-      if (activeCashRegisters.isNotEmpty)
-        ActiveCashRegistersCard(
-          key: const ValueKey('cashRegisters'),
-          activeCashRegisters: activeCashRegisters,
+    for (final cardId in visibleCardIds) {
+      final card = AnalyticsCardRegistry.buildCard(
+        context,
+        cardId,
+        analytics,
+        activeCashRegisters,
+        currentFilter: provider.selectedFilter,
+        onSalesTap: () => showTransactionsDialog(
+          context: context,
+          transactions: analytics.transactions,
+          currentFilter: provider.selectedFilter,
+          onTransactionTap: (transaction) =>
+              _showTransactionDetail(context, transaction),
         ),
-    ];
+      );
 
-    return ReorderableAnalyticsGrid(
-      layoutType: 'tablet',
-      crossAxisCount: 3,
-      gap: gap,
-      maxWidth: 900,
-      childAspectRatio: 1.2,
-      enableReordering: true,
-      children: cards,
-    );
-  }
+      if (card != null) {
+        cards.add(card);
+      }
+    }
 
-  /// Layout para desktop (≥ 900px)
-  /// Grid de 4 columnas uniforme con drag-and-drop para reordenar
-  Widget _buildDesktopLayout(
-    BuildContext context,
-    dynamic analytics,
-    List<CashRegister> activeCashRegisters,
-  ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final gap = (screenWidth * 0.01).clamp(10.0, 14.0);
-
-    // Lista de tarjetas con keys únicos para el reordering
-    final List<Widget> cards = [
-      // 1. Facturación - Destacada
-      MetricCard(
-        key: const ValueKey('billing'),
-        title: 'Facturación',
-        value: CurrencyHelper.formatCurrency(analytics.totalSales),
-        icon: Icons.attach_money_rounded,
-        color: const Color(0xFF059669),
-        subtitle: 'Ingresos brutos',
-        isZero: analytics.totalSales == 0,
-        moreInformation: true,
-      ),
-
-      // 2. Ganancia
-      MetricCard(
-        key: const ValueKey('profit'),
-        title: 'Ganancia',
-        value: CurrencyHelper.formatCurrency(analytics.totalProfit),
-        icon: Icons.trending_up_rounded,
-        color: const Color(0xFF7C3AED),
-        subtitle: 'Rentabilidad real',
-        isZero: analytics.totalProfit == 0,
-      ),
-
-      // 3. Ventas
-      MetricCard(
-        key: const ValueKey('sales'),
-        title: 'Ventas',
-        value: analytics.totalTransactions.toString(),
-        icon: Icons.receipt_long_rounded,
-        color: const Color(0xFF2563EB),
-        isZero: analytics.totalTransactions == 0,
-      ),
-
-      // 4. Ticket Promedio
-      MetricCard(
-        key: const ValueKey('averageTicket'),
-        title: 'Ticket Prom.',
-        value: CurrencyHelper.formatCurrency(
-            analytics.averageProfitPerTransaction),
-        icon: Icons.analytics_rounded,
-        color: const Color(0xFF0891B2),
-        isZero: analytics.averageProfitPerTransaction == 0,
-      ),
-
-      // 5. Productos Vendidos
-      ProductsMetricCard(
-        key: const ValueKey('products'),
-        totalProducts: analytics.totalProductsSold,
-        topSellingProducts: analytics.topSellingProducts,
-        color: const Color(0xFFD97706),
-        isZero: analytics.totalProductsSold == 0,
-        subtitle: 'Movimiento de inventario',
-      ),
-
-      // 6. Rentabilidad
-      ProfitabilityMetricCard(
-        key: const ValueKey('profitability'),
-        totalProfit: analytics.totalProfit,
-        mostProfitableProducts: analytics.mostProfitableProducts,
-        color: const Color(0xFF10B981),
-        isZero: analytics.mostProfitableProducts.isEmpty,
-        subtitle: 'Productos más rentables',
-      ),
-
-      // 7. Ranking de Vendedores
-      SellerRankingCard(
-        key: const ValueKey('sellerRanking'),
-        salesBySeller: analytics.salesBySeller,
-        color: const Color(0xFF8B5CF6),
-        isZero: analytics.salesBySeller.isEmpty,
-        subtitle: 'Desempeño del equipo',
-      ),
-
-      // 8. Horas Pico
-      PeakHoursCard(
-        key: const ValueKey('peakHours'),
-        salesByHour: analytics.salesByHour,
-        peakHours: analytics.peakHours,
-        color: const Color(0xFFF59E0B),
-        isZero: analytics.peakHours.isEmpty,
-        subtitle: 'Mayor actividad por hora',
-      ),
-
-      // 9. Productos de Lenta Rotación
-      SlowMovingProductsCard(
-        key: const ValueKey('slowMoving'),
-        slowMovingProducts: analytics.slowMovingProducts,
-        color: const Color(0xFFEF4444),
-        isZero: analytics.slowMovingProducts.isEmpty,
-        subtitle: 'Requieren atención',
-      ),
-
-      // 10. Tendencia de Ventas
-      SalesTrendCard(
-        key: const ValueKey('salesTrend'),
-        salesByDay: analytics.salesByDay,
-        color: const Color(0xFF3B82F6),
-        isZero: analytics.salesByDay.isEmpty,
-        subtitle: 'Evolución temporal',
-      ),
-
-      // 11. Distribución por Categorías
-      CategoryDistributionCard(
-        key: const ValueKey('categoryDist'),
-        salesByCategory: analytics.salesByCategory,
-        totalSales: analytics.totalSales,
-        color: const Color(0xFFEC4899),
-        isZero: analytics.salesByCategory.isEmpty,
-        subtitle: 'Ventas por categoría',
-      ),
-
-      // 12. Días de Venta
-      WeekdaySalesCard(
-        key: const ValueKey('weekdaySales'),
-        salesByWeekday: analytics.salesByWeekday,
-        color: const Color(0xFF6366F1),
-        isZero: analytics.salesByWeekday.isEmpty,
-        subtitle: 'Rendimiento semanal',
-      ),
-
-      // 13. Medios de Pago
-      PaymentMethodsCard(
-        key: const ValueKey('paymentMethods'),
-        paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-        totalSales: analytics.totalSales,
-      ),
-
-      // 14. Cajas Activas (si existen)
-      if (activeCashRegisters.isNotEmpty)
-        ActiveCashRegistersCard(
-          key: const ValueKey('cashRegisters'),
-          activeCashRegisters: activeCashRegisters,
-        ),
-    ];
-
-    return ReorderableAnalyticsGrid(
-      layoutType: 'desktop',
-      crossAxisCount: 4,
-      gap: gap,
-      maxWidth: 1400,
-      childAspectRatio: 1.3,
-      enableReordering: true,
-      children: cards,
-    );
+    return cards;
   }
 
   /// Construye el AppBar personalizado
@@ -672,7 +301,6 @@ class AnalyticsPage extends StatelessWidget {
                           : null,
                     ),
                   ),
-                  // Badge indicador de filtro activo sobre el ícono
                   if (hasActiveFilter)
                     Positioned(
                       left: 8,
@@ -735,6 +363,27 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
+  /// Muestra el diálogo de personalización de tarjetas
+  Future<void> _showCustomizeDialog(
+    BuildContext context,
+    AnalyticsProvider provider,
+  ) async {
+    final salesProvider = context.read<SalesProvider>();
+
+    final result = await showCustomizeCardsDialog(
+      context,
+      provider.visibleCardIds,
+    );
+
+    if (result != null && context.mounted) {
+      // Guardar preferencias de tarjetas visibles
+      await provider.saveVisibleCards(
+        salesProvider.profileAccountSelected.id,
+        result,
+      );
+    }
+  }
+
   /// Construye el estado de error
   Widget _buildErrorState(BuildContext context, String message) {
     return Center(
@@ -795,12 +444,72 @@ class AnalyticsPage extends StatelessWidget {
     );
   }
 
+  /// Construye el estado cuando no hay tarjetas seleccionadas
+  Widget _buildNoCardsState(BuildContext context, AnalyticsProvider provider) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icono decorativo
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.dashboard_customize_rounded,
+                size: 64,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Título
+            Text(
+              'Sin tarjetas seleccionadas',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            // Descripción
+            Text(
+              'Personaliza tu dashboard agregando las tarjetas de analíticas que más te interesen',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            // Botón para añadir tarjetas
+            FilledButton.icon(
+              onPressed: () => _showCustomizeDialog(context, provider),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Agregar Tarjetas'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Muestra el diálogo de detalle de transacción
   void _showTransactionDetail(BuildContext context, TicketModel transaction) {
     final salesProvider = context.read<SalesProvider>();
     final cashRegisterProvider = context.read<CashRegisterProvider>();
 
-    // Capturar referencias necesarias antes del callback asíncrono
     final accountId = salesProvider.profileAccountSelected.id;
     final messenger = ScaffoldMessenger.of(context);
 

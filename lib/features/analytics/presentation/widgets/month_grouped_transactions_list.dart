@@ -24,6 +24,22 @@ class MonthGroupedTransactionsList extends StatelessWidget {
     required this.onTransactionTap,
   });
 
+  /// Constructor estático para usar como Column (no Sliver)
+  /// Útil cuando se necesita dentro de un SliverToBoxAdapter
+  static Widget asColumn({
+    required List<TicketModel> transactions,
+    required bool Function(String monthKey) isMonthExpanded,
+    required void Function(String monthKey) onToggleMonth,
+    required void Function(TicketModel transaction) onTransactionTap,
+  }) {
+    return _MonthGroupedTransactionsColumn(
+      transactions: transactions,
+      isMonthExpanded: isMonthExpanded,
+      onToggleMonth: onToggleMonth,
+      onTransactionTap: onTransactionTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
@@ -259,5 +275,149 @@ class _MonthHeader extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Versión Column del widget (para usar dentro de SliverToBoxAdapter)
+class _MonthGroupedTransactionsColumn extends StatelessWidget {
+  final List<TicketModel> transactions;
+  final bool Function(String monthKey) isMonthExpanded;
+  final void Function(String monthKey) onToggleMonth;
+  final void Function(TicketModel transaction) onTransactionTap;
+
+  const _MonthGroupedTransactionsColumn({
+    required this.transactions,
+    required this.isMonthExpanded,
+    required this.onToggleMonth,
+    required this.onTransactionTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final List<Widget> children = [];
+
+    for (int index = 0; index < transactions.length; index++) {
+      final transaction = transactions[index];
+      final isLast = index == transactions.length - 1;
+      final isFirstInMonth = index == 0 ||
+          _isDifferentMonth(
+            transactions[index - 1].creation,
+            transaction.creation,
+          );
+
+      final monthKey = _getMonthKey(transaction.creation);
+      final isExpanded = isMonthExpanded(monthKey);
+      final transactionsInMonth = _countTransactionsInMonth(index);
+      final monthRevenue = _calculateMonthRevenue(index);
+
+      // Header de mes (expandible/colapsable)
+      if (isFirstInMonth) {
+        children.add(
+          _MonthHeader(
+            label: _getMonthYearLabel(transaction.creation),
+            transactionCount: transactionsInMonth,
+            revenue: monthRevenue,
+            isExpanded: isExpanded,
+            onTap: () => onToggleMonth(monthKey),
+          ),
+        );
+      }
+
+      // Item de transacción (solo si está expandido)
+      if (isExpanded) {
+        children.add(
+          TransactionListItem(
+            ticket: transaction,
+            onTap: () => onTransactionTap(transaction),
+          ),
+        );
+
+        // Divisor entre items del mismo mes
+        if (!isLast &&
+            !_isDifferentMonth(
+              transaction.creation,
+              transactions[index + 1].creation,
+            )) {
+          children.add(
+            Divider(
+              height: 1,
+              color: Theme.of(context)
+                  .colorScheme
+                  .outlineVariant
+                  .withValues(alpha: 0.2),
+            ),
+          );
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  // === Helpers (copiados de MonthGroupedTransactionsList) ===
+
+  bool _isDifferentMonth(Timestamp date1, Timestamp date2) {
+    final dt1 = date1.toDate();
+    final dt2 = date2.toDate();
+    return dt1.year != dt2.year || dt1.month != dt2.month;
+  }
+
+  String _getMonthKey(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+  }
+
+  String _getMonthYearLabel(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  int _countTransactionsInMonth(int startIndex) {
+    if (startIndex >= transactions.length) return 0;
+
+    final startDate = transactions[startIndex].creation;
+    int count = 1;
+
+    for (int i = startIndex + 1; i < transactions.length; i++) {
+      if (_isDifferentMonth(startDate, transactions[i].creation)) break;
+      count++;
+    }
+
+    return count;
+  }
+
+  double _calculateMonthRevenue(int startIndex) {
+    if (startIndex >= transactions.length) return 0.0;
+
+    final startDate = transactions[startIndex].creation;
+    double revenue = transactions[startIndex].priceTotal;
+
+    for (int i = startIndex + 1; i < transactions.length; i++) {
+      if (_isDifferentMonth(startDate, transactions[i].creation)) break;
+      revenue += transactions[i].priceTotal;
+    }
+
+    return revenue;
   }
 }

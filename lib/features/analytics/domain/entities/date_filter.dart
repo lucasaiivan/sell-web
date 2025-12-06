@@ -20,26 +20,34 @@ enum DateFilter {
 
   /// Obtiene el rango de fechas para este filtro
   /// Retorna (fechaInicio, fechaFin) con fechaFin siendo el final del día
+  ///
+  /// **NOTA:** Para filtros de día único (today/yesterday), se incluye también
+  /// el día anterior para permitir cálculo de comparaciones sin consultas adicionales
   (DateTime, DateTime) getDateRange() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     switch (this) {
       case DateFilter.today:
-        return (today, today.add(const Duration(days: 1)));
+        // Incluir ayer para permitir comparación
+        final yesterday = today.subtract(const Duration(days: 1));
+        return (yesterday, today.add(const Duration(days: 1)));
 
       case DateFilter.yesterday:
-        final yesterday = today.subtract(const Duration(days: 1));
-        return (yesterday, today);
+        // Incluir anteayer para permitir comparación
+        final twoDaysAgo = today.subtract(const Duration(days: 2));
+        return (twoDaysAgo, today);
 
       case DateFilter.thisMonth:
-        final firstDayOfMonth = DateTime(now.year, now.month, 1);
-        return (firstDayOfMonth, today.add(const Duration(days: 1)));
+        // Incluir mes anterior completo para permitir comparación
+        final firstDayOfLastMonth = DateTime(now.year, now.month - 1, 1);
+        return (firstDayOfLastMonth, today.add(const Duration(days: 1)));
 
       case DateFilter.lastMonth:
-        final firstDayOfLastMonth = DateTime(now.year, now.month - 1, 1);
+        // Incluir el mes previo al mes pasado para permitir comparación
+        final firstDayOfTwoMonthsAgo = DateTime(now.year, now.month - 2, 1);
         final firstDayOfThisMonth = DateTime(now.year, now.month, 1);
-        return (firstDayOfLastMonth, firstDayOfThisMonth);
+        return (firstDayOfTwoMonthsAgo, firstDayOfThisMonth);
 
       case DateFilter.thisYear:
         final firstDayOfYear = DateTime(now.year, 1, 1);
@@ -74,14 +82,21 @@ enum DateFilter {
   int get estimatedDays {
     switch (this) {
       case DateFilter.today:
-        return 1;
+        return 2; // Incluye ayer para comparación
       case DateFilter.yesterday:
-        return 1;
+        return 2; // Incluye anteayer para comparación
       case DateFilter.thisMonth:
-        return DateTime.now().day; // Días transcurridos del mes
-      case DateFilter.lastMonth:
         final now = DateTime.now();
-        return DateTime(now.year, now.month, 0).day; // Días del mes anterior
+        // Incluye mes actual + mes anterior
+        final daysThisMonth = now.day;
+        final daysLastMonth = DateTime(now.year, now.month, 0).day;
+        return daysThisMonth + daysLastMonth;
+      case DateFilter.lastMonth:
+        // Incluye mes pasado + mes previo al pasado
+        final now = DateTime.now();
+        final daysLastMonth = DateTime(now.year, now.month, 0).day;
+        final daysTwoMonthsAgo = DateTime(now.year, now.month - 1, 0).day;
+        return daysLastMonth + daysTwoMonthsAgo;
       case DateFilter.thisYear:
         final now = DateTime.now();
         return now.difference(DateTime(now.year, 1, 1)).inDays + 1;

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_reorderable_grid_view/widgets/reorderable_builder.dart';
-import '../../data/services/analytics_order_service.dart';
 
-/// Widget: Grid de Analytics Reordenable con Persistencia
+/// Widget: Grid de Analytics Reordenable
 ///
 /// **Responsabilidad:**
 /// - Envolver el grid de tarjetas en un ReorderableBuilder
 /// - Permitir drag-and-drop para reordenar tarjetas
-/// - Persistir el orden en SharedPreferences
 /// - Mantener animaciones fluidas durante el reordenamiento
+/// - Notificar al padre cuando cambia el orden
+///
+/// **IMPORTANTE:** Este widget es STATELESS respecto al orden.
+/// El orden de los children lo controla el padre completamente.
+/// Cuando se hace drag-and-drop, se notifica al padre con los
+/// índices old/new y el padre es responsable de actualizar el orden.
 ///
 /// **Uso:**
 /// ```dart
@@ -17,6 +21,7 @@ import '../../data/services/analytics_order_service.dart';
 ///   crossAxisCount: 6,
 ///   gap: 14.0,
 ///   children: [...],
+///   onReorder: (oldIndex, newIndex) => handleReorder(oldIndex, newIndex),
 /// )
 /// ```
 class ReorderableAnalyticsGrid extends StatefulWidget {
@@ -29,11 +34,12 @@ class ReorderableAnalyticsGrid extends StatefulWidget {
   /// Espacio entre tarjetas
   final double gap;
 
-  /// Tarjetas hijas con keys únicas
+  /// Tarjetas hijas con keys únicas (ya en el orden deseado)
   final List<Widget> children;
 
-  /// Callback cuando se reordena una tarjeta
-  final void Function(List<int> newOrder)? onReorder;
+  /// Callback cuando se reordena - recibe la lista de índices en el nuevo orden
+  /// Ejemplo: si se mueve el elemento 0 a posición 2, recibe [1, 2, 0, 3, ...]
+  final void Function(List<int> reorderedIndices)? onReorder;
 
   /// Ancho máximo del grid (constraint)
   final double? maxWidth;
@@ -64,52 +70,6 @@ class ReorderableAnalyticsGrid extends StatefulWidget {
 class _ReorderableAnalyticsGridState extends State<ReorderableAnalyticsGrid> {
   final _scrollController = ScrollController();
   final _gridViewKey = GlobalKey();
-  
-  /// Lista interna de índices para manejar el reordenamiento
-  late List<int> _orderedIndices;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _orderedIndices = List.generate(widget.children.length, (i) => i);
-    _loadSavedOrder();
-  }
-
-  /// Carga el orden guardado desde SharedPreferences
-  Future<void> _loadSavedOrder() async {
-    final savedOrder = await AnalyticsOrderService.loadOrder(
-      layoutType: widget.layoutType,
-      expectedLength: widget.children.length,
-    );
-    
-    if (mounted) {
-      setState(() {
-        if (savedOrder != null) {
-          _orderedIndices = savedOrder;
-        }
-        _isLoading = false;
-      });
-    }
-  }
-
-  /// Guarda el orden actual en SharedPreferences
-  Future<void> _saveOrder() async {
-    await AnalyticsOrderService.saveOrder(
-      layoutType: widget.layoutType,
-      orderedIndices: _orderedIndices,
-    );
-  }
-
-  @override
-  void didUpdateWidget(ReorderableAnalyticsGrid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Si los children cambian, validar el orden
-    if (widget.children.length != oldWidget.children.length) {
-      _orderedIndices = List.generate(widget.children.length, (i) => i);
-      _loadSavedOrder();
-    }
-  }
 
   @override
   void dispose() {
@@ -117,23 +77,10 @@ class _ReorderableAnalyticsGridState extends State<ReorderableAnalyticsGrid> {
     super.dispose();
   }
 
-  /// Obtiene la lista de widgets ordenados según los índices actuales
-  List<Widget> get _orderedChildren {
-    return _orderedIndices.map((i) => widget.children[i]).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Mostrar loading mientras carga el orden
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    final gridContent = widget.enableReordering
-        ? _buildReorderableGrid()
-        : _buildStaticGrid();
+    final gridContent =
+        widget.enableReordering ? _buildReorderableGrid() : _buildStaticGrid();
 
     if (widget.maxWidth != null) {
       return Center(
@@ -149,33 +96,43 @@ class _ReorderableAnalyticsGridState extends State<ReorderableAnalyticsGrid> {
 
   /// Construye el grid con capacidad de reordenamiento
   Widget _buildReorderableGrid() {
+    // Crear lista de índices simple para el ReorderableBuilder
+    final indices = List.generate(widget.children.length, (i) => i);
+
     return ReorderableBuilder<int>(
       scrollController: _scrollController,
       enableDraggable: widget.enableReordering,
       enableLongPress: true,
-      longPressDelay: const Duration(milliseconds: 400),
+      longPressDelay: const Duration(milliseconds: 300),
       onReorder: (ReorderedListFunction<int> reorderedListFunction) {
-        setState(() {
-          _orderedIndices = reorderedListFunction(_orderedIndices);
-        });
-        
-        // Guardar el nuevo orden
-        _saveOrder();
-        
-        // Notificar al padre si tiene callback
-        widget.onReorder?.call(_orderedIndices);
+        // Aplicar la función para obtener el nuevo orden de índices
+        final newOrder = reorderedListFunction(indices);
+
+        // Verificar que hubo un cambio real
+        bool hasChanged = false;
+        for (int i = 0; i < indices.length; i++) {
+          if (indices[i] != newOrder[i]) {
+            hasChanged = true;
+            break;
+          }
+        }
+
+        // Notificar al padre con la lista completa de índices reordenados
+        if (hasChanged) {
+          widget.onReorder?.call(newOrder);
+        }
       },
       dragChildBoxDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-            blurRadius: 16,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      children: _orderedChildren,
+      children: widget.children,
       builder: (children) {
         return GridView(
           key: _gridViewKey,
@@ -206,8 +163,7 @@ class _ReorderableAnalyticsGridState extends State<ReorderableAnalyticsGrid> {
         crossAxisSpacing: widget.gap,
         childAspectRatio: widget.childAspectRatio,
       ),
-      children: _orderedChildren,
+      children: widget.children,
     );
   }
 }
-

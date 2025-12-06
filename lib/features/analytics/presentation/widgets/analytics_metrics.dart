@@ -44,6 +44,8 @@ class AnalyticsMetrics {
   static const colorSlowMoving = Color(0xFFEF4444);
   static const colorPeakHours = Color(0xFFF59E0B);
   static const colorSellers = Color(0xFF8B5CF6);
+  static const colorPaymentMethods = Color(0xFF0EA5E9);
+  static const colorCashRegisters = Color(0xFFF43F5E);
 
   /// Construye MetricCard de Facturación
   static Widget billing(SalesAnalytics analytics, {String? subtitle}) {
@@ -150,12 +152,16 @@ class AnalyticsMetrics {
     return PaymentMethodsCard(
       paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
       totalSales: analytics.totalSales,
+      color: colorPaymentMethods,
     );
   }
 
   /// Construye ActiveCashRegistersCard (si hay cajas activas)
   static Widget? cashRegisters(List<CashRegister> activeCashRegisters) {
     if (activeCashRegisters.isEmpty) return null;
-    return ActiveCashRegistersCard(activeCashRegisters: activeCashRegisters);
+    return ActiveCashRegistersCard(
+      activeCashRegisters: activeCashRegisters,
+      color: colorCashRegisters,
+    );
   }
 }

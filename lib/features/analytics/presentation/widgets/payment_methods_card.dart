@@ -8,23 +8,33 @@ import 'analytics_base_card.dart';
 /// **Responsabilidad:**
 /// - Mostrar desglose de pagos por método
 /// - Visualizar porcentaje de cada método con barra de progreso
+/// - Abrir modal con análisis detallado al hacer tap
 ///
 /// **Usa:** [AnalyticsBaseCard] como base visual consistente
 class PaymentMethodsCard extends StatelessWidget {
   final Map<String, double> paymentMethodsBreakdown;
   final double totalSales;
 
+  /// Color de la tarjeta (debe venir del registro para consistencia)
+  final Color color;
+
+  /// Callback al hacer tap en la tarjeta
+  final VoidCallback? onTap;
+
+  /// Mostrar indicador de acción (chevron)
+  final bool showActionIndicator;
+
   const PaymentMethodsCard({
     super.key,
     required this.paymentMethodsBreakdown,
     required this.totalSales,
+    required this.color,
+    this.onTap,
+    this.showActionIndicator = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = theme.colorScheme.tertiary;
-
     // Ordenar métodos por monto descendente, con 'Sin Especificar' (string vacío) al final
     final sortedMethods = paymentMethodsBreakdown.entries.toList()
       ..sort((a, b) {
@@ -43,6 +53,8 @@ class PaymentMethodsCard extends StatelessWidget {
       icon: Icons.payment_rounded,
       title: 'Medios de Pago',
       expandChild: false,
+      onTap: onTap,
+      showActionIndicator: showActionIndicator,
       child: isEmpty
           ? const AnalyticsEmptyState(message: 'No hay pagos registrados')
           : Padding(

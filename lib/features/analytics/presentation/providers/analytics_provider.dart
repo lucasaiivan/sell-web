@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
+import '../../data/services/analytics_preferences_service.dart';
 import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
 import '../../domain/usecases/get_sales_analytics_usecase.dart';
+import '../widgets/analytics_card_registry.dart';
 
 /// Estado interno del provider (inmutable)
 class _AnalyticsState {
@@ -13,6 +15,7 @@ class _AnalyticsState {
   final String? errorMessage;
   final DateFilter selectedFilter;
   final Map<String, bool> expandedMonths;
+  final List<String> visibleCardIds; // ← NUEVO: IDs de tarjetas visibles
 
   const _AnalyticsState({
     this.analytics,
@@ -20,6 +23,7 @@ class _AnalyticsState {
     this.errorMessage,
     this.selectedFilter = DateFilter.today,
     this.expandedMonths = const {},
+    this.visibleCardIds = const [], // Por defecto vacío (se cargará dinámicamente)
   });
 
   _AnalyticsState copyWith({
@@ -28,6 +32,7 @@ class _AnalyticsState {
     String? errorMessage,
     DateFilter? selectedFilter,
     Map<String, bool>? expandedMonths,
+    List<String>? visibleCardIds, // ← NUEVO
     bool clearError = false,
     bool clearAnalytics = false,
   }) {
@@ -37,6 +42,7 @@ class _AnalyticsState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       selectedFilter: selectedFilter ?? this.selectedFilter,
       expandedMonths: expandedMonths ?? this.expandedMonths,
+      visibleCardIds: visibleCardIds ?? this.visibleCardIds, // ← NUEVO
     );
   }
 }
@@ -56,12 +62,16 @@ class _AnalyticsState {
 class AnalyticsProvider extends ChangeNotifier
     implements InitializableProvider {
   final GetSalesAnalyticsUseCase _getSalesAnalyticsUseCase;
+  final AnalyticsPreferencesService _preferencesService; // ← NUEVO
 
   _AnalyticsState _state = const _AnalyticsState();
   String _currentAccountId = '';
   StreamSubscription<dynamic>? _subscription;
 
-  AnalyticsProvider(this._getSalesAnalyticsUseCase);
+  AnalyticsProvider(
+    this._getSalesAnalyticsUseCase,
+    this._preferencesService, // ← NUEVO
+  );
 
   // === Getters públicos ===
 
@@ -70,6 +80,7 @@ class AnalyticsProvider extends ChangeNotifier
   String? get errorMessage => _state.errorMessage;
   bool get hasData => _state.analytics != null;
   DateFilter get selectedFilter => _state.selectedFilter;
+  List<String> get visibleCardIds => _state.visibleCardIds; // ← NUEVO
 
   /// Número de transacciones cargadas
   int get transactionCount => _state.analytics?.transactions.length ?? 0;
@@ -89,6 +100,109 @@ class AnalyticsProvider extends ChangeNotifier
 
     _state = _state.copyWith(expandedMonths: newExpandedMonths);
     notifyListeners();
+  }
+
+  // ========== GESTIÓN DE PREFERENCIAS DE TARJETAS ==========
+
+  /// Carga las preferencias de tarjetas para el usuario actual
+  ///
+  /// **Lógica:**
+  /// - Si no hay preferencias guardadas → mostrar solo tarjeta por defecto ('billing')
+  /// - Si hay preferencias guardadas → cargar esas tarjetas
+  ///
+  /// Se llama automáticamente en `initialize()`
+  Future<void> loadCardPreferences(String accountId) async {
+    try {
+      final savedCards = await _preferencesService.loadVisibleCards(accountId);
+
+      if (savedCards == null || savedCards.isEmpty) {
+        // Primera vez: usar tarjetas por defecto (solo 'billing')
+        final defaultIds = AnalyticsCardRegistry.getDefaultCardIds();
+        _state = _state.copyWith(visibleCardIds: defaultIds);
+      } else {
+        // Cargar preferencias guardadas
+        _state = _state.copyWith(visibleCardIds: savedCards);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️  Error cargando preferencias de tarjetas: $e');
+      }
+      // En caso de error, usar tarjetas por defecto
+      final defaultIds = AnalyticsCardRegistry.getDefaultCardIds();
+      _state = _state.copyWith(visibleCardIds: defaultIds);
+      notifyListeners();
+    }
+  }
+
+  /// Alterna la visibilidad de una tarjeta (agregar/remover)
+  ///
+  /// **Persiste:** Automáticamente guarda los cambios
+  Future<void> toggleCardVisibility(String cardId, String accountId) async {
+    try {
+      final newVisibleCards = List<String>.from(_state.visibleCardIds);
+
+      if (newVisibleCards.contains(cardId)) {
+        newVisibleCards.remove(cardId);
+      } else {
+        newVisibleCards.add(cardId);
+      }
+
+      _state = _state.copyWith(visibleCardIds: newVisibleCards);
+      notifyListeners();
+
+      // Persistir cambios
+      await _preferencesService.saveVisibleCards(accountId, newVisibleCards);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️  Error alternando visibilidad de tarjeta: $e');
+      }
+    }
+  }
+
+  /// Actualiza las tarjetas visibles con una lista completa
+  ///
+  /// **Uso:** Desde el diálogo de personalización
+  Future<void> saveVisibleCards(String accountId, List<String> cardIds) async {
+    try {
+      _state = _state.copyWith(visibleCardIds: cardIds);
+      notifyListeners();
+
+      await _preferencesService.saveVisibleCards(accountId, cardIds);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️  Error guardando tarjetas visibles: $e');
+      }
+    }
+  }
+
+  /// Reordena las tarjetas (para drag-and-drop)
+  Future<void> reorderCards(
+    int oldIndex,
+    int newIndex,
+    String accountId,
+  ) async {
+    try {
+      final cards = List<String>.from(_state.visibleCardIds);
+
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+
+      final card = cards.removeAt(oldIndex);
+      cards.insert(newIndex, card);
+
+      _state = _state.copyWith(visibleCardIds: cards);
+      notifyListeners();
+
+      // Persistir nuevo orden
+      await _preferencesService.saveCardOrder(accountId, cards);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️  Error reordenando tarjetas: $e');
+      }
+    }
   }
 
   /// Suscribe a analíticas con actualización en tiempo real
@@ -165,6 +279,9 @@ class AnalyticsProvider extends ChangeNotifier
 
   @override
   Future<void> initialize(String accountId) async {
+    // Cargar preferencias de tarjetas primero
+    await loadCardPreferences(accountId);
+    // Luego suscribirse a analíticas
     subscribeToAnalytics(accountId);
   }
 

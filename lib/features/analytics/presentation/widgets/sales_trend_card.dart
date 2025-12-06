@@ -211,7 +211,7 @@ class SalesTrendCard extends StatelessWidget {
     final trendIcon =
         isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
 
-    // Calcular total y promedio
+    // Calcular total, promedio y estadísticas
     double totalSales = 0;
     for (final dayData in salesByDay.values) {
       totalSales += dayData['totalSales'] as double? ?? 0.0;
@@ -220,88 +220,118 @@ class SalesTrendCard extends StatelessWidget {
         ? (totalSales / salesByDay.length).toDouble()
         : 0.0;
 
-    return Row(
+    // Encontrar mejor y peor día
+    double maxSales = 0;
+    double minSales = double.infinity;
+    for (final dayData in salesByDay.values) {
+      final sales = dayData['totalSales'] as double? ?? 0.0;
+      if (sales > maxSales) maxSales = sales;
+      if (sales < minSales && sales > 0) minSales = sales;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Indicador de tendencia
+        Row(
+          children: [
+            // Indicador de tendencia
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    trendColor.withValues(alpha: 0.15),
+                    trendColor.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: trendColor.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: trendColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(trendIcon, size: 14, color: trendColor),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: trendColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            // Días analizados
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_month_rounded,
+                    size: 12,
+                    color: color,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${NumberHelper.formatNumber(salesByDay.length)} días',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        // Promedio diario
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                trendColor.withValues(alpha: 0.15),
-                trendColor.withValues(alpha: 0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: trendColor.withValues(alpha: 0.4),
-              width: 1.5,
-            ),
+            color: theme.colorScheme.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: trendColor.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(trendIcon, size: 14, color: trendColor),
+              Icon(
+                Icons.show_chart_rounded,
+                size: 11,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
-              const SizedBox(width: 6),
-              Text(
-                '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: trendColor,
-                  letterSpacing: 0.3,
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  '${CurrencyHelper.formatCurrency(avgSales)} promedio',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Promedio diario
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 12,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    CurrencyHelper.formatCurrency(avgSales),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  '/día',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 10,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ],
@@ -363,7 +393,9 @@ class SalesTrendModal extends StatelessWidget {
     double totalSales = 0;
     int totalTransactions = 0;
     double maxDaySales = 0;
+    double minDaySales = double.infinity;
     String bestDay = '';
+    String worstDay = '';
 
     for (final entry in entries) {
       final sales = entry.value['totalSales'] as double? ?? 0.0;
@@ -374,10 +406,25 @@ class SalesTrendModal extends StatelessWidget {
         maxDaySales = sales;
         bestDay = entry.key;
       }
+      if (sales < minDaySales && sales > 0) {
+        minDaySales = sales;
+        worstDay = entry.key;
+      }
     }
 
+    final avgSales = entries.isNotEmpty ? totalSales / entries.length : 0.0;
+    final avgTransactions =
+        entries.isNotEmpty ? totalTransactions / entries.length : 0.0;
+
+    // Calcular tendencia
+    final trend = _calculateTrend();
+    final isPositive = trend >= 0;
+    final trendColor =
+        isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+
     return AnalyticsModal(
-      title: 'Tendencia de Ventas',
+      title: 'Análisis de Tendencia',
+      subtitle: '${NumberHelper.formatNumber(entries.length)} días analizados',
       accentColor: _accentColor,
       icon: Icons.trending_up_rounded,
       child: SingleChildScrollView(
@@ -385,10 +432,70 @@ class SalesTrendModal extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Indicador de tendencia principal
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    trendColor.withValues(alpha: 0.15),
+                    trendColor.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: trendColor.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: trendColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPositive
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
+                      color: trendColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: trendColor,
+                        ),
+                      ),
+                      Text(
+                        isPositive
+                            ? 'Crecimiento del período'
+                            : 'Decrecimiento del período',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Resumen de estadísticas
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -408,7 +515,7 @@ class SalesTrendModal extends StatelessWidget {
                         child: _buildSummaryItem(
                           context,
                           'Transacciones',
-                          totalTransactions.toString(),
+                          NumberHelper.formatNumber(totalTransactions),
                           Icons.receipt_long_rounded,
                         ),
                       ),
@@ -420,20 +527,45 @@ class SalesTrendModal extends StatelessWidget {
                       Expanded(
                         child: _buildSummaryItem(
                           context,
-                          'Mejor Día',
-                          _formatDateFull(bestDay),
-                          Icons.star_rounded,
+                          'Promedio/Día',
+                          CurrencyHelper.formatCurrency(avgSales),
+                          Icons.show_chart_rounded,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildSummaryItem(
                           context,
-                          'Promedio/Día',
-                          CurrencyHelper.formatCurrency(entries.isNotEmpty
-                              ? totalSales / entries.length
-                              : 0),
-                          Icons.calculate_rounded,
+                          'Ventas/Día Prom.',
+                          avgTransactions.toStringAsFixed(1),
+                          Icons.analytics_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSummaryItem(
+                          context,
+                          'Mejor Día',
+                          CurrencyHelper.formatCurrency(maxDaySales),
+                          Icons.star_rounded,
+                          subtitle: _formatDateFull(bestDay),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildSummaryItem(
+                          context,
+                          'Día Más Bajo',
+                          CurrencyHelper.formatCurrency(
+                              minDaySales < double.infinity ? minDaySales : 0),
+                          Icons.trending_down_rounded,
+                          subtitle: worstDay.isNotEmpty
+                              ? _formatDateFull(worstDay)
+                              : '-',
                         ),
                       ),
                     ],
@@ -477,8 +609,9 @@ class SalesTrendModal extends StatelessWidget {
     BuildContext context,
     String label,
     String value,
-    IconData icon,
-  ) {
+    IconData icon, {
+    String? subtitle,
+  }) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,8 +635,38 @@ class SalesTrendModal extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              fontSize: 10,
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  double _calculateTrend() {
+    if (salesByDay.length < 2) return 0.0;
+
+    final entries = salesByDay.entries.toList();
+    final midPoint = entries.length ~/ 2;
+
+    double firstHalfTotal = 0;
+    double secondHalfTotal = 0;
+
+    for (int i = 0; i < midPoint; i++) {
+      firstHalfTotal += entries[i].value['totalSales'] as double? ?? 0.0;
+    }
+    for (int i = midPoint; i < entries.length; i++) {
+      secondHalfTotal += entries[i].value['totalSales'] as double? ?? 0.0;
+    }
+
+    if (firstHalfTotal == 0) return secondHalfTotal > 0 ? 100.0 : 0.0;
+    return ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100;
   }
 
   Widget _buildDetailedChart(
@@ -703,7 +866,7 @@ class SalesTrendModal extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '$transactions ventas',
+                  '${NumberHelper.formatNumber(transactions)} ventas',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),

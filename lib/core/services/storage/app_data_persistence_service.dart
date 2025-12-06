@@ -450,4 +450,74 @@ class AppDataPersistenceService {
       return false;
     }
   }
+
+  // ==========================================
+  // MÉTODOS GENÉRICOS para PERSONALIZACIÓN
+  // ==========================================
+
+  /// Guarda un string con una clave personalizada
+  ///
+  /// **Uso:** Para datos que no tienen un método específico
+  /// **Ejemplo:** Preferencias de features, configuraciones personalizadas
+  Future<void> setString(String key, String value) async {
+    try {
+      await _prefs.setString(key, value);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene un string con una clave personalizada
+  Future<String?> getString(String key) async {
+    try {
+      return _prefs.getString(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Guarda un int con una clave personalizada
+  Future<void> setInt(String key, int value) async {
+    try {
+      await _prefs.setInt(key, value);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene un int con una clave personalizada
+  Future<int?> getInt(String key) async {
+    try {
+      return _prefs.getInt(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Guarda un bool con una clave personalizada
+  Future<void> setBool(String key, bool value) async {
+    try {
+      await _prefs.setBool(key, value);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene un bool con una clave personalizada
+  Future<bool?> getBool(String key) async {
+    try {
+      return _prefs.getBool(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Elimina un valor con una clave personalizada
+  Future<void> remove(String key) async {
+    try {
+      await _prefs.remove(key);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

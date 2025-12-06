@@ -87,6 +87,9 @@ class SellerRankingCard extends StatelessWidget {
     final displayName =
         sellerName.isNotEmpty ? sellerName : 'Vendedor $position';
 
+    // Destacar vendedor #1 (o único)
+    final isTopSeller = position == 1;
+
     // Colores para las posiciones
     Color badgeColor;
     IconData? badgeIcon;
@@ -111,12 +114,37 @@ class SellerRankingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        // Destacar vendedor #1 con gradiente dorado
+        gradient: isTopSeller
+            ? LinearGradient(
+                colors: [
+                  badgeColor.withValues(alpha: 0.2),
+                  badgeColor.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color: isTopSeller
+            ? null
+            : theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
+          color: isTopSeller
+              ? badgeColor.withValues(alpha: 0.5)
+              : color.withValues(alpha: 0.2),
+          width: isTopSeller ? 1.5 : 1,
         ),
+        // Sombra sutil para el vendedor #1
+        boxShadow: isTopSeller
+            ? [
+                BoxShadow(
+                  color: badgeColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [

@@ -37,6 +37,8 @@ import 'package:sellweb/features/analytics/data/datasources/analytics_remote_dat
     as _i577;
 import 'package:sellweb/features/analytics/data/repositories/analytics_repository_impl.dart'
     as _i164;
+import 'package:sellweb/features/analytics/data/services/analytics_preferences_service.dart'
+    as _i956;
 import 'package:sellweb/features/analytics/domain/repositories/analytics_repository.dart'
     as _i732;
 import 'package:sellweb/features/analytics/domain/usecases/get_sales_analytics_usecase.dart'
@@ -326,10 +328,13 @@ extension GetItInjectableX on _i174.GetIt {
         _i465.ClearAdminProfileUseCase(gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i475.SaveAdminProfileUseCase>(() =>
         _i475.SaveAdminProfileUseCase(gh<_i581.AppDataPersistenceService>()));
-    gh.lazySingleton<_i897.ThermalPrinterHttpService>(() =>
-        _i897.ThermalPrinterHttpService(gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i750.ThemeService>(
         () => _i750.ThemeService(gh<_i581.AppDataPersistenceService>()));
+    gh.lazySingleton<_i897.ThermalPrinterHttpService>(() =>
+        _i897.ThermalPrinterHttpService(gh<_i581.AppDataPersistenceService>()));
+    gh.factory<_i956.AnalyticsPreferencesService>(() =>
+        _i956.AnalyticsPreferencesService(
+            gh<_i581.AppDataPersistenceService>()));
     gh.factory<_i984.ThemeDataAppProvider>(() => _i984.ThemeDataAppProvider(
           gh<_i750.ThemeService>(),
           gh<_i581.AppDataPersistenceService>(),
@@ -588,8 +593,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i799.DeleteUserUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
         ));
-    gh.factory<_i975.AnalyticsProvider>(
-        () => _i975.AnalyticsProvider(gh<_i161.GetSalesAnalyticsUseCase>()));
+    gh.factory<_i975.AnalyticsProvider>(() => _i975.AnalyticsProvider(
+          gh<_i161.GetSalesAnalyticsUseCase>(),
+          gh<_i956.AnalyticsPreferencesService>(),
+        ));
     gh.factory<_i185.AccountScopeProvider>(() => _i185.AccountScopeProvider(
           gh<_i127.CatalogueProvider>(),
           gh<_i306.CashRegisterProvider>(),

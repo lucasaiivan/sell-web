@@ -66,7 +66,7 @@ class ProductsMetricCard extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: AnalyticsMainValue(
-                value: totalProducts.toString(),
+                value: NumberHelper.formatNumber(totalProducts),
                 isZero: isZero,
               ),
             ),
@@ -118,7 +118,7 @@ class ProductsMetricCard extends StatelessWidget {
         ),
       ),
       title: product.description,
-      subtitle: '$quantitySold vendidos',
+      subtitle: '${NumberHelper.formatNumber(quantitySold)} vendidos',
       badge: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(

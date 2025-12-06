@@ -21,16 +21,17 @@ import 'analytics_modal.dart';
 class ActiveCashRegistersCard extends StatelessWidget {
   final List<CashRegister> activeCashRegisters;
 
+  /// Color de la tarjeta (debe venir del registro para consistencia)
+  final Color color;
+
   const ActiveCashRegistersCard({
     super.key,
     required this.activeCashRegisters,
+    required this.color,
   });
-
-  static const _accentColor = Color(0xFF0891B2); // Cyan
 
   @override
   Widget build(BuildContext context) {
-    final color = _accentColor;
     final isEmpty = activeCashRegisters.isEmpty;
     final count = activeCashRegisters.length;
 
@@ -88,6 +89,7 @@ class ActiveCashRegistersCard extends StatelessWidget {
         activeCashRegisters: activeCashRegisters,
         cashRegisterProvider: cashRegisterProvider,
         accountId: salesProvider.profileAccountSelected.id,
+        accentColor: color,
       ),
     );
   }
@@ -202,21 +204,23 @@ class ActiveCashRegistersModal extends StatelessWidget {
   final CashRegisterProvider cashRegisterProvider;
   final String accountId;
 
+  /// Color de acento para el modal (consistencia con la tarjeta)
+  final Color accentColor;
+
   const ActiveCashRegistersModal({
     super.key,
     required this.activeCashRegisters,
     required this.cashRegisterProvider,
     required this.accountId,
+    required this.accentColor,
   });
-
-  static const _accentColor = Color(0xFF0891B2);
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
     return AnalyticsModal(
-      accentColor: _accentColor,
+      accentColor: accentColor,
       icon: Icons.point_of_sale_rounded,
       title: 'Cajas Activas',
       subtitle:
@@ -268,7 +272,7 @@ class ActiveCashRegistersModal extends StatelessWidget {
         color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _accentColor.withValues(alpha: 0.2),
+          color: accentColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -283,12 +287,12 @@ class ActiveCashRegistersModal extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _accentColor.withValues(alpha: 0.12),
+                    color: accentColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.point_of_sale_rounded,
-                    color: _accentColor,
+                    color: accentColor,
                     size: 22,
                   ),
                 ),
@@ -372,10 +376,10 @@ class ActiveCashRegistersModal extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha: 0.08),
+                color: accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _accentColor.withValues(alpha: 0.2),
+                  color: accentColor.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -384,7 +388,7 @@ class ActiveCashRegistersModal extends StatelessWidget {
                   Icon(
                     Icons.timelapse_rounded,
                     size: 18,
-                    color: _accentColor,
+                    color: accentColor,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -403,7 +407,7 @@ class ActiveCashRegistersModal extends StatelessWidget {
                               fechaInicio: cashRegister.opening),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: _accentColor,
+                            color: accentColor,
                           ),
                         ),
                       ],
@@ -560,7 +564,7 @@ class ActiveCashRegistersModal extends StatelessWidget {
             // Descuentos - calculados desde tickets para mayor precisión
             _DiscountMetricTile(
               cashRegister: cashRegister,
-              accentColor: _accentColor,
+              accentColor: accentColor,
               cashRegisterProvider: cashRegisterProvider,
               accountId: accountId,
             ),

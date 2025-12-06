@@ -33,6 +33,8 @@ import 'package:sellweb/core/services/storage/i_storage_datasource.dart'
 import 'package:sellweb/core/services/storage/storage_datasource.dart' as _i390;
 import 'package:sellweb/core/services/theme/theme_service.dart' as _i750;
 import 'package:sellweb/core/USAGE_EXAMPLES.dart' as _i1071;
+import 'package:sellweb/features/analytics/data/datasources/analytics_preferences_remote_datasource.dart'
+    as _i716;
 import 'package:sellweb/features/analytics/data/datasources/analytics_remote_datasource.dart'
     as _i577;
 import 'package:sellweb/features/analytics/data/repositories/analytics_repository_impl.dart'
@@ -332,9 +334,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i750.ThemeService(gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i897.ThermalPrinterHttpService>(() =>
         _i897.ThermalPrinterHttpService(gh<_i581.AppDataPersistenceService>()));
-    gh.factory<_i956.AnalyticsPreferencesService>(() =>
-        _i956.AnalyticsPreferencesService(
-            gh<_i581.AppDataPersistenceService>()));
     gh.factory<_i984.ThemeDataAppProvider>(() => _i984.ThemeDataAppProvider(
           gh<_i750.ThemeService>(),
           gh<_i581.AppDataPersistenceService>(),
@@ -352,6 +351,9 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i178.PrinterProvider(gh<_i897.ThermalPrinterHttpService>()));
     gh.lazySingleton<_i577.AnalyticsRemoteDataSource>(() =>
         _i577.AnalyticsRemoteDataSource(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i716.AnalyticsPreferencesRemoteDataSource>(() =>
+        _i716.AnalyticsPreferencesRemoteDataSource(
+            gh<_i562.IFirestoreDataSource>()));
     gh.lazySingleton<_i818.CashRegisterRepository>(() =>
         _i1059.CashRegisterRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
     gh.lazySingleton<_i348.AuthRepository>(() => _i566.AuthRepositoryImpl(
@@ -387,6 +389,11 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i83.CatalogueRepository>(
         () => _i576.CatalogueRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.factory<_i956.AnalyticsPreferencesService>(
+        () => _i956.AnalyticsPreferencesService(
+              gh<_i581.AppDataPersistenceService>(),
+              gh<_i716.AnalyticsPreferencesRemoteDataSource>(),
+            ));
     gh.lazySingleton<_i925.MultiUserRemoteDataSource>(() =>
         _i925.MultiUserRemoteDataSourceImpl(gh<_i562.IFirestoreDataSource>()));
     gh.lazySingleton<_i983.CatalogueRemoteDataSource>(() =>

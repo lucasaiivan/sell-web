@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/analytics_colors.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
 import 'analytics_modal.dart';
@@ -17,7 +18,7 @@ class AverageTicketModal extends StatelessWidget {
     required this.analytics,
   });
 
-  static const _accentColor = Color(0xFF0891B2);
+  static const _accentColor = AnalyticsColors.averageTicket; // Turquesa
 
   @override
   Widget build(BuildContext context) {

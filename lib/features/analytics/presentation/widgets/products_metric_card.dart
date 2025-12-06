@@ -155,7 +155,7 @@ class TopSellingProductsModal extends StatelessWidget {
     required this.topSellingProducts,
   });
 
-  static const _accentColor = Color(0xFFD97706);
+  static const _accentColor = AnalyticsColors.products; // Azul Índigo
 
   @override
   Widget build(BuildContext context) {

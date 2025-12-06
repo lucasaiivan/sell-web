@@ -64,8 +64,41 @@ class PeakHoursCard extends StatelessWidget {
             const SizedBox(height: 8),
             // Hora pico principal con valor (simplificado)
             _buildPeakHourPreview(context, peakHourLabel, peakSales),
+            const SizedBox(height: 6),
+            // Feedback
+            _buildFeedbackText(context, topHour?['hour'] as int?),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(BuildContext context, int? peakHour) {
+    if (peakHour == null) return const SizedBox();
+    
+    final theme = Theme.of(context);
+    String feedback;
+    
+    if (peakHour >= 12 && peakHour <= 14) {
+      feedback = 'Horario de almuerzo muy activo';
+    } else if (peakHour >= 19 && peakHour <= 21) {
+      feedback = 'Horario nocturno con alta demanda';
+    } else if (peakHour >= 9 && peakHour <= 11) {
+      feedback = 'Buena actividad en la mañana';
+    } else if (peakHour >= 15 && peakHour <= 18) {
+      feedback = 'Tarde productiva';
+    } else if (peakHour >= 6 && peakHour <= 8) {
+      feedback = 'Actividad temprana destacada';
+    } else {
+      feedback = 'Horario inusual de ventas';
+    }
+    
+    return Text(
+      feedback,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+        fontSize: 11,
       ),
     );
   }
@@ -189,7 +222,25 @@ class PeakHoursModal extends StatelessWidget {
     required this.peakHours,
   });
 
-  static const _accentColor = Color(0xFFF59E0B);
+  static const _accentColor = AnalyticsColors.peakHours; // Rojo Coral
+
+  String _getModalFeedback(List<Map<String, dynamic>> peakHours) {
+    if (peakHours.isEmpty) return 'Sin datos de horas pico';
+    
+    final topHour = peakHours.first['hour'] as int;
+    
+    if (topHour >= 12 && topHour <= 14) {
+      return 'Tu hora pico está en el almuerzo. Asegura suficiente personal y stock.';
+    } else if (topHour >= 19 && topHour <= 21) {
+      return 'Las noches son tu fuerte. Mantén inventario disponible en este horario.';
+    } else if (topHour >= 9 && topHour <= 11) {
+      return 'Las mañanas son activas. Abre temprano para aprovechar la demanda.';
+    } else if (topHour >= 15 && topHour <= 18) {
+      return 'Las tardes son productivas. Considera promociones en este horario.';
+    } else {
+      return 'Tu hora pico es inusual. Analiza el patrón para optimizar operaciones.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -317,39 +368,75 @@ class PeakHoursModal extends StatelessWidget {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                    child: Row(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    child: Column(
                       children: [
+                        // Feedback contextual
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: _accentColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
+                            color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _accentColor.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
                           ),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.local_fire_department_rounded,
-                                  color: _accentColor, size: 16),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Top 5 Horas Pico',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: _accentColor,
-                                    ),
+                              Icon(
+                                Icons.lightbulb_outline_rounded,
+                                size: 16,
+                                color: _accentColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _getModalFeedback(peakHours),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: theme.colorScheme.outlineVariant
-                                .withValues(alpha: 0.3),
-                          ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _accentColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.local_fire_department_rounded,
+                                      color: _accentColor, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Top 5 Horas Pico',
+                                    style: theme.textTheme.labelMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: _accentColor,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                height: 1,
+                                color: theme.colorScheme.outlineVariant
+                                    .withValues(alpha: 0.3),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -417,7 +504,7 @@ class PeakHoursModal extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               AnalyticsBadge(
-                                text: '${percentage.toStringAsFixed(0)}%',
+                                text: NumberHelper.formatPercentage(percentage),
                                 color: _accentColor,
                               ),
                             ],

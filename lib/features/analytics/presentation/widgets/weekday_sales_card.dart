@@ -72,8 +72,36 @@ class WeekdaySalesCard extends StatelessWidget {
             const SizedBox(height: 8),
             // Mejor día
             if (bestDay != null) _buildBestDayIndicator(context, bestDay),
+            const SizedBox(height: 6),
+            // Feedback
+            _buildFeedbackText(context, bestDay),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(BuildContext context, Map<String, dynamic>? bestDay) {
+    final theme = Theme.of(context);
+    if (bestDay == null) return const SizedBox();
+    
+    final dayNumber = bestDay['dayNumber'] as int? ?? 0;
+    String feedback;
+    
+    if (dayNumber >= 6) {
+      feedback = 'Fin de semana es tu mejor momento';
+    } else if (dayNumber >= 2 && dayNumber <= 5) {
+      feedback = 'Entre semana tienes buena actividad';
+    } else {
+      feedback = 'Los lunes son tu día fuerte';
+    }
+    
+    return Text(
+      feedback,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+        fontSize: 11,
       ),
     );
   }
@@ -242,7 +270,30 @@ class WeekdaySalesModal extends StatelessWidget {
     required this.salesByWeekday,
   });
 
-  static const _accentColor = Color(0xFF6366F1);
+  static const _accentColor = AnalyticsColors.weekdaySales; // Cian
+
+  String _getModalFeedback(Map<int, Map<String, dynamic>> salesByWeekday) {
+    if (salesByWeekday.isEmpty) return 'Sin datos de ventas semanales';
+    
+    double maxSales = 0;
+    int bestDay = 0;
+    
+    for (final entry in salesByWeekday.entries) {
+      final sales = entry.value['totalSales'] as double? ?? 0.0;
+      if (sales > maxSales) {
+        maxSales = sales;
+        bestDay = entry.key;
+      }
+    }
+    
+    if (bestDay >= 6) {
+      return 'Los fines de semana son tu fuerte. Mantén inventario completo y personal disponible.';
+    } else if (bestDay >= 2 && bestDay <= 5) {
+      return 'Entre semana tienes buena actividad. Aprovecha para promociones especiales.';
+    } else {
+      return 'Los lunes destacan en tus ventas. Inicia la semana con buena energía y stock.';
+    }
+  }
 
   static const List<String> _fullDayNames = [
     '',
@@ -290,6 +341,38 @@ class WeekdaySalesModal extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Feedback contextual
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _accentColor.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 16,
+                    color: _accentColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _getModalFeedback(salesByWeekday),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             // Gráfico de barras detallado
             SizedBox(
               height: 200,

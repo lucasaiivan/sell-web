@@ -85,8 +85,35 @@ class ProfitabilityMetricCard extends StatelessWidget {
               topProductQuantity,
               topProductProfit,
             ),
+            const SizedBox(height: 6),
+            _buildFeedbackText(context),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(BuildContext context) {
+    final theme = Theme.of(context);
+    final productsCount = mostProfitableProducts.length;
+    
+    String feedback;
+    if (productsCount >= 10) {
+      feedback = 'Gran variedad de productos rentables';
+    } else if (productsCount >= 5) {
+      feedback = 'Buenos productos generando ganancias';
+    } else if (productsCount >= 3) {
+      feedback = 'Pocos productos rentables';
+    } else {
+      feedback = 'Amplía tu catálogo rentable';
+    }
+    
+    return Text(
+      feedback,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+        fontSize: 11,
       ),
     );
   }
@@ -166,10 +193,11 @@ class MostProfitableProductsModal extends StatelessWidget {
     required this.mostProfitableProducts,
   });
 
-  static const _accentColor = Color(0xFF10B981);
+  static const _accentColor = AnalyticsColors.profitability; // Violeta
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AnalyticsModal(
       accentColor: _accentColor,
       icon: Icons.diamond_rounded,
@@ -181,10 +209,46 @@ class MostProfitableProductsModal extends StatelessWidget {
               title: 'No hay datos de rentabilidad',
               subtitle: 'Agrega precio de compra a tus productos',
             )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: mostProfitableProducts.length,
-              itemBuilder: (context, index) {
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _accentColor.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.stars_rounded,
+                          size: 16,
+                          color: _accentColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _getModalFeedback(mostProfitableProducts.length),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: mostProfitableProducts.length,
+                    itemBuilder: (context, index) {
                 final item = mostProfitableProducts[index];
                 final product = item['product'] as ProductCatalogue;
                 final quantitySold = item['quantitySold'] as int;
@@ -236,9 +300,24 @@ class MostProfitableProductsModal extends StatelessWidget {
                     ),
                   ],
                 );
-              },
+                    },
+                  ),
+                ),
+              ],
             ),
     );
+  }
+
+  String _getModalFeedback(int productsCount) {
+    if (productsCount >= 10) {
+      return '¡Excelente! Tienes una gran variedad de productos rentables generando ganancias.';
+    } else if (productsCount >= 5) {
+      return 'Tienes varios productos rentables. Considera expandir tu catálogo top.';
+    } else if (productsCount >= 3) {
+      return 'Pocos productos generan la mayoría de tus ganancias. Diversifica tu oferta rentable.';
+    } else {
+      return 'Tu rentabilidad depende de muy pocos productos. Amplía tu catálogo con más opciones.';
+    }
   }
 
   Color? _getPositionColor(int position) {

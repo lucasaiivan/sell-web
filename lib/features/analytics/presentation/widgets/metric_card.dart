@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/core.dart';
 import 'analytics_base_card.dart';
 
 /// Widget: Card de Métrica (Rediseñado - Sin desbordamiento)
@@ -33,6 +34,9 @@ class MetricCard extends StatelessWidget {
   /// Información de porcentaje adicional (ej: "45.2% margen")
   final String? percentageInfo;
 
+  /// Texto de feedback contextual
+  final String? feedbackText;
+
   const MetricCard({
     super.key,
     required this.title,
@@ -46,6 +50,7 @@ class MetricCard extends StatelessWidget {
     this.showActionIndicator = false,
     this.comparisonData,
     this.percentageInfo,
+    this.feedbackText,
   });
 
   @override
@@ -79,13 +84,15 @@ class MetricCard extends StatelessWidget {
               ),
             ),
           ),
-          // Comparación con día anterior o porcentaje adicional
-          if (hasComparison || hasPercentageInfo) ...[
+          // Comparación con día anterior, porcentaje adicional o feedback
+          if (hasComparison || hasPercentageInfo || (feedbackText != null && !isZero)) ...[
             const SizedBox(height: 6),
             if (hasComparison)
               _buildComparisonBadge(context, comparisonData!)
             else if (hasPercentageInfo)
-              _buildPercentageBadge(context, percentageInfo!, theme),
+              _buildPercentageBadge(context, percentageInfo!, theme)
+            else if (feedbackText != null && !isZero)
+              _buildFeedbackText(context, feedbackText!, theme),
           ],
         ],
       ),
@@ -101,6 +108,7 @@ class MetricCard extends StatelessWidget {
         isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
     final trendIcon =
         isPositive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
+    final label = data['label'] as String? ?? 'anterior';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -118,22 +126,25 @@ class MetricCard extends StatelessWidget {
           Icon(trendIcon, size: 12, color: trendColor),
           const SizedBox(width: 4),
           Text(
-            '${isPositive ? '+' : ''}${percentage.toStringAsFixed(1)}%',
+            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(percentage)} que $label',
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: trendColor,
               fontSize: 11,
             ),
           ),
-          const SizedBox(width: 4),
-          Text(
-            '${data['label'] ?? 'anterior'}',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              fontSize: 10,
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(
+      BuildContext context, String text, ThemeData theme) {
+    return Text(
+      text,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
       ),
     );
   }

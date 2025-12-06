@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/analytics_colors.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
+import 'package:sellweb/core/utils/helpers/number_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'analytics_modal.dart';
@@ -18,7 +20,7 @@ class ProfitModal extends StatelessWidget {
     required this.analytics,
   });
 
-  static const _accentColor = Color(0xFF7C3AED);
+  static const _accentColor = AnalyticsColors.profit; // Verde Esmeralda
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +77,26 @@ class ProfitModal extends StatelessWidget {
   Widget _buildProfitSummary(BuildContext context, double profitMargin) {
     final theme = Theme.of(context);
 
+    // Generar feedback según el margen
+    String feedbackText;
+    IconData feedbackIcon;
+    if (profitMargin >= 50) {
+      feedbackText = '¡Excelente! Tu margen de ganancia es muy alto';
+      feedbackIcon = Icons.rocket_launch_rounded;
+    } else if (profitMargin >= 30) {
+      feedbackText = 'Muy bien, tienes un buen margen de rentabilidad';
+      feedbackIcon = Icons.thumb_up_rounded;
+    } else if (profitMargin >= 15) {
+      feedbackText = 'Tu margen de ganancia es saludable';
+      feedbackIcon = Icons.trending_up_rounded;
+    } else if (profitMargin >= 5) {
+      feedbackText = 'Tu margen de ganancia es bajo, considera optimizar';
+      feedbackIcon = Icons.info_outline_rounded;
+    } else {
+      feedbackText = 'Atención: tu margen es muy ajustado';
+      feedbackIcon = Icons.warning_rounded;
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -117,7 +139,7 @@ class ProfitModal extends StatelessWidget {
                 child: _buildStatItem(
                   context,
                   Icons.percent_rounded,
-                  '${profitMargin.toStringAsFixed(1)}%',
+                  NumberHelper.formatPercentage(profitMargin),
                   'Margen',
                 ),
               ),
@@ -135,6 +157,39 @@ class ProfitModal extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          // Feedback contextual
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  feedbackIcon,
+                  size: 16,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    feedbackText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

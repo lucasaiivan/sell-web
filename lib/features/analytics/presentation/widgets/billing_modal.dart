@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/analytics_colors.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
@@ -18,7 +19,7 @@ class BillingModal extends StatelessWidget {
     required this.analytics,
   });
 
-  static const _accentColor = Color(0xFF059669);
+  static const _accentColor = AnalyticsColors.billing; // Verde Bosque
 
   @override
   Widget build(BuildContext context) {

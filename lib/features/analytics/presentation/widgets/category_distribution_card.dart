@@ -57,7 +57,7 @@ class CategoryDistributionCard extends StatelessWidget {
               children: [
                 // Gráfico de dona - tamaño dinámico
                 Expanded(
-                  flex: 4,
+                  flex: 5,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final availableSize = constraints.biggest.shortestSide;
@@ -78,7 +78,7 @@ class CategoryDistributionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 // Leyenda compacta
                 Expanded(
-                  flex: 5,
+                  flex: 4,
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: _buildLegend(context, displayCategories),
@@ -110,7 +110,7 @@ class CategoryDistributionCard extends StatelessWidget {
           color: categoryColor,
           value: percentage,
           // Mostrar porcentaje si es >= 10%
-          title: percentage >= 10 ? '${percentage.toStringAsFixed(0)}%' : '',
+          title: percentage >= 10 ? NumberHelper.formatPercentage(percentage) : '',
           titleStyle: TextStyle(
             fontSize: (size * 0.09).clamp(9.0, 13.0),
             fontWeight: FontWeight.bold,
@@ -143,7 +143,7 @@ class CategoryDistributionCard extends StatelessWidget {
             color: Colors.grey.shade400,
             value: othersPercentage,
             title: othersPercentage >= 10
-                ? '${othersPercentage.toStringAsFixed(0)}%'
+                ? NumberHelper.formatPercentage(othersPercentage)
                 : '',
             titleStyle: TextStyle(
               fontSize: (size * 0.09).clamp(9.0, 13.0),
@@ -193,83 +193,35 @@ class CategoryDistributionCard extends StatelessWidget {
           final index = entry.key;
           final category = entry.value;
           final categoryName = category['category'] as String? ?? 'Sin nombre';
-          final percentage = category['percentage'] as double? ?? 0.0;
-          final categorySales = category['totalSales'] as double? ?? 0.0;
           final categoryColor = _categoryColors[index % _categoryColors.length];
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Indicador de color mejorado
+                // Punto indicador de color
                 Container(
-                  width: 12,
-                  height: 12,
+                  width: 8,
+                  height: 8,
                   decoration: BoxDecoration(
                     color: categoryColor,
-                    borderRadius: BorderRadius.circular(3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: categoryColor.withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Información de categoría
+                // Nombre de categoría con ellipsis
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        categoryName,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
-                          letterSpacing: 0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        CurrencyHelper.formatCurrency(categorySales),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.65),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Badge de porcentaje mejorado
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: categoryColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: categoryColor.withValues(alpha: 0.4),
-                      width: 1,
-                    ),
-                  ),
                   child: Text(
-                    '${percentage.toStringAsFixed(1)}%',
+                    categoryName,
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: categoryColor,
-                      letterSpacing: 0.3,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                      letterSpacing: 0.1,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -286,13 +238,16 @@ class CategoryDistributionCard extends StatelessWidget {
                   size: 14,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '+${salesByCategory.length - displayCount} categorías',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '+${salesByCategory.length - displayCount} más',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -326,7 +281,7 @@ class CategoryDistributionModal extends StatelessWidget {
     required this.totalSales,
   });
 
-  static const _accentColor = Color(0xFFEC4899);
+  static const _accentColor = AnalyticsColors.categories; // Magenta
 
   static const List<Color> _categoryColors = [
     Color(0xFF3B82F6),
@@ -338,6 +293,24 @@ class CategoryDistributionModal extends StatelessWidget {
     Color(0xFFEC4899),
     Color(0xFF84CC16),
   ];
+
+  String _getModalFeedback(List<Map<String, dynamic>> salesByCategory) {
+    if (salesByCategory.isEmpty) return 'Sin datos de categorías';
+    
+    final categoriesCount = salesByCategory.length;
+    final topCategory = salesByCategory.first;
+    final topPercentage = topCategory['percentage'] as double? ?? 0.0;
+    
+    if (topPercentage >= 60) {
+      return 'Una categoría domina tus ventas. Diversifica tu oferta para reducir riesgos.';
+    } else if (topPercentage >= 40) {
+      return 'Tienes una categoría líder clara. Mantén el stock de productos top.';
+    } else if (categoriesCount >= 5) {
+      return 'Buena diversificación de categorías. Continúa balanceando tu catálogo.';
+    } else {
+      return 'Ventas equilibradas entre categorías. Analiza cuáles tienen mejor margen.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -353,6 +326,38 @@ class CategoryDistributionModal extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Feedback contextual
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _accentColor.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.category_rounded,
+                    size: 16,
+                    color: _accentColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _getModalFeedback(salesByCategory),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             // Gráfico grande
             SizedBox(
               height: 220,
@@ -427,7 +432,7 @@ class CategoryDistributionModal extends StatelessWidget {
         PieChartSectionData(
           color: categoryColor,
           value: percentage,
-          title: percentage >= 10 ? '${percentage.toStringAsFixed(0)}%' : '',
+          title: percentage >= 10 ? NumberHelper.formatPercentage(percentage) : '',
           titleStyle: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -582,7 +587,7 @@ class CategoryDistributionModal extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '${percentage.toStringAsFixed(1)}%',
+                  NumberHelper.formatPercentage(percentage),
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: categoryColor,

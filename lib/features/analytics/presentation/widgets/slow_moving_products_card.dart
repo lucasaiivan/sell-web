@@ -65,17 +65,35 @@ class SlowMovingProductsCard extends StatelessWidget {
                 child: _buildSlowProductPreview(context, product, quantitySold),
               );
             }),
-            const SizedBox(height: 2),
-            // Badge de alerta compacto
-            Text(
-              '$totalSlowProducts producto${totalSlowProducts != 1 ? 's' : ''} ⚠️',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
+            const SizedBox(height: 6),
+            // Feedback
+            _buildFeedbackText(context, totalSlowProducts),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(BuildContext context, int totalSlowProducts) {
+    final theme = Theme.of(context);
+    String feedback;
+    
+    if (totalSlowProducts >= 20) {
+      feedback = 'Mucho inventario estancado';
+    } else if (totalSlowProducts >= 10) {
+      feedback = 'Revisa tu inventario';
+    } else if (totalSlowProducts >= 5) {
+      feedback = 'Algunos productos lentos';
+    } else {
+      feedback = 'Pocas alertas de rotación';
+    }
+    
+    return Text(
+      feedback,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+        fontSize: 11,
       ),
     );
   }
@@ -167,7 +185,19 @@ class SlowMovingProductsModal extends StatelessWidget {
     required this.slowMovingProducts,
   });
 
-  static const _accentColor = Color(0xFFEF4444);
+  static const _accentColor = AnalyticsColors.slowMoving; // Naranja/Ámbar
+
+  String _getModalFeedback(int productsCount) {
+    if (productsCount >= 20) {
+      return 'Tienes mucho inventario estancado. Urgente: aplica descuentos o promociones para liberar stock.';
+    } else if (productsCount >= 10) {
+      return 'Varios productos con poca rotación. Considera ajustar precios o hacer promoción 2x1.';
+    } else if (productsCount >= 5) {
+      return 'Algunos productos se venden lento. Evaluar descuentos para mejorar rotación.';
+    } else {
+      return 'Pocas alertas de rotación. Tu inventario está bien optimizado.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -280,9 +310,35 @@ class SlowMovingProductsModal extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          AnalyticsInfoCard.tip(
-                            message:
-                                'Productos vendidos 5 o menos veces. Considera promociones o ajustes de precio.',
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _accentColor.withValues(alpha: 0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 16,
+                                  color: _accentColor,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _getModalFeedback(slowMovingProducts.length),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

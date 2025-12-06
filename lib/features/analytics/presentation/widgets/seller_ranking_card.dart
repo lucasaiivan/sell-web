@@ -64,17 +64,35 @@ class SellerRankingCard extends StatelessWidget {
                     context, sellerName, totalSales, index + 1),
               );
             }),
-            const SizedBox(height: 2),
-            // Contador de vendedores compacto
-            Text(
-              '$totalSellers vendedor${totalSellers != 1 ? 'es' : ''} 🏆',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
+            const SizedBox(height: 6),
+            // Feedback
+            _buildFeedbackText(context, totalSellers),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(BuildContext context, int totalSellers) {
+    final theme = Theme.of(context);
+    String feedback;
+    
+    if (totalSellers >= 5) {
+      feedback = 'Equipo grande trabajando';
+    } else if (totalSellers >= 3) {
+      feedback = 'Buen equipo de ventas';
+    } else if (totalSellers == 2) {
+      feedback = 'Equipo compacto y efectivo';
+    } else {
+      feedback = 'Operación individual';
+    }
+    
+    return Text(
+      feedback,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+        fontSize: 11,
       ),
     );
   }
@@ -135,16 +153,6 @@ class SellerRankingCard extends StatelessWidget {
               : color.withValues(alpha: 0.2),
           width: isTopSeller ? 1.5 : 1,
         ),
-        // Sombra sutil para el vendedor #1
-        boxShadow: isTopSeller
-            ? [
-                BoxShadow(
-                  color: badgeColor.withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
       ),
       child: Row(
         children: [
@@ -221,10 +229,11 @@ class SellerRankingModal extends StatelessWidget {
     required this.salesBySeller,
   });
 
-  static const _accentColor = Color(0xFF8B5CF6);
+  static const _accentColor = AnalyticsColors.sellerRanking; // Amarillo Oro
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AnalyticsModal(
       accentColor: _accentColor,
       icon: Icons.emoji_events_rounded,
@@ -236,10 +245,46 @@ class SellerRankingModal extends StatelessWidget {
               title: 'No hay vendedores',
               subtitle: 'Aún no hay datos de vendedores',
             )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: salesBySeller.length,
-              itemBuilder: (context, index) {
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _accentColor.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.people_rounded,
+                          size: 16,
+                          color: _accentColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _getModalFeedback(salesBySeller),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: salesBySeller.length,
+                    itemBuilder: (context, index) {
                 final seller = salesBySeller[index];
                 final sellerName = seller['sellerName'] as String;
                 final totalSales = seller['totalSales'] as double;
@@ -302,9 +347,26 @@ class SellerRankingModal extends StatelessWidget {
                     ),
                   ],
                 );
-              },
+                    },
+                  ),
+                ),
+              ],
             ),
     );
+  }
+
+  String _getModalFeedback(List<Map<String, dynamic>> salesBySeller) {
+    final sellersCount = salesBySeller.length;
+    
+    if (sellersCount >= 5) {
+      return 'Tienes un equipo grande. Motívalos con metas y reconocimientos para mejorar resultados.';
+    } else if (sellersCount >= 3) {
+      return 'Tu equipo está bien dimensionado. Capacítalos para maximizar su potencial.';
+    } else if (sellersCount == 2) {
+      return 'Equipo compacto. Considera agregar más vendedores para crecer las ventas.';
+    } else {
+      return 'Operas solo. Considera incorporar personal para escalar tu negocio.';
+    }
   }
 
   Widget _buildSellerAvatar(

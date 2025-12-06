@@ -47,13 +47,22 @@ class SalesTrendCard extends StatelessWidget {
             const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
           else ...[
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _buildLineChart(context),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildLineChart(context),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 0,
+                    child: _buildTrendBadge(context, trend),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
-            _buildTrendIndicator(context, trend),
+            _buildFeedbackText(context, trend),
           ],
         ],
       ),
@@ -203,7 +212,7 @@ class SalesTrendCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTrendIndicator(BuildContext context, double trend) {
+  Widget _buildTrendBadge(BuildContext context, double trend) {
     final theme = Theme.of(context);
     final isPositive = trend >= 0;
     final trendColor =
@@ -211,130 +220,84 @@ class SalesTrendCard extends StatelessWidget {
     final trendIcon =
         isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
 
-    // Calcular total, promedio y estadísticas
-    double totalSales = 0;
-    for (final dayData in salesByDay.values) {
-      totalSales += dayData['totalSales'] as double? ?? 0.0;
-    }
-    final avgSales = salesByDay.isNotEmpty
-        ? (totalSales / salesByDay.length).toDouble()
-        : 0.0;
-
-    // Encontrar mejor y peor día
-    double maxSales = 0;
-    double minSales = double.infinity;
-    for (final dayData in salesByDay.values) {
-      final sales = dayData['totalSales'] as double? ?? 0.0;
-      if (sales > maxSales) maxSales = sales;
-      if (sales < minSales && sales > 0) minSales = sales;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            // Indicador de tendencia
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    trendColor.withValues(alpha: 0.15),
-                    trendColor.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: trendColor.withValues(alpha: 0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: trendColor.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(trendIcon, size: 14, color: trendColor),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: trendColor,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            // Días analizados
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.calendar_month_rounded,
-                    size: 12,
-                    color: color,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${NumberHelper.formatNumber(salesByDay.length)} días',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            trendColor.withValues(alpha: 0.15),
+            trendColor.withValues(alpha: 0.05),
           ],
         ),
-        const SizedBox(height: 6),
-        // Promedio diario
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.show_chart_rounded,
-                size: 11,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  '${CurrencyHelper.formatCurrency(avgSales)} promedio',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontSize: 10,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: trendColor.withValues(alpha: 0.4),
+          width: 1.5,
         ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.surface.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: trendColor.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(trendIcon, size: 14, color: trendColor),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(trend)}',
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: trendColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedbackText(BuildContext context, double trend) {
+    final theme = Theme.of(context);
+
+    // Generar mensaje de feedback según el estado de la tendencia
+    String feedbackText;
+    if (trend.abs() < 5) {
+      feedbackText = 'Tus ventas se mantienen estables';
+    } else if (trend >= 0) {
+      if (trend > 20) {
+        feedbackText = 'Tus ventas están creciendo excelentemente';
+      } else if (trend > 10) {
+        feedbackText = 'Tus ventas muestran un buen crecimiento';
+      } else {
+        feedbackText = 'Tus ventas están en crecimiento';
+      }
+    } else {
+      if (trend < -20) {
+        feedbackText = 'Tus ventas han caído significativamente';
+      } else if (trend < -10) {
+        feedbackText = 'Tus ventas muestran una disminución notable';
+      } else {
+        feedbackText = 'Tus ventas han disminuido levemente';
+      }
+    }
+
+    return Text(
+      feedbackText,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+      ),
     );
   }
 
@@ -383,7 +346,7 @@ class SalesTrendModal extends StatelessWidget {
 
   const SalesTrendModal({super.key, required this.salesByDay});
 
-  static const _accentColor = Color(0xFF3B82F6);
+  static const _accentColor = AnalyticsColors.salesTrend; // Azul Eléctrico
 
   @override
   Widget build(BuildContext context) {
@@ -432,7 +395,7 @@ class SalesTrendModal extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Indicador de tendencia principal
+            // Indicador de tendencia principal con feedback
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -448,44 +411,79 @@ class SalesTrendModal extends StatelessWidget {
                   width: 1.5,
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: trendColor.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isPositive
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_down_rounded,
-                      color: trendColor,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: trendColor.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isPositive
+                              ? Icons.trending_up_rounded
+                              : Icons.trending_down_rounded,
                           color: trendColor,
+                          size: 24,
                         ),
                       ),
-                      Text(
-                        isPositive
-                            ? 'Crecimiento del período'
-                            : 'Decrecimiento del período',
-                        style: theme.textTheme.labelMedium?.copyWith(
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(trend)}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: trendColor,
+                            ),
+                          ),
+                          Text(
+                            isPositive
+                                ? 'Crecimiento del período'
+                                : 'Decrecimiento del período',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _getFeedbackIcon(trend),
+                          size: 16,
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.7),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          _getFeedbackText(trend, isPositive),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -894,6 +892,50 @@ class SalesTrendModal extends StatelessWidget {
       return DateFormat('EEEE d MMM', 'es').format(date);
     } catch (_) {
       return dateKey;
+    }
+  }
+
+  IconData _getFeedbackIcon(double trend) {
+    if (trend.abs() < 5) {
+      return Icons.remove_rounded;
+    } else if (trend >= 0) {
+      if (trend > 20) {
+        return Icons.rocket_launch_rounded;
+      } else if (trend > 10) {
+        return Icons.thumb_up_rounded;
+      } else {
+        return Icons.trending_up_rounded;
+      }
+    } else {
+      if (trend < -20) {
+        return Icons.warning_rounded;
+      } else if (trend < -10) {
+        return Icons.trending_down_rounded;
+      } else {
+        return Icons.arrow_downward_rounded;
+      }
+    }
+  }
+
+  String _getFeedbackText(double trend, bool isPositive) {
+    if (trend.abs() < 5) {
+      return 'Tus ventas se mantienen estables en el período';
+    } else if (isPositive) {
+      if (trend > 20) {
+        return '¡Excelente! Tus ventas están creciendo muy bien';
+      } else if (trend > 10) {
+        return 'Muy bien, tus ventas muestran buen crecimiento';
+      } else {
+        return 'Tus ventas están en crecimiento moderado';
+      }
+    } else {
+      if (trend < -20) {
+        return 'Atención: tus ventas han disminuido significativamente';
+      } else if (trend < -10) {
+        return 'Tus ventas muestran una disminución notable';
+      } else {
+        return 'Tus ventas han disminuido levemente';
+      }
     }
   }
 }

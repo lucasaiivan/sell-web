@@ -118,6 +118,28 @@ class FirestorePaths {
       '/ACCOUNTS/$accountId/FIXERDESCRIPTIONS';
 
   // ==========================================
+  // CONFIGURACIÓN Y PREFERENCIAS
+  // ==========================================
+
+  /// Colección de configuraciones de una cuenta
+  static String accountSettings(String accountId) =>
+      '/ACCOUNTS/$accountId/SETTINGS/';
+
+  /// Preferencias de analíticas del dashboard
+  ///
+  /// **Estructura del documento:**
+  /// ```json
+  /// {
+  ///   "visibleCards": ["billing", "profit", "sales"],
+  ///   "cardOrder": ["billing", "profit", "sales", "products"],
+  ///   "lastUpdated": Timestamp,
+  ///   "version": 1
+  /// }
+  /// ```
+  static String analyticsPreferences(String accountId) =>
+      '/ACCOUNTS/$accountId/SETTINGS/analytics_preferences';
+
+  // ==========================================
   // COLECCIONES DE USUARIOS (/USERS)
   // ==========================================
 

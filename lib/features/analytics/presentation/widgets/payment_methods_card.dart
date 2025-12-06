@@ -62,7 +62,10 @@ class PaymentMethodsCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
-                children: sortedMethods.map((entry) {
+                children: sortedMethods.asMap().entries.map((indexedEntry) {
+                  final index = indexedEntry.key;
+                  final entry = indexedEntry.value;
+                  final isTopMethod = index == 0;
                   final percentage =
                       totalSales > 0 ? entry.value / totalSales : 0.0;
 
@@ -70,6 +73,7 @@ class PaymentMethodsCard extends StatelessWidget {
                   final paymentMethod = PaymentMethod.fromCode(entry.key);
                   final displayName = paymentMethod.displayName;
                   final methodIcon = paymentMethod.icon;
+                  final methodColor = paymentMethod.color;
 
                   return _buildPaymentMethodItem(
                     context,
@@ -77,7 +81,8 @@ class PaymentMethodsCard extends StatelessWidget {
                     displayName,
                     entry.value,
                     percentage,
-                    color,
+                    methodColor,
+                    isTopMethod: isTopMethod,
                   );
                 }).toList(),
               ),
@@ -91,72 +96,92 @@ class PaymentMethodsCard extends StatelessWidget {
     String name,
     double amount,
     double percentage,
-    Color color,
-  ) {
+    Color color, {
+    bool isTopMethod = false,
+  }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    // Tamaños dinámicos: más grande para el método más usado, más pequeño para los demás
+    final itemHeight = isTopMethod ? 42.0 : 32.0;
+    final fontSize = isTopMethod ? 14.0 : 12.0;
+    final iconSize = isTopMethod ? 20.0 : 16.0;
+    final bottomPadding = isTopMethod ? 12.0 : 8.0;
+
+    // Colores de texto e icono optimizados para contraste
+    final textColor = theme.colorScheme.onSurface.withValues(alpha: isTopMethod ? 1.0 : 0.9);
+    final iconColor = theme.colorScheme.onSurface.withValues(alpha: isTopMethod ? 1.0 : 0.8);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          children: [
+            // Barra de progreso - más prominente para el método más usado
+            LinearProgressIndicator(
+              value: percentage,
+              backgroundColor: color.withValues(alpha: isDark ? 0.15 : 0.1),
+              color: color.withValues(alpha: isDark ? 0.8 : 0.9),
+              minHeight: itemHeight,
+            ),
+            // Contenido sobre la barra
+            Container(
+              height: itemHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Row(
                 children: [
+                  // Icono
                   Icon(
                     icon,
-                    size: 20,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    size: iconSize,
+                    color: iconColor,
                   ),
                   const SizedBox(width: 10),
+                  // Nombre del método
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: isTopMethod ? FontWeight.w700 : FontWeight.w600,
+                        fontSize: fontSize,
+                        color: textColor,
+                        letterSpacing: 0.1,
+                        shadows: [
+                          Shadow(
+                            color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                            offset: const Offset(0, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Monto facturado
                   Text(
-                    name,
+                    CurrencyHelper.formatCurrency(amount),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: isTopMethod ? FontWeight.w800 : FontWeight.w700,
+                      fontSize: fontSize,
+                      color: textColor,
+                      letterSpacing: 0.1,
+                      shadows: [
+                        Shadow(
+                          color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                          offset: const Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              Text(
-                CurrencyHelper.formatCurrency(amount),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: percentage,
-                    backgroundColor: color.withValues(alpha: 0.15),
-                    color: color,
-                    minHeight: 8,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 48,
-                child: Text(
-                  '${(percentage * 100).toStringAsFixed(1)}%',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.end,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

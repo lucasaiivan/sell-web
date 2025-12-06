@@ -34,6 +34,9 @@ class ActiveCashRegistersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEmpty = activeCashRegisters.isEmpty;
     final count = activeCashRegisters.length;
+    
+    // Mostrar máximo 3 cajas
+    final visibleRegisters = activeCashRegisters.take(3).toList();
 
     return AnalyticsBaseCard(
       color: color,
@@ -43,7 +46,7 @@ class ActiveCashRegistersCard extends StatelessWidget {
       subtitle: isEmpty
           ? null
           : '$count ${count == 1 ? 'caja abierta' : 'cajas abiertas'}',
-      expandChild: false,
+      expandChild: true, // Expandir para poder alinear al fondo
       showActionIndicator: !isEmpty,
       onTap: isEmpty ? null : () => _showCashRegistersModal(context),
       child: isEmpty
@@ -51,10 +54,11 @@ class ActiveCashRegistersCard extends StatelessWidget {
           : Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: activeCashRegisters.map((cashRegister) {
-                  final isLast = activeCashRegisters.indexOf(cashRegister) ==
-                      activeCashRegisters.length - 1;
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.end, // Alinear al fondo
+                children: visibleRegisters.map((cashRegister) {
+                  final isLast = visibleRegisters.indexOf(cashRegister) ==
+                      visibleRegisters.length - 1;
 
                   return Column(
                     children: [
@@ -101,99 +105,99 @@ class ActiveCashRegistersCard extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
 
-    return Row(
-      children: [
-        // Indicador visual de caja activa
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
         ),
-        const SizedBox(width: 12),
-
-        // Información de la caja
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
-              Text(
-                cashRegister.description.isNotEmpty
-                    ? cashRegister.description
-                    : 'Caja sin nombre',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
+              // Indicador visual de caja activa
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 14,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              const SizedBox(width: 10),
+              // Nombre de la caja
+              Expanded(
+                child: Text(
+                  cashRegister.description.isNotEmpty
+                      ? cashRegister.description
+                      : 'Caja sin nombre',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
                   ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      cashRegister.nameUser.isNotEmpty
-                          ? cashRegister.nameUser
-                          : 'Sin operador',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-        ),
-
-        const SizedBox(width: 16),
-
-        // Métricas (Balance y Transacciones)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              CurrencyHelper.formatCurrency(cashRegister.getExpectedBalance),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+          const SizedBox(height: 8),
+          // Fila inferior con operador, balance y tiempo
+          Row(
+            children: [
+              // Operador
+              Icon(
+                Icons.person_outline,
+                size: 14,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.timelapse_rounded,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  DateFormatter.getElapsedTime(
-                      fechaInicio: cashRegister.opening),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  cashRegister.nameUser.isNotEmpty
+                      ? cashRegister.nameUser
+                      : 'Sin operador',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
-          ],
-        ),
-      ],
+              ),
+              const Spacer(),
+              // Balance
+              Text(
+                CurrencyHelper.formatCurrency(cashRegister.getExpectedBalance),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Tiempo transcurrido
+              Icon(
+                Icons.timelapse_rounded,
+                size: 14,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                DateFormatter.getElapsedTime(
+                    fechaInicio: cashRegister.opening),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

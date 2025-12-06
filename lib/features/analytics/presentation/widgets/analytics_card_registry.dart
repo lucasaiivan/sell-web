@@ -60,7 +60,7 @@ class AnalyticsCardRegistry {
       description: 'Ingresos brutos totales del período',
       icon: Icons.attach_money_rounded,
       category: AnalyticsCardCategory.metrics,
-      color: Color(0xFF059669),
+      color: Color(0xFF10B981), // Verde Bosque
       isDefault: true, // Tarjeta por defecto
     ),
     const AnalyticsCardDefinition(
@@ -69,7 +69,7 @@ class AnalyticsCardRegistry {
       description: 'Rentabilidad neta del período',
       icon: Icons.trending_up_rounded,
       category: AnalyticsCardCategory.financial,
-      color: Color(0xFF7C3AED),
+      color: Color(0xFF059669), // Verde Esmeralda
     ),
     const AnalyticsCardDefinition(
       id: 'sales',
@@ -77,7 +77,7 @@ class AnalyticsCardRegistry {
       description: 'Número total de transacciones',
       icon: Icons.receipt_long_rounded,
       category: AnalyticsCardCategory.metrics,
-      color: Color(0xFF2563EB),
+      color: Color(0xFF3B82F6), // Azul Real
       isDefault: true, // Tarjeta por defecto
     ),
     const AnalyticsCardDefinition(
@@ -86,7 +86,7 @@ class AnalyticsCardRegistry {
       description: 'Valor promedio por transacción',
       icon: Icons.analytics_rounded,
       category: AnalyticsCardCategory.metrics,
-      color: Color(0xFF0891B2),
+      color: Color(0xFF14B8A6), // Turquesa
     ),
 
     // ========== PRODUCTOS ==========
@@ -96,7 +96,7 @@ class AnalyticsCardRegistry {
       description: 'Total de productos y top ventas',
       icon: Icons.shopping_bag_rounded,
       category: AnalyticsCardCategory.products,
-      color: Color(0xFFD97706),
+      color: Color(0xFF6366F1), // Azul Índigo
     ),
     const AnalyticsCardDefinition(
       id: 'profitability',
@@ -104,7 +104,7 @@ class AnalyticsCardRegistry {
       description: 'Productos más rentables',
       icon: Icons.attach_money_rounded,
       category: AnalyticsCardCategory.financial,
-      color: Color(0xFF10B981),
+      color: Color(0xFF8B5CF6), // Violeta
     ),
     const AnalyticsCardDefinition(
       id: 'slowMoving',
@@ -112,7 +112,7 @@ class AnalyticsCardRegistry {
       description: 'Productos con baja rotación',
       icon: Icons.inventory_2_rounded,
       category: AnalyticsCardCategory.products,
-      color: Color(0xFFEF4444),
+      color: Color(0xFFF59E0B), // Naranja/Ámbar (Precaución)
     ),
     const AnalyticsCardDefinition(
       id: 'categoryDist',
@@ -120,7 +120,7 @@ class AnalyticsCardRegistry {
       description: 'Distribución de ventas por categoría',
       icon: Icons.category_rounded,
       category: AnalyticsCardCategory.products,
-      color: Color(0xFFEC4899),
+      color: Color(0xFFD946EF), // Magenta
     ),
 
     // ========== RENDIMIENTO ==========
@@ -130,7 +130,7 @@ class AnalyticsCardRegistry {
       description: 'Horarios de mayor actividad',
       icon: Icons.access_time_rounded,
       category: AnalyticsCardCategory.performance,
-      color: Color(0xFFF59E0B),
+      color: Color(0xFFF43F5E), // Rojo Coral (Intensidad)
     ),
     const AnalyticsCardDefinition(
       id: 'weekdaySales',
@@ -138,7 +138,7 @@ class AnalyticsCardRegistry {
       description: 'Rendimiento por día de la semana',
       icon: Icons.calendar_today_rounded,
       category: AnalyticsCardCategory.performance,
-      color: Color(0xFF6366F1),
+      color: Color(0xFF06B6D4), // Cian
     ),
     const AnalyticsCardDefinition(
       id: 'salesTrend',
@@ -146,7 +146,7 @@ class AnalyticsCardRegistry {
       description: 'Evolución temporal de ventas',
       icon: Icons.show_chart_rounded,
       category: AnalyticsCardCategory.performance,
-      color: Color(0xFF3B82F6),
+      color: Color(0xFF0EA5E9), // Azul Eléctrico
     ),
 
     // ========== EQUIPO ==========
@@ -156,7 +156,7 @@ class AnalyticsCardRegistry {
       description: 'Desempeño del equipo de ventas',
       icon: Icons.emoji_events_rounded,
       category: AnalyticsCardCategory.team,
-      color: Color(0xFF8B5CF6),
+      color: Color(0xFFEAB308), // Amarillo Oro
     ),
 
     // ========== FINANCIERO ==========
@@ -166,7 +166,7 @@ class AnalyticsCardRegistry {
       description: 'Distribución de métodos de pago',
       icon: Icons.payment_rounded,
       category: AnalyticsCardCategory.financial,
-      color: Color(0xFF0EA5E9),
+      color: Color(0xFF64748B), // Gris Azulado
     ),
 
     // ========== OPERACIONES ==========
@@ -176,7 +176,7 @@ class AnalyticsCardRegistry {
       description: 'Estado de cajas registradoras',
       icon: Icons.point_of_sale_rounded,
       category: AnalyticsCardCategory.operations,
-      color: Color(0xFFF43F5E),
+      color: Color(0xFF84CC16), // Verde Lima (Estado Online)
     ),
   ];
 
@@ -247,7 +247,7 @@ class AnalyticsCardRegistry {
           showActionIndicator: hasData,
           onTap: hasData ? () => showProfitModal(context, analytics) : null,
           percentageInfo:
-              hasData ? '${profitMargin.toStringAsFixed(1)}% margen' : null,
+              hasData ? '${NumberHelper.formatPercentage(profitMargin)} margen' : null,
         );
 
       case 'sales':
@@ -529,13 +529,13 @@ class AnalyticsCardRegistry {
         comparisonLabel = 'anteayer';
         break;
       case DateFilter.thisMonth:
-        comparisonLabel = 'mes anterior ';
+        comparisonLabel = 'el mes pasado';
         break;
       case DateFilter.lastMonth:
-        comparisonLabel = 'mes anterior';
+        comparisonLabel = 'el mes anterior';
         break;
       default:
-        comparisonLabel = 'anterior';
+        comparisonLabel = 'antes';
     }
 
     // Para filtros de día: comparar último día con penúltimo (solo si hay múltiples días)

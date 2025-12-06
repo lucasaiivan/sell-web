@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'analytics_colors.dart';
 
 /// Enum centralizado para métodos de pago
 /// Define los códigos internos, nombres legibles, colores e iconos
 enum PaymentMethod {
-  cash('cash', 'Efectivo', Color(0xFF4CAF50), Icons.payments_rounded),
-  transfer('transfer', 'Transferencia', Color(0xFF2196F3),
+  cash('cash', 'Efectivo', AnalyticsColors.paymentCash, Icons.payments_rounded),
+  transfer('transfer', 'Transferencia', AnalyticsColors.paymentTransfer,
       Icons.account_balance_rounded),
-  card(
-      'card', 'Tarjeta Déb/Créd', Color(0xFFFF9800), Icons.credit_card_rounded),
-  qr('qr', 'QR', Color(0xFF9C27B0), Icons.qr_code_2_rounded),
+  card('card', 'Tarjeta Déb/Créd', AnalyticsColors.paymentCard,
+      Icons.credit_card_rounded),
+  qr('qr', 'QR', AnalyticsColors.paymentQR, Icons.qr_code_2_rounded),
   unspecified(
-      '', 'Sin Especificar', Color(0xFF9E9E9E), Icons.help_outline_rounded);
+      '', 'Sin Especificar', AnalyticsColors.paymentUnspecified, Icons.help_outline_rounded);
 
   final String code;
   final String displayName;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/utils/helpers/currency_helper.dart';
+import 'package:sellweb/core/utils/helpers/number_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
 import 'analytics_modal.dart';
 
@@ -18,7 +19,27 @@ class PaymentMethodsModal extends StatelessWidget {
     required this.analytics,
   });
 
-  static const _accentColor = Color(0xFF0EA5E9);
+  static const _accentColor = Color(0xFF64748B); // Gris Azulado
+
+  String _getModalFeedback(List<MapEntry<String, double>> sortedMethods) {
+    if (sortedMethods.isEmpty) return 'Sin métodos de pago registrados';
+    
+    final methodsCount = sortedMethods.length;
+    final topMethod = sortedMethods.first;
+    final topPercentage = analytics.totalSales > 0
+        ? (topMethod.value / analytics.totalSales * 100)
+        : 0.0;
+    
+    if (methodsCount == 1) {
+      return 'Aceptas un solo método de pago. Considera agregar más opciones para tus clientes.';
+    } else if (topPercentage >= 70) {
+      return 'Un método domina tus ventas. Promociona otros medios para mayor flexibilidad.';
+    } else if (methodsCount >= 4) {
+      return 'Ofreces variedad de medios de pago. Esto facilita la compra a tus clientes.';
+    } else {
+      return 'Buena diversificación de medios de pago. Mantiene opciones para todos tus clientes.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +69,38 @@ class PaymentMethodsModal extends StatelessWidget {
               children: [
                 // Resumen
                 _buildPaymentSummary(context, sortedMethods),
+                const SizedBox(height: 16),
+                // Feedback contextual
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _accentColor.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.credit_card_rounded,
+                        size: 16,
+                        color: _accentColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _getModalFeedback(sortedMethods),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // Lista detallada
@@ -73,9 +126,9 @@ class PaymentMethodsModal extends StatelessWidget {
     final theme = Theme.of(context);
     final totalMethods = sortedMethods.length;
     final topMethod = sortedMethods.isNotEmpty ? sortedMethods.first : null;
-    final topMethodName = topMethod != null
-        ? PaymentMethod.fromCode(topMethod.key).displayName
-        : 'N/A';
+    final topPaymentMethod = PaymentMethod.fromCode(topMethod?.key ?? '');
+    final topMethodName = topPaymentMethod.displayName;
+    final topMethodColor = topPaymentMethod.color;
     final topMethodPercentage = topMethod != null && analytics.totalSales > 0
         ? (topMethod.value / analytics.totalSales * 100)
         : 0.0;
@@ -85,15 +138,15 @@ class PaymentMethodsModal extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _accentColor.withValues(alpha: 0.15),
-            _accentColor.withValues(alpha: 0.05),
+            topMethodColor.withValues(alpha: 0.15),
+            topMethodColor.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _accentColor.withValues(alpha: 0.2),
+          color: topMethodColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -101,21 +154,21 @@ class PaymentMethodsModal extends StatelessWidget {
         children: [
           // Método más usado
           Icon(
-            PaymentMethod.fromCode(topMethod?.key ?? '').icon,
+            topPaymentMethod.icon,
             size: 40,
-            color: _accentColor,
+            color: topMethodColor,
           ),
           const SizedBox(height: 8),
           Text(
             topMethodName,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: _accentColor,
+              color: topMethodColor,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Método más usado (${topMethodPercentage.toStringAsFixed(1)}%)',
+            'Método más usado (${NumberHelper.formatPercentage(topMethodPercentage)})',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -130,6 +183,7 @@ class PaymentMethodsModal extends StatelessWidget {
                   Icons.category_rounded,
                   '$totalMethods',
                   'Métodos usados',
+                  topMethodColor,
                 ),
               ),
               Container(
@@ -143,6 +197,7 @@ class PaymentMethodsModal extends StatelessWidget {
                   Icons.attach_money_rounded,
                   CurrencyHelper.formatCurrency(analytics.totalSales),
                   'Total Facturado',
+                  topMethodColor,
                 ),
               ),
             ],
@@ -157,6 +212,7 @@ class PaymentMethodsModal extends StatelessWidget {
     IconData icon,
     String value,
     String label,
+    Color color,
   ) {
     final theme = Theme.of(context);
 
@@ -165,7 +221,7 @@ class PaymentMethodsModal extends StatelessWidget {
         Icon(
           icon,
           size: 20,
-          color: _accentColor,
+          color: color,
         ),
         const SizedBox(height: 4),
         Text(
@@ -191,6 +247,7 @@ class PaymentMethodsModal extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     final paymentMethod = PaymentMethod.fromCode(entry.key);
+    final methodColor = paymentMethod.color;
     final amount = entry.value;
     final count = analytics.paymentMethodsCount[entry.key] ?? 0;
     final percentage =
@@ -215,12 +272,12 @@ class PaymentMethodsModal extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _accentColor.withValues(alpha: 0.1),
+                  color: methodColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   paymentMethod.icon,
-                  color: _accentColor,
+                  color: methodColor,
                   size: 22,
                 ),
               ),
@@ -254,7 +311,7 @@ class PaymentMethodsModal extends StatelessWidget {
                     CurrencyHelper.formatCurrency(amount),
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: _accentColor,
+                      color: methodColor,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -262,13 +319,13 @@ class PaymentMethodsModal extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _accentColor.withValues(alpha: 0.1),
+                      color: methodColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${percentage.toStringAsFixed(1)}%',
+                      NumberHelper.formatPercentage(percentage),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: _accentColor,
+                        color: methodColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -283,8 +340,8 @@ class PaymentMethodsModal extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: percentage / 100,
-              backgroundColor: _accentColor.withValues(alpha: 0.1),
-              color: _accentColor,
+              backgroundColor: methodColor.withValues(alpha: 0.1),
+              color: methodColor,
               minHeight: 6,
             ),
           ),

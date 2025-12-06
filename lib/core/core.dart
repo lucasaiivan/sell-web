@@ -8,6 +8,7 @@ export 'config/oauth_config.dart';
 export 'config/firebase_options.dart';
 
 // Constantes
+export 'constants/analytics_colors.dart';
 export 'constants/app_constants.dart';
 export 'constants/shared_prefs_keys.dart';
 

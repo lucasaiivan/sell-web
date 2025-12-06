@@ -44,7 +44,7 @@ class AnalyticsMetrics {
   static const colorSlowMoving = Color(0xFFEF4444);
   static const colorPeakHours = Color(0xFFF59E0B);
   static const colorSellers = Color(0xFF8B5CF6);
-  static const colorPaymentMethods = Color(0xFF0EA5E9);
+  static const colorPaymentMethods = Color(0xFFD8C4E8);
   static const colorCashRegisters = Color(0xFFF43F5E);
 
   /// Construye MetricCard de Facturación
@@ -61,6 +61,27 @@ class AnalyticsMetrics {
 
   /// Construye MetricCard de Ganancia
   static Widget profit(SalesAnalytics analytics, {String? subtitle}) {
+    // Calcular margen de ganancia para feedback
+    final profitMargin = analytics.totalSales > 0
+        ? (analytics.totalProfit / analytics.totalSales * 100)
+        : 0.0;
+    
+    // Generar mensaje de feedback según el margen
+    String? feedbackText;
+    if (analytics.totalProfit > 0) {
+      if (profitMargin >= 50) {
+        feedbackText = 'Excelente margen de ganancia';
+      } else if (profitMargin >= 30) {
+        feedbackText = 'Buen margen de rentabilidad';
+      } else if (profitMargin >= 15) {
+        feedbackText = 'Margen de ganancia saludable';
+      } else if (profitMargin >= 5) {
+        feedbackText = 'Margen de ganancia bajo';
+      } else {
+        feedbackText = 'Margen muy ajustado';
+      }
+    }
+
     return MetricCard(
       title: 'Ganancia',
       value: CurrencyHelper.formatCurrency(analytics.totalProfit),
@@ -68,6 +89,7 @@ class AnalyticsMetrics {
       color: colorProfit,
       subtitle: subtitle,
       isZero: analytics.totalProfit == 0,
+      feedbackText: feedbackText,
     );
   }
 

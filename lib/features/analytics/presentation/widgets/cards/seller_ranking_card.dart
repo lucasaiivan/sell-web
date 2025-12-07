@@ -49,24 +49,40 @@ class SellerRankingCard extends StatelessWidget {
         children: [
           if (!hasData)
             const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
-          else ...[
-            // Mostrar hasta 3 vendedores
-            ...previewSellers.asMap().entries.map((entry) {
-              final index = entry.key;
-              final seller = entry.value;
-              final sellerName =
-                  seller['sellerName'] as String? ?? 'Sin nombre';
-              final totalSales = seller['totalSales'] as double? ?? 0.0;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: _buildSellerPreview(
-                    context, sellerName, totalSales, index + 1),
-              );
-            }),
-            const SizedBox(height: 6),
-            // Feedback
-            _buildFeedbackText(context, totalSellers),
-          ],
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 180;
+                // Si es muy bajo, ocultamos el feedback text
+                final showFeedback = constraints.maxHeight > 140;
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Mostrar hasta 3 vendedores
+                    ...previewSellers.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final seller = entry.value;
+                      final sellerName =
+                          seller['sellerName'] as String? ?? 'Sin nombre';
+                      final totalSales = seller['totalSales'] as double? ?? 0.0;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: _buildSellerPreview(
+                            context, sellerName, totalSales, index + 1, isCompact),
+                      );
+                    }),
+                    
+                    if (showFeedback && !isCompact) ...[
+                      const SizedBox(height: 6),
+                      // Feedback
+                      _buildFeedbackText(context, totalSellers),
+                    ],
+                  ],
+                );
+              },
+            ),
         ],
       ),
     );
@@ -98,7 +114,7 @@ class SellerRankingCard extends StatelessWidget {
 
   /// Preview del vendedor con posición
   Widget _buildSellerPreview(BuildContext context, String sellerName,
-      double totalSales, int position) {
+      double totalSales, int position, bool isCompact) {
     final theme = Theme.of(context);
     // Asegurar que siempre haya un nombre visible
     final displayName =
@@ -129,7 +145,8 @@ class SellerRankingCard extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 6 : 8, vertical: isCompact ? 3 : 5),
       decoration: BoxDecoration(
         // Destacar vendedor #1 con gradiente dorado
         gradient: isTopSeller
@@ -159,13 +176,13 @@ class SellerRankingCard extends StatelessWidget {
           if (badgeIcon != null)
             Icon(
               badgeIcon,
-              size: 14,
+              size: isCompact ? 12 : 14,
               color: badgeColor,
             )
           else
             Container(
-              width: 14,
-              height: 14,
+              width: isCompact ? 12 : 14,
+              height: isCompact ? 12 : 14,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
@@ -174,14 +191,14 @@ class SellerRankingCard extends StatelessWidget {
                 child: Text(
                   '$position',
                   style: TextStyle(
-                    fontSize: 8,
+                    fontSize: isCompact ? 7 : 8,
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
                 ),
               ),
             ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           // Nombre del vendedor
           Expanded(
             child: Text(
@@ -189,17 +206,20 @@ class SellerRankingCard extends StatelessWidget {
               style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
-                fontSize: 11,
+                fontSize: isCompact ? 10 : 11,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (!isCompact)
+            const SizedBox(width: 4),
+          
           // Ventas compacto
           Text(
             CurrencyHelper.formatCurrency(totalSales),
             style: theme.textTheme.labelSmall?.copyWith(
-              fontSize: 9,
+              fontSize: isCompact ? 8 : 9,
               color: color,
               fontWeight: FontWeight.w600,
             ),

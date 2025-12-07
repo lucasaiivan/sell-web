@@ -46,22 +46,20 @@ class SalesTrendCard extends StatelessWidget {
             const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
           else ...[
             Expanded(
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _buildLineChart(context),
-                  ),
-                  Positioned(
-                    top: 8,
-                    left: 0,
-                    child: _buildTrendBadge(context, trend),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: _buildLineChart(context),
               ),
             ),
-            const SizedBox(height: 8),
-            _buildFeedbackText(context, trend),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: _buildFeedbackText(context, trend)),
+                const SizedBox(width: 12),
+                _buildTrendBadge(context, trend),
+              ],
+            ),
           ],
         ],
       ),
@@ -216,49 +214,25 @@ class SalesTrendCard extends StatelessWidget {
     final isPositive = trend >= 0;
     final trendColor =
         isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
-    final trendIcon =
-        isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            trendColor.withValues(alpha: 0.15),
-            trendColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
+        color: trendColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: trendColor.withValues(alpha: 0.4),
-          width: 1.5,
+          color: trendColor.withValues(alpha: 0.3),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.surface.withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: trendColor.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(trendIcon, size: 14, color: trendColor),
-          ),
-          const SizedBox(width: 6),
           Text(
             '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(trend)}',
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
               color: trendColor,
-              letterSpacing: 0.3,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -272,31 +246,46 @@ class SalesTrendCard extends StatelessWidget {
     // Generar mensaje de feedback según el estado de la tendencia
     String feedbackText;
     if (trend.abs() < 5) {
-      feedbackText = 'Tus ventas se mantienen estables';
+      feedbackText = 'Estable';
     } else if (trend >= 0) {
       if (trend > 20) {
-        feedbackText = 'Tus ventas están creciendo excelentemente';
+        feedbackText = 'Gran crecimiento';
       } else if (trend > 10) {
-        feedbackText = 'Tus ventas muestran un buen crecimiento';
+        feedbackText = 'Buen crecimiento';
       } else {
-        feedbackText = 'Tus ventas están en crecimiento';
+        feedbackText = 'Crecimiento';
       }
     } else {
       if (trend < -20) {
-        feedbackText = 'Tus ventas han caído significativamente';
+        feedbackText = 'Caída significativa';
       } else if (trend < -10) {
-        feedbackText = 'Tus ventas muestran una disminución notable';
+        feedbackText = 'Disminución notable';
       } else {
-        feedbackText = 'Tus ventas han disminuido levemente';
+        feedbackText = 'Leve disminución';
       }
     }
 
-    return Text(
-      feedbackText,
-      style: theme.textTheme.bodyMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Comportamiento',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontSize: 10,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          feedbackText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 

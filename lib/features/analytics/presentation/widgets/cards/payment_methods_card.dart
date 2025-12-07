@@ -35,15 +35,15 @@ class PaymentMethodsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ordenar métodos por monto descendente, con 'Sin Especificar' (string vacío) al final
-    final sortedMethods = paymentMethodsBreakdown.entries.toList()
-      ..sort((a, b) {
-        // String vacío (Sin Especificar) siempre va al final (retorna valor positivo)
-        if (a.key.isEmpty) return 1;
-        if (b.key.isEmpty) return -1;
-        // Los demás se ordenan por monto descendente
-        return b.value.compareTo(a.value);
-      });
+    // Ordenar métodos por monto descendente
+    final sortedMethods = (paymentMethodsBreakdown.entries.toList()
+          ..sort((a, b) {
+            if (a.key.isEmpty) return 1;
+            if (b.key.isEmpty) return -1;
+            return b.value.compareTo(a.value);
+          }))
+        .take(4)
+        .toList();
 
     final isEmpty = sortedMethods.isEmpty;
 
@@ -57,35 +57,44 @@ class PaymentMethodsCard extends StatelessWidget {
       showActionIndicator: showActionIndicator,
       child: isEmpty
           ? const AnalyticsEmptyState(message: 'No hay pagos registrados')
-          : Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: sortedMethods.asMap().entries.map((indexedEntry) {
-                  final index = indexedEntry.key;
-                  final entry = indexedEntry.value;
-                  final isTopMethod = index == 0;
-                  final percentage =
-                      totalSales > 0 ? entry.value / totalSales : 0.0;
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                // Ajustar tamaños basado en el espacio disponible
+                final isSmall = constraints.maxWidth < 300;
+                final isCompact = constraints.maxWidth < 180;
 
-                  // Obtener información del método de pago desde el enum
-                  final paymentMethod = PaymentMethod.fromCode(entry.key);
-                  final displayName = paymentMethod.displayName;
-                  final methodIcon = paymentMethod.icon;
-                  final methodColor = paymentMethod.color;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: sortedMethods.asMap().entries.map((indexedEntry) {
+                      final index = indexedEntry.key;
+                      final entry = indexedEntry.value;
+                      final isTopMethod = index == 0;
+                      final percentage =
+                          totalSales > 0 ? entry.value / totalSales : 0.0;
 
-                  return _buildPaymentMethodItem(
-                    context,
-                    methodIcon,
-                    displayName,
-                    entry.value,
-                    percentage,
-                    methodColor,
-                    isTopMethod: isTopMethod,
-                  );
-                }).toList(),
-              ),
+                      final paymentMethod = PaymentMethod.fromCode(entry.key);
+                      final displayName = paymentMethod.displayName;
+                      final methodIcon = paymentMethod.icon;
+                      final methodColor = paymentMethod.color;
+
+                      return _buildPaymentMethodItem(
+                        context,
+                        methodIcon,
+                        displayName,
+                        entry.value,
+                        percentage,
+                        methodColor,
+                        isTopMethod: isTopMethod,
+                        isSmall: isSmall,
+                        isCompact: isCompact,
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
             ),
     );
   }
@@ -98,19 +107,29 @@ class PaymentMethodsCard extends StatelessWidget {
     double percentage,
     Color color, {
     bool isTopMethod = false,
+    bool isSmall = false,
+    bool isCompact = false,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    // Tamaños dinámicos: más grande para el método más usado, más pequeño para los demás
-    final itemHeight = isTopMethod ? 42.0 : 32.0;
-    final fontSize = isTopMethod ? 14.0 : 12.0;
-    final iconSize = isTopMethod ? 20.0 : 16.0;
-    final bottomPadding = isTopMethod ? 12.0 : 8.0;
 
-    // Colores de texto e icono optimizados para contraste
-    final textColor = theme.colorScheme.onSurface.withValues(alpha: isTopMethod ? 1.0 : 0.9);
-    final iconColor = theme.colorScheme.onSurface.withValues(alpha: isTopMethod ? 1.0 : 0.8);
+    // Tamaños dinámicos
+    final double itemHeight = isTopMethod
+        ? (isCompact ? 36 : 42)
+        : (isCompact ? 28 : 32);
+    
+    final double fontSize = isTopMethod
+        ? (isCompact ? 12 : 14)
+        : (isCompact ? 10 : 12);
+        
+    final double iconSize = isTopMethod
+        ? (isCompact ? 16 : 20)
+        : (isCompact ? 14 : 16);
+        
+    final double bottomPadding = isTopMethod ? 8.0 : 6.0;
+
+    const textColor = Colors.white;
+    const iconColor = Colors.white;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
@@ -118,59 +137,71 @@ class PaymentMethodsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           children: [
-            // Barra de progreso - más prominente para el método más usado
+            // Barra de progreso
             LinearProgressIndicator(
               value: percentage,
-              backgroundColor: color.withValues(alpha: isDark ? 0.15 : 0.1),
+              backgroundColor: color.withValues(alpha: isDark ? 0.3 : 0.4),
               color: color.withValues(alpha: isDark ? 0.8 : 0.9),
               minHeight: itemHeight,
             ),
             // Contenido sobre la barra
             Container(
               height: itemHeight,
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              padding: EdgeInsets.symmetric(
+                  horizontal: isCompact ? 8 : 12.0),
               child: Row(
                 children: [
-                  // Icono
                   Icon(
                     icon,
                     size: iconSize,
                     color: iconColor,
-                  ),
-                  const SizedBox(width: 10),
-                  // Nombre del método
-                  Expanded(
-                    child: Text(
-                      name,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: isTopMethod ? FontWeight.w700 : FontWeight.w600,
-                        fontSize: fontSize,
-                        color: textColor,
-                        letterSpacing: 0.1,
-                        shadows: [
-                          Shadow(
-                            color: theme.colorScheme.surface.withValues(alpha: 0.5),
-                            offset: const Offset(0, 1),
-                            blurRadius: 2,
-                          ),
-                        ],
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        offset: const Offset(0, 1),
+                        blurRadius: 2,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: isCompact ? 6 : 10),
+                  // Nombre del método
+                  if (!isCompact || isTopMethod)
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight:
+                              isTopMethod ? FontWeight.w700 : FontWeight.w600,
+                          fontSize: fontSize,
+                          color: textColor,
+                          letterSpacing: 0.1,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              offset: const Offset(0, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    )
+                  else
+                    const Spacer(),
+                    
+                  SizedBox(width: isCompact ? 4 : 12),
                   // Monto facturado
                   Text(
                     CurrencyHelper.formatCurrency(amount),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isTopMethod ? FontWeight.w800 : FontWeight.w700,
+                      fontWeight:
+                          isTopMethod ? FontWeight.w800 : FontWeight.w700,
                       fontSize: fontSize,
                       color: textColor,
-                      letterSpacing: 0.1,
                       shadows: [
                         Shadow(
-                          color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                          color: Colors.black.withValues(alpha: 0.3),
                           offset: const Offset(0, 1),
                           blurRadius: 2,
                         ),

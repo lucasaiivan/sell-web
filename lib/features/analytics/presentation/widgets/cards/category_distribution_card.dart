@@ -40,8 +40,8 @@ class CategoryDistributionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasData = !isZero && salesByCategory.isNotEmpty;
-    // Limitar a 5 categorías para el gráfico
-    final displayCategories = salesByCategory.take(5).toList();
+    // Limitar a 4 categorías para el gráfico en la tarjeta
+    final displayCategories = salesByCategory.take(4).toList();
 
     return AnalyticsBaseCard(
       color: color,
@@ -98,42 +98,39 @@ class CategoryDistributionCard extends StatelessWidget {
     // Calcular radios basados en el tamaño disponible
     final radius = size * 0.24; // ~24% del diámetro (más grande)
     final centerRadius = size * 0.22; // ~22% del diámetro
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     for (int i = 0; i < categories.length; i++) {
       final category = categories[i];
       final percentage = category['percentage'] as double? ?? 0.0;
       final categoryColor = _categoryColors[i % _categoryColors.length];
+      final isLargeEnough = percentage >= 4;
 
       sections.add(
         PieChartSectionData(
           color: categoryColor,
           value: percentage,
-          // Mostrar porcentaje si es >= 10%
-          title: percentage >= 10 ? NumberHelper.formatPercentage(percentage) : '',
-          titleStyle: TextStyle(
-            fontSize: (size * 0.09).clamp(9.0, 13.0),
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: [
-              Shadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 2,
-              ),
-            ],
-          ),
-          radius: radius,
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.surface,
-            width: 2,
-          ),
+          title: '', // Usamos badgeWidget
+          showTitle: false,
+          radius: i == 0 ? radius * 1.1 : radius,
+          badgeWidget: isLargeEnough
+              ? _Badge(
+                  NumberHelper.formatPercentage(percentage),
+                  color: categoryColor,
+                  isDark: isDark,
+                  size: size * 0.09,
+                )
+              : null,
+          badgePositionPercentageOffset: 1.2,
         ),
       );
     }
 
     // Si hay "otros" agregar sección gris
-    if (salesByCategory.length > 5) {
+    if (salesByCategory.length > 4) {
       double othersPercentage = 0;
-      for (int i = 5; i < salesByCategory.length; i++) {
+      for (int i = 4; i < salesByCategory.length; i++) {
         othersPercentage += salesByCategory[i]['percentage'] as double? ?? 0.0;
       }
       if (othersPercentage > 0) {
@@ -141,37 +138,57 @@ class CategoryDistributionCard extends StatelessWidget {
           PieChartSectionData(
             color: Colors.grey.shade400,
             value: othersPercentage,
-            title: othersPercentage >= 10
-                ? NumberHelper.formatPercentage(othersPercentage)
-                : '',
-            titleStyle: TextStyle(
-              fontSize: (size * 0.09).clamp(9.0, 13.0),
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 2,
-                ),
-              ],
-            ),
+            title: '',
+            showTitle: false,
             radius: radius * 0.95,
             borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.surface,
+              color: Colors.white.withValues(alpha: 0.5),
               width: 2,
             ),
+            badgeWidget: null,
+            badgePositionPercentageOffset: 1.2,
           ),
         );
       }
     }
 
-    return PieChart(
-      PieChartData(
-        sections: sections,
-        centerSpaceRadius: centerRadius,
-        sectionsSpace: 2,
-        startDegreeOffset: -90,
-      ),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        PieChart(
+          PieChartData(
+            sections: sections,
+            centerSpaceRadius: centerRadius,
+            sectionsSpace: 4, // Más espacio entre secciones
+            startDegreeOffset: -90,
+          ),
+        ),
+        Opacity(
+          opacity: 0.5,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                salesByCategory.length.toString(),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: size * 0.18,
+                  color: theme.colorScheme.onSurface,
+                  height: 1.0,
+                ),
+              ),
+              Text(
+                'Total',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: size * 0.08,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -193,6 +210,7 @@ class CategoryDistributionCard extends StatelessWidget {
           final category = entry.value;
           final categoryName = category['category'] as String? ?? 'Sin nombre';
           final categoryColor = _categoryColors[index % _categoryColors.length];
+          final isTop = index == 0;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 6),
@@ -200,12 +218,22 @@ class CategoryDistributionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Punto indicador de color
-                Container(
-                  width: 8,
-                  height: 8,
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: isTop ? 12 : 8,
+                  height: isTop ? 12 : 8,
                   decoration: BoxDecoration(
                     color: categoryColor,
                     shape: BoxShape.circle,
+                    boxShadow: isTop
+                        ? [
+                            BoxShadow(
+                              color: categoryColor.withValues(alpha: 0.4),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -214,9 +242,11 @@ class CategoryDistributionCard extends StatelessWidget {
                   child: Text(
                     categoryName,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
+                      fontSize: isTop ? 13 : 11,
+                      fontWeight: isTop ? FontWeight.bold : FontWeight.w600,
+                      color: isTop
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       letterSpacing: 0.1,
                     ),
                     maxLines: 1,
@@ -227,25 +257,33 @@ class CategoryDistributionCard extends StatelessWidget {
             ),
           );
         }),
-        if (salesByCategory.length > displayCount)
+        if (salesByCategory.length > 4)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(bottom: 6),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.more_horiz,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                // Punto indicador de color
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                const SizedBox(width: 4),
-                Flexible(
+                const SizedBox(width: 10),
+                // Nombre de categoría "Otras"
+                Expanded(
                   child: Text(
-                    '+${salesByCategory.length - displayCount} más',
+                    'Otras',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      fontSize: 10,
-                      fontStyle: FontStyle.italic,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                      letterSpacing: 0.1,
                     ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -314,7 +352,8 @@ class CategoryDistributionModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final topCategories = salesByCategory.take(8).toList();
+    // Mostrar todas las categorías en el modal (o un número razonable si son muchas)
+    final displayCategories = salesByCategory;
 
     return AnalyticsModal(
       title: 'Ventas por Categoría',
@@ -360,7 +399,7 @@ class CategoryDistributionModal extends StatelessWidget {
             // Gráfico grande
             SizedBox(
               height: 220,
-              child: _buildDetailedDonutChart(context, topCategories),
+              child: _buildDetailedDonutChart(context, displayCategories),
             ),
             const SizedBox(height: 24),
 
@@ -420,27 +459,34 @@ class CategoryDistributionModal extends StatelessWidget {
     List<Map<String, dynamic>> categories,
   ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final sections = <PieChartSectionData>[];
 
     for (int i = 0; i < categories.length; i++) {
       final category = categories[i];
       final percentage = category['percentage'] as double? ?? 0.0;
       final categoryColor = _categoryColors[i % _categoryColors.length];
+      final isLargeEnough = percentage >= 2; // Mostrar casi todos los porcentajes
 
       sections.add(
         PieChartSectionData(
           color: categoryColor,
           value: percentage,
-          title: percentage >= 10 ? NumberHelper.formatPercentage(percentage) : '',
-          titleStyle: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          title: '', // Usamos badgeWidget
+          showTitle: false,
+          badgeWidget: isLargeEnough
+              ? _Badge(
+                  NumberHelper.formatPercentage(percentage),
+                  color: categoryColor,
+                  isDark: isDark,
+                  size: 12,
+                )
+              : null,
+          badgePositionPercentageOffset: 1.1,
           radius: 45,
           borderSide: BorderSide(
-            color: theme.colorScheme.surface,
-            width: 3,
+            color: Colors.white.withValues(alpha: 0.5),
+            width: 2,
           ),
         ),
       );
@@ -453,7 +499,7 @@ class CategoryDistributionModal extends StatelessWidget {
           PieChartData(
             sections: sections,
             centerSpaceRadius: 50,
-            sectionsSpace: 3,
+            sectionsSpace: 4,
             startDegreeOffset: -90,
           ),
         ),
@@ -524,84 +570,138 @@ class CategoryDistributionModal extends StatelessWidget {
     final quantitySold = category['quantitySold'] as int? ?? 0;
     final categoryColor = _categoryColors[index % _categoryColors.length];
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color:
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: categoryColor.withValues(alpha: 0.3),
-            width: 1,
-          ),
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark 
+            ? categoryColor.withValues(alpha: 0.15) 
+            : categoryColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: categoryColor.withValues(alpha: 0.2),
+          width: 1,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: categoryColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    categoryName,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: categoryColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: categoryColor.withValues(alpha: 0.4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  categoryName,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                CurrencyHelper.formatCurrency(categorySales),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percentage / 100,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    color: categoryColor,
+                    minHeight: 6,
                   ),
                 ),
-                Text(
-                  CurrencyHelper.formatCurrency(categorySales),
-                  style: theme.textTheme.bodyMedium?.copyWith(
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 45,
+                child: Text(
+                  NumberHelper.formatPercentage(percentage),
+                  style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: categoryColor,
                   ),
+                  textAlign: TextAlign.end,
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: percentage / 100,
-                      backgroundColor: categoryColor.withValues(alpha: 0.15),
-                      color: categoryColor,
-                      minHeight: 6,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  NumberHelper.formatPercentage(percentage),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: categoryColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$quantitySold productos vendidos',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$quantitySold productos vendidos',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String text;
+  final Color color;
+  final bool isDark;
+  final double size;
+
+  const _Badge(
+    this.text, {
+    required this.color,
+    required this.isDark,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(8), // Esquinas redondeadas
+        border: Border.all(color: color, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: size.clamp(9.0, 12.0),
+          fontWeight: FontWeight.bold,
+          color: color,
         ),
       ),
     );

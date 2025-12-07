@@ -126,7 +126,7 @@ class MetricCard extends StatelessWidget {
           Icon(trendIcon, size: 12, color: trendColor),
           const SizedBox(width: 4),
           Text(
-            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(percentage)} que $label',
+            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(percentage)} respecto $label',
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: trendColor,

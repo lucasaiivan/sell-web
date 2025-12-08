@@ -34,17 +34,12 @@ class ActiveCashRegistersCard extends StatelessWidget {
     final isEmpty = activeCashRegisters.isEmpty;
     final count = activeCashRegisters.length;
 
-    // Mostrar máximo 3 cajas
-    final visibleRegisters = activeCashRegisters.take(3).toList();
-
     return AnalyticsBaseCard(
       color: color,
       isZero: isEmpty,
       icon: Icons.point_of_sale_rounded,
       title: 'Cajas Activas',
-      subtitle: isEmpty
-          ? null
-          : '$count ${count == 1 ? 'caja abierta' : 'cajas abiertas'}',
+      subtitle: isEmpty ? null: '$count ${count == 1 ? 'caja abierta' : 'cajas abiertas'}',
       expandChild: true, // Expandir para poder alinear al fondo
       showActionIndicator: !isEmpty,
       onTap: isEmpty ? null : () => _showCashRegistersModal(context),
@@ -53,10 +48,26 @@ class ActiveCashRegistersCard extends StatelessWidget {
           : LayoutBuilder(
               builder: (context, constraints) {
                 // Determinar si debemos mostrar versión compacta basado en el ancho
-                final isCompact = constraints.maxWidth < 160;
+                final isCompact = constraints.maxWidth < 200;
+                
+                // Calcular dinámicamente cuántos items mostrar según el espacio
+                // Altura estimada: item ~60px (compacto ~50px), spacing + divider ~17px
+                final itemHeight = isCompact ? 50.0 : 60.0;
+                const itemSpacing = 17.0; // 8 + 1 (divider) + 8
+                const paddingTop = 12.0;
+                
+                final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+                  availableHeight: constraints.maxHeight - paddingTop,
+                  itemHeight: itemHeight,
+                  itemSpacing: itemSpacing,
+                  minItems: 1,
+                  maxItems: activeCashRegisters.length,
+                );
+                
+                final visibleRegisters = activeCashRegisters.take(visibleCount).toList();
 
                 return Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.only(top: paddingTop),
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -65,9 +76,9 @@ class ActiveCashRegistersCard extends StatelessWidget {
                           visibleRegisters.length - 1;
 
                       return Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildCashRegisterItem(
-                              context, cashRegister, color, isCompact),
+                          _buildCashRegisterItem(context, cashRegister, color, isCompact),
                           if (!isLast) ...[
                             const SizedBox(height: 8),
                             Divider(
@@ -180,35 +191,61 @@ class ActiveCashRegistersCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Operador
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: isCompact ? 12 : 14,
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        cashRegister.nameUser.isNotEmpty
-                            ? cashRegister.nameUser
-                            : 'Sin operador',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                          fontSize: isCompact ? 10 : 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              // Tiempo transcurrido (ocultar en muy compacto si choca)
+              if (isCompact) ...[
+                Flexible(
+                  child: Row(
+                    children: [ 
+                      Icon(
+                        Icons.timelapse_rounded,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormatter.getElapsedTime(
+                            fechaInicio: cashRegister.opening),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
+              // Operador
+              if(!isCompact)...[
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: isCompact ? 12 : 14,
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          cashRegister.nameUser.isNotEmpty
+                              ? cashRegister.nameUser
+                              : 'Sin operador',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
+                            fontSize: isCompact ? 10 : 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
               const SizedBox(width: 8),
               // Balance
               Text(

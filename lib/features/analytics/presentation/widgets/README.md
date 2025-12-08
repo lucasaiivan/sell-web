@@ -20,7 +20,6 @@ Tarjetas individuales de métricas (Widgets visuales del dashboard).
 
 ### `modals/`
 Vistas de detalle que se abren al hacer tap en una tarjeta.
-- `billing_modal.dart`: Detalle de facturación.
 - `profit_modal.dart`: Detalle de ganancias y rentabilidad.
 - `average_ticket_modal.dart`: Análisis de ticket promedio.
 

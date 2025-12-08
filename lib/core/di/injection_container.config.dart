@@ -41,6 +41,8 @@ import 'package:sellweb/features/analytics/data/repositories/analytics_repositor
     as _i164;
 import 'package:sellweb/features/analytics/data/services/analytics_preferences_service.dart'
     as _i956;
+import 'package:sellweb/features/analytics/data/services/trend_calculator_service.dart'
+    as _i1012;
 import 'package:sellweb/features/analytics/domain/repositories/analytics_repository.dart'
     as _i732;
 import 'package:sellweb/features/analytics/domain/usecases/get_sales_analytics_usecase.dart'
@@ -311,6 +313,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i329.GetDemoProductsUseCase());
     gh.lazySingleton<_i377.GetProductByCodeUseCase>(
         () => _i377.GetProductByCodeUseCase());
+    gh.lazySingleton<_i1012.TrendCalculatorService>(
+        () => _i1012.TrendCalculatorService());
     gh.lazySingleton<_i283.IStorageDataSource>(
         () => _i390.StorageDataSource(gh<_i457.FirebaseStorage>()));
     gh.lazySingleton<_i581.AppDataPersistenceService>(
@@ -603,6 +607,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i975.AnalyticsProvider>(() => _i975.AnalyticsProvider(
           gh<_i161.GetSalesAnalyticsUseCase>(),
           gh<_i956.AnalyticsPreferencesService>(),
+          gh<_i1012.TrendCalculatorService>(),
         ));
     gh.factory<_i185.AccountScopeProvider>(() => _i185.AccountScopeProvider(
           gh<_i127.CatalogueProvider>(),

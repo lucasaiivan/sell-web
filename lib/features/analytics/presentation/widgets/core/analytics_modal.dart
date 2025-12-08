@@ -369,6 +369,9 @@ class AnalyticsListItem extends StatelessWidget {
   /// Widgets en el trailing (derecha)
   final List<Widget>? trailingWidgets;
 
+  /// Widget opcional que se renderiza debajo del item (ej: barra de progreso)
+  final Widget? child;
+
   /// Color de acento (usado para posiciones top 3)
   final Color? accentColor;
 
@@ -385,6 +388,7 @@ class AnalyticsListItem extends StatelessWidget {
     this.trailingWidgets,
     this.accentColor,
     this.onTap,
+    this.child,
   });
 
   @override
@@ -432,95 +436,106 @@ class AnalyticsListItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Leading con badge de posición
-                if (position != null)
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
+                Row(
+                  children: [
+                    // Leading con badge de posición
+                    if (position != null)
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          leading,
+                          // Badge de posición
+                          Positioned(
+                            top: -4,
+                            left: -4,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: effectiveAccentColor ?? colorScheme.primary,
+                                border: Border.all(
+                                  color: colorScheme.surface,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$position',
+                                  style: TextStyle(
+                                    color: isTopThree
+                                        ? Colors.black87
+                                        : colorScheme.onPrimary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
                       leading,
-                      // Badge de posición
-                      Positioned(
-                        top: -4,
-                        left: -4,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: effectiveAccentColor ?? colorScheme.primary,
-                            border: Border.all(
-                              color: colorScheme.surface,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              '$position',
-                              style: TextStyle(
-                                color: isTopThree
-                                    ? Colors.black87
-                                    : colorScheme.onPrimary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  leading,
 
-                const SizedBox(width: 14),
+                    const SizedBox(width: 14),
 
-                // Contenido central
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (subtitle != null || subtitleWidget != null) ...[
-                        const SizedBox(height: 3),
-                        if (subtitleWidget != null)
-                          subtitleWidget!
-                        else
+                    // Contenido central
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            subtitle!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                            title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                      ],
-                    ],
-                  ),
+                          if (subtitle != null || subtitleWidget != null) ...[
+                            const SizedBox(height: 3),
+                            if (subtitleWidget != null)
+                              subtitleWidget!
+                            else
+                              Text(
+                                subtitle!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    // Trailing widgets
+                    if (trailingWidgets != null && trailingWidgets!.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: trailingWidgets!,
+                      ),
+                  ],
                 ),
 
-                // Trailing widgets
-                if (trailingWidgets != null && trailingWidgets!.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: trailingWidgets!,
-                  ),
+                // Child opcional debajo del item (ej: barra de progreso)
+                if (child != null) ...[
+                  const SizedBox(height: 8),
+                  child!,
+                ],
               ],
             ),
           ),
@@ -694,6 +709,302 @@ class AnalyticsModalEmptyState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Widget: Banner de feedback/información para modales
+///
+/// **Responsabilidad:**
+/// - Mostrar mensajes informativos, consejos o alertas en los modales
+/// - Diseño con borde y sin fondo para no ser intrusivo
+/// - Reutilizable en todos los modales de analytics
+///
+class AnalyticsFeedbackBanner extends StatelessWidget {
+  /// Icono a mostrar en el banner
+  final Widget? icon;
+
+  /// Mensaje de texto
+  final String message;
+
+  /// Color de acento (opcional, usa onSurfaceVariant por defecto)
+  final Color? accentColor;
+
+  /// Margen del contenedor (opcional)
+  final EdgeInsetsGeometry? margin;
+
+  const AnalyticsFeedbackBanner({
+    super.key,
+    this.icon,
+    required this.message,
+    this.accentColor,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final feedbackColor = accentColor ?? theme.colorScheme.onSurfaceVariant;
+
+    return Container(
+      margin: margin,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: feedbackColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          IconTheme(
+            data: IconThemeData(
+              color: feedbackColor,
+              size: 20,
+            ),
+            child: icon ?? const SizedBox.shrink(),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Opacity(
+              opacity: 0.7,
+              child: Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Widget: Tarjeta de resumen con dos métricas para modales
+///
+/// **Responsabilidad:**
+/// - Mostrar dos métricas principales lado a lado
+/// - Diseño consistente con gradiente y bordes
+/// - Reutilizable en todos los modales de analytics
+///
+/// Clase auxiliar para representar una métrica
+class AnalyticsMetric {
+  final String value;
+  final String label;
+
+  const AnalyticsMetric({
+    required this.value,
+    required this.label,
+  });
+}
+
+/// Widget: Tarjeta de Estado para Modales de Analytics
+///
+/// **Responsabilidad:**
+/// - Mostrar indicadores de estado/tendencia con icono, valor y feedback
+/// - Mostrar métricas adicionales (izquierda y derecha) opcionalmente
+/// - Diseño flexible y reutilizable para múltiples propósitos
+/// - Soportar valores numéricos, porcentajes, etiquetas, etc.
+///
+/// **Modos de uso:**
+/// 1. Con mainValue/mainLabel: Muestra valor principal + feedback
+/// 2. Con leftMetric/rightMetric: Muestra dos métricas lado a lado
+class AnalyticsStatusCard extends StatelessWidget {
+  /// Valor principal a mostrar (ej: "15.5%", "+\$1000", "87")
+  /// Si es null, se usa el modo de dos métricas (leftMetric/rightMetric)
+  final String? mainValue;
+
+  /// Etiqueta o descripción del valor principal
+  final String? mainLabel;
+
+  /// Icono principal (en círculo decorativo)
+  final IconData? icon;
+
+  /// Color de acento para el card
+  final Color statusColor;
+
+  /// Icono para el área de feedback
+  final IconData? feedbackIcon;
+
+  /// Texto de feedback/descripción contextual
+  final String? feedbackText;
+
+  /// Métrica izquierda (opcional, para modo de dos métricas)
+  final AnalyticsMetric? leftMetric;
+
+  /// Métrica derecha (opcional, para modo de dos métricas)
+  final AnalyticsMetric? rightMetric;
+
+  /// Tamaño del icono principal (opcional)
+  final double iconSize;
+
+  /// Si el card debe mostrar signo + en valores positivos (opcional)
+  final bool showPlusSign;
+
+  const AnalyticsStatusCard({
+    super.key,
+    this.mainValue,
+    this.mainLabel,
+    this.icon,
+    required this.statusColor,
+    this.feedbackIcon,
+    this.feedbackText,
+    this.leftMetric,
+    this.rightMetric,
+    this.iconSize = 24,
+    this.showPlusSign = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Un único layout que permite mostrar:
+    // - Icono + valor principal (si se pasa)
+    // - Una fila de métricas (leftMetric/rightMetric) opcional
+    // - Feedback opcional
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            statusColor.withValues(alpha: 0.15),
+            statusColor.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Fila: Icono + Valor principal (si se proporciona alguno)
+          if (icon != null || mainValue != null || mainLabel != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      color: statusColor,
+                      size: iconSize,
+                    ),
+                  ),
+                if (icon != null) const SizedBox(width: 12),
+                if (mainValue != null || mainLabel != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (mainValue != null)
+                        Text(
+                          mainValue!,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      if (mainLabel != null)
+                        Text(
+                          mainLabel!,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+
+          // Métricas: pueden mostrarse junto con el valor principal
+          if (leftMetric != null || rightMetric != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (leftMetric != null)
+                  Expanded(child: _buildMetricColumn(context, leftMetric!)),
+                if (leftMetric != null && rightMetric != null)
+                  Container(
+                    width: 1,
+                    height: 48,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                  ),
+                if (rightMetric != null)
+                  Expanded(child: _buildMetricColumn(context, rightMetric!)),
+              ],
+            ),
+          ],
+
+          // Feedback contextual
+          if (feedbackText != null) const SizedBox(height: 12),
+          if (feedbackText != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (feedbackIcon != null)
+                    Icon(
+                      feedbackIcon,
+                      size: 16,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  if (feedbackIcon != null) const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      feedbackText!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye una columna para mostrar una métrica
+  Widget _buildMetricColumn(BuildContext context, AnalyticsMetric metric) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Text(
+          metric.value,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: statusColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          metric.label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

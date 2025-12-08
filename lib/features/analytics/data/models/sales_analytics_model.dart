@@ -182,11 +182,16 @@ class SalesAnalyticsModel extends SalesAnalytics {
         // Most profitable products
         final profitPerUnit = product.salePrice - product.purchasePrice;
         if (profitPerUnit > 0) {
+          final totalSalesProduct = product.salePrice * product.quantity;
+          final totalCostProduct = product.purchasePrice * product.quantity;
+          
           if (!profitableProductStats.containsKey(productId)) {
             profitableProductStats[productId] = {
               'product': product,
               'quantitySold': 0,
               'totalProfit': 0.0,
+              'totalSales': 0.0,
+              'totalCost': 0.0,
               'profitPerUnit': profitPerUnit,
             };
           }
@@ -196,6 +201,12 @@ class SalesAnalyticsModel extends SalesAnalytics {
           profitableProductStats[productId]!['totalProfit'] =
               (profitableProductStats[productId]!['totalProfit'] as double) +
                   (profitPerUnit * product.quantity);
+          profitableProductStats[productId]!['totalSales'] =
+              (profitableProductStats[productId]!['totalSales'] as double) +
+                  totalSalesProduct;
+          profitableProductStats[productId]!['totalCost'] =
+              (profitableProductStats[productId]!['totalCost'] as double) +
+                  totalCostProduct;
         }
 
         // Slow moving products

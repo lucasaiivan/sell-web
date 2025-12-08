@@ -85,7 +85,9 @@ class MetricCard extends StatelessWidget {
             ),
           ),
           // Comparación con día anterior, porcentaje adicional o feedback
-          if (hasComparison || hasPercentageInfo || (feedbackText != null && !isZero)) ...[
+          if (hasComparison ||
+              hasPercentageInfo ||
+              (feedbackText != null && !isZero)) ...[
             const SizedBox(height: 6),
             if (hasComparison)
               _buildComparisonBadge(context, comparisonData!)
@@ -110,6 +112,26 @@ class MetricCard extends StatelessWidget {
         isPositive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
     final label = data['label'] as String? ?? 'anterior';
 
+    // Crear texto resumido según el label
+    final String resumedText;
+    final labelLower = label.toLowerCase();
+
+    if (labelLower == 'ayer') {
+      resumedText = 'que ayer';
+    } else if (labelLower == 'anteayer') {
+      resumedText = 'que día anterior';
+    } else if (labelLower.contains('mes pasado')) {
+      resumedText = 'que mes pasado';
+    } else if (labelLower.contains('mes anterior')) {
+      resumedText = 'que mes anterior';
+    } else if (labelLower.contains('semana')) {
+      resumedText = 'que semana anterior';
+    } else if (labelLower.contains('año')) {
+      resumedText = 'que año anterior';
+    } else {
+      resumedText = 'que $label';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -126,7 +148,7 @@ class MetricCard extends StatelessWidget {
           Icon(trendIcon, size: 12, color: trendColor),
           const SizedBox(width: 4),
           Text(
-            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(percentage)} respecto $label',
+            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(percentage)} $resumedText',
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: trendColor,

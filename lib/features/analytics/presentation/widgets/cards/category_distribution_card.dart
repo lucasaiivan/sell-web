@@ -339,7 +339,7 @@ class CategoryDistributionModal extends StatelessWidget {
     final topPercentage = topCategory['percentage'] as double? ?? 0.0;
     
     if (topPercentage >= 60) {
-      return 'Una categoría domina tus ventas. Diversifica tu oferta para reducir riesgos.';
+      return 'Una categoría domina tus ventas. Considera diversificar tu catálogo.';
     } else if (topPercentage >= 40) {
       return 'Tienes una categoría líder clara. Mantén el stock de productos top.';
     } else if (categoriesCount >= 5) {
@@ -363,75 +363,19 @@ class CategoryDistributionModal extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: [ 
+            const SizedBox(height: 16),
             // Feedback contextual
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _accentColor.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.category_rounded,
-                    size: 16,
-                    color: _accentColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _getModalFeedback(salesByCategory),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            AnalyticsFeedbackBanner(
+              icon: Icon(Icons.category_rounded, color: _accentColor),
+              message: _getModalFeedback(salesByCategory),
             ),
             const SizedBox(height: 16),
             // Gráfico grande
             SizedBox(
               height: 220,
               child: _buildDetailedDonutChart(context, displayCategories),
-            ),
-            const SizedBox(height: 24),
-
-            // Resumen
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryItem(
-                      context,
-                      'Total Ventas',
-                      CurrencyHelper.formatCurrency(totalSales),
-                      Icons.attach_money_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSummaryItem(
-                      context,
-                      'Categorías',
-                      salesByCategory.length.toString(),
-                      Icons.category_rounded,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ), 
             const SizedBox(height: 24),
 
             // Lista de categorías
@@ -483,11 +427,7 @@ class CategoryDistributionModal extends StatelessWidget {
                 )
               : null,
           badgePositionPercentageOffset: 1.1,
-          radius: 45,
-          borderSide: BorderSide(
-            color: Colors.white.withValues(alpha: 0.5),
-            width: 2,
-          ),
+          radius: 45, 
         ),
       );
     }
@@ -569,97 +509,123 @@ class CategoryDistributionModal extends StatelessWidget {
     final percentage = category['percentage'] as double? ?? 0.0;
     final quantitySold = category['quantitySold'] as int? ?? 0;
     final categoryColor = _categoryColors[index % _categoryColors.length];
-
-    final isDark = theme.brightness == Brightness.dark;
-    
+ 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark 
-            ? categoryColor.withValues(alpha: 0.15) 
-            : categoryColor.withValues(alpha: 0.05),
+        color: categoryColor.withValues(alpha: 0.01),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: categoryColor.withValues(alpha: 0.2),
+          color: categoryColor.withValues(alpha: 0.25),
           width: 1,
-        ),
+        ), 
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Fila 1: Icono, nombre y ventas
           Row(
             children: [
+              // Indicador de color
               Container(
-                width: 12,
-                height: 12,
+                width: 16,
+                height: 16,
                 decoration: BoxDecoration(
                   color: categoryColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: categoryColor.withValues(alpha: 0.4),
-                      blurRadius: 4,
+                      color: categoryColor.withValues(alpha: 0.5),
+                      blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
+              // Nombre y descripción
               Expanded(
-                child: Text(
-                  categoryName,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      categoryName,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$quantitySold productos vendidos',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                CurrencyHelper.formatCurrency(categorySales),
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
+              // Ventas totales en grande
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    CurrencyHelper.formatCurrency(categorySales),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: categoryColor,
+                    ),
+                  ),
+                  Text(
+                    'Ventas',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          // Fila 2: Barra de progreso y porcentaje
           Row(
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: percentage / 100,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
                     color: categoryColor,
-                    minHeight: 6,
+                    minHeight: 8,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              SizedBox(
-                width: 45,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: categoryColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: categoryColor.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
                 child: Text(
                   NumberHelper.formatPercentage(percentage),
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: categoryColor,
                   ),
-                  textAlign: TextAlign.end,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$quantitySold productos vendidos',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
           ),
         ],
       ),

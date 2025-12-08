@@ -81,9 +81,8 @@ class AnalyticsBaseCard extends StatelessWidget {
         ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
         : color.withValues(alpha: 0.2);
 
-    final iconColor = isZero
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
-        : color;
+    final iconColor =
+        isZero ? theme.colorScheme.onSurface.withValues(alpha: 0.38) : color;
 
     return Card(
       elevation: 0,
@@ -147,11 +146,12 @@ class AnalyticsBaseCard extends StatelessWidget {
               padding: effectivePadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: shouldExpand ? MainAxisSize.max : MainAxisSize.min,
+                mainAxisSize:
+                    shouldExpand ? MainAxisSize.max : MainAxisSize.min,
                 children: [
                   // --- Header: Icono y Título ---
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
                         width: iconBoxSize,
@@ -160,38 +160,45 @@ class AnalyticsBaseCard extends StatelessWidget {
                           color: iconContainerColor,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(
-                          icon,
-                          color: iconColor,
-                          size: iconSize,
+                        child: Center(
+                          child: Icon(
+                            icon,
+                            color: iconColor,
+                            size: iconSize,
+                          ),
                         ),
                       ),
-                      SizedBox(width: (minDim * 0.04).clamp(8.0, 12.0)),
+                      SizedBox(width: (minDim * 0.04).clamp(10.0, 14.0)),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  color: onContainerColor.withValues(alpha: 0.8),
-                                  fontSize: titleSize,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            Text(
+                              title,
+                              style: TextStyle(
+                                color: onContainerColor.withValues(alpha: 0.85),
+                                // Aumentar tamaño cuando no hay subtítulo
+                                fontSize: subtitle == null
+                                    ? titleSize * 1.25
+                                    : titleSize,
+                                fontWeight: FontWeight.w600,
+                                height: 1.2,
+                                letterSpacing: -0.2,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             if (subtitle != null) ...[
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 3),
                               Text(
                                 subtitle!,
                                 style: TextStyle(
-                                  color: onContainerColor.withValues(alpha: 0.5),
+                                  color:
+                                      onContainerColor.withValues(alpha: 0.5),
                                   fontSize: subtitleSize,
+                                  height: 1.2,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -202,10 +209,13 @@ class AnalyticsBaseCard extends StatelessWidget {
                       ),
                       // Indicador de acción
                       if (showActionIndicator && onTap != null)
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: onContainerColor.withValues(alpha: 0.4),
-                          size: 20,
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.chevron_right_rounded,
+                            color: onContainerColor.withValues(alpha: 0.35),
+                            size: 22,
+                          ),
                         ),
                     ],
                   ),
@@ -257,6 +267,7 @@ class AnalyticsMainValue extends StatelessWidget {
   final String value;
   final bool isZero;
   final double? fontSize;
+
   /// Factor de escala adicional (1.0 = normal, 1.5 = 50% más grande)
   final double scaleFactor;
 
@@ -297,21 +308,21 @@ class AnalyticsMainValue extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calcular fontSize basado en el espacio disponible
-        final availableHeight = constraints.maxHeight.isFinite 
-            ? constraints.maxHeight 
-            : 60.0;
-        final availableWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : 200.0;
-        
+        final availableHeight =
+            constraints.maxHeight.isFinite ? constraints.maxHeight : 60.0;
+        final availableWidth =
+            constraints.maxWidth.isFinite ? constraints.maxWidth : 200.0;
+
         // El fontSize base es proporcional a la altura disponible
         // pero también limitado por el ancho (para valores largos)
         final heightBasedSize = availableHeight * 0.6;
         final widthBasedSize = availableWidth / (value.length * 0.5);
-        
-        final calculatedSize = (heightBasedSize < widthBasedSize 
-            ? heightBasedSize 
-            : widthBasedSize).clamp(18.0, 72.0) * scaleFactor;
+
+        final calculatedSize = (heightBasedSize < widthBasedSize
+                    ? heightBasedSize
+                    : widthBasedSize)
+                .clamp(18.0, 72.0) *
+            scaleFactor;
 
         return FittedBox(
           fit: BoxFit.scaleDown,
@@ -332,6 +343,101 @@ class AnalyticsMainValue extends StatelessWidget {
   }
 }
 
+/// Utilidad para calcular dinámicamente cuántos items mostrar
+/// según el espacio disponible, evitando desbordamientos.
+///
+/// **Uso:**
+/// ```dart
+/// LayoutBuilder(
+///   builder: (context, constraints) {
+///     final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+///       availableHeight: constraints.maxHeight - headerHeight,
+///       itemHeight: 48.0,
+///       itemSpacing: 8.0,
+///       minItems: 1,
+///       maxItems: items.length,
+///     );
+///     return Column(children: items.take(visibleCount).toList());
+///   },
+/// )
+/// ```
+class DynamicItemsCalculator {
+  DynamicItemsCalculator._();
+
+  /// Calcula cuántos items pueden mostrarse en el espacio disponible
+  ///
+  /// **Parámetros:**
+  /// - [availableHeight]: Altura disponible para los items (excluyendo header)
+  /// - [itemHeight]: Altura estimada de cada item
+  /// - [itemSpacing]: Espaciado entre items (padding/dividers)
+  /// - [minItems]: Mínimo de items a mostrar (default: 1)
+  /// - [maxItems]: Máximo de items disponibles
+  /// - [reservedHeight]: Altura reservada para otros elementos (feedback text, etc.)
+  ///
+  /// **Retorna:** Número de items que caben completamente
+  static int calculateVisibleItems({
+    required double availableHeight,
+    required double itemHeight,
+    double itemSpacing = 8.0,
+    int minItems = 1,
+    int maxItems = 10,
+    double reservedHeight = 0.0,
+  }) {
+    if (!availableHeight.isFinite || availableHeight <= 0) {
+      return minItems.clamp(1, maxItems);
+    }
+
+    final effectiveHeight = availableHeight - reservedHeight;
+    if (effectiveHeight <= 0) return minItems.clamp(1, maxItems);
+
+    // Altura total por item (item + spacing)
+    final totalItemHeight = itemHeight + itemSpacing;
+    
+    // Calcular cuántos items caben (el último no necesita spacing)
+    // Fórmula: effectiveHeight >= (n * itemHeight) + ((n - 1) * itemSpacing)
+    // Simplificado: n = (effectiveHeight + itemSpacing) / (itemHeight + itemSpacing)
+    final calculatedItems = ((effectiveHeight + itemSpacing) / totalItemHeight).floor();
+
+    return calculatedItems.clamp(minItems, maxItems);
+  }
+
+  /// Calcula items visibles con altura dinámica por item
+  ///
+  /// Útil cuando los items tienen alturas diferentes (ej: compacto vs normal)
+  static int calculateVisibleItemsWithDynamicHeight({
+    required double availableHeight,
+    required double Function(int index) getItemHeight,
+    double itemSpacing = 8.0,
+    int minItems = 1,
+    int maxItems = 10,
+    double reservedHeight = 0.0,
+  }) {
+    if (!availableHeight.isFinite || availableHeight <= 0) {
+      return minItems.clamp(1, maxItems);
+    }
+
+    final effectiveHeight = availableHeight - reservedHeight;
+    if (effectiveHeight <= 0) return minItems.clamp(1, maxItems);
+
+    double usedHeight = 0;
+    int count = 0;
+
+    for (int i = 0; i < maxItems; i++) {
+      final itemHeight = getItemHeight(i);
+      final neededHeight = usedHeight + itemHeight + (i > 0 ? itemSpacing : 0);
+      
+      if (neededHeight <= effectiveHeight) {
+        usedHeight = neededHeight;
+        count++;
+      } else {
+        break;
+      }
+    }
+
+    return count.clamp(minItems, maxItems);
+  }
+}
+
 /// Widget helper para preview de item destacado
 class AnalyticsHighlightItem extends StatelessWidget {
   final Widget leading;
@@ -344,7 +450,7 @@ class AnalyticsHighlightItem extends StatelessWidget {
     super.key,
     required this.leading,
     required this.title,
-    required this.subtitle,
+    this.subtitle = '',
     required this.accentColor,
     this.badge,
   });
@@ -354,7 +460,7 @@ class AnalyticsHighlightItem extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
@@ -375,22 +481,24 @@ class AnalyticsHighlightItem extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 10,
-                    color: accentColor,
-                    fontWeight: FontWeight.w500,
+                if (subtitle.isNotEmpty)
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 10,
+                      color: accentColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ],
             ),
           ),

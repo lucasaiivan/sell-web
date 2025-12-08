@@ -312,8 +312,7 @@ class WeekdaySalesModal extends StatelessWidget {
     // Calcular totales
     double totalSales = 0;
     int totalTransactions = 0;
-    double maxDaySales = 0;
-    int bestDayNumber = 1;
+    double maxDaySales = 0; 
 
     for (final entry in salesByWeekday.entries) {
       final sales = entry.value['totalSales'] as double? ?? 0.0;
@@ -321,8 +320,7 @@ class WeekdaySalesModal extends StatelessWidget {
       totalSales += sales;
       totalTransactions += transactions;
       if (sales > maxDaySales) {
-        maxDaySales = sales;
-        bestDayNumber = entry.key;
+        maxDaySales = sales; 
       }
     }
 
@@ -341,35 +339,11 @@ class WeekdaySalesModal extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Feedback contextual
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _accentColor.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    size: 16,
-                    color: _accentColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _getModalFeedback(salesByWeekday),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            AnalyticsFeedbackBanner(
+              icon: const Icon(Icons.calendar_today_rounded),
+              message: _getModalFeedback(salesByWeekday),
+              accentColor: _accentColor,
+              margin: const EdgeInsets.only(top: 16, bottom: 24),
             ),
             const SizedBox(height: 16),
             // Gráfico de barras detallado
@@ -379,59 +353,16 @@ class WeekdaySalesModal extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Resumen
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+            // Resumen : mejor dia y cantidad de ventas 
+            AnalyticsStatusCard(
+              statusColor: _accentColor,
+              leftMetric: AnalyticsMetric(
+                value: CurrencyHelper.formatCurrency(totalSales),
+                label: 'Total Semana',
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Total Semana',
-                          CurrencyHelper.formatCurrency(totalSales),
-                          Icons.attach_money_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Transacciones',
-                          totalTransactions.toString(),
-                          Icons.receipt_long_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Mejor Día',
-                          _fullDayNames[bestDayNumber],
-                          Icons.star_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Promedio/Día',
-                          CurrencyHelper.formatCurrency(totalSales / 7),
-                          Icons.calculate_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              rightMetric: AnalyticsMetric(
+                value: totalTransactions.toString(),
+                label: 'Transacciones',
               ),
             ),
             const SizedBox(height: 24),
@@ -546,7 +477,7 @@ class WeekdaySalesModal extends StatelessWidget {
               interval: maxSales / 4,
               getTitlesWidget: (value, meta) {
                 return Text(
-                  CurrencyHelper.formatCurrency(value),
+                  _formatAxisValue(value),
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontSize: 10,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -577,37 +508,32 @@ class WeekdaySalesModal extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: _accentColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
+  /// Formatea valores del eje Y sin decimales para montos redondos
+  String _formatAxisValue(double value) {
+    if (value == 0) return '\$0';
+    
+    // Si es un número muy grande, mostrar en K
+    if (value >= 1000) {
+      if (value % 1000 == 0) {
+        return '\$${(value / 1000).toStringAsFixed(0)}K';
+      } else {
+        return '\$${(value / 1000).toStringAsFixed(1)}K';
+      }
+    }
+    
+    // Para números pequeños, mostrar sin decimales si son números redondos
+    if (value == value.truncate()) {
+      return '\$${value.toStringAsFixed(0)}';
+    }
+    
+    // Si tiene decimales, mostrar con 0 decimales si es muy cercano a un entero
+    final rounded = value.round();
+    if ((value - rounded).abs() < 0.01) {
+      return '\$${rounded.toStringAsFixed(0)}';
+    }
+    
+    // Sino, usar el formato estándar
+    return CurrencyHelper.formatCurrency(value);
   }
 
   Widget _buildDayRankItem(
@@ -650,13 +576,10 @@ class WeekdaySalesModal extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color:
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: rank <= 3
-                ? rankColor.withValues(alpha: 0.3)
-                : Colors.transparent,
+            color: rankColor.withValues(alpha: 0.3),
             width: 1,
           ),
         ),

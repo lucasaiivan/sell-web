@@ -214,10 +214,11 @@ class AnalyticsPage extends StatelessWidget {
         cardId,
         analytics,
         activeCashRegisters,
+        provider,
         currentFilter: provider.selectedFilter,
         onSalesTap: () => showTransactionsDialog(
           context: context,
-          transactions: analytics.transactions,
+          transactions: analytics.getFilteredTransactions(provider.selectedFilter),
           currentFilter: provider.selectedFilter,
           onTransactionTap: (transaction) =>
               _showTransactionDetail(context, transaction),

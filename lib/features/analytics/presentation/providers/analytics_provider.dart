@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 import '../../data/services/analytics_preferences_service.dart';
+import '../../data/services/trend_calculator_service.dart';
 import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
+import '../../domain/entities/trend_data.dart';
 import '../../domain/usecases/get_sales_analytics_usecase.dart';
 import '../widgets/analytics_widgets.dart';
 
@@ -23,7 +25,8 @@ class _AnalyticsState {
     this.errorMessage,
     this.selectedFilter = DateFilter.today,
     this.expandedMonths = const {},
-    this.visibleCardIds = const [], // Por defecto vacío (se cargará dinámicamente)
+    this.visibleCardIds =
+        const [], // Por defecto vacío (se cargará dinámicamente)
   });
 
   _AnalyticsState copyWith({
@@ -62,16 +65,27 @@ class _AnalyticsState {
 class AnalyticsProvider extends ChangeNotifier
     implements InitializableProvider {
   final GetSalesAnalyticsUseCase _getSalesAnalyticsUseCase;
-  final AnalyticsPreferencesService _preferencesService; // ← NUEVO
+  final AnalyticsPreferencesService _preferencesService;
+  final TrendCalculatorService _trendCalculatorService;
 
   _AnalyticsState _state = const _AnalyticsState();
   String _currentAccountId = '';
   StreamSubscription<dynamic>? _subscription;
+  TrendData? _cachedTrendData;
+  bool _disposed = false;
 
   AnalyticsProvider(
     this._getSalesAnalyticsUseCase,
-    this._preferencesService, // ← NUEVO
+    this._preferencesService,
+    this._trendCalculatorService,
   );
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
 
   // === Getters públicos ===
 
@@ -227,12 +241,15 @@ class AnalyticsProvider extends ChangeNotifier
               isLoading: false,
               errorMessage: failure.message,
             );
+            _cachedTrendData = null; // Invalidar caché en caso de error
           },
           (analytics) {
             _state = _state.copyWith(
               isLoading: false,
               analytics: analytics,
             );
+            _cachedTrendData =
+                null; // Invalidar caché cuando lleguen nuevos datos
           },
         );
         notifyListeners();
@@ -242,9 +259,33 @@ class AnalyticsProvider extends ChangeNotifier
           isLoading: false,
           errorMessage: 'Error: ${error.toString()}',
         );
+        _cachedTrendData = null; // Invalidar caché en caso de error
         notifyListeners();
       },
     );
+  }
+
+  /// Calcula datos de tendencia para el filtro actual
+  TrendData calculateTrendData() {
+    if (_state.analytics == null) return TrendData.empty();
+
+    // Verificar si ya tenemos datos en caché para el filtro actual
+    if (_cachedTrendData != null) {
+      return _cachedTrendData!;
+    }
+
+    // Calcular tendencia
+    final transactions =
+        _state.analytics!.getFilteredTransactions(_state.selectedFilter);
+    final trendData = _trendCalculatorService.calculateTrend(
+      transactions: transactions,
+      filter: _state.selectedFilter,
+    );
+
+    // Guardar en caché
+    _cachedTrendData = trendData;
+
+    return trendData;
   }
 
   /// Cambia el filtro de fecha y re-suscribe
@@ -256,6 +297,10 @@ class AnalyticsProvider extends ChangeNotifier
       clearAnalytics: true,
       expandedMonths: const {}, // Resetear expansión de meses
     );
+
+    // Invalidar caché de tendencias
+    _cachedTrendData = null;
+
     notifyListeners();
 
     if (_currentAccountId.isNotEmpty) {
@@ -266,6 +311,8 @@ class AnalyticsProvider extends ChangeNotifier
   /// Limpia el estado del provider
   void clear() {
     _subscription?.cancel();
+    _subscription = null;
+    _cachedTrendData = null;
     _state = const _AnalyticsState();
     _currentAccountId = '';
     notifyListeners();
@@ -273,7 +320,10 @@ class AnalyticsProvider extends ChangeNotifier
 
   @override
   void dispose() {
+    _disposed = true;
     _subscription?.cancel();
+    _subscription = null;
+    _cachedTrendData = null;
     super.dispose();
   }
 
@@ -289,15 +339,9 @@ class AnalyticsProvider extends ChangeNotifier
   void cleanup() {
     _subscription?.cancel();
     _subscription = null;
+    _cachedTrendData = null;
     _state = const _AnalyticsState();
     _currentAccountId = '';
-
-    try {
-      notifyListeners();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('⚠️ AnalyticsProvider.cleanup: Provider ya disposed');
-      }
-    }
+    notifyListeners();
   }
 }

@@ -31,8 +31,6 @@ class SellerRankingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalSellers = salesBySeller.length;
     final hasData = !isZero && salesBySeller.isNotEmpty;
-    // Obtener hasta 3 vendedores para preview
-    final previewSellers = salesBySeller.take(3).toList();
 
     return AnalyticsBaseCard(
       color: color,
@@ -53,14 +51,32 @@ class SellerRankingCard extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxWidth < 180;
-                // Si es muy bajo, ocultamos el feedback text
-                final showFeedback = constraints.maxHeight > 140;
+                
+                // Calcular dinámicamente cuántos vendedores mostrar
+                // Altura estimada: item ~32px (compacto ~28px), spacing ~4px, feedback ~24px
+                final itemHeight = isCompact ? 28.0 : 32.0;
+                const itemSpacing = 4.0;
+                const feedbackHeight = 30.0; // Incluye SizedBox(6) + text
+                
+                // Determinar si hay espacio para mostrar el feedback
+                final showFeedback = constraints.maxHeight > 100 && !isCompact;
+                
+                final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+                  availableHeight: constraints.maxHeight,
+                  itemHeight: itemHeight,
+                  itemSpacing: itemSpacing,
+                  minItems: 1,
+                  maxItems: salesBySeller.length,
+                  reservedHeight: showFeedback ? feedbackHeight : 0,
+                );
+                
+                final previewSellers = salesBySeller.take(visibleCount).toList();
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Mostrar hasta 3 vendedores
+                    // Mostrar vendedores según el espacio disponible
                     ...previewSellers.asMap().entries.map((entry) {
                       final index = entry.key;
                       final seller = entry.value;
@@ -74,7 +90,7 @@ class SellerRankingCard extends StatelessWidget {
                       );
                     }),
                     
-                    if (showFeedback && !isCompact) ...[
+                    if (showFeedback) ...[
                       const SizedBox(height: 6),
                       // Feedback
                       _buildFeedbackText(context, totalSellers),
@@ -266,37 +282,12 @@ class SellerRankingModal extends StatelessWidget {
             )
           : Column(
               children: [
+                // widget : Feedback sobre el equipo de ventas
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _accentColor.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.people_rounded,
-                          size: 16,
-                          color: _accentColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _getModalFeedback(salesBySeller),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: AnalyticsFeedbackBanner(
+                    icon: Icon( Icons.people_rounded),
+                    message: _getModalFeedback(salesBySeller),
                   ),
                 ),
                 Expanded(

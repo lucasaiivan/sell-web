@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/analytics/domain/entities/analytics_card_definition.dart';
@@ -8,7 +7,7 @@ import 'package:sellweb/features/cash_register/domain/entities/cash_register.dar
 
 import '../cards/widgets.dart';
 import '../modals/widgets.dart';
-import 'package:sellweb/core/constants/analytics_colors.dart';
+import '../../providers/analytics_provider.dart';
 
 /// Registro centralizado de todas las tarjetas de analíticas disponibles
 ///
@@ -176,6 +175,7 @@ class AnalyticsCardRegistry {
   /// - `cardId`: ID único de la tarjeta (de `AnalyticsCardDefinition.id`)
   /// - `analytics`: Datos de analíticas
   /// - `activeCashRegisters`: Lista de cajas activas (opcional)
+  /// - `analyticsProvider`: Provider de analíticas (para calcular tendencias)
   /// - `currentFilter`: Filtro de fecha actual (para calcular comparaciones correctas)
   /// - `onSalesTap`: Callback especial para la tarjeta de ventas (abre dialog fullscreen)
   ///
@@ -185,7 +185,8 @@ class AnalyticsCardRegistry {
     BuildContext context,
     String cardId,
     SalesAnalytics analytics,
-    List<CashRegister> activeCashRegisters, {
+    List<CashRegister> activeCashRegisters,
+    AnalyticsProvider analyticsProvider, {
     required DateFilter currentFilter,
     VoidCallback? onSalesTap,
   }) {
@@ -197,26 +198,25 @@ class AnalyticsCardRegistry {
     final periodTotals = analytics.getTotalsForFilter(currentFilter);
 
     switch (cardId) {
-      case 'billing':
+      case 'billing': // Facturación
         final hasData = periodTotals.totalSales > 0;
         return MetricCard(
           key: const ValueKey('billing'),
           title: 'Facturación',
           value: CurrencyHelper.formatCurrency(periodTotals.totalSales),
           icon: Icons.attach_money_rounded,
-          color: color,
-          subtitle: 'Ingresos brutos',
+          color: color, 
           isZero: periodTotals.totalSales == 0,
-          moreInformation: true,
+          moreInformation: false,
           showActionIndicator: hasData,
-          onTap: hasData ? () => showBillingModal(context, analytics) : null,
+          onTap: null,
           comparisonData: analytics.getPeriodComparison(
             currentFilter,
             (data) => data['totalSales'] as double? ?? 0.0,
           ),
         );
 
-      case 'profit':
+      case 'profit': // Ganancia
         final hasData = periodTotals.totalProfit > 0;
         final profitMargin = periodTotals.totalSales > 0
             ? (periodTotals.totalProfit / periodTotals.totalSales * 100)
@@ -230,12 +230,13 @@ class AnalyticsCardRegistry {
           subtitle: 'Rentabilidad real',
           isZero: periodTotals.totalProfit == 0,
           showActionIndicator: hasData,
-          onTap: hasData ? () => showProfitModal(context, analytics) : null,
-          percentageInfo:
-              hasData ? '${NumberHelper.formatPercentage(profitMargin)} margen' : null,
+          onTap: hasData ? () => showProfitModal(context, analytics, filter: currentFilter) : null,
+          percentageInfo: hasData
+              ? '${NumberHelper.formatPercentage(profitMargin)} margen'
+              : null,
         );
 
-      case 'sales':
+      case 'sales': // Ventas
         final hasTransactions = periodTotals.totalTransactions > 0;
         return MetricCard(
           key: const ValueKey('sales'),
@@ -252,111 +253,138 @@ class AnalyticsCardRegistry {
           ),
         );
 
-      case 'averageTicket':
-        final hasData = periodTotals.averageProfitPerTransaction > 0;
+      case 'averageTicket': // Ticket Promedio
+        final hasData = periodTotals.averageTicket > 0;
         return MetricCard(
           key: const ValueKey('averageTicket'),
-          title: 'Ticket Prom.',
-          value: CurrencyHelper.formatCurrency(
-              periodTotals.averageProfitPerTransaction),
+          title: 'Ticket Promedio',
+          value: CurrencyHelper.formatCurrency(periodTotals.averageTicket),
           icon: Icons.analytics_rounded,
           color: color,
-          isZero: periodTotals.averageProfitPerTransaction == 0,
+          isZero: periodTotals.averageTicket == 0,
           showActionIndicator: hasData,
-          onTap:
-              hasData ? () => showAverageTicketModal(context, analytics) : null,
-        );
-
-      case 'products':
-        return ProductsMetricCard(
-          key: const ValueKey('products'),
-          totalProducts: analytics.totalProductsSold,
-          topSellingProducts: analytics.topSellingProducts,
-          color: color,
-          subtitle: 'Movimiento de inventario',
-          isZero: analytics.totalProductsSold == 0,
-        );
-
-      case 'profitability':
-        return ProfitabilityMetricCard(
-          key: const ValueKey('profitability'),
-          totalProfit: analytics.totalProfit,
-          mostProfitableProducts: analytics.mostProfitableProducts,
-          color: color,
-          subtitle: 'Productos más rentables',
-          isZero: analytics.mostProfitableProducts.isEmpty,
-        );
-
-      case 'slowMoving':
-        return SlowMovingProductsCard(
-          key: const ValueKey('slowMoving'),
-          slowMovingProducts: analytics.slowMovingProducts,
-          color: color,
-          subtitle: 'Requieren atención',
-          isZero: analytics.slowMovingProducts.isEmpty,
-        );
-
-      case 'categoryDist':
-        return CategoryDistributionCard(
-          key: const ValueKey('categoryDist'),
-          salesByCategory: analytics.salesByCategory,
-          totalSales: analytics.totalSales,
-          color: color,
-          subtitle: 'Ventas por categoría',
-          isZero: analytics.salesByCategory.isEmpty,
-        );
-
-      case 'peakHours':
-        return PeakHoursCard(
-          key: const ValueKey('peakHours'),
-          salesByHour: analytics.salesByHour,
-          peakHours: analytics.peakHours,
-          color: color,
-          subtitle: 'Mayor actividad por hora',
-          isZero: analytics.peakHours.isEmpty,
-        );
-
-      case 'weekdaySales':
-        return WeekdaySalesCard(
-          key: const ValueKey('weekdaySales'),
-          salesByWeekday: analytics.salesByWeekday,
-          color: color,
-          subtitle: 'Rendimiento semanal',
-          isZero: analytics.salesByWeekday.isEmpty,
-        );
-
-      case 'salesTrend':
-        return SalesTrendCard(
-          key: const ValueKey('salesTrend'),
-          salesByDay: analytics.salesByDay,
-          color: color,
-          subtitle: 'Evolución temporal',
-          isZero: analytics.salesByDay.isEmpty,
-        );
-
-      case 'sellerRanking':
-        return SellerRankingCard(
-          key: const ValueKey('sellerRanking'),
-          salesBySeller: analytics.salesBySeller,
-          color: color,
-          subtitle: 'Desempeño del equipo',
-          isZero: analytics.salesBySeller.isEmpty,
-        );
-
-      case 'paymentMethods':
-        final hasData = analytics.paymentMethodsBreakdown.isNotEmpty;
-        return PaymentMethodsCard(
-          key: const ValueKey('paymentMethods'),
-          paymentMethodsBreakdown: analytics.paymentMethodsBreakdown,
-          totalSales: analytics.totalSales,
-          color: color,
-          showActionIndicator: hasData,
+            subtitle: '${NumberHelper.formatNumber(periodTotals.totalTransactions)} transacciones',
           onTap: hasData
-              ? () => showPaymentMethodsModal(context, analytics)
+              ? () => showAverageTicketModal(context, analytics, currentFilter)
               : null,
         );
 
-      case 'cashRegisters':
+      case 'products': // Productos
+        // Usar datos del período filtrado
+        final filteredProducts = analytics.getTopSellingProductsForFilter(currentFilter);
+        final totalProductsFiltered = filteredProducts.fold<int>(
+          0, (sum, p) => sum + (p['quantitySold'] as int));
+        final hasProductsData = periodTotals.totalTransactions > 0;
+        return ProductsMetricCard(
+          key: const ValueKey('products'),
+          totalProducts: totalProductsFiltered,
+          topSellingProducts: filteredProducts,
+          color: color,
+          subtitle: 'Movimiento de inventario',
+          isZero: !hasProductsData,
+        );
+
+      case 'profitability': // Rentabilidad
+        // Usar datos del período filtrado
+        final filteredProfitableProducts = analytics.getMostProfitableProductsForFilter(currentFilter);
+        final hasProfitData = periodTotals.totalTransactions > 0;
+        return ProfitabilityMetricCard(
+          key: const ValueKey('profitability'),
+          mostProfitableProducts: filteredProfitableProducts,
+          color: color,
+          subtitle: 'Producto más rentable',
+          isZero: !hasProfitData || filteredProfitableProducts.isEmpty,
+        );
+
+      case 'slowMoving': // Lenta Rotación
+        return SlowMovingProductsCard(
+          key: const ValueKey('slowMoving'),
+          slowMovingProducts: analytics.slowMovingProducts,
+          color: color, 
+          isZero: analytics.slowMovingProducts.isEmpty,
+        );
+
+      case 'categoryDist': // Categorías
+        // Usar datos del período filtrado
+        final filteredCategories = analytics.getSalesByCategoryForFilter(currentFilter);
+        final hasCategoryData = periodTotals.totalTransactions > 0;
+        return CategoryDistributionCard(
+          key: const ValueKey('categoryDist'),
+          salesByCategory: filteredCategories,
+          totalSales: periodTotals.totalSales,
+          color: color,
+        
+          subtitle: 'Ventas por categoría',
+          isZero: !hasCategoryData || filteredCategories.isEmpty,
+        );
+
+      case 'peakHours':  // Horas Pico
+        // Usar datos del período filtrado
+        final filteredSalesByHour = analytics.getSalesByHourForFilter(currentFilter);
+        final filteredPeakHours = analytics.getPeakHoursForFilter(currentFilter);
+        final hasPeakData = periodTotals.totalTransactions > 0;
+        return PeakHoursCard(
+          key: const ValueKey('peakHours'),
+          salesByHour: filteredSalesByHour,
+          peakHours: filteredPeakHours,
+          color: color,
+          subtitle: 'Mayor actividad por hora',
+          isZero: !hasPeakData || filteredPeakHours.isEmpty,
+        );
+
+      case 'weekdaySales': // Ventas por día
+        // Usar datos del período filtrado
+        final filteredWeekdaySales = analytics.getSalesByWeekdayForFilter(currentFilter);
+        final hasWeekdayData = periodTotals.totalTransactions > 0;
+        return WeekdaySalesCard(
+          key: const ValueKey('weekdaySales'),
+          salesByWeekday: filteredWeekdaySales,
+          color: color,
+          subtitle: 'Rendimiento por dia',
+          isZero: !hasWeekdayData,
+        );
+
+      case 'salesTrend': // Tendencia de Ventas
+        // Calcular datos de tendencia con granularidad adaptativa
+        final trendData = analyticsProvider.calculateTrendData();
+        final hasTrendData = periodTotals.totalTransactions > 0;
+        return SalesTrendCard(
+          key: const ValueKey('salesTrend'),
+          trendData: trendData,
+          color: color,
+          subtitle: 'Evolución temporal',
+          isZero: !hasTrendData || !trendData.hasData,
+        );
+
+      case 'sellerRanking': // Ranking de Vendedores
+        // Usar datos del período filtrado
+        final filteredSalesBySeller = analytics.getSalesBySellerForFilter(currentFilter);
+        final hasSellerData = periodTotals.totalTransactions > 0;
+        return SellerRankingCard(
+          key: const ValueKey('sellerRanking'),
+          salesBySeller: filteredSalesBySeller,
+          color: color,
+          subtitle: 'Desempeño del equipo',
+          isZero: !hasSellerData || filteredSalesBySeller.isEmpty,
+        );
+
+      case 'paymentMethods': // Medios de Pago
+        // Usar datos del período filtrado (aplicar filtro de fecha)
+        final filteredPaymentMethods = analytics.getPaymentMethodsForFilter(currentFilter);
+        final hasPaymentData = periodTotals.totalTransactions > 0 &&
+            filteredPaymentMethods.isNotEmpty;
+        return PaymentMethodsCard(
+          key: const ValueKey('paymentMethods'),
+          paymentMethodsBreakdown: filteredPaymentMethods,
+          totalSales: periodTotals.totalSales,
+          color: color,
+          showActionIndicator: hasPaymentData,
+          onTap: hasPaymentData
+              ? () => showPaymentMethodsModal(context, analytics, currentFilter)
+              : null,
+        );
+
+      case 'cashRegisters': // Cajas Registradoras
         // Esta tarjeta es OPERACIONAL: muestra el estado actual, no depende del filtro de fecha
         if (activeCashRegisters.isEmpty) return null;
         return ActiveCashRegistersCard(
@@ -410,5 +438,4 @@ class AnalyticsCardRegistry {
 
     return grouped;
   }
-
 }

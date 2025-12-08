@@ -31,8 +31,8 @@ class ProductCatalogue {
   final bool stock;
   final int alertStock;
   final int sales;
-  final double salePrice;
-  final double purchasePrice;
+  final double salePrice; // Precio de venta
+  final double purchasePrice; // Precio de compra
   final String currencySign;
 
   // Variables en tiempo de ejecución

@@ -34,8 +34,6 @@ class SlowMovingProductsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalSlowProducts = slowMovingProducts.length;
     final hasData = !isZero && slowMovingProducts.isNotEmpty;
-    // Obtener hasta 2 productos para preview
-    final previewProducts = slowMovingProducts.take(2).toList();
 
     return AnalyticsBaseCard(
       color: color,
@@ -45,31 +43,48 @@ class SlowMovingProductsCard extends StatelessWidget {
       subtitle: subtitle,
       showActionIndicator: hasData,
       onTap: hasData ? () => _showSlowMovingModal(context) : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment:
-            hasData ? MainAxisAlignment.end : MainAxisAlignment.center,
-        children: [
-          if (!hasData) ...[
-            const Flexible(
-              child: AnalyticsEmptyState(message: 'Sin alertas'),
+      child: !hasData
+          ? const Flexible(child: AnalyticsEmptyState(message: 'Sin alertas'))
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                // Calcular dinámicamente cuántos productos mostrar
+                // Altura estimada: item ~28px, spacing ~4px, feedback ~24px
+                const itemHeight = 28.0;
+                const itemSpacing = 4.0;
+                const feedbackHeight = 30.0; // Incluye SizedBox(6) + text
+                
+                final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+                  availableHeight: constraints.maxHeight,
+                  itemHeight: itemHeight,
+                  itemSpacing: itemSpacing,
+                  minItems: 1,
+                  maxItems: slowMovingProducts.length,
+                  reservedHeight: feedbackHeight,
+                );
+                
+                final previewProducts = slowMovingProducts.take(visibleCount).toList();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Mostrar productos con lenta rotación según el espacio
+                    ...previewProducts.map((productData) {
+                      final product = productData['product'] as ProductCatalogue;
+                      final quantitySold = productData['quantitySold'] as int? ?? 0;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: _buildSlowProductPreview(context, product, quantitySold),
+                      );
+                    }),
+                    const SizedBox(height: 6),
+                    // Feedback
+                    _buildFeedbackText(context, totalSlowProducts),
+                  ],
+                );
+              },
             ),
-          ] else ...[
-            // Mostrar hasta 2 productos con lenta rotación
-            ...previewProducts.map((productData) {
-              final product = productData['product'] as ProductCatalogue;
-              final quantitySold = productData['quantitySold'] as int? ?? 0;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: _buildSlowProductPreview(context, product, quantitySold),
-              );
-            }),
-            const SizedBox(height: 6),
-            // Feedback
-            _buildFeedbackText(context, totalSlowProducts),
-          ],
-        ],
-      ),
     );
   }
 
@@ -78,7 +93,7 @@ class SlowMovingProductsCard extends StatelessWidget {
     String feedback;
     
     if (totalSlowProducts >= 20) {
-      feedback = 'Mucho inventario estancado';
+      feedback = 'Requiere su atención';
     } else if (totalSlowProducts >= 10) {
       feedback = 'Revisa tu inventario';
     } else if (totalSlowProducts >= 5) {
@@ -92,7 +107,7 @@ class SlowMovingProductsCard extends StatelessWidget {
       style: theme.textTheme.bodySmall?.copyWith(
         fontWeight: FontWeight.w600,
         color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-        fontSize: 11,
+        fontSize: 12,
       ),
     );
   }
@@ -111,7 +126,7 @@ class SlowMovingProductsCard extends StatelessWidget {
                 : 'Producto sin nombre';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical:4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
@@ -169,8 +184,7 @@ class SlowMovingProductsCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          SlowMovingProductsModal(slowMovingProducts: slowMovingProducts),
+      builder: (context) => SlowMovingProductsModal(slowMovingProducts: slowMovingProducts),
     );
   }
 }
@@ -239,9 +253,7 @@ class SlowMovingProductsModal extends StatelessWidget {
                 SliverAppBar(
                   pinned: true,
                   backgroundColor: colorScheme.surface,
-                  surfaceTintColor: colorScheme.surface,
-                  expandedHeight: 180,
-                  toolbarHeight: 80,
+                  surfaceTintColor: colorScheme.surface, 
                   automaticallyImplyLeading: false,
                   titleSpacing: 0,
                   title: Padding(
@@ -303,46 +315,6 @@ class SlowMovingProductsModal extends StatelessWidget {
                       ),
                     ),
                   ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 100, 20, 10),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _accentColor.withValues(alpha: 0.2),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 16,
-                                  color: _accentColor,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _getModalFeedback(slowMovingProducts.length),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
                 if (slowMovingProducts.isEmpty)
                   const SliverFillRemaining(
@@ -353,7 +325,27 @@ class SlowMovingProductsModal extends StatelessWidget {
                       iconColor: Color(0xFF10B981),
                     ),
                   )
-                else
+                else ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: AnalyticsFeedbackBanner(
+                        icon: Icon(
+                          slowMovingProducts.length >= 20
+                              ? Icons.error_outline_rounded
+                              : slowMovingProducts.length >= 10
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.info_outline_rounded,
+                        ),
+                        message: _getModalFeedback(slowMovingProducts.length),
+                        accentColor: slowMovingProducts.length >= 20
+                            ? const Color(0xFFEF4444)
+                            : slowMovingProducts.length >= 10
+                                ? const Color(0xFFF59E0B)
+                                : const Color(0xFF3B82F6),
+                      ),
+                    ),
+                  ),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -495,6 +487,7 @@ class SlowMovingProductsModal extends StatelessWidget {
                       childCount: slowMovingProducts.length,
                     ),
                   ),
+                ],
                 SliverToBoxAdapter(
                   child: SizedBox(
                       height: MediaQuery.of(context).padding.bottom + 20),

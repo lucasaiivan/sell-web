@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/analytics_colors.dart';
-import 'package:sellweb/core/utils/helpers/currency_helper.dart';
-import 'package:sellweb/core/utils/helpers/number_helper.dart';
+import 'package:sellweb/core/utils/helpers/currency_helper.dart'; 
+import 'package:sellweb/features/analytics/domain/entities/date_filter.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../core/widgets.dart';
@@ -14,10 +14,12 @@ import '../core/widgets.dart';
 /// - Mostrar estadísticas de rentabilidad
 class ProfitModal extends StatelessWidget {
   final SalesAnalytics analytics;
+  final DateFilter? filter;
 
   const ProfitModal({
     super.key,
     required this.analytics,
+    this.filter,
   });
 
   static const _accentColor = AnalyticsColors.profit; // Verde Esmeralda
@@ -26,10 +28,28 @@ class ProfitModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Calcular margen de ganancia
-    final profitMargin = analytics.totalSales > 0
-        ? (analytics.totalProfit / analytics.totalSales * 100)
-        : 0.0;
+    // Obtener totales del período filtrado (igual que la tarjeta)
+    final periodTotals = filter != null 
+        ? analytics.getTotalsForFilter(filter!)
+        : (
+            totalSales: analytics.totalSales,
+            totalProfit: analytics.totalProfit,
+            totalTransactions: analytics.totalTransactions,
+            averageProfitPerTransaction: analytics.averageProfitPerTransaction,
+            averageTicket: analytics.totalTransactions > 0 
+                ? analytics.totalSales / analytics.totalTransactions 
+                : 0.0,
+          );
+    
+    // Obtener productos más rentables según el filtro aplicado
+    final profitableProducts = filter != null 
+        ? analytics.getMostProfitableProductsForFilter(filter!)
+        : analytics.mostProfitableProducts;
+    
+    // Usar totales del período filtrado
+    final totalProfit = periodTotals.totalProfit;
+    final totalSales = periodTotals.totalSales;
+    final profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100) : 0.0;
 
     return AnalyticsModal(
       accentColor: _accentColor,
@@ -47,11 +67,27 @@ class ProfitModal extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               children: [
                 // Resumen principal
-                _buildProfitSummary(context, profitMargin),
+                AnalyticsStatusCard(
+                  statusColor: _accentColor,
+                  leftMetric: AnalyticsMetric(
+                    value: CurrencyHelper.formatCurrency(totalProfit),
+                    label: 'Ganancia Total',
+                  ),
+                  rightMetric: AnalyticsMetric(
+                    value: '${profitMargin.toStringAsFixed(2)}%',
+                    label: 'Margen',
+                  ),
+                ),
+                AnalyticsFeedbackBanner(
+                  icon: const Icon(Icons.info_outline_rounded),
+                  message: 'Los datos muestran la ganancia del periodo filtrado. Registra el precio de compra en productos para calcular ganancias y márgenes exactos.',
+                  accentColor: _accentColor,
+                  margin: const EdgeInsets.only(top: 16),
+                ),
                 const SizedBox(height: 24),
 
                 // Productos más rentables
-                if (analytics.mostProfitableProducts.isNotEmpty) ...[
+                if (profitableProducts.isNotEmpty) ...[
                   Text(
                     'Productos más rentables',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -59,7 +95,7 @@ class ProfitModal extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...analytics.mostProfitableProducts
+                  ...profitableProducts
                       .take(5)
                       .toList()
                       .asMap()
@@ -74,160 +110,6 @@ class ProfitModal extends StatelessWidget {
     );
   }
 
-  Widget _buildProfitSummary(BuildContext context, double profitMargin) {
-    final theme = Theme.of(context);
-
-    // Generar feedback según el margen
-    String feedbackText;
-    IconData feedbackIcon;
-    if (profitMargin >= 50) {
-      feedbackText = '¡Excelente! Tu margen de ganancia es muy alto';
-      feedbackIcon = Icons.rocket_launch_rounded;
-    } else if (profitMargin >= 30) {
-      feedbackText = 'Muy bien, tienes un buen margen de rentabilidad';
-      feedbackIcon = Icons.thumb_up_rounded;
-    } else if (profitMargin >= 15) {
-      feedbackText = 'Tu margen de ganancia es saludable';
-      feedbackIcon = Icons.trending_up_rounded;
-    } else if (profitMargin >= 5) {
-      feedbackText = 'Tu margen de ganancia es bajo, considera optimizar';
-      feedbackIcon = Icons.info_outline_rounded;
-    } else {
-      feedbackText = 'Atención: tu margen es muy ajustado';
-      feedbackIcon = Icons.warning_rounded;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _accentColor.withValues(alpha: 0.15),
-            _accentColor.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _accentColor.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Ganancia total grande
-          Text(
-            CurrencyHelper.formatCurrency(analytics.totalProfit),
-            style: theme.textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: _accentColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Ganancia Total',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Estadísticas adicionales
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  context,
-                  Icons.percent_rounded,
-                  NumberHelper.formatPercentage(profitMargin),
-                  'Margen',
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  context,
-                  Icons.attach_money_rounded,
-                  CurrencyHelper.formatCurrency(analytics.totalSales),
-                  'Ingresos Brutos',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Feedback contextual
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  feedbackIcon,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    feedbackText,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context,
-    IconData icon,
-    String value,
-    String label,
-  ) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: _accentColor,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildProductItem(
     BuildContext context,
     int index,
@@ -235,6 +117,8 @@ class ProfitModal extends StatelessWidget {
   ) {
     final product = productData['product'] as ProductCatalogue;
     final totalProfit = productData['totalProfit'] as double? ?? 0.0;
+    final totalSales = product.salePrice;
+    final totalCost = product.purchasePrice;
     final quantitySold = productData['quantitySold'] as int? ?? 0;
     final position = index + 1;
 
@@ -251,14 +135,57 @@ class ProfitModal extends StatelessWidget {
           : 'Producto sin nombre',
       subtitle: '$quantitySold unidades vendidas',
       trailingWidgets: [
-        AnalyticsBadge(
-          text: CurrencyHelper.formatCurrency(totalProfit),
-          color: _accentColor,
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // text : costo 
+            Text(
+              'Compra: ${CurrencyHelper.formatCurrency(totalCost * quantitySold)}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.7),
+                  ),
+            ),
+            // text : ventas
+            Text(
+              'Ventas: ${CurrencyHelper.formatCurrency(totalSales * quantitySold)}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.7),
+                  ),
+            ),
+            const SizedBox(height: 4),
+            // Ganancia destacada en caja compacta
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _accentColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                CurrencyHelper.formatCurrency(totalProfit),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: _accentColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
-
+ 
   Color _getPositionColor(int position) {
     switch (position) {
       case 1:
@@ -274,11 +201,11 @@ class ProfitModal extends StatelessWidget {
 }
 
 /// Muestra el modal de ganancia
-void showProfitModal(BuildContext context, SalesAnalytics analytics) {
+void showProfitModal(BuildContext context, SalesAnalytics analytics, {DateFilter? filter}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => ProfitModal(analytics: analytics),
+    builder: (context) => ProfitModal(analytics: analytics, filter: filter),
   );
 }

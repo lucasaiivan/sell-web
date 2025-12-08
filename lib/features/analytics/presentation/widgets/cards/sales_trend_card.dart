@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:sellweb/core/core.dart';
+import 'package:sellweb/features/analytics/domain/entities/trend_data.dart';
 import '../core/widgets.dart';
 
 /// Widget: Tarjeta de Tendencia de Ventas
@@ -10,15 +10,16 @@ import '../core/widgets.dart';
 /// - Mostrar gráfico de línea con evolución de ventas en el tiempo
 /// - Visualizar tendencia (crecimiento/decrecimiento)
 /// - Abrir modal con análisis detallado
+/// - Adaptar visualización según granularidad (horas, días, meses)
 class SalesTrendCard extends StatelessWidget {
-  final Map<String, Map<String, dynamic>> salesByDay;
+  final TrendData trendData;
   final Color color;
   final bool isZero;
   final String? subtitle;
 
   const SalesTrendCard({
     super.key,
-    required this.salesByDay,
+    required this.trendData,
     this.color = const Color(0xFF3B82F6),
     this.isZero = false,
     this.subtitle,
@@ -26,12 +27,11 @@ class SalesTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasData = !isZero && salesByDay.isNotEmpty;
-    final trend = _calculateTrend();
+    final hasData = !isZero && trendData.hasData;
 
     return AnalyticsBaseCard(
       color: color,
-      isZero: isZero || salesByDay.isEmpty,
+      isZero: isZero || !trendData.hasData,
       icon: Icons.trending_up_rounded,
       title: 'Tendencia',
       subtitle: subtitle,
@@ -41,10 +41,11 @@ class SalesTrendCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment:
             hasData ? MainAxisAlignment.end : MainAxisAlignment.center,
-        children: [
+        children: [ 
           if (!hasData)
             const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
           else ...[
+            // view : Gráfico de línea
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
@@ -55,9 +56,9 @@ class SalesTrendCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(child: _buildFeedbackText(context, trend)),
+                Expanded(child: _buildFeedbackText(context)),
                 const SizedBox(width: 12),
-                _buildTrendBadge(context, trend),
+                _buildTrendBadge(context),
               ],
             ),
           ],
@@ -68,20 +69,13 @@ class SalesTrendCard extends StatelessWidget {
 
   Widget _buildLineChart(BuildContext context) {
     final theme = Theme.of(context);
-    final entries = salesByDay.entries.toList();
+    final dataPoints = trendData.dataPoints;
 
-    if (entries.isEmpty) return const SizedBox();
+    if (dataPoints.isEmpty) return const SizedBox();
 
-    double maxY = 0;
-    double minY = double.infinity;
-    final spots = <FlSpot>[];
-
-    for (int i = 0; i < entries.length; i++) {
-      final sales = entries[i].value['totalSales'] as double? ?? 0.0;
-      if (sales > maxY) maxY = sales;
-      if (sales < minY) minY = sales;
-      spots.add(FlSpot(i.toDouble(), sales));
-    }
+    // Usar los valores precalculados del TrendData
+    double maxY = trendData.maxValue;
+    double minY = trendData.minValue;
 
     // Agregar margen superior e inferior para mejor visualización
     final range = maxY - minY;
@@ -99,6 +93,12 @@ class SalesTrendCard extends StatelessWidget {
 
     // Calcular intervalo horizontal seguro
     final interval = ((maxY - minY) / 3).clamp(1.0, double.infinity).toDouble();
+
+    // Crear spots para el gráfico
+    final spots = <FlSpot>[];
+    for (int i = 0; i < dataPoints.length; i++) {
+      spots.add(FlSpot(i.toDouble(), dataPoints[i].value));
+    }
 
     return LineChart(
       LineChartData(
@@ -126,11 +126,10 @@ class SalesTrendCard extends StatelessWidget {
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final index = spot.x.toInt();
-                if (index < 0 || index >= entries.length) return null;
-                final date = entries[index].key;
-                final sales = spot.y;
+                if (index < 0 || index >= dataPoints.length) return null;
+                final point = dataPoints[index];
                 return LineTooltipItem(
-                  '${_formatDateShort(date)}\n${CurrencyHelper.formatCurrency(sales)}',
+                  '${point.label}\n${CurrencyHelper.formatCurrency(point.value)}',
                   const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -162,7 +161,7 @@ class SalesTrendCard extends StatelessWidget {
           },
         ),
         minX: 0,
-        maxX: (entries.length - 1).toDouble().clamp(0, double.infinity),
+        maxX: (dataPoints.length - 1).toDouble().clamp(0, double.infinity),
         minY: minY,
         maxY: maxY,
         lineBarsData: [
@@ -198,19 +197,15 @@ class SalesTrendCard extends StatelessWidget {
                 end: Alignment.bottomCenter,
               ),
             ),
-            shadow: Shadow(
-              color: color.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTrendBadge(BuildContext context, double trend) {
+  Widget _buildTrendBadge(BuildContext context) {
     final theme = Theme.of(context);
+    final trend = trendData.trendPercentage;
     final isPositive = trend >= 0;
     final trendColor =
         isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
@@ -240,8 +235,9 @@ class SalesTrendCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFeedbackText(BuildContext context, double trend) {
+  Widget _buildFeedbackText(BuildContext context) {
     final theme = Theme.of(context);
+    final trend = trendData.trendPercentage;
 
     // Generar mensaje de feedback según el estado de la tendencia
     String feedbackText;
@@ -289,93 +285,42 @@ class SalesTrendCard extends StatelessWidget {
     );
   }
 
-  double _calculateTrend() {
-    if (salesByDay.length < 2) return 0.0;
-
-    final entries = salesByDay.entries.toList();
-    final midPoint = entries.length ~/ 2;
-
-    double firstHalfTotal = 0;
-    double secondHalfTotal = 0;
-
-    for (int i = 0; i < midPoint; i++) {
-      firstHalfTotal += entries[i].value['totalSales'] as double? ?? 0.0;
-    }
-    for (int i = midPoint; i < entries.length; i++) {
-      secondHalfTotal += entries[i].value['totalSales'] as double? ?? 0.0;
-    }
-
-    if (firstHalfTotal == 0) return secondHalfTotal > 0 ? 100.0 : 0.0;
-    return ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100;
-  }
-
-  String _formatDateShort(String dateKey) {
-    try {
-      final date = DateTime.parse(dateKey);
-      return DateFormat('d MMM', 'es').format(date);
-    } catch (_) {
-      return dateKey;
-    }
-  }
-
   void _showTrendModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SalesTrendModal(salesByDay: salesByDay),
+      builder: (context) => SalesTrendModal(trendData: trendData),
     );
   }
 }
 
 /// Modal: Análisis Detallado de Tendencia
 class SalesTrendModal extends StatelessWidget {
-  final Map<String, Map<String, dynamic>> salesByDay;
+  final TrendData trendData;
 
-  const SalesTrendModal({super.key, required this.salesByDay});
+  const SalesTrendModal({super.key, required this.trendData});
 
-  static const _accentColor = AnalyticsColors.salesTrend; // Azul Eléctrico
+  static const _accentColor = AnalyticsColors.salesTrend;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final entries = salesByDay.entries.toList();
+    final dataPoints = trendData.dataPoints;
 
-    double totalSales = 0;
-    int totalTransactions = 0;
-    double maxDaySales = 0;
-    double minDaySales = double.infinity;
-    String bestDay = '';
-    String worstDay = '';
-
-    for (final entry in entries) {
-      final sales = entry.value['totalSales'] as double? ?? 0.0;
-      final transactions = entry.value['transactionCount'] as int? ?? 0;
-      totalSales += sales;
-      totalTransactions += transactions;
-      if (sales > maxDaySales) {
-        maxDaySales = sales;
-        bestDay = entry.key;
-      }
-      if (sales < minDaySales && sales > 0) {
-        minDaySales = sales;
-        worstDay = entry.key;
-      }
-    }
-
-    final avgSales = entries.isNotEmpty ? totalSales / entries.length : 0.0;
-    final avgTransactions =
-        entries.isNotEmpty ? totalTransactions / entries.length : 0.0;
+    // Obtener granularidad para títulos contextuales
+    final granularityLabel = _getGranularityLabel(trendData.granularity);
 
     // Calcular tendencia
-    final trend = _calculateTrend();
+    final trend = trendData.trendPercentage;
     final isPositive = trend >= 0;
     final trendColor =
         isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
 
     return AnalyticsModal(
       title: 'Análisis de Tendencia',
-      subtitle: '${NumberHelper.formatNumber(entries.length)} días analizados',
+      subtitle:
+          '${NumberHelper.formatNumber(dataPoints.length)} $granularityLabel analizados',
       accentColor: _accentColor,
       icon: Icons.trending_up_rounded,
       child: SingleChildScrollView(
@@ -383,207 +328,61 @@ class SalesTrendModal extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Indicador de tendencia principal con feedback
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    trendColor.withValues(alpha: 0.15),
-                    trendColor.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: trendColor.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: trendColor.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isPositive
-                              ? Icons.trending_up_rounded
-                              : Icons.trending_down_rounded,
-                          color: trendColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(trend)}',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: trendColor,
-                            ),
-                          ),
-                          Text(
-                            isPositive
-                                ? 'Crecimiento del período'
-                                : 'Decrecimiento del período',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _getFeedbackIcon(trend),
-                          size: 16,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _getFeedbackText(trend, isPositive),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Resumen de estadísticas
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _accentColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Total Período',
-                          CurrencyHelper.formatCurrency(totalSales),
-                          Icons.attach_money_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Transacciones',
-                          NumberHelper.formatNumber(totalTransactions),
-                          Icons.receipt_long_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Promedio/Día',
-                          CurrencyHelper.formatCurrency(avgSales),
-                          Icons.show_chart_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Ventas/Día Prom.',
-                          avgTransactions.toStringAsFixed(1),
-                          Icons.analytics_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Mejor Día',
-                          CurrencyHelper.formatCurrency(maxDaySales),
-                          Icons.star_rounded,
-                          subtitle: _formatDateFull(bestDay),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSummaryItem(
-                          context,
-                          'Día Más Bajo',
-                          CurrencyHelper.formatCurrency(
-                              minDaySales < double.infinity ? minDaySales : 0),
-                          Icons.trending_down_rounded,
-                          subtitle: worstDay.isNotEmpty
-                              ? _formatDateFull(worstDay)
-                              : '-',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            // Tendencia del período
+            AnalyticsStatusCard(
+              mainValue: '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
+              mainLabel: isPositive
+                  ? 'Crecimiento del período'
+                  : 'Decrecimiento del período',
+              icon: isPositive
+                  ? Icons.trending_up_rounded
+                  : Icons.trending_down_rounded,
+              statusColor: trendColor,
+              feedbackIcon: _getFeedbackIcon(trend),
+              feedbackText: _getFeedbackText(trend, isPositive),
+            ), 
             const SizedBox(height: 24),
+
             Text(
-              'Evolución Diaria',
+              'Evolución ${_getEvolutionLabel(trendData.granularity)}',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 200,
-              child: _buildDetailedChart(context, entries, maxDaySales),
+              height: 250,
+              child: _buildDetailedChart(context),
             ),
             const SizedBox(height: 24),
+            AnalyticsFeedbackBanner(
+              message:'La tendencia se calcula comparando las ventas de la primera mitad del período con la segunda mitad.',
+            ),
+            const SizedBox(height: 24),
+            // resumen : total facturado y transacciones
+            AnalyticsStatusCard(
+               leftMetric: AnalyticsMetric(
+                label: 'Total Facturado',
+                value: CurrencyHelper.formatCurrency(trendData.totalSales)),
+                rightMetric: AnalyticsMetric(
+                label: 'Transacciones',
+                value: NumberHelper.formatNumber(trendData.totalTransactions)
+                  ),
+                statusColor: _accentColor,
+            ),  
+            const SizedBox(height: 24),
+
             Text(
-              'Detalle por Día',
+              'Detalle ${_getDetailLabel(trendData.granularity)}',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-            ...entries.reversed.map((entry) => _buildDayItem(
+            ...dataPoints.reversed.map((point) => _buildDataPointItem(
                   context,
-                  entry.key,
-                  entry.value,
-                  maxDaySales,
+                  point,
+                  trendData.maxValue,
                 )),
           ],
         ),
@@ -591,86 +390,22 @@ class SalesTrendModal extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon, {
-    String? subtitle,
-  }) {
+  Widget _buildDetailedChart(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: _accentColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              fontSize: 10,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
+    final dataPoints = trendData.dataPoints;
 
-  double _calculateTrend() {
-    if (salesByDay.length < 2) return 0.0;
-
-    final entries = salesByDay.entries.toList();
-    final midPoint = entries.length ~/ 2;
-
-    double firstHalfTotal = 0;
-    double secondHalfTotal = 0;
-
-    for (int i = 0; i < midPoint; i++) {
-      firstHalfTotal += entries[i].value['totalSales'] as double? ?? 0.0;
-    }
-    for (int i = midPoint; i < entries.length; i++) {
-      secondHalfTotal += entries[i].value['totalSales'] as double? ?? 0.0;
-    }
-
-    if (firstHalfTotal == 0) return secondHalfTotal > 0 ? 100.0 : 0.0;
-    return ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100;
-  }
-
-  Widget _buildDetailedChart(
-    BuildContext context,
-    List<MapEntry<String, Map<String, dynamic>>> entries,
-    double maxY,
-  ) {
-    final theme = Theme.of(context);
-    if (entries.isEmpty) return const SizedBox();
+    if (dataPoints.isEmpty) return const SizedBox();
 
     final spots = <FlSpot>[];
-    for (int i = 0; i < entries.length; i++) {
-      final sales = entries[i].value['totalSales'] as double? ?? 0.0;
-      spots.add(FlSpot(i.toDouble(), sales));
+    for (int i = 0; i < dataPoints.length; i++) {
+      spots.add(FlSpot(i.toDouble(), dataPoints[i].value));
     }
 
-    maxY = maxY * 1.2;
+    double maxY = trendData.maxValue * 1.2;
     if (maxY == 0) maxY = 100;
+
+    // Determinar intervalo de etiquetas según cantidad de datos
+    final labelInterval = _calculateLabelInterval(dataPoints.length);
 
     return LineChart(
       LineChartData(
@@ -690,17 +425,16 @@ class SalesTrendModal extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 32,
-              interval:
-                  entries.length > 7 ? (entries.length / 7).ceilToDouble() : 1,
+              interval: labelInterval,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= entries.length) {
+                if (index < 0 || index >= dataPoints.length) {
                   return const SizedBox();
                 }
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    _formatDateShort(entries[index].key),
+                    dataPoints[index].label,
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontSize: 10,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -741,10 +475,10 @@ class SalesTrendModal extends StatelessWidget {
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final index = spot.x.toInt();
-                if (index < 0 || index >= entries.length) return null;
-                final entry = entries[index];
+                if (index < 0 || index >= dataPoints.length) return null;
+                final point = dataPoints[index];
                 return LineTooltipItem(
-                  '${_formatDateFull(entry.key)}\n${CurrencyHelper.formatCurrency(spot.y)}\n${entry.value['transactionCount']} ventas',
+                  '${point.fullLabel}\n${CurrencyHelper.formatCurrency(spot.y)}\n${point.transactionCount} ventas',
                   TextStyle(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
@@ -756,7 +490,7 @@ class SalesTrendModal extends StatelessWidget {
           ),
         ),
         minX: 0,
-        maxX: (entries.length - 1).toDouble().clamp(0, double.infinity),
+        maxX: (dataPoints.length - 1).toDouble().clamp(0, double.infinity),
         minY: 0,
         maxY: maxY,
         lineBarsData: [
@@ -768,7 +502,7 @@ class SalesTrendModal extends StatelessWidget {
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: FlDotData(
-              show: entries.length <= 14,
+              show: dataPoints.length <= 31,
               getDotPainter: (spot, percent, bar, index) {
                 return FlDotCirclePainter(
                   radius: 4,
@@ -795,16 +529,13 @@ class SalesTrendModal extends StatelessWidget {
     );
   }
 
-  Widget _buildDayItem(
+  Widget _buildDataPointItem(
     BuildContext context,
-    String dateKey,
-    Map<String, dynamic> data,
-    double maxSales,
+    TrendDataPoint point,
+    double maxValue,
   ) {
     final theme = Theme.of(context);
-    final sales = data['totalSales'] as double? ?? 0.0;
-    final transactions = data['transactionCount'] as int? ?? 0;
-    final progress = maxSales > 0 ? sales / maxSales : 0.0;
+    final progress = maxValue > 0 ? point.value / maxValue : 0.0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -821,14 +552,16 @@ class SalesTrendModal extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _formatDateFull(dateKey),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    point.fullLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 Text(
-                  CurrencyHelper.formatCurrency(sales),
+                  CurrencyHelper.formatCurrency(point.value),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: _accentColor,
@@ -852,7 +585,7 @@ class SalesTrendModal extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '${NumberHelper.formatNumber(transactions)} ventas',
+                  '${NumberHelper.formatNumber(point.transactionCount)} ventas',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
@@ -865,22 +598,46 @@ class SalesTrendModal extends StatelessWidget {
     );
   }
 
-  String _formatDateShort(String dateKey) {
-    try {
-      final date = DateTime.parse(dateKey);
-      return DateFormat('d/M', 'es').format(date);
-    } catch (_) {
-      return dateKey;
+  // === Helpers ===
+
+  String _getGranularityLabel(TrendGranularity granularity) {
+    switch (granularity) {
+      case TrendGranularity.hour:
+        return 'horas';
+      case TrendGranularity.day:
+        return 'días';
+      case TrendGranularity.month:
+        return 'meses';
     }
   }
 
-  String _formatDateFull(String dateKey) {
-    try {
-      final date = DateTime.parse(dateKey);
-      return DateFormat('EEEE d MMM', 'es').format(date);
-    } catch (_) {
-      return dateKey;
+  String _getEvolutionLabel(TrendGranularity granularity) {
+    switch (granularity) {
+      case TrendGranularity.hour:
+        return 'por Hora';
+      case TrendGranularity.day:
+        return 'Diaria';
+      case TrendGranularity.month:
+        return 'Mensual';
     }
+  }
+
+  String _getDetailLabel(TrendGranularity granularity) {
+    switch (granularity) {
+      case TrendGranularity.hour:
+        return 'por Hora';
+      case TrendGranularity.day:
+        return 'por Día';
+      case TrendGranularity.month:
+        return 'por Mes';
+    }
+  }
+
+  double _calculateLabelInterval(int dataPointCount) {
+    if (dataPointCount <= 7) return 1.0;
+    if (dataPointCount <= 15) return 2.0;
+    if (dataPointCount <= 31) return 3.0;
+    return (dataPointCount / 7).ceilToDouble();
   }
 
   IconData _getFeedbackIcon(double trend) {

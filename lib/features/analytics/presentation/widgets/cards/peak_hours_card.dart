@@ -108,7 +108,7 @@ class PeakHoursCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal:12, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
@@ -122,16 +122,17 @@ class PeakHoursCard extends StatelessWidget {
           // Icono de reloj pequeño
           Icon(
             Icons.schedule_rounded,
-            size: 16,
+            size: 14,
             color: color,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           // Hora
           Text(
             hourLabel,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w400,
               color: theme.colorScheme.onSurface,
+
             ),
           ),
           const Spacer(),
@@ -141,7 +142,7 @@ class PeakHoursCard extends StatelessWidget {
             style: theme.textTheme.labelSmall?.copyWith(
               fontSize: 10,
               color: color,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -371,35 +372,10 @@ class PeakHoursModal extends StatelessWidget {
                     child: Column(
                       children: [
                         // Feedback contextual
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _accentColor.withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.lightbulb_outline_rounded,
-                                size: 16,
-                                color: _accentColor,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _getModalFeedback(peakHours),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        AnalyticsFeedbackBanner(
+                          icon: Icon(Icons.lightbulb_outline_rounded),
+                          message: _getModalFeedback(peakHours),
+                          accentColor: _accentColor,
                         ),
                         const SizedBox(height: 16),
                         Row(

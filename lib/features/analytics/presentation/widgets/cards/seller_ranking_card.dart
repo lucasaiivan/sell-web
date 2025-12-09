@@ -269,7 +269,6 @@ class SellerRankingModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return AnalyticsModal(
       accentColor: _accentColor,
       icon: Icons.emoji_events_rounded,

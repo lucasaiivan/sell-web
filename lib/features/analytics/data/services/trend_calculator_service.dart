@@ -59,6 +59,9 @@ class TrendCalculatorService {
       minValue: stats.minValue,
       totalSales: stats.totalSales,
       totalTransactions: stats.totalTransactions,
+      activeDataPoints: stats.activeDataPoints,
+      firstHalfSales: stats.firstHalfSales,
+      secondHalfSales: stats.secondHalfSales,
     );
   }
 
@@ -291,6 +294,9 @@ class TrendCalculatorService {
         minValue: 0.0,
         totalSales: 0.0,
         totalTransactions: 0,
+        activeDataPoints: 0,
+        firstHalfSales: 0.0,
+        secondHalfSales: 0.0,
       );
     }
 
@@ -298,32 +304,41 @@ class TrendCalculatorService {
     int totalTransactions = 0;
     double maxValue = 0.0;
     double minValue = double.infinity;
+    int activeDataPoints = 0;
 
     for (final point in dataPoints) {
       totalSales += point.value;
       totalTransactions += point.transactionCount;
       if (point.value > maxValue) maxValue = point.value;
       if (point.value < minValue) minValue = point.value;
+      // Contar puntos con actividad (transacciones > 0)
+      if (point.transactionCount > 0) activeDataPoints++;
     }
 
     // Si todos los valores son 0, ajustar minValue
     if (minValue == double.infinity) minValue = 0.0;
 
-    // Calcular tendencia (primera mitad vs segunda mitad)
-    final trendPercentage = _calculateTrendPercentage(dataPoints);
+    // Calcular ventas por mitad y tendencia
+    final halfResult = _calculateTrendWithHalves(dataPoints);
 
     return _Statistics(
-      trendPercentage: trendPercentage,
+      trendPercentage: halfResult.trendPercentage,
       maxValue: maxValue,
       minValue: minValue,
       totalSales: totalSales,
       totalTransactions: totalTransactions,
+      activeDataPoints: activeDataPoints,
+      firstHalfSales: halfResult.firstHalfSales,
+      secondHalfSales: halfResult.secondHalfSales,
     );
   }
 
-  /// Calcula el porcentaje de tendencia comparando primera mitad vs segunda mitad
-  double _calculateTrendPercentage(List<TrendDataPoint> dataPoints) {
-    if (dataPoints.length < 2) return 0.0;
+  /// Calcula el porcentaje de tendencia y ventas por mitad
+  ({double trendPercentage, double firstHalfSales, double secondHalfSales})
+      _calculateTrendWithHalves(List<TrendDataPoint> dataPoints) {
+    if (dataPoints.length < 2) {
+      return (trendPercentage: 0.0, firstHalfSales: 0.0, secondHalfSales: 0.0);
+    }
 
     final midPoint = dataPoints.length ~/ 2;
 
@@ -337,11 +352,19 @@ class TrendCalculatorService {
       secondHalfTotal += dataPoints[i].value;
     }
 
+    double trendPercentage;
     if (firstHalfTotal == 0) {
-      return secondHalfTotal > 0 ? 100.0 : 0.0;
+      trendPercentage = secondHalfTotal > 0 ? 100.0 : 0.0;
+    } else {
+      trendPercentage =
+          ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100;
     }
 
-    return ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100;
+    return (
+      trendPercentage: trendPercentage,
+      firstHalfSales: firstHalfTotal,
+      secondHalfSales: secondHalfTotal,
+    );
   }
 
   // === Helpers ===
@@ -457,6 +480,9 @@ class _Statistics {
   final double minValue;
   final double totalSales;
   final int totalTransactions;
+  final int activeDataPoints;
+  final double firstHalfSales;
+  final double secondHalfSales;
 
   _Statistics({
     required this.trendPercentage,
@@ -464,5 +490,8 @@ class _Statistics {
     required this.minValue,
     required this.totalSales,
     required this.totalTransactions,
+    required this.activeDataPoints,
+    required this.firstHalfSales,
+    required this.secondHalfSales,
   });
 }

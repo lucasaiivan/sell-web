@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 
 /// Breakpoints para diferentes tamaños de pantalla siguiendo Material Design 3
 class ResponsiveHelper {
-  static const double mobile = 600;
-  static const double tablet = 840;
-  static const double desktop = 1200;
-  static const double largeDesktop = 1600;
+  // ==========================================
+  // BREAKPOINTS DE PANTALLA
+  // ==========================================
+  static const double mobilePortrait = 440; // Móviles en portrait muy pequeños/s
+  static const double mobile = 600;      // Móviles estándar
+  static const double tablet = 840;     // Tablets pequeñas
+  static const double desktop = 1200;   // Desktop estándar
+  static const double largeDesktop = 1600; // Desktop grande
+ 
 
+  // ==========================================
+  // RELACIONES DE ASPECTO
+  // ==========================================
   // Relaciones de aspecto típicas para dispositivos móviles
   static const double minMobileAspectRatio = 0.4; // Muy alto y estrecho
   static const double maxMobileAspectRatio = 1.2; // Casi cuadrado

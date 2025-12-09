@@ -207,8 +207,28 @@ class SalesTrendCard extends StatelessWidget {
     final theme = Theme.of(context);
     final trend = trendData.trendPercentage;
     final isPositive = trend >= 0;
-    final trendColor =
-        isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    final isSignificant = trendData.isTrendSignificant;
+
+    // Color según significancia y tendencia
+    final Color trendColor;
+    if (!isSignificant) {
+      // Gris para datos no significativos
+      trendColor = theme.colorScheme.outline;
+    } else {
+      trendColor =
+          isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    }
+
+    // Texto del badge según contexto
+    final String badgeText;
+    if (!isSignificant) {
+      // Mostrar cantidad de ventas en lugar de porcentaje no significativo
+      badgeText =
+          '${trendData.totalTransactions} venta${trendData.totalTransactions == 1 ? '' : 's'}';
+    } else {
+      badgeText =
+          '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(trend)}';
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -223,7 +243,7 @@ class SalesTrendCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${isPositive ? '+' : ''}${NumberHelper.formatPercentage(trend)}',
+            badgeText,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: trendColor,
@@ -238,10 +258,20 @@ class SalesTrendCard extends StatelessWidget {
   Widget _buildFeedbackText(BuildContext context) {
     final theme = Theme.of(context);
     final trend = trendData.trendPercentage;
+    final isSignificant = trendData.isTrendSignificant;
 
     // Generar mensaje de feedback según el estado de la tendencia
     String feedbackText;
-    if (trend.abs() < 5) {
+    if (!isSignificant) {
+      // Datos insuficientes para una tendencia significativa
+      if (trendData.totalTransactions == 1) {
+        feedbackText = 'Primera venta';
+      } else if (trendData.totalTransactions < 3) {
+        feedbackText = 'Pocas ventas';
+      } else {
+        feedbackText = 'Datos iniciales';
+      }
+    } else if (trend.abs() < 5) {
       feedbackText = 'Estable';
     } else if (trend >= 0) {
       if (trend > 20) {
@@ -311,11 +341,37 @@ class SalesTrendModal extends StatelessWidget {
     // Obtener granularidad para títulos contextuales
     final granularityLabel = _getGranularityLabel(trendData.granularity);
 
-    // Calcular tendencia
+    // Calcular tendencia y significancia
     final trend = trendData.trendPercentage;
     final isPositive = trend >= 0;
-    final trendColor =
-        isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    final isSignificant = trendData.isTrendSignificant;
+
+    // Color según significancia
+    final Color trendColor;
+    if (!isSignificant) {
+      trendColor = theme.colorScheme.outline;
+    } else {
+      trendColor =
+          isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    }
+
+    // Valores y labels según contexto
+    final String mainValue;
+    final String mainLabel;
+    final IconData mainIcon;
+
+    if (!isSignificant) {
+      mainValue =
+          '${trendData.totalTransactions} venta${trendData.totalTransactions == 1 ? '' : 's'}';
+      mainLabel = 'Datos insuficientes para análisis de tendencia';
+      mainIcon = Icons.hourglass_empty_rounded;
+    } else {
+      mainValue = '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%';
+      mainLabel =
+          isPositive ? 'Crecimiento del período' : 'Decrecimiento del período';
+      mainIcon =
+          isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded;
+    }
 
     return AnalyticsModal(
       title: 'Análisis de Tendencia',
@@ -330,18 +386,23 @@ class SalesTrendModal extends StatelessWidget {
           children: [
             // Tendencia del período
             AnalyticsStatusCard(
-              mainValue: '${isPositive ? '+' : ''}${trend.toStringAsFixed(1)}%',
-              mainLabel: isPositive
-                  ? 'Crecimiento del período'
-                  : 'Decrecimiento del período',
-              icon: isPositive
-                  ? Icons.trending_up_rounded
-                  : Icons.trending_down_rounded,
+              mainValue: mainValue,
+              mainLabel: mainLabel,
+              icon: mainIcon,
               statusColor: trendColor,
-              feedbackIcon: _getFeedbackIcon(trend),
-              feedbackText: _getFeedbackText(trend, isPositive),
+              feedbackIcon: _getFeedbackIcon(trend, isSignificant),
+              feedbackText: _getFeedbackText(trend, isPositive, isSignificant),
             ),
             const SizedBox(height: 24),
+
+            // Banner explicativo según contexto
+            if (!isSignificant) ...[
+              AnalyticsFeedbackBanner(
+                message: _getInsufficientDataMessage(),
+                icon: const Icon(Icons.info_outline_rounded),
+              ),
+              const SizedBox(height: 24),
+            ],
 
             Text(
               'Evolución ${_getEvolutionLabel(trendData.granularity)}',
@@ -641,7 +702,12 @@ class SalesTrendModal extends StatelessWidget {
     return (dataPointCount / 7).ceilToDouble();
   }
 
-  IconData _getFeedbackIcon(double trend) {
+  IconData _getFeedbackIcon(double trend, bool isSignificant) {
+    // Si los datos no son significativos, mostrar icono neutral
+    if (!isSignificant) {
+      return Icons.hourglass_empty_rounded;
+    }
+
     if (trend.abs() < 5) {
       return Icons.remove_rounded;
     } else if (trend >= 0) {
@@ -663,7 +729,20 @@ class SalesTrendModal extends StatelessWidget {
     }
   }
 
-  String _getFeedbackText(double trend, bool isPositive) {
+  String _getFeedbackText(double trend, bool isPositive, bool isSignificant) {
+    // Si los datos no son significativos, dar feedback contextual
+    if (!isSignificant) {
+      if (trendData.totalTransactions == 1) {
+        return '¡Primera venta del período! Aún no hay suficientes datos para analizar la tendencia.';
+      } else if (trendData.totalTransactions < 3) {
+        return 'Con solo ${trendData.totalTransactions} ventas, necesitas más actividad para un análisis de tendencia confiable.';
+      } else if (trendData.firstHalfSales == 0) {
+        return 'Las ventas se concentran al final del período. Espera más actividad para una comparación significativa.';
+      } else {
+        return 'Aún no hay suficientes datos distribuidos en el período para un análisis de tendencia preciso.';
+      }
+    }
+
     if (trend.abs() < 5) {
       return 'Tus ventas se mantienen estables en el período';
     } else if (isPositive) {
@@ -682,6 +761,19 @@ class SalesTrendModal extends StatelessWidget {
       } else {
         return 'Tus ventas han disminuido levemente';
       }
+    }
+  }
+
+  /// Genera mensaje explicativo cuando los datos son insuficientes
+  String _getInsufficientDataMessage() {
+    if (trendData.totalTransactions == 1) {
+      return 'El análisis de tendencia compara la primera mitad del período con la segunda mitad. Con una sola venta, aún no es posible calcular una tendencia significativa.';
+    } else if (trendData.firstHalfSales == 0 && trendData.secondHalfSales > 0) {
+      return 'Todas las ventas se concentran en la segunda mitad del período. El porcentaje técnico sería +100%, pero esto no representa un crecimiento real sino el inicio de la actividad.';
+    } else if (trendData.activeDataPoints < 2) {
+      return 'Las ventas están muy concentradas en un solo momento. Se necesita más distribución temporal para un análisis de tendencia confiable.';
+    } else {
+      return 'Se necesitan más transacciones distribuidas a lo largo del período para obtener un análisis de tendencia estadísticamente significativo.';
     }
   }
 }

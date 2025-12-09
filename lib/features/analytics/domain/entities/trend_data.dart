@@ -33,6 +33,15 @@ class TrendData extends Equatable {
   /// Total de transacciones del período
   final int totalTransactions;
 
+  /// Cantidad de puntos de datos con ventas (no vacíos)
+  final int activeDataPoints;
+
+  /// Ventas totales de la primera mitad del período
+  final double firstHalfSales;
+
+  /// Ventas totales de la segunda mitad del período
+  final double secondHalfSales;
+
   const TrendData({
     required this.granularity,
     required this.dataPoints,
@@ -41,6 +50,9 @@ class TrendData extends Equatable {
     required this.minValue,
     required this.totalSales,
     required this.totalTransactions,
+    this.activeDataPoints = 0,
+    this.firstHalfSales = 0.0,
+    this.secondHalfSales = 0.0,
   });
 
   /// Constructor vacío
@@ -53,6 +65,9 @@ class TrendData extends Equatable {
       minValue: 0.0,
       totalSales: 0.0,
       totalTransactions: 0,
+      activeDataPoints: 0,
+      firstHalfSales: 0.0,
+      secondHalfSales: 0.0,
     );
   }
 
@@ -61,6 +76,52 @@ class TrendData extends Equatable {
 
   /// Obtiene el rango de valores (max - min)
   double get valueRange => maxValue - minValue;
+
+  /// Indica si la tendencia es estadísticamente significativa
+  ///
+  /// Se considera significativa cuando:
+  /// - Hay al menos 2 transacciones
+  /// - Hay al menos 2 puntos de datos activos
+  /// - Ambas mitades tienen ventas (para evitar el caso 0 -> algo = 100%)
+  bool get isTrendSignificant {
+    // Mínimo de transacciones para considerar significativo
+    if (totalTransactions < 2) return false;
+    // Mínimo de puntos de datos con actividad
+    if (activeDataPoints < 2) return false;
+    // Si la primera mitad no tiene ventas, la comparación no es significativa
+    // (excepto si la segunda tampoco tiene, en cuyo caso ambas son 0)
+    if (firstHalfSales == 0 && secondHalfSales > 0) return false;
+    return true;
+  }
+
+  /// Indica si hay datos insuficientes para un análisis confiable
+  ///
+  /// Retorna true cuando hay datos pero son muy pocos para sacar conclusiones
+  bool get hasInsufficientData {
+    return hasData && !isTrendSignificant;
+  }
+
+  /// Nivel de confiabilidad del análisis (0.0 - 1.0)
+  ///
+  /// Basado en cantidad de transacciones y distribución de datos
+  double get confidenceLevel {
+    if (!hasData) return 0.0;
+    if (!isTrendSignificant) return 0.2;
+
+    // Más transacciones = mayor confianza (hasta 20 para confianza máxima)
+    final transactionScore = (totalTransactions / 20).clamp(0.0, 1.0);
+    // Más puntos activos = mayor confianza
+    final distributionScore =
+        (activeDataPoints / dataPoints.length).clamp(0.0, 1.0);
+    // Ambas mitades con ventas = mayor confianza
+    final balanceScore =
+        (firstHalfSales > 0 && secondHalfSales > 0) ? 1.0 : 0.5;
+
+    return (transactionScore * 0.4 +
+            distributionScore * 0.3 +
+            balanceScore * 0.3)
+        .clamp(0.3, 1.0);
+  }
 
   @override
   List<Object?> get props => [
@@ -71,6 +132,9 @@ class TrendData extends Equatable {
         minValue,
         totalSales,
         totalTransactions,
+        activeDataPoints,
+        firstHalfSales,
+        secondHalfSales,
       ];
 }
 

@@ -39,7 +39,9 @@ class ActiveCashRegistersCard extends StatelessWidget {
       isZero: isEmpty,
       icon: Icons.point_of_sale_rounded,
       title: 'Cajas Activas',
-      subtitle: isEmpty ? null: '$count ${count == 1 ? 'caja abierta' : 'cajas abiertas'}',
+      subtitle: isEmpty
+          ? null
+          : '$count ${count == 1 ? 'caja abierta' : 'cajas abiertas'}',
       expandChild: true, // Expandir para poder alinear al fondo
       showActionIndicator: !isEmpty,
       onTap: isEmpty ? null : () => _showCashRegistersModal(context),
@@ -49,22 +51,24 @@ class ActiveCashRegistersCard extends StatelessWidget {
               builder: (context, constraints) {
                 // Determinar si debemos mostrar versión compacta basado en el ancho
                 final isCompact = constraints.maxWidth < 200;
-                
+
                 // Calcular dinámicamente cuántos items mostrar según el espacio
                 // Altura estimada: item ~60px (compacto ~50px), spacing + divider ~17px
                 final itemHeight = isCompact ? 50.0 : 60.0;
                 const itemSpacing = 17.0; // 8 + 1 (divider) + 8
                 const paddingTop = 12.0;
-                
-                final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+
+                final visibleCount =
+                    DynamicItemsCalculator.calculateVisibleItems(
                   availableHeight: constraints.maxHeight - paddingTop,
                   itemHeight: itemHeight,
                   itemSpacing: itemSpacing,
                   minItems: 1,
                   maxItems: activeCashRegisters.length,
                 );
-                
-                final visibleRegisters = activeCashRegisters.take(visibleCount).toList();
+
+                final visibleRegisters =
+                    activeCashRegisters.take(visibleCount).toList();
 
                 return Padding(
                   padding: const EdgeInsets.only(top: paddingTop),
@@ -78,7 +82,8 @@ class ActiveCashRegistersCard extends StatelessWidget {
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildCashRegisterItem(context, cashRegister, color, isCompact),
+                          _buildCashRegisterItem(
+                              context, cashRegister, color, isCompact),
                           if (!isLast) ...[
                             const SizedBox(height: 8),
                             Divider(
@@ -195,18 +200,20 @@ class ActiveCashRegistersCard extends StatelessWidget {
               if (isCompact) ...[
                 Flexible(
                   child: Row(
-                    children: [ 
+                    children: [
                       Icon(
                         Icons.timelapse_rounded,
                         size: 14,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         DateFormatter.getElapsedTime(
                             fechaInicio: cashRegister.opening),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
                           fontWeight: FontWeight.w500,
                           fontSize: 11,
                         ),
@@ -216,7 +223,7 @@ class ActiveCashRegistersCard extends StatelessWidget {
                 ),
               ],
               // Operador
-              if(!isCompact)...[
+              if (!isCompact) ...[
                 Flexible(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

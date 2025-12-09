@@ -218,7 +218,8 @@ class AnalyticsPage extends StatelessWidget {
         currentFilter: provider.selectedFilter,
         onSalesTap: () => showTransactionsDialog(
           context: context,
-          transactions: analytics.getFilteredTransactions(provider.selectedFilter),
+          transactions:
+              analytics.getFilteredTransactions(provider.selectedFilter),
           currentFilter: provider.selectedFilter,
           onTransactionTap: (transaction) =>
               _showTransactionDetail(context, transaction),

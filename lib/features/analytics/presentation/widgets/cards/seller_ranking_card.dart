@@ -51,17 +51,18 @@ class SellerRankingCard extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxWidth < 180;
-                
+
                 // Calcular dinámicamente cuántos vendedores mostrar
                 // Altura estimada: item ~32px (compacto ~28px), spacing ~4px, feedback ~24px
                 final itemHeight = isCompact ? 28.0 : 32.0;
                 const itemSpacing = 4.0;
                 const feedbackHeight = 30.0; // Incluye SizedBox(6) + text
-                
+
                 // Determinar si hay espacio para mostrar el feedback
                 final showFeedback = constraints.maxHeight > 100 && !isCompact;
-                
-                final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+
+                final visibleCount =
+                    DynamicItemsCalculator.calculateVisibleItems(
                   availableHeight: constraints.maxHeight,
                   itemHeight: itemHeight,
                   itemSpacing: itemSpacing,
@@ -69,8 +70,9 @@ class SellerRankingCard extends StatelessWidget {
                   maxItems: salesBySeller.length,
                   reservedHeight: showFeedback ? feedbackHeight : 0,
                 );
-                
-                final previewSellers = salesBySeller.take(visibleCount).toList();
+
+                final previewSellers =
+                    salesBySeller.take(visibleCount).toList();
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -85,11 +87,11 @@ class SellerRankingCard extends StatelessWidget {
                       final totalSales = seller['totalSales'] as double? ?? 0.0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
-                        child: _buildSellerPreview(
-                            context, sellerName, totalSales, index + 1, isCompact),
+                        child: _buildSellerPreview(context, sellerName,
+                            totalSales, index + 1, isCompact),
                       );
                     }),
-                    
+
                     if (showFeedback) ...[
                       const SizedBox(height: 6),
                       // Feedback
@@ -107,7 +109,7 @@ class SellerRankingCard extends StatelessWidget {
   Widget _buildFeedbackText(BuildContext context, int totalSellers) {
     final theme = Theme.of(context);
     String feedback;
-    
+
     if (totalSellers >= 5) {
       feedback = 'Equipo grande trabajando';
     } else if (totalSellers >= 3) {
@@ -117,7 +119,7 @@ class SellerRankingCard extends StatelessWidget {
     } else {
       feedback = 'Operación individual';
     }
-    
+
     return Text(
       feedback,
       style: theme.textTheme.bodySmall?.copyWith(
@@ -228,9 +230,8 @@ class SellerRankingCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (!isCompact)
-            const SizedBox(width: 4),
-          
+          if (!isCompact) const SizedBox(width: 4),
+
           // Ventas compacto
           Text(
             CurrencyHelper.formatCurrency(totalSales),
@@ -286,77 +287,97 @@ class SellerRankingModal extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: AnalyticsFeedbackBanner(
-                    icon: Icon( Icons.people_rounded),
+                    icon: Icon(Icons.people_rounded),
                     message: _getModalFeedback(salesBySeller),
                   ),
                 ),
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: salesBySeller.length,
                     itemBuilder: (context, index) {
-                final seller = salesBySeller[index];
-                final sellerName = seller['sellerName'] as String;
-                final totalSales = seller['totalSales'] as double;
-                final transactionCount = seller['transactionCount'] as int;
-                final averageTicket = seller['averageTicket'] as double;
-                final position = index + 1;
+                      final seller = salesBySeller[index];
+                      final sellerName = seller['sellerName'] as String;
+                      final totalSales = seller['totalSales'] as double;
+                      final transactionCount =
+                          seller['transactionCount'] as int;
+                      final averageTicket = seller['averageTicket'] as double;
+                      final position = index + 1;
 
-                return AnalyticsListItem(
-                  position: position,
-                  accentColor: _accentColor,
-                  leading: _buildSellerAvatar(context, sellerName, position),
-                  title: sellerName,
-                  subtitleWidget: Row(
-                    children: [
-                      Icon(
-                        Icons.receipt_long_rounded,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$transactionCount ventas',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      return AnalyticsListItem(
+                        position: position,
+                        accentColor: _accentColor,
+                        leading:
+                            _buildSellerAvatar(context, sellerName, position),
+                        title: sellerName,
+                        subtitleWidget: Row(
+                          children: [
+                            Icon(
+                              Icons.receipt_long_rounded,
+                              size: 14,
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
                             ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(
-                        Icons.analytics_rounded,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Prom: ${CurrencyHelper.formatCurrency(averageTicket)}',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            const SizedBox(width: 4),
+                            Text(
+                              '$transactionCount ventas',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(
+                              Icons.analytics_rounded,
+                              size: 14,
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
                             ),
-                      ),
-                    ],
-                  ),
-                  trailingWidgets: [
-                    Text(
-                      CurrencyHelper.formatCurrency(totalSales),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: _accentColor,
+                            const SizedBox(width: 4),
+                            Text(
+                              'Prom: ${CurrencyHelper.formatCurrency(averageTicket)}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        trailingWidgets: [
+                          Text(
+                            CurrencyHelper.formatCurrency(totalSales),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: _accentColor,
+                                ),
                           ),
-                    ),
-                    Text(
-                      'total vendido',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          Text(
+                            'total vendido',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
                           ),
-                    ),
-                  ],
-                );
+                        ],
+                      );
                     },
                   ),
                 ),
@@ -367,7 +388,7 @@ class SellerRankingModal extends StatelessWidget {
 
   String _getModalFeedback(List<Map<String, dynamic>> salesBySeller) {
     final sellersCount = salesBySeller.length;
-    
+
     if (sellersCount >= 5) {
       return 'Tienes un equipo grande. Motívalos con metas y reconocimientos para mejorar resultados.';
     } else if (sellersCount >= 3) {

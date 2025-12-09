@@ -301,16 +301,17 @@ class TransactionListItem extends StatelessWidget {
           flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [ 
+            children: [
               Row(
                 children: [
                   // badge : método de pago
                   Material(
-                    color: _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
+                    color:
+                        _getPaymentColor(ticket.payMode).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -338,7 +339,8 @@ class TransactionListItem extends StatelessWidget {
                   Text(
                     _formatDateTime(ticket.creation.toDate()),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w400,
                     ),
                   ),

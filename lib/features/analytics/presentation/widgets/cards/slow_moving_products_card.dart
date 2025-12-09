@@ -52,8 +52,9 @@ class SlowMovingProductsCard extends StatelessWidget {
                 const itemHeight = 28.0;
                 const itemSpacing = 4.0;
                 const feedbackHeight = 30.0; // Incluye SizedBox(6) + text
-                
-                final visibleCount = DynamicItemsCalculator.calculateVisibleItems(
+
+                final visibleCount =
+                    DynamicItemsCalculator.calculateVisibleItems(
                   availableHeight: constraints.maxHeight,
                   itemHeight: itemHeight,
                   itemSpacing: itemSpacing,
@@ -61,8 +62,9 @@ class SlowMovingProductsCard extends StatelessWidget {
                   maxItems: slowMovingProducts.length,
                   reservedHeight: feedbackHeight,
                 );
-                
-                final previewProducts = slowMovingProducts.take(visibleCount).toList();
+
+                final previewProducts =
+                    slowMovingProducts.take(visibleCount).toList();
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,11 +73,14 @@ class SlowMovingProductsCard extends StatelessWidget {
                   children: [
                     // Mostrar productos con lenta rotación según el espacio
                     ...previewProducts.map((productData) {
-                      final product = productData['product'] as ProductCatalogue;
-                      final quantitySold = productData['quantitySold'] as int? ?? 0;
+                      final product =
+                          productData['product'] as ProductCatalogue;
+                      final quantitySold =
+                          productData['quantitySold'] as int? ?? 0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
-                        child: _buildSlowProductPreview(context, product, quantitySold),
+                        child: _buildSlowProductPreview(
+                            context, product, quantitySold),
                       );
                     }),
                     const SizedBox(height: 6),
@@ -91,7 +96,7 @@ class SlowMovingProductsCard extends StatelessWidget {
   Widget _buildFeedbackText(BuildContext context, int totalSlowProducts) {
     final theme = Theme.of(context);
     String feedback;
-    
+
     if (totalSlowProducts >= 20) {
       feedback = 'Requiere su atención';
     } else if (totalSlowProducts >= 10) {
@@ -101,7 +106,7 @@ class SlowMovingProductsCard extends StatelessWidget {
     } else {
       feedback = 'Pocas alertas de rotación';
     }
-    
+
     return Text(
       feedback,
       style: theme.textTheme.bodySmall?.copyWith(
@@ -126,7 +131,7 @@ class SlowMovingProductsCard extends StatelessWidget {
                 : 'Producto sin nombre';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical:4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
@@ -184,7 +189,8 @@ class SlowMovingProductsCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SlowMovingProductsModal(slowMovingProducts: slowMovingProducts),
+      builder: (context) =>
+          SlowMovingProductsModal(slowMovingProducts: slowMovingProducts),
     );
   }
 }
@@ -253,7 +259,7 @@ class SlowMovingProductsModal extends StatelessWidget {
                 SliverAppBar(
                   pinned: true,
                   backgroundColor: colorScheme.surface,
-                  surfaceTintColor: colorScheme.surface, 
+                  surfaceTintColor: colorScheme.surface,
                   automaticallyImplyLeading: false,
                   titleSpacing: 0,
                   title: Padding(
@@ -328,7 +334,8 @@ class SlowMovingProductsModal extends StatelessWidget {
                 else ...[
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
                       child: AnalyticsFeedbackBanner(
                         icon: Icon(
                           slowMovingProducts.length >= 20

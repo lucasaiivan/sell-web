@@ -200,8 +200,7 @@ class MostProfitableProductsModal extends StatelessWidget {
               subtitle: 'Agrega precio de compra a tus productos',
             )
           : Column(
-              children: [ 
-
+              children: [
                 // view: Feedback sobre la variedad de productos rentables
                 AnalyticsFeedbackBanner(
                   icon: const Icon(Icons.insights_rounded),
@@ -209,7 +208,7 @@ class MostProfitableProductsModal extends StatelessWidget {
                   accentColor: _accentColor,
                   margin: const EdgeInsets.all(12),
                 ),
-                
+
                 Expanded(
                   child: ListView.builder(
                     padding:

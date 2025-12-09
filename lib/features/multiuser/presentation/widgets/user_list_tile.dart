@@ -134,7 +134,7 @@ class UserListTile extends StatelessWidget {
                 Icons.check_circle,
                 size: 14,
                 color: colorScheme.primary,
-              ), 
+              ),
             ],
           ),
           const SizedBox(width: 8),
@@ -155,7 +155,7 @@ class UserListTile extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-        ), 
+        ),
       ],
     );
   }

@@ -52,7 +52,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
 
     return AppBar(
       toolbarHeight: toolbarHeight,
@@ -79,7 +78,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
       surfaceTintColor: colorScheme.surfaceTint,
       elevation: 0,
-      scrolledUnderElevation:1,
+      scrolledUnderElevation: 1,
       bottom: bottom,
       iconTheme: IconThemeData(color: colorScheme.onSurface),
     );

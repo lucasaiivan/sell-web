@@ -12,7 +12,8 @@ class ThemeService {
 
   final ValueNotifier<ThemeMode> _themeMode = ValueNotifier(ThemeMode.system);
   // Color azul profesional (Indigo/Blue) para transmitir confianza y profesionalismo
-  final ValueNotifier<Color> _seedColor = ValueNotifier(const Color(0xFF1565C0));
+  final ValueNotifier<Color> _seedColor =
+      ValueNotifier(const Color(0xFF1565C0));
 
   // Configuraciones personalizables para tonalidades de desenfoque
   double _dialogBarrierOpacityLight = 0.2;
@@ -268,7 +269,8 @@ class ThemeService {
   /// Construye el tema con configuraciones personalizadas de diálogos y drawers
   ThemeData _buildTheme(ColorScheme colorScheme, bool isDark) {
     // Color de fondo profesional para modo claro (evita fatiga visual)
-    final backgroundColor = isDark ? colorScheme.surface : const Color(0xFFF2F5F8);
+    final backgroundColor =
+        isDark ? colorScheme.surface : const Color(0xFFF2F5F8);
 
     return ThemeData(
       colorScheme: colorScheme,

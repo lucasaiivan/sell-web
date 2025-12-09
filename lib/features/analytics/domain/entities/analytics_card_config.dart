@@ -48,20 +48,20 @@ class AnalyticsCardConfig {
 
 /// Tipos de tarjetas disponibles en el dashboard de analytics
 enum AnalyticsCardType {
-  billing,        // Facturación
-  profit,         // Ganancia
-  sales,          // Ventas (cantidad)
-  averageTicket,  // Ticket promedio
-  products,       // Productos vendidos
-  profitability,  // Rentabilidad
-  sellerRanking,  // Ranking de vendedores
-  peakHours,      // Horas pico
-  slowMoving,     // Productos de lenta rotación
-  salesTrend,     // Tendencia de ventas
-  categoryDist,   // Distribución por categorías
-  weekdaySales,   // Ventas por día de la semana
+  billing, // Facturación
+  profit, // Ganancia
+  sales, // Ventas (cantidad)
+  averageTicket, // Ticket promedio
+  products, // Productos vendidos
+  profitability, // Rentabilidad
+  sellerRanking, // Ranking de vendedores
+  peakHours, // Horas pico
+  slowMoving, // Productos de lenta rotación
+  salesTrend, // Tendencia de ventas
+  categoryDist, // Distribución por categorías
+  weekdaySales, // Ventas por día de la semana
   paymentMethods, // Medios de pago
-  cashRegisters,  // Cajas activas
+  cashRegisters, // Cajas activas
 }
 
 /// Extensión para obtener configuración por defecto de cada tipo

@@ -58,9 +58,8 @@ class _CashFlowDialogState extends State<CashFlowDialog> {
         widget.isInflow ? 'Ingreso de Efectivo' : 'Egreso de Efectivo';
     final buttonText =
         widget.isInflow ? 'Registrar Ingreso' : 'Registrar Egreso';
-    final icon = widget.isInflow
-        ? Icons.arrow_downward
-        : Icons.arrow_outward_rounded;
+    final icon =
+        widget.isInflow ? Icons.arrow_downward : Icons.arrow_outward_rounded;
     final headerColor = widget.isInflow
         ? Colors.green.withValues(alpha: 0.1)
         : Colors.red.withValues(alpha: 0.1);

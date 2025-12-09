@@ -74,10 +74,10 @@ class PeakHoursCard extends StatelessWidget {
 
   Widget _buildFeedbackText(BuildContext context, int? peakHour) {
     if (peakHour == null) return const SizedBox();
-    
+
     final theme = Theme.of(context);
     String feedback;
-    
+
     if (peakHour >= 12 && peakHour <= 14) {
       feedback = 'Horario de almuerzo muy activo';
     } else if (peakHour >= 19 && peakHour <= 21) {
@@ -91,7 +91,7 @@ class PeakHoursCard extends StatelessWidget {
     } else {
       feedback = 'Horario inusual de ventas';
     }
-    
+
     return Text(
       feedback,
       style: theme.textTheme.bodySmall?.copyWith(
@@ -108,7 +108,7 @@ class PeakHoursCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal:12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
@@ -132,7 +132,6 @@ class PeakHoursCard extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w400,
               color: theme.colorScheme.onSurface,
-
             ),
           ),
           const Spacer(),
@@ -226,9 +225,9 @@ class PeakHoursModal extends StatelessWidget {
 
   String _getModalFeedback(List<Map<String, dynamic>> peakHours) {
     if (peakHours.isEmpty) return 'Sin datos de horas pico';
-    
+
     final topHour = peakHours.first['hour'] as int;
-    
+
     if (topHour >= 12 && topHour <= 14) {
       return 'Tu hora pico está en el almuerzo. Asegura suficiente personal y stock.';
     } else if (topHour >= 19 && topHour <= 21) {
@@ -390,15 +389,18 @@ class PeakHoursModal extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.local_fire_department_rounded,
-                                      color: _accentColor, size: 16),
+                                  const Icon(
+                                      Icons.local_fire_department_rounded,
+                                      color: _accentColor,
+                                      size: 16),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Top 5 Horas Pico',
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: _accentColor,
-                                        ),
+                                    style:
+                                        theme.textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: _accentColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -474,8 +476,8 @@ class PeakHoursModal extends StatelessWidget {
                               Text(
                                 '$transactionCount ventas',
                                 style: theme.textTheme.labelSmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               AnalyticsBadge(
@@ -488,16 +490,15 @@ class PeakHoursModal extends StatelessWidget {
                             Text(
                               CurrencyHelper.formatCurrency(totalSales),
                               style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: _accentColor,
-                                  ),
+                                fontWeight: FontWeight.bold,
+                                color: _accentColor,
+                              ),
                             ),
                             Text(
                               'vendido',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                    color:
-                                        theme.colorScheme.onSurfaceVariant,
-                                  ),
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),

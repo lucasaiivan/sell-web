@@ -290,7 +290,8 @@ class FormInputTextField extends StatelessWidget {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
             width: 0,
           ),
         ),

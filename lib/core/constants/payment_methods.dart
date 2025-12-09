@@ -10,8 +10,8 @@ enum PaymentMethod {
   card('card', 'Tarjeta Déb/Créd', AnalyticsColors.paymentCard,
       Icons.credit_card_rounded),
   qr('qr', 'QR', AnalyticsColors.paymentQR, Icons.qr_code_2_rounded),
-  unspecified(
-      '', 'Sin Especificar', AnalyticsColors.paymentUnspecified, Icons.help_outline_rounded);
+  unspecified('', 'Sin Especificar', AnalyticsColors.paymentUnspecified,
+      Icons.help_outline_rounded);
 
   final String code;
   final String displayName;

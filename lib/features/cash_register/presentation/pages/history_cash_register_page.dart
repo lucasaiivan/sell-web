@@ -249,7 +249,8 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
           final monthKey = _getMonthKey(cashRegister.opening);
           final isExpanded = provider.isMonthExpanded(monthKey);
           final itemsInMonth = _countItemsInMonth(historyItems, historyIndex);
-          final monthBalance = _calculateMonthBalance(historyItems, historyIndex);
+          final monthBalance =
+              _calculateMonthBalance(historyItems, historyIndex);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,11 +315,13 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
                         ),
                         child: Text(
                           CurrencyFormatter.formatPrice(value: monthBalance),
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
                     ],

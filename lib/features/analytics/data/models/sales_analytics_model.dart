@@ -55,7 +55,8 @@ class SalesAnalyticsModel extends SalesAnalytics {
     final Map<String, Map<String, dynamic>> sellerStats = {};
     final Map<int, Map<String, dynamic>> hourStats = {};
     final Map<String, Map<String, dynamic>> slowProductStats = {};
-    final Map<String, Map<String, dynamic>> dailyStats = {}; // Tendencia por día
+    final Map<String, Map<String, dynamic>> dailyStats =
+        {}; // Tendencia por día
     final Map<String, Map<String, dynamic>> categoryStats = {}; // Por categoría
     final Map<int, Map<String, dynamic>> weekdayStats = {}; // Por día de semana
 
@@ -65,7 +66,16 @@ class SalesAnalyticsModel extends SalesAnalytics {
     }
 
     // Inicializar días de la semana (1=Lunes ... 7=Domingo)
-    final weekdayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    final weekdayNames = [
+      '',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
     for (int i = 1; i <= 7; i++) {
       weekdayStats[i] = {
         'dayOfWeek': i,
@@ -98,7 +108,8 @@ class SalesAnalyticsModel extends SalesAnalytics {
 
       // Tendencia de ventas por día (para gráfico de línea)
       final ticketDate = ticket.creation.toDate();
-      final dayKey = '${ticketDate.year}-${ticketDate.month.toString().padLeft(2, '0')}-${ticketDate.day.toString().padLeft(2, '0')}';
+      final dayKey =
+          '${ticketDate.year}-${ticketDate.month.toString().padLeft(2, '0')}-${ticketDate.day.toString().padLeft(2, '0')}';
       if (!dailyStats.containsKey(dayKey)) {
         dailyStats[dayKey] = {
           'date': dayKey,
@@ -184,7 +195,7 @@ class SalesAnalyticsModel extends SalesAnalytics {
         if (profitPerUnit > 0) {
           final totalSalesProduct = product.salePrice * product.quantity;
           final totalCostProduct = product.purchasePrice * product.quantity;
-          
+
           if (!profitableProductStats.containsKey(productId)) {
             profitableProductStats[productId] = {
               'product': product,
@@ -282,16 +293,14 @@ class SalesAnalyticsModel extends SalesAnalytics {
 
     // Tendencia de ventas por día (ordenar por fecha)
     final salesByDay = Map<String, Map<String, dynamic>>.fromEntries(
-      dailyStats.entries.toList()
-        ..sort((a, b) => a.key.compareTo(b.key)),
+      dailyStats.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
     );
 
     // Calcular promedio por día de semana
     for (final stats in weekdayStats.values) {
       final count = stats['transactionCount'] as int;
-      stats['averageSales'] = count > 0
-          ? (stats['totalSales'] as double) / count
-          : 0.0;
+      stats['averageSales'] =
+          count > 0 ? (stats['totalSales'] as double) / count : 0.0;
     }
 
     return SalesAnalyticsModel(

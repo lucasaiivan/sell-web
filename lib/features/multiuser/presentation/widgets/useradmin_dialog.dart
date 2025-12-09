@@ -48,7 +48,7 @@ enum DayOfWeek {
 class UserAdminDialog extends StatefulWidget {
   /// Perfil de usuario a editar (null para crear nuevo)
   final AdminProfile? user;
-  
+
   /// Si es true, se muestra en pantalla completa en dispositivos pequeños
   final bool fullView;
 
@@ -295,11 +295,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   ///
   /// Contiene campos de email (no editable en modo edición) y nombre opcional
   Widget _buildBasicInfoSection() {
-    final isEditing = widget.user != null; 
+    final isEditing = widget.user != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [ 
+      children: [
         FormInputTextField(
           controller: _emailController,
           labelText: 'Email',
@@ -410,7 +410,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                       ),
                       const SizedBox(height: 8),
                       FormInputTextField(
-                        controller: _inactivateNoteController, 
+                        controller: _inactivateNoteController,
                         hintText: 'Ej: Usuario suspendido temporalmente por...',
                         minLines: 1,
                         maxLines: null,
@@ -447,7 +447,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     if (_isSuperAdmin) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [  
+        children: [
           Container(
             decoration: BoxDecoration(
               color: Colors.purple.withValues(alpha: 0.1),

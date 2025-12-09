@@ -215,7 +215,7 @@ class _CustomizeCardsModalState extends State<CustomizeCardsModal> {
             child: FloatingActionButton(
               onPressed: () {
                 Navigator.of(context).pop(_selectedCardIds.toList());
-              }, 
+              },
               child: const Icon(Icons.check_rounded),
             ),
           ),

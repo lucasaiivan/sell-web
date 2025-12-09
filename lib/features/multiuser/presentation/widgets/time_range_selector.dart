@@ -168,7 +168,8 @@ class TimeRangeSelector extends StatelessWidget {
         endTime!.minute == presetEnd.minute;
   }
 
-  Future<void> _selectCustomTime(BuildContext context, {required bool isStart}) async {
+  Future<void> _selectCustomTime(BuildContext context,
+      {required bool isStart}) async {
     final initialTime = isStart
         ? (startTime ?? const TimeOfDay(hour: 9, minute: 0))
         : (endTime ?? const TimeOfDay(hour: 18, minute: 0));
@@ -351,16 +352,16 @@ class _PresetChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(   
-      avatar:!isSelected
+    return FilterChip(
+      avatar: !isSelected
           ? Icon(
               icon,
-              size: 20, 
+              size: 20,
             )
           : null,
       label: Text(label),
       selected: isSelected,
-      onSelected: (_) => onSelected(startTime, endTime),   
+      onSelected: (_) => onSelected(startTime, endTime),
     );
   }
 }

@@ -205,7 +205,7 @@ class AnalyticsCardRegistry {
           title: 'Facturación',
           value: CurrencyHelper.formatCurrency(periodTotals.totalSales),
           icon: Icons.attach_money_rounded,
-          color: color, 
+          color: color,
           isZero: periodTotals.totalSales == 0,
           moreInformation: false,
           showActionIndicator: hasData,
@@ -230,7 +230,9 @@ class AnalyticsCardRegistry {
           subtitle: 'Rentabilidad real',
           isZero: periodTotals.totalProfit == 0,
           showActionIndicator: hasData,
-          onTap: hasData ? () => showProfitModal(context, analytics, filter: currentFilter) : null,
+          onTap: hasData
+              ? () => showProfitModal(context, analytics, filter: currentFilter)
+              : null,
           percentageInfo: hasData
               ? '${NumberHelper.formatPercentage(profitMargin)} margen'
               : null,
@@ -263,7 +265,8 @@ class AnalyticsCardRegistry {
           color: color,
           isZero: periodTotals.averageTicket == 0,
           showActionIndicator: hasData,
-            subtitle: '${NumberHelper.formatNumber(periodTotals.totalTransactions)} transacciones',
+          subtitle:
+              '${NumberHelper.formatNumber(periodTotals.totalTransactions)} transacciones',
           onTap: hasData
               ? () => showAverageTicketModal(context, analytics, currentFilter)
               : null,
@@ -271,9 +274,10 @@ class AnalyticsCardRegistry {
 
       case 'products': // Productos
         // Usar datos del período filtrado
-        final filteredProducts = analytics.getTopSellingProductsForFilter(currentFilter);
+        final filteredProducts =
+            analytics.getTopSellingProductsForFilter(currentFilter);
         final totalProductsFiltered = filteredProducts.fold<int>(
-          0, (sum, p) => sum + (p['quantitySold'] as int));
+            0, (sum, p) => sum + (p['quantitySold'] as int));
         final hasProductsData = periodTotals.totalTransactions > 0;
         return ProductsMetricCard(
           key: const ValueKey('products'),
@@ -286,7 +290,8 @@ class AnalyticsCardRegistry {
 
       case 'profitability': // Rentabilidad
         // Usar datos del período filtrado
-        final filteredProfitableProducts = analytics.getMostProfitableProductsForFilter(currentFilter);
+        final filteredProfitableProducts =
+            analytics.getMostProfitableProductsForFilter(currentFilter);
         final hasProfitData = periodTotals.totalTransactions > 0;
         return ProfitabilityMetricCard(
           key: const ValueKey('profitability'),
@@ -300,28 +305,30 @@ class AnalyticsCardRegistry {
         return SlowMovingProductsCard(
           key: const ValueKey('slowMoving'),
           slowMovingProducts: analytics.slowMovingProducts,
-          color: color, 
+          color: color,
           isZero: analytics.slowMovingProducts.isEmpty,
         );
 
       case 'categoryDist': // Categorías
         // Usar datos del período filtrado
-        final filteredCategories = analytics.getSalesByCategoryForFilter(currentFilter);
+        final filteredCategories =
+            analytics.getSalesByCategoryForFilter(currentFilter);
         final hasCategoryData = periodTotals.totalTransactions > 0;
         return CategoryDistributionCard(
           key: const ValueKey('categoryDist'),
           salesByCategory: filteredCategories,
           totalSales: periodTotals.totalSales,
           color: color,
-        
           subtitle: 'Ventas por categoría',
           isZero: !hasCategoryData || filteredCategories.isEmpty,
         );
 
-      case 'peakHours':  // Horas Pico
+      case 'peakHours': // Horas Pico
         // Usar datos del período filtrado
-        final filteredSalesByHour = analytics.getSalesByHourForFilter(currentFilter);
-        final filteredPeakHours = analytics.getPeakHoursForFilter(currentFilter);
+        final filteredSalesByHour =
+            analytics.getSalesByHourForFilter(currentFilter);
+        final filteredPeakHours =
+            analytics.getPeakHoursForFilter(currentFilter);
         final hasPeakData = periodTotals.totalTransactions > 0;
         return PeakHoursCard(
           key: const ValueKey('peakHours'),
@@ -332,16 +339,26 @@ class AnalyticsCardRegistry {
           isZero: !hasPeakData || filteredPeakHours.isEmpty,
         );
 
-      case 'weekdaySales': // Ventas por día
-        // Usar datos del período filtrado
-        final filteredWeekdaySales = analytics.getSalesByWeekdayForFilter(currentFilter);
-        final hasWeekdayData = periodTotals.totalTransactions > 0;
+      case 'weekdaySales': // Días de Venta
+        final filteredWeekdaySales =
+            analytics.getSalesByWeekdayForFilter(currentFilter);
+
+        // Verificación adaptativa según tipo de filtro
+        // - Hoy/Ayer: Busca datos en cualquiera de los 7 días cargados
+        // - Otros: Usa total de transacciones del período
+        final hasWeekdayData = (currentFilter == DateFilter.today ||
+                currentFilter == DateFilter.yesterday)
+            ? filteredWeekdaySales.values
+                .any((day) => (day['transactionCount'] as int? ?? 0) > 0)
+            : periodTotals.totalTransactions > 0;
+
         return WeekdaySalesCard(
           key: const ValueKey('weekdaySales'),
           salesByWeekday: filteredWeekdaySales,
           color: color,
-          subtitle: 'Rendimiento por dia',
+          subtitle: 'Rendimiento por día',
           isZero: !hasWeekdayData,
+          currentFilter: currentFilter,
         );
 
       case 'salesTrend': // Tendencia de Ventas
@@ -358,7 +375,8 @@ class AnalyticsCardRegistry {
 
       case 'sellerRanking': // Ranking de Vendedores
         // Usar datos del período filtrado
-        final filteredSalesBySeller = analytics.getSalesBySellerForFilter(currentFilter);
+        final filteredSalesBySeller =
+            analytics.getSalesBySellerForFilter(currentFilter);
         final hasSellerData = periodTotals.totalTransactions > 0;
         return SellerRankingCard(
           key: const ValueKey('sellerRanking'),
@@ -370,7 +388,8 @@ class AnalyticsCardRegistry {
 
       case 'paymentMethods': // Medios de Pago
         // Usar datos del período filtrado (aplicar filtro de fecha)
-        final filteredPaymentMethods = analytics.getPaymentMethodsForFilter(currentFilter);
+        final filteredPaymentMethods =
+            analytics.getPaymentMethodsForFilter(currentFilter);
         final hasPaymentData = periodTotals.totalTransactions > 0 &&
             filteredPaymentMethods.isNotEmpty;
         return PaymentMethodsCard(

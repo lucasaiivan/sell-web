@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/analytics_colors.dart';
-import 'package:sellweb/core/utils/helpers/currency_helper.dart'; 
+import 'package:sellweb/core/utils/helpers/currency_helper.dart';
 import 'package:sellweb/features/analytics/domain/entities/date_filter.dart';
 import 'package:sellweb/features/analytics/domain/entities/sales_analytics.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -29,27 +29,28 @@ class ProfitModal extends StatelessWidget {
     final theme = Theme.of(context);
 
     // Obtener totales del período filtrado (igual que la tarjeta)
-    final periodTotals = filter != null 
+    final periodTotals = filter != null
         ? analytics.getTotalsForFilter(filter!)
         : (
             totalSales: analytics.totalSales,
             totalProfit: analytics.totalProfit,
             totalTransactions: analytics.totalTransactions,
             averageProfitPerTransaction: analytics.averageProfitPerTransaction,
-            averageTicket: analytics.totalTransactions > 0 
-                ? analytics.totalSales / analytics.totalTransactions 
+            averageTicket: analytics.totalTransactions > 0
+                ? analytics.totalSales / analytics.totalTransactions
                 : 0.0,
           );
-    
+
     // Obtener productos más rentables según el filtro aplicado
-    final profitableProducts = filter != null 
+    final profitableProducts = filter != null
         ? analytics.getMostProfitableProductsForFilter(filter!)
         : analytics.mostProfitableProducts;
-    
+
     // Usar totales del período filtrado
     final totalProfit = periodTotals.totalProfit;
     final totalSales = periodTotals.totalSales;
-    final profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100) : 0.0;
+    final profitMargin =
+        totalSales > 0 ? (totalProfit / totalSales * 100) : 0.0;
 
     return AnalyticsModal(
       accentColor: _accentColor,
@@ -80,7 +81,8 @@ class ProfitModal extends StatelessWidget {
                 ),
                 AnalyticsFeedbackBanner(
                   icon: const Icon(Icons.info_outline_rounded),
-                  message: 'Los datos muestran la ganancia del periodo filtrado. Registra el precio de compra en productos para calcular ganancias y márgenes exactos.',
+                  message:
+                      'Los datos muestran la ganancia del periodo filtrado. Registra el precio de compra en productos para calcular ganancias y márgenes exactos.',
                   accentColor: _accentColor,
                   margin: const EdgeInsets.only(top: 16),
                 ),
@@ -95,12 +97,7 @@ class ProfitModal extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...profitableProducts
-                      .take(5)
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map(
+                  ...profitableProducts.take(5).toList().asMap().entries.map(
                         (entry) =>
                             _buildProductItem(context, entry.key, entry.value),
                       ),
@@ -139,7 +136,7 @@ class ProfitModal extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // text : costo 
+            // text : costo
             Text(
               'Compra: ${CurrencyHelper.formatCurrency(totalCost * quantitySold)}',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -185,7 +182,7 @@ class ProfitModal extends StatelessWidget {
       ],
     );
   }
- 
+
   Color _getPositionColor(int position) {
     switch (position) {
       case 1:
@@ -201,7 +198,8 @@ class ProfitModal extends StatelessWidget {
 }
 
 /// Muestra el modal de ganancia
-void showProfitModal(BuildContext context, SalesAnalytics analytics, {DateFilter? filter}) {
+void showProfitModal(BuildContext context, SalesAnalytics analytics,
+    {DateFilter? filter}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,

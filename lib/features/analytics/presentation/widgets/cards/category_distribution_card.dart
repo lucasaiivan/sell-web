@@ -333,11 +333,11 @@ class CategoryDistributionModal extends StatelessWidget {
 
   String _getModalFeedback(List<Map<String, dynamic>> salesByCategory) {
     if (salesByCategory.isEmpty) return 'Sin datos de categorías';
-    
+
     final categoriesCount = salesByCategory.length;
     final topCategory = salesByCategory.first;
     final topPercentage = topCategory['percentage'] as double? ?? 0.0;
-    
+
     if (topPercentage >= 60) {
       return 'Una categoría domina tus ventas. Considera diversificar tu catálogo.';
     } else if (topPercentage >= 40) {
@@ -363,7 +363,7 @@ class CategoryDistributionModal extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [ 
+          children: [
             const SizedBox(height: 16),
             // Feedback contextual
             AnalyticsFeedbackBanner(
@@ -375,7 +375,7 @@ class CategoryDistributionModal extends StatelessWidget {
             SizedBox(
               height: 220,
               child: _buildDetailedDonutChart(context, displayCategories),
-            ), 
+            ),
             const SizedBox(height: 24),
 
             // Lista de categorías
@@ -410,7 +410,8 @@ class CategoryDistributionModal extends StatelessWidget {
       final category = categories[i];
       final percentage = category['percentage'] as double? ?? 0.0;
       final categoryColor = _categoryColors[i % _categoryColors.length];
-      final isLargeEnough = percentage >= 2; // Mostrar casi todos los porcentajes
+      final isLargeEnough =
+          percentage >= 2; // Mostrar casi todos los porcentajes
 
       sections.add(
         PieChartSectionData(
@@ -427,7 +428,7 @@ class CategoryDistributionModal extends StatelessWidget {
                 )
               : null,
           badgePositionPercentageOffset: 1.1,
-          radius: 45, 
+          radius: 45,
         ),
       );
     }
@@ -509,7 +510,7 @@ class CategoryDistributionModal extends StatelessWidget {
     final percentage = category['percentage'] as double? ?? 0.0;
     final quantitySold = category['quantitySold'] as int? ?? 0;
     final categoryColor = _categoryColors[index % _categoryColors.length];
- 
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -519,7 +520,7 @@ class CategoryDistributionModal extends StatelessWidget {
         border: Border.all(
           color: categoryColor.withValues(alpha: 0.25),
           width: 1,
-        ), 
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,7 +563,8 @@ class CategoryDistributionModal extends StatelessWidget {
                     Text(
                       '$quantitySold productos vendidos',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.65),
                         fontSize: 11,
                       ),
                     ),
@@ -600,7 +602,8 @@ class CategoryDistributionModal extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: percentage / 100,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.6),
                     color: categoryColor,
                     minHeight: 8,
                   ),
@@ -608,7 +611,8 @@ class CategoryDistributionModal extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: categoryColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -651,7 +655,9 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.8),
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.7)
+            : Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(8), // Esquinas redondeadas
         border: Border.all(color: color, width: 1),
         boxShadow: [

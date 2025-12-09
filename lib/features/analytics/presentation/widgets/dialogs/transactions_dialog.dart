@@ -87,13 +87,13 @@ class _TransactionsDialogState extends State<TransactionsDialog> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          title: const Text('Transacciones'), 
+          title: const Text('Transacciones'),
           actions: [
             // Mostrar filtro actual
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Center(
-                child: AppBarButtonCircle( 
+                child: AppBarButtonCircle(
                   text: widget.currentFilter.label,
                   tooltip: 'Filtro actual',
                   onPressed: () {}, // Read-only en el diálogo
@@ -133,7 +133,7 @@ class _TransactionsDialogState extends State<TransactionsDialog> {
           Icon(
             Icons.receipt_long_outlined,
             size: 80,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha:0.5),
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -146,7 +146,7 @@ class _TransactionsDialogState extends State<TransactionsDialog> {
           Text(
             'Las transacciones aparecerán aquí',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha:0.7),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -206,7 +206,8 @@ Future<void> showTransactionsBottomSheet({
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha:0.4),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -225,7 +226,8 @@ Future<void> showTransactionsBottomSheet({
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(16),

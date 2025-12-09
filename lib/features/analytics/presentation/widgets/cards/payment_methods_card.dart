@@ -62,19 +62,20 @@ class PaymentMethodsCard extends StatelessWidget {
                 // Ajustar tamaños basado en el espacio disponible
                 final isSmall = constraints.maxWidth < 300;
                 final isCompact = constraints.maxWidth < 180;
-                
+
                 // Calcular dinámicamente cuántos métodos de pago mostrar
                 // Altura del item: topMethod ~42px (compacto ~36px), otros ~32px (compacto ~28px)
                 // Spacing: topMethod ~8px, otros ~6px
                 const paddingTop = 12.0;
-                
+
                 // Usar altura dinámica ya que el primer item es más grande
-                final visibleCount = DynamicItemsCalculator.calculateVisibleItemsWithDynamicHeight(
+                final visibleCount = DynamicItemsCalculator
+                    .calculateVisibleItemsWithDynamicHeight(
                   availableHeight: constraints.maxHeight - paddingTop,
                   getItemHeight: (index) {
                     final isTop = index == 0;
-                    final itemHeight = isTop 
-                        ? (isCompact ? 36.0 : 42.0) 
+                    final itemHeight = isTop
+                        ? (isCompact ? 36.0 : 42.0)
                         : (isCompact ? 28.0 : 32.0);
                     final spacing = isTop ? 8.0 : 6.0;
                     return itemHeight + spacing;
@@ -83,27 +84,33 @@ class PaymentMethodsCard extends StatelessWidget {
                   minItems: 1,
                   maxItems: allSortedMethods.length,
                 );
-                
-                final sortedMethods = allSortedMethods.take(visibleCount).toList();
-                
+
+                final sortedMethods =
+                    allSortedMethods.take(visibleCount).toList();
+
                 // Calcular el total real de los métodos de pago para porcentajes precisos
-                final methodsTotal = sortedMethods.fold<double>(0.0, (sum, entry) => sum + entry.value);
-                final displayTotal = methodsTotal > 0 ? methodsTotal : totalSales;
+                final methodsTotal = sortedMethods.fold<double>(
+                    0.0, (sum, entry) => sum + entry.value);
+                final displayTotal =
+                    methodsTotal > 0 ? methodsTotal : totalSales;
 
                 return Padding(
                   padding: const EdgeInsets.only(top: paddingTop),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.end, // Alinear desde abajo
+                    mainAxisAlignment:
+                        MainAxisAlignment.end, // Alinear desde abajo
                     children: sortedMethods.asMap().entries.map((indexedEntry) {
                       final index = indexedEntry.key;
                       final entry = indexedEntry.value;
                       final isTopMethod = index == 0;
-                      
+
                       // Calcular porcentaje: monto del método / total de métodos de pago visibles
                       // Esto es más preciso que usar periodTotals.totalSales
-                      double percentage = displayTotal > 0 ? (entry.value / displayTotal).clamp(0.0, 1.0) : 0.0;
+                      double percentage = displayTotal > 0
+                          ? (entry.value / displayTotal).clamp(0.0, 1.0)
+                          : 0.0;
 
                       final paymentMethod = PaymentMethod.fromCode(entry.key);
                       final displayName = paymentMethod.displayName;

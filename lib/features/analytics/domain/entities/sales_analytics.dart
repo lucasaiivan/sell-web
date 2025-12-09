@@ -156,7 +156,8 @@ class SalesAnalytics extends Equatable {
   /// Obtiene las transacciones filtradas por rango de fechas
   List<TicketModel> getFilteredTransactions(DateFilter filter) {
     final range = _getDateRangeForFilter(filter);
-    bool inRange(DateTime d) => !d.isBefore(range.start) && d.isBefore(range.end);
+    bool inRange(DateTime d) =>
+        !d.isBefore(range.start) && d.isBefore(range.end);
 
     return transactions.where((ticket) {
       if (ticket.annulled) return false;
@@ -195,7 +196,8 @@ class SalesAnalytics extends Equatable {
           };
         }
         productStats[productId]!['quantitySold'] =
-            (productStats[productId]!['quantitySold'] as int) + product.quantity;
+            (productStats[productId]!['quantitySold'] as int) +
+                product.quantity;
         productStats[productId]!['totalRevenue'] =
             (productStats[productId]!['totalRevenue'] as double) +
                 (product.salePrice * product.quantity);
@@ -203,38 +205,44 @@ class SalesAnalytics extends Equatable {
     }
 
     final sortedProducts = productStats.values.toList()
-      ..sort((a, b) => (b['quantitySold'] as int).compareTo(a['quantitySold'] as int));
+      ..sort((a, b) =>
+          (b['quantitySold'] as int).compareTo(a['quantitySold'] as int));
 
     return sortedProducts;
   }
 
   /// Obtiene productos más rentables filtrados por rango de fechas
-  List<Map<String, dynamic>> getMostProfitableProductsForFilter(DateFilter filter) {
+  List<Map<String, dynamic>> getMostProfitableProductsForFilter(
+      DateFilter filter) {
     final filteredTransactions = getFilteredTransactions(filter);
     final profitableStats = <String, Map<String, dynamic>>{};
 
     for (final ticket in filteredTransactions) {
       for (final product in ticket.products) {
         final productId = product.id;
-        final profit = (product.salePrice - product.purchasePrice) * product.quantity;
+        final profit =
+            (product.salePrice - product.purchasePrice) * product.quantity;
 
         if (!profitableStats.containsKey(productId)) {
           profitableStats[productId] = {
             'product': product, // obj
             'totalProfit': 0.0, // total ganancia
             'quantitySold': 0, // cantidad vendidaw
-            'profitPerUnit': (product.salePrice - product.purchasePrice), // ganancia por unidad
+            'profitPerUnit': (product.salePrice -
+                product.purchasePrice), // ganancia por unidad
           };
         }
         profitableStats[productId]!['totalProfit'] =
             (profitableStats[productId]!['totalProfit'] as double) + profit;
         profitableStats[productId]!['quantitySold'] =
-            (profitableStats[productId]!['quantitySold'] as int) + product.quantity;
+            (profitableStats[productId]!['quantitySold'] as int) +
+                product.quantity;
       }
     }
 
     final sortedProducts = profitableStats.values.toList()
-      ..sort((a, b) => (b['totalProfit'] as double).compareTo(a['totalProfit'] as double));
+      ..sort((a, b) =>
+          (b['totalProfit'] as double).compareTo(a['totalProfit'] as double));
 
     return sortedProducts;
   }
@@ -247,7 +255,9 @@ class SalesAnalytics extends Equatable {
 
     for (final ticket in filteredTransactions) {
       for (final product in ticket.products) {
-        final category = product.nameCategory.isEmpty ? 'Sin categoría' : product.nameCategory;
+        final category = product.nameCategory.isEmpty
+            ? 'Sin categoría'
+            : product.nameCategory;
         final sales = product.salePrice * product.quantity;
 
         if (!categoryStats.containsKey(category)) {
@@ -261,7 +271,8 @@ class SalesAnalytics extends Equatable {
         categoryStats[category]!['totalSales'] =
             (categoryStats[category]!['totalSales'] as double) + sales;
         categoryStats[category]!['quantitySold'] =
-            (categoryStats[category]!['quantitySold'] as int) + product.quantity;
+            (categoryStats[category]!['quantitySold'] as int) +
+                product.quantity;
         totalSales += sales;
       }
     }
@@ -272,7 +283,8 @@ class SalesAnalytics extends Equatable {
       stat['percentage'] = totalSales > 0 ? (sales / totalSales * 100) : 0.0;
       return stat;
     }).toList()
-      ..sort((a, b) => (b['totalSales'] as double).compareTo(a['totalSales'] as double));
+      ..sort((a, b) =>
+          (b['totalSales'] as double).compareTo(a['totalSales'] as double));
 
     return result;
   }
@@ -280,7 +292,8 @@ class SalesAnalytics extends Equatable {
   /// Obtiene tendencia de ventas por día filtrada por rango de fechas
   Map<String, Map<String, dynamic>> getSalesByDayForFilter(DateFilter filter) {
     final range = _getDateRangeForFilter(filter);
-    bool inRange(DateTime d) => !d.isBefore(range.start) && d.isBefore(range.end);
+    bool inRange(DateTime d) =>
+        !d.isBefore(range.start) && d.isBefore(range.end);
 
     final filteredDailySales = <String, Map<String, dynamic>>{};
 
@@ -319,7 +332,7 @@ class SalesAnalytics extends Equatable {
   /// Obtiene horas pico filtradas por rango de fechas
   List<Map<String, dynamic>> getPeakHoursForFilter(DateFilter filter) {
     final hourStats = getSalesByHourForFilter(filter);
-    
+
     // Filtrar solo horas con transacciones y ordenar por ventas
     final peakHours = hourStats.values
         .where((stat) => (stat['transactionCount'] as int) > 0)
@@ -330,22 +343,149 @@ class SalesAnalytics extends Equatable {
     return peakHours.take(5).toList();
   }
 
-  /// Obtiene ventas por día de la semana filtradas por rango de fechas
+  /// Ventas por día de la semana con estrategias según filtro
+  ///
+  /// **Filtros `hoy/ayer`:** Map con índices 0-6, últimos 7 días cronológicos
+  /// - `shortLabel`: Inicial del día (L, M, X, J, V, S, D)
+  /// - `isHighlighted`: Marca el día del filtro seleccionado
+  /// - Datos calculados desde todas las transacciones disponibles
+  ///
+  /// **Otros filtros:** Map con claves 1-7 (lunes-domingo), agregación general
   Map<int, Map<String, dynamic>> getSalesByWeekdayForFilter(DateFilter filter) {
-    final filteredTransactions = getFilteredTransactions(filter);
-    final weekdayStats = <int, Map<String, dynamic>>{};
+    final weekdayNames = [
+      '',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
 
-    // Inicializar días de la semana (1=Lunes ... 7=Domingo)
-    final weekdayNames = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    // Para filtros "hoy" y "ayer": retornar últimos 7 días cronológicos
+    if (filter == DateFilter.today || filter == DateFilter.yesterday) {
+      final now = DateTime.now();
+
+      // Calcular los 7 días a visualizar
+      final last7Days = <DateTime>[];
+
+      if (filter == DateFilter.today) {
+        // "Hoy": [hace6, hace5, hace4, hace3, hace2, hace1, HOY]
+        final today = DateTime(now.year, now.month, now.day);
+        for (int i = 6; i >= 0; i--) {
+          last7Days.add(today.subtract(Duration(days: i)));
+        }
+      } else {
+        // "Ayer": [hace5, hace4, hace3, hace2, hace1, AYER, hoy]
+        final yesterday = DateTime(now.year, now.month, now.day - 1);
+        for (int i = 5; i >= -1; i--) {
+          last7Days.add(yesterday.subtract(Duration(days: i)));
+        }
+      }
+
+      // Día de referencia a destacar (con isHighlighted=true)
+      final referenceDate = filter == DateFilter.today
+          ? DateTime(now.year, now.month, now.day)
+          : DateTime(now.year, now.month, now.day - 1);
+
+      // Construir mapa con índice 0-6 para días cronológicos
+      // Calcular desde todas las transacciones disponibles
+      final chronologicalDays = <int, Map<String, dynamic>>{};
+
+      for (int i = 0; i < last7Days.length; i++) {
+        final date = last7Days[i];
+        final weekday = date.weekday; // 1=Mon, 7=Sun
+        final isTargetDay = date.day == referenceDate.day &&
+            date.month == referenceDate.month &&
+            date.year == referenceDate.year;
+
+        // Calcular métricas para este día desde todas las transacciones cargadas
+        // (datasource carga 7 días completos para permitir esta visualización)
+        double totalSales = 0.0;
+        int transactionCount = 0;
+        double totalProfit = 0.0;
+
+        for (final ticket in transactions) {
+          if (ticket.annulled) continue;
+
+          final ticketDate = ticket.creation.toDate();
+          if (ticketDate.year == date.year &&
+              ticketDate.month == date.month &&
+              ticketDate.day == date.day) {
+            totalSales += ticket.priceTotal;
+            transactionCount++;
+            totalProfit += ticket.getProfit;
+          }
+        }
+
+        // Obtener inicial del día (L, M, X, J, V, S, D)
+        String shortDayName;
+        switch (weekday) {
+          case 1:
+            shortDayName = 'L';
+            break;
+          case 2:
+            shortDayName = 'M';
+            break;
+          case 3:
+            shortDayName = 'X';
+            break;
+          case 4:
+            shortDayName = 'J';
+            break;
+          case 5:
+            shortDayName = 'V';
+            break;
+          case 6:
+            shortDayName = 'S';
+            break;
+          case 7:
+            shortDayName = 'D';
+            break;
+          default:
+            shortDayName = '?';
+        }
+
+        final dayKey =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+        chronologicalDays[i] = {
+          'index': i, // Posición en array (0-6)
+          'date': date, // DateTime completo
+          'dateKey': dayKey, // yyyy-MM-dd para agrupación
+          'dayOfWeek': weekday, // 1=Lun ... 7=Dom
+          'dayName': weekdayNames[weekday], // "Lunes", "Martes", etc.
+          'dayLabel':
+              '${weekdayNames[weekday].substring(0, 3)} ${date.day}', // "Lun 10"
+          'shortLabel': shortDayName, // "L", "M", "X", etc.
+          'totalSales': totalSales, // Total vendido ese día
+          'transactionCount': transactionCount, // Número de tickets
+          'totalProfit': totalProfit, // Ganancia neta
+          'isToday': filter == DateFilter.today && isTargetDay, // ¿Es hoy?
+          'isYesterday':
+              filter == DateFilter.yesterday && isTargetDay, // ¿Es ayer?
+          'isHighlighted': isTargetDay, // Día a destacar visualmente
+        };
+      }
+
+      return chronologicalDays;
+    }
+
+    // Para otros filtros: análisis general por día de semana (1-7)
+    final weekdayStats = <int, Map<String, dynamic>>{};
     for (int i = 1; i <= 7; i++) {
       weekdayStats[i] = {
         'dayOfWeek': i,
         'dayName': weekdayNames[i],
+        'dayNumber': i,
         'totalSales': 0.0,
         'transactionCount': 0,
         'totalProfit': 0.0,
       };
     }
+
+    final filteredTransactions = getFilteredTransactions(filter);
 
     // Acumular ventas por día de la semana
     for (final ticket in filteredTransactions) {
@@ -389,7 +529,8 @@ class SalesAnalytics extends Equatable {
     final sortedSellers = sellerStats.values.map((seller) {
       final totalSales = seller['totalSales'] as double;
       final transactionCount = seller['transactionCount'] as int;
-      seller['averageTicket'] = transactionCount > 0 ? totalSales / transactionCount : 0.0;
+      seller['averageTicket'] =
+          transactionCount > 0 ? totalSales / transactionCount : 0.0;
       return seller;
     }).toList()
       ..sort((a, b) =>

@@ -1,23 +1,21 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
+import '../../../domain/entities/date_filter.dart';
 import '../core/widgets.dart';
 
-/// Widget: Tarjeta de Ventas por Día de la Semana
+/// Tarjeta: Ventas por Día de la Semana
 ///
-/// **Responsabilidad:**
-/// - Mostrar qué días de la semana generan más ventas
-/// - Visualizar con gráfico de barras horizontal
-/// - Diferente de Horas Pico (que muestra horarios)
+/// **Modo cronológico (hoy/ayer):** Últimos 7 días con tendencia visual
+/// **Modo agregado (otros filtros):** Análisis por día de semana (L-D)
 ///
-/// **Diferencia con PeakHoursCard:**
-/// - Este widget agrupa por DÍA DE SEMANA (Lunes-Domingo)
-/// - PeakHoursCard agrupa por HORA DEL DÍA (0:00-23:00)
+/// Destaca el día del filtro actual con sombra y borde reforzado.
 class WeekdaySalesCard extends StatelessWidget {
   final Map<int, Map<String, dynamic>> salesByWeekday;
   final Color color;
   final bool isZero;
   final String? subtitle;
+  final DateFilter? currentFilter;
 
   const WeekdaySalesCard({
     super.key,
@@ -25,6 +23,7 @@ class WeekdaySalesCard extends StatelessWidget {
     this.color = const Color(0xFF6366F1),
     this.isZero = false,
     this.subtitle,
+    this.currentFilter,
   });
 
   // Nombres cortos de días
@@ -80,21 +79,41 @@ class WeekdaySalesCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFeedbackText(BuildContext context, Map<String, dynamic>? bestDay) {
+  Widget _buildFeedbackText(
+      BuildContext context, Map<String, dynamic>? bestDay) {
     final theme = Theme.of(context);
     if (bestDay == null) return const SizedBox();
-    
-    final dayNumber = bestDay['dayNumber'] as int? ?? 0;
+
+    final isChronological = currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday;
+
     String feedback;
-    
-    if (dayNumber >= 6) {
-      feedback = 'Fin de semana es tu mejor momento';
-    } else if (dayNumber >= 2 && dayNumber <= 5) {
-      feedback = 'Entre semana tienes buena actividad';
+
+    if (isChronological) {
+      // Modo cronológico: mostrar tendencia de últimos 7 días
+      final isHighlighted = bestDay['isHighlighted'] as bool? ?? false;
+      if (isHighlighted) {
+        if (currentFilter == DateFilter.today) {
+          feedback = 'Hoy es tu mejor día de la semana';
+        } else {
+          feedback = 'Ayer fue tu mejor día de la semana';
+        }
+      } else {
+        final dayLabel = bestDay['dayLabel'] as String? ?? '';
+        feedback = '$dayLabel fue tu mejor día';
+      }
     } else {
-      feedback = 'Los lunes son tu día fuerte';
+      // Modo día de semana: feedback tradicional
+      final dayNumber = bestDay['dayNumber'] as int? ?? 0;
+      if (dayNumber >= 6) {
+        feedback = 'Fin de semana es tu mejor momento';
+      } else if (dayNumber >= 2 && dayNumber <= 5) {
+        feedback = 'Entre semana tienes buena actividad';
+      } else {
+        feedback = 'Los lunes son tu día fuerte';
+      }
     }
-    
+
     return Text(
       feedback,
       style: theme.textTheme.bodySmall?.copyWith(
@@ -107,6 +126,8 @@ class WeekdaySalesCard extends StatelessWidget {
 
   Widget _buildWeekdayBars(BuildContext context) {
     final theme = Theme.of(context);
+    final isChronological = currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday;
 
     // Encontrar el máximo para normalizar
     double maxSales = 0;
@@ -120,11 +141,29 @@ class WeekdaySalesCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: List.generate(7, (index) {
-        final dayNumber = index + 1; // 1=Lunes ... 7=Domingo
-        final dayData = salesByWeekday[dayNumber];
+        final Map<String, dynamic>? dayData;
+        final String label;
+        final bool isHighlighted;
+        final bool isWeekend;
+
+        if (isChronological) {
+          // Modo cronológico: índices 0-6
+          dayData = salesByWeekday[index];
+          label = dayData?['shortLabel'] as String? ?? '?';
+          isHighlighted = dayData?['isHighlighted'] as bool? ?? false;
+          final dayOfWeek = dayData?['dayOfWeek'] as int? ?? 1;
+          isWeekend = dayOfWeek >= 6;
+        } else {
+          // Modo día de semana: índices 1-7
+          final dayNumber = index + 1;
+          dayData = salesByWeekday[dayNumber];
+          label = _shortDayNames[dayNumber];
+          isHighlighted = false;
+          isWeekend = dayNumber >= 6;
+        }
+
         final sales = dayData?['totalSales'] as double? ?? 0.0;
         final normalizedHeight = maxSales > 0 ? (sales / maxSales) : 0.0;
-        final isWeekend = dayNumber >= 6;
         final isBestDay = sales == maxSales && sales > 0;
 
         return Expanded(
@@ -137,27 +176,45 @@ class WeekdaySalesCard extends StatelessWidget {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      // Calcular altura máxima disponible
                       final maxAvailableHeight = constraints.maxHeight;
-                      // Calcular altura de la barra
                       final barHeight = (normalizedHeight * maxAvailableHeight)
                           .clamp(4.0, maxAvailableHeight);
 
                       return Align(
                         alignment: Alignment.bottomCenter,
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           width: double.infinity,
                           height: barHeight,
                           decoration: BoxDecoration(
-                            color: isBestDay
-                                ? color
-                                : sales > 0
-                                    ? color.withValues(
-                                        alpha: isWeekend ? 0.6 : 0.4,
-                                      )
-                                    : theme.colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            color: isHighlighted
+                                ? color // Día destacado en modo cronológico - color más intenso
+                                : isBestDay
+                                    ? color
+                                    : sales > 0
+                                        ? color.withValues(
+                                            alpha: isWeekend ? 0.6 : 0.4,
+                                          )
+                                        : theme.colorScheme.onSurfaceVariant
+                                            .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(
+                              isHighlighted ? 6 : 4,
+                            ),
+                            border: isHighlighted
+                                ? Border.all(
+                                    color: theme.colorScheme.surface,
+                                    width: 2.5,
+                                  )
+                                : null,
+                            boxShadow: isHighlighted
+                                ? [
+                                    BoxShadow(
+                                      color: color.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
                       );
@@ -167,7 +224,7 @@ class WeekdaySalesCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Etiqueta del día
                 Text(
-                  _shortDayNames[dayNumber],
+                  label,
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontSize: 9,
                     fontWeight: isBestDay ? FontWeight.bold : FontWeight.w500,
@@ -189,7 +246,16 @@ class WeekdaySalesCard extends StatelessWidget {
     Map<String, dynamic> bestDay,
   ) {
     final theme = Theme.of(context);
-    final dayName = bestDay['dayName'] as String? ?? '';
+    final isChronological = currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday;
+
+    final String dayLabel;
+    if (isChronological) {
+      dayLabel = bestDay['dayLabel'] as String? ?? '';
+    } else {
+      dayLabel = bestDay['dayName'] as String? ?? '';
+    }
+
     final totalSales = bestDay['totalSales'] as double? ?? 0.0;
 
     return Container(
@@ -211,7 +277,7 @@ class WeekdaySalesCard extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            dayName,
+            dayLabel,
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
@@ -255,42 +321,81 @@ class WeekdaySalesCard extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => WeekdaySalesModal(
         salesByWeekday: salesByWeekday,
+        currentFilter: currentFilter,
       ),
     );
   }
 }
 
-/// Modal: Análisis Detallado por Día de la Semana
+/// Modal: Análisis detallado de ventas por día
+///
+/// Muestra gráfico expandido con métricas completas según el modo activo.
 class WeekdaySalesModal extends StatelessWidget {
   final Map<int, Map<String, dynamic>> salesByWeekday;
+  final DateFilter? currentFilter;
 
   const WeekdaySalesModal({
     super.key,
     required this.salesByWeekday,
+    this.currentFilter,
   });
 
   static const _accentColor = AnalyticsColors.weekdaySales; // Cian
 
-  String _getModalFeedback(Map<int, Map<String, dynamic>> salesByWeekday) {
-    if (salesByWeekday.isEmpty) return 'Sin datos de ventas semanales';
-    
-    double maxSales = 0;
-    int bestDay = 0;
-    
-    for (final entry in salesByWeekday.entries) {
-      final sales = entry.value['totalSales'] as double? ?? 0.0;
-      if (sales > maxSales) {
-        maxSales = sales;
-        bestDay = entry.key;
+  String _getModalFeedback(
+    Map<int, Map<String, dynamic>> salesByWeekday,
+    DateFilter? filter,
+  ) {
+    if (salesByWeekday.isEmpty) return 'Sin datos de ventas';
+
+    final isChronological =
+        filter == DateFilter.today || filter == DateFilter.yesterday;
+
+    if (isChronological) {
+      // Modo cronológico: feedback de últimos 7 días
+      double maxSales = 0;
+      Map<String, dynamic>? bestDay;
+
+      for (final dayData in salesByWeekday.values) {
+        final sales = dayData['totalSales'] as double? ?? 0.0;
+        if (sales > maxSales) {
+          maxSales = sales;
+          bestDay = dayData;
+        }
       }
-    }
-    
-    if (bestDay >= 6) {
-      return 'Los fines de semana son tu fuerte. Mantén inventario completo y personal disponible.';
-    } else if (bestDay >= 2 && bestDay <= 5) {
-      return 'Entre semana tienes buena actividad. Aprovecha para promociones especiales.';
+
+      if (bestDay == null) return 'Sin ventas en los últimos 7 días';
+
+      final isHighlighted = bestDay['isHighlighted'] as bool? ?? false;
+      final dayLabel = bestDay['dayLabel'] as String? ?? '';
+
+      if (isHighlighted) {
+        return filter == DateFilter.today
+            ? 'Hoy es tu mejor día de la semana. ¡Sigue así!'
+            : 'Ayer fue tu mejor día de la semana. ¡Excelente trabajo!';
+      } else {
+        return 'Tu mejor día de ventas fue $dayLabel. Analiza qué funcionó bien ese día.';
+      }
     } else {
-      return 'Los lunes destacan en tus ventas. Inicia la semana con buena energía y stock.';
+      // Modo día de semana: feedback tradicional
+      double maxSales = 0;
+      int bestDay = 0;
+
+      for (final entry in salesByWeekday.entries) {
+        final sales = entry.value['totalSales'] as double? ?? 0.0;
+        if (sales > maxSales) {
+          maxSales = sales;
+          bestDay = entry.key;
+        }
+      }
+
+      if (bestDay >= 6) {
+        return 'Los fines de semana son tu fuerte. Mantén inventario completo y personal disponible.';
+      } else if (bestDay >= 2 && bestDay <= 5) {
+        return 'Entre semana tienes buena actividad. Aprovecha para promociones especiales.';
+      } else {
+        return 'Los lunes destacan en tus ventas. Inicia la semana con buena energía y stock.';
+      }
     }
   }
 
@@ -312,7 +417,7 @@ class WeekdaySalesModal extends StatelessWidget {
     // Calcular totales
     double totalSales = 0;
     int totalTransactions = 0;
-    double maxDaySales = 0; 
+    double maxDaySales = 0;
 
     for (final entry in salesByWeekday.entries) {
       final sales = entry.value['totalSales'] as double? ?? 0.0;
@@ -320,7 +425,7 @@ class WeekdaySalesModal extends StatelessWidget {
       totalSales += sales;
       totalTransactions += transactions;
       if (sales > maxDaySales) {
-        maxDaySales = sales; 
+        maxDaySales = sales;
       }
     }
 
@@ -329,8 +434,16 @@ class WeekdaySalesModal extends StatelessWidget {
       ..sort((a, b) => (b.value['totalSales'] as double? ?? 0.0)
           .compareTo(a.value['totalSales'] as double? ?? 0.0));
 
+    final isChronological = currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday;
+    final modalTitle = isChronological
+        ? (currentFilter == DateFilter.today
+            ? 'Últimos 7 Días (hasta Hoy)'
+            : 'Últimos 7 Días (hasta Ayer)')
+        : 'Ventas por Día de Semana';
+
     return AnalyticsModal(
-      title: 'Ventas por Día',
+      title: modalTitle,
       accentColor: _accentColor,
       icon: Icons.calendar_view_week_rounded,
       child: SingleChildScrollView(
@@ -341,7 +454,7 @@ class WeekdaySalesModal extends StatelessWidget {
             // Feedback contextual
             AnalyticsFeedbackBanner(
               icon: const Icon(Icons.calendar_today_rounded),
-              message: _getModalFeedback(salesByWeekday),
+              message: _getModalFeedback(salesByWeekday, currentFilter),
               accentColor: _accentColor,
               margin: const EdgeInsets.only(top: 16, bottom: 24),
             ),
@@ -353,7 +466,7 @@ class WeekdaySalesModal extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Resumen : mejor dia y cantidad de ventas 
+            // Resumen : mejor dia y cantidad de ventas
             AnalyticsStatusCard(
               statusColor: _accentColor,
               leftMetric: AnalyticsMetric(
@@ -396,33 +509,67 @@ class WeekdaySalesModal extends StatelessWidget {
 
   Widget _buildDetailedBarChart(BuildContext context, double maxSales) {
     final theme = Theme.of(context);
+    final isChronological = currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday;
 
     if (maxSales == 0) return const Center(child: Text('Sin datos'));
 
     final barGroups = <BarChartGroupData>[];
 
-    for (int i = 1; i <= 7; i++) {
-      final dayData = salesByWeekday[i];
-      final sales = dayData?['totalSales'] as double? ?? 0.0;
-      final isWeekend = i >= 6;
+    if (isChronological) {
+      // Modo cronológico: índices 0-6
+      for (int i = 0; i < 7; i++) {
+        final dayData = salesByWeekday[i];
+        final sales = dayData?['totalSales'] as double? ?? 0.0;
+        final isHighlighted = dayData?['isHighlighted'] as bool? ?? false;
+        final dayOfWeek = dayData?['dayOfWeek'] as int? ?? 1;
+        final isWeekend = dayOfWeek >= 6;
 
-      barGroups.add(
-        BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: sales,
-              color: isWeekend
-                  ? _accentColor
-                  : _accentColor.withValues(alpha: 0.6),
-              width: 28,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(6),
+        barGroups.add(
+          BarChartGroupData(
+            x: i,
+            barRods: [
+              BarChartRodData(
+                toY: sales,
+                color: isHighlighted
+                    ? _accentColor
+                    : isWeekend
+                        ? _accentColor.withValues(alpha: 0.7)
+                        : _accentColor.withValues(alpha: 0.5),
+                width: 28,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(6),
+                ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
+      }
+    } else {
+      // Modo día de semana: índices 1-7
+      for (int i = 1; i <= 7; i++) {
+        final dayData = salesByWeekday[i];
+        final sales = dayData?['totalSales'] as double? ?? 0.0;
+        final isWeekend = i >= 6;
+
+        barGroups.add(
+          BarChartGroupData(
+            x: i,
+            barRods: [
+              BarChartRodData(
+                toY: sales,
+                color: isWeekend
+                    ? _accentColor
+                    : _accentColor.withValues(alpha: 0.6),
+                width: 28,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(6),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
     }
 
     return BarChart(
@@ -436,9 +583,18 @@ class WeekdaySalesModal extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             getTooltipColor: (_) => theme.colorScheme.surfaceContainerHighest,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              final dayName = _fullDayNames[group.x];
+              final int dayKey = group.x.toInt();
+              String dayLabel;
+
+              if (isChronological) {
+                final dayData = salesByWeekday[dayKey];
+                dayLabel = dayData?['dayLabel'] as String? ?? '?';
+              } else {
+                dayLabel = _fullDayNames[dayKey];
+              }
+
               return BarTooltipItem(
-                '$dayName\n${CurrencyHelper.formatCurrency(rod.toY)}',
+                '$dayLabel\n${CurrencyHelper.formatCurrency(rod.toY)}',
                 TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
@@ -456,11 +612,22 @@ class WeekdaySalesModal extends StatelessWidget {
               reservedSize: 32,
               getTitlesWidget: (value, meta) {
                 final dayIndex = value.toInt();
-                if (dayIndex < 1 || dayIndex > 7) return const SizedBox();
+                String label;
+
+                if (isChronological) {
+                  if (dayIndex < 0 || dayIndex >= 7) return const SizedBox();
+                  final dayData = salesByWeekday[dayIndex];
+                  final dayOfWeek = dayData?['dayOfWeek'] as int? ?? 1;
+                  label = _fullDayNames[dayOfWeek].substring(0, 3);
+                } else {
+                  if (dayIndex < 1 || dayIndex > 7) return const SizedBox();
+                  label = _fullDayNames[dayIndex].substring(0, 3);
+                }
+
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    _fullDayNames[dayIndex].substring(0, 3),
+                    label,
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontSize: 11,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -511,7 +678,7 @@ class WeekdaySalesModal extends StatelessWidget {
   /// Formatea valores del eje Y sin decimales para montos redondos
   String _formatAxisValue(double value) {
     if (value == 0) return '\$0';
-    
+
     // Si es un número muy grande, mostrar en K
     if (value >= 1000) {
       if (value % 1000 == 0) {
@@ -520,18 +687,18 @@ class WeekdaySalesModal extends StatelessWidget {
         return '\$${(value / 1000).toStringAsFixed(1)}K';
       }
     }
-    
+
     // Para números pequeños, mostrar sin decimales si son números redondos
     if (value == value.truncate()) {
       return '\$${value.toStringAsFixed(0)}';
     }
-    
+
     // Si tiene decimales, mostrar con 0 decimales si es muy cercano a un entero
     final rounded = value.round();
     if ((value - rounded).abs() < 0.01) {
       return '\$${rounded.toStringAsFixed(0)}';
     }
-    
+
     // Sino, usar el formato estándar
     return CurrencyHelper.formatCurrency(value);
   }
@@ -544,11 +711,27 @@ class WeekdaySalesModal extends StatelessWidget {
     double maxSales,
   ) {
     final theme = Theme.of(context);
-    final dayName = _fullDayNames[dayNumber];
+    final isChronological = currentFilter == DateFilter.today ||
+        currentFilter == DateFilter.yesterday;
+
+    final String dayLabel;
+    final bool isWeekend;
+    final bool isHighlighted;
+
+    if (isChronological) {
+      dayLabel = dayData['dayLabel'] as String? ?? '?';
+      final dayOfWeek = dayData['dayOfWeek'] as int? ?? 1;
+      isWeekend = dayOfWeek >= 6;
+      isHighlighted = dayData['isHighlighted'] as bool? ?? false;
+    } else {
+      dayLabel = _fullDayNames[dayNumber];
+      isWeekend = dayNumber >= 6;
+      isHighlighted = false;
+    }
+
     final totalSales = dayData['totalSales'] as double? ?? 0.0;
     final transactionCount = dayData['transactionCount'] as int? ?? 0;
     final progress = maxSales > 0 ? totalSales / maxSales : 0.0;
-    final isWeekend = dayNumber >= 6;
 
     // Colores para ranking
     Color rankColor;
@@ -616,12 +799,32 @@ class WeekdaySalesModal extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        dayName,
+                        dayLabel,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (isWeekend)
+                      if (isHighlighted)
+                        Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _accentColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            currentFilter == DateFilter.today ? 'HOY' : 'AYER',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      if (isWeekend && !isHighlighted)
                         Container(
                           margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(

@@ -456,7 +456,8 @@ class AnalyticsListItem extends StatelessWidget {
                               height: 20,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: effectiveAccentColor ?? colorScheme.primary,
+                                color:
+                                    effectiveAccentColor ?? colorScheme.primary,
                                 border: Border.all(
                                   color: colorScheme.surface,
                                   width: 2,
@@ -919,7 +920,8 @@ class AnalyticsStatusCard extends StatelessWidget {
                         Text(
                           mainLabel!,
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.7),
                           ),
                         ),
                     ],
@@ -971,7 +973,8 @@ class AnalyticsStatusCard extends StatelessWidget {
                       feedbackText!,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                       textAlign: TextAlign.center,
                     ),

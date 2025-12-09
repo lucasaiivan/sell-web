@@ -24,14 +24,14 @@ class PaymentMethodsModal extends StatelessWidget {
 
   static const _accentColor = Color(0xFF64748B); // Gris Azulado
 
-  String _getModalFeedback(List<MapEntry<String, double>> sortedMethods, double totalForPeriod) {
+  String _getModalFeedback(
+      List<MapEntry<String, double>> sortedMethods, double totalForPeriod) {
     if (sortedMethods.isEmpty) return 'Sin métodos de pago registrados';
 
     final methodsCount = sortedMethods.length;
     final topMethod = sortedMethods.first;
-    final topPercentage = totalForPeriod > 0
-        ? (topMethod.value / totalForPeriod * 100)
-        : 0.0;
+    final topPercentage =
+        totalForPeriod > 0 ? (topMethod.value / totalForPeriod * 100) : 0.0;
 
     if (methodsCount == 1) {
       return 'Aceptas un solo método de pago. Considera agregar más opciones para tus clientes.';
@@ -81,17 +81,20 @@ class PaymentMethodsModal extends StatelessWidget {
                   icon: PaymentMethod.fromCode(sortedMethods.first.key).icon,
                   feedbackIcon: Icons.info_rounded,
                   feedbackText:
-                    'El método más usado es ${PaymentMethod.fromCode(sortedMethods.first.key).displayName} con ${NumberHelper.formatPercentage(analytics.totalSales > 0 ? (sortedMethods.first.value / analytics.totalSales * 100) : 0.0)}',
+                      'El método más usado es ${PaymentMethod.fromCode(sortedMethods.first.key).displayName} con ${NumberHelper.formatPercentage(analytics.totalSales > 0 ? (sortedMethods.first.value / analytics.totalSales * 100) : 0.0)}',
                   showPlusSign: true,
-                  mainValue: PaymentMethod.fromCode(sortedMethods.first.key).displayName,
+                  mainValue: PaymentMethod.fromCode(sortedMethods.first.key)
+                      .displayName,
                   mainLabel: 'Medio de pago más usado',
                   leftMetric: AnalyticsMetric(
-                  value: CurrencyHelper.formatCurrency(sortedMethods.first.value),
-                  label: 'Facturado',
+                    value: CurrencyHelper.formatCurrency(
+                        sortedMethods.first.value),
+                    label: 'Facturado',
                   ),
                   rightMetric: AnalyticsMetric(
-                  value: '${analytics.paymentMethodsCount[sortedMethods.first.key] ?? 0}',
-                  label: 'Transacciones',
+                    value:
+                        '${analytics.paymentMethodsCount[sortedMethods.first.key] ?? 0}',
+                    label: 'Transacciones',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -118,7 +121,8 @@ class PaymentMethodsModal extends StatelessWidget {
                         child: Text(
                           _getModalFeedback(
                             sortedMethods,
-                            paymentMethodsData.values.fold(0.0, (sum, val) => sum + val),
+                            paymentMethodsData.values
+                                .fold(0.0, (sum, val) => sum + val),
                           ),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
@@ -183,7 +187,7 @@ class PaymentMethodsModal extends StatelessWidget {
             Text(
               CurrencyHelper.formatCurrency(amount),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold, 
+                    fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 2),
@@ -208,7 +212,8 @@ class PaymentMethodsModal extends StatelessWidget {
 }
 
 /// Muestra el modal de métodos de pago
-void showPaymentMethodsModal(BuildContext context, SalesAnalytics analytics, [DateFilter? currentFilter]) {
+void showPaymentMethodsModal(BuildContext context, SalesAnalytics analytics,
+    [DateFilter? currentFilter]) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,

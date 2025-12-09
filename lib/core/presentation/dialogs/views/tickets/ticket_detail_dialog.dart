@@ -72,207 +72,206 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
 
   Widget _buildContent(BuildContext context) {
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Información del negocio y fecha
-          DialogComponents.infoSection(
-            context: context,
-            title: ' Información del Ticket',
-            content: Column(
-              children: [
-                DialogComponents.infoRow(
-                  context: context,
-                  label: 'Negocio',
-                  value: widget.businessName,
-                  icon: Icons.store_rounded,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Información del negocio y fecha
+        DialogComponents.infoSection(
+          context: context,
+          title: ' Información del Ticket',
+          content: Column(
+            children: [
+              DialogComponents.infoRow(
+                context: context,
+                label: 'Negocio',
+                value: widget.businessName,
+                icon: Icons.store_rounded,
+              ),
+              DialogComponents.minSpacing,
+              DialogComponents.infoRow(
+                context: context,
+                label: 'Fecha',
+                value: _formatDate(widget.ticket.creation.toDate()),
+                icon: Icons.schedule_rounded,
+              ),
+              DialogComponents.minSpacing,
+              DialogComponents.infoRow(
+                context: context,
+                label: 'ID Ticket',
+                value: widget.ticket.id,
+                icon: Icons.confirmation_number_rounded,
+              ),
+              DialogComponents.minSpacing,
+              DialogComponents.infoRow(
+                context: context,
+                label: 'Estado',
+                value: widget.ticket.annulled ? 'ANULADO' : 'TRANSACCIONADO',
+                icon: widget.ticket.annulled
+                    ? Icons.cancel_rounded
+                    : Icons.check_circle_rounded,
+                valueStyle: TextStyle(
+                  color: widget.ticket.annulled
+                      ? Theme.of(context).colorScheme.error
+                      : Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
                 ),
-                DialogComponents.minSpacing,
-                DialogComponents.infoRow(
-                  context: context,
-                  label: 'Fecha',
-                  value: _formatDate(widget.ticket.creation.toDate()),
-                  icon: Icons.schedule_rounded,
-                ),
-                DialogComponents.minSpacing,
-                DialogComponents.infoRow(
-                  context: context,
-                  label: 'ID Ticket',
-                  value: widget.ticket.id,
-                  icon: Icons.confirmation_number_rounded,
-                ),
-                DialogComponents.minSpacing,
-                DialogComponents.infoRow(
-                  context: context,
-                  label: 'Estado',
-                  value: widget.ticket.annulled ? 'ANULADO' : 'TRANSACCIONADO',
-                  icon: widget.ticket.annulled
-                      ? Icons.cancel_rounded
-                      : Icons.check_circle_rounded,
-                  valueStyle: TextStyle(
-                    color: widget.ticket.annulled
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          DialogComponents.sectionSpacing,
-          // Información de pago
-          DialogComponents.infoSection(
-            context: context,
-            title: 'Facturación',
-            content: Column(
-              children: [
-                // Método de pago
+        ),
+        DialogComponents.sectionSpacing,
+        // Información de pago
+        DialogComponents.infoSection(
+          context: context,
+          title: 'Facturación',
+          content: Column(
+            children: [
+              // Método de pago
+              DialogComponents.infoRow(
+                context: context,
+                label: 'Método de Pago',
+                value: widget.ticket.getNamePayMode,
+                icon: Icons.credit_card_rounded,
+                valueFill: true,
+                valueStyle: TextStyle(
+                  color: widget.ticket.getPayModeColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              // Mostrar descuento si existe
+              if (widget.ticket.discount > 0) ...[
+                DialogComponents.minSpacing,
                 DialogComponents.infoRow(
                   context: context,
-                  label: 'Método de Pago',
-                  value: widget.ticket.getNamePayMode,
-                  icon: Icons.credit_card_rounded,
-                  valueFill: true,
+                  label: 'Descuento',
+                  value: widget.ticket.discountIsPercentage
+                      ? '${widget.ticket.discount.toStringAsFixed(1)}% (${CurrencyFormatter.formatPrice(value: widget.ticket.getDiscountAmount)})'
+                      : CurrencyFormatter.formatPrice(
+                          value: widget.ticket.discount),
+                  icon: Icons.discount_rounded,
                   valueStyle: TextStyle(
-                    color: widget.ticket.getPayModeColor,
+                    color: Theme.of(context).colorScheme.tertiary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                // Mostrar descuento si existe
-                if (widget.ticket.discount > 0) ...[
+              ],
+              if (widget.ticket.valueReceived > 0) ...[
+                DialogComponents.minSpacing,
+                DialogComponents.infoRow(
+                  context: context,
+                  label: 'Recibido',
+                  value: CurrencyFormatter.formatPrice(
+                      value: widget.ticket.valueReceived),
+                  icon: Icons.monetization_on_rounded,
+                ),
+                if (widget.ticket.valueReceived >
+                    widget.ticket.getTotalPrice) ...[
                   DialogComponents.minSpacing,
                   DialogComponents.infoRow(
                     context: context,
-                    label: 'Descuento',
-                    value: widget.ticket.discountIsPercentage
-                        ? '${widget.ticket.discount.toStringAsFixed(1)}% (${CurrencyFormatter.formatPrice(value: widget.ticket.getDiscountAmount)})'
-                        : CurrencyFormatter.formatPrice(
-                            value: widget.ticket.discount),
-                    icon: Icons.discount_rounded,
-                    valueStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.tertiary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                if (widget.ticket.valueReceived > 0) ...[
-                  DialogComponents.minSpacing,
-                  DialogComponents.infoRow(
-                    context: context,
-                    label: 'Recibido',
+                    label: 'Cambio',
                     value: CurrencyFormatter.formatPrice(
-                        value: widget.ticket.valueReceived),
-                    icon: Icons.monetization_on_rounded,
-                  ),
-                  if (widget.ticket.valueReceived >
-                      widget.ticket.getTotalPrice) ...[
-                    DialogComponents.minSpacing,
-                    DialogComponents.infoRow(
-                      context: context,
-                      label: 'Cambio',
-                      value: CurrencyFormatter.formatPrice(
-                        value: widget.ticket.valueReceived -
-                            widget.ticket.getTotalPrice,
-                      ),
-                      icon: Icons.change_circle_rounded,
+                      value: widget.ticket.valueReceived -
+                          widget.ticket.getTotalPrice,
                     ),
-                  ],
+                    icon: Icons.change_circle_rounded,
+                  ),
                 ],
               ],
-            ),
+            ],
           ),
+        ),
 
-          DialogComponents.sectionSpacing,
+        DialogComponents.sectionSpacing,
 
-          // Total del ticket
-          DialogComponents.summaryContainer(
-            context: context,
-            label: 'Total',
-            value: CurrencyFormatter.formatPrice(
-                value: widget.ticket.getTotalPrice),
-            icon: Icons.receipt_rounded,
-          ),
-          DialogComponents.sectionSpacing,
-          // view : lista de productos
-          DialogComponents.itemList(
-            title: 'Productos Vendidos',
-            context: context,
-            items: widget.ticket.products.map((product) {
-              final quantity = product.quantity;
-              final description = product.description;
-              final unitPrice = product.salePrice;
-              final totalPrice = unitPrice * quantity;
-              // view : item de producto
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    // Cantidad en badge
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
+        // Total del ticket
+        DialogComponents.summaryContainer(
+          context: context,
+          label: 'Total',
+          value:
+              CurrencyFormatter.formatPrice(value: widget.ticket.getTotalPrice),
+          icon: Icons.receipt_rounded,
+        ),
+        DialogComponents.sectionSpacing,
+        // view : lista de productos
+        DialogComponents.itemList(
+          title: 'Productos Vendidos',
+          context: context,
+          items: widget.ticket.products.map((product) {
+            final quantity = product.quantity;
+            final description = product.description;
+            final unitPrice = product.salePrice;
+            final totalPrice = unitPrice * quantity;
+            // view : item de producto
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  // Cantidad en badge
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$quantity',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
-                      child: Center(
-                        child: Text(
-                          '$quantity',
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Descripción del producto
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          description,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          CurrencyFormatter.formatPrice(value: unitPrice),
                           style:
-                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context)
                                         .colorScheme
-                                        .onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
+                                        .onSurfaceVariant,
                                   ),
                         ),
-                      ),
+                      ],
                     ),
-
-                    const SizedBox(width: 12),
-
-                    // Descripción del producto
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            description,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w500),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            CurrencyFormatter.formatPrice(value: unitPrice),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Precio total
-                    Text(
-                      CurrencyFormatter.formatPrice(value: totalPrice),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          DialogComponents.sectionSpacing,
-        ],
+                  ),
+                  const SizedBox(width: 8),
+                  // Precio total
+                  Text(
+                    CurrencyFormatter.formatPrice(value: totalPrice),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        DialogComponents.sectionSpacing,
+      ],
     );
   }
 

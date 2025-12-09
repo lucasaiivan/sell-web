@@ -392,11 +392,12 @@ class DynamicItemsCalculator {
 
     // Altura total por item (item + spacing)
     final totalItemHeight = itemHeight + itemSpacing;
-    
+
     // Calcular cuántos items caben (el último no necesita spacing)
     // Fórmula: effectiveHeight >= (n * itemHeight) + ((n - 1) * itemSpacing)
     // Simplificado: n = (effectiveHeight + itemSpacing) / (itemHeight + itemSpacing)
-    final calculatedItems = ((effectiveHeight + itemSpacing) / totalItemHeight).floor();
+    final calculatedItems =
+        ((effectiveHeight + itemSpacing) / totalItemHeight).floor();
 
     return calculatedItems.clamp(minItems, maxItems);
   }
@@ -425,7 +426,7 @@ class DynamicItemsCalculator {
     for (int i = 0; i < maxItems; i++) {
       final itemHeight = getItemHeight(i);
       final neededHeight = usedHeight + itemHeight + (i > 0 ? itemSpacing : 0);
-      
+
       if (neededHeight <= effectiveHeight) {
         usedHeight = neededHeight;
         count++;

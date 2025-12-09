@@ -228,7 +228,7 @@ class CashRegisterProvider extends ChangeNotifier
     this._saveTicketToTransactionHistoryUseCase,
     this._persistenceService,
   );
- 
+
   @override
   void dispose() {
     _activeCashRegistersSubscription?.cancel();

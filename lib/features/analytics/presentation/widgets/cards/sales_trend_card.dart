@@ -41,7 +41,7 @@ class SalesTrendCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment:
             hasData ? MainAxisAlignment.end : MainAxisAlignment.center,
-        children: [ 
+        children: [
           if (!hasData)
             const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
           else ...[
@@ -340,7 +340,7 @@ class SalesTrendModal extends StatelessWidget {
               statusColor: trendColor,
               feedbackIcon: _getFeedbackIcon(trend),
               feedbackText: _getFeedbackText(trend, isPositive),
-            ), 
+            ),
             const SizedBox(height: 24),
 
             Text(
@@ -356,20 +356,21 @@ class SalesTrendModal extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             AnalyticsFeedbackBanner(
-              message:'La tendencia se calcula comparando las ventas de la primera mitad del período con la segunda mitad.',
+              message:
+                  'La tendencia se calcula comparando las ventas de la primera mitad del período con la segunda mitad.',
             ),
             const SizedBox(height: 24),
             // resumen : total facturado y transacciones
             AnalyticsStatusCard(
-               leftMetric: AnalyticsMetric(
-                label: 'Total Facturado',
-                value: CurrencyHelper.formatCurrency(trendData.totalSales)),
-                rightMetric: AnalyticsMetric(
-                label: 'Transacciones',
-                value: NumberHelper.formatNumber(trendData.totalTransactions)
-                  ),
-                statusColor: _accentColor,
-            ),  
+              leftMetric: AnalyticsMetric(
+                  label: 'Total Facturado',
+                  value: CurrencyHelper.formatCurrency(trendData.totalSales)),
+              rightMetric: AnalyticsMetric(
+                  label: 'Transacciones',
+                  value:
+                      NumberHelper.formatNumber(trendData.totalTransactions)),
+              statusColor: _accentColor,
+            ),
             const SizedBox(height: 24),
 
             Text(

@@ -140,12 +140,10 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
     try {
       final price = _priceController.doubleValue;
-      final description = _descriptionController.text.trim().isEmpty
-          ? ''
-          : _descriptionController.text.trim();
+      final description = _descriptionController.text.trim();
 
       // Agregar el producto de venta rápida
-      widget.provider
+      await widget.provider
           .addQuickProduct(description: description, salePrice: price);
 
       if (mounted) {

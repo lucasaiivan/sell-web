@@ -152,6 +152,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
           // Limpiar providers si había sesión anterior
           if (_accountScope != null) {
             _accountScope!.reset();
+            _lastAccountId = null;
           }
           return const AppPresentationPage();
         }
@@ -165,11 +166,19 @@ class _AppNavigatorState extends State<_AppNavigator> {
           _accountScope = getIt<AccountScopeProvider>();
         }
 
+        // Detectar cambio de cuenta
+        final isAccountChanged =
+            accountId.isNotEmpty && accountId != _lastAccountId;
+
         // Inicializar para nueva cuenta si cambió
-        if (accountId.isNotEmpty && accountId != _lastAccountId) {
+        if (isAccountChanged) {
+          // Actualizar _lastAccountId INMEDIATAMENTE para evitar reinicializaciones múltiples
+          _lastAccountId = accountId;
+
+          // Ejecutar la inicialización del scope en el siguiente frame
+          // para evitar modificar el estado durante el build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _accountScope!.initializeForAccount(accountId);
-            _lastAccountId = accountId;
           });
         }
 

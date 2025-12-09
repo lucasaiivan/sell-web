@@ -25,10 +25,6 @@ class CreateQuickProductUseCase
             ValidationFailure('El precio de venta no puede ser negativo'));
       }
 
-      if (params.description.trim().isEmpty) {
-        return Left(ValidationFailure('La descripción no puede estar vacía'));
-      }
-
       return Right(ProductCatalogue(
         id: UidHelper.generateUid(),
         description: params.description,

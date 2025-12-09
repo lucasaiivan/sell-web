@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/presentation/helpers/responsive_helper.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../core/widgets.dart';
 

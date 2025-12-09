@@ -48,7 +48,6 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final sellProvider = context.read<SalesProvider>();
     final theme = Theme.of(context);
 
     return CustomAppBar(
@@ -59,12 +58,17 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
           children: [
-            Builder(
-              builder: (context) => GestureDetector(
+            // Avatar - usa Selector para escuchar cambios de cuenta
+            Selector<SalesProvider, ({String image, String name})>(
+              selector: (_, provider) => (
+                image: provider.profileAccountSelected.image,
+                name: provider.profileAccountSelected.name,
+              ),
+              builder: (context, accountData, _) => GestureDetector(
                 onTap: () => Scaffold.of(context).openDrawer(),
                 child: UserAvatar(
-                  imageUrl: sellProvider.profileAccountSelected.image,
-                  text: sellProvider.profileAccountSelected.name,
+                  imageUrl: accountData.image,
+                  text: accountData.name,
                 ),
               ),
             ),
@@ -102,8 +106,9 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
                 ),
               ),
               onSelected: (String newValue) {
+                final salesProvider = context.read<SalesProvider>();
                 provider.setHistoryFilter(
-                    newValue, sellProvider.profileAccountSelected.id);
+                    newValue, salesProvider.profileAccountSelected.id);
               },
               itemBuilder: (BuildContext context) {
                 return <String>[

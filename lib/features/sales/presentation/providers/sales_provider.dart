@@ -848,19 +848,75 @@ class SalesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Asegura que AdminProfile esté inicializado antes de procesar una venta
+  ///
+  /// **CRÍTICO**: Este método resuelve la condición de carrera donde la primera venta
+  /// podría ejecutarse antes de que el AdminProfile esté completamente cargado.
+  ///
+  /// **NOTA**: Las ventas se pueden realizar sin caja registradora activa.
+  /// La caja registradora es opcional - si no hay caja activa, la venta se guarda
+  /// sin asociación a caja (cashRegisterId y cashRegisterName estarán vacíos).
+  ///
+  /// **Acciones:**
+  /// 1. Si AdminProfile es null, intenta cargarlo desde AuthProvider
+  Future<void> _ensureInitializedForSale(BuildContext context) async {
+    final authProvider =
+        provider.Provider.of<AuthProvider>(context, listen: false);
+
+    // Verificar y cargar AdminProfile si no está disponible
+    // Esto es necesario para identificar al vendedor que realiza la venta
+    if (_state.currentAdminProfile == null &&
+        authProvider.user?.email != null &&
+        _state.profileAccountSelected.id.isNotEmpty) {
+      if (kDebugMode) {
+        print(
+            '⚠️ SalesProvider: AdminProfile no disponible, cargando antes de la venta...');
+      }
+      await updateAdminProfileForSelectedAccount(authProvider.user!.email!);
+
+      if (kDebugMode) {
+        print(
+            '✅ SalesProvider: AdminProfile cargado: ${_state.currentAdminProfile?.email}');
+      }
+    }
+
+    // NOTA: No forzamos la inicialización de CashRegister aquí porque
+    // las ventas pueden realizarse sin una caja activa seleccionada.
+    // Si hay una caja activa, se asociará automáticamente en _prepareTicketForSale.
+  }
+
   /// PROCESAMIENTO DE VENTA CONFIRMADA
   ///
-  /// 1. Preparar ticket (vendedor, caja, precio, ID)
-  /// 2. Guardar ticket en Firebase (transacciones)
-  /// 3. Incrementar contador de ventas (SOLO si el guardado fue exitoso)
-  /// 4. Actualizar estadísticas de productos y stock
+  /// 1. Verificar y cargar AdminProfile si no está disponible
+  /// 2. Preparar ticket (vendedor, caja opcional, precio, ID)
+  /// 3. Guardar ticket en Firebase (transacciones)
+  /// 4. Incrementar contador de ventas en caja (SOLO si hay caja activa y el guardado fue exitoso)
+  /// 5. Actualizar estadísticas de productos y stock
+  ///
+  /// **NOTA**: Las ventas se pueden realizar sin caja registradora activa.
   ///
   /// ⚠️ IMPORTANTE: El contador 'sales' se incrementa DESPUÉS de guardar el ticket
   /// para garantizar que cashRegister.sales coincida con los tickets realmente guardados.
   Future<void> processSale(BuildContext context) async {
     try {
+      if (kDebugMode) {
+        print('🛒 processSale: Iniciando proceso de venta...');
+        print('   - AdminProfile: ${_state.currentAdminProfile?.email ?? "null"}');
+        print('   - AccountProfile: ${_state.profileAccountSelected.id}');
+      }
+
+      // PASO 0: Asegurar que AdminProfile y CashRegister estén inicializados
+      await _ensureInitializedForSale(context);
+
       // PASO 1: Preparar el ticket con toda la información necesaria (vendedor, caja, precio, ID)
       await _prepareTicketForSale(context);
+
+      if (kDebugMode) {
+        print('📋 processSale: Ticket preparado');
+        print('   - sellerId: ${_state.ticket.sellerId}');
+        print('   - sellerName: ${_state.ticket.sellerName}');
+        print('   - cashRegisterId: ${_state.ticket.cashRegisterId}');
+      }
 
       // PASO 2: Guardar en historial de transacciones (Firebase)
       // NOTA: El último ticket vendido se guarda automáticamente en saveTicketToTransactionHistory
@@ -920,21 +976,57 @@ class SalesProvider extends ChangeNotifier {
   ///
   /// **NOTA**: El sellerId y sellerName corresponden al usuario administrador
   /// que realiza la venta (currentAdminProfile), NO a la cuenta del comercio.
+  ///
+  /// **JERARQUÍA DE FALLBACK para datos del vendedor:**
+  /// 1. currentAdminProfile (perfil del admin logueado)
+  /// 2. AuthProvider.user (usuario autenticado - email)
+  /// 3. profileAccountSelected (cuenta comercial seleccionada)
   Future<void> _prepareTicketForSale(BuildContext context) async {
     final cashRegisterProvider =
         provider.Provider.of<CashRegisterProvider>(context, listen: false);
+    final authProvider =
+        provider.Provider.of<AuthProvider>(context, listen: false);
+
     final activeCashRegister = cashRegisterProvider.hasActiveCashRegister
         ? cashRegisterProvider.currentActiveCashRegister
         : null;
 
-    // Obtener datos del vendedor (usuario admin que realiza la venta)
-    // Si no hay AdminProfile, usar datos de la cuenta como fallback
-    final sellerId = _state.currentAdminProfile?.id.isNotEmpty == true
-        ? _state.currentAdminProfile!.id
-        : _state.profileAccountSelected.id;
-    final sellerName = _state.currentAdminProfile?.name.isNotEmpty == true
-        ? _state.currentAdminProfile!.name
-        : _state.profileAccountSelected.name;
+    // Obtener datos del vendedor con jerarquía de fallbacks
+    // PRIORIDAD 1: AdminProfile (contiene email y nombre del admin)
+    // PRIORIDAD 2: AuthProvider.user (email del usuario autenticado)
+    // PRIORIDAD 3: AccountProfile (datos de la cuenta comercial)
+    String sellerId;
+    String sellerName;
+
+    if (_state.currentAdminProfile?.id.isNotEmpty == true) {
+      // Usar AdminProfile si está disponible
+      sellerId = _state.currentAdminProfile!.id;
+      sellerName = _state.currentAdminProfile!.name.isNotEmpty
+          ? _state.currentAdminProfile!.name
+          : _state.currentAdminProfile!.email;
+    } else if (authProvider.user?.email?.isNotEmpty == true) {
+      // Fallback a datos del usuario autenticado
+      sellerId = authProvider.user!.email!;
+      sellerName = authProvider.user!.displayName?.isNotEmpty == true
+          ? authProvider.user!.displayName!
+          : authProvider.user!.email!;
+      if (kDebugMode) {
+        print(
+            '⚠️ _prepareTicketForSale: Usando AuthProvider como fallback - sellerId: $sellerId');
+      }
+    } else {
+      // Fallback final a datos de la cuenta comercial
+      sellerId = _state.profileAccountSelected.id;
+      sellerName = _state.profileAccountSelected.name;
+      if (kDebugMode) {
+        print(
+            '⚠️ _prepareTicketForSale: Usando AccountProfile como fallback - sellerId: $sellerId');
+      }
+    }
+
+    if (kDebugMode) {
+      print('📝 _prepareTicketForSale: sellerId=$sellerId, sellerName=$sellerName');
+    }
 
     final result = await _prepareSaleTicketUseCase(
       PrepareSaleTicketParams(

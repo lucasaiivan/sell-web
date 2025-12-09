@@ -52,10 +52,9 @@ class AccountScopeProvider extends ChangeNotifier {
       return;
     }
 
-    // Limpiar cuenta anterior si existe
-    if (_currentAccountId != null && _currentAccountId != accountId) {
-      _cleanupProviders();
-    }
+    // SIEMPRE limpiar providers antes de inicializar para una nueva cuenta
+    // Esto asegura que no queden datos de una cuenta/sesión anterior
+    _cleanupProviders();
 
     _currentAccountId = accountId;
     _isInitialized = false;

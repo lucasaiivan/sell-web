@@ -2,15 +2,15 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/services/storage/storage_service.dart';
+import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
+import 'package:sellweb/core/services/storage/storage_paths.dart';
+import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
-
 import '../providers/catalogue_provider.dart';
-import 'package:sellweb/core/presentation/modals/selection_modal.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -134,7 +134,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Selecciona una imagen de la galería
   Future<void> _pickImage() async {
     // Verificar si el producto está verificado
-    if (widget.product.status == 'verified') {
+    if (widget.product.isVerified) {
       final uniqueKey = UniqueKey();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -201,8 +201,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
       // Subir imagen si se seleccionó una nueva
       if (_newImageBytes != null) {
-        final imageUrl = await StorageService.uploadProductImage(
-            updatedProduct.id, _newImageBytes!);
+        final storage = getIt<IStorageDataSource>();
+        final path = StoragePaths.publicProductImage(updatedProduct.id);
+        final imageUrl = await storage.uploadFile(path,_newImageBytes!, metadata: {'contentType': 'image/jpeg','uploaded_by': 'catalogue_editor', }, );
         updatedProduct = updatedProduct.copyWith(image: imageUrl);
       }
 
@@ -253,7 +254,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Construye el producto actualizado con los valores del formulario
   ProductCatalogue _buildUpdatedProduct() {
     return widget.product.copyWith(
-      description: widget.product.status == 'verified'? widget.product.description: _descriptionController.text.trim(),
+      description: widget.product.isVerified
+          ? widget.product.description
+          : _descriptionController.text.trim(),
       salePrice: _parsePriceFromController(_salePriceController),
       purchasePrice: _parsePriceFromController(_purchasePriceController),
       quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
@@ -262,10 +265,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       nameCategory: _categoryController.text.trim(),
       provider: _selectedProviderId ?? '',
       nameProvider: _providerController.text.trim(),
-      idMark: widget.product.status == 'verified'
+      idMark: widget.product.isVerified
           ? widget.product.idMark
           : (_selectedBrandId ?? ''),
-      nameMark: widget.product.status == 'verified'
+      nameMark: widget.product.isVerified
           ? widget.product.nameMark
           : _markController.text.trim(),
       stock: _stockEnabled,
@@ -287,6 +290,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         _parsePriceFromController(_purchasePriceController);
     return newSalePrice != widget.product.salePrice ||
         newPurchasePrice != widget.product.purchasePrice;
+  }
+
+  /// Valida si el código de barras tiene un formato correcto
+  /// Un código válido debe ser numérico y tener entre 8-14 dígitos (EAN/UPC)
+  bool _isValidBarcode(String code) {
+    if (code.isEmpty) return false;
+    // Validar que sea solo números
+    if (!RegExp(r'^\d+$').hasMatch(code)) return false;
+    // Validar longitud (8-14 dígitos es estándar para EAN/UPC)
+    return code.length >= 8 && code.length <= 14;
   }
 
   /// Muestra mensaje de éxito al guardar
@@ -457,9 +470,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     // Upload image if provided
                     String imageUrl = '';
                     if (brandImageBytes != null) {
-                      imageUrl = await StorageService.uploadBrandImage(
-                        brandId,
+                      final storage = getIt<IStorageDataSource>();
+                      final path = StoragePaths.publicBrandImage(brandId);
+                      imageUrl = await storage.uploadFile(
+                        path,
                         brandImageBytes!,
+                        metadata: {
+                          'contentType': 'image/jpeg',
+                          'uploaded_by': 'brand_creator',
+                        },
                       );
                     }
 
@@ -522,9 +541,18 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Construye el AppBar con indicador de carga
   PreferredSizeWidget _buildAppBar() {
+    // Determinar el título según el estado del producto
+    String title;
+    if (widget.product.id.isEmpty || !widget.product.creation.isAfter(DateTime(2000))) {
+      // Producto nuevo que no existe en ningún lado
+      title = 'Nuevo producto';
+    } else {
+      // Producto que ya existe en el catálogo
+      title = 'Editar producto';
+    }
+
     return AppBar(
-      title:
-          Text(widget.isCreatingMode ? 'Agregar producto' : 'Editar producto'),
+      title: Text(title),
       centerTitle: false,
       actions: [
         if (_isSaving)
@@ -674,7 +702,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Construye sección de imagen del producto
   Widget _buildImageSection() {
-    final isVerified = widget.product.status == 'verified';
+    final isVerified = widget.product.isVerified;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -751,10 +779,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         const SizedBox(height: 12),
         Column(
           children: [
-            // Indicador de tipo de producto (solo en modo creación)
-            if (widget.isCreatingMode)
-              _buildProductTypeIndicator(theme, colorScheme),
-            if (widget.isCreatingMode) const SizedBox(height: 16),
             // Campo de código de barras (solo lectura)
             Container(
               padding: const EdgeInsets.all(16),
@@ -767,8 +791,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.qr_code_2,
-                    color: colorScheme.primary,
+                    _isValidBarcode(widget.product.code) ? Icons.public : Icons.store,
+                    color: _isValidBarcode(widget.product.code) ? Colors.green : Colors.orange.shade700,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -776,11 +800,39 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Código de barras',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Código de barras',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _isValidBarcode(widget.product.code)
+                                    ? Colors.green.withValues(alpha: 0.15)
+                                    : Colors.orange.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                _isValidBarcode(widget.product.code)
+                                    ? 'EAN-${widget.product.code.length}'
+                                    : 'Personalizado',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: _isValidBarcode(widget.product.code)
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -799,7 +851,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               ),
             ),
             const SizedBox(height: 18),
-            if (widget.product.status == 'verified') ...[
+            if (widget.product.isVerified) ...[
               // Campo de descripción (solo lectura)
               Container(
                 width: double.infinity,
@@ -853,7 +905,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             ],
             const SizedBox(height: 12),
             // view : marca del prodicto segun si esta verificado o no
-            if (widget.product.status == 'verified') ...[
+            if (widget.product.isVerified) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
@@ -1204,7 +1256,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de marca
   Widget _buildMarkField() {
-    final isVerified = widget.product.status == 'verified';
+    final isVerified = widget.product.isVerified;
     return StreamBuilder<List<Mark>>(
       stream: widget.catalogueProvider.getBrandsStream(),
       builder: (context, snapshot) {
@@ -1479,10 +1531,24 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Botón flotante de guardar
   Widget? _buildFab() {
     if (_isSaving) return null;
+    
+    // Determinar el texto del botón según el estado del producto
+    String buttonText;
+    if (widget.product.id.isEmpty || !widget.product.creation.isAfter(DateTime(2000))) {
+      // Producto nuevo que no existe en ningún lado
+      buttonText = 'Crear';
+    } else if (widget.isCreatingMode) {
+      // Producto que existe en la BD global pero no en el catálogo
+      buttonText = 'Agregar';
+    } else {
+      // Producto que ya existe en el catálogo
+      buttonText = 'Actualizar';
+    }
+    
     return FloatingActionButton.extended(
       heroTag: 'product_edit_save_fab',
       onPressed: _saveProduct,
-      label: const Text('Guardar'),
+      label: Text(buttonText),
     );
   }
 
@@ -1627,42 +1693,5 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  /// Construye el indicador del tipo de producto (local vs global)
-  Widget _buildProductTypeIndicator(ThemeData theme, ColorScheme colorScheme) {
-    final isLocal = widget.product.local;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isLocal
-            ? Colors.orange.withValues(alpha: 0.1)
-            : Colors.green.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isLocal
-              ? Colors.orange.withValues(alpha: 0.3)
-              : Colors.green.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isLocal ? Icons.store : Icons.public,
-            color: isLocal ? Colors.orange.shade700 : Colors.green.shade700,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            isLocal ? 'Producto Local' : 'Producto Global',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: isLocal ? Colors.orange.shade700 : Colors.green.shade700,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

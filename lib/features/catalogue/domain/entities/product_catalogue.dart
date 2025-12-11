@@ -160,7 +160,26 @@ class ProductCatalogue {
     );
   }
 
-  // Getters de lógica de negocio (sí pueden estar en la entidad)
+  // Getters de lógica de negocio
+
+  /// Indica si el producto está verificado por la comunidad
+  bool get isVerified => status == 'verified';
+
+  /// Indica si el producto está pendiente de verificación
+  bool get isPending => status == 'pending';
+
+  /// Indica si el producto es solo local (no se guarda en BD global)
+  bool get isLocalOnly => status == 'local_only';
+
+  /// Indica si el stock está bajo (menor o igual a la alerta)
+  bool get isLowStock => stock && quantityStock <= alertStock;
+
+  /// Indica si el producto está sin stock
+  bool get isOutOfStock => stock && quantityStock <= 0;
+
+  /// Indica si tiene margen de beneficio positivo
+  bool get hasProfitMargin => salePrice > purchasePrice;
+
   String get getPorcentageFormat {
     if (purchasePrice == 0 || salePrice == 0) return '';
     double ganancia = salePrice - purchasePrice;

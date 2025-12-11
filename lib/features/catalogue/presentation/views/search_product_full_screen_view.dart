@@ -50,6 +50,12 @@ class _ProductSearchFullScreenViewState
   // Flag para prevenir múltiples navegaciones simultáneas
   bool _isNavigating = false;
 
+  // Control para detectar escritura rápida de números
+  Timer? _rapidInputTimer;
+  int _rapidInputCount = 0;
+  final int _rapidInputThreshold = 6; // Mínimo de dígitos en tiempo rápido
+  final Duration _rapidInputWindow = const Duration(milliseconds: 1500); // Ventana de tiempo
+
   @override
   void initState() {
     super.initState();
@@ -99,12 +105,16 @@ class _ProductSearchFullScreenViewState
           _isValidBarcode = isValid;
         });
       }
+
+      // Detectar escritura rápida de múltiples dígitos
+      _detectRapidNumericInput();
     });
   }
 
   @override
   void dispose() {
     _deactivateListener(); // Desactivar listener del escáner
+    _rapidInputTimer?.cancel(); // Cancelar timer de entrada rápida
     _codeController.dispose();
     _codeFocusNode.dispose();
     _scannerInputController.dispose();
@@ -137,6 +147,45 @@ class _ProductSearchFullScreenViewState
       logicalKey: event.logicalKey,
       character: event.character,
     );
+  }
+
+  /// Detecta si el usuario está escribiendo múltiples dígitos rápidamente
+  /// Si detecta un patrón de escritura rápida, abre automáticamente la vista de crear producto
+  void _detectRapidNumericInput() {
+    final currentText = _codeController.text.trim();
+    
+    // Solo contar dígitos
+    final digitCount = currentText.replaceAll(RegExp(r'[^\d]'), '').length;
+    
+    // Si no hay dígitos, resetear
+    if (digitCount == 0) {
+      _rapidInputCount = 0;
+      _rapidInputTimer?.cancel();
+      return;
+    }
+
+    // Contar cuántos dígitos se han agregado recientemente
+    _rapidInputCount = digitCount;
+
+    // Cancelar timer anterior si existe
+    _rapidInputTimer?.cancel();
+
+    // Si ya tenemos suficientes dígitos para un código típico (EAN), abrir automáticamente
+    if (digitCount >= _rapidInputThreshold && !_isNavigating && !_isSearching) {
+      // Usar el timer para permitir que el usuario termine de escribir
+      _rapidInputTimer = Timer(_rapidInputWindow, () {
+        // Solo actuar si el texto no ha cambiado desde que se estableció el timer
+        // y si aún tenemos la misma cantidad de dígitos
+        final finalText = _codeController.text.trim();
+        final finalDigitCount = finalText.replaceAll(RegExp(r'[^\d]'), '').length;
+        
+        if (finalDigitCount == _rapidInputCount && mounted && !_isNavigating) {
+          print('⚡ Escritura rápida detectada: $_rapidInputCount dígitos -> Abriendo vista de crear');
+          _searchProduct();
+        }
+        _rapidInputCount = 0;
+      });
+    }
   }
 
   /// Busca el producto por código en el catálogo local y global

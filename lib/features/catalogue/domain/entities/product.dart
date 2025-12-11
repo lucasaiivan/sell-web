@@ -52,6 +52,17 @@ class Product {
   /// Estado del producto (verified, pending, local_only)
   final String status;
 
+  // Getters de lógica de negocio
+
+  /// Indica si el producto está verificado por la comunidad
+  bool get isVerified => status == 'verified';
+
+  /// Indica si el producto está pendiente de verificación
+  bool get isPending => status == 'pending';
+
+  /// Indica si el producto es solo local (no se guarda en BD global)
+  bool get isLocalOnly => status == 'local_only';
+
   /// Convierte este producto global a un producto de catálogo
   ProductCatalogue convertProductCatalogue() {
     return ProductCatalogue(

@@ -453,18 +453,18 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: product.status == 'verified'
+              color: product.isVerified
                   ? Colors.blue.withValues(alpha: 0.12)
                   : theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(999),
-              border: product.status == 'verified'
+              border: product.isVerified
                   ? Border.all(color: Colors.blue.withValues(alpha: 0.3))
                   : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (product.status == 'verified') ...[
+                if (product.isVerified) ...[
                   Icon(
                     Icons.verified,
                     size: 16,
@@ -475,10 +475,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 Text(
                   product.nameMark,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: product.status == 'verified'
+                    color: product.isVerified
                         ? Colors.blue
                         : theme.colorScheme.onSurfaceVariant,
-                    fontWeight: product.status == 'verified' ? FontWeight.w600 : null,
+                    fontWeight: product.isVerified ? FontWeight.w600 : null,
                   ),
                 ),
               ],

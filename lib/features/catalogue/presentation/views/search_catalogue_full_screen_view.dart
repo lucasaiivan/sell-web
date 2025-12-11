@@ -435,7 +435,7 @@ class _ProductCatalogueFullScreenViewState
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 10,
-                color: product.status == 'verified' ? Colors.blue : null,
+                color: product.isVerified ? Colors.blue : null,
                 overflow: TextOverflow.ellipsis,
               ),
               maxLines: 1,
@@ -825,7 +825,7 @@ class _ProductCatalogueFullScreenViewState
                     product.nameMark,
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w900,
-                      color: product.status == 'verified' ? Colors.blue : null,
+                      color: product.isVerified ? Colors.blue : null,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

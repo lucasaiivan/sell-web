@@ -601,17 +601,17 @@ class _ProductListTile extends StatelessWidget {
             Row(
               children: [
                 if (product.nameMark.isNotEmpty) ...[
-                  if (product.status == 'verified')
+                  if (product.isVerified)
                     Icon(
                       Icons.verified,
                       size: 14,
                       color: Colors.blue,
                     ),
-                  if (product.status == 'verified') const SizedBox(width: 4),
+                  if (product.isVerified) const SizedBox(width: 4),
                   Text(
                     product.nameMark,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: (product.status == 'verified')
+                      color: (product.isVerified)
                           ? Colors.blue
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -754,17 +754,17 @@ class _ProductListTile extends StatelessWidget {
             if (product.nameMark.isNotEmpty)
               Row(
                 children: [
-                  if (product.status == 'verified')
+                  if (product.isVerified)
                     Icon(
                       Icons.verified,
                       size: 14,
                       color: Colors.blue,
                     ),
-                  if (product.status == 'verified') const SizedBox(width: 4),
+                  if (product.isVerified) const SizedBox(width: 4),
                   Text(
                     product.nameMark,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: (product.status == 'verified')
+                      color: (product.isVerified)
                           ? Colors.blue
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -1123,20 +1123,19 @@ class _ProductCatalogueCard extends StatelessWidget {
                   if (product.nameMark.isNotEmpty)
                     Row(
                       children: [
-                        if (product.status == 'verified')
+                        if (product.isVerified)
                           Icon(
                             Icons.verified,
                             size: 12,
                             color: Colors.blue,
                           ),
-                        if (product.status == 'verified')
-                          const SizedBox(width: 4),
+                        if (product.isVerified) const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             product.nameMark,
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: product.status == 'verified'
+                              color: product.isVerified
                                   ? Colors.blue
                                   : colorScheme.onSurfaceVariant,
                               fontSize: 10,

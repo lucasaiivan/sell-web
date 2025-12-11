@@ -17,7 +17,6 @@ import 'package:sellweb/core/presentation/providers/initializable_provider.dart'
 import '../../domain/usecases/get_catalogue_stream_usecase.dart';
 import '../../domain/usecases/get_public_product_by_code_usecase.dart';
 import '../../domain/usecases/add_product_to_catalogue_usecase.dart';
-import '../../domain/usecases/create_public_product_usecase.dart';
 import '../../domain/usecases/register_product_price_usecase.dart';
 import '../../domain/usecases/increment_product_sales_usecase.dart';
 import '../../domain/usecases/decrement_product_stock_usecase.dart';
@@ -133,7 +132,6 @@ class CatalogueProvider extends ChangeNotifier
   final GetCatalogueStreamUseCase _getCatalogueStreamUseCase;
   final GetPublicProductByCodeUseCase _getPublicProductByCodeUseCase;
   final AddProductToCatalogueUseCase _addProductToCatalogueUseCase;
-  final CreatePublicProductUseCase _createPublicProductUseCase;
   final RegisterProductPriceUseCase _registerProductPriceUseCase;
   final IncrementProductSalesUseCase _incrementProductSalesUseCase;
   final DecrementProductStockUseCase _decrementProductStockUseCase;
@@ -198,7 +196,6 @@ class CatalogueProvider extends ChangeNotifier
     this._getCatalogueStreamUseCase,
     this._getPublicProductByCodeUseCase,
     this._addProductToCatalogueUseCase,
-    this._createPublicProductUseCase,
     this._registerProductPriceUseCase,
     this._incrementProductSalesUseCase,
     this._decrementProductStockUseCase,

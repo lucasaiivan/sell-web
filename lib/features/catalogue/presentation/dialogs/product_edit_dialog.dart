@@ -143,7 +143,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                 Row(
                   children: [
                     // Ícono de verificación si el producto está verificado
-                    if (widget.product.status == 'verified') ...[
+                    if (widget.product.isVerified) ...[
                       Icon(
                         Icons.verified,
                         size: 20,
@@ -162,7 +162,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                                   .titleLarge
                                   ?.copyWith(
                                       fontWeight: FontWeight.w600,
-                                      color: widget.product.status == 'verified'
+                                      color: widget.product.isVerified
                                           ? Colors.blue
                                           : null,
                                       fontSize: 16),

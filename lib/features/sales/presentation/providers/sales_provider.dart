@@ -29,7 +29,6 @@ import 'package:sellweb/features/sales/domain/usecases/save_last_sold_ticket_use
 import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usecase.dart';
 
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
-import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 
 /// Estado inmutable del provider de ventas
@@ -147,7 +146,7 @@ class SalesProvider extends ChangeNotifier {
   final SaveLastSoldTicketUseCase _saveLastSoldTicketUseCase;
   final GetLastSoldTicketUseCase _getLastSoldTicketUseCase;
 
-  final CatalogueUseCases? _catalogueUseCases;
+  final CatalogueUseCases _catalogueUseCases;
   final AppDataPersistenceService _persistenceService;
   final ThermalPrinterHttpService _printerService;
 
@@ -186,7 +185,7 @@ class SalesProvider extends ChangeNotifier {
     required GetLastSoldTicketUseCase getLastSoldTicketUseCase,
     required AppDataPersistenceService persistenceService,
     required ThermalPrinterHttpService printerService,
-    CatalogueUseCases? catalogueUseCases,
+    required CatalogueUseCases catalogueUseCases,
   })  : _persistenceService = persistenceService,
         _printerService = printerService,
         _addProductToTicketUseCase = addProductToTicketUseCase,
@@ -901,7 +900,8 @@ class SalesProvider extends ChangeNotifier {
     try {
       if (kDebugMode) {
         print('🛒 processSale: Iniciando proceso de venta...');
-        print('   - AdminProfile: ${_state.currentAdminProfile?.email ?? "null"}');
+        print(
+            '   - AdminProfile: ${_state.currentAdminProfile?.email ?? "null"}');
         print('   - AccountProfile: ${_state.profileAccountSelected.id}');
       }
 
@@ -1025,7 +1025,8 @@ class SalesProvider extends ChangeNotifier {
     }
 
     if (kDebugMode) {
-      print('📝 _prepareTicketForSale: sellerId=$sellerId, sellerName=$sellerName');
+      print(
+          '📝 _prepareTicketForSale: sellerId=$sellerId, sellerName=$sellerName');
     }
 
     final result = await _prepareSaleTicketUseCase(
@@ -1296,12 +1297,6 @@ class SalesProvider extends ChangeNotifier {
         return;
       }
 
-      // Si no hay casos de uso inyectados, usar el provider (fallback)
-      if (_catalogueUseCases == null) {
-        await _updateProductSalesAndStockViaProvider(context);
-        return;
-      }
-
       // Procesar cada producto del ticket usando UseCases directamente
       for (final product in _state.ticket.products) {
         if (product.code.isEmpty) {
@@ -1365,52 +1360,6 @@ class SalesProvider extends ChangeNotifier {
             ),
           ),
         );
-      }
-    }
-  }
-
-  /// Método de fallback para actualizar productos vía provider cuando no hay UseCases inyectados
-  Future<void> _updateProductSalesAndStockViaProvider(
-      BuildContext context) async {
-    try {
-      // Obtener el provider del catálogo
-      final catalogueProvider =
-          provider.Provider.of<CatalogueProvider>(context, listen: false);
-      final accountId = _state.profileAccountSelected.id;
-
-      // Procesar cada producto del ticket
-      for (final product in _state.ticket.products) {
-        if (product.code.isEmpty) {
-          // Si el producto no tiene código, saltar (productos de venta rápida)
-          continue;
-        }
-
-        try {
-          // Incrementar ventas del producto en el catálogo
-          await catalogueProvider.incrementProductSales(
-            accountId,
-            product.id,
-            quantity: product.quantity,
-          );
-
-          // Si el producto tiene control de stock habilitado, decrementar stock
-          if (product.stock && product.quantityStock > 0) {
-            await catalogueProvider.decrementProductStock(
-              accountId,
-              product.id,
-              product.quantity,
-            );
-          }
-        } catch (productError) {
-          // Si falla la actualización de un producto específico, continuar con los demás
-          if (kDebugMode) {
-            print('Error actualizando producto ${product.id}: $productError');
-          }
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error general actualizando productos vía provider: $e');
       }
     }
   }

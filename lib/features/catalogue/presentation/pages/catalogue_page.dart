@@ -10,6 +10,8 @@ import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/core/presentation/widgets/connectivity_indicator.dart';
 import '../widgets/product_catalogue_view.dart';
 import '../widgets/product_edit_catalogue_view.dart';
+import '../widgets/catalogue_metrics_bar.dart';
+import '../views/search_product_full_screen_view.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -163,10 +165,21 @@ class _CataloguePageState extends State<CataloguePage> {
           return _buildEmptyState(context);
         }
 
-        // Lista de productos
-        return _isGridView
-            ? _buildGridView(displayProducts)
-            : _buildListView(displayProducts);
+        // Lista de productos con métricas
+        return Column(
+          children: [
+            // Barra de métricas (se ajusta según el filtro)
+            CatalogueMetricsBar(
+              metrics: catalogueProvider.catalogueMetrics,
+            ),
+            // Lista de productos
+            Expanded(
+              child: _isGridView
+                  ? _buildGridView(displayProducts)
+                  : _buildListView(displayProducts),
+            ),
+          ],
+        );
       },
     );
   }
@@ -327,23 +340,42 @@ class _CataloguePageState extends State<CataloguePage> {
 
   /// Botón flotante para agregar productos
   Widget _buildFloatingActionButton(BuildContext context) {
-    return FloatingActionButton.extended(
-      heroTag: 'catalogue_add_product_fab',
-      onPressed: () {
-        // TODO: Implementar diálogo para agregar producto
-        ScaffoldMessenger.of(context).clearSnackBars();
-        final uniqueKey = UniqueKey();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            key: uniqueKey,
-            behavior: SnackBarBehavior.floating,
-            content: const Text('Agregar producto - Por implementar'),
-          ),
-        );
-      },
-      icon: const Icon(Icons.add),
-      label: const Text('Agregar'),
-    );
+    final catalogueProvider =
+        Provider.of<CatalogueProvider>(context, listen: false);
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+
+    return isSmallScreen
+        ? FloatingActionButton(
+            heroTag: 'catalogue_add_product_fab',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProductSearchFullScreenView(
+                    catalogueProvider: catalogueProvider,
+                    salesProvider: salesProvider,
+                  ),
+                ),
+              );
+            },
+            child: const Icon(Icons.add),
+          )
+        : FloatingActionButton.extended(
+            heroTag: 'catalogue_add_product_fab',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProductSearchFullScreenView(
+                    catalogueProvider: catalogueProvider,
+                    salesProvider: salesProvider,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Agregar'),
+          );
   }
 
   /// Calcula el número de columnas según el ancho de la pantalla
@@ -569,17 +601,17 @@ class _ProductListTile extends StatelessWidget {
             Row(
               children: [
                 if (product.nameMark.isNotEmpty) ...[
-                  if (product.verified)
+                  if (product.status == 'verified')
                     Icon(
                       Icons.verified,
                       size: 14,
                       color: Colors.blue,
                     ),
-                  if (product.verified) const SizedBox(width: 4),
+                  if (product.status == 'verified') const SizedBox(width: 4),
                   Text(
                     product.nameMark,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: (product.verified)
+                      color: (product.status == 'verified')
                           ? Colors.blue
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -722,17 +754,17 @@ class _ProductListTile extends StatelessWidget {
             if (product.nameMark.isNotEmpty)
               Row(
                 children: [
-                  if (product.verified)
+                  if (product.status == 'verified')
                     Icon(
                       Icons.verified,
                       size: 14,
                       color: Colors.blue,
                     ),
-                  if (product.verified) const SizedBox(width: 4),
+                  if (product.status == 'verified') const SizedBox(width: 4),
                   Text(
                     product.nameMark,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: (product.verified)
+                      color: (product.status == 'verified')
                           ? Colors.blue
                           : colorScheme.onSurfaceVariant,
                     ),
@@ -1091,19 +1123,20 @@ class _ProductCatalogueCard extends StatelessWidget {
                   if (product.nameMark.isNotEmpty)
                     Row(
                       children: [
-                        if (product.verified)
+                        if (product.status == 'verified')
                           Icon(
                             Icons.verified,
                             size: 12,
                             color: Colors.blue,
                           ),
-                        if (product.verified) const SizedBox(width: 4),
+                        if (product.status == 'verified')
+                          const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             product.nameMark,
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: product.verified
+                              color: product.status == 'verified'
                                   ? Colors.blue
                                   : colorScheme.onSurfaceVariant,
                               fontSize: 10,

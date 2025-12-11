@@ -9,6 +9,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_price.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
+import 'package:sellweb/features/catalogue/domain/entities/catalogue_metric.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 
@@ -25,6 +26,7 @@ import '../../domain/usecases/get_categories_stream_usecase.dart';
 import '../../domain/usecases/get_providers_stream_usecase.dart';
 import '../../domain/usecases/get_brands_stream_usecase.dart';
 import '../../domain/usecases/create_brand_usecase.dart';
+import '../../domain/usecases/create_pending_product_usecase.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
@@ -140,6 +142,7 @@ class CatalogueProvider extends ChangeNotifier
   final GetProvidersStreamUseCase _getProvidersStreamUseCase;
   final GetBrandsStreamUseCase _getBrandsStreamUseCase;
   final CreateBrandUseCase _createBrandUseCase;
+  final CreatePendingProductUseCase _createPendingProductUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
@@ -166,6 +169,22 @@ class CatalogueProvider extends ChangeNotifier
   bool get isFiltering =>
       currentSearchQuery.isNotEmpty || activeFilter != CatalogueFilter.none;
 
+  // ==================== MÉTRICAS DEL CATÁLOGO ====================
+  
+  /// Calcula las métricas basadas en los productos visibles (filtrados)
+  /// Las métricas se ajustan automáticamente según el filtro activo
+  CatalogueMetrics get catalogueMetrics {
+    final productsList = visibleProducts;
+    return CatalogueMetrics.fromProducts(
+      products: productsList,
+      currencySign: productsList.isNotEmpty 
+          ? productsList.first.currencySign 
+          : '\$',
+    );
+  }
+
+  // ===============================================================
+
   List<ProductCatalogue> getTopFilterProducts(
       {int limit = 50, int minimumSales = 1}) {
     return LocalSearchDataSource.getTopSellingProducts(
@@ -188,6 +207,7 @@ class CatalogueProvider extends ChangeNotifier
     this._getProvidersStreamUseCase,
     this._getBrandsStreamUseCase,
     this._createBrandUseCase,
+    this._createPendingProductUseCase,
   );
 
   void initCatalogue(String id) {
@@ -401,6 +421,13 @@ class CatalogueProvider extends ChangeNotifier
     }
   }
 
+  /// Genera un SKU híbrido para productos sin código de barras
+  String generateHybridSku(String accountId) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final idPart = accountId.length > 5 ? accountId.substring(0, 5) : accountId;
+    return 'SKU-$idPart-$timestamp';
+  }
+
   Future<void> createPublicProduct(Product product) async {
     try {
       final productToSave = Product(
@@ -413,22 +440,19 @@ class CatalogueProvider extends ChangeNotifier
         code: product.code,
         followers: product.followers,
         favorite: product.favorite,
-        verified: product.verified,
-        reviewed: product.reviewed,
+        reviewed: false, // Siempre false al crear
         creation: DateTime.now(),
         upgrade: DateTime.now(),
         idUserCreation: product.idUserCreation,
         idUserUpgrade: product.idUserUpgrade,
+        attributes: product.attributes,
+        status: 'pending', // Siempre pending
       );
 
-      final result = await _createPublicProductUseCase(
-          CreatePublicProductParams(productToSave));
-      result.fold(
-        (failure) => throw Exception(failure.message),
-        (_) => null,
-      );
+      // Usar el caso de uso de pendientes
+      await _createPendingProductUseCase(productToSave);
     } catch (e) {
-      throw Exception('Error al crear producto público: $e');
+      throw Exception('Error al crear producto pendiente: $e');
     }
   }
 

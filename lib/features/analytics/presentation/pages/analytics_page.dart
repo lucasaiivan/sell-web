@@ -218,8 +218,12 @@ class AnalyticsPage extends StatelessWidget {
         currentFilter: provider.selectedFilter,
         onSalesTap: () => showTransactionsDialog(
           context: context,
+          // Usar getAllTransactionsForFilter para mostrar TODAS las transacciones
+          // incluyendo anuladas. El usuario debe poder ver su historial completo.
+          // Las transacciones anuladas se muestran con indicador visual pero
+          // el revenue calculado en headers NO las incluye.
           transactions:
-              analytics.getFilteredTransactions(provider.selectedFilter),
+              analytics.getAllTransactionsForFilter(provider.selectedFilter),
           currentFilter: provider.selectedFilter,
           onTransactionTap: (transaction) =>
               _showTransactionDetail(context, transaction),

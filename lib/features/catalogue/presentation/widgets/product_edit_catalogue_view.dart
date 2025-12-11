@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/storage_service.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
@@ -25,12 +26,14 @@ class ProductEditCatalogueView extends StatefulWidget {
   final ProductCatalogue product;
   final CatalogueProvider catalogueProvider;
   final String accountId;
+  final bool isCreatingMode;
 
   const ProductEditCatalogueView({
     super.key,
     required this.product,
     required this.catalogueProvider,
     required this.accountId,
+    this.isCreatingMode = false,
   });
 
   @override
@@ -63,6 +66,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   String? _selectedCategoryId;
   String? _selectedProviderId;
   String? _selectedBrandId;
+
+  // Attributes
+  Map<String, dynamic> _attributes = {};
 
   @override
   void initState() {
@@ -103,6 +109,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         widget.product.provider.isNotEmpty ? widget.product.provider : null;
     _selectedBrandId =
         widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
+    _attributes = Map.from(widget.product.attributes);
   }
 
   /// Configura listeners para recalcular beneficios
@@ -127,7 +134,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Selecciona una imagen de la galería
   Future<void> _pickImage() async {
     // Verificar si el producto está verificado
-    if (widget.product.verified) {
+    if (widget.product.status == 'verified') {
       final uniqueKey = UniqueKey();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -186,15 +193,46 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     try {
       var updatedProduct = _buildUpdatedProduct();
 
+      // Si estamos creando un producto nuevo, generar ID
+      if (widget.isCreatingMode && updatedProduct.id.isEmpty) {
+        final newId = DateTime.now().millisecondsSinceEpoch.toString();
+        updatedProduct = updatedProduct.copyWith(id: newId);
+      }
+
       // Subir imagen si se seleccionó una nueva
       if (_newImageBytes != null) {
         final imageUrl = await StorageService.uploadProductImage(
-            widget.product.id, _newImageBytes!);
+            updatedProduct.id, _newImageBytes!);
         updatedProduct = updatedProduct.copyWith(image: imageUrl);
       }
 
+      // Si es un producto NO local (escaneado), crear en la BD global primero
+      // Los productos locales (entrada manual) NO se guardan en BD global
+      if (widget.isCreatingMode && !updatedProduct.local) {
+        final globalProduct = Product(
+          id: updatedProduct.id,
+          code: updatedProduct.code,
+          description: updatedProduct.description,
+          image: updatedProduct.image,
+          idMark: updatedProduct.idMark,
+          nameMark: updatedProduct.nameMark,
+          imageMark: updatedProduct.imageMark,
+          reviewed: false,
+          followers: 0,
+          favorite: false,
+          creation: DateTime.now(),
+          upgrade: DateTime.now(),
+          idUserCreation: widget.accountId,
+          idUserUpgrade: widget.accountId,
+          attributes: updatedProduct.attributes,
+          status: updatedProduct.status,
+        );
+
+        await widget.catalogueProvider.createPublicProduct(globalProduct);
+      }
+
       // Detectar si cambiaron los precios para actualizar el timestamp upgrade
-      final pricesChanged = _havePricesChanged();
+      final pricesChanged = widget.isCreatingMode ? true : _havePricesChanged();
       await widget.catalogueProvider.addAndUpdateProductToCatalogue(
         updatedProduct,
         widget.accountId,
@@ -215,9 +253,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Construye el producto actualizado con los valores del formulario
   ProductCatalogue _buildUpdatedProduct() {
     return widget.product.copyWith(
-      description: widget.product.verified
-          ? widget.product.description
-          : _descriptionController.text.trim(),
+      description: widget.product.status == 'verified'? widget.product.description: _descriptionController.text.trim(),
       salePrice: _parsePriceFromController(_salePriceController),
       purchasePrice: _parsePriceFromController(_purchasePriceController),
       quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
@@ -226,14 +262,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       nameCategory: _categoryController.text.trim(),
       provider: _selectedProviderId ?? '',
       nameProvider: _providerController.text.trim(),
-      idMark: widget.product.verified
+      idMark: widget.product.status == 'verified'
           ? widget.product.idMark
           : (_selectedBrandId ?? ''),
-      nameMark: widget.product.verified
+      nameMark: widget.product.status == 'verified'
           ? widget.product.nameMark
           : _markController.text.trim(),
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
+      attributes: _attributes,
     );
   }
 
@@ -259,12 +296,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         key: uniqueKey,
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 12),
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 12),
             Expanded(
-              child: Text('Producto actualizado correctamente'),
+              child: Text(widget.isCreatingMode
+                  ? 'Producto agregado correctamente'
+                  : 'Producto actualizado correctamente'),
             ),
           ],
         ),
@@ -484,7 +523,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Construye el AppBar con indicador de carga
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text('Editar producto'),
+      title:
+          Text(widget.isCreatingMode ? 'Agregar producto' : 'Editar producto'),
       centerTitle: false,
       actions: [
         if (_isSaving)
@@ -517,6 +557,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 const SizedBox(height: 24),
                 _buildBasicInfoSection(colorScheme),
                 const SizedBox(height: 24),
+                _buildAttributesSection(colorScheme),
+                const SizedBox(height: 24),
                 _buildPricingSection(),
                 const SizedBox(height: 24),
                 _buildInventorySection(colorScheme),
@@ -531,9 +573,108 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
+  /// Construye sección de atributos dinámicos
+  Widget _buildAttributesSection(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Atributos',
+          icon: Icons.label_outline,
+        ),
+        const SizedBox(height: 12),
+        _buildCard(
+          context: context,
+          child: Column(
+            children: [
+              ..._attributes.entries.map((entry) => ListTile(
+                    dense: true,
+                    title: Text(entry.key),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          entry.value.toString(),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () {
+                            setState(() {
+                              _attributes.remove(entry.key);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  )),
+              if (_attributes.isNotEmpty) const Divider(height: 1),
+              ListTile(
+                dense: true,
+                leading: Icon(Icons.add, size: 20, color: colorScheme.primary),
+                title: Text(
+                  'Agregar atributo',
+                  style: TextStyle(color: colorScheme.primary),
+                ),
+                onTap: _showAddAttributeDialog,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showAddAttributeDialog() {
+    final keyController = TextEditingController();
+    final valueController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Agregar atributo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: keyController,
+              decoration:
+                  const InputDecoration(labelText: 'Nombre (ej. Color)'),
+            ),
+            TextField(
+              controller: valueController,
+              decoration: const InputDecoration(labelText: 'Valor (ej. Rojo)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (keyController.text.isNotEmpty &&
+                  valueController.text.isNotEmpty) {
+                setState(() {
+                  _attributes[keyController.text.trim()] =
+                      valueController.text.trim();
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Construye sección de imagen del producto
   Widget _buildImageSection() {
-    final isVerified = widget.product.verified;
+    final isVerified = widget.product.status == 'verified';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -610,6 +751,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         const SizedBox(height: 12),
         Column(
           children: [
+            // Indicador de tipo de producto (solo en modo creación)
+            if (widget.isCreatingMode)
+              _buildProductTypeIndicator(theme, colorScheme),
+            if (widget.isCreatingMode) const SizedBox(height: 16),
             // Campo de código de barras (solo lectura)
             Container(
               padding: const EdgeInsets.all(16),
@@ -654,7 +799,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               ),
             ),
             const SizedBox(height: 18),
-            if (widget.product.verified) ...[
+            if (widget.product.status == 'verified') ...[
               // Campo de descripción (solo lectura)
               Container(
                 width: double.infinity,
@@ -708,7 +853,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             ],
             const SizedBox(height: 12),
             // view : marca del prodicto segun si esta verificado o no
-            if (widget.product.verified) ...[
+            if (widget.product.status == 'verified') ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
@@ -1059,7 +1204,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de marca
   Widget _buildMarkField() {
-    final isVerified = widget.product.verified;
+    final isVerified = widget.product.status == 'verified';
     return StreamBuilder<List<Mark>>(
       stream: widget.catalogueProvider.getBrandsStream(),
       builder: (context, snapshot) {
@@ -1475,6 +1620,45 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye el indicador del tipo de producto (local vs global)
+  Widget _buildProductTypeIndicator(ThemeData theme, ColorScheme colorScheme) {
+    final isLocal = widget.product.local;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isLocal
+            ? Colors.orange.withValues(alpha: 0.1)
+            : Colors.green.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isLocal
+              ? Colors.orange.withValues(alpha: 0.3)
+              : Colors.green.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isLocal ? Icons.store : Icons.public,
+            color: isLocal ? Colors.orange.shade700 : Colors.green.shade700,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isLocal ? 'Producto Local' : 'Producto Global',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: isLocal ? Colors.orange.shade700 : Colors.green.shade700,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

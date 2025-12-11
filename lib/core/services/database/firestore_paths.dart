@@ -29,6 +29,10 @@ class FirestorePaths {
   static String publicProducts({String country = 'ARG'}) =>
       '/APP/$country/PRODUCTOS';
 
+  /// Productos pendientes de moderación
+  static String productsPending({String country = 'ARG'}) =>
+      '/APP/$country/PRODUCTS_PENDING';
+
   /// Registro de precios de productos
   static String productPrices({
     required String productId,

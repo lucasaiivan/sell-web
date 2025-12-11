@@ -170,6 +170,7 @@ class MonthGroupedTransactionsList extends StatelessWidget {
     return '${months[date.month - 1]} ${date.year}';
   }
 
+  /// Cuenta todas las transacciones del mes (incluyendo anuladas para historial)
   int _countTransactionsInMonth(int startIndex) {
     if (startIndex >= transactions.length) return 0;
 
@@ -184,15 +185,23 @@ class MonthGroupedTransactionsList extends StatelessWidget {
     return count;
   }
 
+  /// Calcula el revenue del mes EXCLUYENDO transacciones anuladas
+  /// Las transacciones anuladas no deben sumar a ninguna métrica de facturación
   double _calculateMonthRevenue(int startIndex) {
     if (startIndex >= transactions.length) return 0.0;
 
     final startDate = transactions[startIndex].creation;
-    double revenue = transactions[startIndex].priceTotal;
+    // Solo sumar si NO está anulada
+    double revenue = transactions[startIndex].annulled
+        ? 0.0
+        : transactions[startIndex].priceTotal;
 
     for (int i = startIndex + 1; i < transactions.length; i++) {
       if (_isDifferentMonth(startDate, transactions[i].creation)) break;
-      revenue += transactions[i].priceTotal;
+      // Solo sumar si NO está anulada
+      if (!transactions[i].annulled) {
+        revenue += transactions[i].priceTotal;
+      }
     }
 
     return revenue;
@@ -393,6 +402,7 @@ class _MonthGroupedTransactionsColumn extends StatelessWidget {
     return '${months[date.month - 1]} ${date.year}';
   }
 
+  /// Cuenta todas las transacciones del mes (incluyendo anuladas para historial)
   int _countTransactionsInMonth(int startIndex) {
     if (startIndex >= transactions.length) return 0;
 
@@ -407,15 +417,23 @@ class _MonthGroupedTransactionsColumn extends StatelessWidget {
     return count;
   }
 
+  /// Calcula el revenue del mes EXCLUYENDO transacciones anuladas
+  /// Las transacciones anuladas no deben sumar a ninguna métrica de facturación
   double _calculateMonthRevenue(int startIndex) {
     if (startIndex >= transactions.length) return 0.0;
 
     final startDate = transactions[startIndex].creation;
-    double revenue = transactions[startIndex].priceTotal;
+    // Solo sumar si NO está anulada
+    double revenue = transactions[startIndex].annulled
+        ? 0.0
+        : transactions[startIndex].priceTotal;
 
     for (int i = startIndex + 1; i < transactions.length; i++) {
       if (_isDifferentMonth(startDate, transactions[i].creation)) break;
-      revenue += transactions[i].priceTotal;
+      // Solo sumar si NO está anulada
+      if (!transactions[i].annulled) {
+        revenue += transactions[i].priceTotal;
+      }
     }
 
     return revenue;

@@ -31,9 +31,6 @@ class Product {
   /// Indica si el producto está marcado como favorito
   final bool favorite;
 
-  /// Indica si el producto ha sido verificado por un moderador
-  final bool verified;
-
   /// Indica si el producto ha sido revisado por un moderador
   final bool reviewed;
 
@@ -49,6 +46,12 @@ class Product {
   /// ID del usuario que actualizó el producto
   final String idUserUpgrade;
 
+  /// Atributos dinámicos del producto (peso, color, talle, etc.)
+  final Map<String, dynamic> attributes;
+
+  /// Estado del producto (verified, pending, local_only)
+  final String status;
+
   /// Convierte este producto global a un producto de catálogo
   ProductCatalogue convertProductCatalogue() {
     return ProductCatalogue(
@@ -59,7 +62,6 @@ class Product {
       image: image,
       description: description,
       code: code,
-      verified: verified,
       reviewed: reviewed,
       followers: followers,
       favorite: favorite,
@@ -76,6 +78,8 @@ class Product {
       purchasePrice: 0.0,
       currencySign: '\$',
       local: false,
+      attributes: attributes,
+      status: status,
     );
   }
 
@@ -89,12 +93,13 @@ class Product {
     this.code = "",
     this.followers = 0,
     this.favorite = false,
-    this.verified = false,
     this.reviewed = false,
     required this.creation,
     required this.upgrade,
     this.idUserCreation = '',
     this.idUserUpgrade = '',
+    this.attributes = const {},
+    this.status = 'pending',
   });
 
   factory Product.fromMap(Map<String, dynamic> map) {
@@ -108,7 +113,6 @@ class Product {
       code: map['code'] ?? '',
       followers: map['followers'] ?? 0,
       favorite: map['favorite'] ?? false,
-      verified: map['verified'] ?? false,
       reviewed: map['reviewed'] ?? false,
       creation: map['creation'] is Timestamp
           ? (map['creation'] as Timestamp).toDate()
@@ -118,6 +122,15 @@ class Product {
           : DateTime.now(),
       idUserCreation: map['idUserCreation'] ?? '',
       idUserUpgrade: map['idUserUpgrade'] ?? '',
+      attributes: map.containsKey('attributes')
+          ? Map<String, dynamic>.from(map['attributes'])
+          : {},
+      // Migración: Lee 'status' si existe, sino convierte desde 'verified'
+      status: map.containsKey('status')
+          ? map['status']
+          : (map.containsKey('verified') && map['verified'] == true)
+              ? 'verified'
+              : 'pending',
     );
   }
 
@@ -132,12 +145,13 @@ class Product {
       'code': code,
       'followers': followers,
       'favorite': favorite,
-      'verified': verified,
       'reviewed': reviewed,
       'creation': Timestamp.fromDate(creation),
       'upgrade': Timestamp.fromDate(upgrade),
       'idUserCreation': idUserCreation,
       'idUserUpgrade': idUserUpgrade,
+      'attributes': attributes,
+      'status': status,
     };
   }
 }

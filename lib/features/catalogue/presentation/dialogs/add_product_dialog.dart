@@ -238,7 +238,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       children: [
         _buildExistingProductInfo(),
         // Botón de editar solo visible si el producto no está verificado
-        if (!widget.product.verified) ...[
+        if (widget.product.status != 'verified') ...[
           const SizedBox(height: 8),
           _buildEditButton(),
         ],
@@ -251,14 +251,16 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
     return DialogComponents.infoSection(
       context: context,
-      backgroundColor: widget.product.verified
+      backgroundColor: widget.product.status == 'verified'
           ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
           : theme.colorScheme.tertiaryContainer.withValues(alpha: 0.1),
       title: widget.product.code,
-      icon:
-          widget.product.verified ? Icons.verified : Icons.info_outline_rounded,
-      accentColor:
-          widget.product.verified ? Colors.blue : theme.colorScheme.tertiary,
+      icon: widget.product.status == 'verified'
+          ? Icons.verified
+          : Icons.info_outline_rounded,
+      accentColor: widget.product.status == 'verified'
+          ? Colors.blue
+          : theme.colorScheme.tertiary,
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -443,7 +445,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       sellProvider.addProductsticket(updatedProduct);
 
       // Si el producto no está verificado y la descripción cambió, actualizar la base de datos pública
-      if (!widget.product.verified &&
+      if (widget.product.status != 'verified' &&
           !widget.isNew &&
           _descriptionController.text.trim() != widget.product.description) {
         await _updatePublicProductDescription(updatedProduct);
@@ -498,7 +500,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         upgrade: DateTime.now(),
         idUserCreation: updatedProduct.documentIdCreation,
         idUserUpgrade: widget.authProvider.user?.email ?? '',
-        verified: updatedProduct.verified,
+        status: updatedProduct.status,
         reviewed: updatedProduct.reviewed,
         favorite: updatedProduct.outstanding,
         followers: updatedProduct.followers,
@@ -532,7 +534,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         upgrade: DateTime.now(),
         idUserCreation: authProvider.user?.email ?? '',
         idUserUpgrade: authProvider.user?.email ?? '',
-        verified: false,
+        status: 'pending',
         reviewed: false,
         favorite: false,
         followers: 0,

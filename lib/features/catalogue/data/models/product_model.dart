@@ -17,12 +17,13 @@ class ProductModel extends Product {
     super.code,
     super.followers,
     super.favorite,
-    super.verified,
     super.reviewed,
     required super.creation,
     required super.upgrade,
     super.idUserCreation,
     super.idUserUpgrade,
+    super.attributes,
+    super.status,
   });
 
   /// Crea una instancia desde un Map de datos
@@ -34,7 +35,6 @@ class ProductModel extends Product {
           data.containsKey('idUserCreation') ? data['idUserCreation'] : '',
       idUserUpgrade:
           data.containsKey('idUserUpgrade') ? data['idUserUpgrade'] : '',
-      verified: data.containsKey('verified') ? data['verified'] : false,
       reviewed: data.containsKey('reviewed') ? data['reviewed'] : false,
       favorite: data.containsKey('favorite') ? data['favorite'] : false,
       idMark: data.containsKey('idMark')
@@ -61,6 +61,15 @@ class ProductModel extends Product {
               : '',
       upgrade: _parseTimestamp(data['upgrade']),
       creation: _parseTimestamp(data['creation']),
+      attributes: data.containsKey('attributes')
+          ? Map<String, dynamic>.from(data['attributes'])
+          : {},
+      // Migración: Lee 'status' si existe, sino convierte desde 'verified'
+      status: data.containsKey('status')
+          ? data['status']
+          : (data.containsKey('verified') && data['verified'] == true)
+              ? 'verified'
+              : 'pending',
     );
   }
 
@@ -76,7 +85,6 @@ class ProductModel extends Product {
         'followers': followers,
         'idUserCreation': idUserCreation,
         'idUserUpgrade': idUserUpgrade,
-        "verified": verified,
         'reviewed': reviewed,
         "favorite": favorite,
         "idMark": idMark,
@@ -87,6 +95,8 @@ class ProductModel extends Product {
         "code": code,
         "creation": Timestamp.fromDate(creation),
         "upgrade": Timestamp.fromDate(upgrade),
+        "attributes": attributes,
+        "status": status,
       };
 
   /// Convierte a JSON para actualizaciones (omitiendo campos inmutables)
@@ -94,7 +104,6 @@ class ProductModel extends Product {
         "id": id,
         'followers': followers,
         'idUserUpgrade': idUserUpgrade,
-        "verified": verified,
         'reviewed': reviewed,
         "favorite": favorite,
         "idMark": idMark,
@@ -117,12 +126,13 @@ class ProductModel extends Product {
       code: code,
       followers: followers,
       favorite: favorite,
-      verified: verified,
       reviewed: reviewed,
       creation: creation,
       upgrade: upgrade,
       idUserCreation: idUserCreation,
       idUserUpgrade: idUserUpgrade,
+      attributes: attributes,
+      status: status,
     );
   }
 

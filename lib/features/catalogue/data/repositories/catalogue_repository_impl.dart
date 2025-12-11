@@ -94,6 +94,24 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     }
   }
 
+  // future : crear un nuevo producto pendiente de moderación
+  @override
+  Future<void> createPendingProduct(Product product) async {
+    if (product.id.isEmpty) {
+      throw ArgumentError('El producto debe tener un ID válido');
+    }
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.productsPending();
+      final docPath = '$path/${product.id}';
+      final productMap = product.toJson();
+
+      await _dataSource.setDocument(docPath, productMap, merge: false);
+    } catch (e) {
+      throw Exception('Error al crear producto pendiente en Firestore: $e');
+    }
+  }
+
   // future : incrementa el contador de ventas de un producto
   @override
   Future<void> incrementSales(

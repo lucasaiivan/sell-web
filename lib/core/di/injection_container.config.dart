@@ -173,6 +173,8 @@ import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.da
     as _i1012;
 import 'package:sellweb/features/catalogue/domain/usecases/create_brand_usecase.dart'
     as _i753;
+import 'package:sellweb/features/catalogue/domain/usecases/create_pending_product_usecase.dart'
+    as _i461;
 import 'package:sellweb/features/catalogue/domain/usecases/create_public_product_usecase.dart'
     as _i540;
 import 'package:sellweb/features/catalogue/domain/usecases/decrement_product_stock_usecase.dart'
@@ -495,6 +497,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i753.CreateBrandUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i821.AddProductToCatalogueUseCase>(() =>
         _i821.AddProductToCatalogueUseCase(gh<_i83.CatalogueRepository>()));
+    gh.lazySingleton<_i461.CreatePendingProductUseCase>(() =>
+        _i461.CreatePendingProductUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i540.CreatePublicProductUseCase>(
         () => _i540.CreatePublicProductUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i230.GetBrandsStreamUseCase>(
@@ -545,6 +549,7 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i241.GetProvidersStreamUseCase>(),
           gh<_i230.GetBrandsStreamUseCase>(),
           gh<_i753.CreateBrandUseCase>(),
+          gh<_i461.CreatePendingProductUseCase>(),
         ));
     gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
           gh<_i253.SignInWithGoogleUseCase>(),

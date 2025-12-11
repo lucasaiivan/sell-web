@@ -13,10 +13,11 @@ class ProductCatalogue {
   final String documentIdUpgrade;
 
   // Variables del producto global
-  final bool verified;
   final bool reviewed;
   final bool outstanding;
   final int followers;
+  final Map<String, dynamic> attributes;
+  final String status;
 
   // Variables del catálogo de la cuenta
   final bool local;
@@ -46,7 +47,6 @@ class ProductCatalogue {
 
   ProductCatalogue({
     this.id = "",
-    this.verified = false,
     this.reviewed = false,
     this.followers = 0,
     this.favorite = false,
@@ -80,11 +80,12 @@ class ProductCatalogue {
     this.quantity = 1,
     this.local = false,
     this.priceTotal = 0,
+    this.attributes = const {},
+    this.status = 'pending',
   });
 
   ProductCatalogue copyWith({
     String? id,
-    bool? verified,
     bool? reviewed,
     int? followers,
     bool? favorite,
@@ -117,10 +118,11 @@ class ProductCatalogue {
     String? imageMark,
     int? quantity,
     bool? local,
+    Map<String, dynamic>? attributes,
+    String? status,
   }) {
     return ProductCatalogue(
       id: id ?? this.id,
-      verified: verified ?? this.verified,
       reviewed: reviewed ?? this.reviewed,
       followers: followers ?? this.followers,
       favorite: favorite ?? this.favorite,
@@ -153,6 +155,8 @@ class ProductCatalogue {
       imageMark: imageMark ?? this.imageMark,
       quantity: quantity ?? this.quantity,
       local: local ?? this.local,
+      attributes: attributes ?? this.attributes,
+      status: status ?? this.status,
     );
   }
 
@@ -189,7 +193,6 @@ class ProductCatalogue {
   Map<String, dynamic> toMap() => {
         "id": id,
         'local': local,
-        "verified": verified,
         'reviewed': reviewed,
         'followers': followers,
         'outstanding': outstanding,
@@ -242,7 +245,6 @@ class ProductCatalogue {
     return ProductCatalogue(
       id: data['id'] ?? '',
       local: data['local'] ?? false,
-      verified: data['verified'] ?? data['verificado'] ?? false,
       reviewed: data['reviewed'] ?? data['revisado'] ?? false,
       followers: data['followers'] ?? data['seguidores'] ?? 0,
       favorite: data['favorite'] ?? data['favorito'] ?? false,
@@ -278,6 +280,15 @@ class ProductCatalogue {
       revenue: (data['revenue'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
+      attributes: data.containsKey('attributes')
+          ? Map<String, dynamic>.from(data['attributes'])
+          : {},
+      // Migración: Lee 'status' si existe, sino convierte desde 'verified'
+      status: data.containsKey('status')
+          ? data['status']
+          : (data.containsKey('verified') && data['verified'] == true)
+              ? 'verified'
+              : 'pending',
     );
   }
 }

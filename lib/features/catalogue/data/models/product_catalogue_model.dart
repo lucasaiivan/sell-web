@@ -10,7 +10,6 @@ import 'product_model.dart';
 class ProductCatalogueModel extends ProductCatalogue {
   ProductCatalogueModel({
     super.id,
-    super.verified,
     super.reviewed,
     super.followers,
     super.favorite,
@@ -43,15 +42,14 @@ class ProductCatalogueModel extends ProductCatalogue {
     super.imageMark,
     super.quantity,
     super.local,
+    super.attributes,
+    super.status,
   });
 
   /// Crea una instancia desde un Map con soporte para nombres legacy
   factory ProductCatalogueModel.fromMap(Map<String, dynamic> data) {
     return ProductCatalogueModel(
       id: data.containsKey('id') ? data['id'] : '',
-      verified: data.containsKey('verified')
-          ? data['verified']
-          : data['verificado'] ?? false,
       reviewed: data.containsKey('reviewed')
           ? data['reviewed']
           : data['revisado'] ?? false,
@@ -127,6 +125,15 @@ class ProductCatalogueModel extends ProductCatalogue {
       revenue: data.containsKey('revenue') ? data['revenue'] : 0.0,
       quantity: data.containsKey('quantity') ? data['quantity'] : 1,
       local: data.containsKey('local') ? data['local'] : false,
+      attributes: data.containsKey('attributes')
+          ? Map<String, dynamic>.from(data['attributes'])
+          : {},
+      // Migración: Lee 'status' si existe, sino convierte desde 'verified'
+      status: data.containsKey('status')
+          ? data['status']
+          : (data.containsKey('verified') && data['verified'] == true)
+              ? 'verified'
+              : 'pending',
     );
   }
 
@@ -136,7 +143,6 @@ class ProductCatalogueModel extends ProductCatalogue {
       id: product.id,
       followers: product.followers,
       image: product.image,
-      verified: product.verified,
       reviewed: product.reviewed,
       outstanding: product.favorite,
       idMark: product.idMark,
@@ -150,6 +156,8 @@ class ProductCatalogueModel extends ProductCatalogue {
       documentIdUpgrade: product.idUserUpgrade,
       creation: product.creation,
       upgrade: product.upgrade,
+      attributes: product.attributes,
+      status: product.status,
     );
   }
 
@@ -157,7 +165,6 @@ class ProductCatalogueModel extends ProductCatalogue {
   Map<String, dynamic> toMap() => {
         "id": id,
         'local': local,
-        "verified": verified,
         'reviewed': reviewed,
         'followers': followers,
         'outstanding': outstanding,
@@ -189,13 +196,14 @@ class ProductCatalogueModel extends ProductCatalogue {
         "sales": sales,
         "alertStock": alertStock,
         "revenue": revenue,
+        "attributes": attributes,
+        "status": status,
       };
 
   /// Convierte a entidad de dominio pura
   ProductCatalogue toEntity() {
     return ProductCatalogue(
       id: id,
-      verified: verified,
       reviewed: reviewed,
       followers: followers,
       favorite: favorite,
@@ -228,6 +236,8 @@ class ProductCatalogueModel extends ProductCatalogue {
       imageMark: imageMark,
       quantity: quantity,
       local: local,
+      attributes: attributes,
+      status: status,
     );
   }
 
@@ -237,7 +247,6 @@ class ProductCatalogueModel extends ProductCatalogue {
       id: id,
       followers: followers,
       image: image,
-      verified: verified,
       reviewed: reviewed,
       favorite: outstanding,
       idMark: idMark,
@@ -249,6 +258,8 @@ class ProductCatalogueModel extends ProductCatalogue {
       creation: documentCreation,
       idUserCreation: documentIdCreation,
       idUserUpgrade: documentIdUpgrade,
+      attributes: attributes,
+      status: status,
     );
   }
 

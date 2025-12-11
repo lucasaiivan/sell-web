@@ -153,7 +153,8 @@ class SalesAnalytics extends Equatable {
     return (start: rangeStart, end: rangeEnd);
   }
 
-  /// Obtiene las transacciones filtradas por rango de fechas
+  /// Obtiene las transacciones filtradas por rango de fechas (solo efectivas, NO anuladas)
+  /// Usar para métricas donde las anuladas NO deben contar
   List<TicketModel> getFilteredTransactions(DateFilter filter) {
     final range = _getDateRangeForFilter(filter);
     bool inRange(DateTime d) =>
@@ -161,6 +162,19 @@ class SalesAnalytics extends Equatable {
 
     return transactions.where((ticket) {
       if (ticket.annulled) return false;
+      final ticketDate = ticket.creation.toDate();
+      return inRange(ticketDate);
+    }).toList();
+  }
+
+  /// Obtiene TODAS las transacciones filtradas por rango de fechas (incluyendo anuladas)
+  /// Usar para visualización de historial donde el usuario debe ver todas las transacciones
+  /// Las transacciones anuladas se muestran con indicador visual pero NO afectan métricas
+  List<TicketModel> getAllTransactionsForFilter(DateFilter filter) {
+    final range = _getDateRangeForFilter(filter);
+    bool inRange(DateTime d) => !d.isBefore(range.start) && d.isBefore(range.end);
+
+    return transactions.where((ticket) {
       final ticketDate = ticket.creation.toDate();
       return inRange(ticketDate);
     }).toList();

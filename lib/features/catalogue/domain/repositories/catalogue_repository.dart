@@ -24,6 +24,9 @@ abstract class CatalogueRepository {
   /// Crea un nuevo producto público
   Future<void> createPublicProduct(Product product);
 
+  /// Crea un nuevo producto pendiente de moderación
+  Future<void> createPendingProduct(Product product);
+
   /// Registra el precio de un producto
   Future<void> registerProductPrice(
       ProductPrice productPrice, String productCode);

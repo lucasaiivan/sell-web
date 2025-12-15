@@ -5,10 +5,11 @@ import 'package:provider/provider.dart' as provider_pkg;
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
 import 'package:sellweb/core/services/storage/storage_paths.dart';
-import 'package:sellweb/core/di/injection_container.dart'; 
+import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
-import 'package:sellweb/features/catalogue/domain/entities/provider.dart' as catalog_provider;
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
+    as catalog_provider;
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import 'brand_search_dialog.dart';
@@ -405,7 +406,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       await _deleteProduct();
     }
   }
- 
 
   /// Elimina el producto del catálogo
   Future<void> _deleteProduct() async {
@@ -565,7 +565,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                           imageQuality: 85,
                                         );
                                         if (image != null) {
-                                          final bytes = await image.readAsBytes();
+                                          final bytes =
+                                              await image.readAsBytes();
                                           setState(() {
                                             brandImageBytes = bytes;
                                           });
@@ -579,7 +580,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                               key: uniqueKey,
                                               content: Text(
                                                   'Error al seleccionar imagen: $e'),
-                                              backgroundColor: colorScheme.error,
+                                              backgroundColor:
+                                                  colorScheme.error,
                                             ),
                                           );
                                         }
@@ -620,7 +622,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                             'Imagen (opcional)',
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
-                                              color: colorScheme.onSurfaceVariant,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                         ],
@@ -710,14 +713,17 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
                                   try {
                                     // Generate ID using IdGenerator con accountId público
-                                    final brandId = IdGenerator.generateBrandId('PUBLIC');
+                                    final brandId =
+                                        IdGenerator.generateBrandId('PUBLIC');
 
                                     // Upload image if provided
                                     String imageUrl = '';
                                     if (brandImageBytes != null) {
-                                      final storage = getIt<IStorageDataSource>();
+                                      final storage =
+                                          getIt<IStorageDataSource>();
                                       final path =
-                                          StoragePaths.publicBrandImage(brandId);
+                                          StoragePaths.publicBrandImage(
+                                              brandId);
                                       imageUrl = await storage.uploadFile(
                                         path,
                                         brandImageBytes!,
@@ -731,9 +737,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                     // Create brand object with normalized fields
                                     final newBrand = Mark(
                                       id: brandId,
-                                      name: nameController.text.trim().toLowerCase(), 
-                                      description:
-                                          descriptionController.text.trim().toLowerCase(),
+                                      name: nameController.text
+                                          .trim()
+                                          .toLowerCase(),
+                                      description: descriptionController.text
+                                          .trim()
+                                          .toLowerCase(),
                                       image: imageUrl,
                                       verified: false,
                                       creation: DateTime.now(),
@@ -747,7 +756,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                     if (context.mounted) {
                                       Navigator.of(context).pop(newBrand);
                                       final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
                                           key: uniqueKey,
                                           content: const Row(
@@ -758,7 +768,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                               Text('Marca creada exitosamente'),
                                             ],
                                           ),
-                                          backgroundColor: Colors.green.shade600,
+                                          backgroundColor:
+                                              Colors.green.shade600,
                                           behavior: SnackBarBehavior.floating,
                                           margin: const EdgeInsets.only(
                                             bottom: 16,
@@ -772,7 +783,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                     setState(() => isCreating = false);
                                     if (context.mounted) {
                                       final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
                                           key: uniqueKey,
                                           content: Row(
@@ -781,7 +793,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                                   color: Colors.white),
                                               const SizedBox(width: 12),
                                               Expanded(
-                                                child: Text('Error: ${e.toString()}'),
+                                                child: Text(
+                                                    'Error: ${e.toString()}'),
                                               ),
                                             ],
                                           ),
@@ -808,7 +821,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                   ),
                                 )
                               : const Icon(Icons.add, size: 20),
-                          label: Text(isCreating ? 'Creando...' : 'Crear marca'),
+                          label:
+                              Text(isCreating ? 'Creando...' : 'Crear marca'),
                         ),
                       ),
                     ],
@@ -826,7 +840,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Future<Mark?> _showEditBrandDialog(Mark brand) async {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: brand.name);
-    final descriptionController = TextEditingController(text: brand.description);
+    final descriptionController =
+        TextEditingController(text: brand.description);
     Uint8List? brandImageBytes;
     final picker = ImagePicker();
     bool isUpdating = false;
@@ -941,7 +956,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                           imageQuality: 85,
                                         );
                                         if (image != null) {
-                                          final bytes = await image.readAsBytes();
+                                          final bytes =
+                                              await image.readAsBytes();
                                           setState(() {
                                             brandImageBytes = bytes;
                                           });
@@ -955,7 +971,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                               key: uniqueKey,
                                               content: Text(
                                                   'Error al seleccionar imagen: $e'),
-                                              backgroundColor: colorScheme.error,
+                                              backgroundColor:
+                                                  colorScheme.error,
                                             ),
                                           );
                                         }
@@ -998,7 +1015,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                                       Icons.add_photo_alternate,
                                                       size: 48,
                                                       color: colorScheme.primary
-                                                          .withValues(alpha: 0.7),
+                                                          .withValues(
+                                                              alpha: 0.7),
                                                     ),
                                                     const SizedBox(height: 8),
                                                     Text(
@@ -1123,9 +1141,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                     // Upload new image if provided
                                     String imageUrl = currentImageUrl;
                                     if (brandImageBytes != null) {
-                                      final storage = getIt<IStorageDataSource>();
+                                      final storage =
+                                          getIt<IStorageDataSource>();
                                       final path =
-                                          StoragePaths.publicBrandImage(brand.id);
+                                          StoragePaths.publicBrandImage(
+                                              brand.id);
                                       imageUrl = await storage.uploadFile(
                                         path,
                                         brandImageBytes!,
@@ -1152,7 +1172,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                     if (context.mounted) {
                                       Navigator.of(context).pop(updatedBrand);
                                       final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
                                           key: uniqueKey,
                                           content: const Row(
@@ -1160,10 +1181,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                               Icon(Icons.check_circle,
                                                   color: Colors.white),
                                               SizedBox(width: 12),
-                                              Text('Marca actualizada exitosamente'),
+                                              Text(
+                                                  'Marca actualizada exitosamente'),
                                             ],
                                           ),
-                                          backgroundColor: Colors.green.shade600,
+                                          backgroundColor:
+                                              Colors.green.shade600,
                                           behavior: SnackBarBehavior.floating,
                                           margin: const EdgeInsets.only(
                                             bottom: 16,
@@ -1177,7 +1200,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                     setState(() => isUpdating = false);
                                     if (context.mounted) {
                                       final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
                                           key: uniqueKey,
                                           content: Row(
@@ -1186,7 +1210,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                                   color: Colors.white),
                                               const SizedBox(width: 12),
                                               Expanded(
-                                                child: Text('Error: ${e.toString()}'),
+                                                child: Text(
+                                                    'Error: ${e.toString()}'),
                                               ),
                                             ],
                                           ),
@@ -1213,7 +1238,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                   ),
                                 )
                               : const Icon(Icons.save, size: 20),
-                          label: Text(isUpdating ? 'Guardando...' : 'Guardar cambios'),
+                          label: Text(
+                              isUpdating ? 'Guardando...' : 'Guardar cambios'),
                         ),
                       ),
                     ],
@@ -1252,7 +1278,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return AppBar(
       title: Text(title),
       centerTitle: false,
-      actions: [ 
+      actions: [
         // Botón eliminar (solo en modo edición)
         if (!widget.isCreatingMode && !_isSaving)
           IconButton(
@@ -1712,7 +1738,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                               : ProductImage(
                                   imageUrl: widget.product.image,
                                   fit: BoxFit.cover,
-                                  productDescription: _descriptionController.text,
+                                  productDescription:
+                                      _descriptionController.text,
                                 ),
                         ),
                       ),
@@ -2236,7 +2263,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
         return InkWell(
           onTap: () async {
-            final selected = await showModalBottomSheet<catalog_provider.Provider>(
+            final selected =
+                await showModalBottomSheet<catalog_provider.Provider>(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
@@ -2247,7 +2275,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 idBuilder: (item) => item.id,
                 selectedItem: _selectedProviderId != null
                     ? providers.firstWhere((p) => p.id == _selectedProviderId,
-                        orElse: () => catalog_provider.Provider(id: '', name: ''))
+                        orElse: () =>
+                            catalog_provider.Provider(id: '', name: ''))
                     : null,
                 searchHint: 'Buscar proveedor...',
               ),

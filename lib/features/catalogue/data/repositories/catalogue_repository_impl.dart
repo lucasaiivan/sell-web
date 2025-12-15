@@ -262,9 +262,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final snapshot = await _dataSource.getDocuments(
         collection
             .orderBy('name')
-            .startAt([query])
-            .endAt([query + '\uf8ff'])
-            .limit(limit),
+            .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
       );
 
       return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
@@ -327,9 +325,10 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     try {
       final path = FirestorePaths.brands(country: country);
       final collection = _dataSource.collection(path);
-      
+
       // Buscar por ID del documento
-      final query = collection.where(FieldPath.documentId, isEqualTo: id).limit(1);
+      final query =
+          collection.where(FieldPath.documentId, isEqualTo: id).limit(1);
       final snapshot = await _dataSource.getDocuments(query);
 
       if (snapshot.docs.isEmpty) {
@@ -370,7 +369,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final path = FirestorePaths.brands(country: country);
       final docPath = '$path/${brand.id}';
       final brandMap = brand.toJson();
-      
+
       // Actualizar el timestamp de modificación
       brandMap['upgrade'] = Timestamp.now();
 
@@ -482,7 +481,8 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final publicSnapshot = await publicDoc.get();
 
       if (!publicSnapshot.exists) {
-        throw Exception('El producto $productId no existe en la base de datos pública');
+        throw Exception(
+            'El producto $productId no existe en la base de datos pública');
       }
 
       await _dataSource.incrementField(publicPath, 'followers', 1);
@@ -510,7 +510,8 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final publicSnapshot = await publicDoc.get();
 
       if (!publicSnapshot.exists) {
-        throw Exception('El producto $productId no existe en la base de datos pública');
+        throw Exception(
+            'El producto $productId no existe en la base de datos pública');
       }
 
       // Verificar que followers no sea 0 antes de decrementar

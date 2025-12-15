@@ -96,8 +96,7 @@ class ActiveCashRegistersCard extends StatelessWidget {
           ...visibleRegisters.map((cashRegister) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child:
-                  _buildSimpleCashRegisterRow(context, cashRegister, color),
+              child: _buildSimpleCashRegisterRow(context, cashRegister, color),
             );
           }),
           // Mostrar indicador si hay más cajas
@@ -395,7 +394,8 @@ class _ActiveCashRegistersModalState extends State<ActiveCashRegistersModal> {
       accentColor: widget.accentColor,
       icon: Icons.point_of_sale_rounded,
       title: 'Cajas Activas',
-      subtitle: '${widget.activeCashRegisters.length} ${widget.activeCashRegisters.length == 1 ? 'caja abierta' : 'cajas abiertas'}',
+      subtitle:
+          '${widget.activeCashRegisters.length} ${widget.activeCashRegisters.length == 1 ? 'caja abierta' : 'cajas abiertas'}',
       child: widget.activeCashRegisters.isEmpty
           ? const AnalyticsModalEmptyState(
               icon: Icons.point_of_sale_outlined,
@@ -432,7 +432,8 @@ class _ActiveCashRegistersModalState extends State<ActiveCashRegistersModal> {
                     final cashRegister = widget.activeCashRegisters[index];
                     final isExpanded = _expandedStates[index] ?? false;
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
                       child: _buildExpandableCashRegisterTile(
                         context,
                         cashRegister,

@@ -393,25 +393,26 @@ class _ProductSearchFullScreenViewState
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.easeOut,
                   builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: 0.8 + (value * 0.2),
-                    child: Opacity(
-                    opacity: value,
-                    child: child,
-                    ),
-                  );
+                    return Transform.scale(
+                      scale: 0.8 + (value * 0.2),
+                      child: Opacity(
+                        opacity: value,
+                        child: child,
+                      ),
+                    );
                   },
                   child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.qr_code_scanner_rounded,
-                    size: 80,
-                    color: colorScheme.primary,
-                  ),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color:
+                          colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 80,
+                      color: colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -420,8 +421,8 @@ class _ProductSearchFullScreenViewState
                 Text(
                   'Escanee o ingrese el código',
                   style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -507,7 +508,7 @@ class _ProductSearchFullScreenViewState
   Widget _buildCodeTextField(ThemeData theme, ColorScheme colorScheme) {
     final code = _codeController.text.trim();
     final codeLength = code.length;
-    
+
     // Usar el nuevo validador con soporte de formato y país
     final countryInfo = BarcodeValidator.getCountryInfo(code);
     final formattedDescription = BarcodeValidator.getFormattedDescription(code);

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/catalogue_metric.dart';
 
 /// Barra de métricas del catálogo que muestra chips con valor/nombre
-/// 
+///
 /// Diseñada para ser extensible y mostrar métricas adicionales en el futuro.
 /// Los datos se ajustan automáticamente según el filtro activo.
 class CatalogueMetricsBar extends StatelessWidget {
   /// Métricas a mostrar
   final CatalogueMetrics metrics;
-  
+
   /// Callback opcional cuando se toca una métrica
   final void Function(CatalogueMetric metric)? onMetricTap;
 
@@ -21,7 +21,7 @@ class CatalogueMetricsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metricsList = metrics.toMetricsList();
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: SingleChildScrollView(
@@ -56,7 +56,7 @@ class _MetricChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Material(
       color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(12),

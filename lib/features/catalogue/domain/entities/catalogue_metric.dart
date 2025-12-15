@@ -10,24 +10,24 @@ enum CatalogueMetricType {
 }
 
 /// Entidad que representa una métrica del catálogo
-/// 
+///
 /// Diseñada para ser extensible y soportar nuevas métricas en el futuro.
 class CatalogueMetric {
   /// Tipo de métrica
   final CatalogueMetricType type;
-  
+
   /// Valor numérico de la métrica
   final num value;
-  
+
   /// Nombre para mostrar
   final String label;
-  
+
   /// Ícono representativo
   final IconData icon;
-  
+
   /// Formato del valor (ejemplo: moneda, número, porcentaje)
   final MetricValueFormat format;
-  
+
   /// Símbolo de moneda (solo aplica si format es currency)
   final String currencySign;
 
@@ -51,7 +51,7 @@ class CatalogueMetric {
         return _formatNumber(value.toDouble());
     }
   }
-  
+
   /// Formatea un número mostrando el valor completo
   String _formatNumber(double number) {
     if (number == number.truncateToDouble()) {
@@ -85,19 +85,19 @@ enum MetricValueFormat {
 }
 
 /// Contenedor de todas las métricas del catálogo
-/// 
+///
 /// Esta clase facilita el cálculo y acceso a las métricas,
 /// permitiendo agregar nuevas métricas fácilmente en el futuro.
 class CatalogueMetrics {
   /// Número total de artículos (productos únicos)
   final int articles;
-  
+
   /// Cantidad total de unidades en inventario
   final int inventory;
-  
+
   /// Valor total del inventario (stock × precio de venta)
   final double inventoryValue;
-  
+
   /// Símbolo de moneda
   final String currencySign;
 
@@ -114,10 +114,10 @@ class CatalogueMetrics {
     String currencySign = '\$',
   }) {
     final articles = products.length;
-    
+
     int inventory = 0;
     double inventoryValue = 0.0;
-    
+
     for (final product in products) {
       // Solo contar productos con control de stock activo
       if (product.stock) {
@@ -125,7 +125,7 @@ class CatalogueMetrics {
         inventoryValue += product.quantityStock * product.salePrice;
       }
     }
-    
+
     return CatalogueMetrics(
       articles: articles,
       inventory: inventory,

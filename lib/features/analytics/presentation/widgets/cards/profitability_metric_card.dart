@@ -56,12 +56,12 @@ class ProfitabilityMetricCard extends StatelessWidget {
       title: 'Rentabilidad',
       subtitle: subtitle,
       showActionIndicator: hasValidData,
-      onTap: hasValidData ? () => _showMostProfitableProductsModal(context) : null,
+      onTap:
+          hasValidData ? () => _showMostProfitableProductsModal(context) : null,
       child: isZero
           ? const Center(child: AnalyticsEmptyState(message: 'Sin ventas'))
           : LayoutBuilder(
-              builder: (context, constraints) { 
-
+              builder: (context, constraints) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -79,18 +79,17 @@ class ProfitabilityMetricCard extends StatelessWidget {
                       ),
                     ),
                     // Producto más rentable preview (solo en pantallas medianas/grandes)
-                    if ( topProduct != null) ...[
+                    if (topProduct != null) ...[
                       const SizedBox(height: 6),
-                      _buildTopProductPreview(context,topProduct,topProductQuantity,topProductProfit ),
-                       
-                    ], 
+                      _buildTopProductPreview(context, topProduct,
+                          topProductQuantity, topProductProfit),
+                    ],
                   ],
                 );
               },
             ),
     );
   }
- 
 
   /// Construye la vista previa del producto más rentable
   Widget _buildTopProductPreview(
@@ -178,8 +177,8 @@ class MostProfitableProductsModal extends StatelessWidget {
                     statusColor: _accentColor,
                     icon: Icons.diamond_rounded,
                     mainValue: mostProfitableProducts.isNotEmpty
-                        ? CurrencyHelper.formatCurrency(
-                            mostProfitableProducts.first['totalProfit'] as double)
+                        ? CurrencyHelper.formatCurrency(mostProfitableProducts
+                            .first['totalProfit'] as double)
                         : '0',
                     mainLabel: 'Ganancia Top',
                     leftMetric: AnalyticsMetric(
@@ -190,12 +189,15 @@ class MostProfitableProductsModal extends StatelessWidget {
                     ),
                     rightMetric: AnalyticsMetric(
                       value: mostProfitableProducts.isNotEmpty
-                          ? (mostProfitableProducts.first['product'] as ProductCatalogue).description
+                          ? (mostProfitableProducts.first['product']
+                                  as ProductCatalogue)
+                              .description
                           : '-',
                       label: 'Producto',
                     ),
                     feedbackIcon: Icons.info_outline,
-                    feedbackText: _getModalFeedback(mostProfitableProducts.length),
+                    feedbackText:
+                        _getModalFeedback(mostProfitableProducts.length),
                   ),
                 ),
                 // Lista de productos rentables
@@ -223,14 +225,12 @@ class MostProfitableProductsModal extends StatelessWidget {
                             product.nameMark.isNotEmpty
                                 ? product.nameMark
                                 : product.nameCategory,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
                           ),
                           const SizedBox(width: 8),
                           AnalyticsBadge(
@@ -243,19 +243,16 @@ class MostProfitableProductsModal extends StatelessWidget {
                       trailingWidgets: [
                         Text(
                           CurrencyHelper.formatCurrency(totalProfit),
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(
-                                color: _accentColor,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: _accentColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         const SizedBox(height: 4),
                         AnalyticsBadge(
                           text: '$quantitySold vendidos',
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ],
                     );

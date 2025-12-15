@@ -911,7 +911,8 @@ class AnalyticsStatusCard extends StatelessWidget {
                       if (mainValue != null)
                         Text(
                           mainValue!,
-                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: statusColor,
@@ -995,7 +996,8 @@ class AnalyticsStatusCard extends StatelessWidget {
       children: [
         Text(
           metric.value,
-          maxLines: 2, overflow: TextOverflow.ellipsis,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
             color: statusColor,
@@ -1003,7 +1005,8 @@ class AnalyticsStatusCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          maxLines: 1, overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           metric.label,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.7),

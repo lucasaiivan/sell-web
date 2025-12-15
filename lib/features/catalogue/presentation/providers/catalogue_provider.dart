@@ -190,16 +190,15 @@ class CatalogueProvider extends ChangeNotifier
       currentSearchQuery.isNotEmpty || activeFilter != CatalogueFilter.none;
 
   // ==================== MÉTRICAS DEL CATÁLOGO ====================
-  
+
   /// Calcula las métricas basadas en los productos visibles (filtrados)
   /// Las métricas se ajustan automáticamente según el filtro activo
   CatalogueMetrics get catalogueMetrics {
     final productsList = visibleProducts;
     return CatalogueMetrics.fromProducts(
       products: productsList,
-      currencySign: productsList.isNotEmpty 
-          ? productsList.first.currencySign 
-          : '\$',
+      currencySign:
+          productsList.isNotEmpty ? productsList.first.currencySign : '\$',
     );
   }
 
@@ -492,7 +491,8 @@ class CatalogueProvider extends ChangeNotifier
       );
 
       // Crear en la base de datos pública (/PRODUCTOS)
-      await _createPublicProductUseCase(CreatePublicProductParams(productToSave));
+      await _createPublicProductUseCase(
+          CreatePublicProductParams(productToSave));
     } catch (e) {
       throw Exception('Error al crear producto pendiente: $e');
     }
@@ -607,7 +607,7 @@ class CatalogueProvider extends ChangeNotifier
       notifyListeners();
 
       final existedInCatalogue = productExistsInCatalogue(product.code);
-      
+
       var productToSave = product;
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -623,8 +623,9 @@ class CatalogueProvider extends ChangeNotifier
       // ═══════════════════════════════════════════════════════════════════════
       if (newImageBytes != null) {
         final storage = getIt<IStorageDataSource>();
-        final isSku = productToSave.code.startsWith('SKU-') || productToSave.isSku;
-        
+        final isSku =
+            productToSave.code.startsWith('SKU-') || productToSave.isSku;
+
         // Determinar ruta según si es SKU o público
         final String path;
         if (isSku) {
@@ -647,7 +648,7 @@ class CatalogueProvider extends ChangeNotifier
         );
         productToSave = productToSave.copyWith(image: imageUrl);
       }
-      
+
       // Aplicar timestamps según corresponda
       if (isCreatingMode) {
         productToSave = productToSave.copyWith(

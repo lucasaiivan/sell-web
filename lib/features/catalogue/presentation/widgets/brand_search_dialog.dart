@@ -94,13 +94,14 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
 
     try {
       final brands = await widget.catalogueProvider.getPopularBrands(limit: 20);
-      
+
       // Debug: mostrar información de las marcas cargadas
       print('🔍 Marcas cargadas: ${brands.length}');
       for (var i = 0; i < brands.length && i < 3; i++) {
-        print('  Marca $i: id="${brands[i].id}", name="${brands[i].name}", desc="${brands[i].description}"');
+        print(
+            '  Marca $i: id="${brands[i].id}", name="${brands[i].name}", desc="${brands[i].description}"');
       }
-      
+
       if (mounted) {
         setState(() {
           _brands = brands;
@@ -340,12 +341,13 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
           final isSelected = widget.currentBrandId == brand.id;
 
           // Capitalizar nombre para mostrar (sin modificar el valor real)
-          final displayName = brand.name.isNotEmpty 
+          final displayName = brand.name.isNotEmpty
               ? brand.name[0].toUpperCase() + brand.name.substring(1)
               : 'Sin nombre';
-          
+
           final displayDescription = brand.description.isNotEmpty
-              ? brand.description[0].toUpperCase() + brand.description.substring(1)
+              ? brand.description[0].toUpperCase() +
+                  brand.description.substring(1)
               : '';
 
           return ListTile(
@@ -360,9 +362,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
                 : CircleAvatar(
                     backgroundColor: colorScheme.primaryContainer,
                     child: Text(
-                      brand.name.isNotEmpty
-                          ? brand.name[0].toUpperCase()
-                          : '?',
+                      brand.name.isNotEmpty ? brand.name[0].toUpperCase() : '?',
                       style: TextStyle(
                         color: colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,

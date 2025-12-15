@@ -87,19 +87,20 @@ class IdGenerator {
   /// Retorna: PREFIX-XXXXX-YYYYMMDD-NNNN
   static String _generateId(String prefix, String accountId) {
     final now = DateTime.now();
-    
+
     // Generar hash corto del accountId (5 caracteres alfanuméricos)
     final accountHash = _generateShortHash(accountId);
-    
+
     // Fecha en formato compacto YYYYMMDD
     final dateStr = '${now.year}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.day.toString().padLeft(2, '0')}';
-    
+
     // Secuencia única basada en milisegundos del día (4 dígitos)
-    final millisOfDay = now.millisecondsSinceEpoch % 86400000; // Milisegundos en un día
+    final millisOfDay =
+        now.millisecondsSinceEpoch % 86400000; // Milisegundos en un día
     final sequence = (millisOfDay % 10000).toString().padLeft(4, '0');
-    
+
     return '$prefix-$accountHash-$dateStr-$sequence';
   }
 
@@ -111,14 +112,14 @@ class IdGenerator {
     // Usar hashCode del string y convertirlo a base36 (0-9, A-Z)
     final hash = input.hashCode.abs();
     var result = hash.toRadixString(36).toUpperCase();
-    
+
     // Asegurar que tenga exactamente 5 caracteres
     if (result.length > 5) {
       result = result.substring(0, 5);
     } else if (result.length < 5) {
       result = result.padLeft(5, '0');
     }
-    
+
     return result;
   }
 
@@ -153,15 +154,15 @@ class IdGenerator {
   /// Retorna null si el ID no tiene el formato correcto
   static DateTime? extractDate(String id) {
     if (!isGeneratedId(id)) return null;
-    
+
     try {
       final parts = id.split('-');
       final dateStr = parts[2]; // YYYYMMDD
-      
+
       final year = int.parse(dateStr.substring(0, 4));
       final month = int.parse(dateStr.substring(4, 6));
       final day = int.parse(dateStr.substring(6, 8));
-      
+
       return DateTime(year, month, day);
     } catch (e) {
       return null;
@@ -201,9 +202,9 @@ class IdGenerator {
   static int? compareByDate(String id1, String id2) {
     final date1 = extractDate(id1);
     final date2 = extractDate(id2);
-    
+
     if (date1 == null || date2 == null) return null;
-    
+
     return date1.compareTo(date2);
   }
 }

@@ -34,11 +34,15 @@ class Mark {
   factory Mark.fromMap(Map<String, dynamic> map) {
     // Soporte para campos antiguos y nuevos
     String getName() {
-      if (map.containsKey('name') && map['name'] != null && map['name'].toString().isNotEmpty) {
+      if (map.containsKey('name') &&
+          map['name'] != null &&
+          map['name'].toString().isNotEmpty) {
         return map['name'].toString();
       }
       // Compatibilidad con campo antiguo 'titulo'
-      if (map.containsKey('titulo') && map['titulo'] != null && map['titulo'].toString().isNotEmpty) {
+      if (map.containsKey('titulo') &&
+          map['titulo'] != null &&
+          map['titulo'].toString().isNotEmpty) {
         return map['titulo'].toString();
       }
       return '';
@@ -56,11 +60,15 @@ class Mark {
     }
 
     String getImage() {
-      if (map.containsKey('image') && map['image'] != null && map['image'].toString().isNotEmpty) {
+      if (map.containsKey('image') &&
+          map['image'] != null &&
+          map['image'].toString().isNotEmpty) {
         return map['image'].toString();
       }
       // Compatibilidad con campo antiguo 'url_imagen'
-      if (map.containsKey('url_imagen') && map['url_imagen'] != null && map['url_imagen'].toString().isNotEmpty) {
+      if (map.containsKey('url_imagen') &&
+          map['url_imagen'] != null &&
+          map['url_imagen'].toString().isNotEmpty) {
         return map['url_imagen'].toString();
       }
       return '';

@@ -40,11 +40,11 @@ class TicketModel {
   /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
   List<Map<String, dynamic>> _listPoduct = [];
-  
+
   /// Caché de productos convertidos a ProductCatalogue
   /// Se invalida cada vez que se modifica _listPoduct
   List<ProductCatalogue>? _cachedProducts;
-  
+
   late Timestamp
       creation; // Marca de tiempo ( hora en que se reporto el producto )
 

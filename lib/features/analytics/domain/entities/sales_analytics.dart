@@ -172,7 +172,8 @@ class SalesAnalytics extends Equatable {
   /// Las transacciones anuladas se muestran con indicador visual pero NO afectan métricas
   List<TicketModel> getAllTransactionsForFilter(DateFilter filter) {
     final range = _getDateRangeForFilter(filter);
-    bool inRange(DateTime d) => !d.isBefore(range.start) && d.isBefore(range.end);
+    bool inRange(DateTime d) =>
+        !d.isBefore(range.start) && d.isBefore(range.end);
 
     return transactions.where((ticket) {
       final ticketDate = ticket.creation.toDate();

@@ -65,10 +65,12 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
   ///
   /// Retorna [Right(SaveProductResult)] si es exitoso, [Left(Failure)] si falla
   @override
-  Future<Either<Failure, SaveProductResult>> call(SaveProductParams params) async {
+  Future<Either<Failure, SaveProductResult>> call(
+      SaveProductParams params) async {
     try {
       var updatedProduct = params.product;
-      final isSku = updatedProduct.isSku || updatedProduct.code.startsWith('SKU-');
+      final isSku =
+          updatedProduct.isSku || updatedProduct.code.startsWith('SKU-');
       final isVerified = updatedProduct.isVerified;
       final isPending = updatedProduct.isPending;
       final isNewProduct = params.isCreatingMode;
@@ -90,7 +92,8 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
           status: 'sku',
           local: true,
         );
-        resultMessage = isNewProduct ? 'Producto SKU creado' : 'Producto SKU actualizado';
+        resultMessage =
+            isNewProduct ? 'Producto SKU creado' : 'Producto SKU actualizado';
       } else if (isNewProduct && hasNoStatus) {
         // ─────────────────────────────────────────────────────────────────────
         // CASO 2: Producto NUEVO con código válido (no existe en BD global)

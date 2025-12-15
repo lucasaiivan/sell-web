@@ -5,12 +5,12 @@ class ResponsiveHelper {
   // ==========================================
   // BREAKPOINTS DE PANTALLA
   // ==========================================
-  static const double mobilePortrait = 440; // Móviles en portrait muy pequeños/s
-  static const double mobile = 600;      // Móviles estándar
-  static const double tablet = 840;     // Tablets pequeñas
-  static const double desktop = 1200;   // Desktop estándar
+  static const double mobilePortrait =
+      440; // Móviles en portrait muy pequeños/s
+  static const double mobile = 600; // Móviles estándar
+  static const double tablet = 840; // Tablets pequeñas
+  static const double desktop = 1200; // Desktop estándar
   static const double largeDesktop = 1600; // Desktop grande
- 
 
   // ==========================================
   // RELACIONES DE ASPECTO

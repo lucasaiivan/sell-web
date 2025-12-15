@@ -50,7 +50,7 @@ class Product {
   final Map<String, dynamic> attributes;
 
   /// Estado del producto
-  /// 
+  ///
   /// Valores posibles:
   /// - 'verified': Producto verificado por la comunidad (inmutable)
   /// - 'pending': Producto pendiente de verificación
@@ -66,7 +66,7 @@ class Product {
   bool get isPending => status == 'pending';
 
   /// Indica si el producto es un SKU interno del comercio
-  /// 
+  ///
   /// Los productos con status 'sku' son códigos generados internamente
   /// para productos sin código de barras estándar (carnicería, granel, etc.)
   /// Estos productos SOLO existen en el catálogo privado del comercio.

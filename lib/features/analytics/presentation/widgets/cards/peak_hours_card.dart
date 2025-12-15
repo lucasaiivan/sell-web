@@ -286,7 +286,7 @@ class PeakHoursModal extends StatelessWidget {
           // view : contenido principal
           Expanded(
             child: CustomScrollView(
-              slivers: [ 
+              slivers: [
                 SliverAppBar(
                   pinned: true,
                   backgroundColor: colorScheme.surface,

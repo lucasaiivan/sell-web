@@ -1479,6 +1479,56 @@ class MockCatalogueRepository extends _i1.Mock
       ) as _i5.Stream<List<_i17.Mark>>);
 
   @override
+  _i5.Future<List<_i17.Mark>> searchBrands({
+    required String? query,
+    String? country = 'ARG',
+    int? limit = 20,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #searchBrands,
+          [],
+          {
+            #query: query,
+            #country: country,
+            #limit: limit,
+          },
+        ),
+        returnValue: _i5.Future<List<_i17.Mark>>.value(<_i17.Mark>[]),
+      ) as _i5.Future<List<_i17.Mark>>);
+
+  @override
+  _i5.Future<List<_i17.Mark>> getPopularBrands({
+    String? country = 'ARG',
+    int? limit = 20,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPopularBrands,
+          [],
+          {
+            #country: country,
+            #limit: limit,
+          },
+        ),
+        returnValue: _i5.Future<List<_i17.Mark>>.value(<_i17.Mark>[]),
+      ) as _i5.Future<List<_i17.Mark>>);
+
+  @override
+  _i5.Future<_i17.Mark?> getBrandById(
+    String? id, {
+    String? country = 'ARG',
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBrandById,
+          [id],
+          {#country: country},
+        ),
+        returnValue: _i5.Future<_i17.Mark?>.value(),
+      ) as _i5.Future<_i17.Mark?>);
+
+  @override
   _i5.Future<void> createBrand(
     _i17.Mark? brand, {
     String? country = 'ARG',
@@ -1486,6 +1536,21 @@ class MockCatalogueRepository extends _i1.Mock
       (super.noSuchMethod(
         Invocation.method(
           #createBrand,
+          [brand],
+          {#country: country},
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateBrand(
+    _i17.Mark? brand, {
+    String? country = 'ARG',
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateBrand,
           [brand],
           {#country: country},
         ),
@@ -1605,6 +1670,28 @@ class MockCatalogueRepository extends _i1.Mock
             productId,
             newStock,
           ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> incrementProductFollowers(String? productId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #incrementProductFollowers,
+          [productId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> decrementProductFollowers(String? productId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #decrementProductFollowers,
+          [productId],
         ),
         returnValue: _i5.Future<void>.value(),
         returnValueForMissingStub: _i5.Future<void>.value(),

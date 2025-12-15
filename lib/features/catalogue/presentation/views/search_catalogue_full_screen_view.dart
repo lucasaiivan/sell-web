@@ -337,6 +337,7 @@ class _ProductCatalogueFullScreenViewState
                     child: ProductImage(
                       imageUrl: product.image,
                       fit: BoxFit.cover,
+                      productDescription: product.description,
                     ),
                   ),
                   // Información del producto
@@ -802,6 +803,7 @@ class _ProductCatalogueFullScreenViewState
           leading: ProductImage(
             imageUrl: product.image,
             size: 56,
+            productDescription: product.description,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

@@ -10,10 +10,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// - Extension types para type-safety
 class DateFormatter {
   // Formatters reutilizables (evita recrear en cada llamada)
-  static final _fullDateTimeFormat = DateFormat('dd/MM/yyyy HH:mm');
-  static final _fullDateFormat = DateFormat('dd MMM. yyyy');
-  static final _shortDateFormat = DateFormat('dd MMM.');
-  static final _timeFormat = DateFormat('HH:mm');
+  static final _fullDateTimeFormat = DateFormat('dd/MM/yyyy HH:mm', 'es_ES');
+  static final _fullDateFormat = DateFormat('dd MMMM yyyy', 'es_ES');
+  static final _shortDateFormat = DateFormat('dd MMMM', 'es_ES');
+  static final _timeFormat = DateFormat('HH:mm', 'es_ES');
 
   /// Formatea fecha y hora en formato estándar
   ///

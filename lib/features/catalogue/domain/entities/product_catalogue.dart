@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class ProductCatalogue {
   // Información básica del producto
   final String id;
@@ -168,8 +170,14 @@ class ProductCatalogue {
   /// Indica si el producto está pendiente de verificación
   bool get isPending => status == 'pending';
 
-  /// Indica si el producto es solo local (no se guarda en BD global)
-  bool get isLocalOnly => status == 'local_only';
+  /// Indica si el producto es un SKU interno del comercio
+  ///
+  /// Los productos con status 'sku' son códigos generados internamente
+  /// para productos sin código de barras estándar (carnicería, granel, etc.)
+  /// Estos productos SOLO existen en el catálogo privado del comercio.
+  ///
+  /// Nota: También incluye status 'local_only' por compatibilidad con datos antiguos.
+  bool get isSku => status == 'sku' || status == 'local_only';
 
   /// Indica si el stock está bajo (menor o igual a la alerta)
   bool get isLowStock => stock && quantityStock <= alertStock;
@@ -179,6 +187,18 @@ class ProductCatalogue {
 
   /// Indica si tiene margen de beneficio positivo
   bool get hasProfitMargin => salePrice > purchasePrice;
+
+  /// Obtiene la fecha de última actualización del producto en el catálogo de la cuenta.
+  /// Retorna upgrade si es diferente de creation (hubo actualizaciones),
+  /// de lo contrario retorna creation (fecha de creación en el catálogo).
+  DateTime get lastUpdateDate {
+    // Si upgrade es diferente de creation, significa que hubo actualizaciones
+    if (upgrade.millisecondsSinceEpoch != creation.millisecondsSinceEpoch) {
+      return upgrade;
+    }
+    // Si son iguales, retornar creation
+    return creation;
+  }
 
   String get getPorcentageFormat {
     if (purchasePrice == 0 || salePrice == 0) return '';
@@ -209,41 +229,57 @@ class ProductCatalogue {
   bool get isComplete => description.isNotEmpty && nameMark.isNotEmpty;
 
   // Serialization methods
-  Map<String, dynamic> toMap() => {
-        "id": id,
-        'local': local,
-        'reviewed': reviewed,
-        'followers': followers,
-        'outstanding': outstanding,
-        "favorite": favorite,
-        "idMark": idMark,
-        "nameMark": nameMark,
-        'imageMark': imageMark,
-        "image": image,
-        "description": description,
-        "code": code,
-        "provider": provider,
-        "nameProvider": nameProvider,
-        "category": category,
-        "nameCategory": nameCategory,
-        "subcategory": subcategory,
-        "nameSubcategory": nameSubcategory,
-        "salePrice": salePrice,
-        "purchasePrice": purchasePrice,
-        "creation": creation.millisecondsSinceEpoch,
-        "upgrade": upgrade.millisecondsSinceEpoch,
-        "documentCreation": documentCreation.millisecondsSinceEpoch,
-        "documentUpgrade": documentUpgrade.millisecondsSinceEpoch,
-        'documentIdCreation': documentIdCreation,
-        'documentIdUpgrade': documentIdUpgrade,
-        "currencySign": currencySign,
-        "quantity": quantity,
-        "stock": stock,
-        "quantityStock": quantityStock,
-        "sales": sales,
-        "alertStock": alertStock,
-        "revenue": revenue,
-      };
+  /// Convierte el producto a un mapa para persistencia
+  ///
+  /// ## Campos de estado:
+  /// - **status**: Estado del producto ('sku', 'pending', 'verified')
+  ///   - 'sku': Producto interno sin código estándar (solo catálogo privado)
+  ///   - 'pending': Producto con código válido pendiente de verificación
+  ///   - 'verified': Producto verificado por la comunidad (inmutable)
+  /// - **attributes**: Atributos dinámicos del producto
+  Map<String, dynamic> toMap() {
+    final map = {
+      "id": id,
+      'local': local,
+      'reviewed': reviewed,
+      'followers': followers,
+      'outstanding': outstanding,
+      'status': status,
+      'attributes': attributes,
+      "favorite": favorite,
+      "idMark": idMark,
+      "nameMark": nameMark,
+      'imageMark': imageMark,
+      "image": image,
+      "description": description,
+      "code": code,
+      "provider": provider,
+      "nameProvider": nameProvider,
+      "category": category,
+      "nameCategory": nameCategory,
+      "subcategory": subcategory,
+      "nameSubcategory": nameSubcategory,
+      "salePrice": salePrice,
+      "purchasePrice": purchasePrice,
+      "creation": creation.millisecondsSinceEpoch,
+      "upgrade": upgrade.millisecondsSinceEpoch,
+      "documentCreation": documentCreation.millisecondsSinceEpoch,
+      "documentUpgrade": documentUpgrade.millisecondsSinceEpoch,
+      'documentIdCreation': documentIdCreation,
+      'documentIdUpgrade': documentIdUpgrade,
+      "currencySign": currencySign,
+      "quantity": quantity,
+      "stock": stock,
+      "quantityStock": quantityStock,
+      "sales": sales,
+      "alertStock": alertStock,
+      "revenue": revenue,
+    };
+
+    debugPrint(
+        '🔍 ProductCatalogue.toMap: Serializando ${attributes.length} atributos para producto $code');
+    return map;
+  }
 
   Map<String, dynamic> toJson() => toMap();
 
@@ -261,7 +297,7 @@ class ProductCatalogue {
       return DateTime.now();
     }
 
-    return ProductCatalogue(
+    final product = ProductCatalogue(
       id: data['id'] ?? '',
       local: data['local'] ?? false,
       reviewed: data['reviewed'] ?? data['revisado'] ?? false,
@@ -299,7 +335,7 @@ class ProductCatalogue {
       revenue: (data['revenue'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
-      attributes: data.containsKey('attributes')
+      attributes: data.containsKey('attributes') && data['attributes'] != null
           ? Map<String, dynamic>.from(data['attributes'])
           : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
@@ -309,5 +345,7 @@ class ProductCatalogue {
               ? 'verified'
               : 'pending',
     );
+
+    return product;
   }
 }

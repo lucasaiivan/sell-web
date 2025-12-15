@@ -6,7 +6,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/widgets/product_edit_catalogue_view.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'package:sellweb/core/utils/barcode_validator.dart';
+import 'package:sellweb/core/utils/helpers/barcode_validator.dart';
 
 /// Vista de pantalla completa para buscar y agregar productos al catálogo
 ///
@@ -49,12 +49,6 @@ class _ProductSearchFullScreenViewState
 
   // Flag para prevenir múltiples navegaciones simultáneas
   bool _isNavigating = false;
-
-  // Control para detectar escritura rápida de números
-  Timer? _rapidInputTimer;
-  int _rapidInputCount = 0;
-  final int _rapidInputThreshold = 6; // Mínimo de dígitos en tiempo rápido
-  final Duration _rapidInputWindow = const Duration(milliseconds: 1500); // Ventana de tiempo
 
   @override
   void initState() {
@@ -105,16 +99,12 @@ class _ProductSearchFullScreenViewState
           _isValidBarcode = isValid;
         });
       }
-
-      // Detectar escritura rápida de múltiples dígitos
-      _detectRapidNumericInput();
     });
   }
 
   @override
   void dispose() {
     _deactivateListener(); // Desactivar listener del escáner
-    _rapidInputTimer?.cancel(); // Cancelar timer de entrada rápida
     _codeController.dispose();
     _codeFocusNode.dispose();
     _scannerInputController.dispose();
@@ -147,45 +137,6 @@ class _ProductSearchFullScreenViewState
       logicalKey: event.logicalKey,
       character: event.character,
     );
-  }
-
-  /// Detecta si el usuario está escribiendo múltiples dígitos rápidamente
-  /// Si detecta un patrón de escritura rápida, abre automáticamente la vista de crear producto
-  void _detectRapidNumericInput() {
-    final currentText = _codeController.text.trim();
-    
-    // Solo contar dígitos
-    final digitCount = currentText.replaceAll(RegExp(r'[^\d]'), '').length;
-    
-    // Si no hay dígitos, resetear
-    if (digitCount == 0) {
-      _rapidInputCount = 0;
-      _rapidInputTimer?.cancel();
-      return;
-    }
-
-    // Contar cuántos dígitos se han agregado recientemente
-    _rapidInputCount = digitCount;
-
-    // Cancelar timer anterior si existe
-    _rapidInputTimer?.cancel();
-
-    // Si ya tenemos suficientes dígitos para un código típico (EAN), abrir automáticamente
-    if (digitCount >= _rapidInputThreshold && !_isNavigating && !_isSearching) {
-      // Usar el timer para permitir que el usuario termine de escribir
-      _rapidInputTimer = Timer(_rapidInputWindow, () {
-        // Solo actuar si el texto no ha cambiado desde que se estableció el timer
-        // y si aún tenemos la misma cantidad de dígitos
-        final finalText = _codeController.text.trim();
-        final finalDigitCount = finalText.replaceAll(RegExp(r'[^\d]'), '').length;
-        
-        if (finalDigitCount == _rapidInputCount && mounted && !_isNavigating) {
-          print('⚡ Escritura rápida detectada: $_rapidInputCount dígitos -> Abriendo vista de crear');
-          _searchProduct();
-        }
-        _rapidInputCount = 0;
-      });
-    }
   }
 
   /// Busca el producto por código en el catálogo local y global
@@ -342,6 +293,11 @@ class _ProductSearchFullScreenViewState
   }
 
   /// Abre la vista de creación para un producto completamente nuevo
+  ///
+  /// ## Flujo de decisión:
+  /// - **forceLocal = true** (SKU generado): status = 'sku', local = true
+  /// - **Código inválido**: status = 'sku', local = true (solo catálogo privado)
+  /// - **Código válido**: status = 'pending', local = false (BD global + catálogo)
   void _openCreateViewNew(String code, String accountId,
       {bool forceLocal = false}) {
     // Prevenir navegaciones múltiples
@@ -351,19 +307,23 @@ class _ProductSearchFullScreenViewState
     // Desactivar listener del escáner antes de navegar
     _deactivateListener();
 
-    // CORREGIDO: La decisión de "local" depende de la validez del código,
-    // NO del método de entrada (escaneado vs manual)
-    // local: true si el código es inválido o forceLocal es true
-    // local: false si el código tiene checksum válido (EAN/UPC) → se guarda en BD global
+    // Determinar si es un producto válido para BD global
     final isValidCode = BarcodeValidator.isValid(code);
-    final isLocal = forceLocal || !isValidCode;
+    final isSku = forceLocal || code.startsWith('SKU-');
+    final isLocal = isSku || !isValidCode;
+
+    // Determinar el status según el tipo de código
+    // - 'sku': Producto interno del comercio (SKU generado o código no estándar)
+    // - '': Producto nuevo con código válido (el UseCase asignará 'pending' al crearlo en BD)
+    final status = isLocal ? 'sku' : '';
 
     // Debug: Verificar valores
     print('🔍 Creando producto nuevo:');
     print('   Código: $code');
     print('   Es válido: $isValidCode');
+    print('   Es SKU: $isSku');
     print('   Es local: $isLocal');
-    print('   ForceLocal: $forceLocal');
+    print('   Status: $status');
 
     final newProduct = ProductCatalogue(
       id: '', // Se generará al guardar
@@ -374,8 +334,8 @@ class _ProductSearchFullScreenViewState
       upgrade: DateTime.now(),
       documentCreation: DateTime.now(),
       documentUpgrade: DateTime.now(),
-      local: isLocal, // true=código inválido, false=código válido EAN/UPC
-      status: isLocal ? 'local_only' : 'pending',
+      local: isLocal,
+      status: status,
     );
 
     Navigator.of(context)
@@ -415,7 +375,8 @@ class _ProductSearchFullScreenViewState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agregar producto'),
+        backgroundColor: Colors.transparent,
+        title: const Text('Volver al catálogo'),
         centerTitle: false,
       ),
       body: Center(
@@ -426,23 +387,44 @@ class _ProductSearchFullScreenViewState
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Ícono ilustrativo
-                Icon(
-                  Icons.qr_code_scanner_rounded,
-                  size: 120,
-                  color: colorScheme.primary.withValues(alpha: 0.3),
+                // Ícono ilustrativo con animación sutil
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: 0.8 + (value * 0.2),
+                    child: Opacity(
+                    opacity: value,
+                    child: child,
+                    ),
+                  );
+                  },
+                  child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.qr_code_scanner_rounded,
+                    size: 80,
+                    color: colorScheme.primary,
+                  ),
+                  ),
                 ),
                 const SizedBox(height: 32),
 
                 // Título
                 Text(
-                  'Ingrese el código del producto',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  'Escanee o ingrese el código',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
                 const SizedBox(height: 40),
 
                 // Campo de entrada del código
@@ -517,10 +499,18 @@ class _ProductSearchFullScreenViewState
   }
 
   /// Construye el campo de texto del código con validación visual
+  ///
+  /// Muestra:
+  /// - Formato del código (EAN-13, UPC-A, etc.)
+  /// - Bandera del país de origen si se puede identificar
+  /// - Indicador visual de validación (verde=válido, naranja=no estándar)
   Widget _buildCodeTextField(ThemeData theme, ColorScheme colorScheme) {
     final code = _codeController.text.trim();
     final codeLength = code.length;
-    final barcodeType = BarcodeValidator.getBarcodeType(code);
+    
+    // Usar el nuevo validador con soporte de formato y país
+    final countryInfo = BarcodeValidator.getCountryInfo(code);
+    final formattedDescription = BarcodeValidator.getFormattedDescription(code);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -531,11 +521,23 @@ class _ProductSearchFullScreenViewState
           decoration: InputDecoration(
             labelText: 'Código de barras',
             hintText: 'Ej: 7790310081556',
-            suffixIcon: _hasText
+            prefixIcon: _hasText
                 ? Icon(
                     _isValidBarcode ? Icons.check_circle : Icons.info,
                     color:
                         _isValidBarcode ? Colors.green : Colors.orange.shade700,
+                  )
+                : null,
+            suffixIcon: _hasText
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _codeController.clear();
+                        _errorMessage = null;
+                      });
+                      _codeFocusNode.requestFocus();
+                    },
                   )
                 : null,
             border: OutlineInputBorder(
@@ -590,22 +592,37 @@ class _ProductSearchFullScreenViewState
         ),
         if (_hasText) ...[
           const SizedBox(height: 8),
-          // Contador y feedback
+          // Feedback de validación con tipo de código y país
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Feedback de validación con tipo de código
+              // Información del formato y país
               Expanded(
-                child: Text(
-                  _isValidBarcode
-                      ? 'Código válido${barcodeType != null ? " ($barcodeType)" : ""}'
-                      : 'Código no estándar',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: _isValidBarcode
-                        ? Colors.green.shade700
-                        : Colors.orange.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  children: [
+                    // Texto del formato
+                    Text(
+                      _isValidBarcode
+                          ? (formattedDescription ?? 'Código válido')
+                          : 'Código no estándar',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: _isValidBarcode
+                            ? Colors.green.shade700
+                            : Colors.orange.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    // Información adicional del país
+                    if (_isValidBarcode && countryInfo != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        countryInfo.country,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               // Contador de caracteres

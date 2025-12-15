@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
@@ -12,6 +13,10 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/catalogue_metric.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
+import 'package:sellweb/core/utils/helpers/id_generator.dart';
+import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
+import 'package:sellweb/core/services/storage/storage_paths.dart';
+import 'package:sellweb/core/di/injection_container.dart';
 
 // UseCases
 import '../../domain/usecases/get_catalogue_stream_usecase.dart';
@@ -25,7 +30,15 @@ import '../../domain/usecases/get_categories_stream_usecase.dart';
 import '../../domain/usecases/get_providers_stream_usecase.dart';
 import '../../domain/usecases/get_brands_stream_usecase.dart';
 import '../../domain/usecases/create_brand_usecase.dart';
-import '../../domain/usecases/create_pending_product_usecase.dart';
+import '../../domain/usecases/update_brand_usecase.dart';
+import '../../domain/usecases/create_public_product_usecase.dart';
+import '../../domain/usecases/increment_product_followers_usecase.dart';
+import '../../domain/usecases/decrement_product_followers_usecase.dart';
+import '../../domain/usecases/save_product_usecase.dart';
+import '../../domain/usecases/delete_product_usecase.dart';
+import '../../domain/usecases/search_brands_usecase.dart';
+import '../../domain/usecases/get_popular_brands_usecase.dart';
+import '../../domain/usecases/get_brand_by_id_usecase.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
@@ -140,7 +153,16 @@ class CatalogueProvider extends ChangeNotifier
   final GetProvidersStreamUseCase _getProvidersStreamUseCase;
   final GetBrandsStreamUseCase _getBrandsStreamUseCase;
   final CreateBrandUseCase _createBrandUseCase;
-  final CreatePendingProductUseCase _createPendingProductUseCase;
+  final UpdateBrandUseCase _updateBrandUseCase;
+  final CreatePublicProductUseCase _createPublicProductUseCase;
+  final IncrementProductFollowersUseCase _incrementProductFollowersUseCase;
+  final DecrementProductFollowersUseCase _decrementProductFollowersUseCase;
+  final SaveProductUseCase _saveProductUseCase;
+  final DeleteProductUseCase _deleteProductUseCase;
+  // Nuevos UseCases para búsqueda optimizada de marcas
+  final SearchBrandsUseCase _searchBrandsUseCase;
+  final GetPopularBrandsUseCase _getPopularBrandsUseCase;
+  final GetBrandByIdUseCase _getBrandByIdUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
@@ -204,7 +226,15 @@ class CatalogueProvider extends ChangeNotifier
     this._getProvidersStreamUseCase,
     this._getBrandsStreamUseCase,
     this._createBrandUseCase,
-    this._createPendingProductUseCase,
+    this._updateBrandUseCase,
+    this._createPublicProductUseCase,
+    this._incrementProductFollowersUseCase,
+    this._decrementProductFollowersUseCase,
+    this._saveProductUseCase,
+    this._deleteProductUseCase,
+    this._searchBrandsUseCase,
+    this._getPopularBrandsUseCase,
+    this._getBrandByIdUseCase,
   );
 
   void initCatalogue(String id) {
@@ -418,13 +448,28 @@ class CatalogueProvider extends ChangeNotifier
     }
   }
 
-  /// Genera un SKU híbrido para productos sin código de barras
+  /// Genera un SKU híbrido elegante y único para productos sin código de barras
+  ///
+  /// Formato: SKU-XXXXX-YYYYMMDD-NNNN
+  /// - XXXXX: Hash corto del accountId (5 caracteres alfanuméricos)
+  /// - YYYYMMDD: Fecha actual (año-mes-día)
+  /// - NNNN: Secuencia única del día (4 dígitos)
+  ///
+  /// Ejemplo: SKU-A3F9K-20251211-0001
   String generateHybridSku(String accountId) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final idPart = accountId.length > 5 ? accountId.substring(0, 5) : accountId;
-    return 'SKU-$idPart-$timestamp';
+    return IdGenerator.generateProductSku(accountId);
   }
 
+  /// Crea un producto en la base de datos pública (pending)
+  ///
+  /// ## Flujo de creación:
+  /// 1. Se crea el producto con status 'pending' y followers = 1
+  /// 2. El primer comercio que lo crea es el primer follower
+  /// 3. Otros comercios que lo agreguen incrementarán el contador
+  ///
+  /// ## Nota importante:
+  /// - Solo se llama para productos con código de barras válido
+  /// - Los SKU internos NO se guardan en BD pública
   Future<void> createPublicProduct(Product product) async {
     try {
       final productToSave = Product(
@@ -435,7 +480,7 @@ class CatalogueProvider extends ChangeNotifier
         description: product.description,
         image: product.image,
         code: product.code,
-        followers: product.followers,
+        followers: 1, // El creador es el primer follower
         favorite: product.favorite,
         reviewed: false, // Siempre false al crear
         creation: DateTime.now(),
@@ -446,10 +491,242 @@ class CatalogueProvider extends ChangeNotifier
         status: 'pending', // Siempre pending
       );
 
-      // Usar el caso de uso de pendientes
-      await _createPendingProductUseCase(productToSave);
+      // Crear en la base de datos pública (/PRODUCTOS)
+      await _createPublicProductUseCase(CreatePublicProductParams(productToSave));
     } catch (e) {
       throw Exception('Error al crear producto pendiente: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE FOLLOWERS (Métrica de popularidad)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Incrementa el contador de followers de un producto público
+  ///
+  /// Se llama cuando un comercio agrega un producto de la BD global
+  /// a su catálogo privado por primera vez.
+  ///
+  /// ## Contexto de uso:
+  /// - Producto existe en BD global (status: 'pending' o 'verified')
+  /// - Comercio NO tenía el producto en su catálogo
+  /// - Comercio agrega el producto a su catálogo
+  ///
+  /// [productId] - ID del producto público (código de barras)
+  Future<void> incrementProductFollowers(String productId) async {
+    if (productId.isEmpty) {
+      throw Exception('El productId es requerido');
+    }
+
+    try {
+      final result = await _incrementProductFollowersUseCase(
+        IncrementProductFollowersParams(productId: productId),
+      );
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
+    } catch (e) {
+      throw Exception('Error al incrementar followers: $e');
+    }
+  }
+
+  /// Decrementa el contador de followers de un producto público
+  ///
+  /// Se llama cuando un comercio elimina un producto de su catálogo
+  /// que estaba referenciando un producto de la BD global.
+  ///
+  /// ## Contexto de uso:
+  /// - Producto existe en BD global
+  /// - Comercio tenía el producto en su catálogo
+  /// - Comercio elimina el producto de su catálogo
+  ///
+  /// ## Nota:
+  /// - NO se llama para productos SKU internos
+  /// - El contador nunca baja de 0
+  ///
+  /// [productId] - ID del producto público (código de barras)
+  Future<void> decrementProductFollowers(String productId) async {
+    if (productId.isEmpty) {
+      throw Exception('El productId es requerido');
+    }
+
+    try {
+      final result = await _decrementProductFollowersUseCase(
+        DecrementProductFollowersParams(productId: productId),
+      );
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
+    } catch (e) {
+      throw Exception('Error al decrementar followers: $e');
+    }
+  }
+
+  /// Verifica si un producto ya existe en el catálogo local
+  ///
+  /// Usado para determinar si se debe incrementar followers
+  /// al agregar un producto de la BD global.
+  bool productExistsInCatalogue(String code) {
+    return getProductByCode(code) != null;
+  }
+
+  /// Guarda un producto aplicando toda la lógica de negocio
+  ///
+  /// Delega al [SaveProductUseCase] que determina el tipo de producto
+  /// y aplica las reglas correspondientes.
+  ///
+  /// ## Parámetros:
+  /// - [product] - Producto a guardar (puede tener imagen ya subida)
+  /// - [accountId] - ID de la cuenta del comercio
+  /// - [isCreatingMode] - true si es nuevo en catálogo, false si es edición
+  /// - [shouldUpdateUpgrade] - true si debe actualizar timestamp de modificación
+  ///
+  /// ## Retorna:
+  /// - [SaveProductResult] con el producto actualizado y mensaje de éxito
+  ///
+  /// ## Lanza excepciones:
+  /// - Si hay error en validación o guardado
+  Future<SaveProductResult> saveProduct({
+    required ProductCatalogue product,
+    required String accountId,
+    required bool isCreatingMode,
+    bool shouldUpdateUpgrade = true,
+    Uint8List? newImageBytes,
+  }) async {
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta es requerido');
+    }
+    if (product.code.isEmpty) {
+      throw Exception('El código del producto es requerido');
+    }
+
+    try {
+      _state = _state.copyWith(isLoading: true);
+      notifyListeners();
+
+      final existedInCatalogue = productExistsInCatalogue(product.code);
+      
+      var productToSave = product;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // ASIGNAR ID = CÓDIGO (único para todos los productos)
+      // ═══════════════════════════════════════════════════════════════════════
+      if (isCreatingMode && productToSave.id.isEmpty) {
+        // SIEMPRE usar el código como ID (tanto SKU como públicos)
+        productToSave = productToSave.copyWith(id: productToSave.code);
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // SUBIR IMAGEN (ruta según tipo de producto)
+      // ═══════════════════════════════════════════════════════════════════════
+      if (newImageBytes != null) {
+        final storage = getIt<IStorageDataSource>();
+        final isSku = productToSave.code.startsWith('SKU-') || productToSave.isSku;
+        
+        // Determinar ruta según si es SKU o público
+        final String path;
+        if (isSku) {
+          // Productos SKU → Catálogo privado
+          path = StoragePaths.productImage(accountId, productToSave.code);
+        } else {
+          // Productos públicos → Storage público
+          path = StoragePaths.publicProductImage(productToSave.code);
+        }
+
+        final imageUrl = await storage.uploadFile(
+          path,
+          newImageBytes,
+          metadata: {
+            'contentType': 'image/jpeg',
+            'uploaded_by': 'catalogue_editor',
+            'product_code': productToSave.code,
+            'product_type': isSku ? 'sku' : 'public',
+          },
+        );
+        productToSave = productToSave.copyWith(image: imageUrl);
+      }
+      
+      // Aplicar timestamps según corresponda
+      if (isCreatingMode) {
+        productToSave = productToSave.copyWith(
+          creation: DateTime.now(),
+          upgrade: DateTime.now(),
+          documentIdCreation: accountId,
+          documentIdUpgrade: accountId,
+        );
+      } else if (shouldUpdateUpgrade) {
+        productToSave = productToSave.copyWith(
+          upgrade: DateTime.now(),
+          documentIdUpgrade: accountId,
+        );
+      } else {
+        productToSave = productToSave.copyWith(
+          documentIdUpgrade: accountId,
+        );
+      }
+
+      final result = await _saveProductUseCase(
+        SaveProductParams(
+          product: productToSave,
+          accountId: accountId,
+          isCreatingMode: isCreatingMode,
+          existedInCatalogue: existedInCatalogue,
+        ),
+      );
+
+      return result.fold(
+        (failure) => throw Exception(failure.message),
+        (saveResult) => saveResult,
+      );
+    } finally {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
+    }
+  }
+
+  /// Elimina un producto del catálogo aplicando lógica de followers
+  ///
+  /// Delega al [DeleteProductUseCase] que maneja:
+  /// - Productos SKU: Solo elimina del catálogo privado
+  /// - Productos públicos (verified/pending): Elimina del catálogo y decrementa followers
+  ///
+  /// ## Parámetros:
+  /// - [product] - Producto a eliminar
+  /// - [accountId] - ID de la cuenta del comercio
+  ///
+  /// ## Lanza excepciones:
+  /// - Si hay error en la eliminación
+  Future<void> deleteProduct({
+    required ProductCatalogue product,
+    required String accountId,
+  }) async {
+    if (accountId.isEmpty) {
+      throw Exception('El ID de la cuenta es requerido');
+    }
+    if (product.id.isEmpty) {
+      throw Exception('El ID del producto es requerido');
+    }
+
+    try {
+      _state = _state.copyWith(isLoading: true);
+      notifyListeners();
+
+      final result = await _deleteProductUseCase(
+        DeleteProductParams(
+          product: product,
+          accountId: accountId,
+        ),
+      );
+
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
+    } finally {
+      _state = _state.copyWith(isLoading: false);
+      notifyListeners();
     }
   }
 
@@ -630,6 +907,65 @@ class CatalogueProvider extends ChangeNotifier
     return _getBrandsStreamUseCase(const GetBrandsStreamParams());
   }
 
+  /// Busca marcas por nombre con límite de resultados
+  ///
+  /// Implementa búsqueda optimizada por prefijo.
+  /// Ideal para autocompletado y búsqueda en tiempo real.
+  ///
+  /// [query] - Término de búsqueda (retorna lista vacía si está vacío)
+  /// [limit] - Máximo de resultados (default: 20)
+  Future<List<Mark>> searchBrands({
+    required String query,
+    String country = 'ARG',
+    int limit = 20,
+  }) async {
+    try {
+      return await _searchBrandsUseCase(
+        SearchBrandsParams(
+          query: query,
+          country: country,
+          limit: limit,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al buscar marcas: $e');
+    }
+  }
+
+  /// Obtiene las marcas más populares (verificadas y recientes)
+  ///
+  /// Útil para mostrar opciones iniciales sin necesidad de búsqueda.
+  ///
+  /// [limit] - Máximo de resultados (default: 20)
+  Future<List<Mark>> getPopularBrands({
+    String country = 'ARG',
+    int limit = 20,
+  }) async {
+    try {
+      return await _getPopularBrandsUseCase(
+        GetPopularBrandsParams(
+          country: country,
+          limit: limit,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al obtener marcas populares: $e');
+    }
+  }
+
+  /// Obtiene una marca específica por ID
+  ///
+  /// Retorna `null` si la marca no existe.
+  Future<Mark?> getBrandById(String id, {String country = 'ARG'}) async {
+    try {
+      return await _getBrandByIdUseCase(
+        GetBrandByIdParams(id: id, country: country),
+      );
+    } catch (e) {
+      throw Exception('Error al obtener marca por ID: $e');
+    }
+  }
+
   Future<void> createBrand(Mark brand, {String country = 'ARG'}) async {
     try {
       final result = await _createBrandUseCase(
@@ -640,6 +976,19 @@ class CatalogueProvider extends ChangeNotifier
       );
     } catch (e) {
       throw Exception('Error al crear marca: $e');
+    }
+  }
+
+  Future<void> updateBrand(Mark brand, {String country = 'ARG'}) async {
+    try {
+      final result = await _updateBrandUseCase(
+          UpdateBrandParams(brand: brand, country: country));
+      result.fold(
+        (failure) => throw Exception(failure.message),
+        (_) => null,
+      );
+    } catch (e) {
+      throw Exception('Error al actualizar marca: $e');
     }
   }
 

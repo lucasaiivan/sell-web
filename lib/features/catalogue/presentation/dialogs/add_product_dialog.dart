@@ -264,10 +264,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Imagen del producto
-          ProductImage(
-            borderRadius: 8,
-            imageUrl: widget.product.image,
-            size: 60,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: ProductImage(
+              borderRadius: 8,
+              imageUrl: widget.product.image,
+              size: 60,
+              productDescription: widget.product.description,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(

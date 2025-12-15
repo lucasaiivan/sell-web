@@ -61,7 +61,7 @@ class ProductModel extends Product {
               : '',
       upgrade: _parseTimestamp(data['upgrade']),
       creation: _parseTimestamp(data['creation']),
-      attributes: data.containsKey('attributes')
+      attributes: data.containsKey('attributes') && data['attributes'] != null
           ? Map<String, dynamic>.from(data['attributes'])
           : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'

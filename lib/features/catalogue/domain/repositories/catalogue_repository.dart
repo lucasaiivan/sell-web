@@ -48,10 +48,46 @@ abstract class CatalogueRepository {
   Stream<List<Provider>> getProvidersStream(String accountId);
 
   /// Obtiene un stream de marcas
+  /// @deprecated Usa searchBrands o getPopularBrands en su lugar para optimizar consultas
   Stream<List<Mark>> getBrandsStream({String country = 'ARG'});
+
+  /// Busca marcas por nombre con límite de resultados
+  ///
+  /// Usa búsqueda por prefijo optimizada para Firestore.
+  /// Solo retorna marcas que comienzan con [query].
+  ///
+  /// [query] - Término de búsqueda (mínimo 1 carácter)
+  /// [country] - País de las marcas (default: 'ARG')
+  /// [limit] - Máximo de resultados (default: 20)
+  Future<List<Mark>> searchBrands({
+    required String query,
+    String country = 'ARG',
+    int limit = 20,
+  });
+
+  /// Obtiene las marcas más populares (verificadas y recientes)
+  ///
+  /// Retorna marcas verificadas ordenadas por fecha de creación.
+  /// Útil para mostrar opciones iniciales sin búsqueda.
+  ///
+  /// [country] - País de las marcas (default: 'ARG')
+  /// [limit] - Máximo de resultados (default: 20)
+  Future<List<Mark>> getPopularBrands({
+    String country = 'ARG',
+    int limit = 20,
+  });
+
+  /// Obtiene una marca específica por ID
+  ///
+  /// [id] - ID de la marca
+  /// [country] - País de la marca (default: 'ARG')
+  Future<Mark?> getBrandById(String id, {String country = 'ARG'});
 
   /// Crea una nueva marca
   Future<void> createBrand(Mark brand, {String country = 'ARG'});
+
+  /// Actualiza una marca existente
+  Future<void> updateBrand(Mark brand, {String country = 'ARG'});
 
   /// Obtiene todos los productos del catálogo de una cuenta
   ///
@@ -98,4 +134,30 @@ abstract class CatalogueRepository {
   /// [productId] - ID del producto
   /// [newStock] - Nueva cantidad en stock
   Future<void> updateStock(String accountId, String productId, int newStock);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE FOLLOWERS (Contador de comercios usando el producto)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Incrementa el contador de followers de un producto público
+  ///
+  /// Se llama cuando un comercio agrega un producto de la BD global
+  /// a su catálogo privado por primera vez.
+  ///
+  /// [productId] - ID del producto público (código de barras)
+  ///
+  /// **Nota:** Este contador sirve como métrica de popularidad
+  /// y sistema de validación comunitaria del producto.
+  Future<void> incrementProductFollowers(String productId);
+
+  /// Decrementa el contador de followers de un producto público
+  ///
+  /// Se llama cuando un comercio elimina un producto de su catálogo
+  /// que estaba referenciando un producto de la BD global.
+  ///
+  /// [productId] - ID del producto público (código de barras)
+  ///
+  /// **Nota:** El contador se mantiene en 0 como mínimo, nunca negativo.
+  /// El documento se mantiene aunque followers llegue a 0.
+  Future<void> decrementProductFollowers(String productId);
 }

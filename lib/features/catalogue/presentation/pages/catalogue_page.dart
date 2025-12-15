@@ -549,6 +549,7 @@ class _ProductListTile extends StatelessWidget {
                 imageUrl: product.image,
                 size: 80,
                 fit: BoxFit.cover,
+                productDescription: product.description,
               ),
             ),
 
@@ -653,7 +654,7 @@ class _ProductListTile extends StatelessWidget {
             // Fecha de actualización
             Text(
               DateFormatter.getSimplePublicationDate(
-                  product.upgrade, DateTime.now()),
+                  product.lastUpdateDate, DateTime.now()),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontSize: 10,
@@ -784,7 +785,7 @@ class _ProductListTile extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               DateFormatter.getSimplePublicationDate(
-                  product.upgrade, DateTime.now()),
+                  product.lastUpdateDate, DateTime.now()),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontSize: 10,
@@ -1031,6 +1032,7 @@ class _ProductCatalogueCard extends StatelessWidget {
                   ProductImage(
                     imageUrl: product.image,
                     fit: BoxFit.cover,
+                    productDescription: product.description,
                   ),
 
                   // Badge de categoría en la esquina superior izquierda

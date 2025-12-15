@@ -40,6 +40,11 @@ class TicketModel {
   /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
   List<Map<String, dynamic>> _listPoduct = [];
+  
+  /// Caché de productos convertidos a ProductCatalogue
+  /// Se invalida cada vez que se modifica _listPoduct
+  List<ProductCatalogue>? _cachedProducts;
+  
   late Timestamp
       creation; // Marca de tiempo ( hora en que se reporto el producto )
 
@@ -67,10 +72,14 @@ class TicketModel {
 
   /// Obtiene los productos como lista de ProductCatalogue
   /// (convierte desde mapas almacenados internamente)
+  /// Utiliza caché para evitar reconversiones innecesarias
   List<ProductCatalogue> get products {
-    return _listPoduct.map((productMap) {
-      return ProductCatalogue.fromMap(productMap);
-    }).toList();
+    if (_cachedProducts == null) {
+      _cachedProducts = _listPoduct.map((productMap) {
+        return ProductCatalogue.fromMap(productMap);
+      }).toList();
+    }
+    return _cachedProducts!;
   }
 
   /// Establece los productos desde una lista de ProductCatalogue
@@ -79,6 +88,7 @@ class TicketModel {
     _listPoduct = productList.map((product) {
       return product.toMap();
     }).toList();
+    _cachedProducts = null; // Invalidar caché
   }
 
   /// Agrega un producto desde ProductCatalogue
@@ -104,6 +114,7 @@ class TicketModel {
     if (!exist) {
       _listPoduct.add(Map<String, dynamic>.from(productMap));
     }
+    _cachedProducts = null; // Invalidar caché
   }
 
   /// Obtiene un producto específico por ID como ProductCatalogue
@@ -120,19 +131,21 @@ class TicketModel {
   void updateProductQuantity(String productId, int newQuantity) {
     for (var i = 0; i < _listPoduct.length; i++) {
       if (_listPoduct[i]['id'] == productId) {
-        if (newQuantity <= 0) {
+        if (newQuantity == 0) {
           _listPoduct.removeAt(i);
         } else {
           _listPoduct[i]['quantity'] = newQuantity;
         }
-        return;
+        _cachedProducts = null; // Invalidar caché
+        break;
       }
     }
   }
 
   /// Elimina un producto por ID
-  void removeProductById(String productId) {
+  void removeProduct(String productId) {
     _listPoduct.removeWhere((product) => product['id'] == productId);
+    _cachedProducts = null; // Invalidar caché
   }
 
   /// Obtiene el total de productos usando ProductCatalogue
@@ -668,6 +681,7 @@ class TicketModel {
                 ? item
                 : Map<String, dynamic>.from(item as Map)))
         : [];
+    _cachedProducts = null; // Invalidar caché
     creation = data['creation'];
   }
 
@@ -785,6 +799,7 @@ class TicketModel {
     for (var i = 0; i < _listPoduct.length; i++) {
       if (_listPoduct[i]['id'] == productId) {
         _listPoduct[i]['quantity'] = (_listPoduct[i]['quantity'] ?? 0) + 1;
+        _cachedProducts = null; // Invalidar caché
         return;
       }
     }
@@ -806,14 +821,15 @@ class TicketModel {
           // Si la cantidad es 1 o menos, eliminar el producto
           _listPoduct.removeAt(i);
         }
+        _cachedProducts = null; // Invalidar caché
         return;
       }
     }
   }
 
   // void : elimina el producto seleccionado del ticket
-  void removeProduct({required ProductCatalogue product}) {
-    removeProductById(product.id);
+  void removeProductByCatalogue({required ProductCatalogue product}) {
+    removeProduct(product.id);
   }
 
   // void : agrega un producto al ticket

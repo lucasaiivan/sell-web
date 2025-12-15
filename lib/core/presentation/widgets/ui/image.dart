@@ -8,7 +8,7 @@ import 'package:shimmer/shimmer.dart';
 /// **Mejoras Offline:**
 /// - Retry automático con exponential backoff
 /// - Shimmer effect mientras carga
-/// - Fallback elegante a imagen por defecto
+/// - Fallback elegante a imagen por defecto o abreviación
 /// - Callbacks para success/error
 class ProductImage extends StatelessWidget {
   final String? imageUrl;
@@ -21,6 +21,8 @@ class ProductImage extends StatelessWidget {
   final int maxRetries;
   final VoidCallback? onImageLoaded;
   final void Function(String error)? onImageError;
+  final String? productDescription;
+  final int maxAbbreviationChars;
 
   const ProductImage({
     super.key,
@@ -34,6 +36,8 @@ class ProductImage extends StatelessWidget {
     this.maxRetries = 3,
     this.onImageLoaded,
     this.onImageError,
+    this.productDescription,
+    this.maxAbbreviationChars = 4,
   });
 
   @override
@@ -154,7 +158,29 @@ class ProductImage extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Colores adaptativos basados en el tema actual
+    // Si hay descripción del producto, mostrar abreviación
+    if (productDescription != null && productDescription!.isNotEmpty) {
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        child: Center(
+          child: Text(
+            _getAbbreviation(productDescription!),
+            style: TextStyle(
+              fontSize: _calculateFontSize(),
+              fontWeight: FontWeight.bold,
+              color: colorScheme.outline,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Si no hay descripción, mostrar imagen por defecto
     final Color iconColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
     final Color backgroundOverlay =
         colorScheme.onSurfaceVariant.withValues(alpha: 0.04);
@@ -179,5 +205,28 @@ class ProductImage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Obtiene las primeras letras de la descripción del producto
+  String _getAbbreviation(String text) {
+    if (text.isEmpty) return '?';
+    final firstWord = text.trim().split(' ').first;
+    final maxChars = maxAbbreviationChars;
+    return firstWord
+        .substring(
+            0, firstWord.length >= maxChars ? maxChars : firstWord.length)
+        .toUpperCase();
+  }
+
+  /// Calcula el tamaño de fuente basado en el tamaño del contenedor
+  double _calculateFontSize() {
+    if (size == null)
+      return 24; // Tamaño por defecto para contenedores expandidos
+
+    // Fórmula adaptativa basada en el tamaño del contenedor
+    if (size! <= 30) return size! * 0.35;
+    if (size! <= 60) return size! * 0.3;
+    if (size! <= 80) return size! * 0.28;
+    return size! * 0.25;
   }
 }

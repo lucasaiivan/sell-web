@@ -50,4 +50,26 @@ class Mark {
           : null,
     );
   }
+
+  Mark copyWith({
+    String? id,
+    String? name,
+    String? country,
+    String? description,
+    String? image,
+    bool? verified,
+    DateTime? creation,
+    DateTime? upgrade,
+  }) {
+    return Mark(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      country: country ?? this.country,
+      description: description ?? this.description,
+      image: image ?? this.image,
+      verified: verified ?? this.verified,
+      creation: creation ?? this.creation,
+      upgrade: upgrade ?? this.upgrade,
+    );
+  }
 }

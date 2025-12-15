@@ -49,7 +49,12 @@ class Product {
   /// Atributos dinámicos del producto (peso, color, talle, etc.)
   final Map<String, dynamic> attributes;
 
-  /// Estado del producto (verified, pending, local_only)
+  /// Estado del producto
+  /// 
+  /// Valores posibles:
+  /// - 'verified': Producto verificado por la comunidad (inmutable)
+  /// - 'pending': Producto pendiente de verificación
+  /// - 'sku': Producto interno del comercio (solo catálogo privado)
   final String status;
 
   // Getters de lógica de negocio
@@ -60,8 +65,12 @@ class Product {
   /// Indica si el producto está pendiente de verificación
   bool get isPending => status == 'pending';
 
-  /// Indica si el producto es solo local (no se guarda en BD global)
-  bool get isLocalOnly => status == 'local_only';
+  /// Indica si el producto es un SKU interno del comercio
+  /// 
+  /// Los productos con status 'sku' son códigos generados internamente
+  /// para productos sin código de barras estándar (carnicería, granel, etc.)
+  /// Estos productos SOLO existen en el catálogo privado del comercio.
+  bool get isSku => status == 'sku';
 
   /// Convierte este producto global a un producto de catálogo
   ProductCatalogue convertProductCatalogue() {
@@ -133,7 +142,7 @@ class Product {
           : DateTime.now(),
       idUserCreation: map['idUserCreation'] ?? '',
       idUserUpgrade: map['idUserUpgrade'] ?? '',
-      attributes: map.containsKey('attributes')
+      attributes: map.containsKey('attributes') && map['attributes'] != null
           ? Map<String, dynamic>.from(map['attributes'])
           : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'

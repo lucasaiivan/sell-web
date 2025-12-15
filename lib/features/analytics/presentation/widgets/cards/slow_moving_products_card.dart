@@ -404,24 +404,15 @@ class SlowMovingProductsModal extends StatelessWidget {
                                   width: 1.5,
                                 ),
                               ),
-                              child: product.image.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(
-                                        product.image,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => Icon(
-                                          Icons.inventory_2_outlined,
-                                          color: alertColor,
-                                          size: 24,
-                                        ),
-                                      ),
-                                    )
-                                  : Icon(
-                                      Icons.inventory_2_outlined,
-                                      color: alertColor,
-                                      size: 24,
-                                    ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: ProductImage(
+                                  imageUrl: product.image,
+                                  fit: BoxFit.cover,
+                                  borderRadius: 10,
+                                  productDescription: product.description,
+                                ),
+                              ),
                             ),
                             title: product.description,
                             subtitleWidget: Row(

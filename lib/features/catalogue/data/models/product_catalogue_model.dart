@@ -125,7 +125,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       revenue: data.containsKey('revenue') ? data['revenue'] : 0.0,
       quantity: data.containsKey('quantity') ? data['quantity'] : 1,
       local: data.containsKey('local') ? data['local'] : false,
-      attributes: data.containsKey('attributes')
+      attributes: data.containsKey('attributes') && data['attributes'] != null
           ? Map<String, dynamic>.from(data['attributes'])
           : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'

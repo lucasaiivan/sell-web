@@ -38,10 +38,10 @@ class FirestorePaths {
     required String productId,
     String country = 'ARG',
   }) =>
-      '/APP/$country/PRODUCTOS/$productId/PRICES/';
+      '/APP/$country/PRODUCTOS/$productId/PRICES';
 
   /// Marcas registradas por país
-  static String brands({String country = 'ARG'}) => '/APP/$country/MARCAS/';
+  static String brands({String country = 'ARG'}) => '/APP/$country/MARCAS';
 
   /// Reportes de productos
   static String productReports({String country = 'ARG'}) =>
@@ -60,14 +60,14 @@ class FirestorePaths {
   // ==========================================
 
   /// Cuentas de negocios
-  static const String accounts = '/ACCOUNTS/';
+  static const String accounts = '/ACCOUNTS';
 
   /// Documento específico de cuenta
   static String account(String accountId) => '/ACCOUNTS/$accountId';
 
   /// Catálogo de productos de una cuenta
   static String accountCatalogue(String accountId) =>
-      '/ACCOUNTS/$accountId/CATALOGUE/';
+      '/ACCOUNTS/$accountId/CATALOGUE';
 
   /// Documento de producto en catálogo
   static String accountProduct(String accountId, String productId) =>
@@ -75,22 +75,22 @@ class FirestorePaths {
 
   /// Categorías de productos
   static String accountCategories(String accountId) =>
-      '/ACCOUNTS/$accountId/CATEGORY/';
+      '/ACCOUNTS/$accountId/CATEGORY';
 
   /// Proveedores de una cuenta
   static String accountProviders(String accountId) =>
-      '/ACCOUNTS/$accountId/PROVIDER/';
+      '/ACCOUNTS/$accountId/PROVIDER';
 
   /// Transacciones/ventas
   static String accountTransactions(String accountId) =>
-      '/ACCOUNTS/$accountId/TRANSACTIONS/';
+      '/ACCOUNTS/$accountId/TRANSACTIONS';
 
   /// Documento de transacción específica
   static String accountTransaction(String accountId, String transactionId) =>
       '/ACCOUNTS/$accountId/TRANSACTIONS/$transactionId';
 
   /// Administradores y usuarios
-  static String accountUsers(String accountId) => '/ACCOUNTS/$accountId/USERS/';
+  static String accountUsers(String accountId) => '/ACCOUNTS/$accountId/USERS';
 
   /// Usuario específico de una cuenta
   static String accountUser(String accountId, String email) =>
@@ -127,7 +127,7 @@ class FirestorePaths {
 
   /// Colección de configuraciones de una cuenta
   static String accountSettings(String accountId) =>
-      '/ACCOUNTS/$accountId/SETTINGS/';
+      '/ACCOUNTS/$accountId/SETTINGS';
 
   /// Preferencias de analíticas del dashboard
   ///
@@ -148,13 +148,13 @@ class FirestorePaths {
   // ==========================================
 
   /// Usuarios del sistema
-  static const String users = '/USERS/';
+  static const String users = '/USERS';
 
   /// Documento de usuario específico
   static String user(String email) => '/USERS/$email';
 
   /// Cuentas administradas por un usuario
-  static String userManagedAccounts(String email) => '/USERS/$email/ACCOUNTS/';
+  static String userManagedAccounts(String email) => '/USERS/$email/ACCOUNTS';
 
   /// Cuenta específica administrada por un usuario
   static String userManagedAccount(String email, String accountId) =>

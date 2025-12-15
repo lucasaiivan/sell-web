@@ -246,6 +246,89 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   }
 
   @override
+  Future<List<Mark>> searchBrands({
+    required String query,
+    String country = 'ARG',
+    int limit = 20,
+  }) async {
+    try {
+      if (query.isEmpty) return [];
+
+      final path = FirestorePaths.brands(country: country);
+      final collection = _dataSource.collection(path);
+
+      // Búsqueda por prefijo usando el truco de Firestore
+      // Busca documentos donde 'name' >= query y 'name' <= query + '\uf8ff'
+      final snapshot = await _dataSource.getDocuments(
+        collection
+            .orderBy('name')
+            .startAt([query])
+            .endAt([query + '\uf8ff'])
+            .limit(limit),
+      );
+
+      return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+    } catch (e) {
+      throw Exception('Error al buscar marcas: $e');
+    }
+  }
+
+  @override
+  Future<List<Mark>> getPopularBrands({
+    String country = 'ARG',
+    int limit = 20,
+  }) async {
+    try {
+      final path = FirestorePaths.brands(country: country);
+      final collection = _dataSource.collection(path);
+
+      // Obtiene marcas verificadas ordenadas por fecha de creación
+      final snapshot = await _dataSource.getDocuments(
+        collection
+            .where('verified', isEqualTo: true)
+            .orderBy('creation', descending: true)
+            .limit(limit),
+      );
+
+      return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+    } catch (e) {
+      // Si falla por falta de índice, intenta sin filtro de verificación
+      try {
+        final path = FirestorePaths.brands(country: country);
+        final collection = _dataSource.collection(path);
+
+        final snapshot = await _dataSource.getDocuments(
+          collection.orderBy('creation', descending: true).limit(limit),
+        );
+
+        return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+      } catch (e2) {
+        throw Exception('Error al obtener marcas populares: $e2');
+      }
+    }
+  }
+
+  @override
+  Future<Mark?> getBrandById(String id, {String country = 'ARG'}) async {
+    try {
+      final path = FirestorePaths.brands(country: country);
+      final collection = _dataSource.collection(path);
+      
+      // Buscar por ID del documento
+      final query = collection.where(FieldPath.documentId, isEqualTo: id).limit(1);
+      final snapshot = await _dataSource.getDocuments(query);
+
+      if (snapshot.docs.isEmpty) {
+        return null;
+      }
+
+      return Mark.fromMap(snapshot.docs.first.data());
+    } catch (e) {
+      throw Exception('Error al obtener marca por ID: $e');
+    }
+  }
+
+  @override
   Future<void> createBrand(Mark brand, {String country = 'ARG'}) async {
     if (brand.id.isEmpty) {
       throw ArgumentError('La marca debe tener un ID válido');
@@ -260,6 +343,26 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       await _dataSource.setDocument(docPath, brandMap, merge: false);
     } catch (e) {
       throw Exception('Error al crear marca en Firestore: $e');
+    }
+  }
+
+  @override
+  Future<void> updateBrand(Mark brand, {String country = 'ARG'}) async {
+    if (brand.id.isEmpty) {
+      throw ArgumentError('La marca debe tener un ID válido');
+    }
+
+    try {
+      final path = FirestorePaths.brands(country: country);
+      final docPath = '$path/${brand.id}';
+      final brandMap = brand.toJson();
+      
+      // Actualizar el timestamp de modificación
+      brandMap['upgrade'] = Timestamp.now();
+
+      await _dataSource.setDocument(docPath, brandMap, merge: true);
+    } catch (e) {
+      throw Exception('Error al actualizar marca en Firestore: $e');
     }
   }
 
@@ -342,5 +445,68 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       'quantityStock': newStock,
       'upgrade': Timestamp.now(),
     });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE FOLLOWERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Incrementa el contador de followers de un producto público
+  ///
+  /// Usa FieldValue.increment para operación atómica en Firestore.
+  @override
+  Future<void> incrementProductFollowers(String productId) async {
+    if (productId.isEmpty) {
+      throw ArgumentError('El productId es obligatorio');
+    }
+
+    try {
+      final publicPath = '${FirestorePaths.publicProducts()}/$productId';
+
+      // Verificar si existe en productos públicos
+      final publicDoc = _dataSource.document(publicPath);
+      final publicSnapshot = await publicDoc.get();
+
+      if (!publicSnapshot.exists) {
+        throw Exception('El producto $productId no existe en la base de datos pública');
+      }
+
+      await _dataSource.incrementField(publicPath, 'followers', 1);
+    } catch (e) {
+      throw Exception('Error al incrementar followers del producto: $e');
+    }
+  }
+
+  /// Decrementa el contador de followers de un producto público
+  ///
+  /// Usa FieldValue.increment con valor negativo para operación atómica.
+  /// El contador se mantiene en 0 como mínimo en la lógica de negocio,
+  /// aunque Firestore permite valores negativos.
+  @override
+  Future<void> decrementProductFollowers(String productId) async {
+    if (productId.isEmpty) {
+      throw ArgumentError('El productId es obligatorio');
+    }
+
+    try {
+      final publicPath = '${FirestorePaths.publicProducts()}/$productId';
+
+      // Verificar si existe en productos públicos
+      final publicDoc = _dataSource.document(publicPath);
+      final publicSnapshot = await publicDoc.get();
+
+      if (!publicSnapshot.exists) {
+        throw Exception('El producto $productId no existe en la base de datos pública');
+      }
+
+      // Verificar que followers no sea 0 antes de decrementar
+      final data = publicSnapshot.data();
+      final currentFollowers = data?['followers'] ?? 0;
+      if (currentFollowers > 0) {
+        await _dataSource.incrementField(publicPath, 'followers', -1);
+      }
+    } catch (e) {
+      throw Exception('Error al decrementar followers del producto: $e');
+    }
   }
 }

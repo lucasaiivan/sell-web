@@ -73,6 +73,8 @@ class AvatarCircleProduct extends StatelessWidget {
                       imageUrl: product.image,
                       size: size - 6, // Restar el margen y borde
                       borderRadius: size / 2,
+                      productDescription: product.description,
+                      maxAbbreviationChars: 3, // Avatar usa 3 caracteres
                     ),
                   ),
                 ),

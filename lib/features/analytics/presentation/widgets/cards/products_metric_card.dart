@@ -106,20 +106,12 @@ class ProductsMetricCard extends StatelessWidget {
           ),
         ),
         child: ClipOval(
-          child: product.image.isNotEmpty
-              ? ProductImage(
-                  imageUrl: product.image,
-                  size: 28,
-                  borderRadius: 14,
-                )
-              : Icon(
-                  Icons.inventory_2_outlined,
-                  size: 14,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.5),
-                ),
+          child: ProductImage(
+            imageUrl: product.image,
+            size: 28,
+            borderRadius: 14,
+            productDescription: product.description,
+          ),
         ),
       ),
       title: product.description,

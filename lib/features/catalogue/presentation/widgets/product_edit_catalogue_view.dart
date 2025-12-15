@@ -6,11 +6,11 @@ import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
 import 'package:sellweb/core/services/storage/storage_paths.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
-import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
+import 'brand_search_dialog.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -110,12 +110,17 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     _selectedBrandId =
         widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
     _attributes = Map.from(widget.product.attributes);
+
+    debugPrint(
+        '🔍 ProductEdit: Inicializando con ${_attributes.length} atributos: $_attributes');
   }
 
-  /// Configura listeners para recalcular beneficios
+  /// Configura listeners para recalcular beneficios y actualizar preview
   void _setupListeners() {
     _salePriceController.addListener(() => setState(() {}));
     _purchasePriceController.addListener(() => setState(() {}));
+    _descriptionController.addListener(() => setState(() {}));
+    _markController.addListener(() => setState(() {}));
   }
 
   @override
@@ -151,6 +156,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           ),
           backgroundColor: Colors.orange.shade600,
           behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(
+            bottom: 16,
+            left: 16,
+            right: 16,
+          ),
         ),
       );
       return;
@@ -184,76 +194,52 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     }
   }
 
-  /// Valida y guarda los cambios del producto en Firebase
+  /// Valida y guarda los cambios del producto
+  ///
+  /// Delega toda la lógica de negocio al [SaveProductUseCase]
+  /// que determina el tipo de producto y aplica las reglas correspondientes.
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
 
     try {
-      var updatedProduct = _buildUpdatedProduct();
-
-      // Si estamos creando un producto nuevo, generar ID
-      if (widget.isCreatingMode && updatedProduct.id.isEmpty) {
-        final newId = DateTime.now().millisecondsSinceEpoch.toString();
-        updatedProduct = updatedProduct.copyWith(id: newId);
-      }
-
-      // Subir imagen si se seleccionó una nueva
-      if (_newImageBytes != null) {
-        final storage = getIt<IStorageDataSource>();
-        final path = StoragePaths.publicProductImage(updatedProduct.id);
-        final imageUrl = await storage.uploadFile(path,_newImageBytes!, metadata: {'contentType': 'image/jpeg','uploaded_by': 'catalogue_editor', }, );
-        updatedProduct = updatedProduct.copyWith(image: imageUrl);
-      }
-
-      // Si es un producto NO local (escaneado), crear en la BD global primero
-      // Los productos locales (entrada manual) NO se guardan en BD global
-      if (widget.isCreatingMode && !updatedProduct.local) {
-        final globalProduct = Product(
-          id: updatedProduct.id,
-          code: updatedProduct.code,
-          description: updatedProduct.description,
-          image: updatedProduct.image,
-          idMark: updatedProduct.idMark,
-          nameMark: updatedProduct.nameMark,
-          imageMark: updatedProduct.imageMark,
-          reviewed: false,
-          followers: 0,
-          favorite: false,
-          creation: DateTime.now(),
-          upgrade: DateTime.now(),
-          idUserCreation: widget.accountId,
-          idUserUpgrade: widget.accountId,
-          attributes: updatedProduct.attributes,
-          status: updatedProduct.status,
-        );
-
-        await widget.catalogueProvider.createPublicProduct(globalProduct);
-      }
+      final updatedProduct = _buildUpdatedProduct();
 
       // Detectar si cambiaron los precios para actualizar el timestamp upgrade
       final pricesChanged = widget.isCreatingMode ? true : _havePricesChanged();
-      await widget.catalogueProvider.addAndUpdateProductToCatalogue(
-        updatedProduct,
-        widget.accountId,
-        shouldUpdateUpgrade: pricesChanged || _newImageBytes != null,
+      final shouldUpdateUpgrade = pricesChanged || _newImageBytes != null;
+
+      // Delegar toda la lógica de negocio al Provider
+      final result = await widget.catalogueProvider.saveProduct(
+        product: updatedProduct,
+        accountId: widget.accountId,
+        isCreatingMode: widget.isCreatingMode,
+        shouldUpdateUpgrade: shouldUpdateUpgrade,
+        newImageBytes: _newImageBytes,
       );
 
       if (mounted) {
-        _showSuccessMessage();
-        Navigator.of(context).pop();
+        setState(() => _isSaving = false);
+        _showSuccessMessage(result.message);
+
+        // Esperar un frame antes de hacer pop para evitar errores de renderizado
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      if (mounted) _showErrorMessage(e.toString());
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+        _showErrorMessage(e.toString());
+      }
     }
   }
 
   /// Construye el producto actualizado con los valores del formulario
   ProductCatalogue _buildUpdatedProduct() {
-    return widget.product.copyWith(
+    final updated = widget.product.copyWith(
       description: widget.product.isVerified
           ? widget.product.description
           : _descriptionController.text.trim(),
@@ -275,6 +261,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       favorite: _favoriteEnabled,
       attributes: _attributes,
     );
+
+    debugPrint(
+        '🔍 ProductEdit: Guardando producto con ${_attributes.length} atributos: $_attributes');
+    return updated;
   }
 
   /// Parsea el precio desde un controller limpiando formato
@@ -292,18 +282,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         newPurchasePrice != widget.product.purchasePrice;
   }
 
-  /// Valida si el código de barras tiene un formato correcto
-  /// Un código válido debe ser numérico y tener entre 8-14 dígitos (EAN/UPC)
-  bool _isValidBarcode(String code) {
-    if (code.isEmpty) return false;
-    // Validar que sea solo números
-    if (!RegExp(r'^\d+$').hasMatch(code)) return false;
-    // Validar longitud (8-14 dígitos es estándar para EAN/UPC)
-    return code.length >= 8 && code.length <= 14;
-  }
-
   /// Muestra mensaje de éxito al guardar
-  void _showSuccessMessage() {
+  void _showSuccessMessage([String? customMessage]) {
     ScaffoldMessenger.of(context).clearSnackBars();
     final uniqueKey = UniqueKey();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -314,14 +294,20 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             const Icon(Icons.check_circle, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(widget.isCreatingMode
-                  ? 'Producto agregado correctamente'
-                  : 'Producto actualizado correctamente'),
+              child: Text(customMessage ??
+                  (widget.isCreatingMode
+                      ? 'Producto agregado correctamente'
+                      : 'Producto actualizado correctamente')),
             ),
           ],
         ),
         backgroundColor: Colors.green.shade600,
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(
+          bottom: 16,
+          left: 16,
+          right: 16,
+        ),
       ),
     );
   }
@@ -344,186 +330,898 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         ),
         backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(
+          bottom: 16,
+          left: 16,
+          right: 16,
+        ),
         duration: const Duration(seconds: 4),
       ),
     );
   }
 
-  /// Muestra dialog para crear una nueva marca
+  /// Muestra diálogo de confirmación para eliminar producto
+  Future<void> _showDeleteConfirmation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar producto?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Esta acción eliminará "${widget.product.description}" de tu catálogo.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            if (widget.product.isVerified || widget.product.isPending)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.blue.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      color: Colors.blue,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'El producto permanecerá en la base de datos global para otros comercios.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteProduct();
+    }
+  }
+
+  /// Elimina el producto del catálogo
+  Future<void> _deleteProduct() async {
+    setState(() => _isSaving = true);
+
+    try {
+      await widget.catalogueProvider.deleteProduct(
+        product: widget.product,
+        accountId: widget.accountId,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            key: uniqueKey,
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                      'Producto "${widget.product.description}" eliminado'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(
+              bottom: 16,
+              left: 16,
+              right: 16,
+            ),
+          ),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        final uniqueKey = UniqueKey();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            key: uniqueKey,
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text('Error al eliminar: $e'),
+                ),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(
+              bottom: 16,
+              left: 16,
+              right: 16,
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  /// Muestra modal para crear una nueva marca
   Future<Mark?> _showCreateBrandDialog() async {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     Uint8List? brandImageBytes;
     final picker = ImagePicker();
+    bool isCreating = false;
 
-    return showDialog<Mark>(
+    return showModalBottomSheet<Mark>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Crear Nueva Marca'),
-            content: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Image picker
-                    GestureDetector(
-                      onTap: () async {
-                        try {
-                          final XFile? image = await picker.pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 512,
-                            maxHeight: 512,
-                            imageQuality: 85,
-                          );
-                          if (image != null) {
-                            final bytes = await image.readAsBytes();
-                            setState(() {
-                              brandImageBytes = bytes;
-                            });
-                          }
-                        } catch (e) {
-                          final uniqueKey = UniqueKey();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              key: uniqueKey,
-                              content: Text('Error al seleccionar imagen: $e'),
-                            ),
-                          );
-                        }
-                      },
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade400),
-                        ),
-                        child: brandImageBytes != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.memory(
-                                  brandImageBytes!,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_photo_alternate,
-                                      size: 40, color: Colors.grey.shade600),
-                                  const SizedBox(height: 8),
-                                  Text('Agregar imagen',
-                                      style: TextStyle(
-                                          color: Colors.grey.shade600)),
-                                ],
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Name field
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de la marca *',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'El nombre es requerido';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Description field
-                    TextFormField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Descripción',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                    ),
-                  ],
-                ),
-              ),
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
+
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (!formKey.currentState!.validate()) return;
-
-                  try {
-                    // Generate ID for the brand
-                    final brandId =
-                        DateTime.now().millisecondsSinceEpoch.toString();
-
-                    // Upload image if provided
-                    String imageUrl = '';
-                    if (brandImageBytes != null) {
-                      final storage = getIt<IStorageDataSource>();
-                      final path = StoragePaths.publicBrandImage(brandId);
-                      imageUrl = await storage.uploadFile(
-                        path,
-                        brandImageBytes!,
-                        metadata: {
-                          'contentType': 'image/jpeg',
-                          'uploaded_by': 'brand_creator',
-                        },
-                      );
-                    }
-
-                    // Create brand object
-                    final newBrand = Mark(
-                      id: brandId,
-                      name: nameController.text.trim(),
-                      country: 'ARG',
-                      description: descriptionController.text.trim(),
-                      image: imageUrl,
-                      verified: false,
-                      creation: DateTime.now(),
-                      upgrade: DateTime.now(),
-                    );
-
-                    // Save to database
-                    await widget.catalogueProvider.createBrand(newBrand);
-
-                    if (context.mounted) {
-                      Navigator.of(context).pop(newBrand);
-                      final uniqueKey = UniqueKey();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          key: uniqueKey,
-                          content: const Text('Marca creada exitosamente'),
-                          backgroundColor: Colors.green,
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.add_business,
+                        color: colorScheme.primary,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Crear Nueva Marca',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      final uniqueKey = UniqueKey();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          key: uniqueKey,
-                          content: Text('Error al crear marca: $e'),
-                          backgroundColor: Colors.red,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                // Content
+                Expanded(
+                  child: Form(
+                    key: formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Image picker
+                          Center(
+                            child: GestureDetector(
+                              onTap: isCreating
+                                  ? null
+                                  : () async {
+                                      try {
+                                        final XFile? image =
+                                            await picker.pickImage(
+                                          source: ImageSource.gallery,
+                                          maxWidth: 512,
+                                          maxHeight: 512,
+                                          imageQuality: 85,
+                                        );
+                                        if (image != null) {
+                                          final bytes = await image.readAsBytes();
+                                          setState(() {
+                                            brandImageBytes = bytes;
+                                          });
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          final uniqueKey = UniqueKey();
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              key: uniqueKey,
+                                              content: Text(
+                                                  'Error al seleccionar imagen: $e'),
+                                              backgroundColor: colorScheme.error,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: colorScheme.outline
+                                        .withValues(alpha: 0.3),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: brandImageBytes != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: Image.memory(
+                                          brandImageBytes!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.add_photo_alternate,
+                                            size: 48,
+                                            color: colorScheme.primary
+                                                .withValues(alpha: 0.7),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Imagen (opcional)',
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color: colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Name field
+                          TextFormField(
+                            controller: nameController,
+                            enabled: !isCreating,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: InputDecoration(
+                              labelText: 'Nombre de la marca *',
+                              hintText: 'Ej: Coca-Cola',
+                              prefixIcon: const Icon(Icons.label),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'El nombre es requerido';
+                              }
+                              if (value.trim().length < 2) {
+                                return 'El nombre debe tener al menos 2 caracteres';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // Description field
+                          TextFormField(
+                            controller: descriptionController,
+                            enabled: !isCreating,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              labelText: 'Descripción (opcional)',
+                              hintText: 'Información adicional sobre la marca',
+                              prefixIcon: const Icon(Icons.description),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            maxLines: 3,
+                            maxLength: 200,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Actions
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    border: Border(
+                      top: BorderSide(
+                        color: colorScheme.outlineVariant,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: isCreating
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                          child: const Text('Cancelar'),
                         ),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Crear'),
-              ),
-            ],
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.icon(
+                          onPressed: isCreating
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) return;
+
+                                  setState(() => isCreating = true);
+
+                                  try {
+                                    // Generate ID for the brand
+                                    final brandId = DateTime.now()
+                                        .millisecondsSinceEpoch
+                                        .toString();
+
+                                    // Upload image if provided
+                                    String imageUrl = '';
+                                    if (brandImageBytes != null) {
+                                      final storage = getIt<IStorageDataSource>();
+                                      final path =
+                                          StoragePaths.publicBrandImage(brandId);
+                                      imageUrl = await storage.uploadFile(
+                                        path,
+                                        brandImageBytes!,
+                                        metadata: {
+                                          'contentType': 'image/jpeg',
+                                          'uploaded_by': 'user',
+                                        },
+                                      );
+                                    }
+
+                                    // Create brand object
+                                    final newBrand = Mark(
+                                      id: brandId,
+                                      name: nameController.text.trim(),
+                                      country: 'ARG',
+                                      description:
+                                          descriptionController.text.trim(),
+                                      image: imageUrl,
+                                      verified: false,
+                                      creation: DateTime.now(),
+                                      upgrade: DateTime.now(),
+                                    );
+
+                                    // Save to database
+                                    await widget.catalogueProvider
+                                        .createBrand(newBrand);
+
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop(newBrand);
+                                      final uniqueKey = UniqueKey();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          key: uniqueKey,
+                                          content: const Row(
+                                            children: [
+                                              Icon(Icons.check_circle,
+                                                  color: Colors.white),
+                                              SizedBox(width: 12),
+                                              Text('Marca creada exitosamente'),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.green.shade600,
+                                          behavior: SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 16,
+                                            left: 16,
+                                            right: 16,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    setState(() => isCreating = false);
+                                    if (context.mounted) {
+                                      final uniqueKey = UniqueKey();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          key: uniqueKey,
+                                          content: Row(
+                                            children: [
+                                              const Icon(Icons.error_outline,
+                                                  color: Colors.white),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text('Error: ${e.toString()}'),
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: colorScheme.error,
+                                          behavior: SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 16,
+                                            left: 16,
+                                            right: 16,
+                                          ),
+                                          duration: const Duration(seconds: 4),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: isCreating
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.add, size: 20),
+                          label: Text(isCreating ? 'Creando...' : 'Crear marca'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Muestra modal para editar una marca existente
+  Future<Mark?> _showEditBrandDialog(Mark brand) async {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController(text: brand.name);
+    final descriptionController = TextEditingController(text: brand.description);
+    Uint8List? brandImageBytes;
+    final picker = ImagePicker();
+    bool isUpdating = false;
+    String currentImageUrl = brand.image;
+
+    return showModalBottomSheet<Mark>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final theme = Theme.of(context);
+          final colorScheme = theme.colorScheme;
+
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.edit,
+                        color: colorScheme.primary,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Editar Marca',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (brand.verified)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.verified,
+                                size: 14,
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Verificada',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                // Content
+                Expanded(
+                  child: Form(
+                    key: formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Image picker
+                          Center(
+                            child: GestureDetector(
+                              onTap: isUpdating
+                                  ? null
+                                  : () async {
+                                      try {
+                                        final XFile? image =
+                                            await picker.pickImage(
+                                          source: ImageSource.gallery,
+                                          maxWidth: 512,
+                                          maxHeight: 512,
+                                          imageQuality: 85,
+                                        );
+                                        if (image != null) {
+                                          final bytes = await image.readAsBytes();
+                                          setState(() {
+                                            brandImageBytes = bytes;
+                                          });
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          final uniqueKey = UniqueKey();
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              key: uniqueKey,
+                                              content: Text(
+                                                  'Error al seleccionar imagen: $e'),
+                                              backgroundColor: colorScheme.error,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: colorScheme.outline
+                                        .withValues(alpha: 0.3),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: brandImageBytes != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: Image.memory(
+                                          brandImageBytes!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : currentImageUrl.isNotEmpty
+                                        ? ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                            child: Image.network(
+                                              currentImageUrl,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.add_photo_alternate,
+                                                      size: 48,
+                                                      color: colorScheme.primary
+                                                          .withValues(alpha: 0.7),
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      'Cambiar imagen',
+                                                      style: theme
+                                                          .textTheme.bodySmall
+                                                          ?.copyWith(
+                                                        color: colorScheme
+                                                            .onSurfaceVariant,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        : Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.add_photo_alternate,
+                                                size: 48,
+                                                color: colorScheme.primary
+                                                    .withValues(alpha: 0.7),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Agregar imagen',
+                                                style: theme.textTheme.bodySmall
+                                                    ?.copyWith(
+                                                  color: colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Name field
+                          TextFormField(
+                            controller: nameController,
+                            enabled: !isUpdating,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: InputDecoration(
+                              labelText: 'Nombre de la marca *',
+                              hintText: 'Ej: Coca-Cola',
+                              prefixIcon: const Icon(Icons.label),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'El nombre es requerido';
+                              }
+                              if (value.trim().length < 2) {
+                                return 'El nombre debe tener al menos 2 caracteres';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // Description field
+                          TextFormField(
+                            controller: descriptionController,
+                            enabled: !isUpdating,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              labelText: 'Descripción (opcional)',
+                              hintText: 'Información adicional sobre la marca',
+                              prefixIcon: const Icon(Icons.description),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            maxLines: 3,
+                            maxLength: 200,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Actions
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    border: Border(
+                      top: BorderSide(
+                        color: colorScheme.outlineVariant,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: isUpdating
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.icon(
+                          onPressed: isUpdating
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) return;
+
+                                  setState(() => isUpdating = true);
+
+                                  try {
+                                    // Upload new image if provided
+                                    String imageUrl = currentImageUrl;
+                                    if (brandImageBytes != null) {
+                                      final storage = getIt<IStorageDataSource>();
+                                      final path =
+                                          StoragePaths.publicBrandImage(brand.id);
+                                      imageUrl = await storage.uploadFile(
+                                        path,
+                                        brandImageBytes!,
+                                        metadata: {
+                                          'contentType': 'image/jpeg',
+                                          'uploaded_by': 'user',
+                                        },
+                                      );
+                                    }
+
+                                    // Create updated brand object
+                                    final updatedBrand = brand.copyWith(
+                                      name: nameController.text.trim(),
+                                      description:
+                                          descriptionController.text.trim(),
+                                      image: imageUrl,
+                                      upgrade: DateTime.now(),
+                                    );
+
+                                    // Update in database
+                                    await widget.catalogueProvider
+                                        .updateBrand(updatedBrand);
+
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop(updatedBrand);
+                                      final uniqueKey = UniqueKey();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          key: uniqueKey,
+                                          content: const Row(
+                                            children: [
+                                              Icon(Icons.check_circle,
+                                                  color: Colors.white),
+                                              SizedBox(width: 12),
+                                              Text('Marca actualizada exitosamente'),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.green.shade600,
+                                          behavior: SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 16,
+                                            left: 16,
+                                            right: 16,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    setState(() => isUpdating = false);
+                                    if (context.mounted) {
+                                      final uniqueKey = UniqueKey();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          key: uniqueKey,
+                                          content: Row(
+                                            children: [
+                                              const Icon(Icons.error_outline,
+                                                  color: Colors.white),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text('Error: ${e.toString()}'),
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: colorScheme.error,
+                                          behavior: SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 16,
+                                            left: 16,
+                                            right: 16,
+                                          ),
+                                          duration: const Duration(seconds: 4),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: isUpdating
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save, size: 20),
+                          label: Text(isUpdating ? 'Guardando...' : 'Guardar cambios'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -543,7 +1241,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   PreferredSizeWidget _buildAppBar() {
     // Determinar el título según el estado del producto
     String title;
-    if (widget.product.id.isEmpty || !widget.product.creation.isAfter(DateTime(2000))) {
+    if (widget.product.id.isEmpty ||
+        !widget.product.creation.isAfter(DateTime(2000))) {
       // Producto nuevo que no existe en ningún lado
       title = 'Nuevo producto';
     } else {
@@ -555,6 +1254,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       title: Text(title),
       centerTitle: false,
       actions: [
+        // Botón eliminar (solo en modo edición)
+        if (!widget.isCreatingMode && !_isSaving)
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Eliminar producto',
+            onPressed: _showDeleteConfirmation,
+          ),
         if (_isSaving)
           const Padding(
             padding: EdgeInsets.all(16.0),
@@ -581,12 +1287,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildImageSection(),
+                _buildPreviewProductCard(),
                 const SizedBox(height: 24),
                 _buildBasicInfoSection(colorScheme),
                 const SizedBox(height: 24),
-                _buildAttributesSection(colorScheme),
-                const SizedBox(height: 24),
+                // Solo mostrar atributos si no está verificado o si tiene atributos
+                if (!widget.product.isVerified || _attributes.isNotEmpty) ...[
+                  _buildAttributesSection(colorScheme),
+                  const SizedBox(height: 24),
+                ],
                 _buildPricingSection(),
                 const SizedBox(height: 24),
                 _buildInventorySection(colorScheme),
@@ -603,6 +1312,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Construye sección de atributos dinámicos
   Widget _buildAttributesSection(ColorScheme colorScheme) {
+    final isVerified = widget.product.isVerified;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -611,154 +1322,474 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           title: 'Atributos',
           icon: Icons.label_outline,
         ),
-        const SizedBox(height: 12),
-        _buildCard(
-          context: context,
-          child: Column(
+        if (_attributes.isEmpty) ...[
+          const SizedBox(height: 16),
+          if (!isVerified)
+            InkWell(
+              onTap: _showAddAttributeDialog,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        size: 28,
+                        color: colorScheme.primary.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Agregar atributo',
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  width: 1.0,
+                ),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: SizedBox(
+                height: 80,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.label_outline,
+                        size: 32,
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Producto verificado sin atributos',
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.6),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ] else ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              ..._attributes.entries.map((entry) => ListTile(
-                    dense: true,
-                    title: Text(entry.key),
-                    trailing: Row(
+              ..._attributes.entries.map((entry) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.primary.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        entry.value.toString(),
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (!isVerified) ...[
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _showDeleteAttributeDialog(entry.key),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Icon(
+                            Icons.close,
+                            size: 14,
+                            color: colorScheme.error.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+              if (!isVerified)
+                InkWell(
+                  onTap: _showAddAttributeDialog,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          entry.value.toString(),
-                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        Icon(
+                          Icons.add,
+                          size: 16,
+                          color: colorScheme.primary,
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 18),
-                          onPressed: () {
-                            setState(() {
-                              _attributes.remove(entry.key);
-                            });
-                          },
+                        const SizedBox(width: 4),
+                        Text(
+                          'Agregar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.primary,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
-                  )),
-              if (_attributes.isNotEmpty) const Divider(height: 1),
-              ListTile(
-                dense: true,
-                leading: Icon(Icons.add, size: 20, color: colorScheme.primary),
-                title: Text(
-                  'Agregar atributo',
-                  style: TextStyle(color: colorScheme.primary),
+                  ),
                 ),
-                onTap: _showAddAttributeDialog,
-              ),
             ],
           ),
-        ),
+        ],
       ],
     );
   }
 
-  void _showAddAttributeDialog() {
-    final keyController = TextEditingController();
-    final valueController = TextEditingController();
-
+  void _showDeleteAttributeDialog(String attributeKey) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Agregar atributo'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: keyController,
-              decoration:
-                  const InputDecoration(labelText: 'Nombre (ej. Color)'),
-            ),
-            TextField(
-              controller: valueController,
-              decoration: const InputDecoration(labelText: 'Valor (ej. Rojo)'),
-            ),
-          ],
+        title: const Text('¿Eliminar atributo?'),
+        content: Text(
+          'Estás a punto de eliminar el atributo "$attributeKey". Esta acción no se puede deshacer.',
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () {
-              if (keyController.text.isNotEmpty &&
-                  valueController.text.isNotEmpty) {
-                setState(() {
-                  _attributes[keyController.text.trim()] =
-                      valueController.text.trim();
-                });
-                Navigator.pop(context);
-              }
+              setState(() {
+                _attributes.remove(attributeKey);
+              });
+              Navigator.pop(context);
             },
-            child: const Text('Agregar'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Eliminar'),
           ),
         ],
       ),
     );
   }
 
+  void _showAddAttributeDialog() {
+    final keyController = TextEditingController();
+    final valueController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.label_outline,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text('Nuevo atributo'),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: keyController,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: 'Nombre del atributo',
+                    hintText: 'ej. Color, Talle, Peso',
+                    prefixIcon: const Icon(Icons.title),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Ingrese el nombre del atributo';
+                    }
+                    if (_attributes.containsKey(value.trim())) {
+                      return 'Este atributo ya existe';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: valueController,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(
+                    labelText: 'Valor',
+                    hintText: 'ej. Rojo, XL, 500g',
+                    prefixIcon: const Icon(Icons.edit),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Ingrese el valor del atributo';
+                    }
+                    return null;
+                  },
+                  onFieldSubmitted: (_) {
+                    if (formKey.currentState!.validate()) {
+                      setState(() {
+                        _attributes[keyController.text.trim()] =
+                            valueController.text.trim();
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  setState(() {
+                    _attributes[keyController.text.trim()] =
+                        valueController.text.trim();
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('Agregar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   /// Construye sección de imagen del producto
-  Widget _buildImageSection() {
+  Widget _buildPreviewProductCard() {
     final isVerified = widget.product.isVerified;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildSectionHeader(
           context: context,
-          title: 'Imagen del producto',
-          icon: Icons.image_outlined,
+          title: 'Vista previa',
+          icon: Icons.preview_outlined,
         ),
         const SizedBox(height: 12),
-        _buildCard(
-          context: context,
-          child: Center(
-            child: Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                GestureDetector(
-                  onTap: isVerified ? null : _pickImage,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: _newImageBytes != null
-                        ? Image.memory(
-                            _newImageBytes!,
-                            width: 200,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          )
-                        : SizedBox(
-                            width: 200,
-                            height: 200,
-                            child: ProductImage(
-                              imageUrl: widget.product.image,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                  ),
+        Center(
+          // tarjeta: vista previa del producto con botones
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Botón de favorito (izquierda)
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3F414D),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                if (!isVerified)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextButton.icon(
-                      onPressed: _pickImage,
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.black.withValues(alpha: 0.6),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () =>
+                        setState(() => _favoriteEnabled = !_favoriteEnabled),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        _favoriteEnabled ? Icons.star : Icons.star_border,
+                        color: _favoriteEnabled ? Colors.orange : Colors.white,
+                        size: 20,
                       ),
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text('Actualizar'),
                     ),
                   ),
-              ],
-            ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Tarjeta del producto
+              SizedBox(
+                width: 200,
+                height: 200,
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  color: const Color(0xFF3F414D),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  elevation: 0.0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      //  Contenedor de la imagen del producto o imagen por defecto
+                      Expanded(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: _newImageBytes != null
+                              ? Image.memory(
+                                  _newImageBytes!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : ProductImage(
+                                  imageUrl: widget.product.image,
+                                  fit: BoxFit.cover,
+                                  productDescription: _descriptionController.text,
+                                ),
+                        ),
+                      ),
+
+                      // Nombre del producto
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        width: double.infinity,
+                        color: const Color(0xFF2C2E36),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _descriptionController.text.isNotEmpty
+                                  ? _descriptionController.text
+                                  : 'Producto sin nombre',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            // Precio de venta
+                            Text(
+                              _salePriceController.text.isNotEmpty
+                                  ? '\$${_salePriceController.text}'
+                                  : '\$0.00',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Botón de editar imagen (derecha) - solo si no es verificado
+              if (!isVerified)
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3F414D),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(8),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(
+                    width: 44), // Espacio equivalente cuando no hay botón
+            ],
           ),
         ),
       ],
@@ -768,6 +1799,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Construye sección de información básica (descripción y código)
   Widget _buildBasicInfoSection(ColorScheme colorScheme) {
     final theme = Theme.of(context);
+    final code = widget.product.code;
+    final isValidCode = BarcodeValidator.isValid(code);
+    final formattedDescription = BarcodeValidator.getFormattedDescription(code);
+    final displayLabel = formattedDescription ??
+        (isValidCode ? 'Código válido' : 'Personalizado');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -781,18 +1818,19 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           children: [
             // Campo de código de barras (solo lectura)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colorScheme.outline.withValues(alpha: 0.2),
+                  width: 1.0,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    _isValidBarcode(widget.product.code) ? Icons.public : Icons.store,
-                    color: _isValidBarcode(widget.product.code) ? Colors.green : Colors.orange.shade700,
+                    isValidCode ? Icons.public : Icons.store,
+                    color: isValidCode ? Colors.green : Colors.orange.shade700,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -815,17 +1853,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: _isValidBarcode(widget.product.code)
+                                color: isValidCode
                                     ? Colors.green.withValues(alpha: 0.15)
                                     : Colors.orange.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                _isValidBarcode(widget.product.code)
-                                    ? 'EAN-${widget.product.code.length}'
-                                    : 'Personalizado',
+                                displayLabel,
                                 style: theme.textTheme.labelSmall?.copyWith(
-                                  color: _isValidBarcode(widget.product.code)
+                                  color: isValidCode
                                       ? Colors.green.shade700
                                       : Colors.orange.shade700,
                                   fontWeight: FontWeight.bold,
@@ -855,11 +1891,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               // Campo de descripción (solo lectura)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: colorScheme.outline.withValues(alpha: 0.2))),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    width: 1.0,
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -908,11 +1948,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             if (widget.product.isVerified) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: colorScheme.outline.withValues(alpha: 0.2))),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    width: 1.0,
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1038,7 +2082,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+              color: colorScheme.primary.withValues(alpha: 0.3),
+              width: 1.5,
             ),
           ),
           child: SwitchListTile(
@@ -1119,25 +2164,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         _buildCategoryField(),
         const SizedBox(height: 16),
         _buildProviderField(),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-            ),
-          ),
-          child: SwitchListTile(
-            value: _favoriteEnabled,
-            onChanged: (value) => setState(() => _favoriteEnabled = value),
-            title: const Text('Producto favorito'),
-            subtitle: const Text('Marca como favorito para acceso rápido'),
-            secondary: Icon(
-              _favoriteEnabled ? Icons.star : Icons.star_border,
-              color: _favoriteEnabled ? Colors.amber.shade600 : null,
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -1254,287 +2280,116 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  /// Campo de marca
+  /// Campo de marca con búsqueda optimizada
   Widget _buildMarkField() {
     final isVerified = widget.product.isVerified;
-    return StreamBuilder<List<Mark>>(
-      stream: widget.catalogueProvider.getBrandsStream(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
 
-        final brands = snapshot.data ?? [];
-
-        return InkWell(
-          onTap: isVerified
-              ? () {
-                  final uniqueKey = UniqueKey();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      key: uniqueKey,
-                      content: const Row(
-                        children: [
-                          Icon(Icons.lock, color: Colors.white),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                                'No se puede modificar la marca de un producto verificado'),
-                          ),
-                        ],
+    return InkWell(
+      onTap: isVerified
+          ? () {
+              final uniqueKey = UniqueKey();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  key: uniqueKey,
+                  content: const Row(
+                    children: [
+                      Icon(Icons.lock, color: Colors.white),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                            'No se puede modificar la marca de un producto verificado'),
                       ),
-                      backgroundColor: Colors.orange.shade600,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              : () async {
-                  final selected = await _showBrandSelectionModal(brands);
-
-                  if (selected != null) {
-                    setState(() {
-                      _selectedBrandId = selected.id;
-                      _markController.text = selected.name;
-                    });
-                  }
-                },
-          child: IgnorePointer(
-            child: TextFormField(
-              controller: _markController,
-              decoration: InputDecoration(
-                labelText: 'Marca',
-                hintText: 'Seleccionar marca',
-                prefixIcon: Icon(
-                  isVerified
-                      ? Icons.verified
-                      : Icons.branding_watermark_outlined,
-                  color: isVerified ? Colors.blue : null,
+                    ],
+                  ),
+                  backgroundColor: Colors.orange.shade600,
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.only(
+                    bottom: 16,
+                    left: 16,
+                    right: 16,
+                  ),
                 ),
-                suffixIcon: Icon(
-                  isVerified ? Icons.lock : Icons.arrow_drop_down,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                enabledBorder: isVerified
-                    ? OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.blue.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                      )
-                    : null,
-              ),
+              );
+            }
+          : () => _showBrandSearchDialog(),
+      child: IgnorePointer(
+        child: TextFormField(
+          controller: _markController,
+          decoration: InputDecoration(
+            labelText: 'Marca',
+            hintText: 'Buscar o seleccionar marca',
+            prefixIcon: Icon(
+              isVerified ? Icons.verified : Icons.branding_watermark_outlined,
+              color: isVerified ? Colors.blue : null,
             ),
+            suffixIcon: Icon(
+              isVerified ? Icons.lock : Icons.search,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            enabledBorder: isVerified
+                ? OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                  )
+                : null,
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  /// Muestra modal personalizado de selección de marca con botón para crear nueva
-  Future<Mark?> _showBrandSelectionModal(List<Mark> brands) async {
-    return showModalBottomSheet<Mark>(
+  /// Muestra modal de búsqueda de marca optimizado
+  Future<void> _showBrandSearchDialog() async {
+    final result = await showModalBottomSheet<Mark>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        final theme = Theme.of(context);
-        final colorScheme = theme.colorScheme;
-        final searchController = TextEditingController();
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            // Filter brands based on search
-            final query = searchController.text.toLowerCase().trim();
-            final filteredBrands = query.isEmpty
-                ? brands
-                : brands.where((brand) {
-                    return brand.name.toLowerCase().contains(query) ||
-                        brand.description.toLowerCase().contains(query);
-                  }).toList();
-
-            return Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.85,
-              ),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle bar
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      width: 32,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color:
-                            colorScheme.outlineVariant.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Seleccionar Marca',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                          style: IconButton.styleFrom(
-                            backgroundColor:
-                                colorScheme.surfaceContainerHighest,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: TextField(
-                      controller: searchController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar marca...',
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.5),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // List
-                  Expanded(
-                    child: filteredBrands.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search_off_rounded,
-                                  size: 64,
-                                  color: colorScheme.outline
-                                      .withValues(alpha: 0.5),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No se encontraron resultados',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                // Botón para crear marca - solo si hay búsqueda
-                                if (query.isNotEmpty) ...[
-                                  const SizedBox(height: 24),
-                                  TextButton.icon(
-                                    onPressed: () async {
-                                      final newBrand =
-                                          await _showCreateBrandDialog();
-                                      if (newBrand != null && context.mounted) {
-                                        Navigator.of(context).pop(newBrand);
-                                      }
-                                    },
-                                    icon: Icon(Icons.add_circle_outline,
-                                        size: 20),
-                                    label: Text('Crear "$query"'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: filteredBrands.length,
-                            itemBuilder: (context, index) {
-                              final brand = filteredBrands[index];
-                              final isSelected = _selectedBrandId != null &&
-                                  brand.id == _selectedBrandId;
-
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 4),
-                                leading: brand.image.isNotEmpty
-                                    ? CircleAvatar(
-                                        backgroundImage:
-                                            NetworkImage(brand.image),
-                                        backgroundColor:
-                                            colorScheme.surfaceContainerHighest,
-                                      )
-                                    : CircleAvatar(
-                                        backgroundColor:
-                                            colorScheme.surfaceContainerHighest,
-                                        child: Icon(Icons.branding_watermark,
-                                            color:
-                                                colorScheme.onSurfaceVariant),
-                                      ),
-                                title: Text(
-                                  brand.name,
-                                  style: TextStyle(
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color:
-                                        isSelected ? colorScheme.primary : null,
-                                  ),
-                                ),
-                                subtitle: brand.description.isNotEmpty
-                                    ? Text(brand.description)
-                                    : null,
-                                trailing: isSelected
-                                    ? Icon(Icons.check_circle,
-                                        color: colorScheme.primary)
-                                    : null,
-                                onTap: () => Navigator.of(context).pop(brand),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      builder: (context) => BrandSearchDialog(
+        catalogueProvider: widget.catalogueProvider,
+        currentBrandId: _selectedBrandId,
+        currentBrandName: _markController.text,
+        onCreateNewBrand: () async {
+          final newBrand = await _showCreateBrandDialog();
+          if (newBrand != null && mounted) {
+            setState(() {
+              _selectedBrandId = newBrand.id;
+              _markController.text = newBrand.name;
+            });
+          }
+        },
+        onEditBrand: (brand) async {
+          final updatedBrand = await _showEditBrandDialog(brand);
+          if (updatedBrand != null && mounted) {
+            setState(() {
+              _selectedBrandId = updatedBrand.id;
+              _markController.text = updatedBrand.name;
+            });
+          }
+        },
+      ),
     );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedBrandId = result.id;
+        _markController.text = result.name;
+      });
+    }
   }
 
   /// Botón flotante de guardar
   Widget? _buildFab() {
     if (_isSaving) return null;
-    
+
     // Determinar el texto del botón según el estado del producto
     String buttonText;
-    if (widget.product.id.isEmpty || !widget.product.creation.isAfter(DateTime(2000))) {
+    if (widget.product.id.isEmpty ||
+        !widget.product.creation.isAfter(DateTime(2000))) {
       // Producto nuevo que no existe en ningún lado
       buttonText = 'Crear';
     } else if (widget.isCreatingMode) {
@@ -1544,7 +2399,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       // Producto que ya existe en el catálogo
       buttonText = 'Actualizar';
     }
-    
+
     return FloatingActionButton.extended(
       heroTag: 'product_edit_save_fab',
       onPressed: _saveProduct,
@@ -1571,30 +2426,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Tarjeta contenedora con bordes redondeados
-  Widget _buildCard({
-    required BuildContext context,
-    required Widget child,
-  }) {
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: Theme.of(context)
-              .colorScheme
-              .outlineVariant
-              .withValues(alpha: 0.3),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: child,
-      ),
     );
   }
 
@@ -1692,6 +2523,4 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       ),
     );
   }
-
-
 }

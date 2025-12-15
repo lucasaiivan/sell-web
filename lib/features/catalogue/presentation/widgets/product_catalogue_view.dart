@@ -262,8 +262,8 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'product_catalogue_edit_fab',
-        onPressed: () {
-          Navigator.of(context).push(
+        onPressed: () async {
+          final result = await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => ProductEditCatalogueView(
                 product: _currentProduct,
@@ -272,6 +272,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
               ),
             ),
           );
+
+          if (result == true && mounted) {
+            Navigator.of(context).pop();
+          }
         },
         icon: const Icon(Icons.edit),
         label: const Text('Editar'),
@@ -416,6 +420,29 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           ],
         ),
       ),
+      if (product.attributes.isNotEmpty)
+        _buildInfoCard(
+          context: context,
+          title: 'Atributos',
+          icon: Icons.label_outline,
+          child: Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            children: product.attributes.entries.map((entry) {
+              return Chip(
+                label: Text(
+                  '${entry.key}: ${entry.value}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              );
+            }).toList(),
+          ),
+        ),
     ];
 
     return cards;
@@ -435,7 +462,216 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       DateTime.now(),
     );
 
-    final summaryContent = Column(
+    final summaryMobileContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Row superior: imagen + marca y descripción
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen del producto
+            SizedBox(
+              width: 100,
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ProductImage(
+                    imageUrl: product.image,
+                    fit: BoxFit.cover,
+                    productDescription: product.description,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Columna con marca y descripción
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Marca del producto
+                  if (product.nameMark.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: product.isVerified
+                            ? Colors.blue.withValues(alpha: 0.12)
+                            : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(999),
+                        border: product.isVerified
+                            ? Border.all(
+                                color: Colors.blue.withValues(alpha: 0.3))
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (product.isVerified) ...[
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          Flexible(
+                            child: Text(
+                              product.nameMark,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: product.isVerified
+                                    ? Colors.blue
+                                    : theme.colorScheme.onSurfaceVariant,
+                                fontWeight:
+                                    product.isVerified ? FontWeight.w600 : null,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  // Descripción del producto
+                  Text(
+                    product.description.isNotEmpty
+                        ? product.description
+                        : 'Producto sin nombre',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 12),
+                  // Chips de metadata (código, categoría, proveedor)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (product.code.isNotEmpty)
+                        _buildMetaChip(
+                          context,
+                          icon: Icons.qr_code_2,
+                          label: product.code,
+                        ),
+                      if (product.nameCategory.isNotEmpty)
+                        _buildMetaChip(
+                          context,
+                          icon: Icons.category_outlined,
+                          label: product.nameCategory,
+                        ),
+                      if (product.provider.isNotEmpty)
+                        _buildMetaChip(
+                          context,
+                          icon: Icons.local_shipping_outlined,
+                          label: product.nameProvider.isNotEmpty
+                              ? product.nameProvider
+                              : product.provider,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        // Información de precios
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                salePrice,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (product.purchasePrice > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Compra: $purchasePrice',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.onPrimaryContainer.withValues(
+                      alpha: 0.8,
+                    ),
+                  ),
+                ),
+                if (product.getPorcentageFormat.isNotEmpty)
+                  Text(
+                    'Margen ${product.getPorcentageFormat}',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Chips de estado
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (product.favorite)
+              _buildStatusChip(
+                context,
+                icon: Icons.star_rate_rounded,
+                label: 'Favorito',
+                color: Colors.amber.shade600,
+              ),
+            if (product.stock)
+              _buildStatusChip(
+                context,
+                icon: product.quantityStock <= 0
+                    ? Icons.inventory_2_outlined
+                    : product.quantityStock <= product.alertStock
+                        ? Icons.warning_amber_rounded
+                        : Icons.inventory_outlined,
+                label: product.quantityStock <= 0
+                    ? 'Sin stock'
+                    : product.quantityStock <= product.alertStock
+                        ? 'Bajo stock (${product.quantityStock})'
+                        : 'Stock: ${product.quantityStock}',
+                color: product.quantityStock <= 0
+                    ? Colors.red
+                    : product.quantityStock <= product.alertStock
+                        ? Colors.orange
+                        : Colors.green,
+                filled: true,
+              )
+            else
+              _buildStatusChip(
+                context,
+                icon: Icons.inventory_outlined,
+                label: 'Sin control de stock',
+                color: colorScheme.outline,
+                filled: false,
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Actualizado $updatedLabel',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+    final summaryWebContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -616,25 +852,25 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
     );
 
     Widget imagePreview(BuildContext context) {
+      // Calcular tamaños responsivos
+      final isMobile = !isWide && MediaQuery.of(context).size.width < 600;
+      final imageSize = isWide
+          ? 260.0
+          : isMobile
+              ? 150.0 // Mitad del tamaño en pantallas reducidas
+              : 200.0;
+
       return SizedBox(
-        width: isWide ? 260 : double.infinity,
+        width: imageSize,
         child: AspectRatio(
           aspectRatio: 1,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: product.image.isNotEmpty
-                ? ProductImage(
-                    imageUrl: product.image,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    color: colorScheme.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.inventory_2_outlined,
-                      size: 72,
-                      color: colorScheme.outline,
-                    ),
-                  ),
+            child: ProductImage(
+              imageUrl: product.image,
+              fit: BoxFit.cover,
+              productDescription: product.description,
+            ),
           ),
         ),
       );
@@ -654,17 +890,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 children: [
                   imagePreview(context),
                   const SizedBox(width: 32),
-                  Expanded(child: summaryContent),
+                  Expanded(child: summaryWebContent),
                 ],
               )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  imagePreview(context),
-                  const SizedBox(height: 24),
-                  summaryContent,
-                ],
-              ),
+            : summaryMobileContent,
       ),
     );
   }

@@ -115,17 +115,12 @@ class ProfitabilityMetricCard extends StatelessWidget {
           ),
         ),
         child: ClipOval(
-          child: product.image.isNotEmpty
-              ? ProductImage(
-                  imageUrl: product.image,
-                  size: 24,
-                  borderRadius: 14,
-                )
-              : Icon(
-                  Icons.diamond_outlined,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
+          child: ProductImage(
+            imageUrl: product.image,
+            size: 24,
+            borderRadius: 14,
+            productDescription: product.description,
+          ),
         ),
       ),
       title: product.description,

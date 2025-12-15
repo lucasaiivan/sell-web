@@ -127,6 +127,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                 child: ProductImage(
                   imageUrl: widget.product.image,
                   size: 80,
+                  productDescription: widget.product.description,
                 ),
               ),
             ),

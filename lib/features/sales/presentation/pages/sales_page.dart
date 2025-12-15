@@ -1117,6 +1117,7 @@ class _SalesPageState extends State<SalesPage> {
           leading: ProductImage(
             imageUrl: product.image,
             size: 50,
+            productDescription: product.description,
           ),
 
           title: Column(
@@ -1323,6 +1324,7 @@ class _ProductoItemState extends State<ProductoItem> {
                 borderRadius: 12,
                 imageUrl: widget.producto.image,
                 fit: BoxFit.cover,
+                productDescription: widget.producto.description,
               ),
               // view : alerta de stock bajo o sin stock
               if (alertStockText.isNotEmpty)

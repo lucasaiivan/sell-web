@@ -34,10 +34,14 @@ import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usec
 import 'package:sellweb/core/services/theme/theme_service.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   // CRITICAL: Initialize bindings FIRST in the main zone, synchronously
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar datos de localización para español
+  await initializeDateFormatting('es_ES', null);
 
   // Firebase initialization in the SAME zone as runApp
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

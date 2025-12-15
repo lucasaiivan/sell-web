@@ -34,13 +34,14 @@ class StoragePaths {
       'APP/$country/PRODUCTOS/$productId.jpg';
 
   // ==========================================
-  // MARCAS
+  // MARCAS (BRANDS)
   // ==========================================
 
   /// Imagen de marca pública
-  /// Ruta: APP/ARG/MARCAS/{brandId}.jpg
+  /// Ruta: APP/ARG/BRANDS/{brandId}.jpg
+  /// NOTA: Migrado de /MARCAS a /BRANDS
   static String publicBrandImage(String brandId, {String country = 'ARG'}) =>
-      'APP/$country/MARCAS/$brandId.jpg';
+      'APP/$country/BRANDS/$brandId.jpg';
 
   /// Imagen de marca en catálogo de cuenta
   /// Ruta: ACCOUNTS/{accountId}/BRANDS/{brandId}.jpg

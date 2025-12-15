@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Mark {
   final String id;
   final String name;
-  final String country;
   final String description;
   final String image;
   final bool verified;
@@ -13,7 +12,6 @@ class Mark {
   Mark({
     required this.id,
     required this.name,
-    required this.country,
     this.description = '',
     this.image = '',
     this.verified = false,
@@ -25,7 +23,6 @@ class Mark {
     return {
       'id': id,
       'name': name,
-      'country': country,
       'description': description,
       'image': image,
       'verified': verified,
@@ -35,13 +32,57 @@ class Mark {
   }
 
   factory Mark.fromMap(Map<String, dynamic> map) {
+    // Soporte para campos antiguos y nuevos
+    String getName() {
+      if (map.containsKey('name') && map['name'] != null && map['name'].toString().isNotEmpty) {
+        return map['name'].toString();
+      }
+      // Compatibilidad con campo antiguo 'titulo'
+      if (map.containsKey('titulo') && map['titulo'] != null && map['titulo'].toString().isNotEmpty) {
+        return map['titulo'].toString();
+      }
+      return '';
+    }
+
+    String getDescription() {
+      if (map.containsKey('description') && map['description'] != null) {
+        return map['description'].toString();
+      }
+      // Compatibilidad con campo antiguo 'descripcion'
+      if (map.containsKey('descripcion') && map['descripcion'] != null) {
+        return map['descripcion'].toString();
+      }
+      return '';
+    }
+
+    String getImage() {
+      if (map.containsKey('image') && map['image'] != null && map['image'].toString().isNotEmpty) {
+        return map['image'].toString();
+      }
+      // Compatibilidad con campo antiguo 'url_imagen'
+      if (map.containsKey('url_imagen') && map['url_imagen'] != null && map['url_imagen'].toString().isNotEmpty) {
+        return map['url_imagen'].toString();
+      }
+      return '';
+    }
+
+    bool getVerified() {
+      if (map.containsKey('verified')) {
+        return map['verified'] ?? false;
+      }
+      // Compatibilidad con campo antiguo 'verificado'
+      if (map.containsKey('verificado')) {
+        return map['verificado'] ?? false;
+      }
+      return false;
+    }
+
     return Mark(
       id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      country: map['country'] ?? '',
-      description: map['description'] ?? '',
-      image: map['image'] ?? '',
-      verified: map['verified'] ?? false,
+      name: getName(),
+      description: getDescription(),
+      image: getImage(),
+      verified: getVerified(),
       creation: map['creation'] is Timestamp
           ? (map['creation'] as Timestamp).toDate()
           : null,
@@ -64,7 +105,6 @@ class Mark {
     return Mark(
       id: id ?? this.id,
       name: name ?? this.name,
-      country: country ?? this.country,
       description: description ?? this.description,
       image: image ?? this.image,
       verified: verified ?? this.verified,

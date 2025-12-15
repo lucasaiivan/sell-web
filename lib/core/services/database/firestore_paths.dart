@@ -41,7 +41,12 @@ class FirestorePaths {
       '/APP/$country/PRODUCTOS/$productId/PRICES';
 
   /// Marcas registradas por país
-  static String brands({String country = 'ARG'}) => '/APP/$country/MARCAS';
+  /// NOTA: Migrado de /MARCAS a /BRANDS con normalización de description
+  static String brands({String country = 'ARG'}) => '/APP/$country/BRANDS';
+
+  /// Colección antigua de marcas (deprecated - usar brands() en su lugar)
+  @Deprecated('Usar brands() en su lugar. Esta colección será eliminada.')
+  static String brandsOld({String country = 'ARG'}) => '/APP/$country/MARCAS';
 
   /// Reportes de productos
   static String productReports({String country = 'ARG'}) =>
@@ -173,8 +178,9 @@ class FirestorePaths {
       'APP/ARG/PRODUCTOS/$productId';
 
   /// Path de imagen de marca pública
+  /// NOTA: Migrado de /MARCAS a /BRANDS
   static String publicBrandImagePath(String brandId) =>
-      'APP/ARG/MARCAS/$brandId';
+      'APP/ARG/BRANDS/$brandId';
 }
 
 /// Extension para construir paths complejos con query params

@@ -94,6 +94,13 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
 
     try {
       final brands = await widget.catalogueProvider.getPopularBrands(limit: 20);
+      
+      // Debug: mostrar información de las marcas cargadas
+      print('🔍 Marcas cargadas: ${brands.length}');
+      for (var i = 0; i < brands.length && i < 3; i++) {
+        print('  Marca $i: id="${brands[i].id}", name="${brands[i].name}", desc="${brands[i].description}"');
+      }
+      
       if (mounted) {
         setState(() {
           _brands = brands;
@@ -101,6 +108,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
         });
       }
     } catch (e) {
+      print('❌ Error cargando marcas populares: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -331,11 +339,23 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
           final brand = _brands[index];
           final isSelected = widget.currentBrandId == brand.id;
 
+          // Capitalizar nombre para mostrar (sin modificar el valor real)
+          final displayName = brand.name.isNotEmpty 
+              ? brand.name[0].toUpperCase() + brand.name.substring(1)
+              : 'Sin nombre';
+          
+          final displayDescription = brand.description.isNotEmpty
+              ? brand.description[0].toUpperCase() + brand.description.substring(1)
+              : '';
+
           return ListTile(
             leading: brand.image.isNotEmpty
                 ? CircleAvatar(
                     backgroundImage: NetworkImage(brand.image),
                     radius: 20,
+                    onBackgroundImageError: (_, __) {
+                      // En caso de error al cargar la imagen, muestra el avatar con inicial
+                    },
                   )
                 : CircleAvatar(
                     backgroundColor: colorScheme.primaryContainer,
@@ -353,7 +373,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
               children: [
                 Expanded(
                   child: Text(
-                    brand.name,
+                    displayName,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
@@ -368,9 +388,9 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
                   ),
               ],
             ),
-            subtitle: brand.description.isNotEmpty
+            subtitle: displayDescription.isNotEmpty
                 ? Text(
-                    brand.description,
+                    displayDescription,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   )

@@ -1,13 +1,14 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart' as provider_pkg;
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
 import 'package:sellweb/core/services/storage/storage_paths.dart';
-import 'package:sellweb/core/di/injection_container.dart';
+import 'package:sellweb/core/di/injection_container.dart'; 
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
-import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart' as catalog_provider;
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import 'brand_search_dialog.dart';
@@ -404,6 +405,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       await _deleteProduct();
     }
   }
+ 
 
   /// Elimina el producto del catálogo
   Future<void> _deleteProduct() async {
@@ -707,10 +709,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                   setState(() => isCreating = true);
 
                                   try {
-                                    // Generate ID for the brand
-                                    final brandId = DateTime.now()
-                                        .millisecondsSinceEpoch
-                                        .toString();
+                                    // Generate ID using IdGenerator con accountId público
+                                    final brandId = IdGenerator.generateBrandId('PUBLIC');
 
                                     // Upload image if provided
                                     String imageUrl = '';
@@ -728,13 +728,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                       );
                                     }
 
-                                    // Create brand object
+                                    // Create brand object with normalized fields
                                     final newBrand = Mark(
                                       id: brandId,
-                                      name: nameController.text.trim(),
-                                      country: 'ARG',
+                                      name: nameController.text.trim().toLowerCase(), 
                                       description:
-                                          descriptionController.text.trim(),
+                                          descriptionController.text.trim().toLowerCase(),
                                       image: imageUrl,
                                       verified: false,
                                       creation: DateTime.now(),
@@ -1253,7 +1252,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return AppBar(
       title: Text(title),
       centerTitle: false,
-      actions: [
+      actions: [ 
         // Botón eliminar (solo en modo edición)
         if (!widget.isCreatingMode && !_isSaving)
           IconButton(
@@ -2226,7 +2225,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de proveedor
   Widget _buildProviderField() {
-    return StreamBuilder<List<Provider>>(
+    return StreamBuilder<List<catalog_provider.Provider>>(
       stream: widget.catalogueProvider.getProvidersStream(widget.accountId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -2237,18 +2236,18 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
         return InkWell(
           onTap: () async {
-            final selected = await showModalBottomSheet<Provider>(
+            final selected = await showModalBottomSheet<catalog_provider.Provider>(
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (context) => SelectionModal<Provider>(
+              builder: (context) => SelectionModal<catalog_provider.Provider>(
                 title: 'Seleccionar Proveedor',
                 items: providers,
                 labelBuilder: (item) => item.name,
                 idBuilder: (item) => item.id,
                 selectedItem: _selectedProviderId != null
                     ? providers.firstWhere((p) => p.id == _selectedProviderId,
-                        orElse: () => Provider(id: '', name: ''))
+                        orElse: () => catalog_provider.Provider(id: '', name: ''))
                     : null,
                 searchHint: 'Buscar proveedor...',
               ),

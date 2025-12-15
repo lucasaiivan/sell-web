@@ -280,6 +280,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   }) async {
     try {
       final path = FirestorePaths.brands(country: country);
+      print('📍 Obteniendo marcas de: $path');
       final collection = _dataSource.collection(path);
 
       // Obtiene marcas verificadas ordenadas por fecha de creación
@@ -290,8 +291,15 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
             .limit(limit),
       );
 
+      print('📊 Documentos obtenidos: ${snapshot.docs.length}');
+      if (snapshot.docs.isNotEmpty) {
+        final firstDoc = snapshot.docs.first.data();
+        print('🔍 Primer documento raw: $firstDoc');
+      }
+
       return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
     } catch (e) {
+      print('⚠️  Error con query verificadas, intentando sin filtro: $e');
       // Si falla por falta de índice, intenta sin filtro de verificación
       try {
         final path = FirestorePaths.brands(country: country);
@@ -300,6 +308,12 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
         final snapshot = await _dataSource.getDocuments(
           collection.orderBy('creation', descending: true).limit(limit),
         );
+
+        print('📊 Documentos obtenidos (sin filtro): ${snapshot.docs.length}');
+        if (snapshot.docs.isNotEmpty) {
+          final firstDoc = snapshot.docs.first.data();
+          print('🔍 Primer documento raw (sin filtro): $firstDoc');
+        }
 
         return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
       } catch (e2) {

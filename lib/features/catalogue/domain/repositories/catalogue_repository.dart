@@ -160,4 +160,60 @@ abstract class CatalogueRepository {
   /// **Nota:** El contador se mantiene en 0 como mínimo, nunca negativo.
   /// El documento se mantiene aunque followers llegue a 0.
   Future<void> decrementProductFollowers(String productId);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE CATEGORÍAS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Crea una nueva categoría
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [name] - Nombre de la categoría
+  Future<void> createCategory({
+    required String accountId,
+    required String name,
+  });
+
+  /// Actualiza una categoría existente
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [categoryId] - ID de la categoría
+  /// [name] - Nuevo nombre de la categoría
+  Future<void> updateCategory({
+    required String accountId,
+    required String categoryId,
+    required String name,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE PROVEEDORES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Crea un nuevo proveedor
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [name] - Nombre del proveedor
+  /// [phone] - Teléfono del proveedor (opcional)
+  /// [email] - Email del proveedor (opcional)
+  Future<void> createProvider({
+    required String accountId,
+    required String name,
+    String? phone,
+    String? email,
+  });
+
+  /// Actualiza un proveedor existente
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [providerId] - ID del proveedor
+  /// [name] - Nuevo nombre del proveedor
+  /// [phone] - Nuevo teléfono del proveedor (opcional)
+  /// [email] - Nuevo email del proveedor (opcional)
+  Future<void> updateProvider({
+    required String accountId,
+    required String providerId,
+    required String name,
+    String? phone,
+    String? email,
+  });
 }

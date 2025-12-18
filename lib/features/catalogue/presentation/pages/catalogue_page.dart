@@ -12,6 +12,10 @@ import '../widgets/product_catalogue_view.dart';
 import '../widgets/product_edit_catalogue_view.dart';
 import '../widgets/catalogue_metrics_bar.dart';
 import '../views/search_product_full_screen_view.dart';
+import '../views/categories_list_view.dart';
+import '../views/providers_list_view.dart';
+import '../views/dialogs/category_dialog.dart';
+import '../views/dialogs/provider_dialog.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -22,13 +26,35 @@ class CataloguePage extends StatefulWidget {
   State<CataloguePage> createState() => _CataloguePageState();
 }
 
-class _CataloguePageState extends State<CataloguePage> {
+class _CataloguePageState extends State<CataloguePage>
+    with SingleTickerProviderStateMixin {
   bool _isGridView = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) {
+      // Limpiar búsqueda y filtros cuando cambia de tab
+      final catalogueProvider =
+          Provider.of<CatalogueProvider>(context, listen: false);
+      catalogueProvider.clearSearchResults();
+      catalogueProvider.clearCategoryProviderFilter();
+      _searchController.clear();
+    }
+  }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -69,21 +95,43 @@ class _CataloguePageState extends State<CataloguePage> {
           Expanded(
             child: Consumer<CatalogueProvider>(
               builder: (context, catalogueProvider, _) {
+                // Mostrar el nombre del filtro activo (categoría o proveedor)
+                final activeFilterName =
+                    catalogueProvider.selectedCategoryName ??
+                        catalogueProvider.selectedProviderName;
+                final hasActiveEntityFilter =
+                    catalogueProvider.hasCategoryFilter ||
+                        catalogueProvider.hasProviderFilter;
+
+                // Si hay filtro de categoría/proveedor, actualizar el controller
+                if (hasActiveEntityFilter &&
+                    activeFilterName != null &&
+                    _searchController.text != activeFilterName) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _searchController.text = activeFilterName;
+                  });
+                }
+
                 return ProductSearchField(
                   controller: _searchController,
                   focusNode: _searchFocusNode,
                   hintText: 'Buscar producto',
                   products: catalogueProvider.products,
-                  searchResultsCount: _searchController.text.isNotEmpty
+                  searchResultsCount: (catalogueProvider.isFiltering)
                       ? catalogueProvider.visibleProducts.length
                       : null,
                   onChanged: (query) {
+                    // Si el usuario escribe, limpiar filtros de categoría/proveedor
+                    if (catalogueProvider.hasCategoryFilter ||
+                        catalogueProvider.hasProviderFilter) {
+                      catalogueProvider.clearCategoryProviderFilter();
+                    }
                     // Buscar productos según el query con debouncing
                     catalogueProvider.searchProductsWithDebounce(query: query);
                   },
                   onClear: () {
-                    // Limpiar búsqueda y mostrar todos los productos
-                    catalogueProvider.clearSearchResults();
+                    // Limpiar todos los filtros
+                    catalogueProvider.clearAllFilters();
                   },
                 );
               },
@@ -92,6 +140,7 @@ class _CataloguePageState extends State<CataloguePage> {
           const SizedBox(width: 12),
           // Indicador de conectividad
           const ConnectivityIndicator(),
+          // Filtros
           Consumer<CatalogueProvider>(
             builder: (context, catalogueProvider, _) {
               return PopupMenuButton<CatalogueFilter>(
@@ -128,11 +177,31 @@ class _CataloguePageState extends State<CataloguePage> {
           ),
         ],
       ),
+      bottom: TabBar(
+        controller: _tabController,
+        tabs: const [
+          Tab(text: 'Productos'),
+          Tab(text: 'Categorías'),
+          Tab(text: 'Proveedores'),
+        ],
+      ),
     );
   }
 
-  /// Construye el cuerpo de la página con la lista de productos
+  /// Construye el cuerpo de la página con TabBarView
   Widget _buildBody(BuildContext context) {
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildProductsTab(),
+        _buildCategoriesTab(),
+        _buildProvidersTab(),
+      ],
+    );
+  }
+
+  /// Tab de productos
+  Widget _buildProductsTab() {
     return Consumer<CatalogueProvider>(
       builder: (context, catalogueProvider, child) {
         // Estado de carga
@@ -145,18 +214,16 @@ class _CataloguePageState extends State<CataloguePage> {
         final hasSearch = catalogueProvider.currentSearchQuery.isNotEmpty;
         final hasFilter = catalogueProvider.hasActiveFilter;
 
-        // Sin productos
+        // Si no hay productos para mostrar, devolver directamente el estado vacío
+        // sin la barra de métricas
         if (displayProducts.isEmpty) {
-          if (hasSearch) {
-            return _buildNoResultsState(context);
-          }
-          if (hasFilter) {
-            return _buildFilteredEmptyState(
-              context,
-              catalogueProvider.activeFilter,
-            );
-          }
-          return _buildEmptyState(context);
+          return _buildProductsContent(
+            context,
+            displayProducts,
+            hasSearch,
+            hasFilter,
+            catalogueProvider.activeFilter,
+          );
         }
 
         // Lista de productos con métricas
@@ -166,14 +233,77 @@ class _CataloguePageState extends State<CataloguePage> {
             CatalogueMetricsBar(
               metrics: catalogueProvider.catalogueMetrics,
             ),
-            // Lista de productos
+            // Contenido principal (Lista)
             Expanded(
-              child: _isGridView
-                  ? _buildGridView(displayProducts)
-                  : _buildListView(displayProducts),
+              child: _buildProductsContent(
+                context,
+                displayProducts,
+                hasSearch,
+                hasFilter,
+                catalogueProvider.activeFilter,
+              ),
             ),
           ],
         );
+      },
+    );
+  }
+
+  /// Construye el contenido de la lista de productos o el estado vacío
+  Widget _buildProductsContent(
+    BuildContext context,
+    List<ProductCatalogue> displayProducts,
+    bool hasSearch,
+    bool hasFilter,
+    CatalogueFilter activeFilter,
+  ) {
+    if (displayProducts.isEmpty) {
+      if (hasSearch) {
+        return _buildNoResultsState(context);
+      }
+      if (hasFilter) {
+        return _buildFilteredEmptyState(context, activeFilter);
+      }
+      return _buildEmptyState(context);
+    }
+
+    return _isGridView
+        ? _buildGridView(displayProducts)
+        : _buildListView(displayProducts);
+  }
+
+  /// Tab de categorías
+  Widget _buildCategoriesTab() {
+    final catalogueProvider =
+        Provider.of<CatalogueProvider>(context, listen: false);
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+
+    return CategoriesListView(
+      accountId: salesProvider.profileAccountSelected.id,
+      onCategoryTap: (categoryId, categoryName) {
+        // Mostrar el nombre de la categoría en el buscador
+        _searchController.text = categoryName;
+        // Cambiar al tab de productos y filtrar
+        _tabController.animateTo(0);
+        catalogueProvider.filterByCategory(categoryId);
+      },
+    );
+  }
+
+  /// Tab de proveedores
+  Widget _buildProvidersTab() {
+    final catalogueProvider =
+        Provider.of<CatalogueProvider>(context, listen: false);
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+
+    return ProvidersListView(
+      accountId: salesProvider.profileAccountSelected.id,
+      onProviderTap: (providerId, providerName) {
+        // Mostrar el nombre del proveedor en el buscador
+        _searchController.text = providerName;
+        // Cambiar al tab de productos y filtrar
+        _tabController.animateTo(0);
+        catalogueProvider.filterByProvider(providerId);
       },
     );
   }
@@ -332,7 +462,7 @@ class _CataloguePageState extends State<CataloguePage> {
     );
   }
 
-  /// Botón flotante para agregar productos
+  /// Botón flotante para agregar productos/categorías/proveedores
   Widget _buildFloatingActionButton(BuildContext context) {
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);
@@ -342,34 +472,68 @@ class _CataloguePageState extends State<CataloguePage> {
 
     return isSmallScreen
         ? FloatingActionButton(
-            heroTag: 'catalogue_add_product_fab',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ProductSearchFullScreenView(
-                    catalogueProvider: catalogueProvider,
-                    salesProvider: salesProvider,
-                  ),
-                ),
-              );
-            },
+            heroTag: 'catalogue_add_fab',
+            onPressed: () =>
+                _handleFabAction(context, catalogueProvider, salesProvider),
             child: const Icon(Icons.add),
           )
         : FloatingActionButton.extended(
-            heroTag: 'catalogue_add_product_fab',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ProductSearchFullScreenView(
-                    catalogueProvider: catalogueProvider,
-                    salesProvider: salesProvider,
-                  ),
-                ),
-              );
-            },
+            heroTag: 'catalogue_add_fab',
+            onPressed: () =>
+                _handleFabAction(context, catalogueProvider, salesProvider),
             icon: const Icon(Icons.add),
-            label: const Text('Agregar'),
+            label: Text(_getFabLabel()),
           );
+  }
+
+  /// Maneja la acción del FAB según la vista activa
+  void _handleFabAction(
+    BuildContext context,
+    CatalogueProvider catalogueProvider,
+    SalesProvider salesProvider,
+  ) {
+    final currentTab = _tabController.index;
+
+    switch (currentTab) {
+      case 0: // Tab de Productos
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ProductSearchFullScreenView(
+              catalogueProvider: catalogueProvider,
+              salesProvider: salesProvider,
+            ),
+          ),
+        );
+        break;
+      case 1: // Tab de Categorías
+        showCategoryDialog(
+          context,
+          catalogueProvider: catalogueProvider,
+          accountId: salesProvider.profileAccountSelected.id,
+        );
+        break;
+      case 2: // Tab de Proveedores
+        showProviderDialog(
+          context,
+          catalogueProvider: catalogueProvider,
+          accountId: salesProvider.profileAccountSelected.id,
+        );
+        break;
+    }
+  }
+
+  /// Obtiene la etiqueta del FAB según la vista activa
+  String _getFabLabel() {
+    switch (_tabController.index) {
+      case 0:
+        return 'Agregar';
+      case 1:
+        return 'Categoría';
+      case 2:
+        return 'Proveedor';
+      default:
+        return 'Agregar';
+    }
   }
 
   /// Calcula el número de columnas según el ancho de la pantalla

@@ -119,10 +119,15 @@ class CatalogueMetrics {
     double inventoryValue = 0.0;
 
     for (final product in products) {
-      // Solo contar productos con control de stock activo
+      // Si tiene control de stock, usar la cantidad real
       if (product.stock) {
         inventory += product.quantityStock;
         inventoryValue += product.quantityStock * product.salePrice;
+      } else {
+        // Si NO tiene control de stock (servicios, ilimitado), contar como 1 unidad
+        // para que sume al inventario y al valor total
+        inventory += 1;
+        inventoryValue += product.salePrice;
       }
     }
 

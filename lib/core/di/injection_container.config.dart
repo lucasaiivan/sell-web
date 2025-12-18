@@ -173,8 +173,12 @@ import 'package:sellweb/features/catalogue/domain/usecases/catalogue_usecases.da
     as _i1012;
 import 'package:sellweb/features/catalogue/domain/usecases/create_brand_usecase.dart'
     as _i753;
+import 'package:sellweb/features/catalogue/domain/usecases/create_category_usecase.dart'
+    as _i824;
 import 'package:sellweb/features/catalogue/domain/usecases/create_pending_product_usecase.dart'
     as _i461;
+import 'package:sellweb/features/catalogue/domain/usecases/create_provider_usecase.dart'
+    as _i201;
 import 'package:sellweb/features/catalogue/domain/usecases/create_public_product_usecase.dart'
     as _i540;
 import 'package:sellweb/features/catalogue/domain/usecases/decrement_product_followers_usecase.dart'
@@ -217,8 +221,12 @@ import 'package:sellweb/features/catalogue/domain/usecases/search_brands_usecase
     as _i275;
 import 'package:sellweb/features/catalogue/domain/usecases/update_brand_usecase.dart'
     as _i334;
+import 'package:sellweb/features/catalogue/domain/usecases/update_category_usecase.dart'
+    as _i824;
 import 'package:sellweb/features/catalogue/domain/usecases/update_product_favorite_usecase.dart'
     as _i55;
+import 'package:sellweb/features/catalogue/domain/usecases/update_provider_usecase.dart'
+    as _i519;
 import 'package:sellweb/features/catalogue/domain/usecases/update_stock_usecase.dart'
     as _i226;
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart'
@@ -545,6 +553,14 @@ extension GetItInjectableX on _i174.GetIt {
         _i354.DecrementProductFollowersUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i214.IncrementProductFollowersUseCase>(() =>
         _i214.IncrementProductFollowersUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i824.UpdateCategoryUseCase>(
+        () => _i824.UpdateCategoryUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i824.CreateCategoryUseCase>(
+        () => _i824.CreateCategoryUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i201.CreateProviderUseCase>(
+        () => _i201.CreateProviderUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i519.UpdateProviderUseCase>(
+        () => _i519.UpdateProviderUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i226.UpdateStockUseCase>(
         () => _i226.UpdateStockUseCase(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i1012.CatalogueUseCases>(
@@ -622,13 +638,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
         () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
-    gh.factory<_i564.MultiUserProvider>(() => _i564.MultiUserProvider(
-          gh<_i353.GetUsersUseCase>(),
-          gh<_i442.CreateUserUseCase>(),
-          gh<_i395.UpdateUserUseCase>(),
-          gh<_i799.DeleteUserUseCase>(),
-          gh<_i644.GetUserAccountsUseCase>(),
-        ));
     gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
           gh<_i474.GetCatalogueStreamUseCase>(),
           gh<_i1001.GetPublicProductByCodeUseCase>(),
@@ -650,6 +659,17 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i275.SearchBrandsUseCase>(),
           gh<_i199.GetPopularBrandsUseCase>(),
           gh<_i256.GetBrandByIdUseCase>(),
+          gh<_i824.CreateCategoryUseCase>(),
+          gh<_i824.UpdateCategoryUseCase>(),
+          gh<_i201.CreateProviderUseCase>(),
+          gh<_i519.UpdateProviderUseCase>(),
+        ));
+    gh.factory<_i564.MultiUserProvider>(() => _i564.MultiUserProvider(
+          gh<_i353.GetUsersUseCase>(),
+          gh<_i442.CreateUserUseCase>(),
+          gh<_i395.UpdateUserUseCase>(),
+          gh<_i799.DeleteUserUseCase>(),
+          gh<_i644.GetUserAccountsUseCase>(),
         ));
     gh.factory<_i975.AnalyticsProvider>(() => _i975.AnalyticsProvider(
           gh<_i161.GetSalesAnalyticsUseCase>(),

@@ -538,4 +538,111 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       throw Exception('Error al decrementar followers del producto: $e');
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE CATEGORÍAS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> createCategory({
+    required String accountId,
+    required String name,
+  }) async {
+    if (accountId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId y name son obligatorios');
+    }
+
+    try {
+      final path = FirestorePaths.accountCategories(accountId);
+      final collection = _dataSource.collection(path);
+
+      await collection.add({
+        'name': name,
+        'subcategories': {},
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al crear categoría: $e');
+    }
+  }
+
+  @override
+  Future<void> updateCategory({
+    required String accountId,
+    required String categoryId,
+    required String name,
+  }) async {
+    if (accountId.isEmpty || categoryId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId, categoryId y name son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountCategories(accountId)}/$categoryId';
+      final doc = _dataSource.document(path);
+
+      await doc.update({
+        'name': name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al actualizar categoría: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE PROVEEDORES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> createProvider({
+    required String accountId,
+    required String name,
+    String? phone,
+    String? email,
+  }) async {
+    if (accountId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId y name son obligatorios');
+    }
+
+    try {
+      final path = FirestorePaths.accountProviders(accountId);
+      final collection = _dataSource.collection(path);
+
+      await collection.add({
+        'name': name,
+        if (phone != null) 'phone': phone,
+        if (email != null) 'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al crear proveedor: $e');
+    }
+  }
+
+  @override
+  Future<void> updateProvider({
+    required String accountId,
+    required String providerId,
+    required String name,
+    String? phone,
+    String? email,
+  }) async {
+    if (accountId.isEmpty || providerId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId, providerId y name son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountProviders(accountId)}/$providerId';
+      final doc = _dataSource.document(path);
+
+      await doc.update({
+        'name': name,
+        if (phone != null) 'phone': phone,
+        if (email != null) 'email': email,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al actualizar proveedor: $e');
+    }
+  }
 }

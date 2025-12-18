@@ -39,6 +39,10 @@ import '../../domain/usecases/delete_product_usecase.dart';
 import '../../domain/usecases/search_brands_usecase.dart';
 import '../../domain/usecases/get_popular_brands_usecase.dart';
 import '../../domain/usecases/get_brand_by_id_usecase.dart';
+import '../../domain/usecases/create_category_usecase.dart';
+import '../../domain/usecases/update_category_usecase.dart';
+import '../../domain/usecases/create_provider_usecase.dart';
+import '../../domain/usecases/update_provider_usecase.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
@@ -54,6 +58,9 @@ class _CatalogueState {
   final List<ProductCatalogue> filteredProducts;
   final String currentSearchQuery;
   final CatalogueFilter activeFilter;
+  // Filtros por categoría y proveedor
+  final String? selectedCategoryId;
+  final String? selectedProviderId;
 
   const _CatalogueState({
     required this.products,
@@ -65,6 +72,8 @@ class _CatalogueState {
     this.filteredProducts = const <ProductCatalogue>[],
     this.currentSearchQuery = '',
     this.activeFilter = CatalogueFilter.none,
+    this.selectedCategoryId,
+    this.selectedProviderId,
   });
 
   _CatalogueState copyWith({
@@ -77,6 +86,8 @@ class _CatalogueState {
     List<ProductCatalogue>? filteredProducts,
     String? currentSearchQuery,
     CatalogueFilter? activeFilter,
+    Object? selectedCategoryId = const Object(),
+    Object? selectedProviderId = const Object(),
   }) {
     return _CatalogueState(
       products: products ?? this.products,
@@ -93,6 +104,12 @@ class _CatalogueState {
       filteredProducts: filteredProducts ?? this.filteredProducts,
       currentSearchQuery: currentSearchQuery ?? this.currentSearchQuery,
       activeFilter: activeFilter ?? this.activeFilter,
+      selectedCategoryId: selectedCategoryId == const Object()
+          ? this.selectedCategoryId
+          : selectedCategoryId as String?,
+      selectedProviderId: selectedProviderId == const Object()
+          ? this.selectedProviderId
+          : selectedProviderId as String?,
     );
   }
 
@@ -109,7 +126,9 @@ class _CatalogueState {
           isLoading == other.isLoading &&
           listEquals(filteredProducts, other.filteredProducts) &&
           currentSearchQuery == other.currentSearchQuery &&
-          activeFilter == other.activeFilter;
+          activeFilter == other.activeFilter &&
+          selectedCategoryId == other.selectedCategoryId &&
+          selectedProviderId == other.selectedProviderId;
 
   @override
   int get hashCode =>
@@ -121,7 +140,9 @@ class _CatalogueState {
       isLoading.hashCode ^
       filteredProducts.hashCode ^
       currentSearchQuery.hashCode ^
-      activeFilter.hashCode;
+      activeFilter.hashCode ^
+      selectedCategoryId.hashCode ^
+      selectedProviderId.hashCode;
 }
 
 /// Provider para gestionar el estado del catálogo de productos
@@ -163,6 +184,11 @@ class CatalogueProvider extends ChangeNotifier
   final SearchBrandsUseCase _searchBrandsUseCase;
   final GetPopularBrandsUseCase _getPopularBrandsUseCase;
   final GetBrandByIdUseCase _getBrandByIdUseCase;
+  // UseCases para categorías y proveedores
+  final CreateCategoryUseCase _createCategoryUseCase;
+  final UpdateCategoryUseCase _updateCategoryUseCase;
+  final CreateProviderUseCase _createProviderUseCase;
+  final UpdateProviderUseCase _updateProviderUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
@@ -171,13 +197,15 @@ class CatalogueProvider extends ChangeNotifier
   // Immutable state
   _CatalogueState _state = const _CatalogueState(products: []);
 
+  // Listas de categorías y proveedores
+  List<Category> _categories = [];
+  List<Provider> _providers = [];
+
   // Public getters
   List<ProductCatalogue> get products => _state.products;
   List<ProductCatalogue> get filteredProducts => _state.filteredProducts;
   List<ProductCatalogue> get visibleProducts =>
-      (currentSearchQuery.isNotEmpty || hasActiveFilter)
-          ? _state.filteredProducts
-          : _state.products;
+      _hasAnyActiveFilter ? _state.filteredProducts : _state.products;
   String get currentSearchQuery => _state.currentSearchQuery;
   ProductCatalogue? get lastScannedProduct => _state.lastScannedProduct;
   String? get lastScannedCode => _state.lastScannedCode;
@@ -186,8 +214,21 @@ class CatalogueProvider extends ChangeNotifier
   bool get isLoading => _state.isLoading;
   CatalogueFilter get activeFilter => _state.activeFilter;
   bool get hasActiveFilter => activeFilter != CatalogueFilter.none;
-  bool get isFiltering =>
-      currentSearchQuery.isNotEmpty || activeFilter != CatalogueFilter.none;
+  String? get selectedCategoryId => _state.selectedCategoryId;
+  String? get selectedProviderId => _state.selectedProviderId;
+  bool get hasCategoryFilter => _state.selectedCategoryId != null;
+  bool get hasProviderFilter => _state.selectedProviderId != null;
+
+  /// Verifica si hay algún filtro activo (búsqueda, categoría, proveedor o filtro especial)
+  bool get _hasAnyActiveFilter =>
+      currentSearchQuery.isNotEmpty ||
+      hasActiveFilter ||
+      hasCategoryFilter ||
+      hasProviderFilter;
+
+  bool get isFiltering => _hasAnyActiveFilter;
+  List<Category> get categories => _categories;
+  List<Provider> get providers => _providers;
 
   // ==================== MÉTRICAS DEL CATÁLOGO ====================
 
@@ -234,6 +275,10 @@ class CatalogueProvider extends ChangeNotifier
     this._searchBrandsUseCase,
     this._getPopularBrandsUseCase,
     this._getBrandByIdUseCase,
+    this._createCategoryUseCase,
+    this._updateCategoryUseCase,
+    this._createProviderUseCase,
+    this._updateProviderUseCase,
   );
 
   void initCatalogue(String id) {
@@ -251,6 +296,10 @@ class CatalogueProvider extends ChangeNotifier
     if (id == 'demo') {
       return;
     }
+
+    // Cargar categorías y proveedores
+    loadCategories(id);
+    loadProviders(id);
 
     _catalogueSubscription =
         _getCatalogueStreamUseCase(GetCatalogueStreamParams(id)).listen(
@@ -1069,25 +1118,62 @@ class CatalogueProvider extends ChangeNotifier
     String? query,
     List<ProductCatalogue>? searchResults,
     CatalogueFilter? filter,
+    String? categoryId,
+    String? providerId,
+    bool clearCategoryProvider = false,
     bool shouldNotify = true,
   }) {
     final normalizedQuery = (query ?? _state.currentSearchQuery).trim();
     final effectiveFilter = filter ?? _state.activeFilter;
+    final effectiveCategoryId = clearCategoryProvider
+        ? null
+        : (categoryId ?? _state.selectedCategoryId);
+    final effectiveProviderId = clearCategoryProvider
+        ? null
+        : (providerId ?? _state.selectedProviderId);
 
     final bool hasQuery = normalizedQuery.isNotEmpty;
     final bool hasFilter = effectiveFilter != CatalogueFilter.none;
+    final bool hasCategoryFilter = effectiveCategoryId != null;
+    final bool hasProviderFilter = effectiveProviderId != null;
 
     List<ProductCatalogue> workingList = _state.products;
 
-    if (hasQuery) {
-      workingList = searchResults ?? searchProducts(query: normalizedQuery);
+    // 1. Filtro por categoría
+    if (hasCategoryFilter) {
+      workingList = workingList
+          .where((product) => product.category == effectiveCategoryId)
+          .toList();
     }
 
+    // 2. Filtro por proveedor
+    if (hasProviderFilter) {
+      workingList = workingList
+          .where((product) => product.provider == effectiveProviderId)
+          .toList();
+    }
+
+    // 3. Búsqueda por texto (descripción, marca, código, etc.)
+    if (hasQuery) {
+      // Si tenemos resultados de búsqueda pre-calculados, usarlos como referencia
+      if (searchResults != null) {
+        // Intersección: productos que están en searchResults Y en workingList
+        final searchIds = searchResults.map((p) => p.id).toSet();
+        workingList =
+            workingList.where((p) => searchIds.contains(p.id)).toList();
+      } else {
+        // Buscar en la lista de trabajo actual
+        workingList = _searchInList(workingList, normalizedQuery);
+      }
+    }
+
+    // 4. Filtros especiales (favoritos, stock)
     if (hasFilter) {
       workingList = _filterProductsByOption(workingList, effectiveFilter);
     }
 
-    final bool shouldUseFilteredList = hasQuery || hasFilter;
+    final bool shouldUseFilteredList =
+        hasQuery || hasFilter || hasCategoryFilter || hasProviderFilter;
 
     _state = _state.copyWith(
       filteredProducts: shouldUseFilteredList
@@ -1095,11 +1181,37 @@ class CatalogueProvider extends ChangeNotifier
           : const <ProductCatalogue>[],
       currentSearchQuery: normalizedQuery,
       activeFilter: effectiveFilter,
+      selectedCategoryId: effectiveCategoryId,
+      selectedProviderId: effectiveProviderId,
     );
 
     if (shouldNotify) {
       notifyListeners();
     }
+  }
+
+  /// Búsqueda local en una lista de productos
+  List<ProductCatalogue> _searchInList(
+      List<ProductCatalogue> source, String query) {
+    final normalizedQuery = query.toLowerCase().trim();
+    if (normalizedQuery.isEmpty) return source;
+
+    return source.where((product) {
+      // Buscar en descripción
+      if (product.description.toLowerCase().contains(normalizedQuery))
+        return true;
+      // Buscar en código
+      if (product.code.toLowerCase().contains(normalizedQuery)) return true;
+      // Buscar en marca
+      if (product.nameMark.toLowerCase().contains(normalizedQuery)) return true;
+      // Buscar en categoría
+      if (product.nameCategory.toLowerCase().contains(normalizedQuery))
+        return true;
+      // Buscar en proveedor
+      if (product.nameProvider.toLowerCase().contains(normalizedQuery))
+        return true;
+      return false;
+    }).toList();
   }
 
   List<ProductCatalogue> _filterProductsByOption(
@@ -1133,5 +1245,153 @@ class CatalogueProvider extends ChangeNotifier
     }
     _recomputeFilteredProducts(shouldNotify: false);
     _notifyProductChanges();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE CATEGORÍAS Y PROVEEDORES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Carga las categorías desde Firestore
+  void loadCategories(String accountId) {
+    getCategoriesStream(accountId).listen((categories) {
+      _categories = categories;
+      notifyListeners();
+    });
+  }
+
+  /// Carga los proveedores desde Firestore
+  void loadProviders(String accountId) {
+    getProvidersStream(accountId).listen((providers) {
+      _providers = providers;
+      notifyListeners();
+    });
+  }
+
+  /// Crea una nueva categoría
+  Future<void> createCategory({
+    required String accountId,
+    required Category category,
+  }) async {
+    try {
+      await _createCategoryUseCase(
+        CreateCategoryParams(
+          accountId: accountId,
+          category: category,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al crear categoría: $e');
+    }
+  }
+
+  /// Actualiza una categoría existente
+  Future<void> updateCategory({
+    required Category category,
+  }) async {
+    try {
+      final accountId = getIt<AccountProfile>().id;
+      await _updateCategoryUseCase(
+        UpdateCategoryParams(
+          accountId: accountId,
+          category: category,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al actualizar categoría: $e');
+    }
+  }
+
+  /// Crea un nuevo proveedor
+  Future<void> createProvider({
+    required String accountId,
+    required Provider provider,
+  }) async {
+    try {
+      await _createProviderUseCase(
+        CreateProviderParams(
+          accountId: accountId,
+          provider: provider,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al crear proveedor: $e');
+    }
+  }
+
+  /// Actualiza un proveedor existente
+  Future<void> updateProvider({
+    required Provider provider,
+  }) async {
+    try {
+      final accountId = getIt<AccountProfile>().id;
+      await _updateProviderUseCase(
+        UpdateProviderParams(
+          accountId: accountId,
+          provider: provider,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al actualizar proveedor: $e');
+    }
+  }
+
+  /// Filtra productos por categoría (usa el sistema centralizado)
+  void filterByCategory(String categoryId) {
+    _recomputeFilteredProducts(
+      categoryId: categoryId,
+      providerId: null, // Limpiar filtro de proveedor
+      query:
+          '', // Mantener la búsqueda vacía, se mostrará el nombre en el buscador desde la UI
+    );
+  }
+
+  /// Filtra productos por proveedor (usa el sistema centralizado)
+  void filterByProvider(String providerId) {
+    _recomputeFilteredProducts(
+      providerId: providerId,
+      categoryId: null, // Limpiar filtro de categoría
+      query:
+          '', // Mantener la búsqueda vacía, se mostrará el nombre en el buscador desde la UI
+    );
+  }
+
+  /// Limpia todos los filtros (categoría, proveedor, búsqueda, filtros especiales)
+  void clearAllFilters() {
+    _recomputeFilteredProducts(
+      clearCategoryProvider: true,
+      query: '',
+      filter: CatalogueFilter.none,
+    );
+  }
+
+  /// Limpia solo el filtro de categoría/proveedor (mantiene búsqueda y filtros especiales)
+  void clearCategoryProviderFilter() {
+    _recomputeFilteredProducts(
+      clearCategoryProvider: true,
+    );
+  }
+
+  /// Obtiene el nombre de la categoría seleccionada
+  String? get selectedCategoryName {
+    if (_state.selectedCategoryId == null) return null;
+    try {
+      return _categories
+          .firstWhere((c) => c.id == _state.selectedCategoryId)
+          .name;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Obtiene el nombre del proveedor seleccionado
+  String? get selectedProviderName {
+    if (_state.selectedProviderId == null) return null;
+    try {
+      return _providers
+          .firstWhere((p) => p.id == _state.selectedProviderId)
+          .name;
+    } catch (_) {
+      return null;
+    }
   }
 }

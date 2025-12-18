@@ -1696,6 +1696,90 @@ class MockCatalogueRepository extends _i1.Mock
         returnValue: _i5.Future<void>.value(),
         returnValueForMissingStub: _i5.Future<void>.value(),
       ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> createCategory({
+    required String? accountId,
+    required String? name,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createCategory,
+          [],
+          {
+            #accountId: accountId,
+            #name: name,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateCategory({
+    required String? accountId,
+    required String? categoryId,
+    required String? name,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateCategory,
+          [],
+          {
+            #accountId: accountId,
+            #categoryId: categoryId,
+            #name: name,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> createProvider({
+    required String? accountId,
+    required String? name,
+    String? phone,
+    String? email,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createProvider,
+          [],
+          {
+            #accountId: accountId,
+            #name: name,
+            #phone: phone,
+            #email: email,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateProvider({
+    required String? accountId,
+    required String? providerId,
+    required String? name,
+    String? phone,
+    String? email,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateProvider,
+          [],
+          {
+            #accountId: accountId,
+            #providerId: providerId,
+            #name: name,
+            #phone: phone,
+            #email: email,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 }
 
 /// A class which mocks [CatalogueRemoteDataSource].

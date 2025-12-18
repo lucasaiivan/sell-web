@@ -22,27 +22,26 @@ class CatalogueMetricsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final metricsList = metrics.toMetricsList();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SingleChildScrollView(
+    return SizedBox(
+      height: 50,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: metricsList.map((metric) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: _MetricChip(
-                metric: metric,
-                onTap: onMetricTap != null ? () => onMetricTap!(metric) : null,
-              ),
-            );
-          }).toList(),
-        ),
+        itemCount: metricsList.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final metric = metricsList[index];
+          return _MetricChip(
+            metric: metric,
+            onTap: onMetricTap != null ? () => onMetricTap!(metric) : null,
+          );
+        },
       ),
     );
   }
 }
 
-/// Chip individual que muestra una métrica (valor/nombre)
+/// Chip individual con estilo "WhatsApp" (Pill shape)
 class _MetricChip extends StatelessWidget {
   final CatalogueMetric metric;
   final VoidCallback? onTap;
@@ -54,32 +53,40 @@ class _MetricChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Material(
-      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(12),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 metric.formattedValue,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(width: 6),
               Text(
                 metric.label,
-                style: textTheme.labelSmall?.copyWith(
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

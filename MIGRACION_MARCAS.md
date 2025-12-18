@@ -148,13 +148,13 @@ Ambos campos `name` y `description` son normalizados para mejorar búsquedas:
 
 ### Generación de Nuevos IDs
 Se utiliza `IdGenerator.generateBrandId()` para crear IDs consistentes:
-- **Formato**: `BRD-XXXXX-YYYYMMDD-NNNN`
+- **Formato**: `BRD-SALT-YYYYMMDD-NNNN`
 - **Componentes**:
   - `BRD`: Prefijo de marca
-  - `XXXXX`: Hash del accountId (5 caracteres)
+  - `SALT`: Salt aleatorio (3 caracteres)
   - `YYYYMMDD`: Fecha de creación
   - `NNNN`: Secuencia única del día
-- **Ejemplo**: `BRD-A3F9K-20251215-0001`
+- **Ejemplo**: `BRD-X8Y-20251215-0001`
 
 ### Mapeo de IDs
 El servicio mantiene un mapeo de IDs antiguos → nuevos:

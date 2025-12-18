@@ -449,14 +449,14 @@ class CatalogueProvider extends ChangeNotifier
 
   /// Genera un SKU híbrido elegante y único para productos sin código de barras
   ///
-  /// Formato: SKU-XXXXX-YYYYMMDD-NNNN
-  /// - XXXXX: Hash corto del accountId (5 caracteres alfanuméricos)
+  /// Formato: SKU-SALT-YYYYMMDD-NNNN
+  /// - SALT: Salt aleatorio de 3 caracteres
   /// - YYYYMMDD: Fecha actual (año-mes-día)
   /// - NNNN: Secuencia única del día (4 dígitos)
   ///
-  /// Ejemplo: SKU-A3F9K-20251211-0001
-  String generateHybridSku(String accountId) {
-    return IdGenerator.generateProductSku(accountId);
+  /// Ejemplo: SKU-X8Y-20251211-0001
+  String generateHybridSku() {
+    return IdGenerator.generateProductSku();
   }
 
   /// Crea un producto en la base de datos pública (pending)

@@ -43,7 +43,7 @@ class ProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Usar color adaptativo tanto para backgroundColor personalizado como por defecto
-    final defaultBackgroundColor = Theme.of(context).colorScheme.surface;
+    final effectiveBackgroundColor = backgroundColor ?? Colors.transparent;
 
     // Si se especifica un size, usar SizedBox con AspectRatio 1:1
     if (size != null) {
@@ -52,7 +52,7 @@ class ProductImage extends StatelessWidget {
         height: size,
         child: Container(
           decoration: BoxDecoration(
-            color: defaultBackgroundColor,
+            color: effectiveBackgroundColor,
             borderRadius: BorderRadius.circular(borderRadius),
           ),
           child: ClipRRect(
@@ -66,7 +66,7 @@ class ProductImage extends StatelessWidget {
     // Si no se especifica size, permitir que se expanda completamente
     return Container(
       decoration: BoxDecoration(
-        color: defaultBackgroundColor,
+        color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: ClipRRect(

@@ -7,9 +7,10 @@ import 'package:sellweb/features/catalogue/presentation/providers/catalogue_prov
 ///
 /// Características:
 /// - Búsqueda con debouncing (500ms) para optimizar consultas a Firestore
-/// - Muestra marcas populares al inicio
+/// - No carga marcas al inicio (búsqueda bajo demanda)
+/// - Buscador centrado en estado inicial
 /// - Búsqueda por prefijo en tiempo real
-/// - Opción para crear nueva marca desde el modal
+/// - Opción para crear nueva marca (visible solo cuando no hay resultados)
 /// - Indicadores visuales para marcas verificadas y seleccionadas
 /// - Se presenta como BottomSheet con handle bar
 class BrandSearchDialog extends StatefulWidget {
@@ -39,14 +40,17 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
 
   List<Mark> _brands = [];
   bool _isLoading = false;
-  bool _showPopular = true;
+  bool _hasSearched = false;
+  bool _isTyping = false; // Indica si el usuario está escribiendo (periodo de debounce)
+  String _lastSearchQuery = ''; 
+  
 
   @override
   void initState() {
-    super.initState();
-    _searchController.text = widget.currentBrandName;
-    _searchController.addListener(_onSearchChanged);
-    _loadPopularBrands();
+    super.initState(); 
+    _lastSearchQuery = widget.currentBrandName.trim(); // Inicializar con el nombre actual de la marca
+    _searchController.addListener(_onSearchChanged); 
+    // No cargar marcas al inicio
   }
 
   @override
@@ -63,67 +67,60 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
 
     final query = _searchController.text.trim();
 
-    // Forzar rebuild para actualizar el suffixIcon del TextField
+    // Solo procesar si el contenido realmente cambió (no solo selección de texto)
+    if (query == _lastSearchQuery) {
+      return;
+    }
+
+    _lastSearchQuery = query;
+
+    // Actualizar el suffixIcon del TextField
     setState(() {});
 
     if (query.isEmpty) {
-      _loadPopularBrands();
+      setState(() {
+        _brands = [];
+        _hasSearched = false;
+        _isLoading = false;
+        _isTyping = false;
+      });
       return;
     }
 
     if (query.length < 2) {
       setState(() {
         _brands = [];
-        _showPopular = false;
+        _hasSearched = false;
+        _isLoading = false;
+        _isTyping = false;
       });
       return;
     }
 
-    // Debounce: espera 500ms después de que el usuario deja de escribir
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _searchBrands(query);
-    });
-  }
-
-  /// Carga las marcas populares (verificadas y recientes)
-  Future<void> _loadPopularBrands() async {
+    // Activar estado de escritura para feedback visual
     setState(() {
-      _isLoading = true;
-      _showPopular = true;
+      _isTyping = true;
     });
 
-    try {
-      final brands = await widget.catalogueProvider.getPopularBrands(limit: 20);
-
-      // Debug: mostrar información de las marcas cargadas
-      print('🔍 Marcas cargadas: ${brands.length}');
-      for (var i = 0; i < brands.length && i < 3; i++) {
-        print(
-            '  Marca $i: id="${brands[i].id}", name="${brands[i].name}", desc="${brands[i].description}"');
-      }
-
-      if (mounted) {
+    // Debounce: espera 1100ms después de que el usuario deja de escribir
+    _debounceTimer = Timer(const Duration(milliseconds: 1100), () {
+      if (mounted && _searchController.text.trim() == query) {
         setState(() {
-          _brands = brands;
-          _isLoading = false;
+          _isTyping = false;
         });
+        _searchBrands(query);
       }
-    } catch (e) {
-      print('❌ Error cargando marcas populares: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _brands = [];
-        });
-      }
-    }
+    });
   }
 
   /// Busca marcas por nombre (búsqueda por prefijo)
   Future<void> _searchBrands(String query) async {
+    // Almacenamos el query actual para validar consistencia al finalizar la consulta
+    final searchStartedWith = query;
+
     setState(() {
       _isLoading = true;
-      _showPopular = false;
+      _hasSearched = true;
     });
 
     try {
@@ -132,14 +129,20 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
         limit: 30,
       );
 
-      if (mounted) {
+      // Solo actualizamos el estado si:
+      // 1. El widget sigue montado
+      // 2. El query que buscamos sigue siendo el que está en el controlador
+      // 3. El query que buscamos es el mismo que inició esta ejecución (evita race conditions)
+      if (mounted && 
+          _searchController.text.trim() == searchStartedWith &&
+          query == searchStartedWith) {
         setState(() {
           _brands = brands;
           _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _searchController.text.trim() == searchStartedWith) {
         setState(() {
           _isLoading = false;
           _brands = [];
@@ -163,129 +166,177 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
       ),
       child: Column(
         children: [
-          // Handle bar y Header FIJO
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+          // Handle bar
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
               ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.branding_watermark_outlined,
-                      color: colorScheme.primary,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _showPopular ? 'Marcas populares' : 'Buscar marca',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-            ],
+            ),
           ),
-          // Contenido colapsable: búsqueda y contador
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 12),
-                      // Campo de búsqueda
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _focusNode,
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            hintText: 'Buscar marca...',
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: _searchController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      _loadPopularBrands();
-                                    },
-                                  )
-                                : null,
-                            filled: true,
-                            fillColor: colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.5),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Contador o mensaje
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Row(
-                          children: [
-                            if (_isLoading)
-                              const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            else if (_brands.isNotEmpty)
-                              Text(
-                                '${_brands.length} marcas encontradas',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            const Spacer(),
-                            if (widget.onCreateNewBrand != null)
-                              TextButton.icon(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  widget.onCreateNewBrand?.call();
-                                },
-                                icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Nueva marca'),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+          // AppBar con título
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.branding_watermark_outlined,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Buscar marca',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                // Lista de marcas con scroll
-                _buildBrandsListSliver(theme, colorScheme),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Cerrar',
+                ),
               ],
             ),
           ),
+          const Divider(height: 1),
+          // Contenido
+          Expanded(
+            child: _brands.isEmpty && !_isLoading && !_hasSearched
+                ? _buildCenteredSearch(theme, colorScheme)
+                : _buildSearchWithResults(theme, colorScheme),
+          ),
         ],
       ),
+    );
+  }
+
+  /// Construye la vista con el buscador centrado (estado inicial)
+  Widget _buildCenteredSearch(ThemeData theme, ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // icon : búsqueda 
+            Icon(
+              Icons.cloud_queue_sharp,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _searchController,
+              focusNode: _focusNode,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Escribe el nombre de la marca...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? _isTyping
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.backspace_outlined, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                            },
+                          )
+                    : null,
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Construye la vista con resultados de búsqueda
+  Widget _buildSearchWithResults(ThemeData theme, ColorScheme colorScheme) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Campo de búsqueda en la parte superior
+              Padding(
+                padding: const EdgeInsets.only(top: 16, left: 24, right: 24),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _focusNode,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar marca...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? _isTyping
+                            ? const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(Icons.backspace_outlined, size: 20),
+                                onPressed: () {
+                                  _searchController.clear();
+                                },
+                              )
+                        : null,
+                    filled: true,
+                    fillColor: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Contador de resultados
+              if (_brands.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${_brands.length} marcas encontradas',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+        // Lista de marcas con scroll
+        _buildBrandsListSliver(theme, colorScheme),
+      ],
     );
   }
 
@@ -312,20 +363,27 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
               ),
               const SizedBox(height: 16),
               Text(
-                _searchController.text.isEmpty
-                    ? 'Escribe para buscar marcas'
-                    : 'No se encontraron marcas',
+                'No se encontraron marcas',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (_searchController.text.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Intenta con otro término',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+              const SizedBox(height: 8),
+              Text(
+                'Intenta con otro término',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (widget.onCreateNewBrand != null) ...[
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    widget.onCreateNewBrand?.call();
+                  },
+                  icon: const Icon(Icons.add, size: 20),
+                  label: const Text('Crear nueva marca'),
                 ),
               ],
             ],
@@ -338,7 +396,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final brand = _brands[index];
-          final isSelected = widget.currentBrandId == brand.id;
+          final isSelected = widget.currentBrandId == brand.id; 
 
           // Capitalizar nombre para mostrar (sin modificar el valor real)
           final displayName = brand.name.isNotEmpty
@@ -398,7 +456,6 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.onEditBrand != null && !brand.verified)
                   IconButton(
                     icon: Icon(
                       Icons.edit_outlined,

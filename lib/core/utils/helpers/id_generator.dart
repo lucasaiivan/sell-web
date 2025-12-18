@@ -1,18 +1,18 @@
+import 'dart:math';
+
 /// Generador universal de IDs únicos y legibles para entidades del sistema
 ///
-/// Genera IDs con formato: [PREFIX]-[HASH]-[DATE]-[SEQ]
+/// Genera IDs con formato: [PREFIX]-[HASH/SALT]-[DATE]-[SEQ]
 ///
 /// **Ventajas:**
-/// - IDs cortos y legibles (22 caracteres)
+/// - IDs cortos y legibles
 /// - Fecha visible para identificación rápida
-/// - Único por cuenta + timestamp
+/// - Único por colisión controlada + timestamp
 /// - Ordenables cronológicamente
 ///
 /// **Ejemplos:**
-/// - Productos: SKU-A3F9K-20251211-0001
-/// - Categorías: CAT-A3F9K-20251211-0001
-/// - Proveedores: PRV-A3F9K-20251211-0001
-/// - Marcas: BRD-A3F9K-20251211-0001
+/// - Productos: SKU-A3F-20251211-0001 (Salt aleatorio 3 chars)
+/// - Transacciones: TRX-USR12-20251211-0001 (Primeros 5 chars del userId)
 class IdGenerator {
   /// Prefijos para diferentes tipos de entidades
   static const String productPrefix = 'SKU';
@@ -20,76 +20,42 @@ class IdGenerator {
   static const String providerPrefix = 'PRV';
   static const String brandPrefix = 'BRD';
   static const String transactionPrefix = 'TRX';
-  static const String ticketPrefix = 'TKT';
+  static const String cashRegisterPrefix = 'CSH';
 
   /// Genera un ID único para un producto SKU interno
-  ///
-  /// Formato: SKU-XXXXX-YYYYMMDD-NNNN
-  /// - XXXXX: Hash corto del accountId (5 caracteres alfanuméricos)
-  /// - YYYYMMDD: Fecha actual (año-mes-día)
-  /// - NNNN: Secuencia única del día (4 dígitos)
-  ///
-  /// Ejemplo: `SKU-A3F9K-20251211-0001`
-  static String generateProductSku(String accountId) {
-    return _generateId(productPrefix, accountId);
+  /// Usa un Random Salt de 3 caracteres para brevedad.
+  static String generateProductSku() {
+    return _generateId(productPrefix, _generateRandomSalt(3));
   }
 
   /// Genera un ID único para una categoría
-  ///
-  /// Formato: CAT-XXXXX-YYYYMMDD-NNNN
-  ///
-  /// Ejemplo: `CAT-A3F9K-20251211-0001`
-  static String generateCategoryId(String accountId) {
-    return _generateId(categoryPrefix, accountId);
+  static String generateCategoryId() {
+    return _generateId(categoryPrefix, _generateRandomSalt(3));
   }
 
   /// Genera un ID único para un proveedor
-  ///
-  /// Formato: PRV-XXXXX-YYYYMMDD-NNNN
-  ///
-  /// Ejemplo: `PRV-A3F9K-20251211-0001`
-  static String generateProviderId(String accountId) {
-    return _generateId(providerPrefix, accountId);
+  static String generateProviderId() {
+    return _generateId(providerPrefix, _generateRandomSalt(3));
   }
 
   /// Genera un ID único para una marca
-  ///
-  /// Formato: BRD-XXXXX-YYYYMMDD-NNNN
-  ///
-  /// Ejemplo: `BRD-A3F9K-20251211-0001`
-  static String generateBrandId(String accountId) {
-    return _generateId(brandPrefix, accountId);
+  static String generateBrandId() {
+    return _generateId(brandPrefix, _generateRandomSalt(3));
   }
 
-  /// Genera un ID único para una transacción
-  ///
-  /// Formato: TRX-XXXXX-YYYYMMDD-NNNN
-  ///
-  /// Ejemplo: `TRX-A3F9K-20251211-0001`
-  static String generateTransactionId(String accountId) {
-    return _generateId(transactionPrefix, accountId);
+  /// Genera un ID único para una caja registradora
+  static String generateCashRegisterId() {
+    return _generateId(cashRegisterPrefix, _generateRandomSalt(3));
   }
 
-  /// Genera un ID único para un ticket/venta
-  ///
-  /// Formato: TKT-XXXXX-YYYYMMDD-NNNN
-  ///
-  /// Ejemplo: `TKT-A3F9K-20251211-0001`
-  static String generateTicketId(String accountId) {
-    return _generateId(ticketPrefix, accountId);
+  /// Genera un ID único para una transacción o ticket de venta
+  static String generateTransactionId() {
+    return _generateId(transactionPrefix, _generateRandomSalt(3));
   }
 
   /// Genera un ID genérico con el formato estándar
-  ///
-  /// [prefix] - Prefijo del tipo de entidad (SKU, CAT, PRV, etc.)
-  /// [accountId] - ID de la cuenta del comercio
-  ///
-  /// Retorna: PREFIX-XXXXX-YYYYMMDD-NNNN
-  static String _generateId(String prefix, String accountId) {
+  static String _generateId(String prefix, String hash) {
     final now = DateTime.now();
-
-    // Generar hash corto del accountId (5 caracteres alfanuméricos)
-    final accountHash = _generateShortHash(accountId);
 
     // Fecha en formato compacto YYYYMMDD
     final dateStr = '${now.year}'
@@ -97,61 +63,34 @@ class IdGenerator {
         '${now.day.toString().padLeft(2, '0')}';
 
     // Secuencia única basada en milisegundos del día (4 dígitos)
-    final millisOfDay =
-        now.millisecondsSinceEpoch % 86400000; // Milisegundos en un día
+    final millisOfDay = now.millisecondsSinceEpoch % 86400000;
     final sequence = (millisOfDay % 10000).toString().padLeft(4, '0');
 
-    return '$prefix-$accountHash-$dateStr-$sequence';
+    return '$prefix-$hash-$dateStr-$sequence';
   }
 
-  /// Genera un hash corto alfanumérico de 5 caracteres
-  ///
-  /// Convierte el hashCode del string a base36 (0-9, A-Z)
-  /// y asegura que tenga exactamente 5 caracteres.
-  static String _generateShortHash(String input) {
-    // Usar hashCode del string y convertirlo a base36 (0-9, A-Z)
-    final hash = input.hashCode.abs();
-    var result = hash.toRadixString(36).toUpperCase();
-
-    // Asegurar que tenga exactamente 5 caracteres
-    if (result.length > 5) {
-      result = result.substring(0, 5);
-    } else if (result.length < 5) {
-      result = result.padLeft(5, '0');
-    }
-
-    return result;
+  /// Genera un salt aleatorio alfanumérico
+  static String _generateRandomSalt(int length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rnd = Random();
+    return String.fromCharCodes(Iterable.generate(
+        length, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
   }
 
   /// Verifica si un string es un ID generado por este sistema
-  ///
-  /// Retorna true si el ID tiene el formato PREFIX-XXXXX-YYYYMMDD-NNNN
-  ///
-  /// Ejemplo:
-  /// ```dart
-  /// IdGenerator.isGeneratedId('SKU-A3F9K-20251211-0001') // true
-  /// IdGenerator.isGeneratedId('7501234567890') // false
-  /// ```
+  /// Soporta hashes de 3 a 5 caracteres
   static bool isGeneratedId(String id) {
-    final pattern = RegExp(r'^[A-Z]{3}-[A-Z0-9]{5}-\d{8}-\d{4}$');
+    final pattern = RegExp(r'^[A-Z]{3}-[A-Z0-9]{3,5}-\d{8}-\d{4}$');
     return pattern.hasMatch(id);
   }
 
   /// Extrae el prefijo de un ID generado
-  ///
-  /// Ejemplo: `"SKU-A3F9K-20251211-0001"` → `"SKU"`
-  ///
-  /// Retorna null si el ID no tiene el formato correcto
   static String? extractPrefix(String id) {
     if (!isGeneratedId(id)) return null;
     return id.split('-').first;
   }
 
   /// Extrae la fecha de creación de un ID generado
-  ///
-  /// Ejemplo: `"SKU-A3F9K-20251211-0001"` → `DateTime(2025, 12, 11)`
-  ///
-  /// Retorna null si el ID no tiene el formato correcto
   static DateTime? extractDate(String id) {
     if (!isGeneratedId(id)) return null;
 
@@ -169,22 +108,14 @@ class IdGenerator {
     }
   }
 
-  /// Extrae el hash de la cuenta de un ID generado
-  ///
-  /// Ejemplo: `"SKU-A3F9K-20251211-0001"` → `"A3F9K"`
-  ///
-  /// Retorna null si el ID no tiene el formato correcto
-  static String? extractAccountHash(String id) {
+  /// Extrae el hash/salt de un ID generado
+  static String? extractHash(String id) {
     if (!isGeneratedId(id)) return null;
     final parts = id.split('-');
     return parts[1];
   }
 
   /// Extrae la secuencia de un ID generado
-  ///
-  /// Ejemplo: `"SKU-A3F9K-20251211-0001"` → `"0001"`
-  ///
-  /// Retorna null si el ID no tiene el formato correcto
   static String? extractSequence(String id) {
     if (!isGeneratedId(id)) return null;
     final parts = id.split('-');
@@ -192,13 +123,6 @@ class IdGenerator {
   }
 
   /// Compara dos IDs generados por fecha
-  ///
-  /// Retorna:
-  /// - Negativo si id1 es anterior a id2
-  /// - 0 si son del mismo día
-  /// - Positivo si id1 es posterior a id2
-  ///
-  /// Retorna null si alguno de los IDs no es válido
   static int? compareByDate(String id1, String id2) {
     final date1 = extractDate(id1);
     final date2 = extractDate(id2);
@@ -208,3 +132,4 @@ class IdGenerator {
     return date1.compareTo(date2);
   }
 }
+

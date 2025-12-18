@@ -431,103 +431,95 @@ class _SalesPageState extends State<SalesPage> {
 
     // Si no hay productos y ya cargó, ocultar el buttonAppbar
     return CustomAppBar(
-      toolbarHeight: 70,
-      titleSpacing: 0,
       automaticallyImplyLeading: false,
-      titleWidget: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: [
-            // avatar : avatar de usuario y botón de abrir drawer
-            Builder(
-              builder: (context) => GestureDetector(
-                onTap: () => Scaffold.of(context).openDrawer(),
-                child: UserAvatar(
-                  imageUrl: provider.profileAccountSelected.image,
-                  text: provider.profileAccountSelected.name,
-                ),
+      titleWidget: Row(
+        children: [
+          // avatar : avatar de usuario y botón de abrir drawer
+          Builder(
+            builder: (context) => GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: UserAvatar(
+                imageUrl: provider.profileAccountSelected.image,
+                text: provider.profileAccountSelected.name,
               ),
             ),
-            const SizedBox(width: 12),
-            // button : busqueda de productos
-            Expanded(
-              child: SearchButton(
-                height: 40,
-                onPressed: (isLoading || isEmpty)
-                    ? () {}
-                    : () => showModalBottomSheetSelectProducts(buildContext),
-                icon: isLoading || isEmpty
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(buildContext)
-                                .colorScheme
-                                .primaryContainer))
-                    : Icon(Icons.search_rounded),
-                label: textHintSearchButton,
-                color: Theme.of(buildContext).colorScheme.primaryContainer,
-                textColor:
-                    Theme.of(buildContext).colorScheme.onPrimaryContainer,
-                iconColor:
-                    Theme.of(buildContext).colorScheme.onPrimaryContainer,
-              ),
+          ),
+          const SizedBox(width: 12),
+          // button : busqueda de productos
+          Expanded(
+            child: SearchButton(
+              height: 40,
+              onPressed: (isLoading || isEmpty)
+                  ? () {}
+                  : () => showModalBottomSheetSelectProducts(buildContext),
+              icon: isLoading || isEmpty
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Theme.of(buildContext)
+                              .colorScheme
+                              .primaryContainer))
+                  : Icon(Icons.search_rounded),
+              label: textHintSearchButton,
+              color: Theme.of(buildContext).colorScheme.primaryContainer,
+              textColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
+              iconColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
             ),
-            const SizedBox(width: 12),
-            // Indicador de conectividad
-            const ConnectivityIndicator(),
-            // view : botones de la barra de acciones
-            Row(
-              children: [
-                // button : botón de estado de la impresora
-                Consumer<PrinterProvider>(
-                  builder: (context, printerProvider, __) {
-                    final isConnected = printerProvider.isConnected;
-                    return AppBarButtonCircle(
-                      icon: isConnected
-                          ? Icons.print_outlined
-                          : Icons.print_disabled_outlined,
-                      tooltip: isConnected
-                          ? 'Impresora conectada y lista\nToca para configurar'
-                          : 'Impresora no disponible\nToca para configurar conexión',
-                      onPressed: () => _showPrinterConfigDialog(buildContext),
-                      backgroundColor: isConnected
-                          ? Colors.green.withValues(alpha: 0.1)
+          ),
+          const SizedBox(width: 12),
+          // Indicador de conectividad
+          const ConnectivityIndicator(),
+          // view : botones de la barra de acciones
+          Row(
+            children: [
+              // button : botón de estado de la impresora
+              Consumer<PrinterProvider>(
+                builder: (context, printerProvider, __) {
+                  final isConnected = printerProvider.isConnected;
+                  return AppBarButtonCircle(
+                    icon: isConnected
+                        ? Icons.print_outlined
+                        : Icons.print_disabled_outlined,
+                    tooltip: isConnected
+                        ? 'Impresora conectada y lista\nToca para configurar'
+                        : 'Impresora no disponible\nToca para configurar conexión',
+                    onPressed: () => _showPrinterConfigDialog(buildContext),
+                    backgroundColor: isConnected
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : null,
+                    colorAccent: isConnected ? Colors.green.shade700 : null,
+                  );
+                },
+              ),
+
+              // button : último ticket vendido
+              Consumer<SalesProvider>(
+                builder: (context, sellProvider, __) {
+                  final hasLastTicket = sellProvider.lastSoldTicket != null;
+                  return AppBarButtonCircle(
+                      icon: Icons.receipt_long_rounded,
+                      tooltip: hasLastTicket
+                          ? 'Ver último ticket\nToca para ver detalles y reimprimir'
+                          : 'No hay tickets recientes',
+                      onPressed: hasLastTicket
+                          ? () =>
+                              _showLastTicketDialog(buildContext, sellProvider)
                           : null,
-                      colorAccent: isConnected ? Colors.green.shade700 : null,
-                    );
-                  },
-                ),
+                      backgroundColor: Theme.of(buildContext)
+                          .colorScheme
+                          .primaryContainer
+                          .withValues(alpha: 0.4),
+                      colorAccent: Theme.of(buildContext).colorScheme.primary);
+                },
+              ),
 
-                // button : último ticket vendido
-                Consumer<SalesProvider>(
-                  builder: (context, sellProvider, __) {
-                    final hasLastTicket = sellProvider.lastSoldTicket != null;
-                    return AppBarButtonCircle(
-                        icon: Icons.receipt_long_rounded,
-                        tooltip: hasLastTicket
-                            ? 'Ver último ticket\nToca para ver detalles y reimprimir'
-                            : 'No hay tickets recientes',
-                        onPressed: hasLastTicket
-                            ? () => _showLastTicketDialog(
-                                buildContext, sellProvider)
-                            : null,
-                        backgroundColor: Theme.of(buildContext)
-                            .colorScheme
-                            .primaryContainer
-                            .withValues(alpha: 0.4),
-                        colorAccent:
-                            Theme.of(buildContext).colorScheme.primary);
-                  },
-                ),
-
-                // button : administrar caja
-                CashRegisterStatusWidget(),
-              ],
-            )
-          ],
-        ),
+              // button : administrar caja
+              CashRegisterStatusWidget(),
+            ],
+          )
+        ],
       ),
     );
   }

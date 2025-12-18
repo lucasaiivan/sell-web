@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
 import 'package:sellweb/core/services/database/firestore_paths.dart';
+import 'package:sellweb/core/utils/helpers/id_generator.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/cash_register/domain/repositories/cash_register_repository.dart';
 
@@ -256,7 +257,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String cashierName,
   }) async {
     try {
-      final cashRegisterId = UidHelper.generateUid();
+      final cashRegisterId = IdGenerator.generateCashRegisterId();
       final now = DateTime.now();
 
       final cashRegister = CashRegister(

@@ -43,8 +43,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.centerTitle = false,
     this.bottom,
     this.backgroundColor,
-    this.toolbarHeight,
-    this.titleSpacing,
+    this.toolbarHeight = 80.0,
+    this.titleSpacing = 0.0,
     this.automaticallyImplyLeading = true,
   });
 
@@ -56,25 +56,26 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: toolbarHeight,
       titleSpacing: titleSpacing,
+      actionsPadding: const EdgeInsets.only(right: 8.0, top: 8.0),
       automaticallyImplyLeading: automaticallyImplyLeading,
-      title: titleWidget ??
-          (title != null
-              ? Text(
-                  title!,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                )
-              : null),
+      title: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+        child: titleWidget ??
+            (title != null
+                ? Text(
+                    title!,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  )
+                : const SizedBox.shrink()),
+      ),
       centerTitle: centerTitle,
       leading: leading,
       // Si leading es null y no queremos el botón de back automático, podemos controlarlo
       // pero por defecto AppBar lo maneja bien.
-      actions: [
-        if (actions != null) ...actions!,
-        const SizedBox(width: 16), // Margen derecho consistente
-      ],
+      actions: actions,
       backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
       surfaceTintColor: colorScheme.surfaceTint,
       elevation: 0,

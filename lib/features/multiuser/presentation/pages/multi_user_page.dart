@@ -97,37 +97,34 @@ class _MultiUserPageState extends State<MultiUserPage> {
     final theme = Theme.of(context);
 
     return CustomAppBar(
-      toolbarHeight: 70,
-      titleSpacing: 0,
       automaticallyImplyLeading: false,
-      titleWidget: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: [
-            // Avatar - usa Selector para escuchar cambios de cuenta
-            Selector<SalesProvider, ({String image, String name})>(
-              selector: (_, provider) => (
-                image: provider.profileAccountSelected.image,
-                name: provider.profileAccountSelected.name,
-              ),
-              builder: (context, accountData, _) => GestureDetector(
-                onTap: () => Scaffold.of(context).openDrawer(),
-                child: UserAvatar(
-                  imageUrl: accountData.image,
-                  text: accountData.name,
-                ),
+      titleWidget: Row(
+        children: [
+          // Avatar - usa Selector para escuchar cambios de cuenta
+          Selector<SalesProvider, ({String image, String name})>(
+            selector: (_, provider) => (
+              image: provider.profileAccountSelected.image,
+              name: provider.profileAccountSelected.name,
+            ),
+            builder: (context, accountData, _) => GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: UserAvatar(
+                imageUrl: accountData.image,
+                text: accountData.name,
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
               'Usuarios',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

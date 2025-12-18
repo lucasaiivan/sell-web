@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
-import 'package:sellweb/core/utils/helpers/uid_helper.dart';
+import 'package:sellweb/core/utils/helpers/id_generator.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -181,7 +181,7 @@ class SellUsecases {
     }
 
     return ProductCatalogue(
-      id: UidHelper.generateUid(),
+      id: IdGenerator.generateProductSku(),
       description: description,
       salePrice: salePrice,
       code: '', // Productos rápidos no tienen código
@@ -328,7 +328,7 @@ class SellUsecases {
     if (updatedTicket.id.isEmpty) {
       updatedTicket = updateTicketFields(
         updatedTicket,
-        id: UidHelper.generateUid(),
+        id: IdGenerator.generateTransactionId(),
       );
     }
 
@@ -344,7 +344,7 @@ class SellUsecases {
     }
 
     final ticketId =
-        ticket.id.trim().isEmpty ? UidHelper.generateUid() : ticket.id;
+        ticket.id.trim().isEmpty ? IdGenerator.generateTransactionId() : ticket.id;
 
     // ✅ FIX: Usar getTotalPrice que incluye descuento (monto real cobrado)
     // Si priceTotal ya está establecido correctamente, usarlo; de lo contrario, calcularlo

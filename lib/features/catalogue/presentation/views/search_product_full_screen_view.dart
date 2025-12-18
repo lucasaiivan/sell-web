@@ -361,7 +361,7 @@ class _ProductSearchFullScreenViewState
   /// Genera un SKU híbrido y abre la vista de creación
   void _generateSkuAndCreate() {
     final accountId = widget.salesProvider.profileAccountSelected.id;
-    final sku = widget.catalogueProvider.generateHybridSku(accountId);
+    final sku = widget.catalogueProvider.generateHybridSku();
 
     // Abrir vista de creación con el SKU generado
     // Forzamos local porque es un producto sin código estándar

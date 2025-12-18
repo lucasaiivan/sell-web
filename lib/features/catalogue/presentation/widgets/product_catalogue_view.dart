@@ -429,9 +429,20 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             spacing: 8.0,
             runSpacing: 8.0,
             children: product.attributes.entries.map((entry) {
+              final value = entry.value;
+              String displayValue = '';
+              
+              if (value is List) {
+                if (value.isNotEmpty) {
+                  displayValue = ': ${value.join(", ")}';
+                }
+              } else if (value != null && value.toString().isNotEmpty) {
+                displayValue = ': $value';
+              }
+
               return Chip(
                 label: Text(
-                  '${entry.key}: ${entry.value}',
+                  '${entry.key}$displayValue',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),

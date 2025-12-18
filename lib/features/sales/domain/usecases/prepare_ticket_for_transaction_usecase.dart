@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:sellweb/core/errors/failures.dart';
 import 'package:sellweb/core/usecases/usecase.dart';
-import 'package:sellweb/core/utils/helpers/uid_helper.dart';
+import 'package:sellweb/core/utils/helpers/id_generator.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
 /// Prepara un ticket para ser guardado en el historial de transacciones
@@ -27,7 +27,7 @@ class PrepareTicketForTransactionUseCase
       }
 
       final ticketId = params.ticket.id.trim().isEmpty
-          ? UidHelper.generateUid()
+          ? IdGenerator.generateTransactionId()
           : params.ticket.id;
 
       // Usar getTotalPrice que incluye descuento (monto real cobrado)

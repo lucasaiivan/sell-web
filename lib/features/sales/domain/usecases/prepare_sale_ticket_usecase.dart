@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:sellweb/core/errors/failures.dart';
 import 'package:sellweb/core/usecases/usecase.dart';
-import 'package:sellweb/core/utils/helpers/uid_helper.dart';
+import 'package:sellweb/core/utils/helpers/id_generator.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
@@ -60,7 +60,7 @@ class PrepareSaleTicketUseCase
       // Generar ID si no existe
       if (updatedTicket.id.isEmpty) {
         updatedTicket = updatedTicket.copyWith(
-          id: UidHelper.generateUid(),
+          id: IdGenerator.generateTransactionId(),
         );
       }
 

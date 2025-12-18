@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:sellweb/core/errors/failures.dart';
 import 'package:sellweb/core/usecases/usecase.dart';
-import 'package:sellweb/core/utils/helpers/uid_helper.dart';
+import 'package:sellweb/core/utils/helpers/id_generator.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 /// Crea un producto rápido (sin código de barras) para venta inmediata
@@ -26,7 +26,7 @@ class CreateQuickProductUseCase
       }
 
       return Right(ProductCatalogue(
-        id: UidHelper.generateUid(),
+        id: IdGenerator.generateProductSku(),
         description: params.description,
         salePrice: params.salePrice,
         code: '', // Productos rápidos no tienen código

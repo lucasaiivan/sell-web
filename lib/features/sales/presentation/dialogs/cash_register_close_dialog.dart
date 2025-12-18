@@ -21,6 +21,13 @@ class CashRegisterCloseDialog extends StatefulWidget {
 
 class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
   double _currentDifference = 0.0;
+  late CashRegisterProvider _provider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _provider = context.read<CashRegisterProvider>();
+  }
 
   @override
   void initState() {
@@ -28,14 +35,13 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
     // Limpiar errores previos al inicializar el diálogo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final provider = context.read<CashRegisterProvider>();
-        provider.clearError();
+        _provider.clearError();
 
         // Limpiar el campo de balance final para empezar con valor vacío
-        provider.finalBalanceController.clear();
+        _provider.finalBalanceController.clear();
 
         // Escuchar cambios en el balance final para calcular la diferencia en tiempo real
-        provider.finalBalanceController.addListener(_updateDifference);
+        _provider.finalBalanceController.addListener(_updateDifference);
       }
     });
   }
@@ -43,16 +49,14 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
   @override
   void dispose() {
     // Remover el listener cuando se destruya el widget
-    final provider = context.read<CashRegisterProvider>();
-    provider.finalBalanceController.removeListener(_updateDifference);
+    _provider.finalBalanceController.removeListener(_updateDifference);
     super.dispose();
   }
 
   void _updateDifference() {
     if (mounted) {
       setState(() {
-        final provider = context.read<CashRegisterProvider>();
-        final finalBalance = provider.finalBalanceController.doubleValue;
+        final finalBalance = _provider.finalBalanceController.doubleValue;
         final expectedBalance = widget.cashRegister.getExpectedBalance;
 
         // Diferencia = Balance Final (lo que hay) - Balance Esperado (lo que debería haber)

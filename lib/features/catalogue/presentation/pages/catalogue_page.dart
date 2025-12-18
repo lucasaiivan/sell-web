@@ -47,92 +47,86 @@ class _CataloguePageState extends State<CataloguePage> {
   /// Construye el AppBar de la página de catálogo
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return CustomAppBar(
-      toolbarHeight: 70,
-      titleSpacing: 0,
       automaticallyImplyLeading: false,
-      titleWidget: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: [
-            // Avatar y botón de drawer - usa Selector para escuchar cambios de cuenta
-            Selector<SalesProvider, ({String image, String name})>(
-              selector: (_, provider) => (
-                image: provider.profileAccountSelected.image,
-                name: provider.profileAccountSelected.name,
-              ),
-              builder: (context, accountData, _) => GestureDetector(
-                onTap: () => Scaffold.of(context).openDrawer(),
-                child: UserAvatar(
-                  imageUrl: accountData.image,
-                  text: accountData.name,
-                ),
+      titleWidget: Row(
+        children: [
+          // Avatar y botón de drawer - usa Selector para escuchar cambios de cuenta
+          Selector<SalesProvider, ({String image, String name})>(
+            selector: (_, provider) => (
+              image: provider.profileAccountSelected.image,
+              name: provider.profileAccountSelected.name,
+            ),
+            builder: (context, accountData, _) => GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: UserAvatar(
+                imageUrl: accountData.image,
+                text: accountData.name,
               ),
             ),
-            const SizedBox(width: 12),
-            // Campo de búsqueda
-            Flexible(
-              child: Consumer<CatalogueProvider>(
-                builder: (context, catalogueProvider, _) {
-                  return ProductSearchField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    hintText: 'Buscar producto',
-                    products: catalogueProvider.products,
-                    searchResultsCount: _searchController.text.isNotEmpty
-                        ? catalogueProvider.visibleProducts.length
-                        : null,
-                    onChanged: (query) {
-                      // Buscar productos según el query con debouncing
-                      catalogueProvider.searchProductsWithDebounce(
-                          query: query);
-                    },
-                    onClear: () {
-                      // Limpiar búsqueda y mostrar todos los productos
-                      catalogueProvider.clearSearchResults();
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Indicador de conectividad
-            const ConnectivityIndicator(),
-            Consumer<CatalogueProvider>(
+          ),
+          const SizedBox(width: 12),
+          // Campo de búsqueda
+          Expanded(
+            child: Consumer<CatalogueProvider>(
               builder: (context, catalogueProvider, _) {
-                return PopupMenuButton<CatalogueFilter>(
-                  tooltip: catalogueProvider.hasActiveFilter
-                      ? 'Filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
-                      : 'Filtrar productos',
-                  position: PopupMenuPosition.under,
-                  offset: const Offset(0, 8),
-                  initialValue: catalogueProvider.activeFilter,
-                  onSelected: catalogueProvider.applyFilter,
-                  itemBuilder: (context) => _buildFilterMenuEntries(
-                    context,
-                    catalogueProvider.activeFilter,
-                  ),
-                  child: IgnorePointer(
-                    child: AppBarButtonCircle(
-                      icon: catalogueProvider.hasActiveFilter
-                          ? Icons.filter_alt_off_rounded
-                          : Icons.filter_alt_rounded,
-                      tooltip: catalogueProvider.hasActiveFilter
-                          ? 'Quitar filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
-                          : 'Filtrar productos',
-                      onPressed: () {},
-                    ),
-                  ),
+                return ProductSearchField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  hintText: 'Buscar producto',
+                  products: catalogueProvider.products,
+                  searchResultsCount: _searchController.text.isNotEmpty
+                      ? catalogueProvider.visibleProducts.length
+                      : null,
+                  onChanged: (query) {
+                    // Buscar productos según el query con debouncing
+                    catalogueProvider.searchProductsWithDebounce(query: query);
+                  },
+                  onClear: () {
+                    // Limpiar búsqueda y mostrar todos los productos
+                    catalogueProvider.clearSearchResults();
+                  },
                 );
               },
             ),
-            // Botón para alternar vista
-            AppBarButtonCircle(
-              icon: _isGridView ? Icons.view_list : Icons.grid_view,
-              tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
-              onPressed: () => setState(() => _isGridView = !_isGridView),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+          // Indicador de conectividad
+          const ConnectivityIndicator(),
+          Consumer<CatalogueProvider>(
+            builder: (context, catalogueProvider, _) {
+              return PopupMenuButton<CatalogueFilter>(
+                tooltip: catalogueProvider.hasActiveFilter
+                    ? 'Filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
+                    : 'Filtrar productos',
+                position: PopupMenuPosition.under,
+                offset: const Offset(0, 8),
+                initialValue: catalogueProvider.activeFilter,
+                onSelected: catalogueProvider.applyFilter,
+                itemBuilder: (context) => _buildFilterMenuEntries(
+                  context,
+                  catalogueProvider.activeFilter,
+                ),
+                child: IgnorePointer(
+                  child: AppBarButtonCircle(
+                    icon: catalogueProvider.hasActiveFilter
+                        ? Icons.filter_alt_off_rounded
+                        : Icons.filter_alt_rounded,
+                    tooltip: catalogueProvider.hasActiveFilter
+                        ? 'Quitar filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
+                        : 'Filtrar productos',
+                    onPressed: () {},
+                  ),
+                ),
+              );
+            },
+          ),
+          // Botón para alternar vista
+          AppBarButtonCircle(
+            icon: _isGridView ? Icons.view_list : Icons.grid_view,
+            tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
+            onPressed: () => setState(() => _isGridView = !_isGridView),
+          ),
+        ],
       ),
     );
   }

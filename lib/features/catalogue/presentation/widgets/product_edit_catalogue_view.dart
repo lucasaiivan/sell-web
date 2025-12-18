@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart' as provider_pkg;
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
 import 'package:sellweb/core/services/storage/storage_paths.dart';
@@ -44,6 +43,8 @@ class ProductEditCatalogueView extends StatefulWidget {
 }
 
 class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
+  static const double _iconOpacity = 0.8;
+
   // Form state
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
@@ -68,6 +69,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   String? _selectedCategoryId;
   String? _selectedProviderId;
   String? _selectedBrandId;
+  String? _selectedBrandImage;
 
   // Attributes
   Map<String, dynamic> _attributes = {};
@@ -111,10 +113,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         widget.product.provider.isNotEmpty ? widget.product.provider : null;
     _selectedBrandId =
         widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
+    _selectedBrandImage =
+        widget.product.imageMark.isNotEmpty ? widget.product.imageMark : null;
     _attributes = Map.from(widget.product.attributes);
 
-    debugPrint(
-        '🔍 ProductEdit: Inicializando con ${_attributes.length} atributos: $_attributes');
+    debugPrint('🔍 ProductEdit: Inicializando con ${_attributes.length} atributos: $_attributes');
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
@@ -259,6 +262,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       nameMark: widget.product.isVerified
           ? widget.product.nameMark
           : _markController.text.trim(),
+      imageMark: widget.product.isVerified
+          ? widget.product.imageMark
+          : (_selectedBrandImage ?? ''),
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
       attributes: _attributes,
@@ -476,14 +482,17 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     }
   }
 
-  /// Muestra modal para crear una nueva marca
-  Future<Mark?> _showCreateBrandDialog() async {
+  /// Muestra modal para crear o editar una marca
+  Future<Mark?> _showBrandDialog({Mark? brand}) async {
+    final isEditing = brand != null;
     final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
+    final nameController = TextEditingController(text: brand?.name);
+    final descriptionController = TextEditingController(text: brand?.description);
     Uint8List? brandImageBytes;
     final picker = ImagePicker();
-    bool isCreating = false;
+    bool isLoading = false;
+    bool isVerified = brand?.verified ?? false;
+    String currentImageUrl = brand?.image ?? '';
 
     return showModalBottomSheet<Mark>(
       context: context,
@@ -524,14 +533,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.add_business,
+                        isEditing ? Icons.edit : Icons.branding_watermark_outlined,
                         color: colorScheme.primary,
                         size: 24,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Crear Nueva Marca',
+                          isEditing ? 'Editar Marca' : 'Crear Nueva Marca',
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -553,7 +562,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           // Image picker
                           Center(
                             child: GestureDetector(
-                              onTap: isCreating
+                              onTap: isLoading
                                   ? null
                                   : () async {
                                       try {
@@ -591,404 +600,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                 width: 140,
                                 height: 140,
                                 decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: colorScheme.outline
-                                        .withValues(alpha: 0.3),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: brandImageBytes != null
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(14),
-                                        child: Image.memory(
-                                          brandImageBytes!,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.add_photo_alternate,
-                                            size: 48,
-                                            color: colorScheme.primary
-                                                .withValues(alpha: 0.7),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Imagen (opcional)',
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                              color:
-                                                  colorScheme.onSurfaceVariant,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          // Name field
-                          TextFormField(
-                            controller: nameController,
-                            enabled: !isCreating,
-                            textCapitalization: TextCapitalization.words,
-                            decoration: InputDecoration(
-                              labelText: 'Nombre de la marca *',
-                              hintText: 'Ej: Coca-Cola',
-                              prefixIcon: const Icon(Icons.label),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'El nombre es requerido';
-                              }
-                              if (value.trim().length < 2) {
-                                return 'El nombre debe tener al menos 2 caracteres';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          // Description field
-                          TextFormField(
-                            controller: descriptionController,
-                            enabled: !isCreating,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: InputDecoration(
-                              labelText: 'Descripción (opcional)',
-                              hintText: 'Información adicional sobre la marca',
-                              prefixIcon: const Icon(Icons.description),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            maxLines: 3,
-                            maxLength: 200,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Actions
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    border: Border(
-                      top: BorderSide(
-                        color: colorScheme.outlineVariant,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: isCreating
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                          child: const Text('Cancelar'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: FilledButton.icon(
-                          onPressed: isCreating
-                              ? null
-                              : () async {
-                                  if (!formKey.currentState!.validate()) return;
-
-                                  setState(() => isCreating = true);
-
-                                  try {
-                                    // Generate ID using IdGenerator con accountId público
-                                    final brandId =
-                                        IdGenerator.generateBrandId('PUBLIC');
-
-                                    // Upload image if provided
-                                    String imageUrl = '';
-                                    if (brandImageBytes != null) {
-                                      final storage =
-                                          getIt<IStorageDataSource>();
-                                      final path =
-                                          StoragePaths.publicBrandImage(
-                                              brandId);
-                                      imageUrl = await storage.uploadFile(
-                                        path,
-                                        brandImageBytes!,
-                                        metadata: {
-                                          'contentType': 'image/jpeg',
-                                          'uploaded_by': 'user',
-                                        },
-                                      );
-                                    }
-
-                                    // Create brand object with normalized fields
-                                    final newBrand = Mark(
-                                      id: brandId,
-                                      name: nameController.text
-                                          .trim()
-                                          .toLowerCase(),
-                                      description: descriptionController.text
-                                          .trim()
-                                          .toLowerCase(),
-                                      image: imageUrl,
-                                      verified: false,
-                                      creation: DateTime.now(),
-                                      upgrade: DateTime.now(),
-                                    );
-
-                                    // Save to database
-                                    await widget.catalogueProvider
-                                        .createBrand(newBrand);
-
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop(newBrand);
-                                      final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          key: uniqueKey,
-                                          content: const Row(
-                                            children: [
-                                              Icon(Icons.check_circle,
-                                                  color: Colors.white),
-                                              SizedBox(width: 12),
-                                              Text('Marca creada exitosamente'),
-                                            ],
-                                          ),
-                                          backgroundColor:
-                                              Colors.green.shade600,
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: const EdgeInsets.only(
-                                            bottom: 16,
-                                            left: 16,
-                                            right: 16,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    setState(() => isCreating = false);
-                                    if (context.mounted) {
-                                      final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          key: uniqueKey,
-                                          content: Row(
-                                            children: [
-                                              const Icon(Icons.error_outline,
-                                                  color: Colors.white),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                    'Error: ${e.toString()}'),
-                                              ),
-                                            ],
-                                          ),
-                                          backgroundColor: colorScheme.error,
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: const EdgeInsets.only(
-                                            bottom: 16,
-                                            left: 16,
-                                            right: 16,
-                                          ),
-                                          duration: const Duration(seconds: 4),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                          icon: isCreating
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.add, size: 20),
-                          label:
-                              Text(isCreating ? 'Creando...' : 'Crear marca'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// Muestra modal para editar una marca existente
-  Future<Mark?> _showEditBrandDialog(Mark brand) async {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: brand.name);
-    final descriptionController =
-        TextEditingController(text: brand.description);
-    Uint8List? brandImageBytes;
-    final picker = ImagePicker();
-    bool isUpdating = false;
-    String currentImageUrl = brand.image;
-
-    return showModalBottomSheet<Mark>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
-
-          return Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.85,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.edit,
-                        color: colorScheme.primary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Editar Marca',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      if (brand.verified)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.verified,
-                                size: 14,
-                                color: Colors.blue,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Verificada',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                // Content
-                Expanded(
-                  child: Form(
-                    key: formKey,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Image picker
-                          Center(
-                            child: GestureDetector(
-                              onTap: isUpdating
-                                  ? null
-                                  : () async {
-                                      try {
-                                        final XFile? image =
-                                            await picker.pickImage(
-                                          source: ImageSource.gallery,
-                                          maxWidth: 512,
-                                          maxHeight: 512,
-                                          imageQuality: 85,
-                                        );
-                                        if (image != null) {
-                                          final bytes =
-                                              await image.readAsBytes();
-                                          setState(() {
-                                            brandImageBytes = bytes;
-                                          });
-                                        }
-                                      } catch (e) {
-                                        if (context.mounted) {
-                                          final uniqueKey = UniqueKey();
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              key: uniqueKey,
-                                              content: Text(
-                                                  'Error al seleccionar imagen: $e'),
-                                              backgroundColor:
-                                                  colorScheme.error,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                              child: Container(
-                                width: 140,
-                                height: 140,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: colorScheme.outline
-                                        .withValues(alpha: 0.3),
-                                    width: 2,
-                                  ),
+                                  color: (brandImageBytes != null ||
+                                          currentImageUrl.isNotEmpty)
+                                      ? Colors.transparent
+                                      : colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(16), 
                                 ),
                                 child: brandImageBytes != null
                                     ? ClipRRect(
@@ -1007,53 +623,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                               fit: BoxFit.cover,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
-                                                return Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.add_photo_alternate,
-                                                      size: 48,
-                                                      color: colorScheme.primary
-                                                          .withValues(
-                                                              alpha: 0.7),
-                                                    ),
-                                                    const SizedBox(height: 8),
-                                                    Text(
-                                                      'Cambiar imagen',
-                                                      style: theme
-                                                          .textTheme.bodySmall
-                                                          ?.copyWith(
-                                                        color: colorScheme
-                                                            .onSurfaceVariant,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                );
+                                                return _buildImagePlaceholder(
+                                                    colorScheme,
+                                                    theme,
+                                                    isEditing);
                                               },
                                             ),
                                           )
-                                        : Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.add_photo_alternate,
-                                                size: 48,
-                                                color: colorScheme.primary
-                                                    .withValues(alpha: 0.7),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Agregar imagen',
-                                                style: theme.textTheme.bodySmall
-                                                    ?.copyWith(
-                                                  color: colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                        : _buildImagePlaceholder(
+                                            colorScheme, theme, isEditing),
                               ),
                             ),
                           ),
@@ -1061,12 +639,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           // Name field
                           TextFormField(
                             controller: nameController,
-                            enabled: !isUpdating,
+                            enabled: !isLoading,
                             textCapitalization: TextCapitalization.words,
                             decoration: InputDecoration(
                               labelText: 'Nombre de la marca *',
                               hintText: 'Ej: Coca-Cola',
-                              prefixIcon: const Icon(Icons.label),
+                              prefixIcon: const Opacity(
+                                opacity: _iconOpacity,
+                                child: Icon(Icons.label_outlined),
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -1085,25 +666,57 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           // Description field
                           TextFormField(
                             controller: descriptionController,
-                            enabled: !isUpdating,
+                            enabled: !isLoading,
+                            keyboardType: TextInputType.multiline,
                             textCapitalization: TextCapitalization.sentences,
                             decoration: InputDecoration(
                               labelText: 'Descripción (opcional)',
                               hintText: 'Información adicional sobre la marca',
-                              prefixIcon: const Icon(Icons.description),
+                              prefixIcon: const Opacity(
+                                opacity: _iconOpacity,
+                                child: Icon(Icons.description_outlined),
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            maxLines: 3,
+                            minLines: 1,
+                            maxLines: null,
                             maxLength: 200,
+                          ),
+                          const SizedBox(height: 16),
+                          // Verification switch
+                          SwitchListTile(
+                            title: const Text('Marca verificada'),
+                            subtitle: const Text(
+                                'Indica si la marca es oficial y reconocida'),
+                            value: isVerified,
+                            onChanged: isLoading
+                                ? null
+                                : (value) => setState(() => isVerified = value),
+                            secondary: Opacity(
+                              opacity: _iconOpacity,
+                              child: Icon(
+                                Icons.verified,
+                                color: isVerified
+                                    ? Colors.blue
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color:
+                                    colorScheme.outline.withValues(alpha: 0.2),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-                // Actions
+                // Actions : Guardar y Cancelar
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -1120,7 +733,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     children: [
                       Expanded(
                         child: TextButton(
-                          onPressed: isUpdating
+                          onPressed: isLoading
                               ? null
                               : () => Navigator.of(context).pop(),
                           child: const Text('Cancelar'),
@@ -1129,23 +742,25 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                       const SizedBox(width: 12),
                       Expanded(
                         flex: 2,
-                        child: FilledButton.icon(
-                          onPressed: isUpdating
+                        child: FilledButton(
+                          onPressed: isLoading
                               ? null
                               : () async {
                                   if (!formKey.currentState!.validate()) return;
 
-                                  setState(() => isUpdating = true);
+                                  setState(() => isLoading = true);
 
                                   try {
-                                    // Upload new image if provided
+                                    String brandId = brand?.id ??
+                                        IdGenerator.generateBrandId();
                                     String imageUrl = currentImageUrl;
+
                                     if (brandImageBytes != null) {
                                       final storage =
                                           getIt<IStorageDataSource>();
                                       final path =
                                           StoragePaths.publicBrandImage(
-                                              brand.id);
+                                              brandId);
                                       imageUrl = await storage.uploadFile(
                                         path,
                                         brandImageBytes!,
@@ -1156,90 +771,57 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                       );
                                     }
 
-                                    // Create updated brand object
-                                    final updatedBrand = brand.copyWith(
-                                      name: nameController.text.trim(),
-                                      description:
-                                          descriptionController.text.trim(),
-                                      image: imageUrl,
-                                      upgrade: DateTime.now(),
-                                    );
+                                    final finalBrand = isEditing
+                                        ? brand.copyWith(
+                                            name: nameController.text.trim(),
+                                            description: descriptionController
+                                                .text
+                                                .trim(),
+                                            image: imageUrl,
+                                            verified: isVerified,
+                                            upgrade: DateTime.now(),
+                                          )
+                                        : Mark(
+                                            id: brandId,
+                                            name: nameController.text
+                                                .trim()
+                                                .toLowerCase(),
+                                            description: descriptionController
+                                                .text
+                                                .trim()
+                                                .toLowerCase(),
+                                            image: imageUrl,
+                                            verified: isVerified,
+                                            creation: DateTime.now(),
+                                            upgrade: DateTime.now(),
+                                          );
 
-                                    // Update in database
-                                    await widget.catalogueProvider
-                                        .updateBrand(updatedBrand);
+                                    if (isEditing) {
+                                      await widget.catalogueProvider
+                                          .updateBrand(finalBrand);
+                                    } else {
+                                      await widget.catalogueProvider
+                                          .createBrand(finalBrand);
+                                    }
 
                                     if (context.mounted) {
-                                      Navigator.of(context).pop(updatedBrand);
-                                      final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          key: uniqueKey,
-                                          content: const Row(
-                                            children: [
-                                              Icon(Icons.check_circle,
-                                                  color: Colors.white),
-                                              SizedBox(width: 12),
-                                              Text(
-                                                  'Marca actualizada exitosamente'),
-                                            ],
-                                          ),
-                                          backgroundColor:
-                                              Colors.green.shade600,
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: const EdgeInsets.only(
-                                            bottom: 16,
-                                            left: 16,
-                                            right: 16,
-                                          ),
-                                        ),
-                                      );
+                                      Navigator.of(context).pop(finalBrand);
+                                      _showSuccessMessage(isEditing
+                                          ? 'Marca actualizada exitosamente'
+                                          : 'Marca creada exitosamente');
                                     }
                                   } catch (e) {
-                                    setState(() => isUpdating = false);
+                                    setState(() => isLoading = false);
                                     if (context.mounted) {
-                                      final uniqueKey = UniqueKey();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          key: uniqueKey,
-                                          content: Row(
-                                            children: [
-                                              const Icon(Icons.error_outline,
-                                                  color: Colors.white),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                    'Error: ${e.toString()}'),
-                                              ),
-                                            ],
-                                          ),
-                                          backgroundColor: colorScheme.error,
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: const EdgeInsets.only(
-                                            bottom: 16,
-                                            left: 16,
-                                            right: 16,
-                                          ),
-                                          duration: const Duration(seconds: 4),
-                                        ),
-                                      );
+                                      _showErrorMessage(e.toString());
                                     }
                                   }
                                 },
-                          icon: isUpdating
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.save, size: 20),
-                          label: Text(
-                              isUpdating ? 'Guardando...' : 'Guardar cambios'),
+                          child: Text(isLoading
+                              ? (isEditing ? 'Guardando...' : 'Creando...')
+                              : (isEditing
+                                  ? 'Guardar'
+                                  : 'Crear')),
                         ),
                       ),
                     ],
@@ -1250,6 +832,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildImagePlaceholder(
+      ColorScheme colorScheme, ThemeData theme, bool isEditing) {
+    return Icon(
+      Icons.add_photo_alternate,
+      size: 48,
+      color: colorScheme.primary.withValues(alpha: 0.7),
     );
   }
 
@@ -1352,130 +943,130 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           if (!isVerified)
             InkWell(
               onTap: _showAddAttributeDialog,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                    width: 1.5,
+                    color: colorScheme.outline.withValues(alpha: 0.3),
                   ),
                 ),
-                padding: const EdgeInsets.all(12),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_circle_outline,
-                        size: 28,
-                        color: colorScheme.primary.withValues(alpha: 0.7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
+                      size: 18,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Agregar atributo',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary,
+                        fontSize: 12,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Agregar atributo',
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             )
           else
             Container(
               decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: 0.2),
-                  width: 1.0,
+                  color: colorScheme.outline.withValues(alpha: 0.3),
                 ),
               ),
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                height: 80,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.label_outline,
-                        size: 32,
-                        color:
-                            colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Producto verificado sin atributos',
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.6),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Producto verificado',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'sin atributos',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
         ] else ...[
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
-            runSpacing: 8,
+            runSpacing: 8, 
             children: [
               ..._attributes.entries.map((entry) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.3),
-                      width: 1.5,
+                final value = entry.value;
+                final String displayValue = value is List 
+                    ? value.join(', ') 
+                    : value?.toString() ?? '';
+                
+                return InkWell(
+                  onTap: !isVerified ? () => _showAddAttributeDialog(
+                    editKey: entry.key,
+                    editValue: entry.value,
+                  ) : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: colorScheme.outline.withValues(alpha: 0.3),
+                      ),
                     ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        entry.key,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurface,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        entry.value.toString(),
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.8),
-                          fontSize: 12,
-                        ),
-                      ),
-                      if (!isVerified) ...[
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () => _showDeleteAttributeDialog(entry.key),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Icon(
-                            Icons.close,
-                            size: 14,
-                            color: colorScheme.error.withValues(alpha: 0.6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          entry.key,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.primary,
+                            fontSize: 12,
                           ),
                         ),
+                        if (displayValue.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            displayValue,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 );
               }),
@@ -1554,114 +1145,294 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  void _showAddAttributeDialog() {
-    final keyController = TextEditingController();
-    final valueController = TextEditingController();
+  void _showAddAttributeDialog({String? editKey, dynamic editValue}) {
+    final keyController = TextEditingController(text: editKey);
     final formKey = GlobalKey<FormState>();
+    
+    // Lista de variantes con controladores editables
+    final List<TextEditingController> variantControllers = [];
+    
+    // Inicializar controladores con valores existentes
+    if (editValue is List) {
+      for (var variant in editValue) {
+        if (variant.toString().isNotEmpty) {
+          variantControllers.add(TextEditingController(text: variant.toString()));
+        }
+      }
+    } else if (editValue != null && editValue.toString().isNotEmpty) {
+      variantControllers.add(TextEditingController(text: editValue.toString()));
+    }
+    
+    // Para nuevos atributos, las variantes son opcionales, no agregar campo inicial
 
     showDialog(
       context: context,
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
-        return AlertDialog(
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.label_outline,
-                  color: colorScheme.primary,
-                  size: 24,
+        final isEditing = editKey != null;
+        
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isEditing ? Icons.edit_outlined : Icons.label_outline,
+                      color: colorScheme.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(isEditing ? 'Editar atributo' : 'Nuevo atributo'),
+                  ),
+                  if (isEditing)
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showDeleteAttributeDialog(editKey);
+                      },
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: colorScheme.error,
+                      ),
+                      tooltip: 'Eliminar atributo',
+                    ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Campo: Nombre del atributo
+                      TextFormField(
+                        controller: keyController,
+                        enabled: !isEditing,
+                        autofocus: !isEditing,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(
+                          labelText: 'Nombre del atributo',
+                          hintText: 'ej. Color, Talle, Peso',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Ingrese el nombre del atributo';
+                          }
+                          if (!isEditing && _attributes.containsKey(value.trim())) {
+                            return 'Este atributo ya existe';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Lista de variantes editables
+                      Row(
+                        children: [
+                          Text(
+                            'Variantes',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '(Opcional)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Items de variantes en lista
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 250),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              ...List.generate(variantControllers.length, (index) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: colorScheme.outline.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextField(
+                                            controller: variantControllers[index],
+                                            textCapitalization: TextCapitalization.sentences,
+                                            decoration: InputDecoration(
+                                              hintText: 'Escribe la variante',
+                                              border: InputBorder.none,
+                                              contentPadding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (variantControllers.length > 1)
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.close,
+                                              size: 18,
+                                              color: colorScheme.error,
+                                            ),
+                                            onPressed: () {
+                                              setDialogState(() {
+                                                variantControllers[index].dispose();
+                                                variantControllers.removeAt(index);
+                                              });
+                                            },
+                                            tooltip: 'Eliminar',
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Botón agregar variante
+                      InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            variantControllers.add(TextEditingController());
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: colorScheme.primary.withValues(alpha: 0.4),
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add,
+                                size: 18,
+                                color: colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Agregar variante',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text('Nuevo atributo'),
-            ],
-          ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: keyController,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre del atributo',
-                    hintText: 'ej. Color, Talle, Peso',
-                    prefixIcon: const Icon(Icons.title),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingrese el nombre del atributo';
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    for (var controller in variantControllers) {
+                      controller.dispose();
                     }
-                    if (_attributes.containsKey(value.trim())) {
-                      return 'Este atributo ya existe';
-                    }
-                    return null;
+                    Navigator.pop(context);
                   },
+                  child: const Text('Cancelar'),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: valueController,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    labelText: 'Valor',
-                    hintText: 'ej. Rojo, XL, 500g',
-                    prefixIcon: const Icon(Icons.edit),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                FilledButton.icon(
+                  onPressed: () => _submitAttribute(
+                    formKey,
+                    keyController,
+                    variantControllers,
+                    isEditing,
+                    editKey,
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Ingrese el valor del atributo';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) {
-                    if (formKey.currentState!.validate()) {
-                      setState(() {
-                        _attributes[keyController.text.trim()] =
-                            valueController.text.trim();
-                      });
-                      Navigator.pop(context);
-                    }
-                  },
+                  icon: Icon(isEditing ? Icons.check : Icons.add, size: 20),
+                  label: Text(isEditing ? 'Guardar' : 'Agregar'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton.icon(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  setState(() {
-                    _attributes[keyController.text.trim()] =
-                        valueController.text.trim();
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text('Agregar'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
+  }
+
+  /// Método auxiliar para enviar el atributo
+  void _submitAttribute(
+    GlobalKey<FormState> formKey,
+    TextEditingController keyController,
+    List<TextEditingController> variantControllers,
+    bool isEditing,
+    String? oldKey,
+  ) {
+    if (!formKey.currentState!.validate()) return;
+
+    final key = keyController.text.trim();
+    
+    // Extraer valores de los controladores y filtrar vacíos
+    final variants = variantControllers
+        .map((controller) => controller.text.trim())
+        .where((text) => text.isNotEmpty)
+        .toList();
+
+    setState(() {
+      // Si está editando y cambió la key, eliminar la anterior
+      if (isEditing && oldKey != null && oldKey != key) {
+        _attributes.remove(oldKey);
+      }
+      
+      // Guardar: si hay variantes, guardar como string (1) o lista (2+), sino guardar como lista vacía
+      if (variants.isEmpty) {
+        _attributes[key] = [];
+      } else if (variants.length == 1) {
+        _attributes[key] = variants.first;
+      } else {
+        _attributes[key] = variants.toList();
+      }
+    });
+    
+    // Limpiar controladores
+    for (var controller in variantControllers) {
+      controller.dispose();
+    }
+
+    Navigator.pop(context);
   }
 
   /// Construye sección de imagen del producto
@@ -1715,7 +1486,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 height: 200,
                 child: Card(
                   clipBehavior: Clip.antiAlias,
-                  color: const Color(0xFF3F414D),
+                  color: (_newImageBytes != null ||
+                          widget.product.image.isNotEmpty)
+                      ? Colors.transparent
+                      : const Color(0xFF3F414D),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
                   ),
@@ -1952,14 +1726,20 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               // Campo de descripción (editable)
               TextFormField(
                 controller: _descriptionController,
+                keyboardType: TextInputType.multiline,
                 decoration: InputDecoration(
                   labelText: 'Descripción del producto *',
                   hintText: 'Ej: Coca Cola 2L',
-                  prefixIcon: const Icon(Icons.description_outlined),
+                  prefixIcon: const Opacity(
+                    opacity: _iconOpacity,
+                    child: Icon(Icons.description_outlined),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                minLines: 1,
+                maxLines: null,
                 maxLength: 100,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -1996,12 +1776,28 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.blue,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
+                        if (widget.product.imageMark.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 10.0),
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image: NetworkImage(widget.product.imageMark),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.blue,
+                            size: 18,
+                          ),
+                        const SizedBox(width: 4),
                         Text(
                           widget.product.nameMark.isNotEmpty
                               ? widget.product.nameMark
@@ -2054,9 +1850,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return TextFormField(
       controller: _salePriceController,
       decoration: InputDecoration(
-        labelText: 'Precio de venta *',
+        labelText: 'Precio de venta',
         hintText: '0.00',
-        prefixIcon: const Icon(Icons.trending_up),
+        prefixIcon: const Opacity(
+          opacity: _iconOpacity,
+          child: Icon(Icons.public_sharp),
+        ),
         prefixText: '\$ ',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -2082,7 +1881,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       decoration: InputDecoration(
         labelText: 'Precio de compra',
         hintText: '0.00',
-        prefixIcon: const Icon(Icons.shopping_basket_outlined),
+        prefixIcon: const Opacity(
+          opacity: _iconOpacity,
+          child: Icon(Icons.inventory_2_outlined),
+        ),
         prefixText: '\$ ',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -2117,17 +1919,26 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             onChanged: (value) => setState(() => _stockEnabled = value),
             title: const Text('Control de stock'),
             subtitle: const Text('Activa para rastrear cantidad disponible'),
-            secondary: Icon(
-              _stockEnabled ? Icons.inventory : Icons.inventory_outlined,
-              color: _stockEnabled ? colorScheme.primary : null,
+            secondary: Opacity(
+              opacity: _iconOpacity,
+              child: Icon(
+                Icons.inventory_outlined,
+                color: _stockEnabled ? colorScheme.primary : null,
+              ),
             ),
           ),
         ),
         if (_stockEnabled) ...[
           const SizedBox(height: 16),
-          _buildQuantityField(),
+          Padding(
+            padding: const EdgeInsets.only(left: 16 ),
+            child: _buildQuantityField(),
+          ),
           const SizedBox(height: 16),
-          _buildAlertStockField(),
+          Padding(
+            padding: const EdgeInsets.only(left: 16 ),
+            child: _buildAlertStockField(),
+          ),
         ],
       ],
     );
@@ -2140,7 +1951,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       decoration: InputDecoration(
         labelText: 'Cantidad disponible',
         hintText: '0',
-        prefixIcon: const Icon(Icons.numbers),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -2165,8 +1975,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       controller: _alertStockController,
       decoration: InputDecoration(
         labelText: 'Alerta de stock bajo',
-        hintText: '5',
-        prefixIcon: const Icon(Icons.notification_important_outlined),
+        hintText: '5', 
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -2237,7 +2046,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               decoration: InputDecoration(
                 labelText: 'Categoría',
                 hintText: 'Seleccionar categoría',
-                prefixIcon: const Icon(Icons.category_outlined),
+                prefixIcon: const Opacity(
+                  opacity: _iconOpacity,
+                  child: Icon(Icons.category_outlined),
+                ),
                 suffixIcon: const Icon(Icons.arrow_drop_down),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -2295,7 +2107,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               decoration: InputDecoration(
                 labelText: 'Proveedor',
                 hintText: 'Seleccionar proveedor',
-                prefixIcon: const Icon(Icons.local_shipping_outlined),
+                prefixIcon: const Opacity(
+                  opacity: _iconOpacity,
+                  child: Icon(Icons.local_shipping_outlined),
+                ),
                 suffixIcon: const Icon(Icons.arrow_drop_down),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -2346,10 +2161,28 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           decoration: InputDecoration(
             labelText: 'Marca',
             hintText: 'Buscar o seleccionar marca',
-            prefixIcon: Icon(
-              isVerified ? Icons.verified : Icons.branding_watermark_outlined,
-              color: isVerified ? Colors.blue : null,
-            ),
+            prefixIcon: _selectedBrandImage != null &&
+                    _selectedBrandImage!.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: NetworkImage(_selectedBrandImage!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  )
+                : Icon(
+                    isVerified
+                        ? Icons.verified
+                        : Icons.branding_watermark_outlined,
+                    color: isVerified ? Colors.blue : null,
+                  ),
             suffixIcon: Icon(
               isVerified ? Icons.lock : Icons.search,
             ),
@@ -2382,20 +2215,22 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         currentBrandId: _selectedBrandId,
         currentBrandName: _markController.text,
         onCreateNewBrand: () async {
-          final newBrand = await _showCreateBrandDialog();
+          final newBrand = await _showBrandDialog();
           if (newBrand != null && mounted) {
             setState(() {
               _selectedBrandId = newBrand.id;
               _markController.text = newBrand.name;
+              _selectedBrandImage = newBrand.image;
             });
           }
         },
         onEditBrand: (brand) async {
-          final updatedBrand = await _showEditBrandDialog(brand);
+          final updatedBrand = await _showBrandDialog(brand: brand);
           if (updatedBrand != null && mounted) {
             setState(() {
               _selectedBrandId = updatedBrand.id;
               _markController.text = updatedBrand.name;
+              _selectedBrandImage = updatedBrand.image;
             });
           }
         },
@@ -2406,6 +2241,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       setState(() {
         _selectedBrandId = result.id;
         _markController.text = result.name;
+        _selectedBrandImage = result.image;
       });
     }
   }

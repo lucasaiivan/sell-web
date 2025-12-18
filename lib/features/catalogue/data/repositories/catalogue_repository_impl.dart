@@ -257,15 +257,29 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final path = FirestorePaths.brands(country: country);
       final collection = _dataSource.collection(path);
 
-      // Búsqueda por prefijo usando el truco de Firestore
+      // Primera búsqueda: por prefijo en 'name'
       // Busca documentos donde 'name' >= query y 'name' <= query + '\uf8ff'
-      final snapshot = await _dataSource.getDocuments(
+      final snapshotByName = await _dataSource.getDocuments(
         collection
             .orderBy('name')
             .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
       );
 
-      return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+      final resultsByName = snapshotByName.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+
+      // Si encontramos resultados en 'name', retornamos
+      if (resultsByName.isNotEmpty) {
+        return resultsByName;
+      }
+
+      // Segunda búsqueda: por prefijo en 'description' si no hay resultados en 'name'
+      final snapshotByDescription = await _dataSource.getDocuments(
+        collection
+            .orderBy('description')
+            .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
+      );
+
+      return snapshotByDescription.docs.map((doc) => Mark.fromMap(doc.data())).toList();
     } catch (e) {
       throw Exception('Error al buscar marcas: $e');
     }

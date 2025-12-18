@@ -51,37 +51,34 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
     final theme = Theme.of(context);
 
     return CustomAppBar(
-      toolbarHeight: 70,
-      titleSpacing: 0,
       automaticallyImplyLeading: false,
-      titleWidget: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: [
-            // Avatar - usa Selector para escuchar cambios de cuenta
-            Selector<SalesProvider, ({String image, String name})>(
-              selector: (_, provider) => (
-                image: provider.profileAccountSelected.image,
-                name: provider.profileAccountSelected.name,
-              ),
-              builder: (context, accountData, _) => GestureDetector(
-                onTap: () => Scaffold.of(context).openDrawer(),
-                child: UserAvatar(
-                  imageUrl: accountData.image,
-                  text: accountData.name,
-                ),
+      titleWidget: Row(
+        children: [
+          // Avatar - usa Selector para escuchar cambios de cuenta
+          Selector<SalesProvider, ({String image, String name})>(
+            selector: (_, provider) => (
+              image: provider.profileAccountSelected.image,
+              name: provider.profileAccountSelected.name,
+            ),
+            builder: (context, accountData, _) => GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: UserAvatar(
+                imageUrl: accountData.image,
+                text: accountData.name,
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
               'Historial',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       actions: [
         Consumer<CashRegisterProvider>(
@@ -92,17 +89,14 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: IgnorePointer(
-                  child: AppBarButtonCircle(
-                    icon: Icons.filter_list_rounded,
-                    text: provider.historyFilter,
-                    tooltip: 'Filtrar historial',
-                    onPressed: () {},
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    colorAccent: theme.colorScheme.primary,
-                  ),
+              child: IgnorePointer(
+                child: AppBarButtonCircle(
+                  icon: Icons.filter_list_rounded,
+                  text: provider.historyFilter,
+                  tooltip: 'Filtrar historial',
+                  onPressed: () {},
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  colorAccent: theme.colorScheme.primary,
                 ),
               ),
               onSelected: (String newValue) {

@@ -11,7 +11,7 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
     as catalog_provider;
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
-import 'brand_search_dialog.dart';
+import '../widgets/brand_search_dialog.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -117,7 +117,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         widget.product.imageMark.isNotEmpty ? widget.product.imageMark : null;
     _attributes = Map.from(widget.product.attributes);
 
-    debugPrint('🔍 ProductEdit: Inicializando con ${_attributes.length} atributos: $_attributes');
+    debugPrint(
+        '🔍 ProductEdit: Inicializando con ${_attributes.length} atributos: $_attributes');
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
@@ -487,7 +488,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     final isEditing = brand != null;
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: brand?.name);
-    final descriptionController = TextEditingController(text: brand?.description);
+    final descriptionController =
+        TextEditingController(text: brand?.description);
     Uint8List? brandImageBytes;
     final picker = ImagePicker();
     bool isLoading = false;
@@ -533,7 +535,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   child: Row(
                     children: [
                       Icon(
-                        isEditing ? Icons.edit : Icons.branding_watermark_outlined,
+                        isEditing
+                            ? Icons.edit
+                            : Icons.branding_watermark_outlined,
                         color: colorScheme.primary,
                         size: 24,
                       ),
@@ -604,7 +608,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                           currentImageUrl.isNotEmpty)
                                       ? Colors.transparent
                                       : colorScheme.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(16), 
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: brandImageBytes != null
                                     ? ClipRRect(
@@ -819,9 +823,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                 },
                           child: Text(isLoading
                               ? (isEditing ? 'Guardando...' : 'Creando...')
-                              : (isEditing
-                                  ? 'Guardar'
-                                  : 'Crear')),
+                              : (isEditing ? 'Guardar' : 'Crear')),
                         ),
                       ),
                     ],
@@ -1018,19 +1020,20 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
-            runSpacing: 8, 
+            runSpacing: 8,
             children: [
               ..._attributes.entries.map((entry) {
                 final value = entry.value;
-                final String displayValue = value is List 
-                    ? value.join(', ') 
-                    : value?.toString() ?? '';
-                
+                final String displayValue =
+                    value is List ? value.join(', ') : value?.toString() ?? '';
+
                 return InkWell(
-                  onTap: !isVerified ? () => _showAddAttributeDialog(
-                    editKey: entry.key,
-                    editValue: entry.value,
-                  ) : null,
+                  onTap: !isVerified
+                      ? () => _showAddAttributeDialog(
+                            editKey: entry.key,
+                            editValue: entry.value,
+                          )
+                      : null,
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
                     decoration: BoxDecoration(
@@ -1148,21 +1151,22 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   void _showAddAttributeDialog({String? editKey, dynamic editValue}) {
     final keyController = TextEditingController(text: editKey);
     final formKey = GlobalKey<FormState>();
-    
+
     // Lista de variantes con controladores editables
     final List<TextEditingController> variantControllers = [];
-    
+
     // Inicializar controladores con valores existentes
     if (editValue is List) {
       for (var variant in editValue) {
         if (variant.toString().isNotEmpty) {
-          variantControllers.add(TextEditingController(text: variant.toString()));
+          variantControllers
+              .add(TextEditingController(text: variant.toString()));
         }
       }
     } else if (editValue != null && editValue.toString().isNotEmpty) {
       variantControllers.add(TextEditingController(text: editValue.toString()));
     }
-    
+
     // Para nuevos atributos, las variantes son opcionales, no agregar campo inicial
 
     showDialog(
@@ -1170,7 +1174,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
         final isEditing = editKey != null;
-        
+
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -1179,7 +1183,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+                      color:
+                          colorScheme.primaryContainer.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1190,7 +1195,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(isEditing ? 'Editar atributo' : 'Nuevo atributo'),
+                    child:
+                        Text(isEditing ? 'Editar atributo' : 'Nuevo atributo'),
                   ),
                   if (isEditing)
                     IconButton(
@@ -1230,14 +1236,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Ingrese el nombre del atributo';
                           }
-                          if (!isEditing && _attributes.containsKey(value.trim())) {
+                          if (!isEditing &&
+                              _attributes.containsKey(value.trim())) {
                             return 'Este atributo ya existe';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Lista de variantes editables
                       Row(
                         children: [
@@ -1254,40 +1261,46 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             '(Opcional)',
                             style: TextStyle(
                               fontSize: 11,
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                              color: colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.6),
                               fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      
+
                       // Items de variantes en lista
                       Container(
                         constraints: const BoxConstraints(maxHeight: 250),
                         child: SingleChildScrollView(
                           child: Column(
                             children: [
-                              ...List.generate(variantControllers.length, (index) {
+                              ...List.generate(variantControllers.length,
+                                  (index) {
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: colorScheme.outline.withValues(alpha: 0.3),
+                                        color: colorScheme.outline
+                                            .withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Row(
                                       children: [
                                         Expanded(
                                           child: TextField(
-                                            controller: variantControllers[index],
-                                            textCapitalization: TextCapitalization.sentences,
+                                            controller:
+                                                variantControllers[index],
+                                            textCapitalization:
+                                                TextCapitalization.sentences,
                                             decoration: InputDecoration(
                                               hintText: 'Escribe la variante',
                                               border: InputBorder.none,
-                                              contentPadding: const EdgeInsets.symmetric(
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
                                                 horizontal: 12,
                                                 vertical: 12,
                                               ),
@@ -1303,8 +1316,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                             ),
                                             onPressed: () {
                                               setDialogState(() {
-                                                variantControllers[index].dispose();
-                                                variantControllers.removeAt(index);
+                                                variantControllers[index]
+                                                    .dispose();
+                                                variantControllers
+                                                    .removeAt(index);
                                               });
                                             },
                                             tooltip: 'Eliminar',
@@ -1319,7 +1334,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
+
                       // Botón agregar variante
                       InkWell(
                         onTap: () {
@@ -1404,7 +1419,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     if (!formKey.currentState!.validate()) return;
 
     final key = keyController.text.trim();
-    
+
     // Extraer valores de los controladores y filtrar vacíos
     final variants = variantControllers
         .map((controller) => controller.text.trim())
@@ -1416,7 +1431,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       if (isEditing && oldKey != null && oldKey != key) {
         _attributes.remove(oldKey);
       }
-      
+
       // Guardar: si hay variantes, guardar como string (1) o lista (2+), sino guardar como lista vacía
       if (variants.isEmpty) {
         _attributes[key] = [];
@@ -1426,7 +1441,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         _attributes[key] = variants.toList();
       }
     });
-    
+
     // Limpiar controladores
     for (var controller in variantControllers) {
       controller.dispose();
@@ -1931,12 +1946,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (_stockEnabled) ...[
           const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.only(left: 16 ),
+            padding: const EdgeInsets.only(left: 16),
             child: _buildQuantityField(),
           ),
           const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.only(left: 16 ),
+            padding: const EdgeInsets.only(left: 16),
             child: _buildAlertStockField(),
           ),
         ],
@@ -1975,7 +1990,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       controller: _alertStockController,
       decoration: InputDecoration(
         labelText: 'Alerta de stock bajo',
-        hintText: '5', 
+        hintText: '5',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -2161,28 +2176,28 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           decoration: InputDecoration(
             labelText: 'Marca',
             hintText: 'Buscar o seleccionar marca',
-            prefixIcon: _selectedBrandImage != null &&
-                    _selectedBrandImage!.isNotEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: NetworkImage(_selectedBrandImage!),
-                          fit: BoxFit.cover,
+            prefixIcon:
+                _selectedBrandImage != null && _selectedBrandImage!.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                              image: NetworkImage(_selectedBrandImage!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
+                      )
+                    : Icon(
+                        isVerified
+                            ? Icons.verified
+                            : Icons.branding_watermark_outlined,
+                        color: isVerified ? Colors.blue : null,
                       ),
-                    ),
-                  )
-                : Icon(
-                    isVerified
-                        ? Icons.verified
-                        : Icons.branding_watermark_outlined,
-                    color: isVerified ? Colors.blue : null,
-                  ),
             suffixIcon: Icon(
               isVerified ? Icons.lock : Icons.search,
             ),

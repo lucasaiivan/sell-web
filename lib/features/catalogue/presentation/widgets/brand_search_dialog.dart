@@ -41,15 +41,16 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
   List<Mark> _brands = [];
   bool _isLoading = false;
   bool _hasSearched = false;
-  bool _isTyping = false; // Indica si el usuario está escribiendo (periodo de debounce)
-  String _lastSearchQuery = ''; 
-  
+  bool _isTyping =
+      false; // Indica si el usuario está escribiendo (periodo de debounce)
+  String _lastSearchQuery = '';
 
   @override
   void initState() {
-    super.initState(); 
-    _lastSearchQuery = widget.currentBrandName.trim(); // Inicializar con el nombre actual de la marca
-    _searchController.addListener(_onSearchChanged); 
+    super.initState();
+    _lastSearchQuery = widget.currentBrandName
+        .trim(); // Inicializar con el nombre actual de la marca
+    _searchController.addListener(_onSearchChanged);
     // No cargar marcas al inicio
   }
 
@@ -133,7 +134,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
       // 1. El widget sigue montado
       // 2. El query que buscamos sigue siendo el que está en el controlador
       // 3. El query que buscamos es el mismo que inició esta ejecución (evita race conditions)
-      if (mounted && 
+      if (mounted &&
           _searchController.text.trim() == searchStartedWith &&
           query == searchStartedWith) {
         setState(() {
@@ -225,7 +226,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // icon : búsqueda 
+            // icon : búsqueda
             Icon(
               Icons.cloud_queue_sharp,
               size: 64,
@@ -250,15 +251,16 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
                             ),
                           )
                         : IconButton(
-                            icon: const Icon(Icons.backspace_outlined, size: 20),
+                            icon:
+                                const Icon(Icons.backspace_outlined, size: 20),
                             onPressed: () {
                               _searchController.clear();
                             },
                           )
                     : null,
                 filled: true,
-                fillColor: colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.5),
+                fillColor:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -295,11 +297,13 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
                                 child: SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               )
                             : IconButton(
-                                icon: const Icon(Icons.backspace_outlined, size: 20),
+                                icon: const Icon(Icons.backspace_outlined,
+                                    size: 20),
                                 onPressed: () {
                                   _searchController.clear();
                                 },
@@ -396,7 +400,7 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final brand = _brands[index];
-          final isSelected = widget.currentBrandId == brand.id; 
+          final isSelected = widget.currentBrandId == brand.id;
 
           // Capitalizar nombre para mostrar (sin modificar el valor real)
           final displayName = brand.name.isNotEmpty
@@ -456,18 +460,18 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: colorScheme.primary,
-                    ),
-                    tooltip: 'Editar marca',
-                    onPressed: () {
-                      Navigator.pop(context);
-                      widget.onEditBrand?.call(brand);
-                    },
+                IconButton(
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    size: 20,
+                    color: colorScheme.primary,
                   ),
+                  tooltip: 'Editar marca',
+                  onPressed: () {
+                    Navigator.pop(context);
+                    widget.onEditBrand?.call(brand);
+                  },
+                ),
                 if (isSelected)
                   Icon(
                     Icons.check_circle,

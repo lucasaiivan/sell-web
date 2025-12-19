@@ -132,4 +132,3 @@ class IdGenerator {
     return date1.compareTo(date2);
   }
 }
-

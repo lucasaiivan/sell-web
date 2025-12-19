@@ -343,8 +343,9 @@ class SellUsecases {
       throw Exception('El ticket debe contener al menos un producto');
     }
 
-    final ticketId =
-        ticket.id.trim().isEmpty ? IdGenerator.generateTransactionId() : ticket.id;
+    final ticketId = ticket.id.trim().isEmpty
+        ? IdGenerator.generateTransactionId()
+        : ticket.id;
 
     // ✅ FIX: Usar getTotalPrice que incluye descuento (monto real cobrado)
     // Si priceTotal ya está establecido correctamente, usarlo; de lo contrario, calcularlo

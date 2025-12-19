@@ -265,7 +265,8 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
             .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
       );
 
-      final resultsByName = snapshotByName.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+      final resultsByName =
+          snapshotByName.docs.map((doc) => Mark.fromMap(doc.data())).toList();
 
       // Si encontramos resultados en 'name', retornamos
       if (resultsByName.isNotEmpty) {
@@ -279,7 +280,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
             .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
       );
 
-      return snapshotByDescription.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+      return snapshotByDescription.docs
+          .map((doc) => Mark.fromMap(doc.data()))
+          .toList();
     } catch (e) {
       throw Exception('Error al buscar marcas: $e');
     }

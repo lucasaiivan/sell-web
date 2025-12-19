@@ -431,7 +431,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             children: product.attributes.entries.map((entry) {
               final value = entry.value;
               String displayValue = '';
-              
+
               if (value is List) {
                 if (value.isNotEmpty) {
                   displayValue = ': ${value.join(", ")}';

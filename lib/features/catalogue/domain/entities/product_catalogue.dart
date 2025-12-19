@@ -22,9 +22,9 @@ class ProductCatalogue {
   final String status;
 
   // Variables del catálogo de la cuenta
-  final bool local;
-  final DateTime creation;
-  final DateTime upgrade;
+  final bool local; // Indica si el producto es un SKU interno del comercio
+  final DateTime creation; // Fecha de creación 
+  final DateTime upgrade; // Fecha de última actualización
   final bool favorite;
   final String category;
   final String provider;
@@ -187,16 +187,18 @@ class ProductCatalogue {
 
   /// Indica si tiene margen de beneficio positivo
   bool get hasProfitMargin => salePrice > purchasePrice;
-
-  /// Obtiene la fecha de última actualización del producto en el catálogo de la cuenta.
-  /// Retorna upgrade si es diferente de creation (hubo actualizaciones),
-  /// de lo contrario retorna creation (fecha de creación en el catálogo).
+ 
+  /// Retorna la fecha de última actualización del producto
+  ///
+  /// Valida si existe una actualización real comparando `upgrade` con `creation`.
+  /// Si `upgrade` es posterior a `creation`, significa que hubo una modificación.
+  /// De lo contrario, retorna `creation` (producto nunca actualizado).
   DateTime get lastUpdateDate {
-    // Si upgrade es diferente de creation, significa que hubo actualizaciones
-    if (upgrade.millisecondsSinceEpoch != creation.millisecondsSinceEpoch) {
+    // Validar si upgrade es posterior a creation (actualización real)
+    if (upgrade.isAfter(creation)) {
       return upgrade;
     }
-    // Si son iguales, retornar creation
+    // Si no hay actualización válida, retornar fecha de creación
     return creation;
   }
 

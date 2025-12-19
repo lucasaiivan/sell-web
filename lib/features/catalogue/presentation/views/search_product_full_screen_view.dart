@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/features/catalogue/presentation/widgets/product_edit_catalogue_view.dart';
+import 'package:sellweb/features/catalogue/presentation/views/product_edit_catalogue_view.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/core/utils/helpers/barcode_validator.dart';
 

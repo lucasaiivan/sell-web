@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/services.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/cash_register/presentation/dialogs/cash_flow_dialog.dart';
@@ -8,7 +9,6 @@ import 'package:sellweb/features/sales/presentation/dialogs/cash_register_close_
 import 'package:sellweb/features/sales/presentation/dialogs/cash_register_management_dialog.dart';
 import 'package:web/web.dart' as html;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -37,6 +37,8 @@ class _SalesPageState extends State<SalesPage> {
   bool _isDialogOpen = false;
   BuildContext? _manualDialogContext;
   late final _ScannerInputController _scannerInputController;
+  int? _lastHomePageIndex;
+  bool _skipExitDialogOnce = false;
 
   /// Verifica si hay algún diálogo o modal abierto sobre la página actual
   /// Retorna true si la página de ventas NO es la ruta actual (hay algo encima)
@@ -78,6 +80,18 @@ class _SalesPageState extends State<SalesPage> {
     // Detectar si esta página está visible usando HomeProvider
     final homeProvider = Provider.of<HomeProvider>(context, listen: true);
     final shouldBeActive = homeProvider.isSellPage;
+
+    final currentIndex = homeProvider.currentPageIndex;
+    // Detectar si acabamos de volver a la página de ventas desde otra pestaña
+    if (_lastHomePageIndex != null &&
+        _lastHomePageIndex != 0 &&
+        currentIndex == 0) {
+      _skipExitDialogOnce = true; // Evitar diálogo al volver desde otra pestaña
+    } else if (currentIndex == 0 && _lastHomePageIndex == 0) {
+      // Estamos consistentemente en ventas, asegurar que el diálogo puede aparecer
+      _skipExitDialogOnce = false;
+    }
+    _lastHomePageIndex = currentIndex;
 
     // Activar/desactivar listener según visibilidad de la página
     if (shouldBeActive && !_isListenerActive) {
@@ -139,56 +153,84 @@ class _SalesPageState extends State<SalesPage> {
         // inicialiar [initializeFromPersistence]
 
         // --- pantalla principal de venta ---
-        return Scaffold(
-          appBar: appbar(buildContext: context, provider: sellProvider),
-          drawer: const AppDrawer(),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              return Row(
-                children: [
-                  Flexible(
-                    child: Stack(
-                      children: [
-                        // -----------------------------
-                        /// scan bar (KeyboardListener) se utiliza para detectar y responder a eventos del Escaner de codigo de barra
-                        // -----------------------------
-                        /// body : cuerpo de la página de venta
-                        /// ----------------------------
-                        Focus(
-                          focusNode: _focusNode,
-                          autofocus: true,
-                          child: body(provider: sellProvider),
-                        ),
-                        // floatingActionButtonBody : boton flotante para agregar productos al ticket
-                        Positioned(
-                          bottom: 16,
-                          right: 16,
-                          child: floatingActionButtonBody(
-                              sellProvider: sellProvider),
-                        ),
-                      ],
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+
+            // Evitar mostrar el diálogo inmediatamente al volver desde otra pestaña
+            if (_skipExitDialogOnce) {
+              _skipExitDialogOnce = false;
+              return;
+            }
+
+            // Mostrar diálogo de confirmación para salir de la app
+            final shouldExit = await showConfirmationDialog(
+              context: context,
+              title: 'Salir de la aplicación',
+              message: '¿Estás seguro que deseas salir?',
+              confirmText: 'Salir',
+              cancelText: 'Cancelar',
+              icon: Icons.exit_to_app_rounded,
+              isDestructive: true,
+            );
+
+            // Si confirma, cerrar la aplicación
+            if (shouldExit == true) {
+              SystemNavigator.pop();
+            }
+          },
+          child: Scaffold(
+            appBar: appbar(buildContext: context, provider: sellProvider),
+            drawer: const AppDrawer(),
+            body: LayoutBuilder(
+              builder: (context, constraints) {
+                return Row(
+                  children: [
+                    Flexible(
+                      child: Stack(
+                        children: [
+                          // -----------------------------
+                          /// scan bar (KeyboardListener) se utiliza para detectar y responder a eventos del Escaner de codigo de barra
+                          // -----------------------------
+                          /// body : cuerpo de la página de venta
+                          /// ----------------------------
+                          Focus(
+                            focusNode: _focusNode,
+                            autofocus: true,
+                            child: body(provider: sellProvider),
+                          ),
+                          // floatingActionButtonBody : boton flotante para agregar productos al ticket
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: floatingActionButtonBody(
+                                sellProvider: sellProvider),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                  if (!isMobile(context) &&
-                          sellProvider.ticket.getProductsQuantity() != 0 ||
-                      (isMobile(context) && sellProvider.ticketView))
-                    // drawerTicket : información del ticket
-                    TicketDrawerWidget(
-                      showConfirmedPurchase:
-                          _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                      onEditCashAmount: () =>
-                          dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                      onConfirmSale: () =>
-                          _confirmSale(sellProvider), // para confirmar la venta
-                      onCloseTicket: _showConfirmedPurchase
-                          ? _onConfirmationComplete // Callback especial cuando está en modo confirmación
-                          : () => sellProvider.setTicketView(
-                              false), // para cerrar el ticket normalmente
-                    ),
-                ],
-              );
-            },
+                    // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
+                    if (!isMobile(context) &&
+                            sellProvider.ticket.getProductsQuantity() != 0 ||
+                        (isMobile(context) && sellProvider.ticketView))
+                      // drawerTicket : información del ticket
+                      TicketDrawerWidget(
+                        showConfirmedPurchase:
+                            _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                        onEditCashAmount: () =>
+                            dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                        onConfirmSale: () => _confirmSale(
+                            sellProvider), // para confirmar la venta
+                        onCloseTicket: _showConfirmedPurchase
+                            ? _onConfirmationComplete // Callback especial cuando está en modo confirmación
+                            : () => sellProvider.setTicketView(
+                                false), // para cerrar el ticket normalmente
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         );
       },

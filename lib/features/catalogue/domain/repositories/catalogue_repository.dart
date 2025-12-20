@@ -185,6 +185,15 @@ abstract class CatalogueRepository {
     required String name,
   });
 
+  /// Elimina una categoría
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [categoryId] - ID de la categoría a eliminar
+  Future<void> deleteCategory({
+    required String accountId,
+    required String categoryId,
+  });
+
   // ═══════════════════════════════════════════════════════════════════════════
   // GESTIÓN DE PROVEEDORES
   // ═══════════════════════════════════════════════════════════════════════════
@@ -215,5 +224,14 @@ abstract class CatalogueRepository {
     required String name,
     String? phone,
     String? email,
+  });
+
+  /// Elimina un proveedor
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [providerId] - ID del proveedor a eliminar
+  Future<void> deleteProvider({
+    required String accountId,
+    required String providerId,
   });
 }

@@ -6,6 +6,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dar
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/core/presentation/widgets/connectivity_indicator.dart';
 import '../views/product_catalogue_view.dart';
@@ -13,7 +14,9 @@ import '../views/product_edit_catalogue_view.dart';
 import '../widgets/catalogue_metrics_bar.dart';
 import '../views/search_product_full_screen_view.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
-import 'package:sellweb/features/catalogue/domain/entities/provider.dart' as catalogue_provider_entity;
+import 'package:sellweb/features/catalogue/domain/entities/catalogue_metric.dart';
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
+    as catalogue_provider_entity;
 import '../views/dialogs/category_dialog.dart';
 import '../views/dialogs/provider_dialog.dart';
 
@@ -62,11 +65,22 @@ class _CataloguePageState extends State<CataloguePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      drawer: const AppDrawer(),
-      body: _buildBody(context),
-      floatingActionButton: _buildFloatingActionButton(context),
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        // Navegar de vuelta a la página de ventas
+        homeProvider.navigateToSell();
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(context),
+        drawer: const AppDrawer(),
+        body: _buildBody(context),
+        floatingActionButton: _buildFloatingActionButton(context),
+      ),
     );
   }
 
@@ -112,26 +126,55 @@ class _CataloguePageState extends State<CataloguePage>
                   });
                 }
 
+                // Determinar hint text según el tab activo
+                String hintText;
+                switch (_tabController.index) {
+                  case 0:
+                    hintText = 'Buscar producto';
+                    break;
+                  case 1:
+                    hintText = 'Buscar categoría';
+                    break;
+                  case 2:
+                    hintText = 'Buscar proveedor';
+                    break;
+                  default:
+                    hintText = 'Buscar';
+                }
+
                 return ProductSearchField(
                   controller: _searchController,
                   focusNode: _searchFocusNode,
-                  hintText: 'Buscar producto',
+                  hintText: hintText,
                   products: catalogueProvider.products,
                   searchResultsCount: (catalogueProvider.isFiltering)
                       ? catalogueProvider.visibleProducts.length
                       : null,
                   onChanged: (query) {
-                    // Si el usuario escribe, limpiar filtros de categoría/proveedor
-                    if (catalogueProvider.hasCategoryFilter ||
-                        catalogueProvider.hasProviderFilter) {
-                      catalogueProvider.clearCategoryProviderFilter();
+                    // Comportamiento según el tab activo
+                    if (_tabController.index == 0) {
+                      // Tab de productos
+                      // Si el usuario escribe, limpiar filtros de categoría/proveedor
+                      if (catalogueProvider.hasCategoryFilter ||
+                          catalogueProvider.hasProviderFilter) {
+                        catalogueProvider.clearCategoryProviderFilter();
+                      }
+                      // Buscar productos según el query con debouncing
+                      catalogueProvider.searchProductsWithDebounce(
+                          query: query);
                     }
-                    // Buscar productos según el query con debouncing
-                    catalogueProvider.searchProductsWithDebounce(query: query);
+                    // Para categorías y proveedores, el filtrado se maneja en setState
+                    else {
+                      setState(() {}); // Rebuild para filtrar listas
+                    }
                   },
                   onClear: () {
-                    // Limpiar todos los filtros
-                    catalogueProvider.clearAllFilters();
+                    if (_tabController.index == 0) {
+                      // Limpiar todos los filtros en tab de productos
+                      catalogueProvider.clearAllFilters();
+                    }
+                    // En otros tabs, solo limpia el controller
+                    setState(() {}); // Rebuild para mostrar lista completa
                   },
                 );
               },
@@ -139,8 +182,9 @@ class _CataloguePageState extends State<CataloguePage>
           ),
           const SizedBox(width: 12),
           // Indicador de conectividad
+          // Indicador de conectividad
           const ConnectivityIndicator(),
-          // Filtros
+          // Filtros (Visibles en todos los tabs)
           Consumer<CatalogueProvider>(
             builder: (context, catalogueProvider, _) {
               return PopupMenuButton<CatalogueFilter>(
@@ -150,31 +194,42 @@ class _CataloguePageState extends State<CataloguePage>
                 position: PopupMenuPosition.under,
                 offset: const Offset(0, 8),
                 initialValue: catalogueProvider.activeFilter,
-                onSelected: catalogueProvider.applyFilter,
+                onSelected: (filter) {
+                  catalogueProvider.applyFilter(filter);
+                  // Si estamos en otro tab y aplicamos un filtro (que no sea 'none'),
+                  // cambiar automáticamente al tab de productos
+                  if (_tabController.index != 0 &&
+                      filter != CatalogueFilter.none) {
+                    _tabController.animateTo(0);
+                  }
+                },
                 itemBuilder: (context) => _buildFilterMenuEntries(
                   context,
                   catalogueProvider.activeFilter,
                 ),
                 child: IgnorePointer(
-                  child: AppBarButtonCircle(
-                    icon: catalogueProvider.hasActiveFilter
-                        ? Icons.filter_alt_off_rounded
-                        : Icons.filter_alt_rounded,
-                    tooltip: catalogueProvider.hasActiveFilter
-                        ? 'Quitar filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
-                        : 'Filtrar productos',
-                    onPressed: () {},
+                  child: Badge(
+                    isLabelVisible: catalogueProvider.hasActiveFilter,
+                    alignment: const Alignment(0.4, -0.4),
+                    child: AppBarButtonCircle(
+                      icon: Icons.filter_alt_rounded,
+                      tooltip: catalogueProvider.hasActiveFilter
+                          ? 'Quitar filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
+                          : 'Filtrar productos',
+                      onPressed: () {},
+                    ),
                   ),
                 ),
               );
             },
           ),
-          // Botón para alternar vista
-          AppBarButtonCircle(
-            icon: _isGridView ? Icons.view_list : Icons.grid_view,
-            tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
-            onPressed: () => setState(() => _isGridView = !_isGridView),
-          ),
+          // Botón para alternar vista (solo visible en tab de productos)
+          if (_tabController.index == 0)
+            AppBarButtonCircle(
+              icon: _isGridView ? Icons.view_list : Icons.grid_view,
+              tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
+              onPressed: () => setState(() => _isGridView = !_isGridView),
+            ),
         ],
       ),
       bottom: TabBar(
@@ -202,27 +257,30 @@ class _CataloguePageState extends State<CataloguePage>
 
   /// Tab de productos
   Widget _buildProductsTab() {
-    return Consumer<CatalogueProvider>(
-      builder: (context, catalogueProvider, child) {
+    return Selector<CatalogueProvider, _ProductsTabState>(
+      selector: (_, provider) => _ProductsTabState(
+        isLoading: provider.isLoading,
+        visibleProducts: provider.visibleProducts,
+        currentSearchQuery: provider.currentSearchQuery,
+        hasActiveFilter: provider.hasActiveFilter,
+        activeFilter: provider.activeFilter,
+        catalogueMetrics: provider.catalogueMetrics,
+      ),
+      builder: (context, state, child) {
         // Estado de carga
-        if (catalogueProvider.isLoading) {
+        if (state.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Determinar qué lista mostrar: filtrada o completa
-        final displayProducts = catalogueProvider.visibleProducts;
-        final hasSearch = catalogueProvider.currentSearchQuery.isNotEmpty;
-        final hasFilter = catalogueProvider.hasActiveFilter;
-
         // Si no hay productos para mostrar, devolver directamente el estado vacío
         // sin la barra de métricas
-        if (displayProducts.isEmpty) {
+        if (state.visibleProducts.isEmpty) {
           return _buildProductsContent(
             context,
-            displayProducts,
-            hasSearch,
-            hasFilter,
-            catalogueProvider.activeFilter,
+            state.visibleProducts,
+            state.currentSearchQuery.isNotEmpty,
+            state.hasActiveFilter,
+            state.activeFilter,
           );
         }
 
@@ -231,16 +289,16 @@ class _CataloguePageState extends State<CataloguePage>
           children: [
             // Barra de métricas (se ajusta según el filtro)
             CatalogueMetricsBar(
-              metrics: catalogueProvider.catalogueMetrics,
+              metrics: state.catalogueMetrics,
             ),
             // Contenido principal (Lista)
             Expanded(
               child: _buildProductsContent(
                 context,
-                displayProducts,
-                hasSearch,
-                hasFilter,
-                catalogueProvider.activeFilter,
+                state.visibleProducts,
+                state.currentSearchQuery.isNotEmpty,
+                state.hasActiveFilter,
+                state.activeFilter,
               ),
             ),
           ],
@@ -278,14 +336,28 @@ class _CataloguePageState extends State<CataloguePage>
         Provider.of<CatalogueProvider>(context, listen: false);
     final salesProvider = Provider.of<SalesProvider>(context, listen: false);
 
-    return CategoriesListView(
-      accountId: salesProvider.profileAccountSelected.id,
-      onCategoryTap: (categoryId, categoryName) {
-        // Mostrar el nombre de la categoría en el buscador
-        _searchController.text = categoryName;
-        // Cambiar al tab de productos y filtrar
-        _tabController.animateTo(0);
-        catalogueProvider.filterByCategory(categoryId);
+    return Consumer<CatalogueProvider>(
+      builder: (context, provider, _) {
+        // Filtrar categorías según el texto del buscador
+        final searchQuery = _searchController.text.toLowerCase().trim();
+        final categories = searchQuery.isEmpty
+            ? provider.categories
+            : provider.categories
+                .where((category) =>
+                    category.name.toLowerCase().contains(searchQuery))
+                .toList();
+
+        return CategoriesListView(
+          accountId: salesProvider.profileAccountSelected.id,
+          categories: categories,
+          onCategoryTap: (categoryId, categoryName) {
+            // Mostrar el nombre de la categoría en el buscador
+            _searchController.text = categoryName;
+            // Cambiar al tab de productos y filtrar
+            _tabController.animateTo(0);
+            catalogueProvider.filterByCategory(categoryId);
+          },
+        );
       },
     );
   }
@@ -296,14 +368,27 @@ class _CataloguePageState extends State<CataloguePage>
         Provider.of<CatalogueProvider>(context, listen: false);
     final salesProvider = Provider.of<SalesProvider>(context, listen: false);
 
-    return ProvidersListView(
-      accountId: salesProvider.profileAccountSelected.id,
-      onProviderTap: (providerId, providerName) {
-        // Mostrar el nombre del proveedor en el buscador
-        _searchController.text = providerName;
-        // Cambiar al tab de productos y filtrar
-        _tabController.animateTo(0);
-        catalogueProvider.filterByProvider(providerId);
+    return Consumer<CatalogueProvider>(
+      builder: (context, provider, _) {
+        // Filtrar proveedores según el texto del buscador
+        final searchQuery = _searchController.text.toLowerCase().trim();
+        final providers = searchQuery.isEmpty
+            ? provider.providers
+            : provider.providers
+                .where((prov) => prov.name.toLowerCase().contains(searchQuery))
+                .toList();
+
+        return ProvidersListView(
+          accountId: salesProvider.profileAccountSelected.id,
+          providers: providers,
+          onProviderTap: (providerId, providerName) {
+            // Mostrar el nombre del proveedor en el buscador
+            _searchController.text = providerName;
+            // Cambiar al tab de productos y filtrar
+            _tabController.animateTo(0);
+            catalogueProvider.filterByProvider(providerId);
+          },
+        );
       },
     );
   }
@@ -482,7 +567,7 @@ class _CataloguePageState extends State<CataloguePage>
             onPressed: () =>
                 _handleFabAction(context, catalogueProvider, salesProvider),
             icon: const Icon(Icons.add),
-            label: Text(_getFabLabel()),
+            label: const Text('Agregar'),
           );
   }
 
@@ -519,20 +604,6 @@ class _CataloguePageState extends State<CataloguePage>
           accountId: salesProvider.profileAccountSelected.id,
         );
         break;
-    }
-  }
-
-  /// Obtiene la etiqueta del FAB según la vista activa
-  String _getFabLabel() {
-    switch (_tabController.index) {
-      case 0:
-        return 'Agregar';
-      case 1:
-        return 'Categoría';
-      case 2:
-        return 'Proveedor';
-      default:
-        return 'Agregar';
     }
   }
 
@@ -746,7 +817,7 @@ class _ProductListTile extends StatelessWidget {
                 if (product.favorite) const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    product.description,
+                    TextFormatter.capitalizeString(product.description),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -768,7 +839,7 @@ class _ProductListTile extends StatelessWidget {
                     ),
                   if (product.isVerified) const SizedBox(width: 4),
                   Text(
-                    product.nameMark,
+                    TextFormatter.capitalizeString(product.nameMark),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: (product.isVerified)
                           ? Colors.blue
@@ -787,15 +858,37 @@ class _ProductListTile extends StatelessWidget {
                     ),
                   ],
                 ],
-                if (product.category.isNotEmpty)
+                if (product.category.isNotEmpty) ...[
                   Text(
-                    product.nameCategory,
+                    TextFormatter.capitalizeString(product.nameCategory),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
+                ],
+                if (product.nameProvider.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text(
+                      '•',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      TextFormatter.capitalizeString(product.nameProvider),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 4),
@@ -811,7 +904,8 @@ class _ProductListTile extends StatelessWidget {
             const SizedBox(height: 4),
             // Fecha de actualización
             Text(
-              DateFormatter.getSimplePublicationDate(product.lastUpdateDate, DateTime.now()),
+              DateFormatter.getSimplePublicationDate(
+                  product.lastUpdateDate, DateTime.now()),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
                 fontSize: 10,
@@ -897,7 +991,7 @@ class _ProductListTile extends StatelessWidget {
                 if (product.favorite) const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    product.description,
+                    TextFormatter.capitalizeString(product.description),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -963,6 +1057,16 @@ class _ProductListTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Mostrar "Sin datos" si no hay categoría ni proveedor
+            if (product.category.isEmpty && product.nameProvider.isEmpty)
+              Text(
+                'Sin datos',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+
             // Categoría
             if (product.category.isNotEmpty)
               Row(
@@ -975,7 +1079,7 @@ class _ProductListTile extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      product.nameCategory,
+                      TextFormatter.capitalizeString(product.nameCategory),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
@@ -986,7 +1090,9 @@ class _ProductListTile extends StatelessWidget {
                   ),
                 ],
               ),
-            if (product.category.isNotEmpty) const SizedBox(height: 6),
+            if (product.category.isNotEmpty && product.nameProvider.isNotEmpty)
+              const SizedBox(height: 6),
+
             // Proveedor
             if (product.nameProvider.isNotEmpty)
               Row(
@@ -999,7 +1105,7 @@ class _ProductListTile extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      product.nameProvider,
+                      TextFormatter.capitalizeString(product.nameProvider),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
@@ -1010,7 +1116,10 @@ class _ProductListTile extends StatelessWidget {
                   ),
                 ],
               ),
-            if (product.nameProvider.isNotEmpty) const SizedBox(height: 6),
+            if ((product.category.isNotEmpty ||
+                    product.nameProvider.isNotEmpty) &&
+                product.stock)
+              const SizedBox(height: 6),
             // Stock
             if (product.stock)
               _buildStockIndicator(
@@ -1207,7 +1316,7 @@ class _ProductCatalogueCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          product.nameCategory,
+                          TextFormatter.capitalizeString(product.nameCategory),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white,
                             fontSize: 10,
@@ -1227,8 +1336,15 @@ class _ProductCatalogueCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          color: Colors.amber.shade500,
+                          color: Colors.amber.shade600.withValues(alpha: 0.95),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Icon(
                           Icons.star_rounded,
@@ -1291,7 +1407,7 @@ class _ProductCatalogueCard extends StatelessWidget {
                         if (product.isVerified) const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            product.nameMark,
+                            TextFormatter.capitalizeString(product.nameMark),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: product.isVerified
@@ -1308,7 +1424,7 @@ class _ProductCatalogueCard extends StatelessWidget {
                   if (product.nameMark.isNotEmpty) const SizedBox(height: 8),
                   // Descripción con altura dinámica
                   Text(
-                    product.description,
+                    TextFormatter.capitalizeString(product.description),
                     style: theme.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.bold),
                     maxLines: 2,
@@ -1466,22 +1582,26 @@ class _ProductCatalogueCard extends StatelessWidget {
 class CategoriesListView extends StatefulWidget {
   final String accountId;
   final Function(String categoryId, String categoryName)? onCategoryTap;
+  final List<Category>? categories; // Lista filtrada opcional
 
   const CategoriesListView({
     super.key,
     required this.accountId,
     this.onCategoryTap,
+    this.categories, // Agregar parámetro opcional
   });
 
   @override
   State<CategoriesListView> createState() => _CategoriesListViewState();
 }
+
 class _CategoriesListViewState extends State<CategoriesListView> {
   @override
   Widget build(BuildContext context) {
     return Consumer<CatalogueProvider>(
       builder: (context, catalogueProvider, _) {
-        final categories = catalogueProvider.categories;
+        // Usar lista filtrada si se proporciona, sino usar la del provider
+        final categories = widget.categories ?? catalogueProvider.categories;
 
         if (catalogueProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -1500,8 +1620,11 @@ class _CategoriesListViewState extends State<CategoriesListView> {
                   const Divider(height: 0, thickness: 0.4),
               itemBuilder: (context, index) {
                 final category = categories[index];
+                final productCount =
+                    catalogueProvider.getProductCountByCategory(category.id);
                 return _buildCategoryTile(
                   category: category,
+                  productCount: productCount,
                   onTap: () {
                     if (widget.onCategoryTap != null) {
                       widget.onCategoryTap!(category.id, category.name);
@@ -1579,6 +1702,7 @@ class _CategoriesListViewState extends State<CategoriesListView> {
 
   Widget _buildCategoryTile({
     required Category category,
+    required int productCount,
     VoidCallback? onTap,
     VoidCallback? onEdit,
   }) {
@@ -1613,9 +1737,26 @@ class _CategoriesListViewState extends State<CategoriesListView> {
             // Nombre
             Expanded(
               child: Text(
-                category.name,
+                TextFormatter.capitalizeString(category.name),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Contador de productos
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                productCount.toString(),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -1630,22 +1771,27 @@ class _CategoriesListViewState extends State<CategoriesListView> {
 class ProvidersListView extends StatefulWidget {
   final String accountId;
   final Function(String providerId, String providerName)? onProviderTap;
+  final List<catalogue_provider_entity.Provider>?
+      providers; // Lista filtrada opcional
 
   const ProvidersListView({
     super.key,
     required this.accountId,
     this.onProviderTap,
+    this.providers, // Agregar parámetro opcional
   });
 
   @override
   State<ProvidersListView> createState() => _ProvidersListViewState();
 }
+
 class _ProvidersListViewState extends State<ProvidersListView> {
   @override
   Widget build(BuildContext context) {
     return Consumer<CatalogueProvider>(
       builder: (context, catalogueProvider, _) {
-        final providers = catalogueProvider.providers;
+        // Usar lista filtrada si se proporciona, sino usar la del provider
+        final providers = widget.providers ?? catalogueProvider.providers;
 
         if (catalogueProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -1664,8 +1810,11 @@ class _ProvidersListViewState extends State<ProvidersListView> {
                   const Divider(height: 0, thickness: 0.4),
               itemBuilder: (context, index) {
                 final provider = providers[index];
+                final productCount =
+                    catalogueProvider.getProductCountByProvider(provider.id);
                 return _buildProviderTile(
                   provider: provider,
+                  productCount: productCount,
                   onTap: () {
                     if (widget.onProviderTap != null) {
                       widget.onProviderTap!(provider.id, provider.name);
@@ -1744,6 +1893,7 @@ class _ProvidersListViewState extends State<ProvidersListView> {
 
   Widget _buildProviderTile({
     required catalogue_provider_entity.Provider provider,
+    required int productCount,
     VoidCallback? onTap,
     VoidCallback? onEdit,
   }) {
@@ -1781,7 +1931,7 @@ class _ProvidersListViewState extends State<ProvidersListView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    provider.name,
+                    TextFormatter.capitalizeString(provider.name),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -1802,9 +1952,67 @@ class _ProvidersListViewState extends State<ProvidersListView> {
                 ],
               ),
             ),
+            const SizedBox(width: 8),
+            // Contador de productos
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                productCount.toString(),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Estado inmutable para el Selector de _buildProductsTab
+/// Solo se reconstruye cuando cambian estos campos específicos
+class _ProductsTabState {
+  final bool isLoading;
+  final List<ProductCatalogue> visibleProducts;
+  final String currentSearchQuery;
+  final bool hasActiveFilter;
+  final CatalogueFilter activeFilter;
+  final CatalogueMetrics catalogueMetrics;
+
+  const _ProductsTabState({
+    required this.isLoading,
+    required this.visibleProducts,
+    required this.currentSearchQuery,
+    required this.hasActiveFilter,
+    required this.activeFilter,
+    required this.catalogueMetrics,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _ProductsTabState &&
+          runtimeType == other.runtimeType &&
+          isLoading == other.isLoading &&
+          visibleProducts == other.visibleProducts &&
+          currentSearchQuery == other.currentSearchQuery &&
+          hasActiveFilter == other.hasActiveFilter &&
+          activeFilter == other.activeFilter &&
+          catalogueMetrics == other.catalogueMetrics;
+
+  @override
+  int get hashCode =>
+      isLoading.hashCode ^
+      visibleProducts.hashCode ^
+      currentSearchQuery.hashCode ^
+      hasActiveFilter.hashCode ^
+      activeFilter.hashCode ^
+      catalogueMetrics.hashCode;
 }

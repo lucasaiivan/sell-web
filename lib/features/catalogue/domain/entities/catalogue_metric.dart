@@ -44,7 +44,9 @@ class CatalogueMetric {
   String get formattedValue {
     switch (format) {
       case MetricValueFormat.currency:
-        return '$currencySign${_formatNumber(value.toDouble())}';
+        // Para moneda, redondear y mostrar sin céntimos
+        final formatter = NumberFormat('#,###', 'es_ES');
+        return '$currencySign${formatter.format(value.round())}';
       case MetricValueFormat.percentage:
         return '${value.toStringAsFixed(1)}%';
       case MetricValueFormat.number:

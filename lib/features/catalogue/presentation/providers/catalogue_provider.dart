@@ -41,8 +41,10 @@ import '../../domain/usecases/get_popular_brands_usecase.dart';
 import '../../domain/usecases/get_brand_by_id_usecase.dart';
 import '../../domain/usecases/create_category_usecase.dart';
 import '../../domain/usecases/update_category_usecase.dart';
+import '../../domain/usecases/delete_category_usecase.dart';
 import '../../domain/usecases/create_provider_usecase.dart';
 import '../../domain/usecases/update_provider_usecase.dart';
+import '../../domain/usecases/delete_provider_usecase.dart';
 
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
@@ -187,8 +189,10 @@ class CatalogueProvider extends ChangeNotifier
   // UseCases para categorías y proveedores
   final CreateCategoryUseCase _createCategoryUseCase;
   final UpdateCategoryUseCase _updateCategoryUseCase;
+  final DeleteCategoryUseCase _deleteCategoryUseCase;
   final CreateProviderUseCase _createProviderUseCase;
   final UpdateProviderUseCase _updateProviderUseCase;
+  final DeleteProviderUseCase _deleteProviderUseCase;
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
@@ -200,6 +204,27 @@ class CatalogueProvider extends ChangeNotifier
   // Listas de categorías y proveedores
   List<Category> _categories = [];
   List<Provider> _providers = [];
+
+  // ==================== CACHÉ DE RENDIMIENTO ====================
+  // Estos cachés se recalculan solo cuando cambia la lista de productos
+  // Evitan operaciones O(n) repetidas en cada build de la UI
+  
+  /// Métricas cacheadas (artículos, inventario, valor)
+  CatalogueMetrics _cachedMetrics = const CatalogueMetrics(
+    articles: 0,
+    inventory: 0,
+    inventoryValue: 0,
+  );
+
+  /// Índice de productos por código normalizado para búsqueda O(1)
+  Map<String, ProductCatalogue> _productsByCode = {};
+
+  /// Contadores de productos por categoría para lookup O(1)
+  Map<String, int> _categoryProductCounts = {};
+
+  /// Contadores de productos por proveedor para lookup O(1)
+  Map<String, int> _providerProductCounts = {};
+  // ==============================================================
 
   // Public getters
   List<ProductCatalogue> get products => _state.products;
@@ -230,11 +255,30 @@ class CatalogueProvider extends ChangeNotifier
   List<Category> get categories => _categories;
   List<Provider> get providers => _providers;
 
-  // ==================== MÉTRICAS DEL CATÁLOGO ====================
+  /// Obtiene la cantidad de productos asociados a una categoría
+  /// Usa caché O(1) en lugar de iterar la lista O(n)
+  int getProductCountByCategory(String categoryId) {
+    if (categoryId.isEmpty) return 0;
+    return _categoryProductCounts[categoryId] ?? 0;
+  }
 
-  /// Calcula las métricas basadas en los productos visibles (filtrados)
-  /// Las métricas se ajustan automáticamente según el filtro activo
+  /// Obtiene la cantidad de productos asociados a un proveedor
+  /// Usa caché O(1) en lugar de iterar la lista O(n)
+  int getProductCountByProvider(String providerId) {
+    if (providerId.isEmpty) return 0;
+    return _providerProductCounts[providerId] ?? 0;
+  }
+
+  /// Retorna las métricas del catálogo
+  /// 
+  /// **Optimización:** Sin filtros activos, retorna métricas cacheadas O(1).
+  /// Con filtros, recalcula solo para el subset visible O(m) donde m << n.
   CatalogueMetrics get catalogueMetrics {
+    // Sin filtros: usar caché (O(1))
+    if (!_hasAnyActiveFilter) {
+      return _cachedMetrics;
+    }
+    // Con filtros: calcular para el subset visible
     final productsList = visibleProducts;
     return CatalogueMetrics.fromProducts(
       products: productsList,
@@ -277,8 +321,10 @@ class CatalogueProvider extends ChangeNotifier
     this._getBrandByIdUseCase,
     this._createCategoryUseCase,
     this._updateCategoryUseCase,
+    this._deleteCategoryUseCase,
     this._createProviderUseCase,
     this._updateProviderUseCase,
+    this._deleteProviderUseCase,
   );
 
   void initCatalogue(String id) {
@@ -313,6 +359,7 @@ class CatalogueProvider extends ChangeNotifier
 
         if (!_areProductListsEqual(_state.products, products)) {
           _updateState(_state.copyWith(products: products));
+          _rebuildCaches(products); // Reconstruir cachés en O(n)
           _refreshFilteredView();
         }
 
@@ -329,15 +376,12 @@ class CatalogueProvider extends ChangeNotifier
     );
   }
 
+  /// Busca un producto por su código
+  /// Usa índice cacheado para búsqueda O(1) en lugar de iterar O(n)
   ProductCatalogue? getProductByCode(String code) {
+    if (code.isEmpty) return null;
     final normalizedCode = code.trim().toUpperCase();
-    try {
-      return _state.products.firstWhere(
-        (product) => product.code.trim().toUpperCase() == normalizedCode,
-      );
-    } catch (e) {
-      return null;
-    }
+    return _productsByCode[normalizedCode];
   }
 
   Future<Product?> getPublicProductByCode(String code) async {
@@ -786,6 +830,7 @@ class CatalogueProvider extends ChangeNotifier
       products: demoProducts,
       isLoading: false,
     );
+    _rebuildCaches(demoProducts); // Reconstruir cachés
     _recomputeFilteredProducts(shouldNotify: false);
     _shouldNotifyListeners = true;
     notifyListeners();
@@ -1061,6 +1106,69 @@ class CatalogueProvider extends ChangeNotifier
     return true;
   }
 
+  /// Reconstruye todos los cachés en una sola iteración O(n)
+  ///
+  /// Este método se llama SOLO cuando cambia la lista de productos,
+  /// optimizando las consultas posteriores de O(n) a O(1).
+  ///
+  /// Cachés reconstruidos:
+  /// - [_cachedMetrics]: Artículos, inventario y valor total
+  /// - [_productsByCode]: Índice para búsqueda por código
+  /// - [_categoryProductCounts]: Contador de productos por categoría
+  /// - [_providerProductCounts]: Contador de productos por proveedor
+  void _rebuildCaches(List<ProductCatalogue> products) {
+    // Reiniciar cachés
+    final productsByCode = <String, ProductCatalogue>{};
+    final categoryProductCounts = <String, int>{};
+    final providerProductCounts = <String, int>{};
+
+    // Variables para métricas
+    int inventory = 0;
+    double inventoryValue = 0.0;
+    final currencySign =
+        products.isNotEmpty ? products.first.currencySign : '\$';
+
+    // Iterar una sola vez (O(n))
+    for (final product in products) {
+      // Índice por código normalizado
+      final normalizedCode = product.code.trim().toUpperCase();
+      productsByCode[normalizedCode] = product;
+
+      // Contadores por categoría
+      if (product.category.isNotEmpty) {
+        categoryProductCounts[product.category] =
+            (categoryProductCounts[product.category] ?? 0) + 1;
+      }
+
+      // Contadores por proveedor
+      if (product.provider.isNotEmpty) {
+        providerProductCounts[product.provider] =
+            (providerProductCounts[product.provider] ?? 0) + 1;
+      }
+
+      // Métricas de inventario
+      if (product.stock) {
+        inventory += product.quantityStock;
+        inventoryValue += product.quantityStock * product.salePrice;
+      } else {
+        // Sin control de stock = 1 unidad por producto
+        inventory += 1;
+        inventoryValue += product.salePrice;
+      }
+    }
+
+    // Asignar cachés
+    _productsByCode = productsByCode;
+    _categoryProductCounts = categoryProductCounts;
+    _providerProductCounts = providerProductCounts;
+    _cachedMetrics = CatalogueMetrics(
+      articles: products.length,
+      inventory: inventory,
+      inventoryValue: inventoryValue,
+      currencySign: currencySign,
+    );
+  }
+
   @override
   void dispose() {
     _catalogueSubscription?.cancel();
@@ -1286,10 +1394,10 @@ class CatalogueProvider extends ChangeNotifier
 
   /// Actualiza una categoría existente
   Future<void> updateCategory({
+    required String accountId,
     required Category category,
   }) async {
     try {
-      final accountId = getIt<AccountProfile>().id;
       await _updateCategoryUseCase(
         UpdateCategoryParams(
           accountId: accountId,
@@ -1298,6 +1406,23 @@ class CatalogueProvider extends ChangeNotifier
       );
     } catch (e) {
       throw Exception('Error al actualizar categoría: $e');
+    }
+  }
+
+  /// Elimina una categoría
+  Future<void> deleteCategory({
+    required String accountId,
+    required String categoryId,
+  }) async {
+    try {
+      await _deleteCategoryUseCase(
+        DeleteCategoryParams(
+          accountId: accountId,
+          categoryId: categoryId,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al eliminar categoría: $e');
     }
   }
 
@@ -1318,12 +1443,29 @@ class CatalogueProvider extends ChangeNotifier
     }
   }
 
+  /// Elimina un proveedor
+  Future<void> deleteProvider({
+    required String accountId,
+    required String providerId,
+  }) async {
+    try {
+      await _deleteProviderUseCase(
+        DeleteProviderParams(
+          accountId: accountId,
+          providerId: providerId,
+        ),
+      );
+    } catch (e) {
+      throw Exception('Error al eliminar proveedor: $e');
+    }
+  }
+
   /// Actualiza un proveedor existente
   Future<void> updateProvider({
+    required String accountId,
     required Provider provider,
   }) async {
     try {
-      final accountId = getIt<AccountProfile>().id;
       await _updateProviderUseCase(
         UpdateProviderParams(
           accountId: accountId,

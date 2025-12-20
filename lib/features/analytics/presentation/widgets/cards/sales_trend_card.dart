@@ -43,7 +43,7 @@ class SalesTrendCard extends StatelessWidget {
             hasData ? MainAxisAlignment.end : MainAxisAlignment.center,
         children: [
           if (!hasData)
-            const Flexible(child: AnalyticsEmptyState(message: 'Sin datos'))
+            const AnalyticsEmptyState(message: 'Sin datos')
           else ...[
             // view : Gráfico de línea
             Expanded(

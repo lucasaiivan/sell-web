@@ -592,6 +592,23 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     }
   }
 
+  @override
+  Future<void> deleteCategory({
+    required String accountId,
+    required String categoryId,
+  }) async {
+    if (accountId.isEmpty || categoryId.isEmpty) {
+      throw ArgumentError('accountId y categoryId son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountCategories(accountId)}/$categoryId';
+      await _dataSource.deleteDocument(path);
+    } catch (e) {
+      throw Exception('Error al eliminar categoría: $e');
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // GESTIÓN DE PROVEEDORES
   // ═══════════════════════════════════════════════════════════════════════════
@@ -646,6 +663,23 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       });
     } catch (e) {
       throw Exception('Error al actualizar proveedor: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteProvider({
+    required String accountId,
+    required String providerId,
+  }) async {
+    if (accountId.isEmpty || providerId.isEmpty) {
+      throw ArgumentError('accountId y providerId son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountProviders(accountId)}/$providerId';
+      await _dataSource.deleteDocument(path);
+    } catch (e) {
+      throw Exception('Error al eliminar proveedor: $e');
     }
   }
 }

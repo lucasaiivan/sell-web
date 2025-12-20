@@ -29,6 +29,9 @@ class SelectionModal<T> extends StatefulWidget {
   final String Function(T)? imageUrlBuilder;
   final T? selectedItem;
   final String searchHint;
+  final VoidCallback? onAdd;
+  final String? labelButton;
+  final void Function(T item)? onButton;
 
   const SelectionModal({
     super.key,
@@ -39,7 +42,10 @@ class SelectionModal<T> extends StatefulWidget {
     this.idBuilder,
     this.imageUrlBuilder,
     this.selectedItem,
-    this.searchHint = 'Buscar...',
+    this.searchHint = 'Buscar',
+    this.onAdd,
+    this.labelButton,
+    this.onButton,
   });
 
   @override
@@ -156,71 +162,220 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
           const SizedBox(height: 16),
           const Divider(height: 1),
 
-          // List
+          // Stack con lista y botón para que la lista se vea detrás
           Expanded(
-            child: _filteredItems.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 64,
-                          color: colorScheme.outline.withValues(alpha: 0.5),
+            child: Stack(
+              children: [
+                // List
+                widget.items.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.local_shipping_outlined,
+                              size: 64,
+                              color: colorScheme.outline.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No tienes ningún${widget.title.toLowerCase().contains('categoría') ? 'a' : ''} ${widget.title.toLowerCase().replaceAll('seleccionar ', '')}${widget.title.toLowerCase().contains('categoría') ? 'a' : ''}',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No se encontraron resultados',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                      )
+                    : _filteredItems.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off_rounded,
+                                  size: 64,
+                                  color: colorScheme.outline
+                                      .withValues(alpha: 0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No se encontraron resultados',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: EdgeInsets.only(
+                              top: 8,
+                              bottom: widget.onAdd != null ? 180 : 24,
+                            ),
+                            itemCount: _filteredItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _filteredItems[index];
+                              final label = widget.labelBuilder(item);
+                              final subtitle =
+                                  widget.subtitleBuilder?.call(item);
+                              final id = widget.idBuilder?.call(item);
+                              final imageUrl =
+                                  widget.imageUrlBuilder?.call(item);
+
+                              final isSelected = widget.selectedItem != null &&
+                                  (widget.idBuilder != null
+                                      ? id ==
+                                          widget
+                                              .idBuilder!(widget.selectedItem!)
+                                      : item == widget.selectedItem);
+
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.of(context).pop(item),
+                                  onLongPress: widget.onButton != null
+                                      ? () {
+                                          Navigator.pop(context);
+                                          widget.onButton!(item);
+                                        }
+                                      : null,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 24, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        // Leading - Avatar
+                                        imageUrl != null && imageUrl.isNotEmpty
+                                            ? CircleAvatar(
+                                                backgroundImage:
+                                                    NetworkImage(imageUrl),
+                                                backgroundColor: colorScheme
+                                                    .surfaceContainerHighest,
+                                                onBackgroundImageError:
+                                                    (_, __) {},
+                                              )
+                                            : CircleAvatar(
+                                                backgroundColor: colorScheme
+                                                    .surfaceContainerHighest,
+                                                child: Text(
+                                                  label.isNotEmpty
+                                                      ? label[0].toUpperCase()
+                                                      : '?',
+                                                  style: TextStyle(
+                                                    color: colorScheme
+                                                        .onSurfaceVariant,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                        const SizedBox(width: 16),
+                                        // Title and Subtitle
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                label,
+                                                style: TextStyle(
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                  color: isSelected
+                                                      ? colorScheme.primary
+                                                      : null,
+                                                ),
+                                              ),
+                                              if (subtitle != null) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  subtitle,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: theme
+                                                      .textTheme.bodySmall
+                                                      ?.copyWith(
+                                                    color: colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                        // Trailing - Check icon
+                                        if (isSelected) ...[
+                                          const SizedBox(width: 8),
+                                          Icon(Icons.check_circle,
+                                              color: colorScheme.primary),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                // Botón de crear con degradado posicionado sobre la lista
+                if (widget.onAdd != null)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Degradado transparente
+                        Container(
+                          height: 100,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                colorScheme.surface.withValues(alpha: 0.0),
+                                colorScheme.surface.withValues(alpha: 0.8),
+                                colorScheme.surface,
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
+                            ),
+                          ),
+                        ),
+                        // Botón
+                        Container(
+                          color: colorScheme.surface,
+                          child: SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    widget.onAdd!();
+                                  },
+                                  icon: const Icon(Icons.add, size: 20),
+                                  label: Text(widget.labelButton ?? 'Crear'),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _filteredItems[index];
-                      final label = widget.labelBuilder(item);
-                      final subtitle = widget.subtitleBuilder?.call(item);
-                      final id = widget.idBuilder?.call(item);
-                      final imageUrl = widget.imageUrlBuilder?.call(item);
-
-                      final isSelected = widget.selectedItem != null &&
-                          (widget.idBuilder != null
-                              ? id == widget.idBuilder!(widget.selectedItem!)
-                              : item == widget.selectedItem);
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 4),
-                        leading: imageUrl != null && imageUrl.isNotEmpty
-                            ? CircleAvatar(
-                                backgroundImage: NetworkImage(imageUrl),
-                                backgroundColor:
-                                    colorScheme.surfaceContainerHighest,
-                              )
-                            : null,
-                        title: Text(
-                          label,
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected ? colorScheme.primary : null,
-                          ),
-                        ),
-                        subtitle: subtitle != null ? Text(subtitle) : null,
-                        trailing: isSelected
-                            ? Icon(Icons.check_circle,
-                                color: colorScheme.primary)
-                            : null,
-                        onTap: () => Navigator.of(context).pop(item),
-                      );
-                    },
                   ),
+              ],
+            ),
           ),
         ],
       ),

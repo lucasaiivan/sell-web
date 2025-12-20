@@ -44,7 +44,7 @@ class SlowMovingProductsCard extends StatelessWidget {
       showActionIndicator: hasData,
       onTap: hasData ? () => _showSlowMovingModal(context) : null,
       child: !hasData
-          ? const Flexible(child: AnalyticsEmptyState(message: 'Sin alertas'))
+          ? const AnalyticsEmptyState(message: 'Sin alertas')
           : LayoutBuilder(
               builder: (context, constraints) {
                 // Calcular dinámicamente cuántos productos mostrar

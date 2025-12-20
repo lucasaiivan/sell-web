@@ -15,7 +15,10 @@ class Provider {
 
   factory Provider.fromDocumentSnapshot(
       {required DocumentSnapshot documentSnapshot}) {
-    final data = documentSnapshot.data() as Map<String, dynamic>;
+    final rawData = documentSnapshot.data();
+    final data =
+        rawData != null ? Map<String, dynamic>.from(rawData as Map) : {};
+
     return Provider(
       id: documentSnapshot.id,
       name: data['name'] ?? '',

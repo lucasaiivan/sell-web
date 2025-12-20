@@ -13,7 +13,10 @@ class Category {
 
   factory Category.fromDocumentSnapshot(
       {required DocumentSnapshot documentSnapshot}) {
-    final data = documentSnapshot.data() as Map<String, dynamic>;
+    final rawData = documentSnapshot.data();
+    final data =
+        rawData != null ? Map<String, dynamic>.from(rawData as Map) : {};
+
     return Category(
       id: documentSnapshot.id,
       name: data['name'] ?? '',

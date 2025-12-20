@@ -185,8 +185,12 @@ import 'package:sellweb/features/catalogue/domain/usecases/decrement_product_fol
     as _i354;
 import 'package:sellweb/features/catalogue/domain/usecases/decrement_product_stock_usecase.dart'
     as _i84;
+import 'package:sellweb/features/catalogue/domain/usecases/delete_category_usecase.dart'
+    as _i94;
 import 'package:sellweb/features/catalogue/domain/usecases/delete_product_usecase.dart'
     as _i126;
+import 'package:sellweb/features/catalogue/domain/usecases/delete_provider_usecase.dart'
+    as _i654;
 import 'package:sellweb/features/catalogue/domain/usecases/get_brand_by_id_usecase.dart'
     as _i256;
 import 'package:sellweb/features/catalogue/domain/usecases/get_brands_stream_usecase.dart'
@@ -555,8 +559,12 @@ extension GetItInjectableX on _i174.GetIt {
         _i214.IncrementProductFollowersUseCase(gh<_i83.CatalogueRepository>()));
     gh.factory<_i824.UpdateCategoryUseCase>(
         () => _i824.UpdateCategoryUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i654.DeleteProviderUseCase>(
+        () => _i654.DeleteProviderUseCase(gh<_i83.CatalogueRepository>()));
     gh.factory<_i824.CreateCategoryUseCase>(
         () => _i824.CreateCategoryUseCase(gh<_i83.CatalogueRepository>()));
+    gh.factory<_i94.DeleteCategoryUseCase>(
+        () => _i94.DeleteCategoryUseCase(gh<_i83.CatalogueRepository>()));
     gh.factory<_i201.CreateProviderUseCase>(
         () => _i201.CreateProviderUseCase(gh<_i83.CatalogueRepository>()));
     gh.factory<_i519.UpdateProviderUseCase>(
@@ -661,8 +669,10 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i256.GetBrandByIdUseCase>(),
           gh<_i824.CreateCategoryUseCase>(),
           gh<_i824.UpdateCategoryUseCase>(),
+          gh<_i94.DeleteCategoryUseCase>(),
           gh<_i201.CreateProviderUseCase>(),
           gh<_i519.UpdateProviderUseCase>(),
+          gh<_i654.DeleteProviderUseCase>(),
         ));
     gh.factory<_i564.MultiUserProvider>(() => _i564.MultiUserProvider(
           gh<_i353.GetUsersUseCase>(),

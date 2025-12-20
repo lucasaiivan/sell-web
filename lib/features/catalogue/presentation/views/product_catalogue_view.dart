@@ -187,7 +187,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentProduct.description),
+        title: Text(TextFormatter.capitalizeString(_currentProduct.description)),
         centerTitle: false,
         actionsPadding: const EdgeInsets.all(8),
         actions: [
@@ -310,7 +310,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                     {
                       'icon': Icons.category_outlined,
                       'label': 'Categoría',
-                      'value': product.nameCategory,
+                      'value': TextFormatter.capitalizeString(product.nameCategory),
                     },
                   // item : proveedor
                   if (product.nameProvider.isNotEmpty ||
@@ -318,9 +318,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                     {
                       'icon': Icons.local_shipping_outlined,
                       'label': 'Proveedor',
-                      'value': product.nameProvider.isNotEmpty
-                          ? product.nameProvider
-                          : product.provider,
+                      'value': TextFormatter.capitalizeString(
+                          product.nameProvider.isNotEmpty
+                              ? product.nameProvider
+                              : product.provider),
                     },
                   if (product.stock) ...[
                     {
@@ -529,7 +530,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                           ],
                           Flexible(
                             child: Text(
-                              product.nameMark,
+                              TextFormatter.capitalizeString(product.nameMark),
                               style: theme.textTheme.labelLarge?.copyWith(
                                 color: product.isVerified
                                     ? Colors.blue
@@ -547,7 +548,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                   // Descripción del producto
                   Text(
                     product.description.isNotEmpty
-                        ? product.description
+                        ? TextFormatter.capitalizeString(product.description)
                         : 'Producto sin nombre',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -572,15 +573,16 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                         _buildMetaChip(
                           context,
                           icon: Icons.category_outlined,
-                          label: product.nameCategory,
+                          label: TextFormatter.capitalizeString(product.nameCategory),
                         ),
                       if (product.provider.isNotEmpty)
                         _buildMetaChip(
                           context,
                           icon: Icons.local_shipping_outlined,
-                          label: product.nameProvider.isNotEmpty
-                              ? product.nameProvider
-                              : product.provider,
+                          label: TextFormatter.capitalizeString(
+                              product.nameProvider.isNotEmpty
+                                  ? product.nameProvider
+                                  : product.provider),
                         ),
                     ],
                   ),
@@ -687,7 +689,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       children: [
         Text(
           product.description.isNotEmpty
-              ? product.description
+              ? TextFormatter.capitalizeString(product.description)
               : 'Producto sin nombre',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
@@ -720,7 +722,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                   const SizedBox(width: 6),
                 ],
                 Text(
-                  product.nameMark,
+                  TextFormatter.capitalizeString(product.nameMark),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: product.isVerified
                         ? Colors.blue
@@ -749,7 +751,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
               _buildMetaChip(
                 context,
                 icon: Icons.category_outlined,
-                label: product.nameCategory,
+                label: TextFormatter.capitalizeString(product.nameCategory),
               ),
 
             // text chip : marca
@@ -757,9 +759,10 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
               _buildMetaChip(
                 context,
                 icon: Icons.local_shipping_outlined,
-                label: product.nameProvider.isNotEmpty
-                    ? product.nameProvider
-                    : product.provider,
+                label: TextFormatter.capitalizeString(
+                    product.nameProvider.isNotEmpty
+                        ? product.nameProvider
+                        : product.provider),
               ),
           ],
         ),

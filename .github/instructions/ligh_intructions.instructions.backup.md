@@ -1,5 +1,11 @@
 # Light Instructions - Flutter Web Sell App
 
+# maximas 
+1. Primero, analiza el problema, lee el código base para encontrar los archivos relevantes.
+2. Simplifica al máximo cada tarea y cambio de código. Queremos evitar cambios masivos o complejos. Cada cambio debe afectar al mínimo código. La clave está en la simplicidad.
+3. NO SEAS PEREZOSO. NUNCA SEAS PEREZOSO. SI HAY UN ERROR, ENCUENTRA LA CAUSA RAÍZ Y ARREGLALA. NO HAY SOLUCIONES TEMPORALES. ERES UN DESARROLLADOR SENIOR. NUNCA SEAS PEREZOSO.
+4. SIEMBRA TODAS LAS CORRECCIONES Y CAMBIOS DE CÓDIGO LO MÁS SIMPLES POSIBLES. SOLO DEBEN AFECTAR AL CÓDIGO NECESARIO Y RELEVANTE PARA LA TAREA Y NADA MÁS. DEBEN AFECTAR AL MENOS CÓDIGO POSIBLE. TU OBJETIVO ES NO INTRODUCIR ERRORES. SE TRATA DE SIMPLICIDAD.
+
 ## 🎯 Guía Rápida para Componentes
 
 ### 🏛️ Filosofía Arquitectónica: Feature-First + Clean Architecture

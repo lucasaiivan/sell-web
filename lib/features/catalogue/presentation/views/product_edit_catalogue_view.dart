@@ -12,6 +12,8 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/brand_search_dialog.dart';
+import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
+import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -559,7 +561,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   child: Form(
                     key: formKey,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.only(
+                          left: 24, right: 24, top: 24, bottom: 180),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -720,114 +723,142 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     ),
                   ),
                 ),
-                // Actions : Guardar y Cancelar
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    border: Border(
-                      top: BorderSide(
-                        color: colorScheme.outlineVariant,
-                        width: 1,
+                // Actions : Guardar y Cancelar con degradado
+                Stack(
+                  children: [
+                    // Degradado transparente
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              colorScheme.surface.withValues(alpha: 0.0),
+                              colorScheme.surface.withValues(alpha: 0.8),
+                              colorScheme.surface,
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                          child: const Text('Cancelar'),
+                    // Contenedor de botones
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border(
+                          top: BorderSide(
+                            color: colorScheme.outlineVariant
+                                .withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: FilledButton(
-                          onPressed: isLoading
-                              ? null
-                              : () async {
-                                  if (!formKey.currentState!.validate()) return;
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => Navigator.of(context).pop(),
+                              child: const Text('Cancelar'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: FilledButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () async {
+                                      if (!formKey.currentState!.validate())
+                                        return;
 
-                                  setState(() => isLoading = true);
+                                      setState(() => isLoading = true);
 
-                                  try {
-                                    String brandId = brand?.id ??
-                                        IdGenerator.generateBrandId();
-                                    String imageUrl = currentImageUrl;
+                                      try {
+                                        String brandId = brand?.id ??
+                                            IdGenerator.generateBrandId();
+                                        String imageUrl = currentImageUrl;
 
-                                    if (brandImageBytes != null) {
-                                      final storage =
-                                          getIt<IStorageDataSource>();
-                                      final path =
-                                          StoragePaths.publicBrandImage(
-                                              brandId);
-                                      imageUrl = await storage.uploadFile(
-                                        path,
-                                        brandImageBytes!,
-                                        metadata: {
-                                          'contentType': 'image/jpeg',
-                                          'uploaded_by': 'user',
-                                        },
-                                      );
-                                    }
-
-                                    final finalBrand = isEditing
-                                        ? brand.copyWith(
-                                            name: nameController.text.trim(),
-                                            description: descriptionController
-                                                .text
-                                                .trim(),
-                                            image: imageUrl,
-                                            verified: isVerified,
-                                            upgrade: DateTime.now(),
-                                          )
-                                        : Mark(
-                                            id: brandId,
-                                            name: nameController.text
-                                                .trim()
-                                                .toLowerCase(),
-                                            description: descriptionController
-                                                .text
-                                                .trim()
-                                                .toLowerCase(),
-                                            image: imageUrl,
-                                            verified: isVerified,
-                                            creation: DateTime.now(),
-                                            upgrade: DateTime.now(),
+                                        if (brandImageBytes != null) {
+                                          final storage =
+                                              getIt<IStorageDataSource>();
+                                          final path =
+                                              StoragePaths.publicBrandImage(
+                                                  brandId);
+                                          imageUrl = await storage.uploadFile(
+                                            path,
+                                            brandImageBytes!,
+                                            metadata: {
+                                              'contentType': 'image/jpeg',
+                                              'uploaded_by': 'user',
+                                            },
                                           );
+                                        }
 
-                                    if (isEditing) {
-                                      await widget.catalogueProvider
-                                          .updateBrand(finalBrand);
-                                    } else {
-                                      await widget.catalogueProvider
-                                          .createBrand(finalBrand);
-                                    }
+                                        final finalBrand = isEditing
+                                            ? brand.copyWith(
+                                                name:
+                                                    nameController.text.trim(),
+                                                description:
+                                                    descriptionController.text
+                                                        .trim(),
+                                                image: imageUrl,
+                                                verified: isVerified,
+                                                upgrade: DateTime.now(),
+                                              )
+                                            : Mark(
+                                                id: brandId,
+                                                name: nameController.text
+                                                    .trim()
+                                                    .toLowerCase(),
+                                                description:
+                                                    descriptionController.text
+                                                        .trim()
+                                                        .toLowerCase(),
+                                                image: imageUrl,
+                                                verified: isVerified,
+                                                creation: DateTime.now(),
+                                                upgrade: DateTime.now(),
+                                              );
 
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop(finalBrand);
-                                      _showSuccessMessage(isEditing
-                                          ? 'Marca actualizada exitosamente'
-                                          : 'Marca creada exitosamente');
-                                    }
-                                  } catch (e) {
-                                    setState(() => isLoading = false);
-                                    if (context.mounted) {
-                                      _showErrorMessage(e.toString());
-                                    }
-                                  }
-                                },
-                          child: Text(isLoading
-                              ? (isEditing ? 'Guardando...' : 'Creando...')
-                              : (isEditing ? 'Guardar' : 'Crear')),
-                        ),
+                                        if (isEditing) {
+                                          await widget.catalogueProvider
+                                              .updateBrand(finalBrand);
+                                        } else {
+                                          await widget.catalogueProvider
+                                              .createBrand(finalBrand);
+                                        }
+
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop(finalBrand);
+                                          _showSuccessMessage(isEditing
+                                              ? 'Marca actualizada exitosamente'
+                                              : 'Marca creada exitosamente');
+                                        }
+                                      } catch (e) {
+                                        setState(() => isLoading = false);
+                                        if (context.mounted) {
+                                          _showErrorMessage(e.toString());
+                                        }
+                                      }
+                                    },
+                              child: Text(isLoading
+                                  ? (isEditing ? 'Guardando...' : 'Creando...')
+                                  : (isEditing ? 'Guardar' : 'Crear')),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -875,6 +906,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         // Botón eliminar (solo en modo edición)
         if (!widget.isCreatingMode && !_isSaving)
           IconButton(
+            padding: const EdgeInsets.all(16.0),
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Eliminar producto',
             onPressed: _showDeleteConfirmation,
@@ -1453,6 +1485,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Construye sección de imagen del producto
   Widget _buildPreviewProductCard() {
     final isVerified = widget.product.isVerified;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1472,8 +1505,17 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               // Botón de favorito (izquierda)
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3F414D),
+                  color: _favoriteEnabled
+                      ? Colors.amber.withValues(alpha: 0.15)
+                      : colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
+                  border: _favoriteEnabled
+                      ? Border.all(
+                          color: Colors.amber.withValues(alpha: 0.3),
+                          width: 1.5,
+                        )
+                      : null,
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -1485,7 +1527,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                       padding: const EdgeInsets.all(8),
                       child: Icon(
                         _favoriteEnabled ? Icons.star : Icons.star_border,
-                        color: _favoriteEnabled ? Colors.orange : Colors.white,
+                        color: _favoriteEnabled
+                            ? Colors.amber.shade600
+                            : colorScheme.onSurfaceVariant,
                         size: 20,
                       ),
                     ),
@@ -1504,7 +1548,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   color: (_newImageBytes != null ||
                           widget.product.image.isNotEmpty)
                       ? Colors.transparent
-                      : const Color(0xFF3F414D),
+                      : colorScheme.surfaceContainerHighest,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
                   ),
@@ -1540,7 +1584,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           vertical: 6,
                         ),
                         width: double.infinity,
-                        color: const Color(0xFF2C2E36),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHigh,
+                          border: Border(
+                            top: BorderSide(
+                              color: colorScheme.outline.withValues(alpha: 0.1),
+                              width: 1,
+                            ),
+                          ),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1550,8 +1602,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                   : 'Producto sin nombre',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1563,7 +1615,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                   ? '\$${_salePriceController.text}'
                                   : '\$0.00',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.8),
+                                color: colorScheme.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1582,7 +1634,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               if (!isVerified)
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3F414D),
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Material(
@@ -1590,11 +1643,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     child: InkWell(
                       onTap: _pickImage,
                       borderRadius: BorderRadius.circular(8),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
                         child: Icon(
                           Icons.image_outlined,
-                          color: Colors.white,
+                          color: colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -2044,7 +2097,19 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     ? categories.firstWhere((c) => c.id == _selectedCategoryId,
                         orElse: () => Category())
                     : null,
-                searchHint: 'Buscar categoría...',
+                searchHint: 'Buscar',
+                onAdd: () => showCategoryDialog(
+                  context,
+                  catalogueProvider: widget.catalogueProvider,
+                  accountId: widget.accountId,
+                ),
+                labelButton: 'Crear categoría',
+                onButton: (item) => showCategoryDialog(
+                  context,
+                  catalogueProvider: widget.catalogueProvider,
+                  accountId: widget.accountId,
+                  category: item,
+                ),
               ),
             );
 
@@ -2105,7 +2170,19 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         orElse: () =>
                             catalog_provider.Provider(id: '', name: ''))
                     : null,
-                searchHint: 'Buscar proveedor...',
+                searchHint: 'Buscar',
+                onAdd: () => showProviderDialog(
+                  context,
+                  catalogueProvider: widget.catalogueProvider,
+                  accountId: widget.accountId,
+                ),
+                labelButton: 'Crear proveedor',
+                onButton: (item) => showProviderDialog(
+                  context,
+                  catalogueProvider: widget.catalogueProvider,
+                  accountId: widget.accountId,
+                  provider: item,
+                ),
               ),
             );
 
@@ -2174,8 +2251,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         child: TextFormField(
           controller: _markController,
           decoration: InputDecoration(
-            labelText: 'Marca',
-            hintText: 'Buscar o seleccionar marca',
+            labelText: 'Buscar marca',
             prefixIcon:
                 _selectedBrandImage != null && _selectedBrandImage!.isNotEmpty
                     ? Padding(

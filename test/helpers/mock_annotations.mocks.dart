@@ -1736,6 +1736,24 @@ class MockCatalogueRepository extends _i1.Mock
       ) as _i5.Future<void>);
 
   @override
+  _i5.Future<void> deleteCategory({
+    required String? accountId,
+    required String? categoryId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteCategory,
+          [],
+          {
+            #accountId: accountId,
+            #categoryId: categoryId,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
   _i5.Future<void> createProvider({
     required String? accountId,
     required String? name,
@@ -1775,6 +1793,24 @@ class MockCatalogueRepository extends _i1.Mock
             #name: name,
             #phone: phone,
             #email: email,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteProvider({
+    required String? accountId,
+    required String? providerId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteProvider,
+          [],
+          {
+            #accountId: accountId,
+            #providerId: providerId,
           },
         ),
         returnValue: _i5.Future<void>.value(),

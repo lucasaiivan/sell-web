@@ -150,19 +150,28 @@ class BaseDialog extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            for (int i = 0; i < actions!.length; i++) ...[
-              if (i > 0) const SizedBox(width: 12),
-              Flexible(
-                child: actions![i],
+        child: actions!.length == 1
+            ? actions![0] // Si solo hay un botón, ocupar todo el ancho
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  for (int i = 0; i < actions!.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 12),
+                    Flexible(
+                      child: actions![i],
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -296,6 +305,15 @@ class BaseDialog extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context, ThemeData theme) {
+    // Si solo hay un botón, hacerlo de ancho completo
+    if (actions!.length == 1) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+        child: actions![0],
+      );
+    }
+
+    // Si hay múltiples botones, usar el layout original
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
       child: Row(

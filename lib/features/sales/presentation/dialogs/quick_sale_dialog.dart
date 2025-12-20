@@ -108,16 +108,15 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
   List<Widget> _buildActions(BuildContext context) {
     return [
-      DialogComponents.secondaryActionButton(
-        context: context,
-        text: 'Cancelar',
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      DialogComponents.primaryActionButton(
-        context: context,
-        text: 'Agregar',
-        onPressed: _processQuickSale,
-        isLoading: _isProcessing,
+      // Botón de ancho completo sin margen lateral
+      SizedBox(
+        width: double.infinity,
+        child: DialogComponents.primaryActionButton(
+          context: context,
+          text: 'Agregar',
+          onPressed: _processQuickSale,
+          isLoading: _isProcessing,
+        ),
       ),
     ];
   }

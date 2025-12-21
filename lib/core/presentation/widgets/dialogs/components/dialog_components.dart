@@ -265,10 +265,21 @@ class DialogComponents {
     required VoidCallback? onPressed,
     IconData? icon,
     bool isDestructive = false,
+    Color? accentColor,
     bool isLoading = false,
     required BuildContext context,
   }) {
     final theme = Theme.of(context);
+
+    // Prefer explicit accentColor, otherwise derive from isDestructive flag or default primary
+    final Color effectiveAccent = accentColor ?? (isDestructive
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary);
+
+    // Decide foreground/onColor: if using theme.error color, use onError; else use onPrimary
+    final Color effectiveOnColor = identical(effectiveAccent, theme.colorScheme.error)
+        ? theme.colorScheme.onError
+        : theme.colorScheme.onPrimary;
 
     return FilledButton.icon(
       onPressed: isLoading ? null : onPressed,
@@ -278,7 +289,7 @@ class DialogComponents {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: theme.colorScheme.onPrimary,
+                color: effectiveOnColor,
               ),
             )
           : icon == null
@@ -286,12 +297,13 @@ class DialogComponents {
               : Icon(icon),
       label: Text(text),
       style: FilledButton.styleFrom(
-        backgroundColor:
-            isDestructive ? theme.colorScheme.error : theme.colorScheme.primary,
-        foregroundColor: isDestructive
-            ? theme.colorScheme.onError
-            : theme.colorScheme.onPrimary,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        backgroundColor: effectiveAccent,
+        foregroundColor: effectiveOnColor,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+        textStyle: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -301,16 +313,28 @@ class DialogComponents {
     required String text,
     required VoidCallback? onPressed,
     IconData? icon,
+    Color? accentColor,
     required BuildContext context,
   }) {
+    final theme = Theme.of(context);
+
+    final Color effectiveAccent = accentColor ?? theme.colorScheme.primary;
+
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: icon == null ? null : Icon(icon),
       label: Text(text),
       style: OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        backgroundColor: theme.colorScheme.surfaceContainer,
+        side: BorderSide(color: effectiveAccent),
+        foregroundColor: effectiveAccent,
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 12,
+          vertical: 20,
+        ),
+        textStyle: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -334,8 +358,11 @@ class DialogComponents {
     String? Function(String?)? validator,
     int maxLines = 1,
     bool readOnly = false,
+    bool center = false,
+    double? fontSize,
     required BuildContext context,
   }) {
+    final theme = Theme.of(context);
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
@@ -347,6 +374,10 @@ class DialogComponents {
       maxLines: maxLines > 1 ? maxLines : null,
       expands: maxLines > 1,
       readOnly: readOnly,
+      textAlign: center ? TextAlign.center : TextAlign.start,
+      style: fontSize != null
+          ? theme.textTheme.bodyLarge?.copyWith(fontSize: fontSize)
+          : null,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -392,12 +423,16 @@ class DialogComponents {
     bool autofocus = false,
     String? Function(String?)? validator,
     TextInputAction? textInputAction,
+    bool center = false,
+    double? fontSize,
+    TextInputType? keyboardType,
     required BuildContext context,
   }) {
     // Import necesario para MoneyInputTextField
     return MoneyInputTextField(
       controller: controller,
       labelText: label,
+      hintText: hint,
       errorText: errorText,
       fillColor: fillColor,
       onChanged: onChanged,
@@ -408,6 +443,9 @@ class DialogComponents {
       autofocus: autofocus,
       textInputAction: textInputAction,
       validator: validator,
+      center: center,
+      fontSize: fontSize,
+      keyboardType: keyboardType,
     );
   }
 
@@ -730,14 +768,17 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
             children: [
               if (widget.title != null)
                 Expanded(
-                  child: Text(
-                    widget.title!,
-                    style: (widget.isMobile
-                            ? widget.theme.textTheme.bodyMedium
-                            : widget.theme.textTheme.bodyLarge)
-                        ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: widget.theme.colorScheme.onSurfaceVariant,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12.0, bottom: 0.0, top: 6.0,left:12.0),
+                    child: Text(
+                      widget.title!,
+                      style: (widget.isMobile
+                              ? widget.theme.textTheme.bodyMedium
+                              : widget.theme.textTheme.bodyLarge)
+                          ?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: widget.theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),

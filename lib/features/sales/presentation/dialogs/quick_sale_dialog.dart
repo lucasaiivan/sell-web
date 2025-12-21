@@ -43,12 +43,9 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return BaseDialog(
       title: 'Venta Rápida',
       icon: Icons.flash_on_rounded,
-      headerColor: theme.colorScheme.primaryContainer,
       fullView: widget.fullView,
       content: _buildContent(context),
       actions: _buildActions(context),
@@ -56,67 +53,70 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   }
 
   Widget _buildContent(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DialogComponents.sectionSpacing,
-          DialogComponents.moneyField(
-            autofocus: true,
-            context: context,
-            controller: _priceController,
-            focusNode: _priceFocusNode,
-            nextFocusNode: _descriptionFocusNode,
-            textInputAction: TextInputAction.next,
-            label: 'Ingresá el monto',
-            hint: '\$0.0',
-            errorText: _showPriceError &&
-                    (_priceController.text.isEmpty ||
-                        _priceController.doubleValue <= 0)
-                ? 'El precio es obligatorio y debe ser mayor a 0'
-                : null,
-            onChanged: (value) {
-              // Quitar el error cuando el usuario escribe un valor válido
-              if (_showPriceError && value > 0) {
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DialogComponents.sectionSpacing,
+            DialogComponents.moneyField(
+              autofocus: true,
+              context: context,
+              controller: _priceController,
+              focusNode: _priceFocusNode,
+              nextFocusNode: _descriptionFocusNode,
+              textInputAction: TextInputAction.next,
+              fontSize: 30,
+              label: 'Monto',
+              hint: '\$0.0',
+              errorText: _showPriceError &&
+                      (_priceController.text.isEmpty ||
+                          _priceController.doubleValue <= 0)
+                  ? 'El precio es obligatorio y debe ser mayor a 0'
+                  : null,
+              onChanged: (value) {
+                // Quitar el error cuando el usuario escribe un valor válido
                 setState(() {
-                  _showPriceError = false;
+                  if (_showPriceError && value > 0) {
+                    _showPriceError = false;
+                  }
                 });
-              }
-            },
-          ),
-          DialogComponents.itemSpacing,
-          DialogComponents.textField(
-            context: context,
-            controller: _descriptionController,
-            focusNode: _descriptionFocusNode,
-            textInputAction: TextInputAction.done,
-            label: 'Descripción (Opcional)',
-            hint: 'Ej: bebida, snack, etc.',
-            onEditingComplete: () {
-              // Al presionar Enter en el campo de descripción, procesar la venta
-              _processQuickSale();
-            },
-            onSuffixPressed: () => _showPriceError = false,
-          ),
-          DialogComponents.sectionSpacing,
-        ],
+              },
+            ),
+            DialogComponents.itemSpacing,
+            DialogComponents.textField(
+              context: context,
+              controller: _descriptionController,
+              focusNode: _descriptionFocusNode,
+              textInputAction: TextInputAction.done,
+              label: 'Descripción',
+              hint: 'Ej: bebida, snack, etc.',
+              onEditingComplete: () {
+                // Al presionar Enter en el campo de descripción, procesar la venta
+                _processQuickSale();
+              },
+              onSuffixPressed: () => _showPriceError = false,
+            ),
+            DialogComponents.sectionSpacing,
+          ],
+        ),
       ),
     );
   }
 
   List<Widget> _buildActions(BuildContext context) {
+    final hasValidAmount =
+        _priceController.text.isNotEmpty && _priceController.doubleValue > 0;
+
     return [
       // Botón de ancho completo sin margen lateral
-      SizedBox(
-        width: double.infinity,
-        child: DialogComponents.primaryActionButton(
-          context: context,
-          text: 'Agregar',
-          onPressed: _processQuickSale,
-          isLoading: _isProcessing,
-        ),
+      DialogComponents.primaryActionButton(
+        context: context,
+        text: 'Agregar',
+        onPressed: hasValidAmount ? _processQuickSale : null,
+        isLoading: _isProcessing,
       ),
     ];
   }
@@ -204,6 +204,7 @@ Future<void> showQuickSaleDialog(
 
   // Vista normal como diálogo
   return showDialog(
+    barrierDismissible: false,
     context: context,
     builder: (context) => QuickSaleDialog(
       provider: provider,

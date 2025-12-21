@@ -7,8 +7,6 @@ import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
-
-import 'package:sellweb/core/presentation/widgets/graphics/graphics.dart';
 import 'package:sellweb/features/cash_register/presentation/dialogs/cash_flow_dialog.dart';
 import 'cash_register_close_dialog.dart';
 import 'cash_register_open_dialog.dart';
@@ -133,20 +131,7 @@ class _TicketStatistics {
 /// ✅ OPTIMIZADO: La gestión de tickets se realiza en [CashRegisterProvider]
 /// con cache inteligente para evitar llamadas duplicadas a la base de datos.
 /// Los tickets se cargan automáticamente y se comparten entre todas las vistas.
-///
-/// ## Uso:
-/// ```dart
-/// // Método 1: Mostrar como diálogo (recomendado para desktop sin caja activa)
-/// CashRegisterManagementDialog.showAsDialog(context);
-///
-/// // Método 2: Mostrar en pantalla completa (recomendado cuando hay caja activa)
-/// CashRegisterManagementDialog.showAsFullScreen(context);
-///
-/// // Método 3: Automático según estado de caja (RECOMENDADO)
-/// // - Con caja activa: Pantalla completa para ver flujo de caja completo
-/// // - Sin caja activa: Diálogo modal para seleccionar/crear caja
-/// CashRegisterManagementDialog.showAdaptive(context);
-/// ```
+///   
 class CashRegisterManagementDialog extends StatefulWidget {
   /// Si es true, el diálogo ocupa toda la pantalla (usando Scaffold)
   final bool fullView;
@@ -245,14 +230,13 @@ class CashRegisterManagementDialog extends StatefulWidget {
     bool barrierDismissible = true,
   }) {
     // ✅ Verificar si hay una caja activa para decidir el tipo de presentación
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final hasActiveCashRegister = cashRegisterProvider.hasActiveCashRegister;
 
     // Si hay caja activa → Pantalla completa (más espacio para ver flujo de caja)
     // Si NO hay caja activa → Diálogo modal (solo para seleccionar/crear caja)
     if (hasActiveCashRegister) {
-      return showAsFullScreen<T>(context);
+      return showAsDialog<T>(context);
     } else {
       return showAsDialog<T>(context, barrierDismissible: barrierDismissible);
     }
@@ -330,6 +314,7 @@ class _CashRegisterManagementDialogState
             final isMobileDevice = isMobile(context);
             // dialog : base dialog
             return BaseDialog(
+              fullView: true,
               title: sTitle,
               icon: Icons.point_of_sale_rounded,
               headerColor: Theme.of(context)
@@ -365,8 +350,7 @@ class _CashRegisterManagementDialogState
                       }
                       // ✅ Usar context.read para acceder sin suscribirse
                       final provider = context.read<CashRegisterProvider>();
-                      return _buildResponsiveContent(
-                          context, provider, isMobileDevice);
+                      return _buildResponsiveContent(context, provider, isMobileDevice);
                     },
                   );
                 },
@@ -511,19 +495,18 @@ class _CashRegisterManagementDialogState
 
     return [
       // button : cierre de caja
-      AppButton.fab(
-        heroTag: 'cash_register_close_fab',
-        text: 'Cerrar Caja',
-        icon: Icons.exit_to_app,
+      DialogComponents.primaryActionButton(
+          
+        context: context,
+        text: 'Cerrar Caja', 
         onPressed: () => _showCloseDialog(context, cashRegister),
-      ),
-      SizedBox(width: isMobile ? 8 : 16),
+      ),  
       // button : cancelar el dialog
-      AppButton.fab(
-        heroTag: 'cash_register_ok_fab',
-        text: 'ok',
+      DialogComponents.secondaryActionButton(
+        context: context,
+        text: 'Ok',
         onPressed: () => Navigator.of(context).pop(),
-      ),
+      ), 
     ];
   }
 

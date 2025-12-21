@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/inputs/inputs.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 
-import 'package:sellweb/core/presentation/widgets/buttons/buttons.dart';
-
 /// Diálogo para abrir una nueva caja registradora
 class CashRegisterOpenDialog extends StatefulWidget {
-  const CashRegisterOpenDialog({super.key});
+  const CashRegisterOpenDialog({super.key, this.fullView = false});
+
+  final bool fullView;
 
   @override
   State<CashRegisterOpenDialog> createState() => _CashRegisterOpenDialogState();
@@ -54,57 +55,49 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   Widget build(BuildContext context) {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
 
-    return AlertDialog(
-      title: Row(
+    return BaseDialog(
+      title: 'Apertura de Caja',
+      icon: Icons.lock_open_rounded,
+      width: 500,
+      fullView: widget.fullView,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Apertura de Caja'),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
+          DialogComponents.sectionSpacing,
+          InputTextField(
+            controller: cashRegisterProvider.openDescriptionController,
+            labelText: 'Nombre',
+            hintText: 'Ej: Caja Principal',
           ),
+          const SizedBox(height: 16),
+          // view : items fixers con nombres frecuentes de caja
+          _buildFrequentNamesSection(context, cashRegisterProvider),
+          const SizedBox(height: 16),
+          // input : Campo para monto inicial
+          MoneyInputTextField(
+            controller: cashRegisterProvider.initialCashController,
+            labelText: 'Monto Inicial',
+          ),
+
+          if (cashRegisterProvider.errorMessage != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              cashRegisterProvider.errorMessage!,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          DialogComponents.sectionSpacing,
         ],
       ),
-      content: SizedBox(
-        width: 400,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            InputTextField(
-              controller: cashRegisterProvider.openDescriptionController,
-              labelText: 'Nombre',
-              hintText: 'Ej: Caja Principal',
-            ),
-            const SizedBox(height: 16),
-            // view : items fixers con nombres frecuentes de caja
-            _buildFrequentNamesSection(context, cashRegisterProvider),
-            const SizedBox(height: 16),
-            // input : Campo para monto inicial
-            MoneyInputTextField(
-              controller: cashRegisterProvider.initialCashController,
-              labelText: 'Monto Inicial',
-            ),
-
-            if (cashRegisterProvider.errorMessage != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                cashRegisterProvider.errorMessage!,
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-        ),
-      ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
         Consumer<SalesProvider>(
           builder: (context, sellProvider, child) {
-            return AppButton.primary(
+            return DialogComponents.primaryActionButton(
+              context: context,
+              text: 'Abrir Caja',
+              icon: Icons.lock_open_rounded,
               onPressed: cashRegisterProvider.isProcessing
                   ? null
                   : () => _handleOpenCashRegister(
@@ -113,7 +106,6 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
                         sellProvider,
                       ),
               isLoading: cashRegisterProvider.isProcessing,
-              text: 'Abrir Caja',
             );
           },
         ),

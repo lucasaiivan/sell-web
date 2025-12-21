@@ -13,6 +13,7 @@ class MoneyInputTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final FocusNode? nextFocusNode;
   final String labelText;
+  final String? hintText;
   final String? errorText;
   final Color? fillColor;
   final List<TextInputFormatter>? inputFormatters;
@@ -20,6 +21,9 @@ class MoneyInputTextField extends StatelessWidget {
   final TextStyle? style;
   final TextInputAction? textInputAction;
   final String? Function(String?)? validator;
+  final bool center;
+  final double? fontSize;
+  final TextInputType? keyboardType;
 
   const MoneyInputTextField({
     super.key,
@@ -31,6 +35,7 @@ class MoneyInputTextField extends StatelessWidget {
     this.focusNode,
     this.nextFocusNode,
     this.labelText = 'Monto',
+    this.hintText,
     this.errorText,
     this.fillColor,
     this.inputFormatters,
@@ -38,6 +43,9 @@ class MoneyInputTextField extends StatelessWidget {
     this.style,
     this.textInputAction,
     this.validator,
+    this.center = false,
+    this.fontSize,
+    this.keyboardType,
   });
 
   @override
@@ -46,14 +54,19 @@ class MoneyInputTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      keyboardType: keyboardType ??
+          const TextInputType.numberWithOptions(decimal: true, signed: false),
       inputFormatters: inputFormatters ?? [AppMoneyInputFormatter()],
       autofocus: autofocus,
-      style: style ?? theme.textTheme.titleLarge,
+      style: fontSize != null
+          ? (style ?? theme.textTheme.titleLarge)?.copyWith(fontSize: fontSize)
+          : (style ?? theme.textTheme.titleLarge),
       textInputAction: textInputAction ?? TextInputAction.done,
       validator: validator,
+      textAlign: center ? TextAlign.center : TextAlign.start,
       decoration: InputDecoration(
         labelText: labelText,
+        hintText: hintText,
         errorText: errorText,
         prefixIcon: const Icon(Icons.attach_money),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

@@ -8,10 +8,12 @@ import 'package:sellweb/features/sales/presentation/providers/sales_provider.dar
 /// Diálogo para cerrar una caja registradora
 class CashRegisterCloseDialog extends StatefulWidget {
   final CashRegister cashRegister;
+  final bool fullView;
 
   const CashRegisterCloseDialog({
     super.key,
     required this.cashRegister,
+    this.fullView = false,
   });
 
   @override
@@ -70,85 +72,67 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
   Widget build(BuildContext context) {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
 
-    return AlertDialog(
-      title: Row(
+    return BaseDialog(
+      title: 'Cierre de Caja',
+      icon: Icons.lock_rounded,
+      width: 500,
+      fullView: widget.fullView,
+      headerColor: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.lock_outline, color: Colors.red),
-          const SizedBox(width: 8),
-          const Text('Cierre de Caja'),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
+          DialogComponents.sectionSpacing,
+          _buildSummaryCard(context),
+          const SizedBox(height: 16),
+          MoneyInputTextField(
+            controller: cashRegisterProvider.finalBalanceController,
+            labelText: 'Balance Final',
           ),
+          // Mostrar diferencia en tiempo real mientras el usuario escribe
+          if (_currentDifference != 0) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Diferencia: ${CurrencyFormatter.formatPrice(value: _currentDifference.abs())}',
+              style: TextStyle(
+                color: _currentDifference < 0 ? Colors.red : Colors.green,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+          ],
+          const SizedBox(height: 16),
+          // text : Mensaje de error si existe
+          if (cashRegisterProvider.errorMessage != null)
+            Text(
+              cashRegisterProvider.errorMessage!,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+          DialogComponents.sectionSpacing,
         ],
       ),
-      content: SizedBox(
-        width: 400,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildSummaryCard(context),
-              const SizedBox(height: 16),
-              MoneyInputTextField(
-                controller: cashRegisterProvider.finalBalanceController,
-                labelText: 'Balance Final',
-              ),
-              // Mostrar diferencia en tiempo real mientras el usuario escribe
-              if (_currentDifference != 0) ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Diferencia: ${CurrencyFormatter.formatPrice(value: _currentDifference.abs())}',
-                  style: TextStyle(
-                    color: _currentDifference < 0 ? Colors.red : Colors.green,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-              ],
-              const SizedBox(height: 16),
-              // text : Mensaje de error si existe
-              if (cashRegisterProvider.errorMessage != null)
-                Text(
-                  cashRegisterProvider.errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-            ],
-          ),
-        ),
-      ),
       actions: [
-        Row(
-          children: [
-            const Spacer(),
-            // button : Cerrar caja
-            Consumer<SalesProvider>(
-              builder: (context, sellProvider, child) {
-                return DialogComponents.primaryActionButton(
-                    context: context,
-                    text: 'Confirmar',
-                    isLoading: cashRegisterProvider.isProcessing,
-                    onPressed: () {
-                      if (cashRegisterProvider.isProcessing) return;
-                      _handleCloseCashRegister(
-                        context,
-                        cashRegisterProvider,
-                        sellProvider,
-                      );
-                    });
+        // button : Cerrar caja
+        Consumer<SalesProvider>(
+          builder: (context, sellProvider, child) {
+            return DialogComponents.primaryActionButton(
+              context: context,
+              text: 'Confirmar Cierre',
+              icon: Icons.lock_rounded,
+              isLoading: cashRegisterProvider.isProcessing,
+              onPressed: () {
+                if (cashRegisterProvider.isProcessing) return;
+                _handleCloseCashRegister(
+                  context,
+                  cashRegisterProvider,
+                  sellProvider,
+                );
               },
-            ),
-            // button : Cancelar cierre de caja
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-          ],
+            );
+          },
         ),
       ],
     );

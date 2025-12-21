@@ -16,7 +16,7 @@ class BaseDialog extends StatelessWidget {
     this.actions,
     this.width = 400,
     this.maxHeight = 600,
-    this.headerColor,
+    this.headerColor = Colors.transparent,
     this.showCloseButton = true,
     this.scrollable = true,
     this.fullView = false,
@@ -76,12 +76,16 @@ class BaseDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Container(
         width: width,
         constraints: BoxConstraints(
           maxHeight: maxHeight,
           maxWidth: 500, // Máximo para desktop
         ),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
@@ -104,12 +108,24 @@ class BaseDialog extends StatelessWidget {
             // Header del diálogo
             _buildHeader(context, theme),
 
-            // Contenido principal con gradiente difuminado
-            _buildContentWithGradient(context, theme),
+            // Stack para superponer acciones sobre el contenido
+            Flexible(
+              child: Stack(
+                children: [
+                  // Contenido principal con gradiente difuminado
+                  _buildContentWithGradient(context, theme),
 
-            // Acciones/botones
-            if (actions != null && actions!.isNotEmpty)
-              _buildActions(context, theme),
+                  // Acciones/botones posicionados sobre el contenido
+                  if (actions != null && actions!.isNotEmpty)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _buildActions(context, theme),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -118,8 +134,7 @@ class BaseDialog extends StatelessWidget {
 
   /// Construye el AppBar para el modo pantalla completa
   PreferredSizeWidget _buildAppBar(BuildContext context, ThemeData theme) {
-    final effectiveHeaderColor =
-        headerColor ?? theme.colorScheme.primaryContainer;
+    final effectiveHeaderColor = headerColor;
     final textColor = theme.colorScheme.onPrimaryContainer;
 
     return AppBar(
@@ -127,7 +142,7 @@ class BaseDialog extends StatelessWidget {
       centerTitle: false,
       leading: showCloseButton
           ? IconButton(
-              icon: const Icon(Icons.close_rounded),
+              icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => Navigator.of(context).pop(),
             )
           : null,
@@ -250,84 +265,58 @@ class BaseDialog extends StatelessWidget {
     if (!scrollable) {
       // Si no es scrollable, solo agregar padding normal
       return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          16,
+          24,
+          hasActions ? 80 : 16, // Espacio extra para los botones flotantes
+        ),
         child: content,
       );
     }
 
-    // Usar Flexible con shrinkWrap para ajustarse al contenido
-    return Flexible(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              // Contenido scrollable que se ajusta al tamaño real
-              SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  16,
-                  24,
-                  hasActions ? 32 : 16, // Padding inferior para el gradiente
-                ),
-                child: content,
-              ),
-
-              // Gradiente difuminado al final (solo si hay acciones)
-              if (hasActions)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      height: 40,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            theme.colorScheme.surface.withValues(alpha: 0.0),
-                            theme.colorScheme.surface.withValues(alpha: 0.5),
-                            theme.colorScheme.surface.withValues(alpha: 0.9),
-                            theme.colorScheme.surface,
-                          ],
-                          stops: const [0.0, 0.4, 0.8, 1.0],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
+    // Contenido scrollable con padding para los botones flotantes
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        16,
+        24,
+        hasActions ? 90 : 16, // Espacio extra para los botones flotantes
       ),
+      child: content,
     );
   }
 
   Widget _buildActions(BuildContext context, ThemeData theme) {
-    // Si solo hay un botón, hacerlo de ancho completo
-    if (actions!.length == 1) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-        child: actions![0],
-      );
-    }
-
-    // Si hay múltiples botones, usar el layout original
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          for (int i = 0; i < actions!.length; i++) ...[
-            if (i > 0) const SizedBox(width: 12),
-            Flexible(
-              child: actions![i],
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            theme.colorScheme.surface.withValues(alpha: 0.0),
+            theme.colorScheme.surface.withValues(alpha: 0.7),
+            theme.colorScheme.surface.withValues(alpha: 0.95),
+            theme.colorScheme.surface,
           ],
-        ],
+          stops: const [0.0, 0.3, 0.7, 1.0],
+        ),
       ),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+      child: actions!.length == 1
+          ? actions![0] // Si solo hay un botón, ocupar todo el ancho
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                for (int i = 0; i < actions!.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  Flexible(
+                    child: actions![i],
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }

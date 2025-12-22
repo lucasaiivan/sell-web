@@ -115,7 +115,7 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
           upgrade: DateTime.now(),
           idUserCreation: params.accountId,
           idUserUpgrade: params.accountId,
-          attributes: updatedProduct.attributes,
+          variants: updatedProduct.variants,
           status: 'pending',
         );
 

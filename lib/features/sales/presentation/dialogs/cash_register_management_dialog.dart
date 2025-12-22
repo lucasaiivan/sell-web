@@ -131,14 +131,11 @@ class _TicketStatistics {
 /// ✅ OPTIMIZADO: La gestión de tickets se realiza en [CashRegisterProvider]
 /// con cache inteligente para evitar llamadas duplicadas a la base de datos.
 /// Los tickets se cargan automáticamente y se comparten entre todas las vistas.
-///   
-class CashRegisterManagementDialog extends StatefulWidget {
-  /// Si es true, el diálogo ocupa toda la pantalla (usando Scaffold)
-  final bool fullView;
+///
+class CashRegisterManagementDialog extends StatefulWidget { 
 
   const CashRegisterManagementDialog({
-    super.key,
-    this.fullView = false,
+    super.key, 
   });
 
   /// Muestra el diálogo de administración de caja como un diálogo modal.
@@ -150,70 +147,25 @@ class CashRegisterManagementDialog extends StatefulWidget {
     BuildContext context, {
     bool barrierDismissible = true,
   }) {
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
 
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
           ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
-        child: const CashRegisterManagementDialog(fullView: false),
+        child: const CashRegisterManagementDialog(),
       ),
     );
   }
 
-  /// Muestra el diálogo de administración de caja en pantalla completa.
-  /// Usa [Navigator.push] con transición deslizante y los providers necesarios ya configurados.
-  ///
-  /// [context]: BuildContext desde donde se navega
-  /// [transitionDuration]: Duración de la animación de transición (default: 300ms)
-  static Future<T?> showAsFullScreen<T>(
-    BuildContext context, {
-    Duration transitionDuration =
-        _CashRegisterDialogConstants.slideTransitionDuration,
-  }) {
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
-    final sellProvider = Provider.of<SalesProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    return Navigator.of(context).push<T>(
-      PageRouteBuilder<T>(
-        pageBuilder: (context, animation, secondaryAnimation) => MultiProvider(
-          providers: [
-            ChangeNotifierProvider<CashRegisterProvider>.value(
-                value: cashRegisterProvider),
-            ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
-            ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-          ],
-          child: const CashRegisterManagementDialog(fullView: true),
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.ease;
-
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
-        transitionDuration: transitionDuration,
-      ),
-    );
-  }
 
   /// Muestra el diálogo de administración de caja de forma adaptativa.
   /// - Con caja activa: Usa pantalla completa ([showAsFullScreen])
@@ -230,7 +182,8 @@ class CashRegisterManagementDialog extends StatefulWidget {
     bool barrierDismissible = true,
   }) {
     // ✅ Verificar si hay una caja activa para decidir el tipo de presentación
-    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider =
+        Provider.of<CashRegisterProvider>(context, listen: false);
     final hasActiveCashRegister = cashRegisterProvider.hasActiveCashRegister;
 
     // Si hay caja activa → Pantalla completa (más espacio para ver flujo de caja)
@@ -293,19 +246,14 @@ class _CashRegisterManagementDialogState
 
   @override
   Widget build(BuildContext context) {
+ 
     // ✅ Usar Selector para escuchar SOLO hasActiveCashRegister y evitar rebuilds innecesarios
     return Selector<CashRegisterProvider, bool>(
       selector: (_, provider) => provider.hasActiveCashRegister,
       builder: (context, hasActiveCashRegister, child) {
         // var
-        final sTitle =
-            hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
+        final sTitle =  hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
 
-        // Si fullView es true, usar Scaffold para ocupar toda la pantalla
-        if (widget.fullView) {
-          // ✅ Usar context.read para acceder sin suscribirse a todos los cambios
-          return _buildFullScreenView(context, sTitle);
-        }
 
         // Vista normal en diálogo
         return LayoutBuilder(
@@ -350,7 +298,8 @@ class _CashRegisterManagementDialogState
                       }
                       // ✅ Usar context.read para acceder sin suscribirse
                       final provider = context.read<CashRegisterProvider>();
-                      return _buildResponsiveContent(context, provider, isMobileDevice);
+                      return _buildResponsiveContent(
+                          context, provider, isMobileDevice);
                     },
                   );
                 },
@@ -367,72 +316,6 @@ class _CashRegisterManagementDialogState
     );
   }
 
-  // view : Vista de pantalla completa usando Scaffold
-  Widget _buildFullScreenView(BuildContext context, String title) {
-    // ✅ Usar context.read para acceder al provider sin suscribirse
-    final provider = context.read<CashRegisterProvider>();
-    final isMobileDevice = isMobile(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // ✅ Calcular padding horizontal adaptativo según el tamaño de pantalla
-    // Pantallas grandes (>1200px): contenido centrado con max-width
-    // Pantallas medianas (800-1200px): padding moderado
-    // Pantallas pequeñas (<800px): padding mínimo para aprovechar espacio
-    final horizontalPadding = getResponsiveValue(
-      context,
-      mobile: 16.0, // Móvil: padding mínimo
-      tablet: 40.0, // Tablet: padding moderado
-      desktop: screenWidth > 1400
-          ? (screenWidth - 1200) / 2
-          : 80.0, // Desktop: centrado con max-width
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          SingleChildScrollView(
-            // ✅ Padding adaptativo: horizontal responsive + vertical fijo
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: 16,
-            ),
-            child: provider.isLoadingActive
-                ? SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    child: const Center(child: CircularProgressIndicator()),
-                  )
-                : _buildResponsiveContent(context, provider, isMobileDevice),
-          ),
-          // bottomNavigationBar : _buildCashRegisterActionButtons
-          Positioned(
-            bottom: 20,
-            left: 0,
-            right: 20,
-            child: provider.hasActiveCashRegister
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: _buildCashRegisterActionButtons(
-                        context, isMobileDevice),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
 
   // view : Construir contenido responsivo de la información de caja existente o muestra mensaje de no caja activa
   Widget _buildResponsiveContent(
@@ -495,18 +378,19 @@ class _CashRegisterManagementDialogState
 
     return [
       // button : cierre de caja
-      DialogComponents.primaryActionButton(
-          
-        context: context,
-        text: 'Cerrar Caja', 
-        onPressed: () => _showCloseDialog(context, cashRegister),
-      ),  
+      Material(
+        child: DialogComponents.primaryActionButton(
+          context: context,
+          text: 'Cerrar Caja',
+          onPressed: () => _showCloseDialog(context, cashRegister),
+        ),
+      ),
       // button : cancelar el dialog
       DialogComponents.secondaryActionButton(
         context: context,
         text: 'Ok',
         onPressed: () => Navigator.of(context).pop(),
-      ), 
+      ),
     ];
   }
 

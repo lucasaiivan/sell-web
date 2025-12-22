@@ -208,7 +208,7 @@ class CatalogueProvider extends ChangeNotifier
   // ==================== CACHÉ DE RENDIMIENTO ====================
   // Estos cachés se recalculan solo cuando cambia la lista de productos
   // Evitan operaciones O(n) repetidas en cada build de la UI
-  
+
   /// Métricas cacheadas (artículos, inventario, valor)
   CatalogueMetrics _cachedMetrics = const CatalogueMetrics(
     articles: 0,
@@ -270,7 +270,7 @@ class CatalogueProvider extends ChangeNotifier
   }
 
   /// Retorna las métricas del catálogo
-  /// 
+  ///
   /// **Optimización:** Sin filtros activos, retorna métricas cacheadas O(1).
   /// Con filtros, recalcula solo para el subset visible O(m) donde m << n.
   CatalogueMetrics get catalogueMetrics {
@@ -579,7 +579,7 @@ class CatalogueProvider extends ChangeNotifier
         upgrade: DateTime.now(),
         idUserCreation: product.idUserCreation,
         idUserUpgrade: product.idUserUpgrade,
-        attributes: product.attributes,
+        variants: product.variants,
         status: 'pending', // Siempre pending
       );
 

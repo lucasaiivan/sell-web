@@ -22,7 +22,7 @@ class ProductModel extends Product {
     required super.upgrade,
     super.idUserCreation,
     super.idUserUpgrade,
-    super.attributes,
+    super.variants,
     super.status,
   });
 
@@ -61,9 +61,11 @@ class ProductModel extends Product {
               : '',
       upgrade: _parseTimestamp(data['upgrade']),
       creation: _parseTimestamp(data['creation']),
-      attributes: data.containsKey('attributes') && data['attributes'] != null
-          ? Map<String, dynamic>.from(data['attributes'])
-          : {},
+      variants: data.containsKey('variants') && data['variants'] != null
+          ? Map<String, dynamic>.from(data['variants'])
+          : data.containsKey('attributes') && data['attributes'] != null
+              ? Map<String, dynamic>.from(data['attributes'])
+              : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: data.containsKey('status')
           ? data['status']
@@ -95,7 +97,7 @@ class ProductModel extends Product {
         "code": code,
         "creation": Timestamp.fromDate(creation),
         "upgrade": Timestamp.fromDate(upgrade),
-        "attributes": attributes,
+        "variants": variants,
         "status": status,
       };
 
@@ -131,7 +133,7 @@ class ProductModel extends Product {
       upgrade: upgrade,
       idUserCreation: idUserCreation,
       idUserUpgrade: idUserUpgrade,
-      attributes: attributes,
+      variants: variants,
       status: status,
     );
   }

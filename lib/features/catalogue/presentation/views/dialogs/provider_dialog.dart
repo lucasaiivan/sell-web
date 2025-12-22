@@ -31,8 +31,10 @@ class _ProviderDialogState extends State<ProviderDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.provider?.name ?? '');
-    _phoneController = TextEditingController(text: widget.provider?.phone ?? '');
-    _emailController = TextEditingController(text: widget.provider?.email ?? '');
+    _phoneController =
+        TextEditingController(text: widget.provider?.phone ?? '');
+    _emailController =
+        TextEditingController(text: widget.provider?.email ?? '');
   }
 
   @override

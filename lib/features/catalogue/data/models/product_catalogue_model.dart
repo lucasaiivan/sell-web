@@ -42,7 +42,7 @@ class ProductCatalogueModel extends ProductCatalogue {
     super.imageMark,
     super.quantity,
     super.local,
-    super.attributes,
+    super.variants,
     super.status,
   });
 
@@ -125,9 +125,11 @@ class ProductCatalogueModel extends ProductCatalogue {
       revenue: data.containsKey('revenue') ? data['revenue'] : 0.0,
       quantity: data.containsKey('quantity') ? data['quantity'] : 1,
       local: data.containsKey('local') ? data['local'] : false,
-      attributes: data.containsKey('attributes') && data['attributes'] != null
-          ? Map<String, dynamic>.from(data['attributes'])
-          : {},
+      variants: data.containsKey('variants') && data['variants'] != null
+          ? Map<String, dynamic>.from(data['variants'])
+          : data.containsKey('attributes') && data['attributes'] != null
+              ? Map<String, dynamic>.from(data['attributes'])
+              : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: data.containsKey('status')
           ? data['status']
@@ -156,7 +158,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       documentIdUpgrade: product.idUserUpgrade,
       creation: product.creation,
       upgrade: product.upgrade,
-      attributes: product.attributes,
+      variants: product.variants,
       status: product.status,
     );
   }
@@ -196,7 +198,7 @@ class ProductCatalogueModel extends ProductCatalogue {
         "sales": sales,
         "alertStock": alertStock,
         "revenue": revenue,
-        "attributes": attributes,
+        "variants": variants,
         "status": status,
       };
 
@@ -236,7 +238,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       imageMark: imageMark,
       quantity: quantity,
       local: local,
-      attributes: attributes,
+      variants: variants,
       status: status,
     );
   }
@@ -258,7 +260,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       creation: documentCreation,
       idUserCreation: documentIdCreation,
       idUserUpgrade: documentIdUpgrade,
-      attributes: attributes,
+      variants: variants,
       status: status,
     );
   }

@@ -77,7 +77,8 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
       icon: Icons.lock_rounded,
       width: 500,
       fullView: widget.fullView,
-      headerColor: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
+      headerColor:
+          Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

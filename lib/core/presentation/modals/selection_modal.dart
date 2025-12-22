@@ -363,8 +363,8 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
                                   icon: const Icon(Icons.add, size: 20),
                                   label: Text(widget.labelButton ?? 'Crear'),
                                   style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                   ),
                                 ),
                               ),

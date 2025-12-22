@@ -272,14 +272,14 @@ class DialogComponents {
     final theme = Theme.of(context);
 
     // Prefer explicit accentColor, otherwise derive from isDestructive flag or default primary
-    final Color effectiveAccent = accentColor ?? (isDestructive
-        ? theme.colorScheme.error
-        : theme.colorScheme.primary);
+    final Color effectiveAccent = accentColor ??
+        (isDestructive ? theme.colorScheme.error : theme.colorScheme.primary);
 
     // Decide foreground/onColor: if using theme.error color, use onError; else use onPrimary
-    final Color effectiveOnColor = identical(effectiveAccent, theme.colorScheme.error)
-        ? theme.colorScheme.onError
-        : theme.colorScheme.onPrimary;
+    final Color effectiveOnColor =
+        identical(effectiveAccent, theme.colorScheme.error)
+            ? theme.colorScheme.onError
+            : theme.colorScheme.onPrimary;
 
     return FilledButton.icon(
       onPressed: isLoading ? null : onPressed,
@@ -300,7 +300,7 @@ class DialogComponents {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         backgroundColor: effectiveAccent,
         foregroundColor: effectiveOnColor,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         textStyle: theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w600,
         ),
@@ -331,7 +331,7 @@ class DialogComponents {
         foregroundColor: effectiveAccent,
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 20,
+          vertical: 12,
         ),
         textStyle: theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w600,
@@ -769,7 +769,8 @@ class _ExpandableListContainerState<T> extends State<ExpandableListContainer<T>>
               if (widget.title != null)
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 12.0, bottom: 0.0, top: 6.0,left:12.0),
+                    padding: const EdgeInsets.only(
+                        right: 12.0, bottom: 0.0, top: 6.0, left: 12.0),
                     child: Text(
                       widget.title!,
                       style: (widget.isMobile

@@ -65,10 +65,21 @@ class BaseDialog extends StatelessWidget {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: _buildAppBar(context, theme),
-        body: _buildFullScreenContent(context, theme),
-        bottomNavigationBar: actions != null && actions!.isNotEmpty
-            ? _buildFullScreenActions(context, theme)
-            : null,
+        body: Stack(
+          children: [
+            // Contenido principal
+            _buildFullScreenContent(context, theme),
+            
+            // Botones superpuestos con degradado (igual que en diálogo)
+            if (actions != null && actions!.isNotEmpty)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _buildActions(context, theme),
+              ),
+          ],
+        ),
       );
     }
 
@@ -153,41 +164,16 @@ class BaseDialog extends StatelessWidget {
 
   /// Construye el contenido para el modo pantalla completa
   Widget _buildFullScreenContent(BuildContext context, ThemeData theme) {
+    final hasActions = actions != null && actions!.isNotEmpty;
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        hasActions ? 120 : 24, // Espacio extra para los botones flotantes
+      ),
       child: content,
-    );
-  }
-
-  /// Construye las acciones para el modo pantalla completa
-  Widget _buildFullScreenActions(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: actions!.length == 1
-            ? actions![0] // Si solo hay un botón, ocupar todo el ancho
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  for (int i = 0; i < actions!.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 12),
-                    Flexible(
-                      child: actions![i],
-                    ),
-                  ],
-                ],
-              ),
-      ),
     );
   }
 

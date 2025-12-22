@@ -73,8 +73,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   String? _selectedBrandId;
   String? _selectedBrandImage;
 
-  // Attributes
-  Map<String, dynamic> _attributes = {};
+  // Variants
+  Map<String, dynamic> _variants = {};
 
   @override
   void initState() {
@@ -117,10 +117,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         widget.product.idMark.isNotEmpty ? widget.product.idMark : null;
     _selectedBrandImage =
         widget.product.imageMark.isNotEmpty ? widget.product.imageMark : null;
-    _attributes = Map.from(widget.product.attributes);
+    _variants = Map.from(widget.product.variants);
 
     debugPrint(
-        '🔍 ProductEdit: Inicializando con ${_attributes.length} atributos: $_attributes');
+        '🔍 ProductEdit: Inicializando con ${_variants.length} variantes: $_variants');
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
@@ -270,11 +270,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           : (_selectedBrandImage ?? ''),
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
-      attributes: _attributes,
+      variants: _variants,
     );
 
     debugPrint(
-        '🔍 ProductEdit: Guardando producto con ${_attributes.length} atributos: $_attributes');
+        '🔍 ProductEdit: Guardando producto con ${_variants.length} variantes: $_variants');
     return updated;
   }
 
@@ -942,8 +942,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 _buildBasicInfoSection(colorScheme),
                 const SizedBox(height: 24),
                 // Solo mostrar atributos si no está verificado o si tiene atributos
-                if (!widget.product.isVerified || _attributes.isNotEmpty) ...[
-                  _buildAttributesSection(colorScheme),
+                if (!widget.product.isVerified || _variants.isNotEmpty) ...[
+                  _buildVariantsSection(colorScheme),
                   const SizedBox(height: 24),
                 ],
                 _buildPricingSection(),
@@ -960,8 +960,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  /// Construye sección de atributos dinámicos
-  Widget _buildAttributesSection(ColorScheme colorScheme) {
+  /// Construye sección de variantes dinámicas
+  Widget _buildVariantsSection(ColorScheme colorScheme) {
     final isVerified = widget.product.isVerified;
 
     return Column(
@@ -969,14 +969,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       children: [
         _buildSectionHeader(
           context: context,
-          title: 'Atributos',
+          title: 'Variantes',
           icon: Icons.label_outline,
         ),
-        if (_attributes.isEmpty) ...[
+        if (_variants.isEmpty) ...[
           const SizedBox(height: 16),
           if (!isVerified)
             InkWell(
-              onTap: _showAddAttributeDialog,
+              onTap: _showAddVariantDialog,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 decoration: BoxDecoration(
@@ -1001,7 +1001,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Agregar atributo',
+                      'Agregar variante',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.primary,
@@ -1039,7 +1039,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'sin atributos',
+                    'sin variantes',
                     style: TextStyle(
                       fontSize: 11,
                       color: colorScheme.onSurfaceVariant,
@@ -1054,14 +1054,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ..._attributes.entries.map((entry) {
+              ..._variants.entries.map((entry) {
                 final value = entry.value;
                 final String displayValue =
                     value is List ? value.join(', ') : value?.toString() ?? '';
 
                 return InkWell(
                   onTap: !isVerified
-                      ? () => _showAddAttributeDialog(
+                      ? () => _showAddVariantDialog(
                             editKey: entry.key,
                             editValue: entry.value,
                           )
@@ -1107,7 +1107,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               }),
               if (!isVerified)
                 InkWell(
-                  onTap: _showAddAttributeDialog,
+                  onTap: _showAddVariantDialog,
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     decoration: BoxDecoration(
@@ -1149,13 +1149,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  void _showDeleteAttributeDialog(String attributeKey) {
+  void _showDeleteVariantDialog(String variantKey) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar atributo?'),
+        title: const Text('¿Eliminar variante?'),
         content: Text(
-          'Estás a punto de eliminar el atributo "$attributeKey". Esta acción no se puede deshacer.',
+          'Estás a punto de eliminar la variante "$variantKey". Esta acción no se puede deshacer.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         actions: [
@@ -1166,7 +1166,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           FilledButton(
             onPressed: () {
               setState(() {
-                _attributes.remove(attributeKey);
+                _variants.remove(variantKey);
               });
               Navigator.pop(context);
             },
@@ -1180,7 +1180,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  void _showAddAttributeDialog({String? editKey, dynamic editValue}) {
+  void _showAddVariantDialog({String? editKey, dynamic editValue}) {
     final keyController = TextEditingController(text: editKey);
     final formKey = GlobalKey<FormState>();
 
@@ -1228,19 +1228,19 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child:
-                        Text(isEditing ? 'Editar atributo' : 'Nuevo atributo'),
+                        Text(isEditing ? 'Editar variante' : 'Nueva variante'),
                   ),
                   if (isEditing)
                     IconButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _showDeleteAttributeDialog(editKey);
+                        _showDeleteVariantDialog(editKey);
                       },
                       icon: Icon(
                         Icons.delete_outline,
                         color: colorScheme.error,
                       ),
-                      tooltip: 'Eliminar atributo',
+                      tooltip: 'Eliminar variante',
                     ),
                 ],
               ),
@@ -1258,7 +1258,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         autofocus: !isEditing,
                         textCapitalization: TextCapitalization.words,
                         decoration: InputDecoration(
-                          labelText: 'Nombre del atributo',
+                          labelText: 'Nombre de la variante',
                           hintText: 'ej. Color, Talle, Peso',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1266,11 +1266,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Ingrese el nombre del atributo';
+                            return 'Ingrese el nombre de la variante';
                           }
                           if (!isEditing &&
-                              _attributes.containsKey(value.trim())) {
-                            return 'Este atributo ya existe';
+                              _variants.containsKey(value.trim())) {
+                            return 'Esta variante ya existe';
                           }
                           return null;
                         },
@@ -1461,16 +1461,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     setState(() {
       // Si está editando y cambió la key, eliminar la anterior
       if (isEditing && oldKey != null && oldKey != key) {
-        _attributes.remove(oldKey);
+        _variants.remove(oldKey);
       }
 
       // Guardar: si hay variantes, guardar como string (1) o lista (2+), sino guardar como lista vacía
       if (variants.isEmpty) {
-        _attributes[key] = [];
+        _variants[key] = [];
       } else if (variants.length == 1) {
-        _attributes[key] = variants.first;
+        _variants[key] = variants.first;
       } else {
-        _attributes[key] = variants.toList();
+        _variants[key] = variants.toList();
       }
     });
 

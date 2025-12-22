@@ -18,12 +18,12 @@ class ProductCatalogue {
   final bool reviewed;
   final bool outstanding;
   final int followers;
-  final Map<String, dynamic> attributes;
+  final Map<String, dynamic> variants;
   final String status;
 
   // Variables del catálogo de la cuenta
   final bool local; // Indica si el producto es un SKU interno del comercio
-  final DateTime creation; // Fecha de creación 
+  final DateTime creation; // Fecha de creación
   final DateTime upgrade; // Fecha de última actualización
   final bool favorite;
   final String category;
@@ -82,7 +82,7 @@ class ProductCatalogue {
     this.quantity = 1,
     this.local = false,
     this.priceTotal = 0,
-    this.attributes = const {},
+    this.variants = const {},
     this.status = 'pending',
   });
 
@@ -120,7 +120,7 @@ class ProductCatalogue {
     String? imageMark,
     int? quantity,
     bool? local,
-    Map<String, dynamic>? attributes,
+    Map<String, dynamic>? variants,
     String? status,
   }) {
     return ProductCatalogue(
@@ -157,7 +157,7 @@ class ProductCatalogue {
       imageMark: imageMark ?? this.imageMark,
       quantity: quantity ?? this.quantity,
       local: local ?? this.local,
-      attributes: attributes ?? this.attributes,
+      variants: variants ?? this.variants,
       status: status ?? this.status,
     );
   }
@@ -187,7 +187,7 @@ class ProductCatalogue {
 
   /// Indica si tiene margen de beneficio positivo
   bool get hasProfitMargin => salePrice > purchasePrice;
- 
+
   /// Retorna la fecha de última actualización del producto
   ///
   /// Valida si existe una actualización real comparando `upgrade` con `creation`.
@@ -238,7 +238,7 @@ class ProductCatalogue {
   ///   - 'sku': Producto interno sin código estándar (solo catálogo privado)
   ///   - 'pending': Producto con código válido pendiente de verificación
   ///   - 'verified': Producto verificado por la comunidad (inmutable)
-  /// - **attributes**: Atributos dinámicos del producto
+  /// - **variants**: Variantes dinámicas del producto
   Map<String, dynamic> toMap() {
     final map = {
       "id": id,
@@ -247,7 +247,7 @@ class ProductCatalogue {
       'followers': followers,
       'outstanding': outstanding,
       'status': status,
-      'attributes': attributes,
+      'variants': variants,
       "favorite": favorite,
       "idMark": idMark,
       "nameMark": nameMark,
@@ -279,7 +279,7 @@ class ProductCatalogue {
     };
 
     debugPrint(
-        '🔍 ProductCatalogue.toMap: Serializando ${attributes.length} atributos para producto $code');
+        '🔍 ProductCatalogue.toMap: Serializando ${variants.length} variantes para producto $code');
     return map;
   }
 
@@ -337,9 +337,11 @@ class ProductCatalogue {
       revenue: (data['revenue'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
-      attributes: data.containsKey('attributes') && data['attributes'] != null
-          ? Map<String, dynamic>.from(data['attributes'])
-          : {},
+      variants: data.containsKey('variants') && data['variants'] != null
+          ? Map<String, dynamic>.from(data['variants'])
+          : data.containsKey('attributes') && data['attributes'] != null
+              ? Map<String, dynamic>.from(data['attributes'])
+              : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: data.containsKey('status')
           ? data['status']

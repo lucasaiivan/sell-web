@@ -258,8 +258,8 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
       onPressed: () {
         _searchController.clear();
         setState(() {
-            _brands = [];
-            _hasSearched = false;
+          _brands = [];
+          _hasSearched = false;
         });
       },
     );
@@ -271,37 +271,37 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
     }
 
     if (_brands.isEmpty) {
-        // Estado inicial o sin resultados
-         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _hasSearched ? Icons.search_off_rounded : Icons.search_sharp,
-                size: 64,
-                color: colorScheme.outline.withValues(alpha: 0.5),
+      // Estado inicial o sin resultados
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _hasSearched ? Icons.search_off_rounded : Icons.search_sharp,
+              size: 64,
+              color: colorScheme.outline.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _hasSearched ? 'No se encontraron marcas' : 'Busca una marca',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 16),
-              Text(
-                _hasSearched ? 'No se encontraron marcas' : 'Busca una marca',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+            ),
+            if (_hasSearched && widget.onCreateNewBrand != null) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onCreateNewBrand?.call();
+                },
+                icon: const Icon(Icons.add, size: 20),
+                label: const Text('Crear nueva marca'),
               ),
-              if (_hasSearched && widget.onCreateNewBrand != null) ...[
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: () {
-                     Navigator.pop(context);
-                     widget.onCreateNewBrand?.call();
-                  },
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Crear nueva marca'),
-                ),
-              ],
             ],
-          ),
-        );
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
@@ -321,58 +321,57 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
             : '';
 
         return ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 24, vertical: 4),
-            leading: brand.image.isNotEmpty
-                ? CircleAvatar(
-                    backgroundImage: NetworkImage(brand.image),
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                    onBackgroundImageError: (_, __) {},
-                  )
-                : CircleAvatar(
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                    child: Text(
-                      brand.name.isNotEmpty ? brand.name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+          leading: brand.image.isNotEmpty
+              ? CircleAvatar(
+                  backgroundImage: NetworkImage(brand.image),
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  onBackgroundImageError: (_, __) {},
+                )
+              : CircleAvatar(
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  child: Text(
+                    brand.name.isNotEmpty ? brand.name[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-            title: Text(
-                displayName,
-                style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? colorScheme.primary : null,
                 ),
+          title: Text(
+            displayName,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? colorScheme.primary : null,
             ),
-            subtitle: displayDescription.isNotEmpty
-                ? Text(displayDescription, maxLines: 1, overflow: TextOverflow.ellipsis)
-                : null,
-            trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                    IconButton(
-                        icon: Icon(
-                            Icons.edit_outlined,
-                            size: 20,
-                            color: colorScheme.primary,
-                        ),
-                        tooltip: 'Editar marca',
-                        onPressed: () {
-                            Navigator.pop(context);
-                            widget.onEditBrand?.call(brand);
-                        },
-                    ),
-                    if (isSelected)
-                        Icon(Icons.check_circle, color: colorScheme.primary),
-                ],
-            ),
-            onTap: () => Navigator.pop(context, brand),
+          ),
+          subtitle: displayDescription.isNotEmpty
+              ? Text(displayDescription,
+                  maxLines: 1, overflow: TextOverflow.ellipsis)
+              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.edit_outlined,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+                tooltip: 'Editar marca',
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onEditBrand?.call(brand);
+                },
+              ),
+              if (isSelected)
+                Icon(Icons.check_circle, color: colorScheme.primary),
+            ],
+          ),
+          onTap: () => Navigator.pop(context, brand),
         );
       },
     );
   }
-
-
 }

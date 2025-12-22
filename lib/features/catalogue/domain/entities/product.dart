@@ -46,8 +46,8 @@ class Product {
   /// ID del usuario que actualizó el producto
   final String idUserUpgrade;
 
-  /// Atributos dinámicos del producto (peso, color, talle, etc.)
-  final Map<String, dynamic> attributes;
+  /// Variantes dinámicas del producto (peso, color, talle, etc.)
+  final Map<String, dynamic> variants;
 
   /// Estado del producto
   ///
@@ -98,7 +98,7 @@ class Product {
       purchasePrice: 0.0,
       currencySign: '\$',
       local: false,
-      attributes: attributes,
+      variants: variants,
       status: status,
     );
   }
@@ -118,7 +118,7 @@ class Product {
     required this.upgrade,
     this.idUserCreation = '',
     this.idUserUpgrade = '',
-    this.attributes = const {},
+    this.variants = const {},
     this.status = 'pending',
   });
 
@@ -142,9 +142,11 @@ class Product {
           : DateTime.now(),
       idUserCreation: map['idUserCreation'] ?? '',
       idUserUpgrade: map['idUserUpgrade'] ?? '',
-      attributes: map.containsKey('attributes') && map['attributes'] != null
-          ? Map<String, dynamic>.from(map['attributes'])
-          : {},
+      variants: map.containsKey('variants') && map['variants'] != null
+          ? Map<String, dynamic>.from(map['variants'])
+          : map.containsKey('attributes') && map['attributes'] != null
+              ? Map<String, dynamic>.from(map['attributes'])
+              : {},
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: map.containsKey('status')
           ? map['status']
@@ -170,7 +172,7 @@ class Product {
       'upgrade': Timestamp.fromDate(upgrade),
       'idUserCreation': idUserCreation,
       'idUserUpgrade': idUserUpgrade,
-      'attributes': attributes,
+      'variants': variants,
       'status': status,
     };
   }

@@ -187,7 +187,8 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(TextFormatter.capitalizeString(_currentProduct.description)),
+        title:
+            Text(TextFormatter.capitalizeString(_currentProduct.description)),
         centerTitle: false,
         actionsPadding: const EdgeInsets.all(8),
         actions: [
@@ -310,7 +311,8 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                     {
                       'icon': Icons.category_outlined,
                       'label': 'Categoría',
-                      'value': TextFormatter.capitalizeString(product.nameCategory),
+                      'value':
+                          TextFormatter.capitalizeString(product.nameCategory),
                     },
                   // item : proveedor
                   if (product.nameProvider.isNotEmpty ||
@@ -421,15 +423,15 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           ],
         ),
       ),
-      if (product.attributes.isNotEmpty)
+      if (product.variants.isNotEmpty)
         _buildInfoCard(
           context: context,
-          title: 'Atributos',
+          title: 'Variantes',
           icon: Icons.label_outline,
           child: Wrap(
             spacing: 8.0,
             runSpacing: 8.0,
-            children: product.attributes.entries.map((entry) {
+            children: product.variants.entries.map((entry) {
               final value = entry.value;
               String displayValue = '';
 
@@ -573,7 +575,8 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                         _buildMetaChip(
                           context,
                           icon: Icons.category_outlined,
-                          label: TextFormatter.capitalizeString(product.nameCategory),
+                          label: TextFormatter.capitalizeString(
+                              product.nameCategory),
                         ),
                       if (product.provider.isNotEmpty)
                         _buildMetaChip(

@@ -6,7 +6,7 @@ class TextFormatter {
   /// @return Texto con cada palabra capitalizada
   static String capitalizeString(String input) {
     if (input.trim().isEmpty) return input;
-    
+
     return input.trim().split(RegExp(r'\s+')).map((word) {
       if (word.isEmpty) return word;
       if (word.length > 1) {

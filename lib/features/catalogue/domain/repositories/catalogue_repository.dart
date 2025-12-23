@@ -32,10 +32,10 @@ abstract class CatalogueRepository {
       ProductPrice productPrice, String productCode);
 
   /// Incrementa las ventas de un producto
-  Future<void> incrementSales(String accountId, String productId, int quantity);
+  Future<void> incrementSales(String accountId, String productId, double quantity);
 
   /// Decrementa el stock de un producto
-  Future<void> decrementStock(String accountId, String productId, int quantity);
+  Future<void> decrementStock(String accountId, String productId, double quantity);
 
   /// Actualiza el estado de favorito
   Future<void> updateProductFavorite(
@@ -133,7 +133,7 @@ abstract class CatalogueRepository {
   /// [accountId] - ID de la cuenta
   /// [productId] - ID del producto
   /// [newStock] - Nueva cantidad en stock
-  Future<void> updateStock(String accountId, String productId, int newStock);
+  Future<void> updateStock(String accountId, String productId, double newStock);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // GESTIÓN DE FOLLOWERS (Contador de comercios usando el producto)

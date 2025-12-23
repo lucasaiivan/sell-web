@@ -8,12 +8,12 @@ import '../repositories/catalogue_repository.dart';
 class IncrementProductSalesParams {
   final String accountId;
   final String productId;
-  final int quantity;
+  final double quantity;
 
   const IncrementProductSalesParams({
     required this.accountId,
     required this.productId,
-    this.quantity = 1,
+    this.quantity = 1.0,
   });
 }
 
@@ -36,7 +36,7 @@ class IncrementProductSalesUseCase
   @override
   Future<Either<Failure, void>> call(IncrementProductSalesParams params) async {
     // Validación de negocio
-    if (params.quantity <= 0) {
+    if (params.quantity <= 0.0) {
       return Left(ValidationFailure('La cantidad debe ser mayor a cero'));
     }
 

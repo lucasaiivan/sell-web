@@ -136,8 +136,9 @@ class TicketModel {
   }
 
   /// Obtiene el total de productos usando ProductCatalogue
-  int get totalProductCount {
-    return products.fold(0, (total, product) => total + product.quantity);
+  /// Retorna double para soportar cantidades fraccionarias (kg, L, m)
+  double get totalProductCount {
+    return products.fold(0.0, (total, product) => total + product.quantity);
   }
 
   /// Calcula el total usando ProductCatalogue
@@ -760,7 +761,7 @@ class TicketModel {
 
     // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
-      int quantity = product.quantity;
+      double quantity = product.quantity; // Ahora es double para soportar fraccionarios
       double salePrice = product.salePrice;
       total += salePrice * quantity;
     }

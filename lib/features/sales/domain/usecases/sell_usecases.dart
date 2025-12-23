@@ -138,7 +138,7 @@ class SellUsecases {
     }
 
     if (!productExists) {
-      final quantityToAdd = product.quantity > 0 ? product.quantity : 1;
+      final quantityToAdd = product.quantity >= 0.001 ? product.quantity : 1.0;
       updatedProducts.add(product.copyWith(quantity: quantityToAdd));
     }
 

@@ -939,12 +939,12 @@ class CatalogueProvider extends ChangeNotifier
   }
 
   Future<void> incrementProductSales(String accountId, String productId,
-      {int quantity = 1}) async {
+      {double quantity = 1.0}) async {
     if (accountId.isEmpty || productId.isEmpty) {
       throw Exception('El accountId y productId son requeridos');
     }
 
-    if (quantity <= 0) {
+    if (quantity <= 0.0) {
       throw Exception('La cantidad debe ser mayor a 0');
     }
 
@@ -962,12 +962,12 @@ class CatalogueProvider extends ChangeNotifier
   }
 
   Future<void> decrementProductStock(
-      String accountId, String productId, int quantity) async {
+      String accountId, String productId, double quantity) async {
     if (accountId.isEmpty || productId.isEmpty) {
       throw Exception('El accountId y productId son requeridos');
     }
 
-    if (quantity <= 0) {
+    if (quantity <= 0.0) {
       throw Exception('La cantidad debe ser mayor a 0');
     }
 

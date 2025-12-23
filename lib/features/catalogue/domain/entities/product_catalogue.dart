@@ -39,7 +39,7 @@ class ProductCatalogue {
   final String currencySign;
 
   // Variables en tiempo de ejecución
-  final int quantity;
+  final double quantity; // Cantidad en el ticket (soporta fraccionarios: 0.025 = 25g, 2.5 = 2.5kg)
   final double revenue;
   final double priceTotal;
 
@@ -80,7 +80,7 @@ class ProductCatalogue {
     this.idMark = '',
     this.nameMark = '',
     this.imageMark = '',
-    this.quantity = 1,
+    this.quantity = 1.0,
     this.priceTotal = 0,
     this.variants = const {},
     this.status = 'pending',
@@ -119,7 +119,7 @@ class ProductCatalogue {
     String? idMark,
     String? nameMark,
     String? imageMark,
-    int? quantity,
+    double? quantity,
     Map<String, dynamic>? variants,
     String? status,
   }) {
@@ -299,6 +299,18 @@ class ProductCatalogue {
       return DateTime.now();
     }
 
+    // Parsea quantity como double, compatible con int y double
+    double _parseQuantity(dynamic value) {
+      if (value == null) return 1.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        final parsed = double.tryParse(value);
+        return parsed ?? 1.0;
+      }
+      return 1.0;
+    }
+
     final product = ProductCatalogue(
       id: data['id'] ?? '',
       reviewed: data['reviewed'] ?? data['revisado'] ?? false,
@@ -328,7 +340,7 @@ class ProductCatalogue {
       documentIdCreation: data['documentIdCreation'] ?? '',
       documentIdUpgrade: data['documentIdUpgrade'] ?? '',
       currencySign: data['currencySign'] ?? '\$',
-      quantity: data['quantity'] ?? 1,
+      quantity: _parseQuantity(data['quantity']),
       stock: data['stock'] ?? false,
       quantityStock: data['quantityStock'] ?? 0,
       sales: data['sales'] ?? 0,

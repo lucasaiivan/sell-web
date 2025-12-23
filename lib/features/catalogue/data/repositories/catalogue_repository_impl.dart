@@ -117,12 +117,12 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   // future : incrementa el contador de ventas de un producto
   @override
   Future<void> incrementSales(
-      String accountId, String productId, int quantity) async {
+      String accountId, String productId, double quantity) async {
     if (accountId.isEmpty || productId.isEmpty) {
       throw ArgumentError('El accountId y productId son obligatorios');
     }
 
-    if (quantity <= 0) {
+    if (quantity <= 0.0) {
       throw ArgumentError('La cantidad debe ser mayor a 0');
     }
 
@@ -144,12 +144,12 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   // future : decrementa el stock de un producto
   @override
   Future<void> decrementStock(
-      String accountId, String productId, int quantity) async {
+      String accountId, String productId, double quantity) async {
     if (accountId.isEmpty || productId.isEmpty) {
       throw ArgumentError('El accountId y productId son obligatorios');
     }
 
-    if (quantity <= 0) {
+    if (quantity <= 0.0) {
       throw ArgumentError('La cantidad debe ser mayor a 0');
     }
 
@@ -469,7 +469,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
 
   @override
   Future<void> updateStock(
-      String accountId, String productId, int newStock) async {
+      String accountId, String productId, double newStock) async {
     // ✅ Usar FirestorePaths + DataSource
     final path = FirestorePaths.accountProduct(accountId, productId);
 

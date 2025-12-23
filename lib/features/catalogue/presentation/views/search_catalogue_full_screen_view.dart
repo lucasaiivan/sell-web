@@ -126,10 +126,10 @@ class _ProductCatalogueFullScreenViewState
   }
 
   /// Obtiene la cantidad total de productos seleccionados en el ticket (suma de cantidades)
-  int _getSelectedProductsCount() {
+  double _getSelectedProductsCount() {
     return widget.sellProvider.ticket.products
         .where((product) => product.quantity > 0)
-        .fold(0, (total, product) => total + product.quantity);
+        .fold(0.0, (total, product) => total + product.quantity);
   }
 
   /// Disminuye la cantidad de un producto en el ticket o lo elimina si la cantidad llega a 0

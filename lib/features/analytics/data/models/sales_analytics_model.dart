@@ -45,7 +45,7 @@ class SalesAnalyticsModel extends SalesAnalytics {
     final totalTransactions = validTickets.length;
     double totalProfit = 0.0;
     double totalSales = 0.0;
-    int totalProductsSold = 0;
+    double totalProductsSold = 0.0; // Cambiado a double para soportar fraccionarios
     final Map<String, double> paymentMethodsBreakdown = {};
     final Map<String, int> paymentMethodsCount = {};
 
@@ -160,12 +160,12 @@ class SalesAnalyticsModel extends SalesAnalytics {
         if (!productStats.containsKey(productId)) {
           productStats[productId] = {
             'product': product,
-            'quantitySold': 0,
+            'quantitySold': 0.0,
             'totalRevenue': 0.0,
           };
         }
         productStats[productId]!['quantitySold'] =
-            (productStats[productId]!['quantitySold'] as int) +
+            (productStats[productId]!['quantitySold'] as double) +
                 product.quantity;
         productStats[productId]!['totalRevenue'] =
             (productStats[productId]!['totalRevenue'] as double) +
@@ -180,14 +180,14 @@ class SalesAnalyticsModel extends SalesAnalytics {
             'category': categoryName,
             'totalSales': 0.0,
             'transactionCount': 0,
-            'quantitySold': 0,
+            'quantitySold': 0.0,
           };
         }
         categoryStats[categoryName]!['totalSales'] =
             (categoryStats[categoryName]!['totalSales'] as double) +
                 (product.salePrice * product.quantity);
         categoryStats[categoryName]!['quantitySold'] =
-            (categoryStats[categoryName]!['quantitySold'] as int) +
+            (categoryStats[categoryName]!['quantitySold'] as double) +
                 product.quantity;
 
         // Most profitable products
@@ -199,7 +199,7 @@ class SalesAnalyticsModel extends SalesAnalytics {
           if (!profitableProductStats.containsKey(productId)) {
             profitableProductStats[productId] = {
               'product': product,
-              'quantitySold': 0,
+              'quantitySold': 0.0,
               'totalProfit': 0.0,
               'totalSales': 0.0,
               'totalCost': 0.0,
@@ -207,7 +207,7 @@ class SalesAnalyticsModel extends SalesAnalytics {
             };
           }
           profitableProductStats[productId]!['quantitySold'] =
-              (profitableProductStats[productId]!['quantitySold'] as int) +
+              (profitableProductStats[productId]!['quantitySold'] as double) +
                   product.quantity;
           profitableProductStats[productId]!['totalProfit'] =
               (profitableProductStats[productId]!['totalProfit'] as double) +
@@ -224,13 +224,13 @@ class SalesAnalyticsModel extends SalesAnalytics {
         if (!slowProductStats.containsKey(productId)) {
           slowProductStats[productId] = {
             'product': product,
-            'quantitySold': 0,
+            'quantitySold': 0.0,
             'totalRevenue': 0.0,
             'lastSoldDate': ticket.creation.toDate(),
           };
         }
         slowProductStats[productId]!['quantitySold'] =
-            (slowProductStats[productId]!['quantitySold'] as int) +
+            (slowProductStats[productId]!['quantitySold'] as double) +
                 product.quantity;
         slowProductStats[productId]!['totalRevenue'] =
             (slowProductStats[productId]!['totalRevenue'] as double) +
@@ -249,7 +249,7 @@ class SalesAnalyticsModel extends SalesAnalytics {
     // Top selling products (ordenar por cantidad)
     final topSellingProducts = productStats.values.toList()
       ..sort((a, b) =>
-          (b['quantitySold'] as int).compareTo(a['quantitySold'] as int));
+          (b['quantitySold'] as double).compareTo(a['quantitySold'] as double));
 
     // Most profitable products (ordenar por ganancia)
     final mostProfitableProducts = profitableProductStats.values.toList()
@@ -275,10 +275,10 @@ class SalesAnalyticsModel extends SalesAnalytics {
 
     // Slow moving products (vendidos <= 5 veces)
     final slowMovingProducts = slowProductStats.values
-        .where((p) => (p['quantitySold'] as int) <= 5)
+        .where((p) => (p['quantitySold'] as double) <= 5.0)
         .toList()
       ..sort((a, b) =>
-          (a['quantitySold'] as int).compareTo(b['quantitySold'] as int));
+          (a['quantitySold'] as double).compareTo(b['quantitySold'] as double));
 
     // Ventas por categoría (ordenar por ventas y calcular porcentaje)
     final salesByCategory = categoryStats.values.toList()

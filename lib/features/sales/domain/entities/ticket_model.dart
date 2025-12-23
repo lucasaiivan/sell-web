@@ -149,8 +149,9 @@ class TicketModel {
   }
 
   /// Obtiene el total de productos usando ProductCatalogue
-  int get totalProductCount {
-    return products.fold(0, (total, product) => total + product.quantity);
+  /// Retorna double para soportar cantidades fraccionarias (kg, L, m)
+  double get totalProductCount {
+    return products.fold(0.0, (total, product) => total + product.quantity);
   }
 
   /// Calcula el total usando ProductCatalogue
@@ -192,10 +193,18 @@ class TicketModel {
   // MÉTODOS ADICIONALES DE CONVENIENCIA
   // ==========================================
 
-  int getProductsQuantity() {
-    int count = 0;
+  double getProductsQuantity() {
+    double count = 0.0;
     for (var element in _listPoduct) {
-      count += element['quantity'] as int;
+      // Soportar tanto int como double para compatibilidad con datos existentes
+      final quantity = element['quantity'];
+      if (quantity is int) {
+        count += quantity.toDouble();
+      } else if (quantity is double) {
+        count += quantity;
+      } else {
+        count += (quantity ?? 0.0).toDouble();
+      }
     }
     return count;
   }
@@ -777,7 +786,7 @@ class TicketModel {
 
     // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
-      int quantity = product.quantity;
+      double quantity = product.quantity; // Ahora es double para soportar fraccionarios
       double salePrice = product.salePrice;
       total += salePrice * quantity;
     }
@@ -795,10 +804,18 @@ class TicketModel {
   }
 
   /// Incrementa la cantidad de un producto por ID (nuevo método optimizado)
+  /// Considera el tipo de unidad para incrementar con el step adecuado
   void incrementProductById(String productId) {
     for (var i = 0; i < _listPoduct.length; i++) {
       if (_listPoduct[i]['id'] == productId) {
-        _listPoduct[i]['quantity'] = (_listPoduct[i]['quantity'] ?? 0) + 1;
+        final currentQuantity = (_listPoduct[i]['quantity'] ?? 1.0).toDouble();
+        final unit = _listPoduct[i]['unit'] ?? 'unidad';
+        
+        // Obtener step de incremento según tipo de unidad (usando import necesario arriba)
+        final step = _getQuantityStep(unit);
+        final newQuantity = currentQuantity + step;
+        
+        _listPoduct[i]['quantity'] = newQuantity;
         _cachedProducts = null; // Invalidar caché
         return;
       }
@@ -811,20 +828,44 @@ class TicketModel {
   }
 
   /// Decrementa la cantidad de un producto por ID (nuevo método optimizado)
+  /// Considera el tipo de unidad para decrementar con el step adecuado
   void decrementProductById(String productId) {
     for (var i = 0; i < _listPoduct.length; i++) {
       if (_listPoduct[i]['id'] == productId) {
-        final currentQuantity = _listPoduct[i]['quantity'] ?? 0;
-        if (currentQuantity > 1) {
-          _listPoduct[i]['quantity'] = currentQuantity - 1;
-        } else {
-          // Si la cantidad es 1 o menos, eliminar el producto
+        final currentQuantity = (_listPoduct[i]['quantity'] ?? 1.0).toDouble();
+        final unit = _listPoduct[i]['unit'] ?? 'unidad';
+        
+        // Obtener step de decremento según tipo de unidad
+        final step = _getQuantityStep(unit);
+        final newQuantity = currentQuantity - step;
+        
+        // Si la cantidad resultante es menor que el mínimo permitido, eliminar el producto
+        if (newQuantity < 0.001) {
           _listPoduct.removeAt(i);
+        } else {
+          _listPoduct[i]['quantity'] = newQuantity;
         }
         _cachedProducts = null; // Invalidar caché
         return;
       }
     }
+  }
+
+  /// Obtiene el step de incremento/decremento según el tipo de unidad
+  /// Helper privado para mantener consistencia con UnitHelper
+  double _getQuantityStep(String unit) {
+    // Unidades discretas
+    if (['unidad', 'caja', 'paquete', 'docena'].contains(unit.toLowerCase())) {
+      return 1.0;
+    }
+    
+    // Unidades pequeñas (gramo, mililitro, centímetro)
+    if (['gramo', 'mililitro', 'centímetro'].contains(unit.toLowerCase())) {
+      return 0.01; // Incrementos de 10g, 10ml, 1cm
+    }
+    
+    // Unidades grandes (kilogramo, litro, metro)
+    return 0.1; // Incrementos de 100g, 100ml, 10cm
   }
 
   // void : elimina el producto seleccionado del ticket

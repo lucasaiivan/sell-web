@@ -70,7 +70,7 @@ class TransactionListItem extends StatelessWidget {
     bool isAnnulled,
     double profit,
     int profitPercentage,
-    int itemsCount,
+    double itemsCount,
   ) {
     return Row(
       children: [
@@ -292,7 +292,7 @@ class TransactionListItem extends StatelessWidget {
     bool isAnnulled,
     double profit,
     int profitPercentage,
-    int itemsCount,
+    double itemsCount,
   ) {
     return Row(
       children: [

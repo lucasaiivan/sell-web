@@ -4,6 +4,7 @@ import 'product_price_edit_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
+import 'package:sellweb/features/sales/presentation/widgets/quantity_selector.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Diálogo para editar producto seleccionado
@@ -24,7 +25,7 @@ class ProductEditDialog extends StatefulWidget {
 }
 
 class _ProductEditDialogState extends State<ProductEditDialog> {
-  late int _quantity;
+  late double _quantity;
   bool _isProcessing = false;
 
   @override
@@ -229,58 +230,27 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
     return Column(
       children: [
-        // view : cantidad de unidades del producto
+        // Selector de cantidad con soporte para unidades fraccionarias
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Spacer(),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Botón decrementar
-                _buildQuantityButton(
-                  icon: Icons.remove_rounded,
-                  onPressed: _quantity > 1
-                      ? () => _updateQuantity(_quantity - 1)
-                      : null,
-                  isEnabled: _quantity > 1,
-                ),
-
-                // Cantidad actual
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$_quantity',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-
-                // Botón incrementar
-                _buildQuantityButton(
-                  icon: Icons.add_rounded,
-                  onPressed: () => _updateQuantity(_quantity + 1),
-                  isEnabled: true,
-                ),
-              ],
+            QuantitySelector(
+              initialQuantity: _quantity,
+              unit: widget.product.unit,
+              onQuantityChanged: (newQuantity) {
+                _updateQuantity(newQuantity);
+              },
+              showInput: true,
+              showUnit: true,
             ),
           ],
         ),
         const SizedBox(height: 20),
-        // Header con total destacado
+        // Total con descripción de unidad
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Spacer(),
-            // Contenedor destacado para el total
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -290,13 +260,27 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                 border: Border.all(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1)),
               ),
-              child: Text(
-                'Total: ${CurrencyFormatter.formatPrice(value: _totalPrice)}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontSize: 30,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Cantidad × Precio por unidad
+                  Text(
+                    '${UnitHelper.formatQuantity(_quantity, widget.product.unit)} × ${CurrencyFormatter.formatPrice(value: widget.product.salePrice)}/${widget.product.unit}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Total
+                  Text(
+                    'Total: ${CurrencyFormatter.formatPrice(value: _totalPrice)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontSize: 30,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -305,36 +289,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
     );
   }
 
-  Widget _buildQuantityButton({
-    required IconData icon,
-    required VoidCallback? onPressed,
-    required bool isEnabled,
-  }) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isEnabled
-            ? theme.colorScheme.primary.withValues(alpha: 0.12)
-            : theme.colorScheme.outline.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: IconButton(
-        onPressed: isEnabled ? onPressed : null,
-        icon: Icon(
-          icon,
-          size: 20,
-          color:
-              isEnabled ? theme.colorScheme.primary : theme.colorScheme.outline,
-        ),
-        padding: EdgeInsets.zero,
-      ),
-    );
-  }
-
-  void _updateQuantity(int newQuantity) {
+  void _updateQuantity(double newQuantity) {
     setState(() {
       _quantity = newQuantity;
       _isProcessing = true;

@@ -163,7 +163,7 @@ class TestHelpers {
       description: description ?? 'Test Product',
       salePrice: salePrice ?? 50.0,
       purchasePrice: purchasePrice ?? 30.0,
-      quantity: quantity ?? 1,
+      quantity: quantity?.toDouble() ?? 1.0,
       stock: stock ?? false,
       quantityStock: quantityStock ?? 100,
       category: 'Test Category',

@@ -8,7 +8,7 @@ import '../repositories/catalogue_repository.dart';
 class UpdateStockParams {
   final String accountId;
   final String productId;
-  final int newStock;
+  final double newStock;
 
   const UpdateStockParams({
     required this.accountId,
@@ -35,7 +35,7 @@ class UpdateStockUseCase extends UseCase<void, UpdateStockParams> {
   @override
   Future<Either<Failure, void>> call(UpdateStockParams params) async {
     // Validación de negocio
-    if (params.newStock < 0) {
+    if (params.newStock < 0.0) {
       return Left(ValidationFailure('El stock no puede ser negativo'));
     }
 

@@ -105,7 +105,7 @@ class CatalogueUseCases {
   /// [productId] - ID del producto
   /// [quantity] - Cantidad vendida (por defecto 1)
   Future<void> incrementProductSales(String accountId, String productId,
-      {int quantity = 1}) {
+      {double quantity = 1.0}) {
     return repository.incrementSales(accountId, productId, quantity);
   }
 
@@ -115,7 +115,7 @@ class CatalogueUseCases {
   /// [productId] - ID del producto
   /// [quantity] - Cantidad a decrementar
   Future<void> decrementProductStock(
-      String accountId, String productId, int quantity) {
+      String accountId, String productId, double quantity) {
     return repository.decrementStock(accountId, productId, quantity);
   }
 

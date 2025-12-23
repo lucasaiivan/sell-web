@@ -1081,7 +1081,7 @@ class SalesProvider extends ChangeNotifier {
           saleAmount: _state.ticket.priceTotal,
           discountAmount: _state.ticket
               .getDiscountAmount, // Usar el monto calculado del descuento
-          itemCount: _state.ticket.getProductsQuantity(),
+          itemCount: _state.ticket.getProductsQuantity().round(), // Redondear para itemCount
         );
       }
     } catch (e) {

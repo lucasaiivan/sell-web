@@ -20,8 +20,8 @@ class SalesAnalytics extends Equatable {
   /// Total de ventas (suma de priceTotal)
   final double totalSales;
 
-  /// Total de productos vendidos
-  final int totalProductsSold;
+  /// Total de productos vendidos (soporta cantidades fraccionarias)
+  final double totalProductsSold;
 
   /// Momento en que se calcularon las métricas
   final DateTime calculatedAt;
@@ -60,7 +60,7 @@ class SalesAnalytics extends Equatable {
   final Map<String, Map<String, dynamic>> salesByDay;
 
   /// Distribución de ventas por categoría de producto
-  /// Estructura: [{ 'category': String, 'totalSales': double, 'percentage': double, 'quantitySold': int, 'transactionCount': int }]
+  /// Estructura: [{ 'category': String, 'totalSales': double, 'percentage': double, 'quantitySold': double, 'transactionCount': int }]
   final List<Map<String, dynamic>> salesByCategory;
 
   /// Ventas agrupadas por día de la semana (1=Lunes ... 7=Domingo)
@@ -206,12 +206,12 @@ class SalesAnalytics extends Equatable {
         if (!productStats.containsKey(productId)) {
           productStats[productId] = {
             'product': product,
-            'quantitySold': 0,
+            'quantitySold': 0.0,
             'totalRevenue': 0.0,
           };
         }
         productStats[productId]!['quantitySold'] =
-            (productStats[productId]!['quantitySold'] as int) +
+            (productStats[productId]!['quantitySold'] as double) +
                 product.quantity;
         productStats[productId]!['totalRevenue'] =
             (productStats[productId]!['totalRevenue'] as double) +
@@ -221,7 +221,7 @@ class SalesAnalytics extends Equatable {
 
     final sortedProducts = productStats.values.toList()
       ..sort((a, b) =>
-          (b['quantitySold'] as int).compareTo(a['quantitySold'] as int));
+          (b['quantitySold'] as double).compareTo(a['quantitySold'] as double));
 
     return sortedProducts;
   }
@@ -242,7 +242,7 @@ class SalesAnalytics extends Equatable {
           profitableStats[productId] = {
             'product': product, // obj
             'totalProfit': 0.0, // total ganancia
-            'quantitySold': 0, // cantidad vendidaw
+            'quantitySold': 0.0, // cantidad vendida (soporta fraccionarios)
             'profitPerUnit': (product.salePrice -
                 product.purchasePrice), // ganancia por unidad
           };
@@ -250,7 +250,7 @@ class SalesAnalytics extends Equatable {
         profitableStats[productId]!['totalProfit'] =
             (profitableStats[productId]!['totalProfit'] as double) + profit;
         profitableStats[productId]!['quantitySold'] =
-            (profitableStats[productId]!['quantitySold'] as int) +
+            (profitableStats[productId]!['quantitySold'] as double) +
                 product.quantity;
       }
     }
@@ -279,14 +279,14 @@ class SalesAnalytics extends Equatable {
           categoryStats[category] = {
             'category': category,
             'totalSales': 0.0,
-            'quantitySold': 0,
+            'quantitySold': 0.0,
             'transactionCount': 0,
           };
         }
         categoryStats[category]!['totalSales'] =
             (categoryStats[category]!['totalSales'] as double) + sales;
         categoryStats[category]!['quantitySold'] =
-            (categoryStats[category]!['quantitySold'] as int) +
+            (categoryStats[category]!['quantitySold'] as double) +
                 product.quantity;
         totalSales += sales;
       }

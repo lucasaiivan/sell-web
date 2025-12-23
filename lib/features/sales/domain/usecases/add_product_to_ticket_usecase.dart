@@ -39,14 +39,14 @@ class AddProductToTicketUseCase
           productExists = true;
 
           if (params.replaceQuantity) {
-            final quantityToUse = params.product.quantity > 0
+            final quantityToUse = params.product.quantity >= 0.001
                 ? params.product.quantity
                 : updatedProducts[i].quantity;
             updatedProducts[i] =
                 params.product.copyWith(quantity: quantityToUse);
           } else {
             final newQuantity = updatedProducts[i].quantity +
-                (params.product.quantity > 0 ? params.product.quantity : 1);
+                (params.product.quantity >= 0.001 ? params.product.quantity : 1.0);
             updatedProducts[i] =
                 updatedProducts[i].copyWith(quantity: newQuantity);
           }
@@ -56,7 +56,7 @@ class AddProductToTicketUseCase
 
       if (!productExists) {
         final quantityToAdd =
-            params.product.quantity > 0 ? params.product.quantity : 1;
+            params.product.quantity >= 0.001 ? params.product.quantity : 1.0;
         updatedProducts.add(params.product.copyWith(quantity: quantityToAdd));
       }
 

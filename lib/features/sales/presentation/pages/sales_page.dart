@@ -1285,7 +1285,7 @@ class _ProductoItemState extends State<ProductoItem> {
             ),
           ),
           // view : cantidad de productos seleccionados
-          widget.producto.quantity == 1
+          widget.producto.quantity <= 1.0
               ? Container()
               : Positioned(
                   top: 5,
@@ -1296,9 +1296,14 @@ class _ProductoItemState extends State<ProductoItem> {
                       padding: const EdgeInsets.all(1.0),
                       child: CircleAvatar(
                         backgroundColor: Colors.white,
-                        child: Text(widget.producto.quantity.toString(),
+                        child: Text(
+                            // Formatear cantidad: enteros sin decimales, fraccionarios con hasta 3 decimales
+                            widget.producto.quantity == widget.producto.quantity.roundToDouble()
+                                ? widget.producto.quantity.toInt().toString()
+                                : widget.producto.quantity.toStringAsFixed(3).replaceAll(RegExp(r'\.?0+$'), ''),
                             style: const TextStyle(
                                 color: Colors.black,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -1401,6 +1406,7 @@ class _ProductoItemState extends State<ProductoItem> {
     final descriptionColor =
         isDark ? theme.colorScheme.onSurfaceVariant : Colors.grey;
     final priceColor = isDark ? theme.colorScheme.onSurface : Colors.black;
+    final unitColor = isDark ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7) : Colors.grey.shade600;
 
     return widget.producto.description == ''
         ? Container()
@@ -1416,15 +1422,33 @@ class _ProductoItemState extends State<ProductoItem> {
                         color: descriptionColor,
                         overflow: TextOverflow.ellipsis),
                     maxLines: 1),
-                Text(
-                    CurrencyFormatter.formatPrice(
-                        value: widget.producto.salePrice),
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17.0,
-                        color: priceColor),
-                    overflow: TextOverflow.clip,
-                    softWrap: false),
+                // Precio con unidad
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                        CurrencyFormatter.formatPrice(
+                            value: widget.producto.salePrice),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17.0,
+                            color: priceColor),
+                        overflow: TextOverflow.clip,
+                        softWrap: false),
+                    if (widget.producto.unit.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 2.0, bottom: 1.0),
+                        child: Text(
+                          '/${widget.producto.unit}',
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            color: unitColor,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
           );

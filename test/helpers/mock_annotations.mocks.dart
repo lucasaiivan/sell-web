@@ -1394,7 +1394,7 @@ class MockCatalogueRepository extends _i1.Mock
   _i5.Future<void> incrementSales(
     String? accountId,
     String? productId,
-    int? quantity,
+    double? quantity,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1413,7 +1413,7 @@ class MockCatalogueRepository extends _i1.Mock
   _i5.Future<void> decrementStock(
     String? accountId,
     String? productId,
-    int? quantity,
+    double? quantity,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1660,7 +1660,7 @@ class MockCatalogueRepository extends _i1.Mock
   _i5.Future<void> updateStock(
     String? accountId,
     String? productId,
-    int? newStock,
+    double? newStock,
   ) =>
       (super.noSuchMethod(
         Invocation.method(

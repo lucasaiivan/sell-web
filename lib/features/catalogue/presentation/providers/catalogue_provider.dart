@@ -376,6 +376,18 @@ class CatalogueProvider extends ChangeNotifier
     );
   }
 
+  /// Busca un producto por su ID
+  /// Itera la lista de productos (O(n)) para encontrar por ID
+  ProductCatalogue? getProductById(String id) {
+    if (id.isEmpty) return null;
+    for (final product in _state.products) {
+      if (product.id == id) {
+        return product;
+      }
+    }
+    return null;
+  }
+
   /// Busca un producto por su código
   /// Usa índice cacheado para búsqueda O(1) en lugar de iterar O(n)
   ProductCatalogue? getProductByCode(String code) {
@@ -744,6 +756,7 @@ class CatalogueProvider extends ChangeNotifier
 
       // Aplicar timestamps según corresponda
       if (isCreatingMode) {
+        // Nuevo producto
         productToSave = productToSave.copyWith(
           creation: DateTime.now(),
           upgrade: DateTime.now(),
@@ -751,11 +764,13 @@ class CatalogueProvider extends ChangeNotifier
           documentIdUpgrade: accountId,
         );
       } else if (shouldUpdateUpgrade) {
+        // Edición de producto existente
         productToSave = productToSave.copyWith(
           upgrade: DateTime.now(),
           documentIdUpgrade: accountId,
         );
       } else {
+        // Edición sin actualizar upgrade
         productToSave = productToSave.copyWith(
           documentIdUpgrade: accountId,
         );
@@ -1087,19 +1102,40 @@ class CatalogueProvider extends ChangeNotifier
     }
   }
 
+  /// Detecta cambios en la lista de productos comparando todos los campos relevantes.
+  ///
+  /// Retorna `false` si hay cambios (precios, descripción, stock, imagen, etc.),
+  /// lo que dispara `notifyListeners()` para actualizar la UI automáticamente.
+  ///
+  /// **Campos comparados**: id, code, salePrice, purchasePrice, description,
+  /// nameMark, nameCategory, nameProvider, quantityStock, stock, alertStock,
+  /// favorite, sales, unit, image, upgrade
+  ///
+  /// **Complejidad**: O(1) si tamaño difiere, O(n) si itera todos los productos
   bool _areProductListsEqual(
       List<ProductCatalogue> list1, List<ProductCatalogue> list2) {
     if (list1.length != list2.length) return false;
 
     for (var i = 0; i < list1.length; i++) {
-      if (list1[i].id != list2[i].id ||
-          list1[i].code != list2[i].code ||
-          list1[i].salePrice != list2[i].salePrice ||
-          list1[i].description != list2[i].description ||
-          list1[i].sales != list2[i].sales ||
-          list1[i].quantityStock != list2[i].quantityStock ||
-          list1[i].favorite != list2[i].favorite ||
-          list1[i].upgrade != list2[i].upgrade) {
+      final p1 = list1[i];
+      final p2 = list2[i];
+
+      if (p1.id != p2.id ||
+          p1.code != p2.code ||
+          p1.salePrice != p2.salePrice ||
+          p1.purchasePrice != p2.purchasePrice ||
+          p1.description != p2.description ||
+          p1.sales != p2.sales ||
+          p1.quantityStock != p2.quantityStock ||
+          p1.favorite != p2.favorite ||
+          p1.upgrade != p2.upgrade ||
+          p1.unit != p2.unit ||
+          p1.nameMark != p2.nameMark ||
+          p1.nameCategory != p2.nameCategory ||
+          p1.nameProvider != p2.nameProvider ||
+          p1.stock != p2.stock ||
+          p1.alertStock != p2.alertStock ||
+          p1.image != p2.image) {
         return false;
       }
     }

@@ -47,6 +47,15 @@ class ProductEditCatalogueView extends StatefulWidget {
 class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   static const double _iconOpacity = 0.8;
 
+  // Unidades de venta disponibles
+  static const List<String> _commonUnits = [
+    'unidad',
+    'kilogramo',
+    'litro',
+    'metro',
+    'caja',
+  ];
+
   // Form state
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
@@ -66,6 +75,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   late final TextEditingController _categoryController;
   late final TextEditingController _providerController;
   late final TextEditingController _markController;
+  late final TextEditingController _unitController;
 
   // Selected IDs
   String? _selectedCategoryId;
@@ -103,6 +113,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     _categoryController = TextEditingController(text: product.nameCategory);
     _providerController = TextEditingController(text: product.nameProvider);
     _markController = TextEditingController(text: product.nameMark);
+    _unitController = TextEditingController(text: product.unit);
   }
 
   /// Inicializa el estado del formulario
@@ -141,6 +152,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     _categoryController.dispose();
     _providerController.dispose();
     _markController.dispose();
+    _unitController.dispose();
     super.dispose();
   }
 
@@ -231,10 +243,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         setState(() => _isSaving = false);
         _showSuccessMessage(result.message);
 
-        // Esperar un frame antes de hacer pop para evitar errores de renderizado
-        await Future.delayed(const Duration(milliseconds: 100));
+        // Esperar un poco más para que Firestore propague los cambios
+        // y el listener del provider actualice la lista de productos
+        await Future.delayed(const Duration(milliseconds: 300));
+
         if (mounted) {
-          Navigator.of(context).pop();
+          // Retornar el producto actualizado para que la vista anterior lo use
+          Navigator.of(context).pop(result.updatedProduct);
         }
       }
     } catch (e) {
@@ -259,6 +274,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       nameCategory: _categoryController.text.trim(),
       provider: _selectedProviderId ?? '',
       nameProvider: _providerController.text.trim(),
+      unit: widget.product.isVerified
+          ? widget.product.unit
+          : _unitController.text.trim(),
       idMark: widget.product.isVerified
           ? widget.product.idMark
           : (_selectedBrandId ?? ''),
@@ -272,9 +290,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       favorite: _favoriteEnabled,
       variants: _variants,
     );
-
-    debugPrint(
-        '🔍 ProductEdit: Guardando producto con ${_variants.length} variantes: $_variants');
     return updated;
   }
 
@@ -1874,7 +1889,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                               Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 18,
-                                    color: Colors.blue,
                                   ),
                         ),
                       ],
@@ -1901,8 +1915,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           context: context,
           title: 'Precios y márgenes',
           icon: Icons.attach_money,
-        ),
+        ), 
         const SizedBox(height: 12),
+        _buildUnitFieldAsLabel(), // Campo de unidad de venta (con estilo similar a marca)
+        const SizedBox(height: 16),
         _buildSalePriceField(),
         const SizedBox(height: 16),
         _buildPurchasePriceField(),
@@ -1961,6 +1977,148 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [AppMoneyInputFormatter(symbol: '')],
     );
+  }
+
+  /// Campo de unidad de venta con estilo similar al campo de marca
+  Widget _buildUnitFieldAsLabel() {
+    final isVerified = widget.product.isVerified;
+    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+
+    if (isVerified) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: colorScheme.outline.withValues(alpha: 0.2),
+            width: 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Vender por',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _getUnitDisplayName(_unitController.text),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: () => _showUnitSelectionDialog(),
+      child: IgnorePointer(
+        child: TextFormField(
+          controller: TextEditingController(
+            text: _getUnitDisplayName(_unitController.text),
+          ),
+          decoration: InputDecoration(
+            labelText: 'Vender por',
+            suffixIcon: const Icon(Icons.arrow_drop_down),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Obtiene el nombre de visualización de la unidad con conversiones
+  String _getUnitDisplayName(String unit) {
+    switch (unit.toLowerCase().trim()) {
+      case 'kilogramo':
+        return 'Kilogramo (kg)';
+      case 'litro':
+        return 'Litro (L)';
+      case 'metro':
+        return 'Metro (m)';
+      case 'caja':
+        return 'Caja';
+      case 'unidad':
+      default:
+        return 'Unidad';
+    }
+  }
+
+  /// Muestra diálogo de selección de unidad
+  void _showUnitSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Seleccionar unidad de venta'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ..._commonUnits.map((unit) {
+                final displayName = _getUnitDisplayName(unit);
+                final conversionInfo = _getUnitConversionInfo(unit);
+
+                return RadioListTile<String>(
+                  title: Text(displayName),
+                  subtitle: conversionInfo.isNotEmpty
+                      ? Text(
+                          conversionInfo,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.7),
+                          ),
+                        )
+                      : null,
+                  value: unit,
+                  groupValue: _unitController.text,
+                  onChanged: (value) {
+                    setState(() {
+                      _unitController.text = value ?? 'unidad';
+                      Navigator.pop(context);
+                    });
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Obtiene información de conversión para mostrar en el diálogo
+  String _getUnitConversionInfo(String unit) {
+    switch (unit.toLowerCase()) {
+      case 'kilogramo':
+        return '1 kg = 1000 g';
+      case 'litro':
+        return '1 L = 1000 ml';
+      case 'metro':
+        return '1 m = 100 cm = 1000 mm';
+      case 'caja':
+        return 'Unidad de empaque';
+      default:
+        return '';
+    }
   }
 
   /// Construye sección de inventario y control de stock

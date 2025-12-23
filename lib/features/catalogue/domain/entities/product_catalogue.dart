@@ -22,7 +22,6 @@ class ProductCatalogue {
   final String status;
 
   // Variables del catálogo de la cuenta
-  final bool local; // Indica si el producto es un SKU interno del comercio
   final DateTime creation; // Fecha de creación
   final DateTime upgrade; // Fecha de última actualización
   final bool favorite;
@@ -36,6 +35,7 @@ class ProductCatalogue {
   final int sales;
   final double salePrice; // Precio de venta
   final double purchasePrice; // Precio de compra
+  final String unit; // Unidad de venta (unidad, kilogramo, litro, metro)
   final String currencySign;
 
   // Variables en tiempo de ejecución
@@ -75,12 +75,12 @@ class ProductCatalogue {
     this.sales = 0,
     this.salePrice = 0.0,
     this.purchasePrice = 0.0,
+    this.unit = 'unidad',
     this.currencySign = "\$",
     this.idMark = '',
     this.nameMark = '',
     this.imageMark = '',
     this.quantity = 1,
-    this.local = false,
     this.priceTotal = 0,
     this.variants = const {},
     this.status = 'pending',
@@ -114,12 +114,12 @@ class ProductCatalogue {
     int? sales,
     double? salePrice,
     double? purchasePrice,
+    String? unit,
     String? currencySign,
     String? idMark,
     String? nameMark,
     String? imageMark,
     int? quantity,
-    bool? local,
     Map<String, dynamic>? variants,
     String? status,
   }) {
@@ -151,12 +151,12 @@ class ProductCatalogue {
       sales: sales ?? this.sales,
       salePrice: salePrice ?? this.salePrice,
       purchasePrice: purchasePrice ?? this.purchasePrice,
+      unit: unit ?? this.unit,
       currencySign: currencySign ?? this.currencySign,
       idMark: idMark ?? this.idMark,
       nameMark: nameMark ?? this.nameMark,
       imageMark: imageMark ?? this.imageMark,
       quantity: quantity ?? this.quantity,
-      local: local ?? this.local,
       variants: variants ?? this.variants,
       status: status ?? this.status,
     );
@@ -242,7 +242,6 @@ class ProductCatalogue {
   Map<String, dynamic> toMap() {
     final map = {
       "id": id,
-      'local': local,
       'reviewed': reviewed,
       'followers': followers,
       'outstanding': outstanding,
@@ -276,6 +275,7 @@ class ProductCatalogue {
       "sales": sales,
       "alertStock": alertStock,
       "revenue": revenue,
+      "unit": unit,
     };
 
     debugPrint(
@@ -301,7 +301,6 @@ class ProductCatalogue {
 
     final product = ProductCatalogue(
       id: data['id'] ?? '',
-      local: data['local'] ?? false,
       reviewed: data['reviewed'] ?? data['revisado'] ?? false,
       followers: data['followers'] ?? data['seguidores'] ?? 0,
       favorite: data['favorite'] ?? data['favorito'] ?? false,
@@ -337,6 +336,7 @@ class ProductCatalogue {
       revenue: (data['revenue'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
+      unit: data['unit'] ?? 'unidad',
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])
           : data.containsKey('attributes') && data['attributes'] != null

@@ -49,6 +49,9 @@ class Product {
   /// Variantes dinámicas del producto (peso, color, talle, etc.)
   final Map<String, dynamic> variants;
 
+  /// Unidad de venta del producto (unidad, kilogramo, litro, metro, caja)
+  final String unit;
+
   /// Estado del producto
   ///
   /// Valores posibles:
@@ -96,8 +99,8 @@ class Product {
       sales: 0,
       salePrice: 0.0,
       purchasePrice: 0.0,
+      unit: unit,
       currencySign: '\$',
-      local: false,
       variants: variants,
       status: status,
     );
@@ -118,6 +121,7 @@ class Product {
     required this.upgrade,
     this.idUserCreation = '',
     this.idUserUpgrade = '',
+    this.unit = 'unidad',
     this.variants = const {},
     this.status = 'pending',
   });
@@ -147,6 +151,7 @@ class Product {
           : map.containsKey('attributes') && map['attributes'] != null
               ? Map<String, dynamic>.from(map['attributes'])
               : {},
+      unit: map['unit'] ?? 'unidad',
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: map.containsKey('status')
           ? map['status']
@@ -171,6 +176,7 @@ class Product {
       'creation': Timestamp.fromDate(creation),
       'upgrade': Timestamp.fromDate(upgrade),
       'idUserCreation': idUserCreation,
+      'unit': unit,
       'idUserUpgrade': idUserUpgrade,
       'variants': variants,
       'status': status,

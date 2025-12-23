@@ -269,7 +269,7 @@ class _ProductSearchFullScreenViewState
       documentUpgrade: globalProduct.upgrade,
       documentIdCreation: globalProduct.idUserCreation,
       documentIdUpgrade: globalProduct.idUserUpgrade,
-      local: false, // Producto de la BD global
+      status: globalProduct.status,
     );
 
     Navigator.of(context)
@@ -310,19 +310,17 @@ class _ProductSearchFullScreenViewState
     // Determinar si es un producto válido para BD global
     final isValidCode = BarcodeValidator.isValid(code);
     final isSku = forceLocal || code.startsWith('SKU-');
-    final isLocal = isSku || !isValidCode;
 
     // Determinar el status según el tipo de código
     // - 'sku': Producto interno del comercio (SKU generado o código no estándar)
     // - '': Producto nuevo con código válido (el UseCase asignará 'pending' al crearlo en BD)
-    final status = isLocal ? 'sku' : '';
+    final status = (isSku || !isValidCode) ? 'sku' : '';
 
     // Debug: Verificar valores
     print('🔍 Creando producto nuevo:');
     print('   Código: $code');
     print('   Es válido: $isValidCode');
     print('   Es SKU: $isSku');
-    print('   Es local: $isLocal');
     print('   Status: $status');
 
     final newProduct = ProductCatalogue(
@@ -334,7 +332,6 @@ class _ProductSearchFullScreenViewState
       upgrade: DateTime.now(),
       documentCreation: DateTime.now(),
       documentUpgrade: DateTime.now(),
-      local: isLocal,
       status: status,
     );
 

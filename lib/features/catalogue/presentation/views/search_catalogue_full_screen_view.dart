@@ -442,16 +442,31 @@ class _ProductCatalogueFullScreenViewState
               maxLines: 1,
             ),
           ],
-          // Precio del producto
-          Text(
-            CurrencyFormatter.formatPrice(value: product.salePrice),
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 17.0,
-              color: Colors.black,
-            ),
-            overflow: TextOverflow.clip,
-            softWrap: false,
+          // Precio del producto con unidad
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                CurrencyFormatter.formatPrice(value: product.salePrice),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17.0,
+                  color: Colors.black,
+                ),
+                overflow: TextOverflow.clip,
+                softWrap: false,
+              ),
+              Text(
+                '/${product.unit}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  color: Colors.black.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -847,14 +862,33 @@ class _ProductCatalogueFullScreenViewState
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // text : Precio de venta
-              Text(
-                CurrencyFormatter.formatPrice(value: product.salePrice),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: colorScheme.onSurface,
-                ),
+              // text : Precio de venta con unidad
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        CurrencyFormatter.formatPrice(value: product.salePrice),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        '/${product.unit}',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(width: 12),
               if (selectedProduct != null) ...[

@@ -90,7 +90,6 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
         // ─────────────────────────────────────────────────────────────────────
         updatedProduct = updatedProduct.copyWith(
           status: 'sku',
-          local: true,
         );
         resultMessage =
             isNewProduct ? 'Producto SKU creado' : 'Producto SKU actualizado';
@@ -116,15 +115,15 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
           idUserCreation: params.accountId,
           idUserUpgrade: params.accountId,
           variants: updatedProduct.variants,
+          unit: updatedProduct.unit,
           status: 'pending',
         );
 
         await _repository.createPublicProduct(globalProduct);
 
-        // Asegurar que el producto local tenga el status correcto
+        // Asegurar que el producto tenga el status correcto
         updatedProduct = updatedProduct.copyWith(
           status: 'pending',
-          local: false,
         );
         resultMessage = 'Producto creado en base de datos global';
       } else if (isNewProduct && isVerified) {
@@ -138,7 +137,6 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
         // Mantener status verified, solo se editan atributos del catálogo
         updatedProduct = updatedProduct.copyWith(
           status: 'verified',
-          local: false,
         );
         resultMessage = 'Producto verificado agregado al catálogo';
       } else if (isNewProduct && isPending) {
@@ -152,11 +150,43 @@ class SaveProductUseCase extends UseCase<SaveProductResult, SaveProductParams> {
         // Mantener status pending
         updatedProduct = updatedProduct.copyWith(
           status: 'pending',
-          local: false,
         );
         resultMessage = 'Producto pendiente agregado al catálogo';
+      } else if (!isNewProduct && isPending) {
+        // ─────────────────────────────────────────────────────────────────────
+        // CASO 5: Editando producto PENDIENTE existente en catálogo
+        // Actualizar tanto en catálogo privado como en BD pública
+        // ─────────────────────────────────────────────────────────────────────
+        final globalProduct = Product(
+          id: updatedProduct.id,
+          code: updatedProduct.code,
+          description: updatedProduct.description,
+          image: updatedProduct.image,
+          idMark: updatedProduct.idMark,
+          nameMark: updatedProduct.nameMark,
+          imageMark: updatedProduct.imageMark,
+          reviewed: false,
+          followers: updatedProduct.followers,
+          favorite: updatedProduct.favorite,
+          creation: updatedProduct.documentCreation,
+          upgrade: DateTime.now(),
+          idUserCreation: updatedProduct.documentIdCreation,
+          idUserUpgrade: params.accountId,
+          variants: updatedProduct.variants,
+          unit: updatedProduct.unit,
+          status: 'pending',
+        );
+
+        // Actualizar en BD pública (merge = true para no perder followers)
+        await _repository.createPublicProduct(globalProduct);
+
+        updatedProduct = updatedProduct.copyWith(
+          status: 'pending',
+        );
+        resultMessage =
+            'Producto pendiente actualizado en BD global y catálogo';
       } else {
-        // Actualización de producto existente en catálogo
+        // Actualización de producto existente en catálogo (otros casos)
         resultMessage = 'Producto actualizado correctamente';
       }
 

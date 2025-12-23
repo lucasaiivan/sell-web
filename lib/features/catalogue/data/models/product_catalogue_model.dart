@@ -36,12 +36,12 @@ class ProductCatalogueModel extends ProductCatalogue {
     super.sales,
     super.salePrice,
     super.purchasePrice,
+    super.unit,
     super.currencySign,
     super.idMark,
     super.nameMark,
     super.imageMark,
     super.quantity,
-    super.local,
     super.variants,
     super.status,
   });
@@ -114,6 +114,7 @@ class ProductCatalogueModel extends ProductCatalogue {
               ? (data['purchasePrice'] as int).toDouble()
               : data['purchasePrice'] ?? 0.0)
           : 0.0,
+      unit: data.containsKey('unit') ? data['unit'] : 'unidad',
       currencySign: data.containsKey('currencySign')
           ? data['currencySign']
           : data['signo_moneda'] ?? '',
@@ -124,7 +125,6 @@ class ProductCatalogueModel extends ProductCatalogue {
       alertStock: data.containsKey('alertStock') ? data['alertStock'] : 5,
       revenue: data.containsKey('revenue') ? data['revenue'] : 0.0,
       quantity: data.containsKey('quantity') ? data['quantity'] : 1,
-      local: data.containsKey('local') ? data['local'] : false,
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])
           : data.containsKey('attributes') && data['attributes'] != null
@@ -159,6 +159,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       creation: product.creation,
       upgrade: product.upgrade,
       variants: product.variants,
+      unit: product.unit,
       status: product.status,
     );
   }
@@ -166,7 +167,6 @@ class ProductCatalogueModel extends ProductCatalogue {
   /// Convierte a Map para Firestore
   Map<String, dynamic> toMap() => {
         "id": id,
-        'local': local,
         'reviewed': reviewed,
         'followers': followers,
         'outstanding': outstanding,
@@ -185,6 +185,7 @@ class ProductCatalogueModel extends ProductCatalogue {
         "nameSubcategory": nameSubcategory,
         "salePrice": salePrice,
         "purchasePrice": purchasePrice,
+        "unit": unit,
         "creation": Timestamp.fromDate(creation),
         "upgrade": Timestamp.fromDate(upgrade),
         "documentCreation": Timestamp.fromDate(documentCreation),
@@ -232,12 +233,12 @@ class ProductCatalogueModel extends ProductCatalogue {
       sales: sales,
       salePrice: salePrice,
       purchasePrice: purchasePrice,
+      unit: unit,
       currencySign: currencySign,
       idMark: idMark,
       nameMark: nameMark,
       imageMark: imageMark,
       quantity: quantity,
-      local: local,
       variants: variants,
       status: status,
     );
@@ -261,6 +262,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       idUserCreation: documentIdCreation,
       idUserUpgrade: documentIdUpgrade,
       variants: variants,
+      unit: unit,
       status: status,
     );
   }

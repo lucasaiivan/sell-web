@@ -93,7 +93,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       icon: _itemCode.isNotEmpty ? null : Icons.flash_on_rounded,
       title: _itemCode.isNotEmpty ? 'Código: $_itemCode' : 'Venta Rápida',
       // iconbutton : botones personalizados de accion
-      rightIcon: widget.product.local || widget.product.code.isEmpty
+      rightIcon: widget.product.isSku || widget.product.code.isEmpty
           ? null
           : IconButton(
               padding: EdgeInsets.zero,

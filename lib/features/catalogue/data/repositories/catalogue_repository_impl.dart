@@ -76,7 +76,7 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
     }
   }
 
-  // future : crear un nuevo producto en la base de datos pública de productos
+  // future : crear/actualizar un producto en la base de datos pública de productos
   @override
   Future<void> createPublicProduct(Product product) async {
     if (product.id.isEmpty) {
@@ -88,9 +88,11 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       final docPath = '$path/${product.id}';
       final productMap = product.toJson();
 
-      await _dataSource.setDocument(docPath, productMap, merge: false);
+      // Usar merge:true para no sobrescribir el contador de followers en actualizaciones
+      await _dataSource.setDocument(docPath, productMap, merge: true);
     } catch (e) {
-      throw Exception('Error al crear producto público en Firestore: $e');
+      throw Exception(
+          'Error al crear/actualizar producto público en Firestore: $e');
     }
   }
 

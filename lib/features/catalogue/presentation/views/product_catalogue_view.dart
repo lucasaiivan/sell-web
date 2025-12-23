@@ -57,20 +57,39 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
 
   /// Sincroniza el producto completo cuando el provider detecta cambios en Firebase
   void _onProviderUpdate() {
-    final updatedProduct = widget.catalogueProvider.products.firstWhere(
-      (p) => p.id == widget.product.id,
-      orElse: () => widget.product,
-    );
+    // Buscar en la lista principal de productos usando el ID
+    final productId =
+        _currentProduct.id.isNotEmpty ? _currentProduct.id : widget.product.id;
 
-    // Actualizar el producto si hay cambios en campos relevantes
-    if (mounted && _hasProductChanged(updatedProduct)) {
+    ProductCatalogue? updatedProduct;
+
+    // Buscar primero por ID
+    for (final p in widget.catalogueProvider.products) {
+      if (p.id == productId) {
+        updatedProduct = p;
+        break;
+      }
+    }
+
+    // Si no se encontró por ID, buscar por código
+    if (updatedProduct == null) {
+      final code = _currentProduct.code.isNotEmpty
+          ? _currentProduct.code
+          : widget.product.code;
+      updatedProduct = widget.catalogueProvider.getProductByCode(code);
+    }
+
+    // Si se encontró el producto y hay cambios, actualizar
+    if (updatedProduct != null &&
+        mounted &&
+        _hasProductChanged(updatedProduct)) {
       setState(() {
-        _currentProduct = updatedProduct;
+        _currentProduct = updatedProduct!;
       });
     }
   }
 
-  /// Verifica si el producto ha cambiado comparando campos relevantes
+  /// Verifica si el producto ha cambiado comparando todos los campos relevantes
   bool _hasProductChanged(ProductCatalogue updatedProduct) {
     return updatedProduct.upgrade.millisecondsSinceEpoch !=
             _currentProduct.upgrade.millisecondsSinceEpoch ||
@@ -78,7 +97,14 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
         updatedProduct.salePrice != _currentProduct.salePrice ||
         updatedProduct.purchasePrice != _currentProduct.purchasePrice ||
         updatedProduct.description != _currentProduct.description ||
-        updatedProduct.quantityStock != _currentProduct.quantityStock;
+        updatedProduct.quantityStock != _currentProduct.quantityStock ||
+        updatedProduct.unit != _currentProduct.unit ||
+        updatedProduct.nameMark != _currentProduct.nameMark ||
+        updatedProduct.nameCategory != _currentProduct.nameCategory ||
+        updatedProduct.nameProvider != _currentProduct.nameProvider ||
+        updatedProduct.stock != _currentProduct.stock ||
+        updatedProduct.alertStock != _currentProduct.alertStock ||
+        updatedProduct.image != _currentProduct.image;
   }
 
   /// Alterna el estado de favorito del producto con manejo de errores
@@ -264,7 +290,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'product_catalogue_edit_fab',
         onPressed: () async {
-          final result = await Navigator.of(context).push(
+          final result = await Navigator.of(context).push<ProductCatalogue?>(
             MaterialPageRoute(
               builder: (context) => ProductEditCatalogueView(
                 product: _currentProduct,
@@ -274,8 +300,11 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             ),
           );
 
-          if (result == true && mounted) {
-            Navigator.of(context).pop();
+          // Si se retornó un producto actualizado, usarlo inmediatamente
+          if (result != null && mounted) {
+            setState(() {
+              _currentProduct = result;
+            });
           }
         },
         icon: const Icon(Icons.edit),
@@ -606,12 +635,27 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                salePrice,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    salePrice,
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '/${product.unit}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onPrimaryContainer.withValues(
+                        alpha: 0.7,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               if (product.purchasePrice > 0) ...[
                 const SizedBox(height: 8),
@@ -779,12 +823,32 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           ),
           child: Row(
             children: [
-              Text(
-                salePrice,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        salePrice,
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '/${product.unit}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: colorScheme.onPrimaryContainer.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(width: 16),
               if (product.purchasePrice > 0)

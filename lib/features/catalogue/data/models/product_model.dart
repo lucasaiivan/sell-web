@@ -23,6 +23,7 @@ class ProductModel extends Product {
     super.idUserCreation,
     super.idUserUpgrade,
     super.variants,
+    super.unit,
     super.status,
   });
 
@@ -66,6 +67,7 @@ class ProductModel extends Product {
           : data.containsKey('attributes') && data['attributes'] != null
               ? Map<String, dynamic>.from(data['attributes'])
               : {},
+      unit: data['unit'] ?? 'unidad',
       // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: data.containsKey('status')
           ? data['status']
@@ -98,6 +100,7 @@ class ProductModel extends Product {
         "creation": Timestamp.fromDate(creation),
         "upgrade": Timestamp.fromDate(upgrade),
         "variants": variants,
+        "unit": unit,
         "status": status,
       };
 

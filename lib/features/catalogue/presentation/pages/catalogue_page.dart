@@ -930,14 +930,27 @@ class _ProductListTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // Precio
-          Text(
-            CurrencyFormatter.formatPrice(value: product.salePrice),
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
-              fontSize: 24,
-            ),
+          // Precio con unidad
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                CurrencyFormatter.formatPrice(value: product.salePrice),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                  fontSize: 24,
+                ),
+              ),
+              Text(
+                '/${product.unit}',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.primary.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
           ),
           // Porcentaje de ganancia - Compacto
           if (product.purchasePrice > 0 && product.getBenefits.isNotEmpty) ...[
@@ -1374,13 +1387,28 @@ class _ProductCatalogueCard extends StatelessWidget {
                         color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        CurrencyFormatter.formatPrice(value: product.salePrice),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimary,
-                          fontSize: 16,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            CurrencyFormatter.formatPrice(
+                                value: product.salePrice),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onPrimary,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            '/${product.unit}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onPrimary.withValues(alpha: 0.9),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

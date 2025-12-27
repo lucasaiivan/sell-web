@@ -456,7 +456,7 @@ class ProductListTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '/${product.unit}',
+                  '/${product.unitSymbol}',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: colorScheme.primary.withValues(alpha: 0.7),
                   ),

@@ -24,6 +24,7 @@ class MoneyInputTextField extends StatelessWidget {
   final bool center;
   final double? fontSize;
   final TextInputType? keyboardType;
+  final bool showCurrencyIcon;
 
   const MoneyInputTextField({
     super.key,
@@ -46,6 +47,7 @@ class MoneyInputTextField extends StatelessWidget {
     this.center = false,
     this.fontSize,
     this.keyboardType,
+    this.showCurrencyIcon = true,
   });
 
   @override
@@ -65,10 +67,14 @@ class MoneyInputTextField extends StatelessWidget {
       validator: validator,
       textAlign: center ? TextAlign.center : TextAlign.start,
       decoration: InputDecoration(
-        labelText: labelText,
+        labelText: labelText.isEmpty ? null : labelText,
         hintText: hintText,
+        hintStyle: (style ?? theme.textTheme.titleLarge)?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          fontSize: fontSize,
+        ),
         errorText: errorText,
-        prefixIcon: const Icon(Icons.attach_money),
+        prefixIcon: showCurrencyIcon ? const Icon(Icons.attach_money) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         filled: false,
         fillColor: fillColor ??

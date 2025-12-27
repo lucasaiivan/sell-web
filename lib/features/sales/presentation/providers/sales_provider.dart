@@ -578,7 +578,7 @@ class SalesProvider extends ChangeNotifier {
   Future<void> addQuickProduct({
     required String description,
     required double salePrice,
-    String unit = 'unidad',
+    String unit = UnitConstants.unit,
     double quantity = 1.0,
   }) async {
     final result = await _createQuickProductUseCase(

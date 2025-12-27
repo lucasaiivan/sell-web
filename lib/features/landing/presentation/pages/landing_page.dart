@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sellweb/core/presentation/helpers/responsive_helper.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -223,7 +224,7 @@ class _AppPresentationPageState extends State<AppPresentationPage>
           'GESTIONA TUS VENTAS\nE INVENTARIO',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Inter', // Assuming standard font fallback
+            fontFamily: GoogleFonts.inter().fontFamily,
             fontWeight: FontWeight.w900,
             fontSize: isMobile ? 36 : 64,
             height: 1.1,

@@ -65,21 +65,10 @@ class BaseDialog extends StatelessWidget {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: _buildAppBar(context, theme),
-        body: Stack(
-          children: [
-            // Contenido principal
-            _buildFullScreenContent(context, theme),
-            
-            // Botones superpuestos con degradado (igual que en diálogo)
-            if (actions != null && actions!.isNotEmpty)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildActions(context, theme),
-              ),
-          ],
-        ),
+        body: _buildFullScreenContent(context, theme),
+        floatingActionButton: actions != null && actions!.isNotEmpty
+            ? _buildActions(context, theme)
+            : null,
       );
     }
 
@@ -274,20 +263,7 @@ class BaseDialog extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context, ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            theme.colorScheme.surface.withValues(alpha: 0.0),
-            theme.colorScheme.surface.withValues(alpha: 0.7),
-            theme.colorScheme.surface.withValues(alpha: 0.95),
-            theme.colorScheme.surface,
-          ],
-          stops: const [0.0, 0.3, 0.7, 1.0],
-        ),
-      ),
+    return Container(  
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
       child: actions!.length == 1
           ? actions![0] // Si solo hay un botón, ocupar todo el ancho

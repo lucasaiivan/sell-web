@@ -381,6 +381,10 @@ class DialogComponents {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        hintStyle: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          fontSize: fontSize,
+        ),
         helperText: helperText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
         suffixIcon: suffixIcon != null
@@ -426,6 +430,7 @@ class DialogComponents {
     bool center = false,
     double? fontSize,
     TextInputType? keyboardType,
+    bool showCurrencyIcon = true,
     required BuildContext context,
   }) {
     // Import necesario para MoneyInputTextField
@@ -446,6 +451,7 @@ class DialogComponents {
       center: center,
       fontSize: fontSize,
       keyboardType: keyboardType,
+      showCurrencyIcon: showCurrencyIcon,
     );
   }
 

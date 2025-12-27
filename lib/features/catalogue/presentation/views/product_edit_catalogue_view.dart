@@ -1,6 +1,4 @@
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:sellweb/core/presentation/modals/base_bottom_sheet.dart';
+import 'package:flutter/material.dart'; 
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellweb/core/core.dart';
@@ -9,8 +7,7 @@ import 'package:sellweb/core/services/storage/storage_paths.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
-import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
-    as catalog_provider;
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart' as catalog_provider;
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/brand_search_dialog.dart';
@@ -18,6 +15,7 @@ import 'package:sellweb/core/utils/formatters/quantity_input_formatter.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
+import 'package:sellweb/core/constants/unit_constants.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -54,13 +52,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   static const double _iconOpacity = 0.8;
 
   // Unidades de venta disponibles
-  static const List<String> _commonUnits = [
-    'unidad',
-    'kilogramo',
-    'litro',
-    'metro',
-    'caja',
-  ];
+  // Unidades de venta disponibles
+  static List<String> get _commonUnits => UnitConstants.validUnits;
 
   // Form state
   final _formKey = GlobalKey<FormState>();
@@ -2108,20 +2101,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Obtiene el nombre de visualización de la unidad con conversiones
+  /// Obtiene el nombre de visualización de la unidad con conversiones
   String _getUnitDisplayName(String unit) {
-    switch (unit.toLowerCase().trim()) {
-      case 'kilogramo':
-        return 'Kilogramo (kg)';
-      case 'litro':
-        return 'Litro (L)';
-      case 'metro':
-        return 'Metro (m)';
-      case 'caja':
-        return 'Caja';
-      case 'unidad':
-      default:
-        return 'Unidad';
-    }
+    return UnitConstants.getDisplayName(unit);
   }
 
   /// Muestra diálogo de selección de unidad
@@ -2156,7 +2138,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   groupValue: _unitController.text,
                   onChanged: (value) {
                     setState(() {
-                      final newUnit = value ?? 'unidad';
+                      final newUnit = value ?? UnitConstants.unit;
                       _unitController.text = newUnit;
 
                       // Re-formatear controllers con la nueva unidad y símbolo
@@ -2199,15 +2181,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Obtiene información de conversión para mostrar en el diálogo
+  /// Obtiene información de conversión para mostrar en el diálogo
   String _getUnitConversionInfo(String unit) {
     switch (unit.toLowerCase()) {
-      case 'kilogramo':
+      case UnitConstants.kilogram:
         return '1 kg = 1000 g';
-      case 'litro':
+      case UnitConstants.liter:
         return '1 L = 1000 ml';
-      case 'metro':
+      case UnitConstants.meter:
         return '1 m = 100 cm = 1000 mm';
-      case 'caja':
+      case UnitConstants.box:
         return 'Unidad de empaque';
       default:
         return '';
@@ -2280,8 +2263,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Widget _buildQuantityField() {
     final isFractional = _isFractionalUnit;
     final unit = _unitController.text;
-    final symbol = _currentUnitSymbol;
-    final step = UnitHelper.getQuantityStep(unit);
+
 
     // Determinar hint y helper según tipo de unidad
     String hintText;
@@ -2289,13 +2271,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
     if (isFractional) {
       // Para unidades fraccionarias, mostrar ejemplos de fracciones
-      if (unit.toLowerCase() == 'kilogramo') {
+      if (unit == UnitConstants.kilogram) {
         hintText = '0,500';
         helperText = 'Ej: 0,500 = 500g | 1,250 = 1kg 250g';
-      } else if (unit.toLowerCase() == 'litro') {
+      } else if (unit == UnitConstants.liter) {
         hintText = '0,500';
         helperText = 'Ej: 0,500 = 500ml | 2,750 = 2L 750ml';
-      } else if (unit.toLowerCase() == 'metro') {
+      } else if (unit == UnitConstants.meter) {
         hintText = '0,50';
         helperText = 'Ej: 0,50 = 50cm | 1,25 = 1m 25cm';
       } else {

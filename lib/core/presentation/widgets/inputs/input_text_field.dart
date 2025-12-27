@@ -84,6 +84,9 @@ class InputTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
+        hintStyle: (style ?? theme.textTheme.bodyLarge)?.copyWith(
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        ),
         helperText: helperText,
         errorText: errorText,
         prefixIcon: prefixIcon,
@@ -235,6 +238,12 @@ class FormInputTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
+        hintStyle: (style ?? Theme.of(context).textTheme.bodyLarge)?.copyWith(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurfaceVariant
+                  .withValues(alpha: 0.5),
+            ),
         helperText: helperText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,

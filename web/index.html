@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -19,7 +20,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Portal de ventas en la web">
-  
+
   <!-- Permisos de cámara para escáner de códigos -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta http-equiv="Permissions-Policy" content="camera=*">
@@ -31,13 +32,14 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icons/Icon-512.png">
 
   <title>sell</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="google-signin-client_id" content="232181553323-1qcbn5q2qoomdqv2lckbolclrs2tsaoe.apps.googleusercontent.com" /> 
+  <meta name="google-signin-client_id"
+    content="232181553323-1qcbn5q2qoomdqv2lckbolclrs2tsaoe.apps.googleusercontent.com" />
 
   <script>
     // The value below is injected by flutter build, do not touch.
@@ -46,11 +48,13 @@
   <!-- This script adds the flutter initialization JS code -->
 
   <style>
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
       padding: 0;
     }
+
     body {
       min-height: 100vh;
       min-width: 100vw;
@@ -63,6 +67,7 @@
       position: fixed;
       inset: 0;
     }
+
     #loading {
       display: flex;
       flex-direction: column;
@@ -74,6 +79,7 @@
       background: var(--background-color, #fafafa);
       position: static;
     }
+
     #loading img {
       width: 104px;
       height: 104px;
@@ -81,22 +87,43 @@
       opacity: 0.96;
       border-radius: 24px;
     }
+
     @media (max-width: 600px) {
-      #loading img { width: 64px; height: 64px; }
+      #loading img {
+        width: 64px;
+        height: 64px;
+      }
     }
+
     @keyframes pulse {
-      0% { transform: scale(0.95); }
-      70% { transform: scale(1); }
-      100% { transform: scale(0.95); }
+      0% {
+        transform: scale(0.95);
+      }
+
+      70% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(0.95);
+      }
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(24px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
   <script>
     // Tema dinámico claro/oscuro según preferencia del usuario
-    (function() {
+    (function () {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       document.documentElement.style.setProperty('--background-color', prefersDark ? '#181a1b' : '#fafafa');
       document.documentElement.style.setProperty('--text-color', prefersDark ? '#fafafa' : '#222');
@@ -104,19 +131,20 @@
   </script>
   <script src="flutter.js" defer></script>
 </head>
+
 <body>
   <div id="flutter_app"></div>
   <div id="loading" role="status" aria-live="polite">
     <img src="icons/Icon-192.png" alt="Cargando portal de ventas" />
   </div>
   <script>
-    window.addEventListener('load', function(ev) {
+    window.addEventListener('load', function (ev) {
       // Download main.dart.js
       var loading = document.querySelector('#loading');
       // Animación de pulso únicamente, sin fade ni scaleOut
       _flutter = {
         loader: {
-          loadEntrypoint: async function() {
+          loadEntrypoint: async function () {
             try {
               await window.flutterWebRenderer;
               // Aquí podrías ocultar el loader si lo deseas, pero sin animaciones extra
@@ -126,14 +154,14 @@
           }
         }
       };
-      window.flutterWebRenderer = "html";
+      window.flutterWebRenderer = "auto";
       var scriptLoading = document.createElement('script');
       scriptLoading.src = "main.dart.js";
       scriptLoading.type = 'application/javascript';
       document.body.append(scriptLoading);
 
       // Ocultar loader cuando Flutter esté listo (evento oficial)
-      window.addEventListener('flutter-initialized', function() {
+      window.addEventListener('flutter-initialized', function () {
         var loadingDiv = document.getElementById('loading');
         if (loadingDiv) {
           loadingDiv.parentNode.removeChild(loadingDiv);
@@ -157,14 +185,14 @@
         return false;
       }
       // Revisa cada 50ms hasta que Flutter pinte algo visible
-      var checkInterval = setInterval(function() {
+      var checkInterval = setInterval(function () {
         if (hideLoaderIfFlutterReady()) {
           clearInterval(checkInterval);
         }
       }, 50);
 
       // Timeout de seguridad: oculta el loader después de 10 segundos sí o sí
-      setTimeout(function() {
+      setTimeout(function () {
         var loadingDiv = document.getElementById('loading');
         if (loadingDiv) {
           loadingDiv.parentNode.removeChild(loadingDiv);
@@ -174,4 +202,5 @@
     });
   </script>
 </body>
+
 </html>

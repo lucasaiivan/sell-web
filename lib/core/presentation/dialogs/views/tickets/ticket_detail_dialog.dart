@@ -208,22 +208,27 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
               child: Row(
                 children: [
                   // Cantidad en badge
+                  // Cantidad en badge con unidad
                   Container(
-                    width: 32,
-                    height: 32,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
                       child: Text(
-                        '$quantity',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        product.formattedQuantityWithUnit,
+                        textAlign: TextAlign.center,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ),
                   ),

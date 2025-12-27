@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'combo_item.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sellweb/core/constants/unit_constants.dart';
 
 class ProductCatalogue {
   // Información básica del producto
@@ -80,7 +82,7 @@ class ProductCatalogue {
     this.sales = 0.0,
     this.salePrice = 0.0,
     this.purchasePrice = 0.0,
-    this.unit = 'unidad',
+    this.unit = UnitConstants.unit,
     this.currencySign = "\$",
     this.idMark = '',
     this.nameMark = '',
@@ -248,87 +250,30 @@ class ProductCatalogue {
   // GETTERS DE UNIDAD DE MEDIDA Y CÁLCULOS
   // ==========================================
 
-  /// Indica si el producto tiene una unidad fraccionaria (kg, L, m, etc.)
-  bool get isFractionalUnit {
-    const fractionalUnits = ['kilogramo', 'gramo', 'litro', 'mililitro', 'metro', 'centímetro'];
-    return fractionalUnits.contains(unit.toLowerCase());
-  }
+  /// Indica si el producto tiene una unidad fraccionaria (kg, L, m)
+  bool get isFractionalUnit => UnitConstants.fractionalUnits.contains(unit);
 
-  /// Indica si el producto tiene una unidad discreta (unidad, caja, paquete, docena)
-  bool get isDiscreteUnit {
-    const discreteUnits = ['unidad', 'caja', 'paquete', 'docena'];
-    return discreteUnits.contains(unit.toLowerCase());
-  }
+  /// Indica si el producto tiene una unidad discreta (unit, box, package)
+  bool get isDiscreteUnit => UnitConstants.discreteUnits.contains(unit);
 
   /// Obtiene el símbolo abreviado de la unidad (kg, g, L, ml, m, cm, u)
   String get unitSymbol {
-    final normalized = unit.toLowerCase();
+    // Si es fraccionario y menor a 1, mostrar subunidad
+    if (unit == UnitConstants.kilogram && quantity < 1.0) return 'g';
+    if (unit == UnitConstants.liter && quantity < 1.0) return 'ml';
+    if (unit == UnitConstants.meter && quantity < 1.0) return 'cm';
 
-    // Lógica de conversión de unidad para visualización
-    if (normalized == 'kilogramo' && quantity < 1.0) return 'g';
-    if (normalized == 'litro' && quantity < 1.0) return 'ml';
-    if (normalized == 'metro' && quantity < 1.0) return 'cm';
-
-    switch (normalized) {
-      case 'kilogramo':
-        return 'kg';
-      case 'gramo':
-        return 'g';
-      case 'litro':
-        return 'L';
-      case 'mililitro':
-        return 'ml';
-      case 'metro':
-        return 'm';
-      case 'centímetro':
-        return 'cm';
-      case 'unidad':
-        return 'u';
-      case 'caja':
-        return 'caja';
-      case 'paquete':
-        return 'paq';
-      case 'docena':
-        return 'doc';
-      default:
-        return unit;
-    }
+    return UnitConstants.getSymbol(unit);
   }
 
-  /// Obtiene el nombre completo de la unidad
-  /// Normaliza variaciones (ej: 'Kilogramo' -> 'kilogramo')
+  /// Obtiene el nombre completo de la unidad (traducido)
   String get unitName {
-    final normalized = unit.toLowerCase();
+     // Si es fraccionario y menor a 1, mostrar nombre de subunidad
+    if (unit == UnitConstants.kilogram && quantity < 1.0) return 'gramos';
+    if (unit == UnitConstants.liter && quantity < 1.0) return 'mililitros';
+    if (unit == UnitConstants.meter && quantity < 1.0) return 'centímetros';
 
-    // Lógica de conversión de unidad para visualización
-    if (normalized == 'kilogramo' && quantity < 1.0) return 'gramo';
-    if (normalized == 'litro' && quantity < 1.0) return 'mililitro';
-    if (normalized == 'metro' && quantity < 1.0) return 'centímetro';
-
-    switch (normalized) {
-      case 'kilogramo':
-        return 'kilogramo';
-      case 'gramo':
-        return 'gramo';
-      case 'litro':
-        return 'litro';
-      case 'mililitro':
-        return 'mililitro';
-      case 'metro':
-        return 'metro';
-      case 'centímetro':
-        return 'centímetro';
-      case 'unidad':
-        return 'unidad';
-      case 'caja':
-        return 'caja';
-      case 'paquete':
-        return 'paquete';
-      case 'docena':
-        return 'docena';
-      default:
-        return unit;
-    }
+    return UnitConstants.getDisplayName(unit);
   }
 
   /// Obtiene el precio total del producto (precio × cantidad)
@@ -346,14 +291,13 @@ class ProductCatalogue {
     }
 
     double displayQuantity = quantity;
-    final normalized = unit.toLowerCase();
-
-    // Lógica de conversión para visualización
-    if (normalized == 'kilogramo' && quantity < 1.0) {
+    
+    // Lógica de conversión para visualización de subunidades
+    if (unit == UnitConstants.kilogram && quantity < 1.0) {
       displayQuantity = quantity * 1000;
-    } else if (normalized == 'litro' && quantity < 1.0) {
+    } else if (unit == UnitConstants.liter && quantity < 1.0) {
       displayQuantity = quantity * 1000;
-    } else if (normalized == 'metro' && quantity < 1.0) {
+    } else if (unit == UnitConstants.meter && quantity < 1.0) {
       displayQuantity = quantity * 100;
     }
 
@@ -381,14 +325,13 @@ class ProductCatalogue {
     }
 
     double displayQuantity = quantity;
-    final normalized = unit.toLowerCase();
 
     // Lógica de conversión para visualización
-    if (normalized == 'kilogramo' && quantity < 1.0) {
+    if (unit == UnitConstants.kilogram && quantity < 1.0) {
       displayQuantity = quantity * 1000;
-    } else if (normalized == 'litro' && quantity < 1.0) {
+    } else if (unit == UnitConstants.liter && quantity < 1.0) {
       displayQuantity = quantity * 1000;
-    } else if (normalized == 'metro' && quantity < 1.0) {
+    } else if (unit == UnitConstants.meter && quantity < 1.0) {
       displayQuantity = quantity * 100;
     }
 
@@ -458,8 +401,7 @@ class ProductCatalogue {
       "revenue": revenue,
       "unit": unit,
       'comboItems': comboItems.map((e) => e.toMap()).toList(),
-      'comboExpiration':
-          comboExpiration != null ? comboExpiration!.millisecondsSinceEpoch : null,
+      'comboExpiration':  comboExpiration?.millisecondsSinceEpoch,
     };
 
     debugPrint(
@@ -477,14 +419,14 @@ class ProductCatalogue {
         return DateTime.fromMillisecondsSinceEpoch(value);
       }
       // Handle Firestore Timestamp
-      if (value.runtimeType.toString() == 'Timestamp') {
-        return (value as dynamic).toDate();
+      if (value is Timestamp) {
+        return value.toDate();
       }
       return DateTime.now();
     }
 
     // Parsea quantity como double, compatible con int y double
-    double _parseQuantity(dynamic value) {
+    double parseQuantity(dynamic value) {
       if (value == null) return 1.0;
       if (value is double) return value;
       if (value is int) return value.toDouble();
@@ -496,7 +438,7 @@ class ProductCatalogue {
     }
 
     // Helper para parsear stocks
-     double _parseStock(dynamic value, double defaultValue) {
+     double parseStock(dynamic value, double defaultValue) {
       if (value == null) return defaultValue;
       if (value is double) return value;
       if (value is int) return value.toDouble();
@@ -533,15 +475,15 @@ class ProductCatalogue {
       documentIdCreation: data['documentIdCreation'] ?? '',
       documentIdUpgrade: data['documentIdUpgrade'] ?? '',
       currencySign: data['currencySign'] ?? '\$',
-      quantity: _parseQuantity(data['quantity']),
+      quantity: parseQuantity(data['quantity']),
       stock: data['stock'] ?? false,
-      quantityStock: _parseStock(data['quantityStock'], 0.0),
-      sales: _parseStock(data['sales'], 0.0),
-      alertStock: _parseStock(data['alertStock'], 5.0),
+      quantityStock: parseStock(data['quantityStock'], 0.0),
+      sales: parseStock(data['sales'], 0.0),
+      alertStock: parseStock(data['alertStock'], 5.0),
       revenue: (data['revenue'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
-      unit: data['unit'] ?? 'unidad',
+      unit: UnitConstants.normalizeId(data['unit'] ?? UnitConstants.unit),
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])
           : data.containsKey('attributes') && data['attributes'] != null

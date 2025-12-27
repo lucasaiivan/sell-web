@@ -72,6 +72,7 @@ dependencies:
   # Value Equality
   equatable: ^2.0.5
   fl_chart: ^1.1.1
+  google_fonts: ^6.3.3
 
 dev_dependencies:
   flutter_test:

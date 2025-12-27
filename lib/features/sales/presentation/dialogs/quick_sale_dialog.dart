@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../../core/core.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
@@ -32,36 +33,15 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   final _quantityFocusNode = FocusNode();
 
   // Unidades disponibles
-  final List<String> _units = ['unidad', 'kilogramo', 'litro'];
-  String _selectedUnit = 'unidad';
+  final List<String> _units = UnitHelper.allUnits;
+  String _selectedUnit = UnitConstants.unit;
 
   bool _isProcessing = false;
   bool _showPriceError = false;
 
   /// Devuelve la etiqueta dinámica del monto según la unidad seleccionada
   String _getMountLabel() {
-    switch (_selectedUnit) {
-      case 'kilogramo':
-        return 'Monto por kg';
-      case 'litro':
-        return 'Monto por litro';
-      case 'unidad':
-      default:
-        return 'Monto por unidad';
-    }
-  }
-
-  /// Devuelve el símbolo de la unidad
-  String _getUnitSymbol() {
-    switch (_selectedUnit) {
-      case 'kilogramo':
-        return 'kg';
-      case 'litro':
-        return 'L';
-      case 'unidad':
-      default:
-        return 'u';
-    }
+    return 'Monto por ${UnitHelper.getUnitDisplayName(_selectedUnit)}';
   }
 
 
@@ -80,17 +60,29 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   Widget build(BuildContext context) {
     return BaseDialog(
       title: 'Venta Rápida',
-      icon: Icons.flash_on_rounded,
+      icon: Icons.bolt_rounded,
       fullView: widget.fullView,
       content: _buildContent(context),
-      actions: [], // Botón movido dentro del content para mejor UX con teclado
+      actions: [
+        DialogComponents.secondaryActionButton(
+          context: context,
+          text: 'Cancelar',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        DialogComponents.primaryActionButton(
+          context: context,
+          text: 'AGREGAR', 
+          onPressed: _hasValidAmount && !_isProcessing ? _processQuickSale : null,
+          isLoading: _isProcessing,
+        ),
+      ],
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    final hasValidAmount =
-        _priceController.text.isNotEmpty && _priceController.doubleValue > 0;
+  bool get _hasValidAmount =>
+      _priceController.text.isNotEmpty && _priceController.doubleValue > 0;
 
+  Widget _buildContent(BuildContext context) {
     return SingleChildScrollView(
       child: Form(
         key: _formKey,
@@ -98,184 +90,286 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DialogComponents.sectionSpacing,
-            // Campo de monto con etiqueta dinámica
-            DialogComponents.moneyField(
-              autofocus: true,
-              context: context,
-              controller: _priceController,
-              focusNode: _priceFocusNode,
-              nextFocusNode: _quantityFocusNode,
-              textInputAction: TextInputAction.next,
-              fontSize: 30,
-              label: _getMountLabel(), // Etiqueta dinámica según unidad
-              hint: '\$0.0',
-              errorText: _showPriceError &&
-                      (_priceController.text.isEmpty ||
-                          _priceController.doubleValue <= 0)
-                  ? 'El precio es obligatorio y debe ser mayor a 0'
-                  : null,
-              onChanged: (value) {
-                setState(() {
-                  if (_showPriceError && value > 0) {
-                    _showPriceError = false;
-                  }
-                });
-              },
-            ),
-            DialogComponents.itemSpacing,
-            // Selección de Unidad
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Unidad de medida',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 4.0,
-                  children: _units.map((unit) {
-                    final isSelected = _selectedUnit == unit;
-                    return ChoiceChip(
-                      label: Text(
-                        unit[0].toUpperCase() + unit.substring(1),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected ? Colors.white : null,
-                        ),
-                      ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _selectedUnit = unit;
-                            // Resetear cantidad a 1 al cambiar unidad
-                            _quantityController.text = '1';
-                          });
-                        }
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      selectedColor: Theme.of(context).colorScheme.primary,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-            DialogComponents.itemSpacing,
-            // Campo de cantidad con controles (+/-)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Botón Decrementar
-                _buildQuantityControlBtn(
-                  context,
-                  icon: Icons.remove,
-                  onTap: _decreaseQuantity,
-                ),
-                const SizedBox(width: 8),
-                // Input Cantidad
-                Expanded(
-                  child: DialogComponents.textField(
-                    context: context,
-                    controller: _quantityController,
-                    focusNode: _quantityFocusNode,
-                    nextFocusNode: _descriptionFocusNode,
-                    textInputAction: TextInputAction.next,
-                    label: 'Cantidad (${_getUnitSymbol()})',
-                    hint: '1',
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    validator: (value) {
-                      // Cantidad opcional, se asume 1 si está vacío
-                      if (value == null || value.isEmpty) return null;
-                      final quantity =
-                          double.tryParse(value.replaceAll(',', '.'));
-                      if (quantity == null || quantity <= 0) {
-                        return 'Inválido';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Botón Incrementar
-                _buildQuantityControlBtn(
-                  context,
-                  icon: Icons.add,
-                  onTap: _increaseQuantity,
-                ),
-              ],
-            ),
-            DialogComponents.itemSpacing,
-            // Campo de descripción
+            const SizedBox(height: 8),
+
+            // CAMPO DE MONTO (GRANDE Y CENTRAL)
+            _buildPremiumMoneyField(context),
+
+            const SizedBox(height: 32),
+
+            // SELECTOR DE UNIDAD (MODERNIZADO)
+            _buildModernUnitSelector(context),
+
+            const SizedBox(height: 24),
+
+            // CAMPO DE CANTIDAD CON CONTROLES INTEGRADOS
+            _buildModernQuantityField(context),
+
+            const SizedBox(height: 24),
+
+            // CAMPO DE DESCRIPCIÓN (MINIMALISTA)
             DialogComponents.textField(
               context: context,
               controller: _descriptionController,
               focusNode: _descriptionFocusNode,
               textInputAction: TextInputAction.done,
-              label: 'Descripción (Opcional)',
-              hint: 'Ej: bebida, snack, etc.',
+              label: '¿Qué estás vendiendo?',
+              hint: 'Ej: Bebida, Snack, Artículo...',
+             
               onEditingComplete: () {
                 _processQuickSale();
               },
-              onSuffixPressed: () => _showPriceError = false,
             ),
-            DialogComponents.sectionSpacing,
-            // Vista previa del total calculado
-            _buildTotalPreview(context),
-            DialogComponents.sectionSpacing,
-            // Botón al final dentro del scroll (mejor UX con teclado)
-            DialogComponents.primaryActionButton(
-              context: context,
-              text: 'Agregar',
-              onPressed: hasValidAmount ? _processQuickSale : null,
-              isLoading: _isProcessing,
-            ),
-            DialogComponents.itemSpacing,
+
+            const SizedBox(height: 32),
+
+            // VISTA PREVIA DEL TOTAL (GLASSMORPHISM STYLE)
+            _buildPremiumTotalPreview(context),
+
+            const SizedBox(height: 16),
           ],
+        ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
+      ),
+    );
+  }
+
+  /// Campo de monto con diseño premium y minimalista
+  Widget _buildPremiumMoneyField(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          _getMountLabel().toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            letterSpacing: 1.2,
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        DialogComponents.moneyField(
+          autofocus: true,
+          context: context,
+          controller: _priceController,
+          focusNode: _priceFocusNode,
+          nextFocusNode: _quantityFocusNode,
+          textInputAction: TextInputAction.next,
+          fontSize: 42,
+          center: true,
+          label: '', // Label vacío para un look más limpio
+          hint: r'$0',
+          showCurrencyIcon: false,
+          errorText: _showPriceError &&
+                  (_priceController.text.isEmpty ||
+                      _priceController.doubleValue <= 0)
+              ? 'El precio es obligatorio'
+              : null,
+          onChanged: (value) {
+            setState(() {
+              if (_showPriceError && value > 0) {
+                _showPriceError = false;
+              }
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  /// Selector de unidades moderno y minimalista
+  Widget _buildModernUnitSelector(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            'UNIDAD DE MEDIDA',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 1.0,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          child: Row(
+            children: _units.map((unit) {
+              final isSelected = _selectedUnit == unit;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedUnit = unit;
+                      _quantityController.text = '1';
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: AnimatedContainer(
+                    duration: 250.ms,
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                          : [],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isSelected) ...[
+                          const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
+                          const SizedBox(width: 6),
+                        ],
+                        Text(
+                          UnitHelper.getUnitDisplayName(unit),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Campo de cantidad modernizado
+  Widget _buildModernQuantityField(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CANTIDAD (${UnitHelper.getUnitSymbol(_selectedUnit)})',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _buildModernQuantityBtn(
+                Icons.remove_rounded,
+                onTap: _decreaseQuantity,
+              ),
+              Expanded(
+                child: TextFormField(
+                  controller: _quantityController,
+                  focusNode: _quantityFocusNode,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    hintText: '1',
+                    hintStyle: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (value) => setState(() {}),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return null;
+                    final quantity = UnitHelper.parseQuantity(value, defaultValue: -1);
+                    if (quantity <= 0) return 'Dato inválido';
+                    return UnitHelper.validateQuantity(quantity, _selectedUnit);
+                  },
+                ),
+              ),
+              _buildModernQuantityBtn(
+                Icons.add_rounded,
+                onTap: _increaseQuantity,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernQuantityBtn(IconData icon, {required VoidCallback onTap}) {
+    return Material(
+      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
         ),
       ),
     );
   }
 
-  /// Muestra una vista previa del cálculo total en tiempo real
-  Widget _buildTotalPreview(BuildContext context) {
+  /// Vista previa del total con estilo premium (Glassmorphism inspired)
+  Widget _buildPremiumTotalPreview(BuildContext context) {
     return AnimatedBuilder(
       animation: Listenable.merge([_priceController, _quantityController]),
       builder: (context, _) {
         final price = _priceController.doubleValue;
-        final quantityText = _quantityController.text.replaceAll(',', '.');
-        final quantity = double.tryParse(quantityText) ?? 0.0;
+        final quantity = UnitHelper.parseQuantity(_quantityController.text);
         final total = price * quantity;
-
 
         if (price <= 0 || quantity <= 0) return const SizedBox.shrink();
 
         return Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .primaryContainer
-                .withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.2),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             ),
           ),
           child: Row(
@@ -285,20 +379,20 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Total Estimado',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Text(
-                    '${CurrencyFormatter.formatPrice(value: price)} x ${UnitHelper.formatQuantityAdaptive(quantity, _selectedUnit)}',
+                    'TOTAL ESTIMADO',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${UnitHelper.formatQuantityAdaptive(quantity, _selectedUnit)} x ${CurrencyFormatter.formatPrice(value: price)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -306,17 +400,20 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               Text(
                 CurrencyFormatter.formatPrice(value: total),
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
                   color: Theme.of(context).colorScheme.primary,
+                  letterSpacing: -0.5,
                 ),
               ),
             ],
           ),
-        );
+        ).animate(target: total > 0 ? 1 : 0).fadeIn().scale(begin: const Offset(0.95, 0.95), curve: Curves.easeOutBack);
       },
     );
   }
+
+
 
   Future<void> _processQuickSale() async {
     // Validar que el precio no esté vacío y sea mayor a 0
@@ -343,9 +440,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         description = 'Venta Rápida';
       }
       
-      final quantity =
-          double.tryParse(_quantityController.text.replaceAll(',', '.')) ??
-              1.0;
+      final quantity = UnitHelper.parseQuantity(_quantityController.text);
 
       // Agregar el producto de venta rápida con cantidad
       await widget.provider.addQuickProduct(
@@ -378,49 +473,17 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
   // MÉTODOS DE UI Y LÓGICA DE CANTIDAD
 
-  Widget _buildQuantityControlBtn(
-    BuildContext context, {
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Icon(
-              icon,
-              size: 24,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _increaseQuantity() {
-    final step = UnitHelper.isFractionalUnit(_selectedUnit) ? 0.1 : 1.0;
-    final currentText = _quantityController.text.replaceAll(',', '.');
-    final current = double.tryParse(currentText) ?? 0;
+    final step = UnitHelper.getQuantityStep(_selectedUnit);
+    final current = UnitHelper.parseQuantity(_quantityController.text, defaultValue: 0);
     _updateQuantity(current + step);
   }
 
   void _decreaseQuantity() {
-    final step = UnitHelper.isFractionalUnit(_selectedUnit) ? 0.1 : 1.0;
-    final minVal = UnitHelper.isFractionalUnit(_selectedUnit) ? 0.1 : 1.0;
-    final currentText = _quantityController.text.replaceAll(',', '.');
-    final current = double.tryParse(currentText) ?? 0;
+    final step = UnitHelper.getQuantityStep(_selectedUnit);
+    final minVal = UnitHelper.minQuantity; 
+    final current = UnitHelper.parseQuantity(_quantityController.text, defaultValue: 0);
+    
     if (current > minVal) {
       _updateQuantity(current - step);
     }
@@ -429,20 +492,11 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   void _updateQuantity(double newValue) {
     if (newValue <= 0) return;
 
-    // Evitar errores de precisión flotante (ej: 0.300000004)
-    final roundedValue = double.parse(newValue.toStringAsFixed(2));
-
-    // Si es entero, mostrar sin decimales
-    if (roundedValue % 1 == 0) {
-      _quantityController.text = roundedValue.toInt().toString();
-    } else {
-      // Si tiene decimales, mostrar con hasta 2 decimales limpios
-      String text = roundedValue.toStringAsFixed(2);
-      if (text.endsWith('0')) text = text.substring(0, text.length - 1);
-      if (text.endsWith('0')) text = text.substring(0, text.length - 1);
-      if (text.endsWith('.')) text = text.substring(0, text.length - 1);
-      _quantityController.text = text;
-    }
+    // Redondeo inteligente para evitar errores flotantes y respetar unidad
+    final smartValue = UnitHelper.roundSmartly(newValue);
+    
+    // Formatear usando el helper que limpia ceros innecesarios
+    _quantityController.text = UnitHelper.formatQuantity(smartValue, _selectedUnit);
   }
 }
 

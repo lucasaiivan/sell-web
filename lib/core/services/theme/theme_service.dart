@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 
 /// Servicio para manejar el tema dinámico de la app y configuración de estilos
@@ -277,6 +278,9 @@ class ThemeService {
       useMaterial3: true,
       brightness: isDark ? Brightness.dark : Brightness.light,
       scaffoldBackgroundColor: backgroundColor,
+      textTheme: GoogleFonts.interTextTheme(
+        isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
+      ),
 
       // Configuración personalizada para diálogos
       dialogTheme: DialogThemeData(

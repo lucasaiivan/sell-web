@@ -32,78 +32,70 @@ class SearchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Calcular tamaños adaptativos basados en las dimensiones
-    final double effectiveHeight = height ?? 40.0;
-    final double adaptiveFontSize = fontSize ?? (effectiveHeight * 0.33);
-    final double adaptiveIconSize = iconSize ?? (effectiveHeight * 0.5);
-    final double adaptivePaddingHorizontal = effectiveHeight * 0.33;
-    final double adaptivePaddingVertical = effectiveHeight * 0.25;
-    final double adaptiveSpacing = effectiveHeight * 0.15;
-
-    Widget button = ElevatedButton(
-      style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.all(
-          (color ?? colorScheme.primaryContainer).withValues(alpha: 0.5),
+    final double effectiveHeight = height ?? 44.0;
+    final double adaptiveFontSize = fontSize ?? 14.0;
+    final double adaptiveIconSize = iconSize ?? 20.0;
+    
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: width ?? double.infinity,
+        height: effectiveHeight,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.3 : 0.5),
+          borderRadius: BorderRadius.circular(effectiveHeight / 2),
+          border: Border.all(
+            color: colorScheme.outline.withValues(alpha: 0.05),
+          ),
         ),
-        foregroundColor: WidgetStateProperty.all(
-          textColor ?? colorScheme.onPrimaryContainer,
-        ),
-        padding: WidgetStateProperty.all(
-          padding ??
-              EdgeInsets.symmetric(
-                horizontal: adaptivePaddingHorizontal,
-                vertical: adaptivePaddingVertical,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(effectiveHeight / 2),
+            splashColor: colorScheme.primary.withValues(alpha: 0.05),
+            highlightColor: colorScheme.primary.withValues(alpha: 0.02),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  IconTheme(
+                    data: IconThemeData(
+                      size: adaptiveIconSize,
+                      color: iconColor ?? colorScheme.onSurfaceVariant,
+                    ),
+                    child: icon,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: adaptiveFontSize,
+                        color: textColor ?? colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w400,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  // Opcional: Icono final para dar balance
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                  ),
+                ],
               ),
-        ),
-        shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(effectiveHeight * 0.25),
-          ),
-        ),
-        elevation: WidgetStateProperty.all(0),
-      ),
-      onPressed: onPressed,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconTheme(
-            data: IconThemeData(
-              size: adaptiveIconSize,
-              color: iconColor ?? textColor ?? colorScheme.onPrimaryContainer,
-            ),
-            child: icon,
-          ),
-          SizedBox(width: adaptiveSpacing),
-          Flexible(
-            child: Opacity(
-              opacity: 0.6,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: adaptiveFontSize,
-                  fontWeight: FontWeight.w500,
-                  color: textColor ?? colorScheme.onPrimaryContainer,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
             ),
           ),
-        ],
+        ),
       ),
     );
-
-    // Aplicar dimensiones con contenedor fijo
-    if (width != null || height != null) {
-      return SizedBox(
-        width: width,
-        height: height,
-        child: button,
-      );
-    }
-
-    return button;
   }
 }

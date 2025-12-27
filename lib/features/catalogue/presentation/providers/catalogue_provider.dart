@@ -152,6 +152,7 @@ class _CatalogueState {
 class CatalogueProvider extends ChangeNotifier
     implements InitializableProvider {
   bool _shouldNotifyListeners = true;
+  bool _disposed = false;
 
   set shouldNotifyListeners(bool value) {
     _shouldNotifyListeners = value;
@@ -159,7 +160,7 @@ class CatalogueProvider extends ChangeNotifier
 
   @override
   void notifyListeners() {
-    if (_shouldNotifyListeners) {
+    if (_shouldNotifyListeners && !_disposed) {
       super.notifyListeners();
     }
   }
@@ -331,6 +332,8 @@ class CatalogueProvider extends ChangeNotifier
     if (id.isEmpty) {
       throw Exception('El ID de la cuenta no puede estar vacío.');
     }
+
+    if (_disposed) return;
 
     _catalogueSubscription?.cancel();
 
@@ -840,6 +843,7 @@ class CatalogueProvider extends ChangeNotifier
   }
 
   void loadDemoProducts(List<ProductCatalogue> demoProducts) {
+    if (_disposed) return;
     _shouldNotifyListeners = false;
     _state = _state.copyWith(
       products: demoProducts,
@@ -1159,7 +1163,7 @@ class CatalogueProvider extends ChangeNotifier
     final providerProductCounts = <String, int>{};
 
     // Variables para métricas
-    int inventory = 0;
+    double inventory = 0.0;
     double inventoryValue = 0.0;
     final currencySign =
         products.isNotEmpty ? products.first.currencySign : '\$';
@@ -1188,7 +1192,7 @@ class CatalogueProvider extends ChangeNotifier
         inventoryValue += product.quantityStock * product.salePrice;
       } else {
         // Sin control de stock = 1 unidad por producto
-        inventory += 1;
+        inventory += 1.0;
         inventoryValue += product.salePrice;
       }
     }
@@ -1207,6 +1211,7 @@ class CatalogueProvider extends ChangeNotifier
 
   @override
   void dispose() {
+    _disposed = true;
     _catalogueSubscription?.cancel();
     _searchDebounceTimer?.cancel();
     super.dispose();

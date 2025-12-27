@@ -56,7 +56,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       _priceController.updateValue(widget.product.salePrice);
     }
 
-    // Si es un producto existente y tiene precio de compra, establecerlo en el controlador
+    // Si es un producto existente y tiene precio de coste, establecerlo en el controlador
     if (!widget.isNew && widget.product.purchasePrice > 0) {
       _purchasePriceController.updateValue(widget.product.purchasePrice);
     }
@@ -131,14 +131,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
               ),
             ],
             DialogComponents.itemSpacing,
-            // Campo de precio de compra (opcional)
+            // Campo de precio de coste (opcional)
             DialogComponents.moneyField(
               context: context,
               controller: _purchasePriceController,
-              label: 'Precio de compra (Opcional)',
+              label: 'Precio de coste (Opcional)',
               hint: '\$0.00',
               validator: (value) {
-                // El precio de compra es opcional, pero si se ingresa debe ser válido
+                // El precio de coste es opcional, pero si se ingresa debe ser válido
                 if (value != null && value.trim().isNotEmpty) {
                   final purchasePrice = _purchasePriceController.doubleValue;
                   final salePrice = _priceController.doubleValue;
@@ -147,11 +147,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     return 'El precio no puede ser negativo';
                   }
 
-                  // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
+                  // Validar que el precio de coste no sea mayor al de venta si ambos están definidos
                   if (purchasePrice > 0 &&
                       salePrice > 0 &&
                       purchasePrice > salePrice) {
-                    return 'El precio de compra no puede ser mayor al de venta';
+                    return 'El precio de coste no puede ser mayor al de venta';
                   }
                 }
                 return null;

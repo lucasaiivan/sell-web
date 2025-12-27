@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/presentation/modals/base_bottom_sheet.dart';
 
 /// Este widget presenta un modal que permite al usuario seleccionar un elemento
 /// de una lista proporcionada, con la opción de buscar y filtrar los elementos.
@@ -52,34 +53,28 @@ class SelectionModal<T> extends StatefulWidget {
   State<SelectionModal<T>> createState() => _SelectionModalState<T>();
 }
 
+
 class _SelectionModalState<T> extends State<SelectionModal<T>> {
   late List<T> _filteredItems;
-  final TextEditingController _searchController = TextEditingController();
-
+  // Controller removed as BaseBottomSheet handles the input field
+  
   @override
   void initState() {
     super.initState();
     _filteredItems = widget.items;
-    _searchController.addListener(_onSearchChanged);
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase().trim();
+  void _onSearch(String query) {
     setState(() {
-      if (query.isEmpty) {
+      if (query.trim().isEmpty) {
         _filteredItems = widget.items;
       } else {
+        final lowerQuery = query.toLowerCase().trim();
         _filteredItems = widget.items.where((item) {
           final label = widget.labelBuilder(item).toLowerCase();
           final subtitle =
               widget.subtitleBuilder?.call(item).toLowerCase() ?? '';
-          return label.contains(query) || subtitle.contains(query);
+          return label.contains(lowerQuery) || subtitle.contains(lowerQuery);
         }).toList();
       }
     });
@@ -90,295 +85,168 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 32,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+    return BaseBottomSheet(
+      title: widget.title,
+      onSearch: _onSearch,
+      searchHint: widget.searchHint,
+      body: widget.items.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.local_shipping_outlined,
+                    size: 64,
+                    color: colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No tienes ningún${widget.title.toLowerCase().contains('categoría') ? 'a' : ''} ${widget.title.toLowerCase().replaceAll('seleccionar ', '')}${widget.title.toLowerCase().contains('categoría') ? 'a' : ''}',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: widget.searchHint,
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor:
-                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ],
               ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-
-          // Stack con lista y botón para que la lista se vea detrás
-          Expanded(
-            child: Stack(
-              children: [
-                // List
-                widget.items.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.local_shipping_outlined,
-                              size: 64,
-                              color: colorScheme.outline.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No tienes ningún${widget.title.toLowerCase().contains('categoría') ? 'a' : ''} ${widget.title.toLowerCase().replaceAll('seleccionar ', '')}${widget.title.toLowerCase().contains('categoría') ? 'a' : ''}',
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+            )
+          : _filteredItems.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off_rounded,
+                        size: 64,
+                        color: colorScheme.outline.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No se encontraron resultados',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                      )
-                    : _filteredItems.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search_off_rounded,
-                                  size: 64,
-                                  color: colorScheme.outline
-                                      .withValues(alpha: 0.5),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No se encontraron resultados',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.only(
-                              top: 8,
-                              bottom: widget.onAdd != null ? 180 : 24,
-                            ),
-                            itemCount: _filteredItems.length,
-                            itemBuilder: (context, index) {
-                              final item = _filteredItems[index];
-                              final label = widget.labelBuilder(item);
-                              final subtitle =
-                                  widget.subtitleBuilder?.call(item);
-                              final id = widget.idBuilder?.call(item);
-                              final imageUrl =
-                                  widget.imageUrlBuilder?.call(item);
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  // Add padding at the bottom to avoid content being hidden by footer actions
+                  padding: EdgeInsets.only(
+                    top: 8,
+                    bottom: widget.onAdd != null ? 100 : 24,
+                  ),
+                  itemCount: _filteredItems.length,
+                  itemBuilder: (context, index) {
+                    final item = _filteredItems[index];
+                    final label = widget.labelBuilder(item);
+                    final subtitle = widget.subtitleBuilder?.call(item);
+                    final id = widget.idBuilder?.call(item);
+                    final imageUrl = widget.imageUrlBuilder?.call(item);
 
-                              final isSelected = widget.selectedItem != null &&
-                                  (widget.idBuilder != null
-                                      ? id ==
-                                          widget
-                                              .idBuilder!(widget.selectedItem!)
-                                      : item == widget.selectedItem);
+                    final isSelected = widget.selectedItem != null &&
+                        (widget.idBuilder != null
+                            ? id == widget.idBuilder!(widget.selectedItem!)
+                            : item == widget.selectedItem);
 
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () => Navigator.of(context).pop(item),
-                                  onLongPress: widget.onButton != null
-                                      ? () {
-                                          Navigator.pop(context);
-                                          widget.onButton!(item);
-                                        }
-                                      : null,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24, vertical: 12),
-                                    child: Row(
-                                      children: [
-                                        // Leading - Avatar
-                                        imageUrl != null && imageUrl.isNotEmpty
-                                            ? CircleAvatar(
-                                                backgroundImage:
-                                                    NetworkImage(imageUrl),
-                                                backgroundColor: colorScheme
-                                                    .surfaceContainerHighest,
-                                                onBackgroundImageError:
-                                                    (_, __) {},
-                                              )
-                                            : CircleAvatar(
-                                                backgroundColor: colorScheme
-                                                    .surfaceContainerHighest,
-                                                child: Text(
-                                                  label.isNotEmpty
-                                                      ? label[0].toUpperCase()
-                                                      : '?',
-                                                  style: TextStyle(
-                                                    color: colorScheme
-                                                        .onSurfaceVariant,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                        const SizedBox(width: 16),
-                                        // Title and Subtitle
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                label,
-                                                style: TextStyle(
-                                                  fontWeight: isSelected
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                                  color: isSelected
-                                                      ? colorScheme.primary
-                                                      : null,
-                                                ),
-                                              ),
-                                              if (subtitle != null) ...[
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  subtitle,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: theme
-                                                      .textTheme.bodySmall
-                                                      ?.copyWith(
-                                                    color: colorScheme
-                                                        .onSurfaceVariant,
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => Navigator.of(context).pop(item),
+                        onLongPress: widget.onButton != null
+                            ? () {
+                                Navigator.pop(context);
+                                widget.onButton!(item);
+                              }
+                            : null,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          child: Row(
+                            children: [
+                              // Leading - Avatar
+                              imageUrl != null && imageUrl.isNotEmpty
+                                  ? CircleAvatar(
+                                      backgroundImage: NetworkImage(imageUrl),
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      onBackgroundImageError: (_, __) {},
+                                    )
+                                  : CircleAvatar(
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      child: Text(
+                                        label.isNotEmpty
+                                            ? label[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                        // Trailing - Check icon
-                                        if (isSelected) ...[
-                                          const SizedBox(width: 8),
-                                          Icon(Icons.check_circle,
-                                              color: colorScheme.primary),
-                                        ],
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
-                // Botón de crear con degradado posicionado sobre la lista
-                if (widget.onAdd != null)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Degradado transparente
-                        Container(
-                          height: 100,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                colorScheme.surface.withValues(alpha: 0.0),
-                                colorScheme.surface.withValues(alpha: 0.8),
-                                colorScheme.surface,
-                              ],
-                              stops: const [0.0, 0.5, 1.0],
-                            ),
-                          ),
-                        ),
-                        // Botón
-                        Container(
-                          color: colorScheme.surface,
-                          child: SafeArea(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    widget.onAdd!();
-                                  },
-                                  icon: const Icon(Icons.add, size: 20),
-                                  label: Text(widget.labelButton ?? 'Crear'),
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                  ),
+                              const SizedBox(width: 16),
+                              // Title and Subtitle
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      label,
+                                      style: TextStyle(
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: isSelected
+                                            ? colorScheme.primary
+                                            : null,
+                                      ),
+                                    ),
+                                    if (subtitle != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        subtitle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
-                            ),
+                              // Trailing - Check icon
+                              if (isSelected) ...[
+                                const SizedBox(width: 8),
+                                Icon(Icons.check_circle,
+                                    color: colorScheme.primary),
+                              ],
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                      ),
+                    );
+                  },
+                ),
+      actions: widget.onAdd != null
+          ? [
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onAdd!();
+                },
+                icon: const Icon(Icons.add, size: 20),
+                label: Text(widget.labelButton ?? 'Crear'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+            ]
+          : null,
     );
   }
 }

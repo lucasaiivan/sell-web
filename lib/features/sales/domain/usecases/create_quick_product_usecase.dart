@@ -30,7 +30,8 @@ class CreateQuickProductUseCase
         description: params.description,
         salePrice: params.salePrice,
         code: '', // Productos rápidos no tienen código
-        quantity: 1,
+        unit: params.unit,
+        quantity: params.quantity,
         creation: DateTime.now(),
         upgrade: DateTime.now(),
         documentCreation: DateTime.now(),
@@ -45,9 +46,13 @@ class CreateQuickProductUseCase
 class CreateQuickProductParams {
   final String description;
   final double salePrice;
+  final String unit;
+  final double quantity;
 
   CreateQuickProductParams({
     required this.description,
     required this.salePrice,
+    this.unit = 'unidad',
+    this.quantity = 1.0,
   });
 }

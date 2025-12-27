@@ -41,30 +41,32 @@ class _CategoryDialogState extends State<CategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseDialog(
+    return BaseBottomSheet(
       title: _isEditing ? 'Editar categoría' : 'Nueva categoría',
       icon: _isEditing ? Icons.edit_rounded : Icons.add_rounded,
-      width: 450,
-      content: Form(
+      body: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DialogComponents.sectionSpacing,
-            DialogComponents.textField(
-              context: context,
-              controller: _controller,
-              label: 'Nombre*',
-              hint: 'Ej: Bebidas, Snacks',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'El nombre es obligatorio';
-                }
-                return null;
-              },
-            ),
-            DialogComponents.sectionSpacing,
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 24),
+              DialogComponents.textField(
+                context: context,
+                controller: _controller,
+                label: 'Nombre*',
+                hint: 'Ej: Bebidas, Snacks',
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El nombre es obligatorio';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 48), // Espacio extra para el teclado
+            ],
+          ),
         ),
       ),
       actions: [
@@ -172,13 +174,19 @@ Future<void> showCategoryDialog(
   required String accountId,
   Category? category,
 }) {
-  return showDialog(
+  return showModalBottomSheet(
     context: context,
-    barrierDismissible: false,
-    builder: (context) => CategoryDialog(
-      catalogueProvider: catalogueProvider,
-      accountId: accountId,
-      category: category,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: CategoryDialog(
+        catalogueProvider: catalogueProvider,
+        accountId: accountId,
+        category: category,
+      ),
     ),
   );
 }

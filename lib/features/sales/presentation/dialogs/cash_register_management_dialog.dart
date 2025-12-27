@@ -16,8 +16,7 @@ class _CashRegisterDialogConstants {
   // Duraciones de animación
   static const animationDuration = Duration(milliseconds: 300);
   static const fastAnimationDuration = Duration(milliseconds: 200);
-  static const slideTransitionDuration = Duration(milliseconds: 300);
-
+   
   // Border radius
   static const double borderRadiusMedium = 6.0;
   static const double borderRadiusLarge = 8.0;

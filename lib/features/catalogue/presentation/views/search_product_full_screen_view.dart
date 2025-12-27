@@ -7,6 +7,7 @@ import 'package:sellweb/features/catalogue/presentation/providers/catalogue_prov
 import 'package:sellweb/features/catalogue/presentation/views/product_edit_catalogue_view.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/core/utils/helpers/barcode_validator.dart';
+import 'package:sellweb/core/core.dart';
 
 /// Vista de pantalla completa para buscar y agregar productos al catálogo
 ///
@@ -299,7 +300,7 @@ class _ProductSearchFullScreenViewState
   /// - **Código inválido**: status = 'sku', local = true (solo catálogo privado)
   /// - **Código válido**: status = 'pending', local = false (BD global + catálogo)
   void _openCreateViewNew(String code, String accountId,
-      {bool forceLocal = false}) {
+      {bool forceLocal = false, bool isCombo = false}) {
     // Prevenir navegaciones múltiples
     if (_isNavigating) return;
 
@@ -322,6 +323,7 @@ class _ProductSearchFullScreenViewState
     print('   Es válido: $isValidCode');
     print('   Es SKU: $isSku');
     print('   Status: $status');
+    print('   Es Combo: $isCombo');
 
     final newProduct = ProductCatalogue(
       id: '', // Se generará al guardar
@@ -343,6 +345,7 @@ class _ProductSearchFullScreenViewState
           catalogueProvider: widget.catalogueProvider,
           accountId: accountId,
           isCreatingMode: true,
+          isCombo: isCombo,
         ),
       ),
     )
@@ -356,13 +359,21 @@ class _ProductSearchFullScreenViewState
   }
 
   /// Genera un SKU híbrido y abre la vista de creación
-  void _generateSkuAndCreate() {
+  /// Muestra un diálogo para seleccionar si crear producto o combo
+  Future<void> _generateSkuAndCreate() async {
     final accountId = widget.salesProvider.profileAccountSelected.id;
+    
+    // Mostrar diálogo de selección
+    final productType = await showProductTypeSelectionDialog(context);
+    
+    // Si el usuario canceló, no hacer nada
+    if (productType == null || !mounted) return;
+    
     final sku = widget.catalogueProvider.generateHybridSku();
+    final isCombo = productType == ProductType.combo;
 
-    // Abrir vista de creación con el SKU generado
-    // Forzamos local porque es un producto sin código estándar
-    _openCreateViewNew(sku, accountId, forceLocal: true);
+    // Abrir vista de creación con el SKU generado y el tipo seleccionado
+    _openCreateViewNew(sku, accountId, forceLocal: true, isCombo: isCombo);
   }
 
   @override

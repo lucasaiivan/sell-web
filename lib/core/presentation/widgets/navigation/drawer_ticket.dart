@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación
@@ -899,22 +900,32 @@ class _TicketProductListState extends State<_TicketProductList> {
           children: [
             Expanded(
               child: Text(
-                '${product.quantity}',
+                product.formattedQuantityWithUnit,
                 style: widget.textValuesStyle,
               ),
             ),
             Expanded(
               flex: 3,
-              child: Text(
-                product.description,
-                style: widget.textValuesStyle,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      product.description,
+                      style: widget.textValuesStyle,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (product.isCombo) ...[
+                    const SizedBox(width: 4),
+                    const ComboTag(isCompact: true),
+                  ],
+                ],
               ),
             ),
             Expanded(
               child: Text(
                 CurrencyFormatter.formatPrice(
-                  value: product.salePrice * product.quantity,
+                  value: product.totalPrice,
                 ),
                 style: widget.textValuesStyle,
                 textAlign: TextAlign.right,

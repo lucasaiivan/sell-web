@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/presentation/modals/base_bottom_sheet.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/i_storage_datasource.dart';
@@ -12,8 +14,10 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/brand_search_dialog.dart';
+import 'package:sellweb/core/utils/formatters/quantity_input_formatter.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
+import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -30,6 +34,7 @@ class ProductEditCatalogueView extends StatefulWidget {
   final CatalogueProvider catalogueProvider;
   final String accountId;
   final bool isCreatingMode;
+  final bool isCombo;
 
   const ProductEditCatalogueView({
     super.key,
@@ -37,6 +42,7 @@ class ProductEditCatalogueView extends StatefulWidget {
     required this.catalogueProvider,
     required this.accountId,
     this.isCreatingMode = false,
+    this.isCombo = false,
   });
 
   @override
@@ -86,9 +92,18 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   // Variants
   Map<String, dynamic> _variants = {};
 
+  // Combo state
+  bool _isCombo = false;
+  List<ComboItem> _comboItems = [];
+  DateTime? _comboExpiration;
+  final TextEditingController _expirationController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar isCombo desde el parámetro del widget
+    _isCombo = widget.isCombo || widget.product.isCombo;
     _initializeControllers();
     _initializeState();
     _setupListeners();
@@ -99,16 +114,27 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     final product = widget.product;
     _descriptionController = TextEditingController(text: product.description);
     _salePriceController = TextEditingController(
-      text: product.salePrice > 0 ? product.salePrice.toString() : '',
+      text: product.salePrice > 0
+          ? CurrencyFormatter.formatPrice(value: product.salePrice, moneda: '')
+          : '',
     );
     _purchasePriceController = TextEditingController(
-      text: product.purchasePrice > 0 ? product.purchasePrice.toString() : '',
+      text: product.purchasePrice > 0
+          ? CurrencyFormatter.formatPrice(
+              value: product.purchasePrice, moneda: '')
+          : '',
     );
     _quantityStockController = TextEditingController(
-      text: product.quantityStock.toString(),
+      text: UnitHelper.formatQuantityWithSymbol(
+        product.quantityStock,
+        product.unit,
+      ),
     );
     _alertStockController = TextEditingController(
-      text: product.alertStock.toString(),
+      text: UnitHelper.formatQuantityWithSymbol(
+        product.alertStock,
+        product.unit,
+      ),
     );
     _categoryController = TextEditingController(text: product.nameCategory);
     _providerController = TextEditingController(text: product.nameProvider);
@@ -132,6 +158,14 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
     debugPrint(
         '🔍 ProductEdit: Inicializando con ${_variants.length} variantes: $_variants');
+        
+    // Inicializar estado de combo
+    _isCombo = widget.isCombo || widget.product.isCombo;
+    _comboItems = List.from(widget.product.comboItems);
+    _comboExpiration = widget.product.comboExpiration;
+    if (_comboExpiration != null) {
+      _expirationController.text = '${_comboExpiration!.day}/${_comboExpiration!.month}/${_comboExpiration!.year}'; 
+    }
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
@@ -153,6 +187,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     _providerController.dispose();
     _markController.dispose();
     _unitController.dispose();
+    _unitController.dispose();
+    _expirationController.dispose();
     super.dispose();
   }
 
@@ -262,14 +298,23 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Construye el producto actualizado con los valores del formulario
   ProductCatalogue _buildUpdatedProduct() {
+    // Parsear cantidad de stock (soporta decimales para unidades fraccionarias)
+    final stockValue = UnitHelper.parseQuantity(
+      _quantityStockController.text,
+      defaultValue: 0.0,
+    );
+
     final updated = widget.product.copyWith(
       description: widget.product.isVerified
           ? widget.product.description
           : _descriptionController.text.trim(),
       salePrice: _parsePriceFromController(_salePriceController),
       purchasePrice: _parsePriceFromController(_purchasePriceController),
-      quantityStock: int.tryParse(_quantityStockController.text) ?? 0,
-      alertStock: int.tryParse(_alertStockController.text) ?? 5,
+      quantityStock: stockValue,
+      alertStock: UnitHelper.parseQuantity(
+        _alertStockController.text,
+        defaultValue: 5.0,
+      ),
       category: _selectedCategoryId ?? '',
       nameCategory: _categoryController.text.trim(),
       provider: _selectedProviderId ?? '',
@@ -289,6 +334,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
       variants: _variants,
+      comboItems: _isCombo ? _comboItems : [],
+      comboExpiration: _isCombo ? _comboExpiration : null,
+      status: widget.product.status, // Mantener status original
     );
     return updated;
   }
@@ -385,10 +433,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
+                  color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.3),
+                    color: Colors.blue.withOpacity(0.3),
                   ),
                 ),
                 child: Row(
@@ -729,7 +777,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                               borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
                                 color:
-                                    colorScheme.outline.withValues(alpha: 0.2),
+                                    colorScheme.outline.withOpacity(0.2),
                               ),
                             ),
                           ),
@@ -753,8 +801,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              colorScheme.surface.withValues(alpha: 0.0),
-                              colorScheme.surface.withValues(alpha: 0.8),
+                              colorScheme.surface.withOpacity(0.0),
+                              colorScheme.surface.withOpacity(0.8),
                               colorScheme.surface,
                             ],
                             stops: const [0.0, 0.5, 1.0],
@@ -770,7 +818,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         border: Border(
                           top: BorderSide(
                             color: colorScheme.outlineVariant
-                                .withValues(alpha: 0.3),
+                                .withOpacity(0.3),
                             width: 1,
                           ),
                         ),
@@ -888,7 +936,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return Icon(
       Icons.add_photo_alternate,
       size: 48,
-      color: colorScheme.primary.withValues(alpha: 0.7),
+      color: colorScheme.primary.withOpacity(0.7),
     );
   }
 
@@ -908,10 +956,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     if (widget.product.id.isEmpty ||
         !widget.product.creation.isAfter(DateTime(2000))) {
       // Producto nuevo que no existe en ningún lado
-      title = 'Nuevo producto';
+      title = _isCombo ? 'Nuevo combo' : 'Nuevo producto';
     } else {
       // Producto que ya existe en el catálogo
-      title = 'Editar producto';
+      title = _isCombo ? 'Editar combo' : 'Editar producto';
     }
 
     return AppBar(
@@ -952,20 +1000,38 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Preview Card
                 _buildPreviewProductCard(),
                 const SizedBox(height: 24),
+                
+                // Información Básica (siempre visible)
                 _buildBasicInfoSection(colorScheme),
                 const SizedBox(height: 24),
-                // Solo mostrar atributos si no está verificado o si tiene atributos
-                if (!widget.product.isVerified || _variants.isNotEmpty) ...[
+                
+                // Variantes (solo en modo producto no verificado)
+                if (!_isCombo && (!widget.product.isVerified || _variants.isNotEmpty)) ...[
                   _buildVariantsSection(colorScheme),
                   const SizedBox(height: 24),
                 ],
+                
+                // Precios (siempre visible)
                 _buildPricingSection(),
                 const SizedBox(height: 24),
+                
+                // Contenido del Combo (solo en modo combo)
+                if (_isCombo) ...[
+                  _buildComboSection(colorScheme),
+                  const SizedBox(height: 24),
+                ],
+                
+                // Control de Stock / Límite de Ventas (siempre visible)
                 _buildInventorySection(colorScheme),
                 const SizedBox(height: 24),
+                
+                // Categoría y Proveedor (siempre visible)
                 _buildPreferencesSection(colorScheme),
+                
+                // Espaciado final para el FAB
                 const SizedBox(height: 80),
               ],
             ),
@@ -997,7 +1063,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.3),
+                    color: colorScheme.outline.withOpacity(0.3),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(
@@ -1032,7 +1098,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: 0.3),
+                  color: colorScheme.outline.withOpacity(0.3),
                 ),
               ),
               padding: const EdgeInsets.symmetric(
@@ -1086,7 +1152,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: colorScheme.outline.withValues(alpha: 0.3),
+                        color: colorScheme.outline.withOpacity(0.3),
                       ),
                     ),
                     padding: const EdgeInsets.symmetric(
@@ -1129,7 +1195,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                       color: Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: colorScheme.primary.withValues(alpha: 0.25),
+                        color: colorScheme.primary.withOpacity(0.25),
                       ),
                     ),
                     padding: const EdgeInsets.symmetric(
@@ -1231,7 +1297,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color:
-                          colorScheme.primaryContainer.withValues(alpha: 0.5),
+                          colorScheme.primaryContainer.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -1309,7 +1375,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             style: TextStyle(
                               fontSize: 11,
                               color: colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.6),
+                                  .withOpacity(0.6),
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -1332,7 +1398,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: colorScheme.outline
-                                            .withValues(alpha: 0.3),
+                                            .withOpacity(0.3),
                                       ),
                                     ),
                                     child: Row(
@@ -1398,7 +1464,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: colorScheme.primary.withValues(alpha: 0.4),
+                              color: colorScheme.primary.withOpacity(0.4),
                               style: BorderStyle.solid,
                             ),
                           ),
@@ -1521,13 +1587,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               Container(
                 decoration: BoxDecoration(
                   color: _favoriteEnabled
-                      ? Colors.amber.withValues(alpha: 0.15)
+                      ? Colors.amber.withOpacity(0.15)
                       : colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.5),
+                          .withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
                   border: _favoriteEnabled
                       ? Border.all(
-                          color: Colors.amber.withValues(alpha: 0.3),
+                          color: Colors.amber.withOpacity(0.3),
                           width: 1.5,
                         )
                       : null,
@@ -1603,7 +1669,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                           color: colorScheme.surfaceContainerHigh,
                           border: Border(
                             top: BorderSide(
-                              color: colorScheme.outline.withValues(alpha: 0.1),
+                              color: colorScheme.outline.withOpacity(0.1),
                               width: 1,
                             ),
                           ),
@@ -1650,7 +1716,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 Container(
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
+                        .withOpacity(0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Material(
@@ -1705,7 +1771,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  color: colorScheme.outline.withOpacity(0.2),
                   width: 1.0,
                 ),
               ),
@@ -1737,8 +1803,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                               ),
                               decoration: BoxDecoration(
                                 color: isValidCode
-                                    ? Colors.green.withValues(alpha: 0.15)
-                                    : Colors.orange.withValues(alpha: 0.15),
+                                    ? Colors.green.withOpacity(0.15)
+                                    : Colors.orange.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -1779,7 +1845,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    color: colorScheme.outline.withOpacity(0.2),
                     width: 1.0,
                   ),
                 ),
@@ -1832,7 +1898,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 },
               ),
             ],
-            const SizedBox(height: 12),
+            if (widget.product.isVerified || !_isCombo)
+              const SizedBox(height: 12),
             // view : marca del prodicto segun si esta verificado o no
             if (widget.product.isVerified) ...[
               Container(
@@ -1842,7 +1909,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    color: colorScheme.outline.withOpacity(0.2),
                     width: 1.0,
                   ),
                 ),
@@ -1889,16 +1956,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                               Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 18,
-                                  ),
+                                    ),
                         ),
                       ],
                     ),
                   ],
                 ),
               )
-            ] else ...[
+            ] else if (!_isCombo) ...[
               _buildMarkField(),
-              const SizedBox(height: 12),
             ],
           ],
         ),
@@ -1915,16 +1981,20 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           context: context,
           title: 'Precios y márgenes',
           icon: Icons.attach_money,
-        ), 
+        ),
         const SizedBox(height: 12),
-        _buildUnitFieldAsLabel(), // Campo de unidad de venta (con estilo similar a marca)
-        const SizedBox(height: 16),
+        if (!_isCombo) ...[
+          _buildUnitFieldAsLabel(), // Campo de unidad de venta (con estilo similar a marca)
+          const SizedBox(height: 16),
+        ],
         _buildSalePriceField(),
-        const SizedBox(height: 16),
-        _buildPurchasePriceField(),
-        if (_salePriceController.text.isNotEmpty &&
-            _purchasePriceController.text.isNotEmpty)
-          _buildProfitPreview(),
+        if (!_isCombo) ...[
+          const SizedBox(height: 16),
+          _buildPurchasePriceField(),
+          if (_salePriceController.text.isNotEmpty &&
+              _purchasePriceController.text.isNotEmpty)
+            _buildProfitPreview(),
+        ],
       ],
     );
   }
@@ -1958,12 +2028,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  /// Campo de precio de compra
+  /// Campo de precio de coste
   Widget _buildPurchasePriceField() {
     return TextFormField(
       controller: _purchasePriceController,
       decoration: InputDecoration(
-        labelText: 'Precio de compra',
+        labelText: 'Precio de coste',
         hintText: '0.00',
         prefixIcon: const Opacity(
           opacity: _iconOpacity,
@@ -1992,7 +2062,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.2),
+            color: colorScheme.outline.withOpacity(0.2),
             width: 1.0,
           ),
         ),
@@ -2078,7 +2148,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurfaceVariant
-                                .withValues(alpha: 0.7),
+                                .withOpacity(0.7),
                           ),
                         )
                       : null,
@@ -2086,7 +2156,30 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   groupValue: _unitController.text,
                   onChanged: (value) {
                     setState(() {
-                      _unitController.text = value ?? 'unidad';
+                      final newUnit = value ?? 'unidad';
+                      _unitController.text = newUnit;
+
+                      // Re-formatear controllers con la nueva unidad y símbolo
+                      final currentQty = UnitHelper.parseQuantity(
+                        _quantityStockController.text,
+                        defaultValue: 0.0,
+                      );
+                      final currentAlert = UnitHelper.parseQuantity(
+                        _alertStockController.text,
+                        defaultValue: 5.0,
+                      );
+
+                      _quantityStockController.text =
+                          UnitHelper.formatQuantityWithSymbol(
+                        currentQty,
+                        newUnit,
+                      );
+                      _alertStockController.text =
+                          UnitHelper.formatQuantityWithSymbol(
+                        currentAlert,
+                        newUnit,
+                      );
+
                       Navigator.pop(context);
                     });
                   },
@@ -2136,19 +2229,21 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.3),
+              color: colorScheme.primary.withOpacity(0.3),
               width: 1.5,
             ),
           ),
           child: SwitchListTile(
             value: _stockEnabled,
             onChanged: (value) => setState(() => _stockEnabled = value),
-            title: const Text('Control de stock'),
-            subtitle: const Text('Activa para rastrear cantidad disponible'),
+            title: Text(_isCombo ? 'Límite de ventas' : 'Control de stock'),
+            subtitle: Text(_isCombo
+                ? 'Define cuántas veces se puede vender este combo'
+                : 'Activa para rastrear cantidad disponible'),
             secondary: Opacity(
               opacity: _iconOpacity,
               child: Icon(
-                Icons.inventory_outlined,
+                _isCombo ? Icons.production_quantity_limits : Icons.inventory_outlined,
                 color: _stockEnabled ? colorScheme.primary : null,
               ),
             ),
@@ -2170,25 +2265,77 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
+  /// Verifica si la unidad seleccionada es fraccionaria (kg, L, m, etc.)
+  bool get _isFractionalUnit {
+    return UnitHelper.isFractionalUnit(_unitController.text);
+  }
+
+  /// Obtiene el símbolo de la unidad actual
+  String get _currentUnitSymbol {
+    return UnitHelper.getUnitSymbol(_unitController.text);
+  }
+
   /// Campo de cantidad en stock con validación
+  /// Soporta decimales para unidades fraccionarias (kg, L, m)
   Widget _buildQuantityField() {
+    final isFractional = _isFractionalUnit;
+    final unit = _unitController.text;
+    final symbol = _currentUnitSymbol;
+    final step = UnitHelper.getQuantityStep(unit);
+
+    // Determinar hint y helper según tipo de unidad
+    String hintText;
+    String? helperText;
+
+    if (isFractional) {
+      // Para unidades fraccionarias, mostrar ejemplos de fracciones
+      if (unit.toLowerCase() == 'kilogramo') {
+        hintText = '0,500';
+        helperText = 'Ej: 0,500 = 500g | 1,250 = 1kg 250g';
+      } else if (unit.toLowerCase() == 'litro') {
+        hintText = '0,500';
+        helperText = 'Ej: 0,500 = 500ml | 2,750 = 2L 750ml';
+      } else if (unit.toLowerCase() == 'metro') {
+        hintText = '0,50';
+        helperText = 'Ej: 0,50 = 50cm | 1,25 = 1m 25cm';
+      } else {
+        hintText = '0';
+        helperText = 'Ingrese cantidad en $_currentUnitSymbol';
+      }
+    } else {
+      hintText = '0';
+      helperText = _isCombo ? 'Número de combos disponibles' : null;
+    }
+
     return TextFormField(
       controller: _quantityStockController,
       decoration: InputDecoration(
         labelText: 'Cantidad disponible',
-        hintText: '0',
+        hintText: hintText,
+        helperText: helperText,
+        helperMaxLines: 2,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        AppQuantityInputFormatter(unit: unit, showSymbol: true),
+      ],
       validator: _stockEnabled
           ? (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Ingrese la cantidad';
               }
-              final qty = int.tryParse(value);
-              if (qty == null || qty < 0) return 'Ingrese una cantidad válida';
+              // Usar UnitHelper para parsear
+              final qty = UnitHelper.parseQuantity(
+                value,
+                defaultValue: -1,
+              );
+              if (qty < 0) return 'Ingrese una cantidad válida';
+              // Validar usando UnitHelper
+              final error = UnitHelper.validateQuantity(qty, unit);
+              if (error != null) return error;
               return null;
             }
           : null,
@@ -2207,7 +2354,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         ),
         helperText: 'Se mostrará una alerta cuando el stock esté en este nivel',
       ),
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        AppQuantityInputFormatter(unit: _unitController.text, showSymbol: true),
+      ],
     );
   }
 
@@ -2634,6 +2784,720 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           ),
         ],
       ),
+    );
+  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LÓGICA DE COMBOS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Construye la sección de configuración de combos
+  Widget _buildComboSection(ColorScheme colorScheme) {
+    if (!_isCombo) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(
+          context: context,
+          title: 'Productos incluidos',
+          icon: Icons.layers_outlined,
+        ),
+        const SizedBox(height: 12),
+
+          if (_comboItems.isEmpty)
+            // Estado vacío - sin cambios
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  width: 1,
+                  style: BorderStyle.solid, 
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.add_shopping_cart,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      size: 32,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Agrega productos al combo',
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            // Vista previa compacta con resumen
+            InkWell(
+              onTap: _showComboItemsModal,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header: Cantidad de productos + botón editar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.shopping_basket_outlined,
+                              size: 20,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${_comboItems.length} ${_comboItems.length == 1 ? 'producto' : 'productos'}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextButton.icon(
+                          onPressed: _showComboItemsModal,
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          label: const Text('Editar'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    
+                    // Vista previa de productos (primeros 3)
+                    ...List.generate(
+                      _comboItems.length > 3 ? 3 : _comboItems.length,
+                      (index) {
+                        final item = _comboItems[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.5),
+                                child: Text(
+                                  item.name.isNotEmpty ? item.name[0].toUpperCase() : '?',
+                                  style: TextStyle(
+                                    color: colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  item.name,
+                                  style: const TextStyle(fontSize: 13),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'x${item.quantity.toStringAsFixed(item.quantity % 1 == 0 ? 0 : 1)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    // Indicador de más productos
+                    if (_comboItems.length > 3)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '+ ${_comboItems.length - 3} más',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    
+                    // Resumen financiero
+                    Column(
+                      children: [
+                        _buildSummaryRow(
+                          label: 'Valor real:',
+                          value: CurrencyFormatter.formatPrice(
+                            value: _calculateComboRealValue(),
+                            moneda: '\$',
+                          ),
+                          textStyle: TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                          valueStyle: TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildSummaryRow(
+                          label: 'Costo total:',
+                          value: CurrencyFormatter.formatPrice(
+                            value: _calculateComboCost(),
+                            moneda: '\$',
+                          ),
+                          textStyle: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                          valueStyle: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildSummaryRow(
+                          label: 'Precio final:',
+                          value: _salePriceController.text.isEmpty
+                              ? '\$0.00'
+                              : '\$${_salePriceController.text}',
+                          textStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                            fontSize: 14,
+                          ),
+                          valueStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 16),
+          FilledButton.tonalIcon(
+            onPressed: _showComboItemsModal,
+            icon: const Icon(Icons.edit),
+            label: Text(_comboItems.isEmpty ? 'Agregar productos' : 'Gestionar productos'),
+          ),
+          
+          const SizedBox(height: 24),
+          // Fecha de expiración (opcional)
+          TextFormField(
+            controller: _expirationController,
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: 'Válido hasta (Opcional)',
+              hintText: 'Seleccionar fecha de expiración',
+              prefixIcon: const Icon(Icons.calendar_today_outlined),
+              suffixIcon: _comboExpiration != null
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _comboExpiration = null;
+                          _expirationController.clear();
+                        });
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onTap: () async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: _comboExpiration ?? DateTime.now().add(const Duration(days: 7)),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+              );
+              if (picked != null) {
+                setState(() {
+                  _comboExpiration = picked;
+                  _expirationController.text = '${picked.day}/${picked.month}/${picked.year}';
+                });
+              }
+            },
+          ),
+        ],
+
+    );
+  }
+  
+  /// Widget helper para crear filas de resumen
+  Widget _buildSummaryRow({
+    required String label,
+    required String value,
+    required TextStyle textStyle,
+    required TextStyle valueStyle,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: textStyle),
+        Text(value, style: valueStyle),
+      ],
+    );
+  }
+
+  /// Calcula el valor real sumando los precios de los items
+  double _calculateComboRealValue() {
+    double total = 0.0;
+    for (var item in _comboItems) {
+      total += item.originalSalePrice * item.quantity;
+    }
+    return total;
+  }
+
+  /// Calcula el costo del combo sumando purchasePrice * quantity 
+  double _calculateComboCost() {
+    double total = 0.0;
+    for (var item in _comboItems) {
+      total += item.purchasePrice * item.quantity;
+    }
+    return total;
+  }
+
+
+
+  /// Muestra modal unificado para gestionar los productos del combo
+  void _showComboItemsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ComboManagementSheet(
+        comboItems: _comboItems,
+        catalogueProvider: widget.catalogueProvider,
+        onItemsChanged: (updatedItems) {
+          setState(() {
+            _comboItems = updatedItems;
+          });
+        },
+      ),
+    );
+  }
+}
+
+
+/// Widget unificado para gestionar productos del combo
+/// Integra búsqueda y edición en una sola interfaz
+class _ComboManagementSheet extends StatefulWidget {
+  final List<ComboItem> comboItems;
+  final CatalogueProvider catalogueProvider;
+  final Function(List<ComboItem>) onItemsChanged;
+
+  const _ComboManagementSheet({
+    required this.comboItems,
+    required this.catalogueProvider,
+    required this.onItemsChanged,
+  });
+
+  @override
+  State<_ComboManagementSheet> createState() => _ComboManagementSheetState();
+}
+
+class _ComboManagementSheetState extends State<_ComboManagementSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  List<ComboItem> _items = [];
+  List<ProductCatalogue> _allProducts = [];
+  List<ProductCatalogue> _searchResults = [];
+  
+  // Usamos el estado del query para determinar si estamos buscando
+  bool get _isSearching => _searchController.text.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List.from(widget.comboItems);
+    _allProducts = widget.catalogueProvider.products;
+    // El listener solo es para actualizar la UI si usamos el getter _isSearching
+    _searchController.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearch(String query) {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+      return;
+    }
+
+    final lowerQuery = query.toLowerCase().trim();
+    setState(() {
+      _searchResults = _allProducts.where((product) {
+        // No permitir combos dentro de combos
+        if (product.isCombo) return false;
+        return product.description.toLowerCase().contains(lowerQuery) ||
+               product.code.toLowerCase().contains(lowerQuery) ||
+               product.nameMark.toLowerCase().contains(lowerQuery);
+      }).toList();
+    });
+  }
+
+  void _addOrUpdateProduct(ProductCatalogue product) {
+    setState(() {
+      final existingIndex = _items.indexWhere((item) => item.productId == product.id);
+      
+      if (existingIndex >= 0) {
+        // Si ya existe, incrementar cantidad
+        _items[existingIndex] = ComboItem(
+          productId: _items[existingIndex].productId,
+          name: _items[existingIndex].name,
+          quantity: _items[existingIndex].quantity + 1.0,
+          originalSalePrice: _items[existingIndex].originalSalePrice,
+          purchasePrice: _items[existingIndex].purchasePrice,
+        );
+      } else {
+        // Si no existe, agregar nuevo
+        _items.add(ComboItem(
+          productId: product.id,
+          name: product.description,
+          quantity: 1.0,
+          originalSalePrice: product.salePrice,
+          purchasePrice: product.purchasePrice,
+        ));
+      }
+      
+      // Limpiar búsqueda
+      _searchController.clear();
+      _searchResults = [];
+      
+      // Notificar cambios
+      widget.onItemsChanged(_items);
+    });
+  }
+
+  void _updateQuantity(int index, double change) {
+    setState(() {
+      final newQuantity = _items[index].quantity + change;
+      if (newQuantity > 0) {
+        _items[index] = ComboItem(
+          productId: _items[index].productId,
+          name: _items[index].name,
+          quantity: newQuantity,
+          originalSalePrice: _items[index].originalSalePrice,
+          purchasePrice: _items[index].purchasePrice,
+        );
+        widget.onItemsChanged(_items);
+      }
+    });
+  }
+
+  void _removeItem(int index) {
+    setState(() {
+      _items.removeAt(index);
+      widget.onItemsChanged(_items);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return BaseBottomSheet(
+      title: 'Gestionar Combo',
+      subtitle: _isSearching 
+          ? 'Buscando productos...' 
+          : '${_items.length} ${_items.length == 1 ? 'producto' : 'productos'}',
+      icon: Icons.layers_outlined,
+      onSearch: _onSearch,
+      searchController: _searchController,
+      searchHint: 'Buscar producto',
+      body: Column(
+        children: [
+            // El buscador ahora es parte del header en BaseBottomSheet
+            
+            // Contenido principal: resultados de búsqueda o lista de items
+            Expanded(
+            child: _isSearching
+                ? _buildSearchResults(colorScheme, theme)
+                : _buildComboItemsList(colorScheme, theme),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResults(ColorScheme colorScheme, ThemeData theme) {
+    if (_searchResults.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 64,
+              color: colorScheme.outline.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No se encontraron productos',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final product = _searchResults[index];
+        final isAlreadyAdded = _items.any((item) => item.productId == product.id);
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: ListTile(
+            leading: product.image.isNotEmpty
+                ? CircleAvatar(
+                    backgroundImage: NetworkImage(product.image),
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                  )
+                : CircleAvatar(
+                    backgroundColor: colorScheme.primaryContainer,
+                    child: Text(
+                      product.description.isNotEmpty
+                          ? product.description[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+            title: Text(
+              product.description,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              '${CurrencyFormatter.formatPrice(value: product.salePrice, moneda: '\$')} • Stock: ${product.quantityStock}',
+              style: theme.textTheme.bodySmall,
+            ),
+            trailing: isAlreadyAdded
+                ? Chip(
+                    label: const Text('Agregado'),
+                    backgroundColor: colorScheme.primaryContainer,
+                    labelStyle: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 11,
+                    ),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  )
+                : Icon(Icons.add_circle_outline, color: colorScheme.primary),
+            onTap: () => _addOrUpdateProduct(product),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildComboItemsList(ColorScheme colorScheme, ThemeData theme) {
+    if (_items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shopping_basket_outlined,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No hay productos en el combo',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Usa el buscador para agregar productos',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      itemCount: _items.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final item = _items[index];
+        
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: colorScheme.primaryContainer,
+                child: Text(
+                  item.name.isNotEmpty ? item.name[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    color: colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Información del producto
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      CurrencyFormatter.formatPrice(
+                        value: item.originalSalePrice,
+                        moneda: '\$',
+                      ),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Controles de cantidad
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 20),
+                      onPressed: () => _updateQuantity(index, -1),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 36),
+                      alignment: Alignment.center,
+                      child: Text(
+                        item.quantity.toStringAsFixed(item.quantity % 1 == 0 ? 0 : 2),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 20),
+                      onPressed: () => _updateQuantity(index, 1),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Botón eliminar
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(Icons.delete_outline, color: colorScheme.error, size: 20),
+                onPressed: () => _removeItem(index),
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

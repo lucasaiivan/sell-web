@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/entities/combo_item.dart';
 
 /// Modelo de datos que extiende [Product] y maneja la serialización
 /// desde/hacia Firestore y JSON.
@@ -25,6 +26,8 @@ class ProductModel extends Product {
     super.variants,
     super.unit,
     super.status,
+    super.comboItems,
+    super.comboExpiration,
   });
 
   /// Crea una instancia desde un Map de datos
@@ -74,6 +77,12 @@ class ProductModel extends Product {
           : (data.containsKey('verified') && data['verified'] == true)
               ? 'verified'
               : 'pending',
+      comboItems: data.containsKey('comboItems') && data['comboItems'] != null
+          ? (data['comboItems'] as List)
+              .map((item) => ComboItem.fromMap(item))
+              .toList()
+          : [],
+      comboExpiration: _parseTimestamp(data['comboExpiration']),
     );
   }
 
@@ -102,6 +111,9 @@ class ProductModel extends Product {
         "variants": variants,
         "unit": unit,
         "status": status,
+        'comboItems': comboItems.map((e) => e.toMap()).toList(),
+        'comboExpiration':
+            comboExpiration != null ? Timestamp.fromDate(comboExpiration!) : null,
       };
 
   /// Convierte a JSON para actualizaciones (omitiendo campos inmutables)
@@ -138,6 +150,8 @@ class ProductModel extends Product {
       idUserUpgrade: idUserUpgrade,
       variants: variants,
       status: status,
+      comboItems: comboItems,
+      comboExpiration: comboExpiration,
     );
   }
 

@@ -5,6 +5,7 @@ import '../entities/product_catalogue.dart';
 import '../entities/product_price.dart';
 import '../entities/mark.dart';
 import '../entities/provider.dart';
+import '../entities/combo_item.dart';
 
 /// Contrato del repositorio de catálogo.
 ///
@@ -36,6 +37,13 @@ abstract class CatalogueRepository {
 
   /// Decrementa el stock de un producto
   Future<void> decrementStock(String accountId, String productId, double quantity);
+
+  /// Decrementa el stock de los items de un combo
+  ///
+  /// [accountId] - ID de la cuenta
+  /// [items] - Lista de items del combo
+  /// [quantitySold] - Cantidad de combos vendidos
+  Future<void> decrementComboStock(String accountId, List<ComboItem> items, double quantitySold);
 
   /// Actualiza el estado de favorito
   Future<void> updateProductFavorite(

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'combo_item.dart';
 
 class ProductCatalogue {
   // Información básica del producto
@@ -20,6 +21,10 @@ class ProductCatalogue {
   final int followers;
   final Map<String, dynamic> variants;
   final String status;
+  
+  // Variables de Combo
+  final List<ComboItem> comboItems;
+  final DateTime? comboExpiration;
 
   // Variables del catálogo de la cuenta
   final DateTime creation; // Fecha de creación
@@ -29,19 +34,19 @@ class ProductCatalogue {
   final String provider;
   final String nameProvider;
   final String nameCategory;
-  final int quantityStock;
-  final bool stock;
-  final int alertStock;
-  final int sales;
+  final double quantityStock; // Stock actual (double para soportar fraccionales)
+  final bool stock; // indica si el seguimiento del stock está activado
+  final double alertStock; // Alerta de stock bajo (double)
+  final double sales; // cantidad de ventas
   final double salePrice; // Precio de venta
-  final double purchasePrice; // Precio de compra
+  final double purchasePrice; // Precio de coste
   final String unit; // Unidad de venta (unidad, kilogramo, litro, metro)
   final String currencySign;
 
   // Variables en tiempo de ejecución
   final double quantity; // Cantidad en el ticket (soporta fraccionarios: 0.025 = 25g, 2.5 = 2.5kg)
   final double revenue;
-  final double priceTotal;
+  final double priceTotal; // precio total del producto considerando la cantidades
 
   // Variables en desuso
   final String subcategory;
@@ -63,8 +68,8 @@ class ProductCatalogue {
     this.subcategory = "",
     this.nameSubcategory = '',
     this.stock = false,
-    this.quantityStock = 0,
-    this.alertStock = 5,
+    this.quantityStock = 0.0,
+    this.alertStock = 5.0,
     this.revenue = 0.0,
     required this.creation,
     required this.upgrade,
@@ -72,7 +77,7 @@ class ProductCatalogue {
     required this.documentUpgrade,
     this.documentIdCreation = "",
     this.documentIdUpgrade = "",
-    this.sales = 0,
+    this.sales = 0.0,
     this.salePrice = 0.0,
     this.purchasePrice = 0.0,
     this.unit = 'unidad',
@@ -81,9 +86,11 @@ class ProductCatalogue {
     this.nameMark = '',
     this.imageMark = '',
     this.quantity = 1.0,
-    this.priceTotal = 0,
+    this.priceTotal = 0.0,
     this.variants = const {},
     this.status = 'pending',
+    this.comboItems = const [],
+    this.comboExpiration,
   });
 
   ProductCatalogue copyWith({
@@ -102,8 +109,8 @@ class ProductCatalogue {
     String? subcategory,
     String? nameSubcategory,
     bool? stock,
-    int? quantityStock,
-    int? alertStock,
+    double? quantityStock,
+    double? alertStock,
     double? revenue,
     DateTime? creation,
     DateTime? upgrade,
@@ -111,7 +118,7 @@ class ProductCatalogue {
     DateTime? documentUpgrade,
     String? documentIdCreation,
     String? documentIdUpgrade,
-    int? sales,
+    double? sales,
     double? salePrice,
     double? purchasePrice,
     String? unit,
@@ -122,6 +129,8 @@ class ProductCatalogue {
     double? quantity,
     Map<String, dynamic>? variants,
     String? status,
+    List<ComboItem>? comboItems,
+    DateTime? comboExpiration,
   }) {
     return ProductCatalogue(
       id: id ?? this.id,
@@ -159,6 +168,8 @@ class ProductCatalogue {
       quantity: quantity ?? this.quantity,
       variants: variants ?? this.variants,
       status: status ?? this.status,
+      comboItems: comboItems ?? this.comboItems,
+      comboExpiration: comboExpiration ?? this.comboExpiration,
     );
   }
 
@@ -178,6 +189,9 @@ class ProductCatalogue {
   ///
   /// Nota: También incluye status 'local_only' por compatibilidad con datos antiguos.
   bool get isSku => status == 'sku' || status == 'local_only';
+
+  /// Indica si el producto es un combo
+  bool get isCombo => comboItems.isNotEmpty;
 
   /// Indica si el stock está bajo (menor o igual a la alerta)
   bool get isLowStock => stock && quantityStock <= alertStock;
@@ -230,6 +244,173 @@ class ProductCatalogue {
 
   bool get isComplete => description.isNotEmpty && nameMark.isNotEmpty;
 
+  // ==========================================
+  // GETTERS DE UNIDAD DE MEDIDA Y CÁLCULOS
+  // ==========================================
+
+  /// Indica si el producto tiene una unidad fraccionaria (kg, L, m, etc.)
+  bool get isFractionalUnit {
+    const fractionalUnits = ['kilogramo', 'gramo', 'litro', 'mililitro', 'metro', 'centímetro'];
+    return fractionalUnits.contains(unit.toLowerCase());
+  }
+
+  /// Indica si el producto tiene una unidad discreta (unidad, caja, paquete, docena)
+  bool get isDiscreteUnit {
+    const discreteUnits = ['unidad', 'caja', 'paquete', 'docena'];
+    return discreteUnits.contains(unit.toLowerCase());
+  }
+
+  /// Obtiene el símbolo abreviado de la unidad (kg, g, L, ml, m, cm, u)
+  String get unitSymbol {
+    final normalized = unit.toLowerCase();
+
+    // Lógica de conversión de unidad para visualización
+    if (normalized == 'kilogramo' && quantity < 1.0) return 'g';
+    if (normalized == 'litro' && quantity < 1.0) return 'ml';
+    if (normalized == 'metro' && quantity < 1.0) return 'cm';
+
+    switch (normalized) {
+      case 'kilogramo':
+        return 'kg';
+      case 'gramo':
+        return 'g';
+      case 'litro':
+        return 'L';
+      case 'mililitro':
+        return 'ml';
+      case 'metro':
+        return 'm';
+      case 'centímetro':
+        return 'cm';
+      case 'unidad':
+        return 'u';
+      case 'caja':
+        return 'caja';
+      case 'paquete':
+        return 'paq';
+      case 'docena':
+        return 'doc';
+      default:
+        return unit;
+    }
+  }
+
+  /// Obtiene el nombre completo de la unidad
+  /// Normaliza variaciones (ej: 'Kilogramo' -> 'kilogramo')
+  String get unitName {
+    final normalized = unit.toLowerCase();
+
+    // Lógica de conversión de unidad para visualización
+    if (normalized == 'kilogramo' && quantity < 1.0) return 'gramo';
+    if (normalized == 'litro' && quantity < 1.0) return 'mililitro';
+    if (normalized == 'metro' && quantity < 1.0) return 'centímetro';
+
+    switch (normalized) {
+      case 'kilogramo':
+        return 'kilogramo';
+      case 'gramo':
+        return 'gramo';
+      case 'litro':
+        return 'litro';
+      case 'mililitro':
+        return 'mililitro';
+      case 'metro':
+        return 'metro';
+      case 'centímetro':
+        return 'centímetro';
+      case 'unidad':
+        return 'unidad';
+      case 'caja':
+        return 'caja';
+      case 'paquete':
+        return 'paquete';
+      case 'docena':
+        return 'docena';
+      default:
+        return unit;
+    }
+  }
+
+  /// Obtiene el precio total del producto (precio × cantidad)
+  double get totalPrice => salePrice * quantity;
+
+  /// Obtiene la ganancia total del producto (ganancia unitaria × cantidad)
+  double get totalProfit => (salePrice - purchasePrice) * quantity;
+
+  /// Formatea la cantidad según el tipo de unidad
+  /// - Discretas: "1", "5", "10"
+  /// - Fraccionarias: "0.5", "1.25", "2.5"
+  String get formattedQuantity {
+    if (isDiscreteUnit) {
+      return quantity.toInt().toString();
+    }
+
+    double displayQuantity = quantity;
+    final normalized = unit.toLowerCase();
+
+    // Lógica de conversión para visualización
+    if (normalized == 'kilogramo' && quantity < 1.0) {
+      displayQuantity = quantity * 1000;
+    } else if (normalized == 'litro' && quantity < 1.0) {
+      displayQuantity = quantity * 1000;
+    } else if (normalized == 'metro' && quantity < 1.0) {
+      displayQuantity = quantity * 100;
+    }
+
+    // Para fraccionarias: eliminar ceros innecesarios
+    if (displayQuantity == displayQuantity.roundToDouble()) {
+      return displayQuantity.toInt().toString();
+    }
+    return displayQuantity.toStringAsFixed(3).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
+  /// Formatea la cantidad con el símbolo de unidad (corto)
+  /// Ejemplos: "2.5 kg", "1 u", "500 g"
+  String get formattedQuantityWithUnit => '$formattedQuantity $unitSymbol';
+
+  /// Formatea la cantidad con el nombre completo de unidad
+  /// Ejemplos: "2.5 kilogramo", "1 unidad", "500 gramo"
+  String get formattedQuantityWithUnitName => '$formattedQuantity $unitName';
+
+  /// Formatea la cantidad de forma compacta para badges pequeños
+  /// Limita decimales a 2 para evitar overflow en UI
+  /// Ejemplos: "2.5", "0.75", "10"
+  String get formattedQuantityCompact {
+    if (isDiscreteUnit) {
+      return quantity.toInt().toString();
+    }
+
+    double displayQuantity = quantity;
+    final normalized = unit.toLowerCase();
+
+    // Lógica de conversión para visualización
+    if (normalized == 'kilogramo' && quantity < 1.0) {
+      displayQuantity = quantity * 1000;
+    } else if (normalized == 'litro' && quantity < 1.0) {
+      displayQuantity = quantity * 1000;
+    } else if (normalized == 'metro' && quantity < 1.0) {
+      displayQuantity = quantity * 100;
+    }
+
+    // Para fraccionarias: máximo 2 decimales, sin ceros finales
+    if (displayQuantity == displayQuantity.roundToDouble()) {
+      return displayQuantity.toInt().toString();
+    }
+    return displayQuantity.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
+  /// Formatea el precio por unidad con el símbolo de unidad
+  /// Ejemplo: "$100/kg", "$50/u"
+  String get formattedPricePerUnit => '\$$salePrice/$unitSymbol';
+ 
+  /// Obtiene la cantidad máxima permitida según el tipo de unidad
+  double get maxQuantity {
+    return isFractionalUnit ? 1000.0 : 10000.0;
+  }
+
+  /// Cantidad mínima permitida
+  static const double minQuantity = 0.001;
+
   // Serialization methods
   /// Convierte el producto a un mapa para persistencia
   ///
@@ -276,6 +457,9 @@ class ProductCatalogue {
       "alertStock": alertStock,
       "revenue": revenue,
       "unit": unit,
+      'comboItems': comboItems.map((e) => e.toMap()).toList(),
+      'comboExpiration':
+          comboExpiration != null ? comboExpiration!.millisecondsSinceEpoch : null,
     };
 
     debugPrint(
@@ -311,6 +495,15 @@ class ProductCatalogue {
       return 1.0;
     }
 
+    // Helper para parsear stocks
+     double _parseStock(dynamic value, double defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? defaultValue;
+      return defaultValue;
+    }
+
     final product = ProductCatalogue(
       id: data['id'] ?? '',
       reviewed: data['reviewed'] ?? data['revisado'] ?? false,
@@ -342,9 +535,9 @@ class ProductCatalogue {
       currencySign: data['currencySign'] ?? '\$',
       quantity: _parseQuantity(data['quantity']),
       stock: data['stock'] ?? false,
-      quantityStock: data['quantityStock'] ?? 0,
-      sales: data['sales'] ?? 0,
-      alertStock: data['alertStock'] ?? 5,
+      quantityStock: _parseStock(data['quantityStock'], 0.0),
+      sales: _parseStock(data['sales'], 0.0),
+      alertStock: _parseStock(data['alertStock'], 5.0),
       revenue: (data['revenue'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
@@ -360,6 +553,12 @@ class ProductCatalogue {
           : (data.containsKey('verified') && data['verified'] == true)
               ? 'verified'
               : 'pending',
+      comboItems: data.containsKey('comboItems') && data['comboItems'] != null
+          ? (data['comboItems'] as List)
+              .map((item) => ComboItem.fromMap(item))
+              .toList()
+          : [],
+      comboExpiration: parseDateTime(data['comboExpiration']),
     );
 
     return product;

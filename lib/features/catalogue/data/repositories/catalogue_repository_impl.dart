@@ -7,6 +7,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_price.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
+import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
 import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
 import 'package:sellweb/core/services/database/firestore_paths.dart';
 
@@ -165,6 +166,35 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       });
     } catch (e) {
       throw Exception('Error al decrementar stock del producto: $e');
+    }
+  }
+
+  @override
+  Future<void> decrementComboStock(
+      String accountId, List<ComboItem> items, double quantitySold) async {
+    if (accountId.isEmpty) {
+      throw ArgumentError('El accountId es obligatorio');
+    }
+
+    if (quantitySold <= 0.0) {
+      throw ArgumentError('La cantidad vendida debe ser mayor a 0');
+    }
+
+    // Iterar sobre los items y decrementar su stock individualmente
+    // Nota: Idealmente esto debería ser una transacción batch, pero
+    // dada la abstracción actual del DataSource, lo haremos iterativo.
+    for (final item in items) {
+      try {
+        await decrementStock(
+          accountId,
+          item.productId,
+          item.quantity * quantitySold,
+        );
+      } catch (e) {
+        // Loguear error pero intentar continuar con los demás items
+        print(
+            'Error al decrementar stock del item de combo ${item.productId}: $e');
+      }
     }
   }
 

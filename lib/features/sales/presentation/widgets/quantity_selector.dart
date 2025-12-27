@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sellweb/core/utils/helpers/unit_helper.dart';
 
 /// Widget reutilizable para seleccionar cantidad de productos
-/// 
+///
 /// Soporta:
 /// - Unidades discretas (unidad, caja, paquete, docena): solo enteros
 /// - Unidades fraccionarias (kilogramo, litro, metro): decimales
@@ -13,22 +13,22 @@ import 'package:sellweb/core/utils/helpers/unit_helper.dart';
 class QuantitySelector extends StatefulWidget {
   /// Cantidad inicial
   final double initialQuantity;
-  
+
   /// Tipo de unidad del producto
   final String unit;
-  
+
   /// Callback cuando cambia la cantidad
   final ValueChanged<double> onQuantityChanged;
-  
+
   /// Si mostrar el input manual de cantidad (por defecto true)
   final bool showInput;
-  
+
   /// Si mostrar la unidad junto a la cantidad (por defecto true)
   final bool showUnit;
-  
+
   /// Tamaño de los botones (por defecto 40)
   final double buttonSize;
-  
+
   const QuantitySelector({
     super.key,
     required this.initialQuantity,
@@ -53,7 +53,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
     super.initState();
     _quantity = widget.initialQuantity;
     _controller = TextEditingController(
-      text: UnitHelper.formatQuantity(_quantity, widget.unit),
+      text: UnitHelper.formatQuantityWithZeros(_quantity, widget.unit),
     );
   }
 
@@ -66,20 +66,22 @@ class _QuantitySelectorState extends State<QuantitySelector> {
   @override
   void didUpdateWidget(QuantitySelector oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Si cambió la cantidad externa y no estamos editando, actualizar
     if (oldWidget.initialQuantity != widget.initialQuantity && !_isEditing) {
       setState(() {
         _quantity = widget.initialQuantity;
-        _controller.text = UnitHelper.formatQuantity(_quantity, widget.unit);
+        _controller.text =
+            UnitHelper.formatQuantityWithZeros(_quantity, widget.unit);
       });
     }
-    
+
     // Si cambió la unidad, revalidar y reformatear
     if (oldWidget.unit != widget.unit) {
       setState(() {
         _quantity = UnitHelper.normalizeQuantity(_quantity, widget.unit);
-        _controller.text = UnitHelper.formatQuantity(_quantity, widget.unit);
+        _controller.text =
+            UnitHelper.formatQuantityWithZeros(_quantity, widget.unit);
       });
       widget.onQuantityChanged(_quantity);
     }
@@ -88,7 +90,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
   void _increment() {
     final step = UnitHelper.getQuantityStep(widget.unit);
     final newQuantity = _quantity + step;
-    
+
     // Validar máximo
     final maxQty = UnitHelper.getMaxQuantity(widget.unit);
     if (newQuantity <= maxQty) {
@@ -99,7 +101,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
   void _decrement() {
     final step = UnitHelper.getQuantityStep(widget.unit);
     final newQuantity = _quantity - step;
-    
+
     // Validar mínimo
     if (newQuantity >= UnitHelper.minQuantity) {
       _updateQuantity(newQuantity);
@@ -109,22 +111,25 @@ class _QuantitySelectorState extends State<QuantitySelector> {
   void _updateQuantity(double newQuantity) {
     // Normalizar según tipo de unidad
     final normalized = UnitHelper.normalizeQuantity(newQuantity, widget.unit);
-    
+
     setState(() {
       _quantity = normalized;
       if (!_isEditing) {
-        _controller.text = UnitHelper.formatQuantity(normalized, widget.unit);
+        _controller.text =
+            UnitHelper.formatQuantityWithZeros(normalized, widget.unit);
       }
     });
-    
+
     widget.onQuantityChanged(normalized);
   }
 
   void _onInputChanged(String value) {
     if (value.isEmpty) return;
-    
-    final parsed = double.tryParse(value);
-    if (parsed != null) {
+
+    // Usar UnitHelper para parsear (maneja locale)
+    final parsed = UnitHelper.parseQuantity(value, defaultValue: -1);
+
+    if (parsed != -1) {
       // Validar
       final error = UnitHelper.validateQuantity(parsed, widget.unit);
       if (error == null) {
@@ -191,16 +196,31 @@ class _QuantitySelectorState extends State<QuantitySelector> {
         icon: Icon(
           icon,
           size: 20,
-          color: isEnabled
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outline,
+          color:
+              isEnabled ? theme.colorScheme.primary : theme.colorScheme.outline,
         ),
         padding: EdgeInsets.zero,
       ),
     );
   }
 
+  // widget : input de cantidad
   Widget _buildInput(ThemeData theme, bool isFractional) {
+    // Convertir a unidad de visualización si es fracción < 1
+    final displayData = UnitHelper.convertToDisplayUnit(_quantity, widget.unit);
+    final displayUnit = displayData['unit'] as String;
+    final displaySymbol = UnitHelper.getUnitSymbol(displayUnit);
+
+    // Formatear con ceros si es necesario
+    final formattedText = _isEditing
+        ? _controller.text
+        : UnitHelper.formatQuantityWithZeros(_quantity, widget.unit);
+
+    // Actualizar controller si no estamos editando
+    if (!_isEditing && _controller.text != formattedText) {
+      _controller.text = formattedText;
+    }
+
     return Container(
       width: 120,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -230,8 +250,9 @@ class _QuantitySelectorState extends State<QuantitySelector> {
               ),
               inputFormatters: [
                 if (isFractional)
-                  // Permitir decimales con hasta 3 dígitos después del punto
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}'))
+                  // Permitir decimales (punto o coma) con hasta 3 dígitos
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*[\.,]?\d{0,3}'))
                 else
                   // Solo números enteros
                   FilteringTextInputFormatter.digitsOnly,
@@ -255,22 +276,25 @@ class _QuantitySelectorState extends State<QuantitySelector> {
                 setState(() {
                   _isEditing = false;
                 });
-                _controller.text = UnitHelper.formatQuantity(_quantity, widget.unit);
+                _controller.text =
+                    UnitHelper.formatQuantityWithZeros(_quantity, widget.unit);
               },
               onEditingComplete: () {
                 setState(() {
                   _isEditing = false;
                 });
-                _controller.text = UnitHelper.formatQuantity(_quantity, widget.unit);
+                _controller.text =
+                    UnitHelper.formatQuantityWithZeros(_quantity, widget.unit);
               },
             ),
           ),
           if (widget.showUnit) ...[
             const SizedBox(width: 4),
             Text(
-              UnitHelper.getUnitSymbol(widget.unit),
+              displaySymbol,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                color:
+                    theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -302,7 +326,8 @@ class _QuantitySelectorState extends State<QuantitySelector> {
             Text(
               UnitHelper.getUnitSymbol(widget.unit),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                color:
+                    theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
               ),
             ),
           ],

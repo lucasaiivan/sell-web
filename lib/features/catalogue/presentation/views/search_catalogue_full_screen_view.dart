@@ -11,6 +11,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dar
 // Presentation imports
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.
 ///
@@ -132,8 +133,10 @@ class _ProductCatalogueFullScreenViewState
         .fold(0.0, (total, product) => total + product.quantity);
   }
 
-  /// Disminuye la cantidad de un producto en el ticket o lo elimina si la cantidad llega a 0
-  void _decreaseProductQuantity(ProductCatalogue product) {
+  /// Aumenta la cantidad de un producto en el ticket
+  /// Para fracciones usa incrementos de 0.1 (100g, 100ml, 10cm)
+  void _increaseProductQuantity(ProductCatalogue product) {
+    final step = UnitHelper.isFractionalUnit(product.unit) ? 0.1 : 1.0;
     final ticketProducts = widget.sellProvider.ticket.products;
 
     // Buscar el producto en el ticket
@@ -141,15 +144,36 @@ class _ProductCatalogueFullScreenViewState
 
     if (productIndex != -1) {
       final currentProduct = ticketProducts[productIndex];
+      final newQuantity = currentProduct.quantity + step;
+      final increasedProduct = currentProduct.copyWith(quantity: newQuantity);
+      widget.sellProvider
+          .addProductsticket(increasedProduct, replaceQuantity: true);
+    } else {
+      // Si no existe, agregarlo con la cantidad base
+      widget.sellProvider.addProductsticket(product.copyWith(quantity: step));
+    }
+  }
 
-      if (currentProduct.quantity > 1) {
-        // Si tiene más de 1, agregar con cantidad -1 (disminuye en 1)
-        final decreasedProduct =
-            currentProduct.copyWith(quantity: currentProduct.quantity - 1);
+  /// Disminuye la cantidad de un producto en el ticket o lo elimina si la cantidad llega a 0
+  /// Para fracciones usa decrementos de 0.1 (100g, 100ml, 10cm)
+  void _decreaseProductQuantity(ProductCatalogue product) {
+    final step = UnitHelper.isFractionalUnit(product.unit) ? 0.1 : 1.0;
+    final ticketProducts = widget.sellProvider.ticket.products;
+
+    // Buscar el producto en el ticket
+    final productIndex = ticketProducts.indexWhere((p) => p.id == product.id);
+
+    if (productIndex != -1) {
+      final currentProduct = ticketProducts[productIndex];
+      final newQuantity = currentProduct.quantity - step;
+
+      if (newQuantity >= UnitHelper.minQuantity) {
+        // Si queda cantidad válida, actualizar
+        final decreasedProduct = currentProduct.copyWith(quantity: newQuantity);
         widget.sellProvider
             .addProductsticket(decreasedProduct, replaceQuantity: true);
       } else {
-        // Si tiene 1 o menos, remover completamente del ticket
+        // Si la cantidad es menor al mínimo, remover completamente del ticket
         widget.sellProvider.removeProduct(currentProduct);
       }
     }
@@ -291,6 +315,7 @@ class _ProductCatalogueFullScreenViewState
   }
 
   /// Construye un item de producto optimizado para la vista de cuadrícula
+  /// Diseño compacto y simétrico para pantallas pequeñas
   Widget _buildProductGridItem(ProductCatalogue product) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -304,6 +329,10 @@ class _ProductCatalogueFullScreenViewState
     } catch (_) {
       selectedProduct = null;
     }
+
+    final totalPrice = selectedProduct != null
+        ? selectedProduct.salePrice * selectedProduct.quantity
+        : product.salePrice;
 
     return AnimatedScale(
         scale: selectedProduct != null ? 0.95 : 1.0,
@@ -334,74 +363,128 @@ class _ProductCatalogueFullScreenViewState
                   // Imagen del producto que ocupa la mayor parte
                   Expanded(
                     flex: 2,
-                    child: ProductImage(
-                      imageUrl: product.image,
-                      fit: BoxFit.cover,
-                      productDescription: product.description,
+                    child: Stack(
+                      children: [
+                        ProductImage(
+                          imageUrl: product.image,
+                          fit: BoxFit.cover,
+                          productDescription: product.description,
+                        ),
+                        if (product.isCombo)
+                          const Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: ComboTag(isCompact: true),
+                          ),
+                      ],
                     ),
                   ),
-                  // Información del producto
-                  _buildProductInfo(product, theme, colorScheme),
+                  // Información del producto con precio total
+                  _buildProductInfoGrid(
+                      product, selectedProduct, totalPrice, theme, colorScheme),
                 ],
               ),
-              // Área táctil para seleccionar el producto
-              Positioned.fill(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      widget.sellProvider.addProductsticket(product.copyWith());
-                      setState(() {}); // Actualizar la vista al seleccionar
-                    },
-                  ),
-                ),
-              ),
-              // Contador de cantidad en la esquina superior derecha
-              if (selectedProduct != null && selectedProduct.quantity > 1)
-                Positioned(
-                  top: 5,
-                  right: 5,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black87,
-                    child: Padding(
-                      padding: const EdgeInsets.all(1.0),
-                      child: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          selectedProduct.quantity.toString(),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
+              // Área táctil para seleccionar el producto (solo si no está seleccionado)
+              if (selectedProduct == null)
+                Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        _increaseProductQuantity(product);
+                        setState(() {});
+                      },
                     ),
                   ),
                 ),
-              // Botón de disminuir cantidad cuando el producto está seleccionado
+              // Controles de cantidad cuando el producto está seleccionado
               if (selectedProduct != null)
                 Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: GestureDetector(
-                    onTap: () {
-                      _decreaseProductQuantity(product);
-                      setState(() {});
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color:
-                            colorScheme.errorContainer.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: Icon(
-                        Icons.remove,
-                        size: 16,
-                        color: colorScheme.onErrorContainer,
-                      ),
+                  bottom: 6,
+                  left: 6,
+                  right: 6,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: colorScheme.outline.withValues(alpha: 0.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Precio Total
+                        Text(
+                          CurrencyFormatter.formatPrice(value: totalPrice),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: colorScheme.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        // Controles
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Botón decrementar
+                            _buildControlButton(
+                              icon: Icons.remove,
+                              color: colorScheme.error,
+                              onPressed: () {
+                                _decreaseProductQuantity(product);
+                                setState(() {});
+                              },
+                            ),
+                            // Cantidad con unidad
+                            Expanded(
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primaryContainer
+                                      .withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  UnitHelper.formatQuantityAdaptive(
+                                      selectedProduct.quantity,
+                                      selectedProduct.unit),
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            // Botón incrementar
+                            _buildControlButton(
+                              icon: Icons.add,
+                              color: colorScheme.primary,
+                              onPressed: () {
+                                _increaseProductQuantity(product);
+                                setState(() {});
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -410,11 +493,41 @@ class _ProductCatalogueFullScreenViewState
         ));
   }
 
-  /// Construye la información del producto (descripción, marca, precio)
-  Widget _buildProductInfo(
-      ProductCatalogue product, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildControlButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: onPressed,
+        child: Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            color: color,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Construye la información del producto para vista de grid
+  /// Diseño compacto optimizado para pantallas pequeñas
+  Widget _buildProductInfoGrid(
+      ProductCatalogue product,
+      ProductCatalogue? selectedProduct,
+      double totalPrice,
+      ThemeData theme,
+      ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.all(6.0),
+      padding: const EdgeInsets.all(5.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,49 +538,91 @@ class _ProductCatalogueFullScreenViewState
             style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.normal,
+              fontSize: 12,
               overflow: TextOverflow.ellipsis,
             ),
             maxLines: 1,
           ),
+          const SizedBox(height: 1),
           // Marca del producto (si existe)
           if (product.nameMark.isNotEmpty) ...[
             Text(
               product.nameMark,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: 10,
+                fontSize: 9,
                 color: product.isVerified ? Colors.blue : null,
                 overflow: TextOverflow.ellipsis,
               ),
               maxLines: 1,
             ),
+            const SizedBox(height: 1),
           ],
-          // Precio del producto con unidad
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                CurrencyFormatter.formatPrice(value: product.salePrice),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17.0,
-                  color: Colors.black,
-                ),
-                overflow: TextOverflow.clip,
-                softWrap: false,
+          // Stock (solo mostrar si está habilitado y hay stock disponible)
+          if (product.stock && product.quantityStock > 0) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: product.quantityStock <= product.alertStock
+                    ? colorScheme.errorContainer
+                    : colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(4),
               ),
-              Text(
-                '/${product.unit}',
+              child: Text(
+                'Stock: ${UnitHelper.formatQuantityAdaptive(product.quantityStock, product.unit)}',
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                  color: Colors.black.withValues(alpha: 0.7),
+                  fontSize: 9,
+                  color: product.quantityStock <= product.alertStock
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 1),
+          ],
+          // Precio
+          if (selectedProduct != null) ...[
+            // MODO SELECCIONADO: Mostrar solo precio unitario como referencia
+            Text(
+              CurrencyFormatter.formatPrice(value: product.salePrice),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ] else ...[
+            // MODO NO SELECCIONADO: Mostrar precio unitario destacado
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  CurrencyFormatter.formatPrice(value: product.salePrice),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.0,
+                    color: Colors.black,
+                  ),
+                  overflow: TextOverflow.clip,
+                  softWrap: false,
+                ),
+                Text(
+                  '/${product.unitSymbol}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 9,
+                    color: Colors.black.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -560,9 +715,7 @@ class _ProductCatalogueFullScreenViewState
               return CustomScrollView(
                 // Inyectar el overlap para mantener consistencia
                 slivers: [
-                  SliverOverlapInjector(
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                          context)),
+                  SliverOverlapInjector( handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)),
                   // Siempre mostrar la lista de productos (filtrados o todos)
                   _buildProductListAsSliver(),
 
@@ -779,6 +932,8 @@ class _ProductCatalogueFullScreenViewState
     );
   }
 
+  /// Construye un item de producto para vista de lista
+  /// Diseño compacto y optimizado para pantallas pequeñas
   Widget _buildProductListItem(ProductCatalogue product) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -814,11 +969,21 @@ class _ProductCatalogueFullScreenViewState
             : null,
         child: ListTile(
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          leading: ProductImage(
-            imageUrl: product.image,
-            size: 56,
-            productDescription: product.description,
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          leading: Stack(
+            children: [
+              ProductImage(
+                imageUrl: product.image,
+                size: 48,
+                productDescription: product.description,
+              ),
+              if (product.isCombo)
+                const Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: ComboTag(isCompact: true),
+                ),
+            ],
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -830,6 +995,7 @@ class _ProductCatalogueFullScreenViewState
                 product.description,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                  fontSize: 14,
                   color: colorScheme.onSurface,
                 ),
                 maxLines: 2,
@@ -837,11 +1003,12 @@ class _ProductCatalogueFullScreenViewState
               ),
               if (product.nameMark.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: 1),
                   child: Text(
                     product.nameMark,
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w900,
+                      fontSize: 11,
                       color: product.isVerified ? Colors.blue : null,
                     ),
                     maxLines: 1,
@@ -852,88 +1019,183 @@ class _ProductCatalogueFullScreenViewState
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              product.code,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.secondary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.code,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    color: colorScheme.secondary,
+                  ),
+                ),
+                if (product.stock && product.quantityStock > 0)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: product.quantityStock <= product.alertStock
+                          ? colorScheme.errorContainer
+                          : colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: product.quantityStock <= product.alertStock
+                            ? colorScheme.error.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Text(
+                      'Stock: ${UnitHelper.formatQuantityAdaptive(product.quantityStock, product.unit)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 10,
+                        color: product.quantityStock <= product.alertStock
+                            ? colorScheme.error
+                            : colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // text : Precio de venta con unidad
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        CurrencyFormatter.formatPrice(value: product.salePrice),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        '/${product.unit}',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              if (selectedProduct != null) ...[
-                // Botón para disminuir cantidad - con estilo similar al contador
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor:
-                      colorScheme.errorContainer.withValues(alpha: 0.8),
-                  child: InkWell(
-                    onTap: () {
-                      // Disminuir cantidad del producto en el ticket
-                      _decreaseProductQuantity(product);
-                      setState(() {}); // Actualizar la vista
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Icon(
-                      Icons.remove,
-                      size: 16,
-                      color: colorScheme.onErrorContainer,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Cantidad seleccionada como CircleAvatar
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: colorScheme.primary,
-                  child: Text(
-                    selectedProduct.quantity.toString(),
-                    style: TextStyle(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+          trailing: _buildProductListTrailing(
+              product, selectedProduct, theme, colorScheme),
           onTap: () {
-            widget.sellProvider.addProductsticket(product.copyWith());
+            _increaseProductQuantity(product);
             setState(() {}); // Actualizar la vista al seleccionar
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildProductListTrailing(
+      ProductCatalogue product,
+      ProductCatalogue? selectedProduct,
+      ThemeData theme,
+      ColorScheme colorScheme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (selectedProduct != null) ...[
+          // Sección de controles
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Decrementar
+                _buildControlButton(
+                  icon: Icons.remove,
+                  color: colorScheme.error,
+                  onPressed: () {
+                    _decreaseProductQuantity(product);
+                    setState(() {});
+                  },
+                ),
+                // Cantidad
+                Container(
+                  constraints: const BoxConstraints(minWidth: 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  alignment: Alignment.center,
+                  child: Text(
+                    UnitHelper.formatQuantityAdaptive(
+                        selectedProduct.quantity, selectedProduct.unit),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                // Incrementar
+                _buildControlButton(
+                  icon: Icons.add,
+                  color: colorScheme.primary,
+                  onPressed: () {
+                    _increaseProductQuantity(product);
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        // Precio (unitario y total)
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (selectedProduct != null) ...[
+              // Calcular precio total
+              Builder(
+                builder: (context) {
+                  final totalPrice =
+                      selectedProduct.salePrice * selectedProduct.quantity;
+                  
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Precio total destacado
+                      Text(
+                        CurrencyFormatter.formatPrice(value: totalPrice),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      // Precio unitario pequeño debajo
+                      Text(
+                        '${CurrencyFormatter.formatPrice(value: product.salePrice)}/${product.unitSymbol}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 10,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ] else ...[
+              // Precio unitario normal
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    CurrencyFormatter.formatPrice(value: product.salePrice),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    '/${product.unitSymbol}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontSize: 10,
+                      color: colorScheme.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 }

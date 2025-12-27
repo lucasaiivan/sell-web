@@ -475,7 +475,7 @@ class CategoryDistributionModal extends StatelessWidget {
     final categoryName = category['category'] as String? ?? 'Sin nombre';
     final categorySales = category['totalSales'] as double? ?? 0.0;
     final percentage = category['percentage'] as double? ?? 0.0;
-    final quantitySold = category['quantitySold'] as int? ?? 0;
+    final quantitySold = category['quantitySold'] as double? ?? 0;
     final categoryColor = _categoryColors[index % _categoryColors.length];
 
     return Container(

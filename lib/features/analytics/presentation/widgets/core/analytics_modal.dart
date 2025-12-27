@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/presentation/modals/base_bottom_sheet.dart';
 
 /// Widget: Modal Base para Analytics
 ///
 /// **Responsabilidad:**
 /// - Proporcionar una base visual consistente para todos los modales de analytics
-/// - Unificar el patrón de diseño: handle, header con icono, contenido
-/// - Manejar animaciones y transiciones suaves
+/// - Unificar el patrón de diseño usando [BaseBottomSheet]
 /// - Soportar contenido dinámico y listas
 ///
 /// **Uso:**
 /// Todos los modales de analytics deben usar este widget como base
-/// para mantener un aspecto visual coherente y reducir duplicación.
 class AnalyticsModal extends StatelessWidget {
   /// Color de acento del modal (usado en header y decoraciones)
   final Color accentColor;
@@ -25,6 +24,7 @@ class AnalyticsModal extends StatelessWidget {
   final String? subtitle;
 
   /// Widget adicional en el header (ej: estadísticas)
+  /// Reemplaza al botón de cerrar si se proporciona
   final Widget? headerAction;
 
   /// Widget informativo opcional (aparece debajo del header)
@@ -39,6 +39,15 @@ class AnalyticsModal extends StatelessWidget {
   /// Si el contenido debe expandirse para llenar el espacio disponible
   final bool expandContent;
 
+  /// Callback para búsqueda. Si se proporciona, se habilita el botón de búsqueda en el header.
+  final ValueChanged<String>? onSearch;
+  
+  /// Texto hint para el buscador
+  final String searchHint;
+  
+  /// Controlador opcional parea el buscador
+  final TextEditingController? searchController;
+
   const AnalyticsModal({
     super.key,
     required this.accentColor,
@@ -50,58 +59,26 @@ class AnalyticsModal extends StatelessWidget {
     this.infoWidget,
     this.maxHeightFactor = 0.85,
     this.expandContent = true,
+    this.onSearch,
+    this.searchHint = 'Buscar...',
+    this.searchController,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * maxHeightFactor,
-      ),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return BaseBottomSheet(
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      // Usamos el color de acento para el icono
+      iconColor: accentColor,
+      headerExtra: headerAction,
+      maxHeightFactor: maxHeightFactor,
+      onSearch: onSearch,
+      searchHint: searchHint,
+      searchController: searchController,
+      body: Column(
         children: [
-          // Handle bar con animación sutil
-          _ModalHandle(colorScheme: colorScheme),
-
-          // Header mejorado
-          _ModalHeader(
-            accentColor: accentColor,
-            icon: icon,
-            title: title,
-            subtitle: subtitle,
-            headerAction: headerAction,
-          ),
-
-          // Divider con gradiente sutil
-          Container(
-            height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.outlineVariant.withValues(alpha: 0.0),
-                  colorScheme.outlineVariant.withValues(alpha: 0.5),
-                  colorScheme.outlineVariant.withValues(alpha: 0.0),
-                ],
-              ),
-            ),
-          ),
-
           // Widget informativo opcional
           if (infoWidget != null)
             Padding(
@@ -110,117 +87,10 @@ class AnalyticsModal extends StatelessWidget {
             ),
 
           // Contenido principal
-          if (expandContent) Flexible(child: child) else child,
-
-          // Bottom safe area
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-        ],
-      ),
-    );
-  }
-}
-
-/// Handle del modal con diseño mejorado
-class _ModalHandle extends StatelessWidget {
-  final ColorScheme colorScheme;
-
-  const _ModalHandle({required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.only(top: 12, bottom: 8),
-        width: 36,
-        height: 4,
-        decoration: BoxDecoration(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
-  }
-}
-
-/// Header del modal con diseño Material 3 mejorado
-class _ModalHeader extends StatelessWidget {
-  final Color accentColor;
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final Widget? headerAction;
-
-  const _ModalHeader({
-    required this.accentColor,
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.headerAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 12, 16),
-      child: Row(
-        children: [
-          // Icono con contenedor decorado
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: accentColor,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Título y subtítulo
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle!,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // Acción del header o botón de cerrar por defecto
-          headerAction ??
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.surfaceContainerHighest,
-                  foregroundColor: colorScheme.onSurfaceVariant,
-                ),
-              ),
+          if (expandContent)
+            Expanded(child: child)
+          else
+            child,
         ],
       ),
     );
@@ -905,28 +775,30 @@ class AnalyticsStatusCard extends StatelessWidget {
                   ),
                 if (icon != null) const SizedBox(width: 12),
                 if (mainValue != null || mainLabel != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (mainValue != null)
-                        Text(
-                          mainValue!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (mainValue != null)
+                          Text(
+                            mainValue!,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
                           ),
-                        ),
-                      if (mainLabel != null)
-                        Text(
-                          mainLabel!,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7),
+                        if (mainLabel != null)
+                          Text(
+                            mainLabel!,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
               ],
             ),

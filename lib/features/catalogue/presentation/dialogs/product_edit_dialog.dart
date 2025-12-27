@@ -36,6 +36,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
 
   // Validaciones y propiedades calculadas
   String get _titleItem {
+    if (widget.product.isCombo) return '';
     if (widget.product.nameMark.isNotEmpty) return widget.product.nameMark;
     return '';
   }
@@ -57,7 +58,7 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   @override
   Widget build(BuildContext context) {
     return BaseDialog(
-      title: 'Editar cantidad',
+      title: widget.product.isCombo ? 'Editar combo' : 'Editar cantidad',
       icon: Icons.edit,
       width: 450,
       content: Column(
@@ -65,6 +66,11 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         children: [
           // Información principal del producto
           _buildProductInfo(),
+           if (widget.product.isCombo)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: _buildComboItemsList(),
+            ),
           DialogComponents.sectionSpacing,
           // Controles de cantidad
           _buildQuantitySection(),
@@ -226,66 +232,69 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   }
 
   Widget _buildQuantitySection() {
-    final theme = Theme.of(context);
+    final theme = Theme.of(context); 
+    final formattedTotal = CurrencyFormatter.formatPrice(value: _totalPrice);
 
-    return Column(
-      children: [
-        // Selector de cantidad con soporte para unidades fraccionarias
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            QuantitySelector(
-              initialQuantity: _quantity,
-              unit: widget.product.unit,
-              onQuantityChanged: (newQuantity) {
-                _updateQuantity(newQuantity);
-              },
-              showInput: true,
-              showUnit: true,
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
-        const SizedBox(height: 20),
-        // Total con descripción de unidad
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Cantidad × Precio por unidad
-                  Text(
-                    '${UnitHelper.formatQuantity(_quantity, widget.product.unit)} × ${CurrencyFormatter.formatPrice(value: widget.product.salePrice)}/${widget.product.unit}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Total
-                  Text(
-                    'Total: ${CurrencyFormatter.formatPrice(value: _totalPrice)}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontSize: 30,
-                    ),
-                  ),
-                ],
-              ),
+      ),
+      child: Column(
+        children: [
+          // Título de sección sutil
+          Text(
+            'Cantidad',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 12),
+
+          // Selector de cantidad
+          QuantitySelector(
+            initialQuantity: _quantity,
+            unit: widget.product.unit,
+            onQuantityChanged: (newQuantity) {
+              _updateQuantity(newQuantity);
+            },
+            showInput: true,
+            showUnit: !widget.product.isCombo,
+          ),
+
+          const SizedBox(height: 16),
+          Divider(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+
+          // Resumen de precio
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [ 
+              // Total
+              Text(
+                'Total',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 24,fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                formattedTotal,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -407,6 +416,51 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         widget.onProductUpdated?.call();
       }
     }
+  }
+  Widget _buildComboItemsList() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Incluye:',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+          const SizedBox(height: 8),
+          ...widget.product.comboItems.map((item) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_outline, 
+                    size: 14, 
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${item.quantity.toInt()}x ${item.name}', // Simplified item display
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
   }
 }
 

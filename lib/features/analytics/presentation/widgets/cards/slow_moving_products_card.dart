@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 import '../core/widgets.dart';
 
 /// Widget: Tarjeta de Productos de Lenta Rotación
@@ -76,7 +77,7 @@ class SlowMovingProductsCard extends StatelessWidget {
                       final product =
                           productData['product'] as ProductCatalogue;
                       final quantitySold =
-                          productData['quantitySold'] as int? ?? 0;
+                          productData['quantitySold'] as double? ?? 0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: _buildSlowProductPreview(
@@ -119,7 +120,7 @@ class SlowMovingProductsCard extends StatelessWidget {
 
   /// Preview simplificado del producto con lenta rotación
   Widget _buildSlowProductPreview(
-      BuildContext context, ProductCatalogue product, int quantitySold) {
+      BuildContext context, ProductCatalogue product, double quantitySold) {
     final theme = Theme.of(context);
     // Asegurar que siempre haya un nombre visible
     final productName = product.description.isNotEmpty
@@ -151,15 +152,25 @@ class SlowMovingProductsCard extends StatelessWidget {
           const SizedBox(width: 6),
           // Nombre del producto
           Expanded(
-            child: Text(
-              productName,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    productName,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (product.isCombo) ...[
+                  const SizedBox(width: 4),
+                  const ComboTag(isCompact: true),
+                ],
+              ],
             ),
           ),
           const SizedBox(width: 4),
@@ -359,7 +370,7 @@ class SlowMovingProductsModal extends StatelessWidget {
                         final productData = slowMovingProducts[index];
                         final product =
                             productData['product'] as ProductCatalogue;
-                        final quantitySold = productData['quantitySold'] as int;
+                        final quantitySold = productData['quantitySold'] as double;
                         final totalRevenue =
                             productData['totalRevenue'] as double;
                         final lastSoldDate =
@@ -404,14 +415,24 @@ class SlowMovingProductsModal extends StatelessWidget {
                                   width: 1.5,
                                 ),
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: ProductImage(
-                                  imageUrl: product.image,
-                                  fit: BoxFit.cover,
-                                  borderRadius: 10,
-                                  productDescription: product.description,
-                                ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: ProductImage(
+                                      imageUrl: product.image,
+                                      fit: BoxFit.cover,
+                                      borderRadius: 10,
+                                      productDescription: product.description,
+                                    ),
+                                  ),
+                                  if (product.isCombo)
+                                    const Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: ComboTag(isCompact: true),
+                                    ),
+                                ],
                               ),
                             ),
                             title: product.description,
@@ -425,38 +446,47 @@ class SlowMovingProductsModal extends StatelessWidget {
                                       .onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '$quantitySold vendido${quantitySold != 1 ? 's' : ''}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                      ),
+                                Flexible(
+                                  child: Text(
+                                    '$quantitySold vendido${quantitySold != 1 ? 's' : ''}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Icon(
                                   Icons.calendar_today_outlined,
-                                  size: 12,
+                                  size: 11,
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  dateFormat.format(lastSoldDate),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                        fontSize: 10,
-                                      ),
+                                Flexible(
+                                  child: Text(
+                                    dateFormat.format(lastSoldDate),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                          fontSize: 10,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
+
                               ],
                             ),
                             trailingWidgets: [

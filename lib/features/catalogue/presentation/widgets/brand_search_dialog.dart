@@ -36,14 +36,11 @@ class BrandSearchDialog extends StatefulWidget {
 
 class _BrandSearchDialogState extends State<BrandSearchDialog> {
   final _searchController = TextEditingController();
-  final _focusNode = FocusNode();
   Timer? _debounceTimer;
 
   List<Mark> _brands = [];
   bool _isLoading = false;
   bool _hasSearched = false;
-  bool _isTyping =
-      false; // Indica si el usuario está escribiendo (periodo de debounce)
   String _lastSearchQuery = '';
 
   @override
@@ -58,7 +55,6 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
   @override
   void dispose() {
     _searchController.dispose();
-    _focusNode.dispose();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -84,7 +80,6 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
         _brands = [];
         _hasSearched = false;
         _isLoading = false;
-        _isTyping = false;
       });
       return;
     }
@@ -94,22 +89,13 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
         _brands = [];
         _hasSearched = false;
         _isLoading = false;
-        _isTyping = false;
       });
       return;
     }
 
-    // Activar estado de escritura para feedback visual
-    setState(() {
-      _isTyping = true;
-    });
-
     // Debounce: espera 1100ms después de que el usuario deja de escribir
     _debounceTimer = Timer(const Duration(milliseconds: 1100), () {
       if (mounted && _searchController.text.trim() == query) {
-        setState(() {
-          _isTyping = false;
-        });
         _searchBrands(query);
       }
     });
@@ -153,118 +139,40 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 32,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Seleccionar Marca',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TextField(
-              controller: _searchController,
-              focusNode: _focusNode,
-              decoration: InputDecoration(
-                hintText: 'Buscar',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _buildSuffixIcon(),
-                filled: true,
-                fillColor:
-                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-
-          // List or Content
-          Expanded(
-            child: _buildContent(theme, colorScheme),
-          ),
-        ],
-      ),
+    return BaseBottomSheet(
+      title: 'Seleccionar Marca',
+      onSearch: _handleSearchInput,
+      searchHint: 'Buscar marca...',
+      searchController: _searchController,
+      body: _buildContent(theme, colorScheme),
     );
   }
 
-  Widget _buildSuffixIcon() {
-    if (_searchController.text.isEmpty) return const SizedBox.shrink();
-    if (_isTyping) {
-      return const Padding(
-        padding: EdgeInsets.all(12.0),
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-    return IconButton(
-      icon: const Icon(Icons.backspace_outlined, size: 20),
-      onPressed: () {
-        _searchController.clear();
-        setState(() {
-          _brands = [];
-          _hasSearched = false;
-        });
-      },
-    );
+  /// Wrapper para adaptar la firma de onSearch y manejar la lógica
+  void _handleSearchInput(String query) {
+    // La lógica de debounce ya está conectada al listener del controller en initState
+    // pero BaseBottomSheet actualiza el controller, que dispara el listener.
+    // También podemos implementar lógica directa aquí si preferimos no usar el listener.
+    // Dado que ya tenemos _onSearchChanged conectado al controller, 
+    // y BaseBottomSheet usa el MISMO controller, no necesitamos hacer nada extra aquí
+    // EXCEPTO si BaseBottomSheet no notifica cambios al controller (lo hace por ser su controller).
+    
+    // Sin embargo, para mayor claridad y evitar dependencias cíclicas, 
+    // BaseBottomSheet llama a onSearch cuando el texto cambia.
+    // El controller también notifica listeners. 
+    // Vamos a confiar en la implementación actual del controller listener _onSearchChanged
+    // que ya tiene el debouncing.
   }
 
+  // ... _buildContent y otros métodos se mantienen, pero ya no necesitamos _buildSuffixIcon
+  // ni la estructura manual del modal.
+  
   Widget _buildContent(ThemeData theme, ColorScheme colorScheme) {
     if (_isLoading && _brands.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -305,13 +213,13 @@ class _BrandSearchDialogState extends State<BrandSearchDialog> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
       itemCount: _brands.length,
       itemBuilder: (context, index) {
         final brand = _brands[index];
         final isSelected = widget.currentBrandId == brand.id;
 
-        // Capitalizar (manteniendo lógica existente)
+        // Capitalizar
         final displayName = brand.name.isNotEmpty
             ? TextFormatter.capitalizeString(brand.name)
             : 'Sin nombre';

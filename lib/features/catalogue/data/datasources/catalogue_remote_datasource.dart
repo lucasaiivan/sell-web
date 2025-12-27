@@ -36,7 +36,7 @@ abstract class CatalogueRemoteDataSource {
   Future<List<CategoryModel>> getCategories();
 
   /// Actualiza el stock de un producto
-  Future<void> updateStock(String accountId, String productId, int newStock);
+  Future<void> updateStock(String accountId, String productId, double newStock);
 }
 
 /// Implementación de [CatalogueRemoteDataSource] usando Firestore.
@@ -147,7 +147,7 @@ class CatalogueRemoteDataSourceImpl implements CatalogueRemoteDataSource {
 
   @override
   Future<void> updateStock(
-      String accountId, String productId, int newStock) async {
+      String accountId, String productId, double newStock) async {
     try {
       final path = FirestorePaths.accountProduct(accountId, productId);
       await _dataSource.updateDocument(path, {

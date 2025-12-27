@@ -61,8 +61,9 @@ class CatalogueMetric {
       final formatter = NumberFormat('#,###', 'es_ES');
       return formatter.format(number.toInt());
     } else {
-      // Número decimal: mostrar con 2 decimales
-      final formatter = NumberFormat('#,##0.00', 'es_ES');
+      // Número decimal: mostrar con 3 decimales para coincidir con el estándar de stock
+      // Eliminar ceros no significativos
+      final formatter = NumberFormat('#,##0.###', 'es_ES');
       return formatter.format(number);
     }
   }
@@ -95,7 +96,7 @@ class CatalogueMetrics {
   final int articles;
 
   /// Cantidad total de unidades en inventario
-  final int inventory;
+  final double inventory;
 
   /// Valor total del inventario (stock × precio de venta)
   final double inventoryValue;
@@ -117,7 +118,7 @@ class CatalogueMetrics {
   }) {
     final articles = products.length;
 
-    int inventory = 0;
+    double inventory = 0.0;
     double inventoryValue = 0.0;
 
     for (final product in products) {
@@ -128,7 +129,7 @@ class CatalogueMetrics {
       } else {
         // Si NO tiene control de stock (servicios, ilimitado), contar como 1 unidad
         // para que sume al inventario y al valor total
-        inventory += 1;
+        inventory += 1.0;
         inventoryValue += product.salePrice;
       }
     }

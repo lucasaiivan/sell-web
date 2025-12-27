@@ -1,6 +1,7 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 
 /// Diálogo reutilizable para mostrar los detalles completos de un ticket
 ///
@@ -243,6 +244,11 @@ class _TicketDetailDialogState extends State<TicketDetailDialog> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        if (product.isCombo)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: ComboTag(isCompact: true),
+                          ),
                         const SizedBox(height: 2),
                         Text(
                           CurrencyFormatter.formatPrice(value: unitPrice),

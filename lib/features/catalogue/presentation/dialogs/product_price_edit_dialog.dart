@@ -6,7 +6,7 @@ import 'package:sellweb/features/catalogue/presentation/providers/catalogue_prov
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:provider/provider.dart' as provider_package;
 
-/// Diálogo para editar precios de producto (precio de venta y precio de compra)
+/// Diálogo para editar precios de producto (precio de venta y precio de coste)
 class ProductPriceEditDialog extends StatefulWidget {
   const ProductPriceEditDialog({
     super.key,
@@ -134,10 +134,10 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
           ),
         ] else ...[
           // Para productos registrados: mostrar ambos precios
-          // Precio de Compra
+          // Precio de Coste
           MoneyInputTextField(
             controller: _purchasePriceController,
-            labelText: 'Precio de Compra (Opcional)',
+            labelText: 'Precio de Coste (Opcional)',
             validator: (value) {
               if (value != null && value.isNotEmpty) {
                 final purchasePrice = _purchasePriceController.doubleValue;
@@ -147,11 +147,11 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                   return 'El precio no puede ser negativo';
                 }
 
-                // Validar que el precio de compra no sea mayor al de venta si ambos están definidos
+                // Validar que el precio de coste no sea mayor al de venta si ambos están definidos
                 if (purchasePrice > 0 &&
                     salePrice > 0 &&
                     purchasePrice > salePrice) {
-                  return 'El precio de compra no puede ser mayor al de venta';
+                  return 'El precio de coste no puede ser mayor al de venta';
                 }
               }
               return null;
@@ -293,7 +293,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
       ));
     }
 
-    // Precio de compra
+    // Precio de coste
     if (_newPurchasePrice != widget.product.purchasePrice) {
       items.add(_buildCompactChangeItem(
         'Compra',
@@ -481,7 +481,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   double _calculateProfitMargin(double salePrice, double purchasePrice) {
     if (purchasePrice <= 0 || salePrice <= 0) return 0;
 
-    // Validación adicional: el precio de compra no puede ser mayor al de venta
+    // Validación adicional: el precio de coste no puede ser mayor al de venta
     if (purchasePrice >= salePrice) return 0;
 
     // Calcular margen de ganancia: (ganancia / precio_venta) * 100
@@ -505,15 +505,15 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
         throw Exception('El precio de venta debe ser mayor a 0');
       }
 
-      // Validación final: Precio de compra no puede ser negativo
+      // Validación final: Precio de coste no puede ser negativo
       if (purchasePrice < 0) {
-        throw Exception('El precio de compra no puede ser negativo');
+        throw Exception('El precio de coste no puede ser negativo');
       }
 
-      // Validación final: Precio de compra no puede ser mayor al de venta (solo para productos registrados)
+      // Validación final: Precio de coste no puede ser mayor al de venta (solo para productos registrados)
       if (!_isQuickItem && purchasePrice > 0 && purchasePrice > salePrice) {
         throw Exception(
-            'El precio de compra (${CurrencyFormatter.formatPrice(value: purchasePrice)}) no puede ser mayor al precio de venta (${CurrencyFormatter.formatPrice(value: salePrice)})');
+            'El precio de coste (${CurrencyFormatter.formatPrice(value: purchasePrice)}) no puede ser mayor al precio de venta (${CurrencyFormatter.formatPrice(value: salePrice)})');
       }
 
       // Obtener providers necesarios

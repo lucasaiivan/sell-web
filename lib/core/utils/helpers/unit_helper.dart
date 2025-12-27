@@ -1,7 +1,8 @@
 import 'dart:math';
+import 'package:intl/intl.dart';
 
 /// Utilidades para manejo de unidades de venta y validaciones de cantidad
-/// 
+///
 /// Este helper centraliza la lógica de:
 /// - Tipos de unidades (discretas vs fraccionarias)
 /// - Validaciones de cantidad según tipo
@@ -24,6 +25,7 @@ class UnitHelper {
     'mililitro',
     'metro',
     'centímetro',
+    'milímetro',
   ];
 
   // Todas las unidades soportadas
@@ -35,6 +37,7 @@ class UnitHelper {
     'mililitro',
     'metro',
     'centímetro',
+    'milímetro',
     'caja',
     'paquete',
     'docena',
@@ -44,10 +47,10 @@ class UnitHelper {
   static const double minQuantity = 0.001;
 
   /// Cantidad máxima para unidades discretas (unidad, caja, paquete, docena)
-  static const double maxQuantityDiscrete = 10000.0;
+  static const double maxQuantityDiscrete = 9999999.0;
 
   /// Cantidad máxima para unidades fraccionarias (kg, L, m, etc.)
-  static const double maxQuantityFractional = 1000.0;
+  static const double maxQuantityFractional = 9999999.0;
 
   /// Determina si una unidad es fraccionaria (permite decimales)
   static bool isFractionalUnit(String unit) {
@@ -65,7 +68,7 @@ class UnitHelper {
   }
 
   /// Valida si una cantidad es válida para el tipo de unidad
-  /// 
+  ///
   /// Retorna `null` si es válido, o un mensaje de error si no lo es.
   static String? validateQuantity(double quantity, String unit) {
     // Validar mínimo
@@ -88,34 +91,178 @@ class UnitHelper {
   }
 
   /// Normaliza una cantidad según el tipo de unidad
-  /// 
+  ///
   /// Para unidades discretas: redondea al entero más cercano
   /// Para unidades fraccionarias: redondea a 3 decimales
   static double normalizeQuantity(double quantity, String unit) {
     if (isDiscreteUnit(unit)) {
       return quantity.roundToDouble();
     }
-    
+
     // Para fraccionarias: redondear a 3 decimales (0.001)
     return (quantity * 1000).roundToDouble() / 1000;
   }
 
+  static final NumberFormat _numberFormat = NumberFormat('#,##0.###', 'es_AR');
+  static final NumberFormat _numberFormatWithZeros =
+      NumberFormat('0.000', 'es_AR');
+
   /// Formatea una cantidad para mostrar en UI
-  /// 
+  ///
   /// Ejemplos:
   /// - Discretas: 1.0 → "1", 5.0 → "5"
-  /// - Fraccionarias: 0.025 → "0.025", 2.5 → "2.5", 1.0 → "1"
+  /// - Fraccionarias: 0.025 → "0,025", 2.5 → "2,5", 1.0 → "1"
   static String formatQuantity(double quantity, String unit) {
     if (isDiscreteUnit(unit)) {
-      return quantity.toInt().toString();
+      return _numberFormat.format(quantity.toInt());
     }
 
     // Eliminar ceros innecesarios
     if (quantity == quantity.roundToDouble()) {
-      return quantity.toInt().toString();
+      return _numberFormat.format(quantity.toInt());
     }
 
-    return quantity.toStringAsFixed(3).replaceAll(RegExp(r'\.?0+$'), '');
+    return _numberFormat.format(quantity);
+  }
+
+  /// Convierte cantidad a unidad más apropiada para visualización
+  ///
+  /// Ejemplos conversión a menor (si fracción < 1):
+  /// - 0.5 kg → {value: 500, unit: 'g'}
+  /// - 0.250 L → {value: 250, unit: 'ml'}
+  ///
+  /// Ejemplos conversión a mayor (si cantidad >= umbral):
+  /// - 1000 g → {value: 1, unit: 'kg'}
+  /// - 1500 ml → {value: 1.5, unit: 'L'}
+  /// - 100 cm → {value: 1, unit: 'm'}
+  static Map<String, dynamic> convertToDisplayUnit(
+      double quantity, String unit) {
+    final unitLower = unit.toLowerCase();
+
+    // 1. Lógica para convertir de unidad mayor a menor (si es < 1)
+    if (quantity < 1.0 && quantity > 0) {
+      switch (unitLower) {
+        case 'kilogramo':
+          return {'value': quantity * 1000, 'unit': 'gramo'};
+        case 'litro':
+          return {'value': quantity * 1000, 'unit': 'mililitro'};
+        case 'metro':
+          if (quantity >= 0.01) {
+            return {'value': quantity * 100, 'unit': 'centímetro'};
+          } else {
+            return {'value': quantity * 1000, 'unit': 'milímetro'};
+          }
+      }
+    }
+
+    // 2. Lógica para convertir de unidad menor a mayor (si es grande)
+    switch (unitLower) {
+      case 'gramo':
+        if (quantity >= 1000) {
+          return {'value': quantity / 1000, 'unit': 'kilogramo'};
+        }
+        break;
+      case 'mililitro':
+        if (quantity >= 1000) {
+          return {'value': quantity / 1000, 'unit': 'litro'};
+        }
+        break;
+      case 'centímetro':
+        if (quantity >= 100) {
+          return {'value': quantity / 100, 'unit': 'metro'};
+        }
+        break;
+      case 'milímetro':
+        if (quantity >= 1000) {
+          return {'value': quantity / 1000, 'unit': 'metro'};
+        }
+        break;
+    }
+
+    // Default: devolver tal cual
+    return {'value': quantity, 'unit': unitLower};
+  }
+
+  /// Formatea cantidad con ceros para mostrar decimales consistentemente
+  ///
+  /// Ejemplos:
+  /// - 0.5 kg → "0,500"
+  /// - 0.025 L → "0,025"
+  /// - 1.5 kg → "1,500"
+  /// - 2.25 kg → "2,250"
+  static String formatQuantityWithZeros(double quantity, String unit) {
+    if (isDiscreteUnit(unit)) {
+      return _numberFormat.format(quantity.toInt());
+    }
+
+    // Para unidades fraccionarias, siempre usar formato con 3 decimales
+    // si no es un número entero
+    if (quantity != quantity.roundToDouble()) {
+      return _numberFormatWithZeros.format(quantity);
+    }
+
+    // Para números enteros, mostrar sin decimales
+    return _numberFormat.format(quantity.toInt());
+  }
+
+  /// Formatea cantidad incluyendo el símbolo de la unidad
+  ///
+  /// [simplified] : Si es true (default), elimina ceros no significativos.
+  static String formatQuantityWithSymbol(double quantity, String unit,
+      {bool simplified = true}) {
+    if (simplified) {
+      final formatted = _numberFormat.format(quantity);
+      final symbol = getUnitSymbol(unit);
+      return symbol.isEmpty ? formatted : '$formatted $symbol';
+    }
+    final formatted = formatQuantityWithZeros(quantity, unit);
+    final symbol = getUnitSymbol(unit);
+    if (symbol.isEmpty) return formatted;
+    return '$formatted $symbol';
+  }
+
+  /// Formatea una cantidad de forma adaptativa (ej: 0.5kg -> 500g)
+  /// con su símbolo correspondiente.
+  ///
+  /// [simplified] : Si es true (default), elimina ceros no significativos (1,500 -> 1,5).
+  ///                Si es false, mantiene 3 decimales fijos (1,500 -> 1,500).
+  static String formatQuantityAdaptive(double quantity, String unit,
+      {bool simplified = true}) {
+    final converted = convertToDisplayUnit(quantity, unit);
+    final val = converted['value'] as double;
+    final u = converted['unit'] as String;
+
+    // Si es discreta, formatear siempre como entero
+    if (isDiscreteUnit(u)) {
+      final symbol = getUnitSymbol(u);
+      final formatted = _numberFormat.format(val.toInt());
+      return symbol.isEmpty ? formatted : '$formatted $symbol';
+    }
+
+    final symbol = getUnitSymbol(u);
+
+    // Si es modo simplificado
+    if (simplified) {
+      // _numberFormat maneja automáticamente enteros y decimales sin ceros extra
+      // ej: 1.0 -> "1", 1.500 -> "1,5", 1.523 -> "1,523"
+      final formatted = _numberFormat.format(val);
+      return symbol.isEmpty ? formatted : '$formatted $symbol';
+    }
+
+    // Modo completo (no simplificado)
+    // Si es entero exacto, mostramos sin decimales (opcional, o podríamos forzar 1,000)
+    // Asumimos que "completo" se refiere a ver decimales significativos completos cuando existen.
+    // Pero si el usuario quiere ver "1,000 kg", quitamos el chequeo de entero.
+    // Sin embargo, por convención, enteros suelen preferirse limpios salvo explicita precisión.
+    // Mantendremos enteros limpios incluso en no-simplificado salvo que sea fracción.
+    if (val == val.roundToDouble()) {
+      final formatted = _numberFormat.format(val.toInt());
+      return symbol.isEmpty ? formatted : '$formatted $symbol';
+    }
+
+    // Fracción con decimales fijos
+    final formatted = _numberFormatWithZeros.format(val);
+    return symbol.isEmpty ? formatted : '$formatted $symbol';
   }
 
   /// Obtiene el nombre capitalizado de una unidad para mostrar en UI
@@ -139,6 +286,8 @@ class UnitHelper {
         return 'm';
       case 'centímetro':
         return 'cm';
+      case 'milímetro':
+        return 'mm';
       case 'unidad':
         return 'u';
       case 'caja':
@@ -165,6 +314,8 @@ class UnitHelper {
         return '1 litro = 1000 mililitros';
       case 'centímetro':
         return '100 centímetros = 1 metro';
+      case 'milímetro':
+        return '1000 milímetros = 1 metro';
       case 'metro':
         return '1 metro = 100 centímetros';
       case 'docena':
@@ -187,13 +338,14 @@ class UnitHelper {
     if (isDiscreteUnit(unit)) {
       return 1.0;
     }
-    
+
     // Para fraccionarias, incrementos según la unidad
     switch (unit.toLowerCase()) {
       case 'gramo':
       case 'mililitro':
       case 'centímetro':
-        return 0.01; // Incrementos de 10g, 10ml, 1cm
+      case 'milímetro':
+        return 1.0; // Incrementos de 1 unidad
       case 'kilogramo':
       case 'litro':
       case 'metro':
@@ -204,35 +356,48 @@ class UnitHelper {
   }
 
   /// Parsea una cantidad desde string, compatible con int y double
-  /// 
+  ///
   /// Maneja:
   /// - "1" → 1.0
-  /// - "1.5" → 1.5
-  /// - "0.025" → 0.025
+  /// - "1,5" → 1.5 (formato local)
+  /// - "1.5" → 1.5 (formato estándar)
   /// - null o inválido → valor por defecto
   static double parseQuantity(dynamic value, {double defaultValue = 1.0}) {
     if (value == null) return defaultValue;
-    
+
     if (value is double) return value;
     if (value is int) return value.toDouble();
-    
+
     if (value is String) {
-      final parsed = double.tryParse(value);
-      return parsed ?? defaultValue;
+      if (value.isEmpty) return defaultValue;
+      
+      // Limpiar el string de caracteres no numéricos (excepto coma y punto)
+      // Esto permite parsear strings que contengan símbolos de unidad o espacios
+      final cleanValue = value.replaceAll(RegExp(r'[^0-9,\.]'), '');
+      if (cleanValue.isEmpty) return defaultValue;
+
+      try {
+        return _numberFormat.parse(cleanValue).toDouble();
+      } catch (_) {
+        // Fallback para formato estándar (punto decimal)
+        // Si tiene coma, reemplazar por punto para tryParse
+        final normalized = cleanValue.replaceAll(',', '.');
+        return double.tryParse(normalized) ?? defaultValue;
+      }
     }
-    
+
     return defaultValue;
   }
 
   /// Convierte una cantidad a formato de almacenamiento
-  /// 
+  ///
   /// Siempre retorna double, pero compatible con deserialización desde int
   static double toStorageValue(dynamic value) {
     return parseQuantity(value, defaultValue: 1.0);
   }
 
   /// Redondea una cantidad de forma inteligente según decimales significativos
-  /// 
+  ///
   /// Ejemplos con 3 decimales:
   /// - 0.025 → 0.025 (25 gramos)
   /// - 0.700 → 0.7 (700 gramos)

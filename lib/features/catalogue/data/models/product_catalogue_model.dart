@@ -48,6 +48,15 @@ class ProductCatalogueModel extends ProductCatalogue {
 
   /// Crea una instancia desde un Map con soporte para nombres legacy
   factory ProductCatalogueModel.fromMap(Map<String, dynamic> data) {
+    // Helper para parsear doubles de forma segura
+    double _parseDouble(dynamic value, double defaultValue) {
+      if (value == null) return defaultValue;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? defaultValue;
+      return defaultValue;
+    }
+
     return ProductCatalogueModel(
       id: data.containsKey('id') ? data['id'] : '',
       reviewed: data.containsKey('reviewed')
@@ -105,26 +114,22 @@ class ProductCatalogueModel extends ProductCatalogue {
           ? data['documentIdUpgrade']
           : data['documentIdUpgrade'] ?? '',
       salePrice: data.containsKey('salePrice')
-          ? (data['salePrice'] is int
-              ? (data['salePrice'] as int).toDouble()
-              : data['salePrice'] ?? 0.0)
+          ? _parseDouble(data['salePrice'], 0.0)
           : 0.0,
       purchasePrice: data.containsKey('purchasePrice')
-          ? (data['purchasePrice'] is int
-              ? (data['purchasePrice'] as int).toDouble()
-              : data['purchasePrice'] ?? 0.0)
+          ? _parseDouble(data['purchasePrice'], 0.0)
           : 0.0,
       unit: data.containsKey('unit') ? data['unit'] : 'unidad',
       currencySign: data.containsKey('currencySign')
           ? data['currencySign']
           : data['signo_moneda'] ?? '',
       quantityStock:
-          data.containsKey('quantityStock') ? data['quantityStock'] : 0,
-      sales: data.containsKey('sales') ? data['sales'] : 0,
+          data.containsKey('quantityStock') ? _parseDouble(data['quantityStock'], 0.0) : 0.0,
+      sales: _parseDouble(data['sales'], 0.0),
       stock: data.containsKey('stock') ? data['stock'] : false,
-      alertStock: data.containsKey('alertStock') ? data['alertStock'] : 5,
-      revenue: data.containsKey('revenue') ? data['revenue'] : 0.0,
-      quantity: data.containsKey('quantity') ? data['quantity'] : 1,
+      alertStock: data.containsKey('alertStock') ? _parseDouble(data['alertStock'], 5.0) : 5.0,
+      revenue: data.containsKey('revenue') ? _parseDouble(data['revenue'], 0.0) : 0.0,
+      quantity: data.containsKey('quantity') ? _parseDouble(data['quantity'], 1.0) : 1.0,
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])
           : data.containsKey('attributes') && data['attributes'] != null

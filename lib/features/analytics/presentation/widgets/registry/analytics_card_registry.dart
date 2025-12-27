@@ -276,8 +276,8 @@ class AnalyticsCardRegistry {
         // Usar datos del período filtrado
         final filteredProducts =
             analytics.getTopSellingProductsForFilter(currentFilter);
-        final totalProductsFiltered = filteredProducts.fold<int>(
-            0, (sum, p) => sum + (p['quantitySold'] as int));
+        final totalProductsFiltered = filteredProducts.fold<double>(
+            0, (sum, p) => sum + (p['quantitySold'] as double));
         final hasProductsData = periodTotals.totalTransactions > 0;
         return ProductsMetricCard(
           key: const ValueKey('products'),

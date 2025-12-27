@@ -49,46 +49,48 @@ class _ProviderDialogState extends State<ProviderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseDialog(
+    return BaseBottomSheet(
       title: _isEditing ? 'Editar proveedor' : 'Nuevo proveedor',
       icon: _isEditing ? Icons.edit_rounded : Icons.add_business_rounded,
-      width: 500,
-      content: Form(
+      body: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DialogComponents.sectionSpacing,
-            DialogComponents.textField(
-              context: context,
-              controller: _nameController,
-              label: 'Nombre*',
-              hint: 'Ej: Distribuidora XYZ',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'El nombre es obligatorio';
-                }
-                return null;
-              },
-            ),
-            DialogComponents.itemSpacing,
-            DialogComponents.textField(
-              context: context,
-              controller: _phoneController,
-              label: 'Teléfono',
-              hint: 'Ej: +52 55 1234 5678',
-              keyboardType: TextInputType.phone,
-            ),
-            DialogComponents.itemSpacing,
-            DialogComponents.textField(
-              context: context,
-              controller: _emailController,
-              label: 'Email',
-              hint: 'Ej: contacto@proveedor.com',
-              keyboardType: TextInputType.emailAddress,
-            ),
-            DialogComponents.sectionSpacing,
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 24),
+              DialogComponents.textField(
+                context: context,
+                controller: _nameController,
+                label: 'Nombre*',
+                hint: 'Ej: Distribuidora XYZ',
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El nombre es obligatorio';
+                  }
+                  return null;
+                },
+              ),
+              DialogComponents.itemSpacing,
+              DialogComponents.textField(
+                context: context,
+                controller: _phoneController,
+                label: 'Teléfono',
+                hint: 'Ej: +52 55 1234 5678',
+                keyboardType: TextInputType.phone,
+              ),
+              DialogComponents.itemSpacing,
+              DialogComponents.textField(
+                context: context,
+                controller: _emailController,
+                label: 'Email',
+                hint: 'Ej: contacto@proveedor.com',
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 48), // Espacio extra para el teclado
+            ],
+          ),
         ),
       ),
       actions: [
@@ -200,13 +202,19 @@ Future<void> showProviderDialog(
   required String accountId,
   Provider? provider,
 }) {
-  return showDialog(
+  return showModalBottomSheet(
     context: context,
-    barrierDismissible: false,
-    builder: (context) => ProviderDialog(
-      catalogueProvider: catalogueProvider,
-      accountId: accountId,
-      provider: provider,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: ProviderDialog(
+        catalogueProvider: catalogueProvider,
+        accountId: accountId,
+        provider: provider,
+      ),
     ),
   );
 }

@@ -444,6 +444,7 @@ class AnalyticsHighlightItem extends StatelessWidget {
   final Widget leading;
   final String title;
   final String subtitle;
+  final Widget? subtitleWidget;
   final Widget? badge;
   final Color accentColor;
 
@@ -452,6 +453,7 @@ class AnalyticsHighlightItem extends StatelessWidget {
     required this.leading,
     required this.title,
     this.subtitle = '',
+    this.subtitleWidget,
     required this.accentColor,
     this.badge,
   });
@@ -489,7 +491,9 @@ class AnalyticsHighlightItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (subtitle.isNotEmpty)
+                if (subtitleWidget != null)
+                  subtitleWidget!
+                else if (subtitle.isNotEmpty)
                   Text(
                     subtitle,
                     style: theme.textTheme.labelSmall?.copyWith(

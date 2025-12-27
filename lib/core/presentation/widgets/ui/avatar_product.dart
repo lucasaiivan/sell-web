@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'image.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 
 /// Avatar de producto con estilo Instagram Stories
 /// Incluye gradiente animado, imagen del producto y texto descriptivo
@@ -53,7 +54,7 @@ class AvatarCircleProduct extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: _getAvatarGradient(),
                   color: product.favorite ||
-                          (product.stock && product.quantityStock < 5)
+                          (product.stock && product.quantityStock <= product.alertStock)
                       ? null
                       : theme.colorScheme.onSurface.withValues(
                           alpha: 0.12), // Color en contraste con opacidad
@@ -90,7 +91,7 @@ class AvatarCircleProduct extends StatelessWidget {
                     height: size * 0.18,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: (product.stock && product.quantityStock < 5)
+                      color: (product.stock && product.quantityStock <= product.alertStock)
                           ? Colors.red.shade400
                           : Colors.amber.shade400,
                       border: Border.all(
@@ -124,7 +125,7 @@ class AvatarCircleProduct extends StatelessWidget {
                   ),
                 ),
               // Badge alerta de stock bajo
-              if (product.stock && product.quantityStock < 5)
+              if (product.stock && product.quantityStock <= product.alertStock)
                 Positioned(
                   top: 4,
                   left: 0,
@@ -149,21 +150,37 @@ class AvatarCircleProduct extends StatelessWidget {
                     ),
                   ),
                 ),
+              // view : etiqueta de combo
+              if (product.isCombo)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Transform.scale(
+                    scale: size < 50 ? 0.8 : 1.0,
+                    alignment: Alignment.topRight,
+                    child: const ComboTag(isCompact: true),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 6),
           // Texto descriptivo corto
           SizedBox(
             width: textWidth,
-            child: Text(
-              _getTruncatedText(product.description),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              children: [
+                Text(
+                  _getTruncatedText(product.description),
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+              ],
             ),
           ),
         ],
@@ -174,7 +191,7 @@ class AvatarCircleProduct extends StatelessWidget {
   /// Obtiene el gradiente apropiado según el estado del producto
   LinearGradient? _getAvatarGradient() {
     // Prioridad: bajo stock > favorito > sin gradiente
-    if (product.stock && product.quantityStock < 5) {
+    if (product.stock && product.quantityStock <= product.alertStock) {
       return LinearGradient(
         colors: [
           Colors.red.shade300,

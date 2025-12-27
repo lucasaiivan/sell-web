@@ -149,6 +149,20 @@ class SalesProvider extends ChangeNotifier {
   final CatalogueUseCases _catalogueUseCases;
   final AppDataPersistenceService _persistenceService;
   final ThermalPrinterHttpService _printerService;
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   // Estado encapsulado para optimizar notificaciones
   late var _state = _SalesProviderState(
@@ -561,12 +575,18 @@ class SalesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addQuickProduct(
-      {required String description, required double salePrice}) async {
+  Future<void> addQuickProduct({
+    required String description,
+    required double salePrice,
+    String unit = 'unidad',
+    double quantity = 1.0,
+  }) async {
     final result = await _createQuickProductUseCase(
       CreateQuickProductParams(
         description: description,
         salePrice: salePrice,
+        unit: unit,
+        quantity: quantity,
       ),
     );
 
@@ -1312,8 +1332,16 @@ class SalesProvider extends ChangeNotifier {
             quantity: product.quantity,
           );
 
+          // Si es un combo, decrementar stock de sus componentes
+          if (product.isCombo) {
+            await _catalogueUseCases.decrementComboStock(
+              accountId,
+              product.comboItems,
+              product.quantity,
+            );
+          } 
           // Si el producto tiene control de stock habilitado, decrementar stock
-          if (product.stock && product.quantityStock > 0) {
+          else if (product.stock && product.quantityStock > 0) {
             await _catalogueUseCases.decrementProductStock(
               accountId,
               product.id,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 import '../core/widgets.dart';
 
 /// Widget: Card de Métrica de Productos
@@ -12,11 +13,11 @@ import '../core/widgets.dart';
 ///
 /// **Usa:** [AnalyticsBaseCard] como base visual consistente
 class ProductsMetricCard extends StatelessWidget {
-  /// Total de productos vendidos
-  final int totalProducts;
+  /// Total de productos vendidos (soporta fraccionarios: 2.5 kg, etc.)
+  final double totalProducts;
 
   /// Lista de productos más vendidos con estadísticas
-  /// Estructura: [{ 'product': ProductCatalogue, 'quantitySold': int, 'totalRevenue': double }]
+  /// Estructura: [{ 'product': ProductCatalogue, 'quantitySold': double, 'totalRevenue': double }]
   final List<Map<String, dynamic>> topSellingProducts;
 
   /// Color de la tarjeta
@@ -47,8 +48,9 @@ class ProductsMetricCard extends StatelessWidget {
     final topProduct = hasValidData
         ? topSellingProducts.first['product'] as ProductCatalogue
         : null;
-    final topProductQuantity =
-        hasValidData ? topSellingProducts.first['quantitySold'] as int : 0;
+    final topProductQuantity = hasValidData 
+        ? (topSellingProducts.first['quantitySold'] as num).toDouble()
+        : 0.0;
 
     return AnalyticsBaseCard(
       color: color,
@@ -70,7 +72,7 @@ class ProductsMetricCard extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: AnalyticsMainValue(
-                      value: NumberHelper.formatNumber(totalProducts),
+                      value: NumberHelper.formatNumber(totalProducts.round()),
                       isZero: isZero,
                     ),
                   ),
@@ -90,7 +92,7 @@ class ProductsMetricCard extends StatelessWidget {
   Widget _buildTopProductPreview(
     BuildContext context,
     ProductCatalogue product,
-    int quantitySold,
+    double quantitySold,
   ) {
     return AnalyticsHighlightItem(
       accentColor: color,
@@ -105,17 +107,36 @@ class ProductsMetricCard extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        child: ClipOval(
-          child: ProductImage(
-            imageUrl: product.image,
-            size: 28,
-            borderRadius: 14,
-            productDescription: product.description,
-          ),
+        child: ProductImage(
+          imageUrl: product.image,
+          size: 28,
+          borderRadius: 14,
+          productDescription: product.description,
         ),
       ),
       title: product.description,
-      subtitle: '${NumberHelper.formatNumber(quantitySold)} vendidos',
+      subtitle: '${product.copyWith(quantity: quantitySold).formattedQuantityWithUnit} vendidos',
+      subtitleWidget: product.isCombo
+          ? Padding(
+              padding: const EdgeInsets.only(top: 2.0),
+              child: Row(
+                children: [
+                   Flexible(
+                     child: Text(
+                      '${product.copyWith(quantity: quantitySold).formattedQuantityWithUnit} vendidos',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const ComboTag(isCompact: true),
+                ],
+              ),
+            )
+          : null,
       badge: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
@@ -160,8 +181,8 @@ class TopSellingProductsModal extends StatelessWidget {
         ? topSellingProducts.first['product'] as ProductCatalogue
         : null;
     final topQuantitySold = topSellingProducts.isNotEmpty
-        ? topSellingProducts.first['quantitySold'] as int
-        : 0;
+        ? (topSellingProducts.first['quantitySold'] as num).toDouble()
+        : 0.0;
     final topTotalRevenue = topSellingProducts.isNotEmpty
         ? topSellingProducts.first['totalRevenue'] as double
         : 0.0;
@@ -187,7 +208,7 @@ class TopSellingProductsModal extends StatelessWidget {
                   mainValue: topProduct?.description ?? '',
                   mainLabel: 'Producto más vendido',
                   leftMetric: AnalyticsMetric(
-                    value: NumberHelper.formatNumber(topQuantitySold),
+                    value: NumberHelper.formatNumber(topQuantitySold.round()),
                     label: 'Unidades vendidas',
                   ),
                   rightMetric: AnalyticsMetric(
@@ -212,25 +233,48 @@ class TopSellingProductsModal extends StatelessWidget {
                 ...List.generate(topSellingProducts.length, (index) {
                   final item = topSellingProducts[index];
                   final product = item['product'] as ProductCatalogue;
-                  final quantitySold = item['quantitySold'] as int;
+                  final quantitySold = item['quantitySold'] as double;
                   final totalRevenue = item['totalRevenue'] as double;
                   final position = index + 1;
 
                   return AnalyticsListItem(
                     position: position,
                     accentColor: _accentColor,
-                    leading: AnalyticsProductAvatar(
-                      imageUrl: product.image,
-                      fallbackIcon: Icons.inventory_2_outlined,
-                      borderColor: _getPositionColor(position),
+                    leading: Stack(
+                      children: [
+                        AnalyticsProductAvatar(
+                          imageUrl: product.image,
+                          fallbackIcon: Icons.inventory_2_outlined,
+                          borderColor: _getPositionColor(position),
+                        ),
+                        if (product.isCombo)
+                          const Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: ComboTag(isCompact: true),
+                          ),
+                      ],
                     ),
                     title: product.description,
-                    subtitle: product.nameMark.isNotEmpty
-                        ? product.nameMark
-                        : product.nameCategory,
+                    subtitleWidget: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.nameMark.isNotEmpty
+                                ? product.nameMark
+                                : product.nameCategory,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ), 
+                      ],
+                    ),
                     trailingWidgets: [
                       AnalyticsBadge(
-                        text: '$quantitySold uds',
+                        text: product.copyWith(quantity: quantitySold).formattedQuantityWithUnit,
                         color: _accentColor,
                       ),
                       const SizedBox(height: 4),

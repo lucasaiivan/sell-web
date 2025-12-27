@@ -154,6 +154,7 @@ class CashRegisterProvider extends ChangeNotifier
   // Stream subscriptions
   StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
   String? _currentAccountId;
+  bool _disposed = false;
 
   // Tickets management
   Future<List<TicketModel>?>? _cashRegisterTickets;
@@ -208,6 +209,13 @@ class CashRegisterProvider extends ChangeNotifier
     notifyListeners();
   }
 
+  @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
+
   CashRegisterProvider(
     this._openCashRegisterUseCase,
     this._closeCashRegisterUseCase,
@@ -231,6 +239,7 @@ class CashRegisterProvider extends ChangeNotifier
 
   @override
   void dispose() {
+    _disposed = true;
     _activeCashRegistersSubscription?.cancel();
     openDescriptionController.dispose();
     initialCashController.dispose();
@@ -282,6 +291,7 @@ class CashRegisterProvider extends ChangeNotifier
 
   Future<void> initializeFromPersistence(String accountId) async {
     if (accountId.isEmpty) return;
+    if (_disposed) return;
 
     try {
       await _loadActiveCashRegistersAndWait(accountId);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 import '../core/widgets.dart';
 
 /// Widget: Card de Métrica de Rentabilidad
@@ -43,8 +44,9 @@ class ProfitabilityMetricCard extends StatelessWidget {
     final topProduct = hasValidData
         ? mostProfitableProducts.first['product'] as ProductCatalogue
         : null;
-    final topProductQuantity =
-        hasValidData ? mostProfitableProducts.first['quantitySold'] as int : 0;
+    final topProductQuantity = hasValidData 
+        ? (mostProfitableProducts.first['quantitySold'] as num).toDouble()
+        : 0.0;
     final topProductProfit = hasValidData
         ? mostProfitableProducts.first['totalProfit'] as double
         : 0.0;
@@ -95,7 +97,7 @@ class ProfitabilityMetricCard extends StatelessWidget {
   Widget _buildTopProductPreview(
     BuildContext context,
     ProductCatalogue product,
-    int quantitySold,
+    double quantitySold,
     double totalProfit,
   ) {
     final theme = Theme.of(context);
@@ -103,8 +105,8 @@ class ProfitabilityMetricCard extends StatelessWidget {
     return AnalyticsHighlightItem(
       accentColor: color,
       leading: Container(
-        width: 24,
-        height: 24,
+        width: 26,
+        height: 26,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: theme.colorScheme.surfaceContainerHighest,
@@ -113,17 +115,30 @@ class ProfitabilityMetricCard extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        child: ClipOval(
-          child: ProductImage(
-            imageUrl: product.image,
-            size: 24,
-            borderRadius: 14,
-            productDescription: product.description,
-          ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ProductImage(
+              imageUrl: product.image,
+              size: 26,
+              borderRadius: 14,
+              productDescription: product.description,
+            ),
+            if (product.isCombo)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Transform.scale(
+                  scale: 0.6,
+                  child: const ComboTag(isCompact: true),
+                ),
+              ),
+          ],
         ),
       ),
       title: product.description,
       subtitle: '$quantitySold unidades vendidas',
+      subtitleWidget: null,
     );
   }
 
@@ -165,7 +180,7 @@ class MostProfitableProductsModal extends StatelessWidget {
           ? const AnalyticsModalEmptyState(
               icon: Icons.diamond_outlined,
               title: 'No hay datos de rentabilidad',
-              subtitle: 'Agrega precio de compra a tus productos',
+              subtitle: 'Agrega precio de coste a tus productos',
             )
           : ListView(
               padding: EdgeInsets.zero,
@@ -206,32 +221,44 @@ class MostProfitableProductsModal extends StatelessWidget {
                   (index) {
                     final item = mostProfitableProducts[index];
                     final product = item['product'] as ProductCatalogue;
-                    final quantitySold = item['quantitySold'] as int;
+                    final quantitySold = item['quantitySold'] as double;
                     final totalProfit = item['totalProfit'] as double;
                     final profitPerUnit = item['profitPerUnit'] as double;
                     final position = index + 1;
                     return AnalyticsListItem(
                       position: position,
                       accentColor: _accentColor,
-                      leading: AnalyticsProductAvatar(
-                        imageUrl: product.image,
-                        fallbackIcon: Icons.diamond_outlined,
-                        borderColor: _getPositionColor(position),
+                      leading: Stack(
+                        children: [
+                          AnalyticsProductAvatar(
+                            imageUrl: product.image,
+                            fallbackIcon: Icons.diamond_outlined,
+                            borderColor: _getPositionColor(position),
+                          ),
+                          if (product.isCombo)
+                            const Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: ComboTag(isCompact: true),
+                            ),
+                        ],
                       ),
                       title: product.description,
                       subtitleWidget: Row(
                         children: [
-                          Text(
-                            product.nameMark.isNotEmpty
-                                ? product.nameMark
-                                : product.nameCategory,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
+                          Flexible(
+                            child: Text(
+                              product.nameMark.isNotEmpty
+                                  ? product.nameMark
+                                  : product.nameCategory,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
+
                           const SizedBox(width: 8),
                           AnalyticsBadge(
                             text:

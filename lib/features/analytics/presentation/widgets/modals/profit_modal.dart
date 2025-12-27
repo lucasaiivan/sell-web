@@ -62,7 +62,7 @@ class ProfitModal extends StatelessWidget {
               icon: Icons.trending_up_rounded,
               title: 'Sin ganancias registradas',
               subtitle:
-                  'Agrega precio de compra a tus productos para calcular ganancias',
+                  'Agrega precio de coste a tus productos para calcular ganancias',
             )
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -82,7 +82,7 @@ class ProfitModal extends StatelessWidget {
                 AnalyticsFeedbackBanner(
                   icon: const Icon(Icons.info_outline_rounded),
                   message:
-                      'Los datos muestran la ganancia del periodo filtrado. Registra el precio de compra en productos para calcular ganancias y márgenes exactos.',
+                      'Los datos muestran la ganancia del periodo filtrado. Registra el precio de coste en productos para calcular ganancias y márgenes exactos.',
                   accentColor: _accentColor,
                   margin: const EdgeInsets.only(top: 16),
                 ),
@@ -116,7 +116,7 @@ class ProfitModal extends StatelessWidget {
     final totalProfit = productData['totalProfit'] as double? ?? 0.0;
     final totalSales = product.salePrice;
     final totalCost = product.purchasePrice;
-    final quantitySold = productData['quantitySold'] as int? ?? 0;
+    final quantitySold = productData['quantitySold'] as double? ?? 0;
     final position = index + 1;
 
     return AnalyticsListItem(

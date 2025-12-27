@@ -7,6 +7,7 @@ import '../entities/product_price.dart';
 import '../entities/category.dart';
 import '../entities/mark.dart';
 import '../entities/provider.dart';
+import '../entities/combo_item.dart';
 
 /// Casos de uso para gestión del catálogo de productos
 ///
@@ -119,6 +120,16 @@ class CatalogueUseCases {
     return repository.decrementStock(accountId, productId, quantity);
   }
 
+  /// Decrementa el stock de los items de un combo
+  ///
+  /// [accountId] - ID de la cuenta del negocio
+  /// [items] - Lista de items del combo
+  /// [quantitySold] - Cantidad de combos vendidos
+  Future<void> decrementComboStock(
+      String accountId, List<ComboItem> items, double quantitySold) {
+    return repository.decrementComboStock(accountId, items, quantitySold);
+  }
+
   /// Actualiza el estado de favorito de un producto específico
   ///
   /// [accountId] - ID de la cuenta del negocio
@@ -167,9 +178,9 @@ class CatalogueUseCases {
               description: 'Producto de prueba #${i + 1}',
               code: 'DEMO${(i + 1).toString().padLeft(3, '0')}',
               salePrice: 10.0 + i,
-              quantityStock: 100 - i,
+              quantityStock: (100 - i).toDouble(),
               stock: true,
-              alertStock: 10,
+              alertStock: 10.0,
               currencySign: '24',
               creation: DateTime.now(),
               upgrade: DateTime.now(),

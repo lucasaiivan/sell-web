@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'product_catalogue.dart';
+import 'combo_item.dart';
 
 /// Entidad que representa un producto en su forma más pura.
 /// No contiene dependencias externas (Firebase, JSON, etc.)
@@ -60,6 +61,12 @@ class Product {
   /// - 'sku': Producto interno del comercio (solo catálogo privado)
   final String status;
 
+  /// Items que componen el combo (si es un combo)
+  final List<ComboItem> comboItems;
+
+  /// Fecha de expiración del combo (opcional)
+  final DateTime? comboExpiration;
+
   // Getters de lógica de negocio
 
   /// Indica si el producto está verificado por la comunidad
@@ -74,6 +81,9 @@ class Product {
   /// para productos sin código de barras estándar (carnicería, granel, etc.)
   /// Estos productos SOLO existen en el catálogo privado del comercio.
   bool get isSku => status == 'sku';
+
+  /// Indica si el producto es un combo
+  bool get isCombo => comboItems.isNotEmpty;
 
   /// Convierte este producto global a un producto de catálogo
   ProductCatalogue convertProductCatalogue() {
@@ -94,8 +104,8 @@ class Product {
       documentUpgrade: DateTime.now(),
       // Valores por defecto para campos específicos del catálogo
       stock: false,
-      quantityStock: 0,
-      alertStock: 5,
+      quantityStock: 0.0,
+      alertStock: 5.0,
       sales: 0,
       salePrice: 0.0,
       purchasePrice: 0.0,
@@ -103,6 +113,8 @@ class Product {
       currencySign: '\$',
       variants: variants,
       status: status,
+      comboItems: comboItems,
+      comboExpiration: comboExpiration,
     );
   }
 
@@ -124,6 +136,8 @@ class Product {
     this.unit = 'unidad',
     this.variants = const {},
     this.status = 'pending',
+    this.comboItems = const [],
+    this.comboExpiration,
   });
 
   factory Product.fromMap(Map<String, dynamic> map) {
@@ -158,6 +172,14 @@ class Product {
           : (map.containsKey('verified') && map['verified'] == true)
               ? 'verified'
               : 'pending',
+      comboItems: map.containsKey('comboItems') && map['comboItems'] != null
+          ? (map['comboItems'] as List)
+              .map((item) => ComboItem.fromMap(item))
+              .toList()
+          : [],
+      comboExpiration: map['comboExpiration'] is Timestamp
+          ? (map['comboExpiration'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -180,6 +202,9 @@ class Product {
       'idUserUpgrade': idUserUpgrade,
       'variants': variants,
       'status': status,
+      'comboItems': comboItems.map((e) => e.toMap()).toList(),
+      'comboExpiration':
+          comboExpiration != null ? Timestamp.fromDate(comboExpiration!) : null,
     };
   }
 }

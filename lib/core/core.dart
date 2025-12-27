@@ -11,6 +11,7 @@ export 'config/firebase_options.dart';
 export 'constants/analytics_colors.dart';
 export 'constants/app_constants.dart';
 export 'constants/shared_prefs_keys.dart';
+export 'constants/ui_constants.dart';
 
 // Errores y Excepciones
 export 'errors/errors.dart';

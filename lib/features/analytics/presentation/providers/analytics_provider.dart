@@ -222,6 +222,7 @@ class AnalyticsProvider extends ChangeNotifier
   /// Suscribe a analíticas con actualización en tiempo real
   void subscribeToAnalytics(String accountId) {
     if (accountId.isEmpty) return;
+    if (_disposed) return;
 
     _subscription?.cancel();
     _currentAccountId = accountId;
@@ -331,6 +332,7 @@ class AnalyticsProvider extends ChangeNotifier
   Future<void> initialize(String accountId) async {
     // Cargar preferencias de tarjetas primero
     await loadCardPreferences(accountId);
+    if (_disposed) return;
     // Luego suscribirse a analíticas
     subscribeToAnalytics(accountId);
   }

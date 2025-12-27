@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
+import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../providers/catalogue_provider.dart';
 import 'product_edit_catalogue_view.dart';
@@ -357,12 +358,16 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                   if (product.stock) ...[
                     {
                       'label': 'Cantidad disponible',
-                      'value': product.quantityStock.toString(),
+                      'value': product.quantityStock % 1 == 0
+                          ? product.quantityStock.toInt().toString()
+                          : product.quantityStock.toString(),
                       'icon': Icons.inventory_outlined,
                     },
                     {
                       'label': 'Alerta configurada',
-                      'value': product.alertStock.toString(),
+                      'value': product.alertStock % 1 == 0
+                          ? product.alertStock.toInt().toString()
+                          : product.alertStock.toString(),
                       'icon': Icons.notification_important_outlined,
                     },
                   ] else
@@ -488,6 +493,40 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
         ),
     ];
 
+
+    
+    // Add Combo Items Card if applicable
+    if (product.isCombo && product.comboItems.isNotEmpty) {
+      cards.insert(0, _buildInfoCard( // Insert at the top or appropriate position
+        context: context,
+        title: 'Contenido del Combo',
+        icon: Icons.layers_outlined,
+        child: Column(
+          children: product.comboItems.map((item) {
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                radius: 16,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Text(
+                  item.name.isNotEmpty ? item.name[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant
+                  ),
+                ),
+              ),
+              title: Text(item.name, style: Theme.of(context).textTheme.bodyMedium),
+              trailing: Text(
+                'x${item.quantity.toInt()}',
+                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            );
+          }).toList(),
+        ),
+      ));
+    }
+
     return cards;
   }
 
@@ -519,10 +558,20 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 aspectRatio: 1,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: ProductImage(
-                    imageUrl: product.image,
-                    fit: BoxFit.cover,
-                    productDescription: product.description,
+                  child: Stack(
+                    children: [
+                      ProductImage(
+                        imageUrl: product.image,
+                        fit: BoxFit.cover,
+                        productDescription: product.description,
+                      ),
+                      if (product.isCombo)
+                        const Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: ComboTag(isCompact: true),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -692,24 +741,26 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 label: 'Favorito',
                 color: Colors.amber.shade600,
               ),
-            if (product.stock)
+            if (product.stock && product.quantityStock > 0)
               _buildStatusChip(
                 context,
-                icon: product.quantityStock <= 0
-                    ? Icons.inventory_2_outlined
-                    : product.quantityStock <= product.alertStock
+                icon: product.quantityStock <= product.alertStock
                         ? Icons.warning_amber_rounded
                         : Icons.inventory_outlined,
-                label: product.quantityStock <= 0
-                    ? 'Sin stock'
-                    : product.quantityStock <= product.alertStock
-                        ? 'Bajo stock (${product.quantityStock})'
-                        : 'Stock: ${product.quantityStock}',
-                color: product.quantityStock <= 0
-                    ? Colors.red
-                    : product.quantityStock <= product.alertStock
+                label: product.quantityStock <= product.alertStock
+                        ? 'Bajo stock (${UnitHelper.formatQuantityAdaptive(product.quantityStock, product.unit)})'
+                        : UnitHelper.formatQuantityAdaptive(product.quantityStock, product.unit),
+                color: product.quantityStock <= product.alertStock
                         ? Colors.orange
                         : Colors.green,
+                filled: true,
+              )
+            else if (product.stock && product.quantityStock <= 0)
+              _buildStatusChip(
+                context,
+                icon: Icons.inventory_2_outlined,
+                label: 'Sin stock',
+                color: Colors.red,
                 filled: true,
               )
             else
@@ -892,24 +943,26 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 color: Colors.amber.shade600,
               ),
             // status chip : stock con estados
-            if (product.stock)
+            if (product.stock && product.quantityStock > 0)
               _buildStatusChip(
                 context,
-                icon: product.quantityStock <= 0
-                    ? Icons.inventory_2_outlined
-                    : product.quantityStock <= product.alertStock
+                icon: product.quantityStock <= product.alertStock
                         ? Icons.warning_amber_rounded
                         : Icons.inventory_outlined,
-                label: product.quantityStock <= 0
-                    ? 'Sin stock'
-                    : product.quantityStock <= product.alertStock
-                        ? 'Bajo stock (${product.quantityStock})'
-                        : 'Stock: ${product.quantityStock}',
-                color: product.quantityStock <= 0
-                    ? Colors.red
-                    : product.quantityStock <= product.alertStock
+                label: product.quantityStock <= product.alertStock
+                        ? 'Bajo stock (${UnitHelper.formatQuantityAdaptive(product.quantityStock, product.unit)})'
+                        : UnitHelper.formatQuantityAdaptive(product.quantityStock, product.unit),
+                color: product.quantityStock <= product.alertStock
                         ? Colors.orange
                         : Colors.green,
+                filled: true,
+              )
+            else if (product.stock && product.quantityStock <= 0)
+              _buildStatusChip(
+                context,
+                icon: Icons.inventory_2_outlined,
+                label: 'Sin stock',
+                color: Colors.red,
                 filled: true,
               )
             else

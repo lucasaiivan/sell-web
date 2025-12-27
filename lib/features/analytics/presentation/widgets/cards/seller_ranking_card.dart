@@ -320,18 +320,22 @@ class SellerRankingModal extends StatelessWidget {
                                   .onSurfaceVariant,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              '$transactionCount ventas',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                            Flexible(
+                              child: Text(
+                                '$transactionCount ventas',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
                             Icon(
                               Icons.analytics_rounded,
                               size: 14,
@@ -340,16 +344,20 @@ class SellerRankingModal extends StatelessWidget {
                                   .onSurfaceVariant,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              'Prom: ${CurrencyHelper.formatCurrency(averageTicket)}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                            Flexible(
+                              child: Text(
+                                'Prom: ${CurrencyHelper.formatCurrency(averageTicket)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),

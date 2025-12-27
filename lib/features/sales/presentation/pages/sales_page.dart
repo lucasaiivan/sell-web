@@ -21,6 +21,8 @@ import 'package:sellweb/features/cash_register/presentation/providers/cash_regis
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
 import 'package:sellweb/core/presentation/widgets/connectivity_indicator.dart';
+import 'package:sellweb/features/sales/presentation/widgets/product_item.dart';
+
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -320,8 +322,20 @@ class _SalesPageState extends State<SalesPage> {
     if (product != null &&
         product.id.isNotEmpty &&
         product.description.isNotEmpty) {
-      // - Si se encuentra el producto en el catálogo con datos válidos, agregarlo al ticket -
-      homeProvider.addProductsticket(product.copyWith());
+      // - Si se encuentra el producto en el catálogo con datos válidos -
+      // Si es unidad fraccionaria, mostrar diálogo para elegir cantidad
+      if (product.isFractionalUnit) {
+        if (mounted) {
+          showProductEditDialog(
+            context,
+            producto: product.copyWith(quantity: 1.0),
+            onProductUpdated: () {},
+          );
+        }
+      } else {
+        // Unidad discreta: agregar directamente al ticket
+        homeProvider.addProductsticket(product.copyWith());
+      }
     } else {
       // Si no se encuentra el producto en el catálogo, buscar en la base pública
       final publicProduct =
@@ -714,7 +728,7 @@ class _SalesPageState extends State<SalesPage> {
               itemCount: itemCount,
               itemBuilder: (context, index) {
                 if (index < list.length) {
-                  return ProductoItem(producto: list[index]);
+                  return ProductItem(producto: list[index]);
                 } else {
                   return itemDefault;
                 }
@@ -767,8 +781,17 @@ class _SalesPageState extends State<SalesPage> {
                     product: product,
                     isSelected: isInTicket,
                     onTap: () {
-                      // Agregar producto al ticket al hacer tap
-                      provider.addProductsticket(product.copyWith());
+                      // Si es unidad fraccionaria, mostrar diálogo para elegir cantidad
+                      if (product.isFractionalUnit) {
+                        showProductEditDialog(
+                          context,
+                          producto: product.copyWith(quantity: 1.0),
+                          onProductUpdated: () {},
+                        );
+                      } else {
+                        // Unidad discreta: agregar directamente al ticket
+                        provider.addProductsticket(product.copyWith());
+                      }
                     },
                   ),
                 );
@@ -1200,15 +1223,17 @@ class _SalesPageState extends State<SalesPage> {
               ),
               const SizedBox(width: 10),
               if (selectedProduct != null)
-                Chip(
-                  label: Text(
-                    selectedProduct.quantity.toString(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    selectedProduct.formattedQuantityCompact,
                     style: const TextStyle(
                         color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                  backgroundColor: colorScheme.primary,
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
                 ),
             ],
           ),
@@ -1220,240 +1245,7 @@ class _SalesPageState extends State<SalesPage> {
   }
 }
 
-class ProductoItem extends StatefulWidget {
-  final ProductCatalogue producto;
 
-  const ProductoItem({super.key, required this.producto});
-
-  @override
-  State<ProductoItem> createState() => _ProductoItemState();
-}
-
-class _ProductoItemState extends State<ProductoItem> {
-  // Identifica si es un producto de venta rápida
-  bool get _isQuickSaleProduct {
-    return widget.producto.id.isEmpty ||
-        widget.producto.id.startsWith('quick_') ||
-        widget.producto.description.isEmpty;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    //  values
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBackgroundColor =
-        isDark ? theme.colorScheme.surfaceContainerHighest : Colors.white;
-
-    final String alertStockText = widget.producto.stock
-        ? (widget.producto.quantityStock >= 0
-            ? widget.producto.quantityStock <= widget.producto.alertStock
-                ? 'Stock bajo'
-                : ''
-            : 'Sin stock')
-        : '';
-
-    // aparición animada
-    return Card(
-      color: cardBackgroundColor,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
-          // view : Si es venta rápida, mostrar solo precio centrado sino mostrar layout normal
-          _isQuickSaleProduct
-              ? _buildQuickSaleLayout()
-              : _buildNormalLayout(alertStockText),
-          // view : selección del producto
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                mouseCursor: MouseCursor.uncontrolled,
-                onTap: () {
-                  // Mostrar el diálogo de edición del producto usando la función reutilizable
-                  showProductEditDialog(
-                    context,
-                    producto: widget.producto,
-                    onProductUpdated: () {
-                      setState(() {});
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-          // view : cantidad de productos seleccionados
-          widget.producto.quantity <= 1.0
-              ? Container()
-              : Positioned(
-                  top: 5,
-                  right: 5,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black87,
-                    child: Padding(
-                      padding: const EdgeInsets.all(1.0),
-                      child: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Text(
-                            // Formatear cantidad: enteros sin decimales, fraccionarios con hasta 3 decimales
-                            widget.producto.quantity == widget.producto.quantity.roundToDouble()
-                                ? widget.producto.quantity.toInt().toString()
-                                : widget.producto.quantity.toStringAsFixed(3).replaceAll(RegExp(r'\.?0+$'), ''),
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
-
-  // WIDGETS COMPONETS
-
-  /// Layout para productos de venta rápida - solo precio centrado
-  Widget _buildQuickSaleLayout() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? theme.colorScheme.onSurface : Colors.black87;
-    final overlayColor = isDark
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.1)
-        : Colors.grey.shade200.withValues(alpha: 0.2);
-
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        color: overlayColor,
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 22, // Precio más grande
-              color: textColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Layout normal para productos con descripción
-  Widget _buildNormalLayout(String alertStockText) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // image : imagen del producto que ocupa parte de la tarjeta con alerta de stock superpuesta
-        Expanded(
-          flex: 2,
-          child: Stack(
-            children: [
-              ProductImage(
-                borderRadius: 12,
-                imageUrl: widget.producto.image,
-                fit: BoxFit.cover,
-                productDescription: widget.producto.description,
-              ),
-              // view : alerta de stock bajo o sin stock
-              if (alertStockText.isNotEmpty)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        alertStockText,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        // view : información del producto
-        contentInfo(),
-      ],
-    );
-  }
-
-  Widget contentInfo() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final descriptionColor =
-        isDark ? theme.colorScheme.onSurfaceVariant : Colors.grey;
-    final priceColor = isDark ? theme.colorScheme.onSurface : Colors.black;
-    final unitColor = isDark ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7) : Colors.grey.shade600;
-
-    return widget.producto.description == ''
-        ? Container()
-        : Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(widget.producto.description,
-                    style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        color: descriptionColor,
-                        overflow: TextOverflow.ellipsis),
-                    maxLines: 1),
-                // Precio con unidad
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                        CurrencyFormatter.formatPrice(
-                            value: widget.producto.salePrice),
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 17.0,
-                            color: priceColor),
-                        overflow: TextOverflow.clip,
-                        softWrap: false),
-                    if (widget.producto.unit.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 2.0, bottom: 1.0),
-                        child: Text(
-                          '/${widget.producto.unit}',
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: unitColor,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          );
-  }
-}
 
 /// Muestra el diálogo de configuración de impresora
 void _showPrinterConfigDialog(BuildContext context) {

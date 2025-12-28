@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
-import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import '../../../../core/di/injection_container.dart';
 import '../provider/multi_user_provider.dart';
 import '../widgets/useradmin_dialog.dart';
@@ -100,18 +99,12 @@ class _MultiUserPageState extends State<MultiUserPage> {
       automaticallyImplyLeading: false,
       titleWidget: Row(
         children: [
-          // Avatar - usa Selector para escuchar cambios de cuenta
-          Selector<SalesProvider, ({String image, String name})>(
-            selector: (_, provider) => (
-              image: provider.profileAccountSelected.image,
-              name: provider.profileAccountSelected.name,
-            ),
-            builder: (context, accountData, _) => GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: UserAvatar(
-                imageUrl: accountData.image,
-                text: accountData.name,
-              ),
+          // Botón de menú drawer
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              tooltip: 'Menú',
             ),
           ),
           const SizedBox(width: 12),

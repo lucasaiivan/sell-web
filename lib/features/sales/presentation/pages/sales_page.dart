@@ -490,25 +490,24 @@ class _SalesPageState extends State<SalesPage> {
       automaticallyImplyLeading: false,
       titleWidget: Row(
         children: [
-          // avatar : avatar de usuario y botón de abrir drawer
+          // Botón de menú drawer
           Builder(
-            builder: (context) => GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: UserAvatar(
-                imageUrl: provider.profileAccountSelected.image,
-                text: provider.profileAccountSelected.name,
-              ),
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              tooltip: 'Menú',
             ),
           ),
           const SizedBox(width: 12),
-          // button : busqueda de productos
+          // button : busqueda de productos 
           Expanded(
-            child: SearchButton(
+            child: SearchTextField.button(
               height: 40,
-              onPressed: (isLoading || isEmpty)
-                  ? () {}
+              onTap: (isLoading || isEmpty)
+                  ? null
                   : () => showModalBottomSheetSelectProducts(buildContext),
-              icon: isLoading || isEmpty
+              isLoading: isLoading || isEmpty,
+              loadingWidget: isLoading || isEmpty
                   ? SizedBox(
                       width: 20,
                       height: 20,
@@ -517,11 +516,8 @@ class _SalesPageState extends State<SalesPage> {
                           color: Theme.of(buildContext)
                               .colorScheme
                               .primaryContainer))
-                  : Icon(Icons.search_rounded),
+                  : null,
               label: textHintSearchButton,
-              color: Theme.of(buildContext).colorScheme.primaryContainer,
-              textColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
-              iconColor: Theme.of(buildContext).colorScheme.onPrimaryContainer,
             ),
           ),
           const SizedBox(width: 12),

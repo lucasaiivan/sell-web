@@ -21,6 +21,7 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
     as catalogue_provider_entity;
 import '../views/dialogs/category_dialog.dart';
 import '../views/dialogs/provider_dialog.dart';
+import '../widgets/product_search_field.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -92,18 +93,12 @@ class _CataloguePageState extends State<CataloguePage>
       automaticallyImplyLeading: false,
       titleWidget: Row(
         children: [
-          // Avatar y botón de drawer - usa Selector para escuchar cambios de cuenta
-          Selector<SalesProvider, ({String image, String name})>(
-            selector: (_, provider) => (
-              image: provider.profileAccountSelected.image,
-              name: provider.profileAccountSelected.name,
-            ),
-            builder: (context, accountData, _) => GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: UserAvatar(
-                imageUrl: accountData.image,
-                text: accountData.name,
-              ),
+          // Botón de menú drawer
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              tooltip: 'Menú',
             ),
           ),
           const SizedBox(width: 12),

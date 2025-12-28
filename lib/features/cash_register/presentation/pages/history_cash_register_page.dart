@@ -54,18 +54,12 @@ class _HistoryCashRegisterPageState extends State<HistoryCashRegisterPage> {
       automaticallyImplyLeading: false,
       titleWidget: Row(
         children: [
-          // Avatar - usa Selector para escuchar cambios de cuenta
-          Selector<SalesProvider, ({String image, String name})>(
-            selector: (_, provider) => (
-              image: provider.profileAccountSelected.image,
-              name: provider.profileAccountSelected.name,
-            ),
-            builder: (context, accountData, _) => GestureDetector(
-              onTap: () => Scaffold.of(context).openDrawer(),
-              child: UserAvatar(
-                imageUrl: accountData.image,
-                text: accountData.name,
-              ),
+          // Botón de menú drawer
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              tooltip: 'Menú',
             ),
           ),
           const SizedBox(width: 12),

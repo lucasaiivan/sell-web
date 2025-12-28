@@ -99,59 +99,63 @@ class _ProductItemState extends State<ProductItem> {
                             backgroundColor: Colors.red.shade400,
                           ),
                         ),
-
-                      if (widget.producto.isCombo)
-                        const Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: ComboTag(isCompact: true),
-                        ),
                     ],
                   ),
                 ),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isQuickSaleProduct ? 'Venta Rápida' : widget.producto.description,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: theme.colorScheme.onSurface,
-                              letterSpacing: -0.5,
+                            _isQuickSaleProduct ? 'Venta Rápida' : widget.producto.description,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (!_isQuickSaleProduct) ...[
-                            const SizedBox(width: 2),
-                            Text(
-                              '/${widget.producto.unitSymbol}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          const SizedBox(height: 2),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: theme.colorScheme.onSurface,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
-                            ),
-                          ],
+                              if (!_isQuickSaleProduct) ...[
+                                const SizedBox(width: 2),
+                                Text(
+                                  '/${widget.producto.unitSymbol}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    if (widget.producto.isCombo)
+                      const Positioned(
+                        top: -10,
+                        left: 10,
+                        child: ComboTag(isCompact: true),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -228,17 +232,10 @@ class _ProductItemState extends State<ProductItem> {
     final isFractional = widget.producto.isFractionalUnit;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.4),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -248,16 +245,19 @@ class _ProductItemState extends State<ProductItem> {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 10,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.2,
+              height: 1.1,
             ),
           ),
           if (isFractional || widget.producto.quantity > 1)
             Text(
-              CurrencyFormatter.formatPrice(value: widget.producto.totalPrice),
+              CurrencyFormatter.formatSimplifiedPrice(value: widget.producto.totalPrice),
               style: TextStyle(
                 color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
+                fontSize: 8.5,
+                fontWeight: FontWeight.bold,
+                height: 1.1,
               ),
             ),
         ],

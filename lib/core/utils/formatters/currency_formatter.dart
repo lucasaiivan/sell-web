@@ -58,4 +58,16 @@ class CurrencyFormatter {
       return '${formatter.format(value / 1000000)}M';
     }
   }
+
+  /// Formatea un precio redondeado y de forma compacta
+  static String formatSimplifiedPrice({
+    String moneda = "\$",
+    required double value,
+  }) {
+    return formatPrice(
+      moneda: moneda,
+      value: value.roundToDouble(),
+      simplified: value.abs() >= 10000,
+    );
+  }
 }

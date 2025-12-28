@@ -6,23 +6,31 @@ class ComboTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Purple color for "llamativo" but somewhat minimalist
-    const color = Colors.deepPurple;
+    // Elegant purple gradient
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.secondary;
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 4 : 6,
-        vertical: isCompact ? 1 : 2,
+        horizontal: isCompact ? 6 : 8,
+        vertical: isCompact ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
+        gradient: LinearGradient(
+          colors: [
+            color,
+            color.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black12,
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          )
+            color: color.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Text(
@@ -30,7 +38,7 @@ class ComboTag extends StatelessWidget {
         style: TextStyle(
           color: Colors.white,
           fontSize: isCompact ? 8 : 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w900,
           letterSpacing: 0.5,
         ),
       ),

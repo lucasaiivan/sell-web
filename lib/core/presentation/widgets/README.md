@@ -81,7 +81,6 @@ Botones especializados para diferentes contextos de la aplicación.
 - `AppBarButton`: Botón optimizado para barras de aplicación
 - `AppFloatingActionButton`: FAB con animaciones y estados
 - `AppTextButton`: Botón de texto con estilos consistentes
-- `SearchButton`: Botón especializado para búsquedas
 
 **Características:**
 - Estados de loading integrados
@@ -97,6 +96,7 @@ Campos de entrada optimizados para formularios y captura de datos.
 **Widgets principales:**
 - `InputTextField`: Campo de texto base con validación
 - `MoneyInputTextField`: Campo especializado para montos y precios
+- `SearchTextField`: Campo de búsqueda base reutilizable (puede funcionar como TextField o botón)
 
 **Características:**
 - Validación integrada
@@ -104,6 +104,7 @@ Campos de entrada optimizados para formularios y captura de datos.
 - Estados de error claros
 - Teclados específicos
 - Compatibilidad con forms
+- Modo interactivo y read-only (botón)
 
 ### 💬 Dialogs (`/dialogs/`)
 

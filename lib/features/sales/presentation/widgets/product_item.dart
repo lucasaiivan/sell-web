@@ -35,16 +35,23 @@ class _ProductItemState extends State<ProductItem> {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          // Fondo más diferenciado
+          color: isDark 
+              ? theme.colorScheme.surfaceContainer
+              : theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(24), // Bordes un poco más redondeados para look moderno
           border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.1),
+            color: isDark 
+                ? theme.colorScheme.outline.withValues(alpha: 0.15)
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: theme.shadowColor.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8), // Sombra más suave y baja
+              spreadRadius: -4,
             ),
           ],
         ),
@@ -92,7 +99,7 @@ class _ProductItemState extends State<ProductItem> {
                           left: 8,
                           child: _buildMinimalistBadge(
                             alertStockText,
-                            backgroundColor: Colors.red.shade400,
+                            backgroundColor: theme.colorScheme.error,
                           ),
                         ),
                     ],
@@ -103,7 +110,7 @@ class _ProductItemState extends State<ProductItem> {
                   clipBehavior: Clip.none,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -112,18 +119,19 @@ class _ProductItemState extends State<ProductItem> {
                               if (_isQuickSaleProduct) ...[
                                 Icon(
                                   Icons.bolt_rounded,
-                                  size: 14,
+                                  size: 16,
                                   color: theme.colorScheme.primary,
                                 ),
                                 const SizedBox(width: 4),
                               ],
+                              // text : nombre del producto
                               Expanded(
                                 child: Text(
                                   _isQuickSaleProduct ? 'Venta Rápida' : widget.producto.description,
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 12,
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -131,26 +139,30 @@ class _ProductItemState extends State<ProductItem> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 6),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
                                 CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18, 
                                   letterSpacing: -0.5,
+                                  height: 1.0,
                                 ),
                               ),
                               if (!_isQuickSaleProduct) ...[
                                 const SizedBox(width: 2),
-                                Text(
-                                  '/${widget.producto.unitSymbol}',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 2),
+                                  child: Text(
+                                    widget.producto.unitSymbol, // Simbolo solo
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.secondary, // Unidad en secondary
+                                    ),
                                   ),
                                 ),
                               ],
@@ -186,8 +198,8 @@ class _ProductItemState extends State<ProductItem> {
                     producto: widget.producto,
                     onProductUpdated: () => setState(() {}),
                   ),
-                  splashColor: theme.colorScheme.primary.withValues(alpha: 0.05),
-                  highlightColor: theme.colorScheme.primary.withValues(alpha: 0.02),
+                  splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  highlightColor: theme.colorScheme.primary.withValues(alpha: 0.05),
                 ),
               ),
             ),

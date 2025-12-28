@@ -246,6 +246,9 @@ class ProductCatalogue {
 
   bool get isComplete => description.isNotEmpty && nameMark.isNotEmpty;
 
+  /// Indica si el producto fue creado de manera rápida (sin ID base o generado al vuelo)
+  bool get isQuickSale => id.isEmpty || id.startsWith('quick_') || code.isEmpty || description.isEmpty;
+
   // ==========================================
   // GETTERS DE UNIDAD DE MEDIDA Y CÁLCULOS
   // ==========================================

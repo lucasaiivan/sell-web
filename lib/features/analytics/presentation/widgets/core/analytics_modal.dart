@@ -239,6 +239,9 @@ class AnalyticsListItem extends StatelessWidget {
   /// Widgets en el trailing (derecha)
   final List<Widget>? trailingWidgets;
 
+  /// Icono o widget opcional que se muestra antes del título
+  final Widget? titlePrefix;
+
   /// Widget opcional que se renderiza debajo del item (ej: barra de progreso)
   final Widget? child;
 
@@ -259,6 +262,7 @@ class AnalyticsListItem extends StatelessWidget {
     this.accentColor,
     this.onTap,
     this.child,
+    this.titlePrefix,
   });
 
   @override
@@ -366,13 +370,23 @@ class AnalyticsListItem extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              if (titlePrefix != null) ...[
+                                titlePrefix!,
+                                const SizedBox(width: 4),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                           if (subtitle != null || subtitleWidget != null) ...[
                             const SizedBox(height: 3),

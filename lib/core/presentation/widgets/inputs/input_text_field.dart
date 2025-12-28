@@ -57,7 +57,7 @@ class InputTextField extends StatelessWidget {
     this.validator,
     this.fillColor,
     this.borderColor,
-    this.borderRadius = 8.0,
+    this.borderRadius = 2.0,
     this.style,
     this.contentPadding,
     this.expandHeight = false,

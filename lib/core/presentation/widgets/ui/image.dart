@@ -164,7 +164,14 @@ class ProductImage extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.surfaceContainerHighest,
+              colorScheme.surfaceContainerHigh,
+            ],
+          ),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
         child: Center(
@@ -172,8 +179,9 @@ class ProductImage extends StatelessWidget {
             _getAbbreviation(productDescription!),
             style: TextStyle(
               fontSize: _calculateFontSize(),
-              fontWeight: FontWeight.bold,
-              color: colorScheme.outline,
+              fontWeight: FontWeight.w900,
+              color: colorScheme.primary.withValues(alpha: 0.3),
+              letterSpacing: 2,
             ),
           ),
         ),
@@ -210,12 +218,17 @@ class ProductImage extends StatelessWidget {
   /// Obtiene las primeras letras de la descripción del producto
   String _getAbbreviation(String text) {
     if (text.isEmpty) return '?';
-    final firstWord = text.trim().split(' ').first;
-    final maxChars = maxAbbreviationChars;
-    return firstWord
-        .substring(
-            0, firstWord.length >= maxChars ? maxChars : firstWord.length)
-        .toUpperCase();
+    final words = text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    
+    if (words.length == 1) {
+      final word = words.first;
+      return word.substring(0, word.length >= 2 ? 2 : word.length).toUpperCase();
+    }
+    
+    // Tomar la primera letra de las dos primeras palabras
+    final first = words[0][0];
+    final second = words[1][0];
+    return '$first$second'.toUpperCase();
   }
 
   /// Calcula el tamaño de fuente basado en el tamaño del contenedor

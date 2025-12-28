@@ -104,7 +104,6 @@ class _AccountSelectionContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final sellProvider = context.watch<SalesProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:sellweb/core/errors/failures.dart';
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
-import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 
 import '../../../../helpers/test_helpers.dart';

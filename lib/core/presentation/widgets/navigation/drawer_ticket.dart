@@ -908,6 +908,14 @@ class _TicketProductListState extends State<_TicketProductList> {
               flex: 3,
               child: Row(
                 children: [
+                  if (product.isQuickSale) ...[
+                    Icon(
+                      Icons.bolt_rounded,
+                      size: 16,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   Flexible(
                     child: Text(
                       product.description,

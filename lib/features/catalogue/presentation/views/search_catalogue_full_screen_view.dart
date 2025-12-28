@@ -534,15 +534,29 @@ class _ProductCatalogueFullScreenViewState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Descripción del producto
-          Text(
-            product.description,
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.normal,
-              fontSize: 12,
-              overflow: TextOverflow.ellipsis,
-            ),
-            maxLines: 1,
+          Row(
+            children: [
+              if (product.isQuickSale) ...[
+                Icon(
+                  Icons.bolt_rounded,
+                  size: 14,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 2),
+              ],
+              Expanded(
+                child: Text(
+                  product.description,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.normal,
+                    fontSize: 12,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 1),
           // Marca del producto (si existe)
@@ -992,15 +1006,29 @@ class _ProductCatalogueFullScreenViewState
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                product.description,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: colorScheme.onSurface,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  if (product.isQuickSale) ...[
+                    Icon(
+                      Icons.bolt_rounded,
+                      size: 16,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Expanded(
+                    child: Text(
+                      product.description,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               if (product.nameMark.isNotEmpty)
                 Padding(

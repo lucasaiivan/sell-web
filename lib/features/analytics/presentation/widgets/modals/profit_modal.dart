@@ -127,6 +127,13 @@ class ProfitModal extends StatelessWidget {
         fallbackIcon: Icons.diamond_outlined,
         borderColor: _getPositionColor(position),
       ),
+      titlePrefix: product.isQuickSale
+          ? Icon(
+              Icons.bolt_rounded,
+              size: 16,
+              color: _accentColor,
+            )
+          : null,
       title: product.description.isNotEmpty
           ? product.description
           : 'Producto sin nombre',

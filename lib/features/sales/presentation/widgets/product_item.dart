@@ -14,11 +14,7 @@ class ProductItem extends StatefulWidget {
 
 class _ProductItemState extends State<ProductItem> {
   // Identifica si es un producto de venta rápida
-  bool get _isQuickSaleProduct {
-    return widget.producto.id.isEmpty ||
-        widget.producto.id.startsWith('quick_') ||
-        widget.producto.description.isEmpty;
-  }
+  bool get _isQuickSaleProduct => widget.producto.isQuickSale;
 
   @override
   Widget build(BuildContext context) {
@@ -111,15 +107,29 @@ class _ProductItemState extends State<ProductItem> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _isQuickSaleProduct ? 'Venta Rápida' : widget.producto.description,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              if (_isQuickSaleProduct) ...[
+                                Icon(
+                                  Icons.bolt_rounded,
+                                  size: 14,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  _isQuickSaleProduct ? 'Venta Rápida' : widget.producto.description,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Row(
@@ -189,13 +199,28 @@ class _ProductItemState extends State<ProductItem> {
 
   Widget _buildQuickSaleImage() {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primaryContainer.withValues(alpha: 0.2),
+            colorScheme.primaryContainer.withValues(alpha: 0.1),
+          ],
+        ),
+      ),
       child: Center(
-        child: Icon(
-          Icons.bolt_rounded,
-          size: 40,
-          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+        child: Text(
+          'VR',
+          style: TextStyle(
+            fontSize: 64,
+            fontWeight: FontWeight.w900,
+            color: colorScheme.primary.withValues(alpha: 0.05),
+            letterSpacing: 4,
+          ),
         ),
       ),
     );

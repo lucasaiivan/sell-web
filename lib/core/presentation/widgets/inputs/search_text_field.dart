@@ -152,7 +152,7 @@ class SearchTextField extends StatelessWidget {
     final effectiveHeight = height ?? 44.0;
 
     // Border radius adaptativo - por defecto usa bordes redondeados (estilo botón)
-    final borderRadius = effectiveHeight / 2;
+    final borderRadius = effectiveHeight / 3;
 
     Widget content = Container(
       width: width,

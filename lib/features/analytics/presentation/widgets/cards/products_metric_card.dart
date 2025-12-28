@@ -255,6 +255,13 @@ class TopSellingProductsModal extends StatelessWidget {
                           ),
                       ],
                     ),
+                    titlePrefix: product.isQuickSale
+                        ? const Icon(
+                            Icons.bolt_rounded,
+                            size: 16,
+                            color: _accentColor,
+                          )
+                        : null,
                     title: product.description,
                     subtitleWidget: Row(
                       children: [

@@ -295,16 +295,16 @@ Cada feature **DEBE** tener su propio README con:
 
 ### READMEs Disponibles
 
-| Feature | README | Estado Documentación |
-|---------|--------|---------------------|
+| Feature | README | Estado |
+|---------|--------|--------|
+| Auth | [auth/README.md](auth/README.md) | ✅ Completo |
 | Analytics | [analytics/README.md](analytics/README.md) | ✅ Completo |
-| Auth | ⚠️ Pendiente | ⚠️ Por crear |
-| Home | ⚠️ Pendiente | ⚠️ Por crear |
-| Landing | ⚠️ Pendiente | ⚠️ Por crear |
-| Catalogue | ⚠️ Pendiente | ⚠️ Por crear |
-| Sales | ⚠️ Pendiente | ⚠️ Por crear |
-| Cash Register | ⚠️ Pendiente | ⚠️ Por crear |
-| Multiuser | 📋 No aplica | 📋 Feature no implementado |
+| Catalogue | [catalogue/README.md](catalogue/README.md) | ✅ Completo |
+| Sales | [sales/README.md](sales/README.md) | ✅ Completo |
+| Cash Register | [cash_register/README.md](cash_register/README.md) | ✅ Completo |
+| Home | [home/README.md](home/README.md) | ✅ Completo |
+| Landing | [landing/README.md](landing/README.md) | ✅ Completo |
+| Multiuser | [multiuser/README.md](multiuser/README.md) | ✅ Completo |
 
 ## Referencias de Arquitectura
 
@@ -335,4 +335,4 @@ Cada feature **DEBE** tener su propio README con:
 
 ---
 
-**Última actualización**: Noviembre 2025
+**Última actualización**: Diciembre 2025

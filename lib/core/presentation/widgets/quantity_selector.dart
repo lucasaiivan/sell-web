@@ -29,6 +29,10 @@ class QuantitySelector extends StatefulWidget {
   /// Tamaño de los botones (por defecto 40)
   final double buttonSize;
 
+  /// Si usar modo compacto (ancho mínimo) o expandir (ancho completo)
+  /// Por defecto es false (ancho completo)
+  final bool isCompact;
+
   const QuantitySelector({
     super.key,
     required this.initialQuantity,
@@ -37,6 +41,7 @@ class QuantitySelector extends StatefulWidget {
     this.showInput = true,
     this.showUnit = true,
     this.buttonSize = 40,
+    this.isCompact = false,
   });
 
   @override
@@ -44,10 +49,13 @@ class QuantitySelector extends StatefulWidget {
 }
 
 class _QuantitySelectorState extends State<QuantitySelector> {
+  // ... existing state variables ...
   late double _quantity;
   late TextEditingController _controller;
   bool _isEditing = false;
-
+  
+  // ... existing methods ...
+  
   @override
   void initState() {
     super.initState();
@@ -78,12 +86,18 @@ class _QuantitySelectorState extends State<QuantitySelector> {
 
     // Si cambió la unidad, revalidar y reformatear
     if (oldWidget.unit != widget.unit) {
+      final newQuantity = UnitHelper.normalizeQuantity(_quantity, widget.unit);
+      
       setState(() {
-        _quantity = UnitHelper.normalizeQuantity(_quantity, widget.unit);
+        _quantity = newQuantity;
         _controller.text =
             UnitHelper.formatQuantityWithZeros(_quantity, widget.unit);
       });
-      widget.onQuantityChanged(_quantity);
+      
+      // Deferir la notificación para evitar setState durante build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onQuantityChanged(newQuantity);
+      });
     }
   }
 
@@ -94,7 +108,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
     // Validar máximo
     final maxQty = UnitHelper.getMaxQuantity(widget.unit);
     if (newQuantity <= maxQty) {
-      _updateQuantity(newQuantity);
+      _updateQuantity(newQuantity, fromButton: true);
     }
   }
 
@@ -104,19 +118,28 @@ class _QuantitySelectorState extends State<QuantitySelector> {
 
     // Validar mínimo
     if (newQuantity >= UnitHelper.minQuantity) {
-      _updateQuantity(newQuantity);
+      _updateQuantity(newQuantity, fromButton: true);
     }
   }
 
-  void _updateQuantity(double newQuantity) {
+  void _updateQuantity(double newQuantity, {bool fromButton = false}) {
     // Normalizar según tipo de unidad
     final normalized = UnitHelper.normalizeQuantity(newQuantity, widget.unit);
 
     setState(() {
       _quantity = normalized;
-      if (!_isEditing) {
+      // Si no estamos editando O si el cambio viene de un botón explícito,
+      // actualizamos el texto del controlador.
+      if (!_isEditing || fromButton) {
         _controller.text =
             UnitHelper.formatQuantityWithZeros(normalized, widget.unit);
+        
+        // Si viene de un botón, mantenemos el cursor al final para evitar saltos extraños
+        if (fromButton && _isEditing) {
+           _controller.selection = TextSelection.fromPosition(
+             TextPosition(offset: _controller.text.length)
+           );
+        }
       }
     });
 
@@ -133,6 +156,9 @@ class _QuantitySelectorState extends State<QuantitySelector> {
       // Validar
       final error = UnitHelper.validateQuantity(parsed, widget.unit);
       if (error == null) {
+        // En el input manual NO pasamos fromButton, y ya estamos en _isEditing=true,
+        // por lo que _updateQuantity NO tocará el texto, lo cual es correcto
+        // para no interferir con lo que el usuario escribe.
         _updateQuantity(parsed);
       }
     }
@@ -143,8 +169,12 @@ class _QuantitySelectorState extends State<QuantitySelector> {
     final theme = Theme.of(context);
     final isFractional = UnitHelper.isFractionalUnit(widget.unit);
 
+    final inputWidget = widget.showInput
+        ? _buildInput(theme, isFractional)
+        : _buildDisplay(theme);
+
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: widget.isCompact ? MainAxisSize.min : MainAxisSize.max,
       children: [
         // Botón decrementar
         _buildButton(
@@ -152,17 +182,17 @@ class _QuantitySelectorState extends State<QuantitySelector> {
           onPressed: _quantity > UnitHelper.minQuantity ? _decrement : null,
           theme: theme,
         ),
-
+    
         const SizedBox(width: 12),
-
+    
         // Input de cantidad (si showInput es true) o solo display
-        if (widget.showInput)
-          _buildInput(theme, isFractional)
+        if (widget.isCompact)
+          inputWidget
         else
-          _buildDisplay(theme),
-
+          Expanded(child: inputWidget),
+    
         const SizedBox(width: 12),
-
+    
         // Botón incrementar
         _buildButton(
           icon: Icons.add_rounded,
@@ -222,8 +252,10 @@ class _QuantitySelectorState extends State<QuantitySelector> {
     }
 
     return Container(
-      width: 120,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      // Si es compacto, usar ancho fijo de 120, si no, que se expanda
+      width: widget.isCompact ? 120 : null,
+      height: widget.buttonSize, // Usar la misma altura del botón
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Quitar padding vertical para que centre bien
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
@@ -236,6 +268,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: TextField(

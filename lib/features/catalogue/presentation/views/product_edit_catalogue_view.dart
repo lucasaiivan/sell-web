@@ -11,7 +11,7 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart' as cat
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/brand_search_dialog.dart';
-import 'package:sellweb/core/utils/formatters/quantity_input_formatter.dart';
+import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
@@ -69,8 +69,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _salePriceController;
   late final TextEditingController _purchasePriceController;
-  late final TextEditingController _quantityStockController;
-  late final TextEditingController _alertStockController;
+
+  double _quantityStock = 0;
+  double _alertStock = 0;
   late final TextEditingController _categoryController;
   late final TextEditingController _providerController;
   late final TextEditingController _markController;
@@ -117,18 +118,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               value: product.purchasePrice, moneda: '')
           : '',
     );
-    _quantityStockController = TextEditingController(
-      text: UnitHelper.formatQuantityWithSymbol(
-        product.quantityStock,
-        product.unit,
-      ),
-    );
-    _alertStockController = TextEditingController(
-      text: UnitHelper.formatQuantityWithSymbol(
-        product.alertStock,
-        product.unit,
-      ),
-    );
+    _quantityStock = product.quantityStock;
+    _alertStock = product.alertStock;
     _categoryController = TextEditingController(text: product.nameCategory);
     _providerController = TextEditingController(text: product.nameProvider);
     _markController = TextEditingController(text: product.nameMark);
@@ -174,8 +165,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     _descriptionController.dispose();
     _salePriceController.dispose();
     _purchasePriceController.dispose();
-    _quantityStockController.dispose();
-    _alertStockController.dispose();
     _categoryController.dispose();
     _providerController.dispose();
     _markController.dispose();
@@ -292,10 +281,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// Construye el producto actualizado con los valores del formulario
   ProductCatalogue _buildUpdatedProduct() {
     // Parsear cantidad de stock (soporta decimales para unidades fraccionarias)
-    final stockValue = UnitHelper.parseQuantity(
-      _quantityStockController.text,
-      defaultValue: 0.0,
-    );
+    final stockValue = _quantityStock;
 
     final updated = widget.product.copyWith(
       description: widget.product.isVerified
@@ -304,10 +290,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       salePrice: _parsePriceFromController(_salePriceController),
       purchasePrice: _parsePriceFromController(_purchasePriceController),
       quantityStock: stockValue,
-      alertStock: UnitHelper.parseQuantity(
-        _alertStockController.text,
-        defaultValue: 5.0,
-      ),
+      alertStock: _alertStock,
       category: _selectedCategoryId ?? '',
       nameCategory: _categoryController.text.trim(),
       provider: _selectedProviderId ?? '',
@@ -2140,30 +2123,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     setState(() {
                       final newUnit = value ?? UnitConstants.unit;
                       _unitController.text = newUnit;
-
-                      // Re-formatear controllers con la nueva unidad y símbolo
-                      final currentQty = UnitHelper.parseQuantity(
-                        _quantityStockController.text,
-                        defaultValue: 0.0,
-                      );
-                      final currentAlert = UnitHelper.parseQuantity(
-                        _alertStockController.text,
-                        defaultValue: 5.0,
-                      );
-
-                      _quantityStockController.text =
-                          UnitHelper.formatQuantityWithSymbol(
-                        currentQty,
-                        newUnit,
-                      );
-                      _alertStockController.text =
-                          UnitHelper.formatQuantityWithSymbol(
-                        currentAlert,
-                        newUnit,
-                      );
+                    });
 
                       Navigator.pop(context);
-                    });
                   },
                 );
               }),
@@ -2232,6 +2194,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             ),
           ),
         ),
+        // view : control de stock
         if (_stockEnabled) ...[
           const SizedBox(height: 16),
           Padding(
@@ -2248,97 +2211,75 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  /// Verifica si la unidad seleccionada es fraccionaria (kg, L, m, etc.)
-  bool get _isFractionalUnit {
-    return UnitHelper.isFractionalUnit(_unitController.text);
-  }
 
-  /// Obtiene el símbolo de la unidad actual
-  String get _currentUnitSymbol {
-    return UnitHelper.getUnitSymbol(_unitController.text);
-  }
 
   /// Campo de cantidad en stock con validación
   /// Soporta decimales para unidades fraccionarias (kg, L, m)
   Widget _buildQuantityField() {
-    final isFractional = _isFractionalUnit;
-    final unit = _unitController.text;
-
-
-    // Determinar hint y helper según tipo de unidad
-    String hintText;
-    String? helperText;
-
-    if (isFractional) {
-      // Para unidades fraccionarias, mostrar ejemplos de fracciones
-      if (unit == UnitConstants.kilogram) {
-        hintText = '0,500';
-        helperText = 'Ej: 0,500 = 500g | 1,250 = 1kg 250g';
-      } else if (unit == UnitConstants.liter) {
-        hintText = '0,500';
-        helperText = 'Ej: 0,500 = 500ml | 2,750 = 2L 750ml';
-      } else if (unit == UnitConstants.meter) {
-        hintText = '0,50';
-        helperText = 'Ej: 0,50 = 50cm | 1,25 = 1m 25cm';
-      } else {
-        hintText = '0';
-        helperText = 'Ingrese cantidad en $_currentUnitSymbol';
-      }
-    } else {
-      hintText = '0';
-      helperText = _isCombo ? 'Número de combos disponibles' : null;
-    }
-
-    return TextFormField(
-      controller: _quantityStockController,
-      decoration: InputDecoration(
-        labelText: 'Cantidad disponible',
-        hintText: hintText,
-        helperText: helperText,
-        helperMaxLines: 2,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'Cantidad disponible',
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ),
-      ),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        AppQuantityInputFormatter(unit: unit, showSymbol: true),
+        QuantitySelector(
+          initialQuantity: _quantityStock,
+          unit: _unitController.text,
+          onQuantityChanged: (value) {
+            setState(() {
+              _quantityStock = value;
+            });
+          },
+          showInput: true,
+          showUnit: true,
+          buttonSize: 48,
+        ),
       ],
-      validator: _stockEnabled
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Ingrese la cantidad';
-              }
-              // Usar UnitHelper para parsear
-              final qty = UnitHelper.parseQuantity(
-                value,
-                defaultValue: -1,
-              );
-              if (qty < 0) return 'Ingrese una cantidad válida';
-              // Validar usando UnitHelper
-              final error = UnitHelper.validateQuantity(qty, unit);
-              if (error != null) return error;
-              return null;
-            }
-          : null,
     );
   }
 
   /// Campo de alerta de stock bajo
   Widget _buildAlertStockField() {
-    return TextFormField(
-      controller: _alertStockController,
-      decoration: InputDecoration(
-        labelText: 'Alerta de stock bajo',
-        hintText: '5',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'Alerta de stock bajo',
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ),
-        helperText: 'Se mostrará una alerta cuando el stock esté en este nivel',
-      ),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        AppQuantityInputFormatter(unit: _unitController.text, showSymbol: true),
+        QuantitySelector(
+          initialQuantity: _alertStock,
+          unit: _unitController.text,
+          onQuantityChanged: (value) {
+            setState(() {
+              _alertStock = value;
+            });
+          },
+          showInput: true,
+          showUnit: true,
+           buttonSize: 48,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Se mostrará una alerta cuando el stock esté en este nivel',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          ),
+        ),
       ],
     );
   }

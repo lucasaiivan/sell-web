@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../../core/core.dart';
+import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo modernizado para venta rápida siguiendo Material Design 3
@@ -25,12 +26,11 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   final _formKey = GlobalKey<FormState>();
   final _priceController = AppMoneyTextEditingController();
   final _descriptionController = TextEditingController();
-  final _quantityController = TextEditingController(text: '1');
+  double _quantity = 1;
 
   // FocusNodes para navegación por teclado
   final _priceFocusNode = FocusNode();
   final _descriptionFocusNode = FocusNode();
-  final _quantityFocusNode = FocusNode();
 
   // Unidades disponibles
   final List<String> _units = UnitHelper.allUnits;
@@ -49,10 +49,8 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
   void dispose() {
     _priceController.dispose();
     _descriptionController.dispose();
-    _quantityController.dispose();
     _priceFocusNode.dispose();
     _descriptionFocusNode.dispose();
-    _quantityFocusNode.dispose();
     super.dispose();
   }
 
@@ -152,7 +150,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
           context: context,
           controller: _priceController,
           focusNode: _priceFocusNode,
-          nextFocusNode: _quantityFocusNode,
+          // nextFocusNode: _descriptionFocusNode, // Removed specific passing to quantity since QuantitySelector manages its own focus
           textInputAction: TextInputAction.next,
           fontSize: 42,
           center: true,
@@ -205,7 +203,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
                   onTap: () {
                     setState(() {
                       _selectedUnit = unit;
-                      _quantityController.text = '1';
+                      _quantity = 1;
                     });
                   },
                   borderRadius: BorderRadius.circular(16),
@@ -264,19 +262,12 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
   /// Campo de cantidad modernizado
   Widget _buildModernQuantityField(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
             'CANTIDAD (${UnitHelper.getUnitSymbol(_selectedUnit)})',
             style: TextStyle(
               fontSize: 10,
@@ -285,76 +276,34 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
               color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildModernQuantityBtn(
-                Icons.remove_rounded,
-                onTap: _decreaseQuantity,
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: _quantityController,
-                  focusNode: _quantityFocusNode,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    hintText: '1',
-                    hintStyle: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onChanged: (value) => setState(() {}),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return null;
-                    final quantity = UnitHelper.parseQuantity(value, defaultValue: -1);
-                    if (quantity <= 0) return 'Dato inválido';
-                    return UnitHelper.validateQuantity(quantity, _selectedUnit);
-                  },
-                ),
-              ),
-              _buildModernQuantityBtn(
-                Icons.add_rounded,
-                onTap: _increaseQuantity,
-              ),
-            ],
+        ),
+        Center(
+          child: QuantitySelector(
+            initialQuantity: _quantity,
+            unit: _selectedUnit,
+            onQuantityChanged: (val) {
+              setState(() {
+                _quantity = val;
+              });
+            },
+            buttonSize: 48,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildModernQuantityBtn(IconData icon, {required VoidCallback onTap}) {
-    return Material(
-      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        ),
-      ),
-    );
-  }
+
 
   /// Vista previa del total con estilo premium (Glassmorphism inspired)
   Widget _buildPremiumTotalPreview(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([_priceController, _quantityController]),
+      animation: _priceController,
       builder: (context, _) {
         final price = _priceController.doubleValue;
-        final quantity = UnitHelper.parseQuantity(_quantityController.text);
-        final total = price * quantity;
+        final total = price * _quantity;
 
-        if (price <= 0 || quantity <= 0) return const SizedBox.shrink();
+        if (price <= 0 || _quantity <= 0) return const SizedBox.shrink();
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -389,7 +338,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${UnitHelper.formatQuantityAdaptive(quantity, _selectedUnit)} x ${CurrencyFormatter.formatPrice(value: price)}',
+                    '${UnitHelper.formatQuantityAdaptive(_quantity, _selectedUnit)} x ${CurrencyFormatter.formatPrice(value: price)}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -440,7 +389,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
         description = 'Venta Rápida';
       }
       
-      final quantity = UnitHelper.parseQuantity(_quantityController.text);
+      final quantity = _quantity;
 
       // Agregar el producto de venta rápida con cantidad
       await widget.provider.addQuickProduct(
@@ -471,33 +420,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
     }
   }
 
-  // MÉTODOS DE UI Y LÓGICA DE CANTIDAD
 
-  void _increaseQuantity() {
-    final step = UnitHelper.getQuantityStep(_selectedUnit);
-    final current = UnitHelper.parseQuantity(_quantityController.text, defaultValue: 0);
-    _updateQuantity(current + step);
-  }
-
-  void _decreaseQuantity() {
-    final step = UnitHelper.getQuantityStep(_selectedUnit);
-    final minVal = UnitHelper.minQuantity; 
-    final current = UnitHelper.parseQuantity(_quantityController.text, defaultValue: 0);
-    
-    if (current > minVal) {
-      _updateQuantity(current - step);
-    }
-  }
-
-  void _updateQuantity(double newValue) {
-    if (newValue <= 0) return;
-
-    // Redondeo inteligente para evitar errores flotantes y respetar unidad
-    final smartValue = UnitHelper.roundSmartly(newValue);
-    
-    // Formatear usando el helper que limpia ceros innecesarios
-    _quantityController.text = UnitHelper.formatQuantity(smartValue, _selectedUnit);
-  }
 }
 
 /// Helper function para mostrar el diálogo de venta rápida

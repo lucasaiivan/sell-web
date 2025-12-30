@@ -39,7 +39,7 @@ class _ProductItemState extends State<ProductItem> {
           color: isDark 
               ? theme.colorScheme.surfaceContainer
               : theme.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(24), // Bordes un poco más redondeados para look moderno
+          borderRadius: BorderRadius.circular(12), // Bordes un poco más redondeados para look moderno
           border: Border.all(
             color: isDark 
                 ? theme.colorScheme.outline.withValues(alpha: 0.15)
@@ -92,20 +92,20 @@ class _ProductItemState extends State<ProductItem> {
                           ),
                         ),
                       ),
-
+                      // badge : stock alert
                       if (alertStockText.isNotEmpty)
                         Positioned(
                           top: 8,
                           left: 8,
                           child: _buildMinimalistBadge(
                             alertStockText,
-                            backgroundColor: theme.colorScheme.error,
+                            backgroundColor: Colors.red.shade400,
                           ),
                         ),
                     ],
                   ),
                 ),
-
+                // view : informacion del producto
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -121,13 +121,12 @@ class _ProductItemState extends State<ProductItem> {
                                   Icons.bolt_rounded,
                                   size: 16,
                                   color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 4),
+                                ), 
                               ],
                               // text : nombre del producto
                               Expanded(
                                 child: Text(
-                                  _isQuickSaleProduct ? 'Venta Rápida' : widget.producto.description,
+                                  _isQuickSaleProduct && widget.producto.description.isEmpty ? 'Venta Rápida' : widget.producto.description,
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     color: theme.colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,
@@ -141,31 +140,31 @@ class _ProductItemState extends State<ProductItem> {
                           ),
                           const SizedBox(height: 6),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
+                              // text : precio total
                               Text(
-                                CurrencyFormatter.formatPrice(value: widget.producto.salePrice),
-                                style: TextStyle(
+                                CurrencyFormatter.formatPrice(value: widget.producto.totalPrice),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 18, 
+                                  fontSize: 18,
                                   letterSpacing: -0.5,
                                   height: 1.0,
                                 ),
                               ),
-                              if (!_isQuickSaleProduct) ...[
-                                const SizedBox(width: 2),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 2),
-                                  child: Text(
-                                    widget.producto.unitSymbol, // Simbolo solo
+                              // text : cantidad y unidad
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Text(
+                                  '${widget.producto.quantity} ${widget.producto.unitSymbol}',
                                     style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.secondary, // Unidad en secondary
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.secondary,
                                     ),
                                   ),
                                 ),
-                              ],
                             ],
                           ),
                         ],
@@ -181,14 +180,14 @@ class _ProductItemState extends State<ProductItem> {
                 ),
               ],
             ),
-
-            if (widget.producto.quantity > 0)
+            // badge : quantity
+            if ( widget.producto.salePrice != widget.producto.totalPrice)
               Positioned(
                 top: 8,
                 right: 8,
-                child: _buildQuantityBadge(context),
-              ),
-
+                child: _buildPriceBadge(context),
+              ), 
+            // overlay : edit product
             Positioned.fill(
               child: Material(
                 color: Colors.transparent,
@@ -264,9 +263,8 @@ class _ProductItemState extends State<ProductItem> {
     );
   }
 
-  Widget _buildQuantityBadge(BuildContext context) {
-    final theme = Theme.of(context);
-    final isFractional = widget.producto.isFractionalUnit;
+  Widget _buildPriceBadge(BuildContext context) {
+    final theme = Theme.of(context); 
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -274,31 +272,15 @@ class _ProductItemState extends State<ProductItem> {
         color: theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            widget.producto.formattedQuantityWithUnit,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.2,
-              height: 1.1,
-            ),
+      child: Text(
+          CurrencyFormatter.formatSimplifiedPrice(value: widget.producto.salePrice),
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            height: 1.1,
           ),
-          if (isFractional || widget.producto.quantity > 1)
-            Text(
-              CurrencyFormatter.formatSimplifiedPrice(value: widget.producto.totalPrice),
-              style: TextStyle(
-                color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
-                fontSize: 8.5,
-                fontWeight: FontWeight.bold,
-                height: 1.1,
-              ),
-            ),
-        ],
-      ),
+        ),
     );
   }
 }

@@ -4,7 +4,7 @@ import 'product_price_edit_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/features/sales/presentation/widgets/quantity_selector.dart';
+import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Diálogo para editar producto seleccionado
@@ -99,105 +99,86 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
       context: context,
       icon: _itemCode.isNotEmpty ? null : Icons.flash_on_rounded,
       title: _itemCode.isNotEmpty ? 'Código: $_itemCode' : 'Venta Rápida',
-      // iconbutton : botones personalizados de accion
       rightIcon: widget.product.isSku || widget.product.code.isEmpty
           ? null
           : IconButton(
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
+              style: IconButton.styleFrom(
+                backgroundColor: widget.product.favorite
+                    ? Colors.amber.withValues(alpha: 0.1)
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+              ),
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
               icon: Icon(
                 widget.product.favorite ? Icons.star : Icons.star_border,
-                color: widget.product.favorite ? Colors.amber : null,
+                size: 20,
+                color: widget.product.favorite
+                    ? Colors.amber
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               onPressed: _isProcessing ? null : _toggleFavorite,
             ),
       content: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar o imagen del producto
-          SizedBox(
+          // Avatar
+          Container(
             width: 80,
             height: 80,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outline
-                      .withValues(alpha: 0.1),
-                  width: 2,
-                ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                width: 1,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: ProductImage(
-                  imageUrl: widget.product.image,
-                  size: 80,
-                  productDescription: widget.product.description,
-                ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: ProductImage(
+                imageUrl: widget.product.image,
+                size: 80,
+                productDescription: widget.product.description,
               ),
             ),
           ),
-
           const SizedBox(width: 16),
-
-          // Información del producto
+          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Nombre/marca del producto con verificación
                 Row(
                   children: [
-                    // Ícono de verificación si el producto está verificado
                     if (widget.product.isVerified) ...[
-                      Icon(
-                        Icons.verified,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
-                      const SizedBox(width: 6),
+                      const Icon(Icons.verified, size: 18, color: Colors.blue),
+                      const SizedBox(width: 4),
                     ],
-                    // Nombre del producto
-                    _titleItem.isEmpty
-                        ? const SizedBox()
-                        : Expanded(
-                            child: Text(
-                              _titleItem,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: widget.product.isVerified
-                                          ? Colors.blue
-                                          : null,
-                                      fontSize: 16),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Text(
+                        _titleItem.isEmpty ? 'Producto' : _titleItem,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                          ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
-
                 const SizedBox(height: 4),
-
-                // Descripción
                 Text(
                   _itemDescription,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-
-                const SizedBox(height: 8),
-
-                // badge : informacion adicional y accion de editar el precio
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    // text : precio del producto
                     DialogComponents.infoBadge(
                       context: context,
                       text: CurrencyFormatter.formatPrice(
@@ -206,20 +187,44 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
                           Theme.of(context).colorScheme.primaryContainer,
                       textColor:
                           Theme.of(context).colorScheme.onPrimaryContainer,
+                      icon: Icons.attach_money,
                     ),
                     const SizedBox(width: 8),
-                    // textbutton : editar producto
-                    TextButton.icon(
-                      onPressed: _isProcessing
+                    // Action chip styled button for editing price
+                    InkWell(
+                      onTap: _isProcessing
                           ? null
                           : () {
                               Navigator.of(context).pop();
                               _editProductPrices();
                             },
-                      icon: widget.product.code.isNotEmpty
-                          ? const Icon(Icons.security, size: 18)
-                          : null,
-                      label: const Text('Editar'),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                         decoration: BoxDecoration(
+                           borderRadius: BorderRadius.circular(20),
+                           border: Border.all(
+                             color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                           )
+                         ),
+                        child: Row(
+                          children: [
+                            if (widget.product.code.isNotEmpty) ...[
+                               Icon(Icons.edit_outlined, 
+                                size: 14, 
+                                color: Theme.of(context).colorScheme.primary),
+                               const SizedBox(width: 4),
+                            ],
+                            Text(
+                              'Editar',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -232,30 +237,18 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
   }
 
   Widget _buildQuantitySection() {
-    final theme = Theme.of(context); 
+    final theme = Theme.of(context);
     final formattedTotal = CurrencyFormatter.formatPrice(value: _totalPrice);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Column(
+    return DialogComponents.infoSection(
+      context: context,
+      title: 'Ajustar Cantidad',
+      icon: Icons.exposure,
+      backgroundColor: theme.colorScheme.surfaceContainerLowest.withValues(alpha: 0.5),
+      content: Column(
         children: [
-          // Título de sección sutil
-          Text(
-            'Cantidad',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Selector de cantidad
+          const SizedBox(height: 8),
+          // view : quantity selector
           QuantitySelector(
             initialQuantity: _quantity,
             unit: widget.product.unit,
@@ -265,36 +258,88 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
             showInput: true,
             showUnit: !widget.product.isCombo,
           ),
-
+          const SizedBox(height: 20),
+          DialogComponents.divider(context: context),
           const SizedBox(height: 16),
-          Divider(
-              height: 1,
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-
-          // Resumen de precio
+          // view : total price
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [ 
-              // Total
-              Text(
-                'Total',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 24,fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    'Calculado',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
               ),
               Text(
                 formattedTotal,
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
+                  letterSpacing: -0.5,
                 ),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildComboItemsList() {
+    return DialogComponents.itemList(
+      context: context,
+      title: 'Contenido del combo',
+      items: widget.product.comboItems.map((item) {
+        return Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '${item.quantity.toInt()}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+      useFillStyle: true,
+      maxVisibleItems: 3,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
     );
   }
 
@@ -416,51 +461,6 @@ class _ProductEditDialogState extends State<ProductEditDialog> {
         widget.onProductUpdated?.call();
       }
     }
-  }
-  Widget _buildComboItemsList() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Incluye:',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-          ),
-          const SizedBox(height: 8),
-          ...widget.product.comboItems.map((item) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle_outline, 
-                    size: 14, 
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${item.quantity.toInt()}x ${item.name}', // Simplified item display
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
   }
 }
 

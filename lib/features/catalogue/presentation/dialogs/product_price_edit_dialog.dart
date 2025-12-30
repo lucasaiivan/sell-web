@@ -107,90 +107,98 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
   }
 
   Widget _buildPriceFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Para items rápidos: solo mostrar precio de venta
-        if (_isQuickItem) ...[
-          // Solo Precio de Venta para items rápidos
-          MoneyInputTextField(
-            controller: _salePriceController,
-            labelText: 'Precio de Venta al Público *',
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'El precio de venta es requerido';
-              }
-              final salePrice = _salePriceController.doubleValue;
-
-              if (salePrice <= 0) {
-                return 'El precio debe ser mayor a 0';
-              }
-
-              return null;
-            },
-            onTextChanged: (value) {
-              setState(() {}); // Para actualizar el estado de los cambios
-            },
-          ),
-        ] else ...[
-          // Para productos registrados: mostrar ambos precios
-          // Precio de Coste
-          MoneyInputTextField(
-            controller: _purchasePriceController,
-            labelText: 'Precio de Coste (Opcional)',
-            validator: (value) {
-              if (value != null && value.isNotEmpty) {
-                final purchasePrice = _purchasePriceController.doubleValue;
+    return DialogComponents.infoSection(
+      context: context,
+      title: 'Ajuste de Precios',
+      icon: Icons.attach_money,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Para items rápidos: solo mostrar precio de venta
+          if (_isQuickItem) ...[
+            // Solo Precio de Venta para items rápidos
+            DialogComponents.moneyField(
+              context: context,
+              controller: _salePriceController,
+              label: 'Precio de Venta al Público *',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'El precio de venta es requerido';
+                }
                 final salePrice = _salePriceController.doubleValue;
 
-                if (purchasePrice < 0) {
-                  return 'El precio no puede ser negativo';
+                if (salePrice <= 0) {
+                  return 'El precio debe ser mayor a 0';
                 }
 
-                // Validar que el precio de coste no sea mayor al de venta si ambos están definidos
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {}); // Para actualizar el estado de los cambios
+              },
+            ),
+          ] else ...[
+            // Para productos registrados: mostrar ambos precios
+            // Precio de Coste
+            DialogComponents.moneyField(
+              context: context,
+              controller: _purchasePriceController,
+              label: 'Precio de Coste (Opcional)',
+              validator: (value) {
+                if (value != null && value.isNotEmpty) {
+                  final purchasePrice = _purchasePriceController.doubleValue;
+                  final salePrice = _salePriceController.doubleValue;
+
+                  if (purchasePrice < 0) {
+                    return 'El precio no puede ser negativo';
+                  }
+
+                  // Validar que el precio de coste no sea mayor al de venta si ambos están definidos
+                  if (purchasePrice > 0 &&
+                      salePrice > 0 &&
+                      purchasePrice > salePrice) {
+                    return 'El precio de coste no puede ser mayor al de venta';
+                  }
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {}); // Para actualizar el estado de los cambios
+              },
+            ),
+            const SizedBox(height: 16),
+            // Precio de Venta
+            DialogComponents.moneyField(
+              context: context,
+              controller: _salePriceController,
+              label: 'Precio de Venta al Público *',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'El precio de venta es requerido';
+                }
+                final salePrice = _salePriceController.doubleValue;
+                final purchasePrice = _purchasePriceController.doubleValue;
+
+                if (salePrice <= 0) {
+                  return 'El precio debe ser mayor a 0';
+                }
+
+                // Validar que el precio de venta no sea menor al de compra si ambos están definidos
                 if (purchasePrice > 0 &&
                     salePrice > 0 &&
-                    purchasePrice > salePrice) {
-                  return 'El precio de coste no puede ser mayor al de venta';
+                    salePrice < purchasePrice) {
+                  return 'El precio de venta no puede ser menor al de compra';
                 }
-              }
-              return null;
-            },
-            onTextChanged: (value) {
-              setState(() {}); // Para actualizar el estado de los cambios
-            },
-          ),
-          const SizedBox(height: 16),
-          // Precio de Venta
-          MoneyInputTextField(
-            controller: _salePriceController,
-            labelText: 'Precio de Venta al Público *',
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'El precio de venta es requerido';
-              }
-              final salePrice = _salePriceController.doubleValue;
-              final purchasePrice = _purchasePriceController.doubleValue;
 
-              if (salePrice <= 0) {
-                return 'El precio debe ser mayor a 0';
-              }
-
-              // Validar que el precio de venta no sea menor al de compra si ambos están definidos
-              if (purchasePrice > 0 &&
-                  salePrice > 0 &&
-                  salePrice < purchasePrice) {
-                return 'El precio de venta no puede ser menor al de compra';
-              }
-
-              return null;
-            },
-            onTextChanged: (value) {
-              setState(() {}); // Para actualizar el estado de los cambios
-            },
-          ),
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {}); // Para actualizar el estado de los cambios
+              },
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -205,29 +213,39 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con descripción del producto y estado
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
+          Row(
             children: [
-              // Icono y estado
+              Icon(
+                Icons.analytics_outlined, 
+                size: 20, 
+                color: theme.colorScheme.onSurfaceVariant
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Resumen de Impacto',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const Spacer(),
+              // Badge de estado
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: _hasChanges
-                      ? theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.3)
+                      ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
                       : theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -235,7 +253,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      _hasChanges ? Icons.compare_arrows : Icons.info_outline,
+                      _hasChanges ? Icons.compare_arrows : Icons.check_circle_outline,
                       size: 14,
                       color: _hasChanges
                           ? theme.colorScheme.primary
@@ -243,7 +261,7 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _hasChanges ? 'Cambios' : 'Actual',
+                      _hasChanges ? 'Modificado' : 'Sin cambios',
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: _hasChanges
@@ -254,19 +272,12 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
-              // Descripción del producto
-              Text(
-                widget.product.description,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
             ],
           ),
-          const SizedBox(height: 12),
+          
+          const SizedBox(height: 16),
+          DialogComponents.divider(context: context),
+          const SizedBox(height: 16),
 
           // Información horizontal de precios
           if (_hasChanges) ...[
@@ -281,198 +292,178 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
 
   Widget _buildHorizontalChanges(
       ThemeData theme, double oldProfitMargin, double newProfitMargin) {
-    final items = <Widget>[];
-
-    // Precio de venta
-    if (_newSalePrice != widget.product.salePrice) {
-      items.add(_buildCompactChangeItem(
-        'Venta',
-        CurrencyFormatter.formatPrice(value: widget.product.salePrice),
-        CurrencyFormatter.formatPrice(value: _newSalePrice),
-        theme,
-      ));
-    }
-
-    // Precio de coste
-    if (_newPurchasePrice != widget.product.purchasePrice) {
-      items.add(_buildCompactChangeItem(
-        'Compra',
-        CurrencyFormatter.formatPrice(value: widget.product.purchasePrice),
-        CurrencyFormatter.formatPrice(value: _newPurchasePrice),
-        theme,
-      ));
-    }
-
-    // Ganancia
-    if (oldProfitMargin != newProfitMargin &&
-        (_newPurchasePrice > 0 || widget.product.purchasePrice > 0)) {
-      final oldMarginText = oldProfitMargin > 0
-          ? '${oldProfitMargin.toStringAsFixed(1)}%'
-          : 'N/A';
-      final newMarginText = newProfitMargin > 0
-          ? '${newProfitMargin.toStringAsFixed(1)}%'
-          : 'N/A';
-
-      items.add(_buildCompactChangeItem(
-        'Ganancia',
-        oldMarginText,
-        newMarginText,
-        theme,
-        newValueColor: newProfitMargin > oldProfitMargin
-            ? Colors.green
-            : newProfitMargin < oldProfitMargin
-                ? theme.colorScheme.error
-                : null,
-      ));
-    }
-
-    // Si no hay items, mostrar mensaje informativo
-    if (items.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Text(
-          'Sin cambios detectados',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontStyle: FontStyle.italic,
+    
+    // Si margin mejora, color verde, si empeora, rojo
+    final isMarginBetter = newProfitMargin > oldProfitMargin;
+    final isMarginWorse = newProfitMargin < oldProfitMargin;
+    
+    return Column(
+      children: [
+        // Comparativa Venta
+        if (_newSalePrice != widget.product.salePrice)
+          _buildComparisonRow(
+            context: context,
+            label: 'Precio Venta',
+            oldValue: CurrencyFormatter.formatPrice(value: widget.product.salePrice),
+            newValue: CurrencyFormatter.formatPrice(value: _newSalePrice),
+            icon: Icons.sell_outlined,
           ),
-        ),
-      );
-    }
+          
+        const SizedBox(height: 8),
 
-    return Wrap(
-      spacing: 20,
-      runSpacing: 12,
-      children: items,
+        // Comparativa Coste
+        if (_newPurchasePrice != widget.product.purchasePrice)
+          _buildComparisonRow(
+            context: context,
+            label: 'Precio Coste',
+            oldValue: CurrencyFormatter.formatPrice(value: widget.product.purchasePrice),
+            newValue: CurrencyFormatter.formatPrice(value: _newPurchasePrice),
+            icon: Icons.shopping_bag_outlined,
+          ),
+          
+         const SizedBox(height: 8),
+
+        // Comparativa Margen (solo si hay coste involucrado)
+        if (oldProfitMargin != newProfitMargin &&
+            (_newPurchasePrice > 0 || widget.product.purchasePrice > 0))
+          _buildComparisonRow(
+            context: context,
+            label: 'Margen',
+            oldValue: '${oldProfitMargin.toStringAsFixed(1)}%',
+            newValue: '${newProfitMargin.toStringAsFixed(1)}%',
+            icon: Icons.trending_up,
+            isBetter: isMarginBetter,
+            isWorse: isMarginWorse,
+          ),
+          
+        if (!_isQuickItem && _newSalePrice == widget.product.salePrice && _newPurchasePrice == widget.product.purchasePrice)
+           Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'Ajusta los valores arriba',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildHorizontalCurrent(ThemeData theme, double profitMargin) {
-    final items = <Widget>[
-      _buildCompactCurrentItem(
-          'Venta',
-          CurrencyFormatter.formatPrice(value: widget.product.salePrice),
-          theme),
-    ];
-
-    if (widget.product.purchasePrice > 0) {
-      items.add(_buildCompactCurrentItem(
-          'Compra',
-          CurrencyFormatter.formatPrice(value: widget.product.purchasePrice),
-          theme));
-      items.add(_buildCompactCurrentItem(
-        'Ganancia',
-        '${profitMargin.toStringAsFixed(1)}%',
-        theme,
-        valueColor: profitMargin > 0 ? Colors.green : theme.colorScheme.error,
-      ));
-    }
-
-    return Wrap(
-      spacing: 20,
-      runSpacing: 12,
-      children: items,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildStatColumn(
+          context: context,
+          label: 'Venta',
+          value: CurrencyFormatter.formatPrice(value: widget.product.salePrice),
+          icon: Icons.sell_outlined,
+        ),
+        if (widget.product.purchasePrice > 0) ...[
+          Container(height: 30, width: 1, color: theme.colorScheme.outlineVariant),
+          _buildStatColumn(
+            context: context,
+            label: 'Coste',
+            value: CurrencyFormatter.formatPrice(value: widget.product.purchasePrice),
+            icon: Icons.shopping_bag_outlined,
+          ),
+          Container(height: 30, width: 1, color: theme.colorScheme.outlineVariant),
+          _buildStatColumn(
+            context: context,
+            label: 'Margen',
+            value: '${profitMargin.toStringAsFixed(1)}%',
+            icon: Icons.trending_up,
+            valueColor: profitMargin > 0 ? Colors.green : theme.colorScheme.error,
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildCompactChangeItem(
-    String label,
-    String oldValue,
-    String newValue,
-    ThemeData theme, {
-    Color? newValueColor,
+  Widget _buildComparisonRow({
+    required BuildContext context,
+    required String label,
+    required String oldValue,
+    required String newValue,
+    required IconData icon,
+    bool? isBetter,
+    bool? isWorse,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+    final theme = Theme.of(context);
+    final valueColor = isBetter == true ? Colors.green : (isWorse == true ? theme.colorScheme.error : theme.colorScheme.primary);
+    
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 2,
+          child: Text(label, style: theme.textTheme.bodyMedium),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
+        Text(
+          oldValue,
+          style: theme.textTheme.bodySmall?.copyWith(
+            decoration: TextDecoration.lineThrough,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Icon(Icons.arrow_forward, size: 14, color: Colors.grey),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: valueColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: valueColor.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            newValue,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: valueColor,
             ),
           ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                oldValue,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  decoration: TextDecoration.lineThrough,
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  fontSize: 12,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 14,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              Text(
-                newValue,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: newValueColor ?? theme.colorScheme.primary,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildCompactCurrentItem(String label, String value, ThemeData theme,
-      {Color? valueColor}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+  Widget _buildStatColumn({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required IconData icon,
+    Color? valueColor,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
-            ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: valueColor ?? theme.colorScheme.onSurface,
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? theme.colorScheme.onSurface,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

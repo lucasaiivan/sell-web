@@ -53,6 +53,19 @@ class IdGenerator {
     return _generateId(transactionPrefix, _generateRandomSalt(3));
   }
 
+  /// Genera un ID único para una cuenta de negocio (estilo Firestore)
+  /// Retorna un ID de 20 caracteres alfanuméricos similar al formato de Firestore
+  /// 
+  /// **Formato:** 20 caracteres alfanuméricos (A-Za-z0-9)
+  /// **Ejemplo:** `a1B2c3D4e5F6g7H8i9J0`
+  static String generateAccountId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    final rnd = Random();
+    return String.fromCharCodes(
+      Iterable.generate(20, (_) => chars.codeUnitAt(rnd.nextInt(chars.length)))
+    );
+  }
+
   /// Genera un ID genérico con el formato estándar
   static String _generateId(String prefix, String hash) {
     final now = DateTime.now();

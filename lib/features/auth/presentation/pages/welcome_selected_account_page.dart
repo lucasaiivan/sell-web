@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
+import 'package:sellweb/features/auth/presentation/dialogs/account_business_dialog.dart';
 
 class WelcomeSelectedAccountPage extends StatelessWidget {
   final Future<void> Function(AccountProfile) onSelectAccount;
@@ -208,6 +210,39 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 30),
+                  
+                  // Botón: Crear nueva cuenta
+                  if (!authProvider.isLoadingAccounts && authProvider.user != null)
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        // Para crear una cuenta necesitamos el ID del usuario actual
+                        final userId = authProvider.user?.uid;
+                        if (userId != null) {
+                          // Crear perfil admin temporal para la creación
+                          final tempAdmin = AdminProfile(
+                            id: userId,
+                            email: authProvider.user?.email ?? '',
+                            name: authProvider.user?.displayName ?? '',
+                            creation: DateTime.now(),
+                            lastUpdate: DateTime.now(),
+                          );
+                          
+                          await showAccountBusinessDialog(
+                            context: context,
+                            currentAdmin: tempAdmin,
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.add_business_rounded),
+                      label: const Text('Crear Nueva Cuenta'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+                  
                   // Botón para cerrar sesión del usuario
                   if (authProvider.user?.email != null)
                     const SizedBox(height: 50),

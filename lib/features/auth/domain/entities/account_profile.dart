@@ -42,6 +42,8 @@ class AccountProfile {
   final String province;
   final String town;
   final DateTime creation;
+  final String ownerId; // ID del administrador propietario de la cuenta
+  final DateTime? lastUsernameUpdate; // Última vez que se actualizó el username
 
   const AccountProfile({
     this.id = "",
@@ -61,6 +63,8 @@ class AccountProfile {
     this.province = "",
     this.town = "",
     required this.creation,
+    this.ownerId = "",
+    this.lastUsernameUpdate,
   });
 
   /// Copia la entidad con los valores proporcionados
@@ -82,6 +86,8 @@ class AccountProfile {
     String? province,
     String? town,
     DateTime? creation,
+    String? ownerId,
+    DateTime? lastUsernameUpdate,
   }) {
     return AccountProfile(
       id: id ?? this.id,
@@ -101,6 +107,8 @@ class AccountProfile {
       province: province ?? this.province,
       town: town ?? this.town,
       creation: creation ?? this.creation,
+      ownerId: ownerId ?? this.ownerId,
+      lastUsernameUpdate: lastUsernameUpdate ?? this.lastUsernameUpdate,
     );
   }
 
@@ -140,6 +148,60 @@ class AccountProfile {
     if (province.isNotEmpty) parts.add(province);
     if (country.isNotEmpty) parts.add(country);
     return parts.join(', ');
+  }
+
+  /// Verifica si el administrador proporcionado es el propietario de esta cuenta
+  ///
+  /// **Parámetros:**
+  /// - `adminId`: ID del administrador a verificar
+  ///
+  /// **Retorna:** `true` si el adminId coincide con el ownerId dela cuenta
+  bool isOwner(String adminId) => ownerId == adminId && adminId.isNotEmpty;
+
+  /// Verifica si el username puede ser actualizado
+  ///
+  /// El username puede actualizarse si:
+  /// - Nunca ha sido actualizado (lastUsernameUpdate es null)
+  /// - Han pasado 30 días o más desde la última actualización
+  ///
+  /// **Retorna:** `true` si puede actualizar el username
+  bool canUpdateUsername() {
+    if (lastUsernameUpdate == null) {
+      return true; // Primera vez, puede actualizar
+    }
+
+    final daysSinceLastUpdate = DateTime.now().difference(lastUsernameUpdate!).inDays;
+    return daysSinceLastUpdate >= 30;
+  }
+
+  /// Calcula los días restantes hasta que pueda actualizar el username
+  ///
+  /// **Retorna:** Número de días restantes, o 0 si ya puede actualizar
+  int daysUntilUsernameUpdate() {
+    if (lastUsernameUpdate == null) {
+      return 0; // Puede actualizar inmediatamente
+    }
+
+    final daysSinceLastUpdate = DateTime.now().difference(lastUsernameUpdate!).inDays;
+    final daysRemaining = 30 - daysSinceLastUpdate;
+    
+    return daysRemaining > 0 ? daysRemaining : 0;
+  }
+
+  /// Retorna mensaje informativo sobre cuándo puede actualizar el username
+  ///
+  /// **Retorna:** String con el mensaje apropiado
+  String getUsernameUpdateMessage() {
+    if (canUpdateUsername()) {
+      return 'Puedes actualizar tu nombre de usuario';
+    }
+
+    final days = daysUntilUsernameUpdate();
+    if (days == 1) {
+      return 'Podrás actualizar tu nombre de usuario en 1 día';
+    }
+    
+    return 'Podrás actualizar tu nombre de usuario en $days días';
   }
 
   @override

@@ -4,12 +4,17 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/auth_profile.dart';
 import '../../domain/entities/account_profile.dart';
+import '../../domain/entities/admin_profile.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/sign_in_with_google_usecase.dart';
 import '../../domain/usecases/sign_in_silently_usecase.dart';
 import '../../domain/usecases/sign_in_anonymously_usecase.dart';
 import '../../domain/usecases/sign_out_usecase.dart';
 import '../../domain/usecases/get_user_stream_usecase.dart';
 import '../../domain/usecases/get_user_accounts_usecase.dart';
+import '../../domain/usecases/create_business_account_usecase.dart';
+import '../../domain/usecases/update_business_account_usecase.dart';
+import '../../domain/usecases/check_username_availability_usecase.dart';
 
 /// Provider para gestionar el estado de autenticación
 ///
@@ -26,6 +31,13 @@ class AuthProvider extends ChangeNotifier {
   final SignOutUseCase _signOutUseCase;
   final GetUserStreamUseCase _getUserStreamUseCase;
   final GetUserAccountsUseCase _getUserAccountsUseCase;
+  final CreateBusinessAccountUseCase _createBusinessAccountUseCase;
+  final UpdateBusinessAccountUseCase _updateBusinessAccountUseCase;
+  final CheckUsernameAvailabilityUseCase _checkUsernameAvailabilityUseCase;
+  final AuthRepository _authRepository;
+
+  // Exponer repository para uso en widgets (ej: UsernameTextField)
+  AuthRepository get authRepository => _authRepository;
 
   GetUserAccountsUseCase get getUserAccountsUseCase => _getUserAccountsUseCase;
 
@@ -70,6 +82,10 @@ class AuthProvider extends ChangeNotifier {
     this._signOutUseCase,
     this._getUserStreamUseCase,
     this._getUserAccountsUseCase,
+    this._createBusinessAccountUseCase,
+    this._updateBusinessAccountUseCase,
+    this._checkUsernameAvailabilityUseCase,
+    this._authRepository,
   ) {
     debugPrint('🚀 [AuthProvider] Constructor - Inicializando...');
 
@@ -277,6 +293,103 @@ class AuthProvider extends ChangeNotifier {
         trialStart: DateTime.now(),
         trialEnd: DateTime.now(),
       );
+    }
+  }
+
+  /// Crea una nueva cuenta comercio
+  ///
+  /// **Retorna:** `true` si se creó exitosamente, `false` en caso contrario
+  Future<bool> createBusinessAccount(AccountProfile account) async {
+    try {
+      debugPrint('📝 [AuthProvider] Creando nueva cuenta: ${account.username}');
+
+      final result = await _createBusinessAccountUseCase.call(account);
+
+      return result.fold(
+        (failure) {
+          debugPrint('❌ [AuthProvider] Error al crear cuenta: ${failure.message}');
+          _authError = failure.message;
+          notifyListeners();
+          return false;
+        },
+        (createdAccount) {
+          debugPrint('✅ [AuthProvider] Cuenta creada: ${createdAccount.id}');
+          
+          // Agregar la nueva cuenta a la lista
+          _accountsAssociateds.add(createdAccount);
+          notifyListeners();
+          
+          return true;
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ [AuthProvider] Error inesperado al crear cuenta: $e');
+      _authError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Actualiza una cuenta comercio existente
+  ///
+  /// **Retorna:** `true` si se actualizó exitosamente, `false` en caso contrario
+  Future<bool> updateBusinessAccount(
+    AccountProfile account,
+    AdminProfile currentAdmin,
+  ) async {
+    try {
+      debugPrint('📝 [AuthProvider] Actualizando cuenta: ${account.id}');
+
+      final result = await _updateBusinessAccountUseCase.call(
+        account: account,
+        currentAdmin: currentAdmin,
+      );
+
+      return result.fold(
+        (failure) {
+          debugPrint('❌ [AuthProvider] Error al actualizar cuenta: ${failure.message}');
+          _authError = failure.message;
+          notifyListeners();
+          return false;
+        },
+        (_) {
+          debugPrint('✅ [AuthProvider] Cuenta actualizada: ${account.id}');
+          
+          // Actualizar la cuenta en la lista
+          final index = _accountsAssociateds.indexWhere((a) => a.id == account.id);
+          if (index != -1) {
+            _accountsAssociateds[index] = account;
+            notifyListeners();
+          }
+          
+          return true;
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ [AuthProvider] Error inesperado al actualizar cuenta: $e');
+      _authError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Verifica disponibilidad de un username
+  ///
+  /// **Retorna:** `true` si está disponible, `false` si ya existe
+  Future<bool> checkUsernameAvailability(String username) async {
+    try {
+      final result = await _checkUsernameAvailabilityUseCase.call(username);
+      
+      return result.fold(
+        (failure) {
+          debugPrint('❌ [AuthProvider] Error al verificar username: ${failure.message}');
+          return false;
+        },
+        (isAvailable) => isAvailable,
+      );
+    } catch (e) {
+      debugPrint('❌ [AuthProvider] Error inesperado verificando username: $e');
+      return false;
     }
   }
 }

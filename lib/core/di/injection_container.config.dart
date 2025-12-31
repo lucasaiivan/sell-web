@@ -59,8 +59,12 @@ import 'package:sellweb/features/auth/domain/repositories/auth_repository.dart'
     as _i348;
 import 'package:sellweb/features/auth/domain/usecases/add_demo_account_if_anonymous_usecase.dart'
     as _i823;
+import 'package:sellweb/features/auth/domain/usecases/check_username_availability_usecase.dart'
+    as _i923;
 import 'package:sellweb/features/auth/domain/usecases/clear_admin_profile_usecase.dart'
     as _i465;
+import 'package:sellweb/features/auth/domain/usecases/create_business_account_usecase.dart'
+    as _i437;
 import 'package:sellweb/features/auth/domain/usecases/fetch_admin_profile_usecase.dart'
     as _i33;
 import 'package:sellweb/features/auth/domain/usecases/get_account_admins_usecase.dart'
@@ -95,6 +99,10 @@ import 'package:sellweb/features/auth/domain/usecases/sign_in_with_google_usecas
     as _i253;
 import 'package:sellweb/features/auth/domain/usecases/sign_out_usecase.dart'
     as _i158;
+import 'package:sellweb/features/auth/domain/usecases/update_business_account_usecase.dart'
+    as _i762;
+import 'package:sellweb/features/auth/domain/usecases/validate_username_usecase.dart'
+    as _i85;
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
     as _i638;
 import 'package:sellweb/features/cash_register/data/repositories/cash_register_repository_impl.dart'
@@ -303,6 +311,8 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     final externalModule = _$ExternalModule();
+    gh.factory<_i85.ValidateUsernameUseCase>(
+        () => _i85.ValidateUsernameUseCase());
     gh.lazySingleton<_i974.FirebaseFirestore>(() => externalModule.firestore);
     gh.lazySingleton<_i457.FirebaseStorage>(() => externalModule.storage);
     await gh.lazySingletonAsync<_i460.SharedPreferences>(
@@ -442,6 +452,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i253.SignInWithGoogleUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i380.SignInAnonymouslyUseCase>(
         () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i158.SignOutUseCase>(
+        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i923.CheckUsernameAvailabilityUseCase>(() =>
+        _i923.CheckUsernameAvailabilityUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i762.UpdateBusinessAccountUseCase>(
+        () => _i762.UpdateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -573,9 +589,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i453.GetProductsUseCase>(
         () => _i453.GetProductsUseCase(gh<_i83.CatalogueRepository>()));
-    gh.lazySingleton<_i158.SignOutUseCase>(
-        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
-
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
         () => _i644.GetUserAccountsUseCase(
               gh<_i840.AccountRepository>(),
@@ -617,14 +630,12 @@ extension GetItInjectableX on _i174.GetIt {
           printerService: gh<_i897.ThermalPrinterHttpService>(),
           catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
         ));
-    gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
-          gh<_i253.SignInWithGoogleUseCase>(),
-          gh<_i1046.SignInSilentlyUseCase>(),
-          gh<_i380.SignInAnonymouslyUseCase>(),
-          gh<_i158.SignOutUseCase>(),
-          gh<_i557.GetUserStreamUseCase>(),
-          gh<_i644.GetUserAccountsUseCase>(),
-        ));
+    gh.factory<_i437.CreateBusinessAccountUseCase>(
+        () => _i437.CreateBusinessAccountUseCase(
+              gh<_i348.AuthRepository>(),
+              gh<_i85.ValidateUsernameUseCase>(),
+              gh<_i923.CheckUsernameAvailabilityUseCase>(),
+            ));
     gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
           gh<_i512.OpenCashRegisterUseCase>(),
           gh<_i202.CloseCashRegisterUseCase>(),
@@ -644,6 +655,18 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i466.GetTransactionsByDateRangeUseCase>(),
           gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
           gh<_i581.AppDataPersistenceService>(),
+        ));
+    gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
+          gh<_i253.SignInWithGoogleUseCase>(),
+          gh<_i1046.SignInSilentlyUseCase>(),
+          gh<_i380.SignInAnonymouslyUseCase>(),
+          gh<_i158.SignOutUseCase>(),
+          gh<_i557.GetUserStreamUseCase>(),
+          gh<_i644.GetUserAccountsUseCase>(),
+          gh<_i437.CreateBusinessAccountUseCase>(),
+          gh<_i762.UpdateBusinessAccountUseCase>(),
+          gh<_i923.CheckUsernameAvailabilityUseCase>(),
+          gh<_i348.AuthRepository>(),
         ));
     gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
         () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));

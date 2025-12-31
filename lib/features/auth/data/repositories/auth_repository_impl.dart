@@ -1,11 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/auth_profile.dart';
+import '../../domain/entities/account_profile.dart';
 import '../models/auth_profile_model.dart';
+import '../models/account_profile_model.dart';
+import '../../../../core/services/database/firestore_paths.dart';
+import '../../../../core/utils/helpers/id_generator.dart';
 
 /// Implementación del repositorio de autenticación
 ///
@@ -126,6 +131,81 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       return Left(ServerFailure(
           'Error en inicio de sesión silencioso: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkUsernameExists(String username) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Consultar en collection '/ACCOUNTS' donde username == providedUsername
+      final querySnapshot = await firestore
+          .collection(FirestorePaths.accounts)
+          .where('username', isEqualTo: username.toLowerCase())
+          .limit(1)
+          .get();
+
+      // Si hay documentos, el username ya existe
+      return Right(querySnapshot.docs.isNotEmpty);
+    } catch (e) {
+      return Left(FirestoreFailure(
+          'Error al verificar disponibilidad del username: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AccountProfile>> createBusinessAccount(
+      AccountProfile account) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // Generar ID único para la cuenta usando IdGenerator
+      final accountId = IdGenerator.generateAccountId();
+
+      // Crear AccountProfile con el ID generado
+      final accountWithId = account.copyWith(
+        id: accountId,
+        creation: DateTime.now(),
+      );
+
+      // Convertir a Map para Firestore
+      final accountModel = AccountProfileModel.fromEntity(accountWithId);
+      final data = accountModel.toFirestore();
+
+      // Guardar en Firestore usando el ID generado
+      await firestore.doc(FirestorePaths.account(accountId)).set(data);
+
+      return Right(accountWithId);
+    } catch (e) {
+      return Left(FirestoreFailure(
+          'Error al crear la cuenta: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateBusinessAccount(
+      AccountProfile account) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      if (account.id.isEmpty) {
+        return Left(ValidationFailure('ID de cuenta inválido'));
+      }
+
+      // Convertir a Map para Firestore
+      final accountModel = AccountProfileModel.fromEntity(account);
+      final data = accountModel.toFirestore();
+
+      // Actualizar documento en '/ACCOUNTS/{id}'
+      await firestore
+          .doc(FirestorePaths.account(account.id))
+          .set(data, SetOptions(merge: true));
+
+      return const Right(null);
+    } catch (e) {
+      return Left(FirestoreFailure(
+          'Error al actualizar la cuenta: ${e.toString()}'));
     }
   }
 }

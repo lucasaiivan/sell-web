@@ -197,6 +197,8 @@ class CatalogueProvider extends ChangeNotifier
 
   // Stream subscription y timer para debouncing
   StreamSubscription<QuerySnapshot>? _catalogueSubscription;
+  StreamSubscription<List<Category>>? _categoriesSubscription;
+  StreamSubscription<List<Provider>>? _providersSubscription;
   Timer? _searchDebounceTimer;
 
   // Immutable state
@@ -1209,34 +1211,53 @@ class CatalogueProvider extends ChangeNotifier
     );
   }
 
-  @override
-  void dispose() {
-    _disposed = true;
-    _catalogueSubscription?.cancel();
-    _searchDebounceTimer?.cancel();
-    super.dispose();
-  }
-
   /// Implementación de InitializableProvider: Inicializa el provider para una cuenta
   @override
   Future<void> initialize(String accountId) async {
     initCatalogue(accountId);
   }
 
-  /// Implementación de InitializableProvider: Limpia recursos y cancela suscripciones
+  /// Limpia todos los recursos y cancela suscripciones de Firestore
   @override
   void cleanup() {
+    debugPrint('🧹 [CatalogueProvider] Limpiando recursos...');
+    
+    // Cancelar suscripción del catálogo
     _catalogueSubscription?.cancel();
     _catalogueSubscription = null;
+    
+    // Cancelar suscripciones de categorías y proveedores
+    _categoriesSubscription?.cancel();
+    _categoriesSubscription = null;
+    _providersSubscription?.cancel();
+    _providersSubscription = null;
+    
+    // Cancelar timers
     _searchDebounceTimer?.cancel();
     _searchDebounceTimer = null;
+    
+    // Resetear estado
     _state = const _CatalogueState(products: []);
+    _categories = [];
+    _providers = [];
+    _cachedMetrics = const CatalogueMetrics(
+      articles: 0,
+      inventory: 0,
+      inventoryValue: 0,
+    );
+    _productsByCode = {};
+    _categoryProductCounts = {};
+    _providerProductCounts = {};
+    
+    debugPrint('✅ [CatalogueProvider] Recursos limpiados (provider reutilizable)');
+  }
 
-    try {
-      notifyListeners();
-    } catch (e) {
-      debugPrint('⚠️ CatalogueProvider.cleanup: Provider ya disposed');
-    }
+  @override
+  void dispose() {
+    debugPrint('🗑️ [CatalogueProvider] Disposing...');
+    cleanup();
+    _disposed = true;
+    super.dispose();
   }
 
   @override
@@ -1402,7 +1423,8 @@ class CatalogueProvider extends ChangeNotifier
 
   /// Carga las categorías desde Firestore
   void loadCategories(String accountId) {
-    getCategoriesStream(accountId).listen((categories) {
+    _categoriesSubscription?.cancel();
+    _categoriesSubscription = getCategoriesStream(accountId).listen((categories) {
       _categories = categories;
       notifyListeners();
     });
@@ -1410,7 +1432,8 @@ class CatalogueProvider extends ChangeNotifier
 
   /// Carga los proveedores desde Firestore
   void loadProviders(String accountId) {
-    getProvidersStream(accountId).listen((providers) {
+    _providersSubscription?.cancel();
+    _providersSubscription = getProvidersStream(accountId).listen((providers) {
       _providers = providers;
       notifyListeners();
     });

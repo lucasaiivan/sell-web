@@ -1,20 +1,31 @@
-/// Rutas centralizadas de Firestore
+/// Rutas centralizadas de Firestore - ÚNICA FUENTE DE VERDAD
+///
+/// **⚠️ IMPORTANTE:**
+/// Esta clase es la ÚNICA fuente de verdad para todas las rutas de Firestore.
+/// NUNCA uses strings hardcoded como 'bussines', 'accounts', etc.
+/// SIEMPRE usa los métodos de esta clase.
 ///
 /// **Responsabilidad:**
 /// - Proveer paths type-safe de colecciones
 /// - Evitar hardcoding de rutas en features
 /// - Documentar estructura de base de datos
+/// - Garantizar consistencia entre todos los features
 ///
 /// **Uso:**
 /// ```dart
+/// // ✅ CORRECTO
 /// final cataloguePath = FirestorePaths.accountCatalogue(accountId);
 /// final ref = firestore.collection(cataloguePath);
+///
+/// // ❌ INCORRECTO - NUNCA hacer esto
+/// final ref = firestore.collection('bussines').doc(id);
 /// ```
 ///
 /// **Beneficios:**
 /// - Refactor-safe: cambiar estructura en un solo lugar
 /// - Type-safe: parámetros requeridos en compile-time
 /// - Self-documenting: estructura de DB visible
+/// - Agent-friendly: Los agentes de IA deben consultar este archivo
 class FirestorePaths {
   FirestorePaths._(); // Prevent instantiation
 

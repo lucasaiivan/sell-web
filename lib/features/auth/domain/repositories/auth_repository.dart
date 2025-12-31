@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/auth_profile.dart';
+import '../entities/account_profile.dart';
 
 /// Contrato del repositorio de autenticación
 ///
@@ -41,6 +42,38 @@ abstract class AuthRepository {
   /// Limpia tokens y credenciales de autenticación
   /// Retorna [Right(void)] si es exitoso, [Left(Failure)] si falla
   Future<Either<Failure, void>> signOut();
+
+  /// Verifica si un username ya existe en el sistema
+  ///
+  /// **Parámetros:**
+  /// - `username`: Username a verificar (debe estar en minúsculas)
+  ///
+  /// **Retorna:**
+  /// - [Right(true)] si el username ya existe
+  /// - [Right(false)] si el username está disponible
+  /// - [Left(Failure)] si hay un error en la consulta
+  Future<Either<Failure, bool>> checkUsernameExists(String username);
+
+  /// Crea una nueva cuenta comercio
+  ///
+  /// **Parámetros:**
+  /// - `account`: Perfil de cuenta a crear (username debe estar validado)
+  ///
+  /// **Retorna:**
+  /// - [Right(AccountProfile)] con la cuenta creada (incluye el ID generado)
+  /// - [Left(Failure)] si hay un error en la creación
+  Future<Either<Failure, AccountProfile>> createBusinessAccount(
+      AccountProfile account);
+
+  /// Actualiza una cuenta comercio existente
+  ///
+  /// **Parámetros:**
+  /// - `account`: Perfil de cuenta con los cambios a aplicar
+  ///
+  /// **Retorna:**
+  /// - [Right(void)] si la actualización es exitosa
+  /// - [Left(Failure)] si hay un error en la actualización
+  Future<Either<Failure, void>> updateBusinessAccount(AccountProfile account);
 
   /// Stream que emite el usuario autenticado actual
   ///

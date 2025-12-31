@@ -23,6 +23,8 @@ class AccountProfileModel extends AccountProfile {
     super.province,
     super.town,
     required super.creation,
+    super.ownerId,
+    super.lastUsernameUpdate,
   });
 
   factory AccountProfileModel.fromDocument(DocumentSnapshot doc) {
@@ -74,6 +76,12 @@ class AccountProfileModel extends AccountProfile {
               ? (data["creation"] as Timestamp).toDate()
               : data["creation"] as DateTime)
           : DateTime.now(),
+      ownerId: data['ownerId'] ?? '',
+      lastUsernameUpdate: data['lastUsernameUpdate'] != null
+          ? (data['lastUsernameUpdate'] is Timestamp
+              ? (data['lastUsernameUpdate'] as Timestamp).toDate()
+              : data['lastUsernameUpdate'] as DateTime)
+          : null,
     );
   }
 
@@ -95,7 +103,14 @@ class AccountProfileModel extends AccountProfile {
         "trial": trial,
         "trialStart": Timestamp.fromDate(trialStart),
         "trialEnd": Timestamp.fromDate(trialEnd),
+        "ownerId": ownerId,
+        "lastUsernameUpdate": lastUsernameUpdate != null
+            ? Timestamp.fromDate(lastUsernameUpdate!)
+            : null,
       };
+
+  /// Convierte a Map para Firestore (alias de toJson)
+  Map<String, dynamic> toFirestore() => toJson();
 
   factory AccountProfileModel.fromMap(Map data) {
     return AccountProfileModel(
@@ -142,6 +157,10 @@ class AccountProfileModel extends AccountProfile {
       trialEnd: data.containsKey('trialEnd')
           ? (data['trialEnd'] as Timestamp).toDate()
           : Timestamp.now().toDate(),
+      ownerId: data['ownerId'] ?? '',
+      lastUsernameUpdate: data['lastUsernameUpdate'] != null
+          ? (data['lastUsernameUpdate'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -164,6 +183,8 @@ class AccountProfileModel extends AccountProfile {
       province: entity.province,
       town: entity.town,
       creation: entity.creation,
+      ownerId: entity.ownerId,
+      lastUsernameUpdate: entity.lastUsernameUpdate,
     );
   }
 }

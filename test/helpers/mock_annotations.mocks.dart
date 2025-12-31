@@ -18,13 +18,13 @@ import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i8;
 import 'package:sellweb/core/errors/failures.dart' as _i26;
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart'
-    as _i29;
+    as _i27;
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart'
-    as _i28;
+    as _i29;
 import 'package:sellweb/features/auth/domain/entities/auth_profile.dart'
     as _i24;
 import 'package:sellweb/features/auth/domain/repositories/account_repository.dart'
-    as _i27;
+    as _i28;
 import 'package:sellweb/features/auth/domain/repositories/auth_repository.dart'
     as _i23;
 import 'package:sellweb/features/catalogue/data/datasources/catalogue_remote_datasource.dart'
@@ -2050,36 +2050,92 @@ class MockAuthRepository extends _i1.Mock implements _i23.AuthRepository {
           ),
         )),
       ) as _i5.Future<_i25.Either<_i26.Failure, void>>);
+
+  @override
+  _i5.Future<_i25.Either<_i26.Failure, bool>> checkUsernameExists(
+          String? username) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #checkUsernameExists,
+          [username],
+        ),
+        returnValue: _i5.Future<_i25.Either<_i26.Failure, bool>>.value(
+            _i8.dummyValue<_i25.Either<_i26.Failure, bool>>(
+          this,
+          Invocation.method(
+            #checkUsernameExists,
+            [username],
+          ),
+        )),
+      ) as _i5.Future<_i25.Either<_i26.Failure, bool>>);
+
+  @override
+  _i5.Future<
+      _i25.Either<_i26.Failure, _i27.AccountProfile>> createBusinessAccount(
+          _i27.AccountProfile? account) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createBusinessAccount,
+          [account],
+        ),
+        returnValue:
+            _i5.Future<_i25.Either<_i26.Failure, _i27.AccountProfile>>.value(
+                _i8.dummyValue<_i25.Either<_i26.Failure, _i27.AccountProfile>>(
+          this,
+          Invocation.method(
+            #createBusinessAccount,
+            [account],
+          ),
+        )),
+      ) as _i5.Future<_i25.Either<_i26.Failure, _i27.AccountProfile>>);
+
+  @override
+  _i5.Future<_i25.Either<_i26.Failure, void>> updateBusinessAccount(
+          _i27.AccountProfile? account) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateBusinessAccount,
+          [account],
+        ),
+        returnValue: _i5.Future<_i25.Either<_i26.Failure, void>>.value(
+            _i8.dummyValue<_i25.Either<_i26.Failure, void>>(
+          this,
+          Invocation.method(
+            #updateBusinessAccount,
+            [account],
+          ),
+        )),
+      ) as _i5.Future<_i25.Either<_i26.Failure, void>>);
 }
 
 /// A class which mocks [AccountRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAccountRepository extends _i1.Mock implements _i27.AccountRepository {
+class MockAccountRepository extends _i1.Mock implements _i28.AccountRepository {
   MockAccountRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<List<_i28.AdminProfile>> getUserAccounts(String? email) =>
+  _i5.Future<List<_i29.AdminProfile>> getUserAccounts(String? email) =>
       (super.noSuchMethod(
         Invocation.method(
           #getUserAccounts,
           [email],
         ),
         returnValue:
-            _i5.Future<List<_i28.AdminProfile>>.value(<_i28.AdminProfile>[]),
-      ) as _i5.Future<List<_i28.AdminProfile>>);
+            _i5.Future<List<_i29.AdminProfile>>.value(<_i29.AdminProfile>[]),
+      ) as _i5.Future<List<_i29.AdminProfile>>);
 
   @override
-  _i5.Future<_i29.AccountProfile?> getAccount(String? accountId) =>
+  _i5.Future<_i27.AccountProfile?> getAccount(String? accountId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getAccount,
           [accountId],
         ),
-        returnValue: _i5.Future<_i29.AccountProfile?>.value(),
-      ) as _i5.Future<_i29.AccountProfile?>);
+        returnValue: _i5.Future<_i27.AccountProfile?>.value(),
+      ) as _i5.Future<_i27.AccountProfile?>);
 
   @override
   _i5.Future<void> saveSelectedAccountId(String? accountId) =>

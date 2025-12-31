@@ -157,6 +157,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
           // Limpiar providers si había sesión anterior
           if (_accountScope != null) {
             _accountScope!.reset();
+            _accountScope = null; // ← Forzar creación de nuevo scope en próximo login
             _lastAccountId = null;
           }
           return const AppPresentationPage();

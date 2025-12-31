@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
+import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/core/presentation/widgets/ui/avatar_user.dart';
 import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart';
 import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
-import 'admin_profile_info_dialog.dart';
+import 'account_business_dialog.dart';
+import 'package:sellweb/core/di/injection_container.dart';
+import 'package:sellweb/core/presentation/providers/account_scope_provider.dart';
+import 'package:sellweb/features/auth/presentation/dialogs/admin_profile_info_dialog.dart';
 
 /// Diálogo de selección de cuentas con información del administrador
 ///
@@ -33,21 +37,21 @@ Future<void> showAccountSelectionDialog({
     width: 600, // Slightly wider for better desktop presentation
     content: const _AccountSelectionContent(),
     actions: [
-      // Botón: Cerrar sesión (más discreto pero accesible)
+      
+      // Botón: Cerrar sesión (solo texto)
       Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
           if (authProvider.user?.email == null) {
             return const SizedBox.shrink();
           }
           final theme = Theme.of(context);
-          return TextButton.icon(
+          return TextButton(
             onPressed: () => _handleSignOut(context, authProvider),
             style: TextButton.styleFrom(
               foregroundColor: theme.colorScheme.error,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            icon: const Icon(Icons.logout_rounded, size: 20),
-            label: const Text('Cerrar sesión'),
+            child: const Text('Cerrar sesión'),
           );
         },
       ),
@@ -92,8 +96,22 @@ Future<void> _handleSignOut(
   );
 
   if (confirm == true && context.mounted) {
+    // 1. Limpiar los providers ANTES de cerrar sesión
+    // Esto cancela los listeners de Firestore mientras el usuario aún tiene permisos
+    try {
+      final accountScope = getIt<AccountScopeProvider>();
+      accountScope.reset();
+      debugPrint('🧹 [SignOut] Providers limpiados exitosamente antes de cerrar sesión');
+    } catch (e) {
+      debugPrint('⚠️ [SignOut] Error al limpiar providers: $e');
+    }
+
+    // 2. Ejecutar cierre de sesión en Firebase
     await authProvider.signOut();
-    Navigator.of(context).pop(); // Cerrar el diálogo de selección de cuentas
+    
+    if (context.mounted) {
+      Navigator.of(context).pop(); // Cerrar el diálogo de selección de cuentas
+    }
   }
 }
 
@@ -138,20 +156,12 @@ class _AccountSelectionContent extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.outline.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        ), 
       ),
-      child: Material(
+      child: Material(elevation: 0,
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -311,16 +321,20 @@ class _AccountSelectionContent extends StatelessWidget {
         ),
         DialogComponents.itemList(
           context: context,
-          items: accounts.map((account) {
-            final isSelected =
-                sellProvider.profileAccountSelected.id == account.id;
-            return _buildAccountItem(context, account, isSelected, sellProvider);
-          }).toList(),
+          items: [
+            ...accounts.map((account) {
+              final isSelected =
+                  sellProvider.profileAccountSelected.id == account.id;
+              return _buildAccountItem(context, account, isSelected, sellProvider);
+            }),
+            // Item: Crear nueva cuenta
+            _buildCreateAccountItem(context, sellProvider),
+          ],
           showDividers: true,
           maxVisibleItems: 10,
           borderRadius: 16,
           useFillStyle: true,
-          backgroundColor: colorScheme.surfaceContainerLow.withValues(alpha: 0.6),
+          backgroundColor: colorScheme.surfaceContainerLow ,
           padding: const EdgeInsets.symmetric(vertical: 4),
         ),
       ],
@@ -452,6 +466,50 @@ class _AccountSelectionContent extends StatelessWidget {
                 ),
               ),
 
+              // Botón Editar (solo si está seleccionada y tiene permisos)
+              if (isSelected) ...[
+                Consumer<SalesProvider>(
+                  builder: (context, salesProvider, _) {
+                    final currentAdmin = salesProvider.currentAdminProfile;
+                    if (currentAdmin == null) return const SizedBox.shrink();
+
+                    // Verificar si es propietario o tiene permiso de editar cuenta
+                    final bool canEdit = account.isOwner(currentAdmin.id) ||
+                        currentAdmin.hasPermission(
+                            AdminPermission.manageAccount);
+
+                    if (!canEdit) return const SizedBox.shrink();
+
+                    return TextButton.icon(
+                      onPressed: () async {
+                        await showAccountBusinessDialog(
+                          context: context,
+                          account: account,
+                          currentAdmin: currentAdmin,
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      icon: Icon(
+                        Icons.edit_rounded,
+                        size: 16,
+                        color: colorScheme.primary,
+                      ),
+                      label: Text(
+                        'Editar',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+
               // Indicador visual (flecha o selección)
               if (!isSelected)
                 Icon(
@@ -459,6 +517,89 @@ class _AccountSelectionContent extends StatelessWidget {
                   size: 14,
                   color: colorScheme.surfaceContainerHigh,
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Item para crear una nueva cuenta
+  Widget _buildCreateAccountItem(
+    BuildContext context,
+    SalesProvider sellProvider,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final currentAdmin = sellProvider.currentAdminProfile;
+
+    if (currentAdmin == null) return const SizedBox.shrink();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          await showAccountBusinessDialog(
+            context: context,
+            currentAdmin: currentAdmin,
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.transparent, width: 1),
+          ),
+          child: Row(
+            children: [
+              // Icono de +
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Texto
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Crear nueva cuenta',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Agrega un nuevo comercio',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Flecha
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: colorScheme.surfaceContainerHigh,
+              ),
             ],
           ),
         ),

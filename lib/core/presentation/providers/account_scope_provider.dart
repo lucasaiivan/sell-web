@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/analytics/presentation/providers/analytics_provider.dart';
+import 'package:sellweb/features/multiuser/presentation/provider/multi_user_provider.dart';
 import 'initializable_provider.dart';
 
 /// Provider: Gestor de Ámbito de Cuenta
@@ -12,13 +13,14 @@ import 'initializable_provider.dart';
 /// - Inicializar y destruir providers al cambiar de cuenta
 /// - Proporcionar acceso centralizado a providers de cuenta
 ///
-/// **Dependencias:** CatalogueProvider, CashRegisterProvider, AnalyticsProvider
+/// **Dependencias:** CatalogueProvider, CashRegisterProvider, AnalyticsProvider, MultiUserProvider
 /// **Inyección DI:** @injectable
 @injectable
 class AccountScopeProvider extends ChangeNotifier {
   final CatalogueProvider catalogueProvider;
   final CashRegisterProvider cashRegisterProvider;
   final AnalyticsProvider analyticsProvider;
+  final MultiUserProvider multiUserProvider;
 
   String? _currentAccountId;
   bool _isInitialized = false;
@@ -27,6 +29,7 @@ class AccountScopeProvider extends ChangeNotifier {
     this.catalogueProvider,
     this.cashRegisterProvider,
     this.analyticsProvider,
+    this.multiUserProvider,
   );
 
   /// ID de la cuenta actual inicializada
@@ -64,6 +67,7 @@ class AccountScopeProvider extends ChangeNotifier {
       _initializeProvider(catalogueProvider, accountId),
       _initializeProvider(cashRegisterProvider, accountId),
       _initializeProvider(analyticsProvider, accountId),
+      _initializeProvider(multiUserProvider, accountId),
     ]);
 
     _isInitialized = true;
@@ -95,6 +99,7 @@ class AccountScopeProvider extends ChangeNotifier {
       catalogueProvider.cleanup();
       cashRegisterProvider.cleanup();
       analyticsProvider.cleanup();
+      multiUserProvider.cleanup();
 
       if (kDebugMode) {
         print('✅ AccountScopeProvider: Providers limpiados correctamente');

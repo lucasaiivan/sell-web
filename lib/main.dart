@@ -18,6 +18,7 @@ import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 import 'package:sellweb/core/presentation/providers/connectivity_provider.dart';
 import 'package:sellweb/features/landing/presentation/pages/landing_page.dart';
 import 'package:sellweb/features/analytics/presentation/providers/analytics_provider.dart';
+import 'package:sellweb/features/multiuser/presentation/provider/multi_user_provider.dart';
 import 'package:sellweb/core/presentation/providers/account_scope_provider.dart';
 // Sales UseCases imports
 import 'package:sellweb/features/sales/domain/usecases/add_product_to_ticket_usecase.dart';
@@ -221,6 +222,10 @@ Widget _buildAccountSpecificProviders({
       ChangeNotifierProxyProvider<AccountScopeProvider, AnalyticsProvider>(
         create: (_) => accountScope.analyticsProvider,
         update: (_, scope, __) => scope.analyticsProvider,
+      ),
+      ChangeNotifierProxyProvider<AccountScopeProvider, MultiUserProvider>(
+        create: (_) => accountScope.multiUserProvider,
+        update: (_, scope, __) => scope.multiUserProvider,
       ),
     ],
     child: const HomePage(),

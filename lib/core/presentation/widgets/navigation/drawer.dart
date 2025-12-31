@@ -5,6 +5,7 @@ import 'package:sellweb/core/presentation/providers/connectivity_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/auth/presentation/dialogs/account_selection_dialog.dart';
+import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import '../widgets.dart';
@@ -176,9 +177,17 @@ class _NavigationMenu extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Consumer2<HomeProvider, ConnectivityProvider>(
-      builder: (context, homeProvider, connectivity, _) {
+    return Consumer3<HomeProvider, ConnectivityProvider, SalesProvider>(
+      builder: (context, homeProvider, connectivity, sellProvider, _) {
         final isOffline = connectivity.isOffline;
+        final adminProfile = sellProvider.currentAdminProfile;
+
+        // Usar hasPermission() para verificaciones consistentes
+        final hasSalesAccess = adminProfile?.hasPermission(AdminPermission.registerSales) ?? false;
+        final hasCatalogueAccess = adminProfile?.hasPermission(AdminPermission.manageCatalogue) ?? false;
+        final hasAnalyticsAccess = adminProfile?.hasPermission(AdminPermission.manageTransactions) ?? false;
+        final hasUsersAccess = adminProfile?.hasPermission(AdminPermission.manageUsers) ?? false;
+        final hasHistoryAccess = adminProfile?.hasPermission(AdminPermission.viewCashCountHistory) ?? false;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -187,85 +196,94 @@ class _NavigationMenu extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Ventas - SIEMPRE habilitado (funciona offline)
-                _DrawerNavTile(
-                  icon: Icons.point_of_sale,
-                  label: 'Ventas',
-                  index: 0,
-                  currentIndex: homeProvider.currentPageIndex,
-                  onSelected: () {
-                    if (homeProvider.currentPageIndex != 0) {
-                      homeProvider.setPageIndex(0);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  colorScheme: colorScheme,
-                  isEnabled: true, // Siempre habilitado
-                ),
-                // Analíticas - Deshabilitado offline
-                _DrawerNavTile(
-                  icon: Icons.analytics,
-                  label: 'Analíticas',
-                  index: 2,
-                  currentIndex: homeProvider.currentPageIndex,
-                  onSelected: () {
-                    if (isOffline) return; // No hacer nada si está offline
-                    if (homeProvider.currentPageIndex != 2) {
-                      homeProvider.setPageIndex(2);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  colorScheme: colorScheme,
-                  isEnabled: !isOffline,
-                ),
-                // Catálogo - Deshabilitado offline
-                _DrawerNavTile(
-                  icon: Icons.inventory_2,
-                  label: 'Catálogo',
-                  index: 1,
-                  currentIndex: homeProvider.currentPageIndex,
-                  onSelected: () {
-                    if (isOffline) return; // No hacer nada si está offline
-                    if (homeProvider.currentPageIndex != 1) {
-                      homeProvider.setPageIndex(1);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  colorScheme: colorScheme,
-                  isEnabled: !isOffline,
-                ),
-                // Usuarios - Deshabilitado offline
-                _DrawerNavTile(
-                  icon: Icons.people,
-                  label: 'Usuarios',
-                  index: 4,
-                  currentIndex: homeProvider.currentPageIndex,
-                  onSelected: () {
-                    if (isOffline) return; // No hacer nada si está offline
-                    if (homeProvider.currentPageIndex != 4) {
-                      homeProvider.setPageIndex(4);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  colorScheme: colorScheme,
-                  isEnabled: !isOffline,
-                ),
-                // Historial Caja - Deshabilitado offline
-                _DrawerNavTile(
-                  icon: Icons.history,
-                  label: 'Historial Caja',
-                  index: 3,
-                  currentIndex: homeProvider.currentPageIndex,
-                  onSelected: () {
-                    if (isOffline) return; // No hacer nada si está offline
-                    if (homeProvider.currentPageIndex != 3) {
-                      homeProvider.setPageIndex(3);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                  colorScheme: colorScheme,
-                  isEnabled: !isOffline,
-                ),
+                // Ventas - Requiere permiso registerSales
+                if (hasSalesAccess)
+                  _DrawerNavTile(
+                    icon: Icons.point_of_sale,
+                    label: 'Ventas',
+                    index: 0,
+                    currentIndex: homeProvider.currentPageIndex,
+                    onSelected: () {
+                      if (homeProvider.currentPageIndex != 0) {
+                        homeProvider.setPageIndex(0);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    colorScheme: colorScheme,
+                    isEnabled: true,
+                  ),
+
+                // Catálogo - Requiere permiso manageCatalogue
+                if (hasCatalogueAccess)
+                  _DrawerNavTile(
+                    icon: Icons.inventory_2,
+                    label: 'Catálogo',
+                    index: 1,
+                    currentIndex: homeProvider.currentPageIndex,
+                    onSelected: () {
+                      if (isOffline) return;
+                      if (homeProvider.currentPageIndex != 1) {
+                        homeProvider.setPageIndex(1);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    colorScheme: colorScheme,
+                    isEnabled: !isOffline,
+                  ),
+
+                // Analíticas - Requiere permiso manageTransactions
+                if (hasAnalyticsAccess)
+                  _DrawerNavTile(
+                    icon: Icons.analytics,
+                    label: 'Analíticas',
+                    index: 2,
+                    currentIndex: homeProvider.currentPageIndex,
+                    onSelected: () {
+                      if (isOffline) return;
+                      if (homeProvider.currentPageIndex != 2) {
+                        homeProvider.setPageIndex(2);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    colorScheme: colorScheme,
+                    isEnabled: !isOffline,
+                  ),
+
+                // Historial Caja - Requiere permiso viewCashCountHistory
+                if (hasHistoryAccess)
+                  _DrawerNavTile(
+                    icon: Icons.history,
+                    label: 'Historial Caja',
+                    index: 3,
+                    currentIndex: homeProvider.currentPageIndex,
+                    onSelected: () {
+                      if (isOffline) return;
+                      if (homeProvider.currentPageIndex != 3) {
+                        homeProvider.setPageIndex(3);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    colorScheme: colorScheme,
+                    isEnabled: !isOffline,
+                  ),
+
+                // Usuarios - Requiere permiso manageUsers
+                if (hasUsersAccess)
+                  _DrawerNavTile(
+                    icon: Icons.people,
+                    label: 'Usuarios',
+                    index: 4,
+                    currentIndex: homeProvider.currentPageIndex,
+                    onSelected: () {
+                      if (isOffline) return;
+                      if (homeProvider.currentPageIndex != 4) {
+                        homeProvider.setPageIndex(4);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    colorScheme: colorScheme,
+                    isEnabled: !isOffline,
+                  ),
               ],
             ),
           ),

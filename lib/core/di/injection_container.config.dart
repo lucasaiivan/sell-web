@@ -442,8 +442,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i253.SignInWithGoogleUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i380.SignInAnonymouslyUseCase>(
         () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i158.SignOutUseCase>(
-        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -575,6 +573,9 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i453.GetProductsUseCase>(
         () => _i453.GetProductsUseCase(gh<_i83.CatalogueRepository>()));
+    gh.lazySingleton<_i158.SignOutUseCase>(
+        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
+
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
         () => _i644.GetUserAccountsUseCase(
               gh<_i840.AccountRepository>(),
@@ -690,6 +691,7 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i127.CatalogueProvider>(),
           gh<_i306.CashRegisterProvider>(),
           gh<_i975.AnalyticsProvider>(),
+          gh<_i564.MultiUserProvider>(),
         ));
     return this;
   }

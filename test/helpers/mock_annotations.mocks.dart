@@ -13,31 +13,33 @@ import 'package:firebase_auth/firebase_auth.dart' as _i7;
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart'
     as _i6;
 import 'package:firebase_core/firebase_core.dart' as _i2;
-import 'package:fpdart/fpdart.dart' as _i24;
+import 'package:fpdart/fpdart.dart' as _i25;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i8;
-import 'package:sellweb/core/errors/failures.dart' as _i25;
+import 'package:sellweb/core/errors/failures.dart' as _i26;
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart'
-    as _i28;
+    as _i29;
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart'
-    as _i27;
+    as _i28;
 import 'package:sellweb/features/auth/domain/entities/auth_profile.dart'
-    as _i23;
+    as _i24;
 import 'package:sellweb/features/auth/domain/repositories/account_repository.dart'
-    as _i26;
+    as _i27;
 import 'package:sellweb/features/auth/domain/repositories/auth_repository.dart'
-    as _i22;
+    as _i23;
 import 'package:sellweb/features/catalogue/data/datasources/catalogue_remote_datasource.dart'
-    as _i18;
-import 'package:sellweb/features/catalogue/data/models/category_model.dart'
-    as _i21;
-import 'package:sellweb/features/catalogue/data/models/product_catalogue_model.dart'
     as _i19;
-import 'package:sellweb/features/catalogue/data/models/product_model.dart'
+import 'package:sellweb/features/catalogue/data/models/category_model.dart'
+    as _i22;
+import 'package:sellweb/features/catalogue/data/models/product_catalogue_model.dart'
     as _i20;
+import 'package:sellweb/features/catalogue/data/models/product_model.dart'
+    as _i21;
 import 'package:sellweb/features/catalogue/domain/entities/category.dart'
+    as _i16;
+import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart'
     as _i15;
-import 'package:sellweb/features/catalogue/domain/entities/mark.dart' as _i17;
+import 'package:sellweb/features/catalogue/domain/entities/mark.dart' as _i18;
 import 'package:sellweb/features/catalogue/domain/entities/product.dart'
     as _i12;
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart'
@@ -45,7 +47,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dar
 import 'package:sellweb/features/catalogue/domain/entities/product_price.dart'
     as _i14;
 import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
-    as _i16;
+    as _i17;
 import 'package:sellweb/features/catalogue/domain/repositories/catalogue_repository.dart'
     as _i11;
 import 'package:shared_preferences/src/shared_preferences_legacy.dart' as _i10;
@@ -1429,6 +1431,25 @@ class MockCatalogueRepository extends _i1.Mock
       ) as _i5.Future<void>);
 
   @override
+  _i5.Future<void> decrementComboStock(
+    String? accountId,
+    List<_i15.ComboItem>? items,
+    double? quantitySold,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #decrementComboStock,
+          [
+            accountId,
+            items,
+            quantitySold,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
   _i5.Future<void> updateProductFavorite(
     String? accountId,
     String? productId,
@@ -1448,38 +1469,38 @@ class MockCatalogueRepository extends _i1.Mock
       ) as _i5.Future<void>);
 
   @override
-  _i5.Stream<List<_i15.Category>> getCategoriesStream(String? accountId) =>
+  _i5.Stream<List<_i16.Category>> getCategoriesStream(String? accountId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getCategoriesStream,
           [accountId],
         ),
-        returnValue: _i5.Stream<List<_i15.Category>>.empty(),
-      ) as _i5.Stream<List<_i15.Category>>);
+        returnValue: _i5.Stream<List<_i16.Category>>.empty(),
+      ) as _i5.Stream<List<_i16.Category>>);
 
   @override
-  _i5.Stream<List<_i16.Provider>> getProvidersStream(String? accountId) =>
+  _i5.Stream<List<_i17.Provider>> getProvidersStream(String? accountId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getProvidersStream,
           [accountId],
         ),
-        returnValue: _i5.Stream<List<_i16.Provider>>.empty(),
-      ) as _i5.Stream<List<_i16.Provider>>);
+        returnValue: _i5.Stream<List<_i17.Provider>>.empty(),
+      ) as _i5.Stream<List<_i17.Provider>>);
 
   @override
-  _i5.Stream<List<_i17.Mark>> getBrandsStream({String? country = 'ARG'}) =>
+  _i5.Stream<List<_i18.Mark>> getBrandsStream({String? country = 'ARG'}) =>
       (super.noSuchMethod(
         Invocation.method(
           #getBrandsStream,
           [],
           {#country: country},
         ),
-        returnValue: _i5.Stream<List<_i17.Mark>>.empty(),
-      ) as _i5.Stream<List<_i17.Mark>>);
+        returnValue: _i5.Stream<List<_i18.Mark>>.empty(),
+      ) as _i5.Stream<List<_i18.Mark>>);
 
   @override
-  _i5.Future<List<_i17.Mark>> searchBrands({
+  _i5.Future<List<_i18.Mark>> searchBrands({
     required String? query,
     String? country = 'ARG',
     int? limit = 20,
@@ -1494,11 +1515,11 @@ class MockCatalogueRepository extends _i1.Mock
             #limit: limit,
           },
         ),
-        returnValue: _i5.Future<List<_i17.Mark>>.value(<_i17.Mark>[]),
-      ) as _i5.Future<List<_i17.Mark>>);
+        returnValue: _i5.Future<List<_i18.Mark>>.value(<_i18.Mark>[]),
+      ) as _i5.Future<List<_i18.Mark>>);
 
   @override
-  _i5.Future<List<_i17.Mark>> getPopularBrands({
+  _i5.Future<List<_i18.Mark>> getPopularBrands({
     String? country = 'ARG',
     int? limit = 20,
   }) =>
@@ -1511,11 +1532,11 @@ class MockCatalogueRepository extends _i1.Mock
             #limit: limit,
           },
         ),
-        returnValue: _i5.Future<List<_i17.Mark>>.value(<_i17.Mark>[]),
-      ) as _i5.Future<List<_i17.Mark>>);
+        returnValue: _i5.Future<List<_i18.Mark>>.value(<_i18.Mark>[]),
+      ) as _i5.Future<List<_i18.Mark>>);
 
   @override
-  _i5.Future<_i17.Mark?> getBrandById(
+  _i5.Future<_i18.Mark?> getBrandById(
     String? id, {
     String? country = 'ARG',
   }) =>
@@ -1525,12 +1546,12 @@ class MockCatalogueRepository extends _i1.Mock
           [id],
           {#country: country},
         ),
-        returnValue: _i5.Future<_i17.Mark?>.value(),
-      ) as _i5.Future<_i17.Mark?>);
+        returnValue: _i5.Future<_i18.Mark?>.value(),
+      ) as _i5.Future<_i18.Mark?>);
 
   @override
   _i5.Future<void> createBrand(
-    _i17.Mark? brand, {
+    _i18.Mark? brand, {
     String? country = 'ARG',
   }) =>
       (super.noSuchMethod(
@@ -1545,7 +1566,7 @@ class MockCatalogueRepository extends _i1.Mock
 
   @override
   _i5.Future<void> updateBrand(
-    _i17.Mark? brand, {
+    _i18.Mark? brand, {
     String? country = 'ARG',
   }) =>
       (super.noSuchMethod(
@@ -1647,14 +1668,14 @@ class MockCatalogueRepository extends _i1.Mock
       ) as _i5.Future<List<_i12.Product>>);
 
   @override
-  _i5.Future<List<_i15.Category>> getCategories(String? accountId) =>
+  _i5.Future<List<_i16.Category>> getCategories(String? accountId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getCategories,
           [accountId],
         ),
-        returnValue: _i5.Future<List<_i15.Category>>.value(<_i15.Category>[]),
-      ) as _i5.Future<List<_i15.Category>>);
+        returnValue: _i5.Future<List<_i16.Category>>.value(<_i16.Category>[]),
+      ) as _i5.Future<List<_i16.Category>>);
 
   @override
   _i5.Future<void> updateStock(
@@ -1822,24 +1843,24 @@ class MockCatalogueRepository extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockCatalogueRemoteDataSource extends _i1.Mock
-    implements _i18.CatalogueRemoteDataSource {
+    implements _i19.CatalogueRemoteDataSource {
   MockCatalogueRemoteDataSource() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<List<_i19.ProductCatalogueModel>> getProducts(String? accountId) =>
+  _i5.Future<List<_i20.ProductCatalogueModel>> getProducts(String? accountId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getProducts,
           [accountId],
         ),
-        returnValue: _i5.Future<List<_i19.ProductCatalogueModel>>.value(
-            <_i19.ProductCatalogueModel>[]),
-      ) as _i5.Future<List<_i19.ProductCatalogueModel>>);
+        returnValue: _i5.Future<List<_i20.ProductCatalogueModel>>.value(
+            <_i20.ProductCatalogueModel>[]),
+      ) as _i5.Future<List<_i20.ProductCatalogueModel>>);
 
   @override
-  _i5.Future<_i19.ProductCatalogueModel?> getProductById(
+  _i5.Future<_i20.ProductCatalogueModel?> getProductById(
     String? accountId,
     String? productId,
   ) =>
@@ -1851,13 +1872,13 @@ class MockCatalogueRemoteDataSource extends _i1.Mock
             productId,
           ],
         ),
-        returnValue: _i5.Future<_i19.ProductCatalogueModel?>.value(),
-      ) as _i5.Future<_i19.ProductCatalogueModel?>);
+        returnValue: _i5.Future<_i20.ProductCatalogueModel?>.value(),
+      ) as _i5.Future<_i20.ProductCatalogueModel?>);
 
   @override
   _i5.Future<void> createProduct(
     String? accountId,
-    _i19.ProductCatalogueModel? product,
+    _i20.ProductCatalogueModel? product,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1874,7 +1895,7 @@ class MockCatalogueRemoteDataSource extends _i1.Mock
   @override
   _i5.Future<void> updateProduct(
     String? accountId,
-    _i19.ProductCatalogueModel? product,
+    _i20.ProductCatalogueModel? product,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1906,25 +1927,25 @@ class MockCatalogueRemoteDataSource extends _i1.Mock
       ) as _i5.Future<void>);
 
   @override
-  _i5.Future<List<_i20.ProductModel>> searchGlobalProducts(String? query) =>
+  _i5.Future<List<_i21.ProductModel>> searchGlobalProducts(String? query) =>
       (super.noSuchMethod(
         Invocation.method(
           #searchGlobalProducts,
           [query],
         ),
         returnValue:
-            _i5.Future<List<_i20.ProductModel>>.value(<_i20.ProductModel>[]),
-      ) as _i5.Future<List<_i20.ProductModel>>);
+            _i5.Future<List<_i21.ProductModel>>.value(<_i21.ProductModel>[]),
+      ) as _i5.Future<List<_i21.ProductModel>>);
 
   @override
-  _i5.Future<List<_i21.CategoryModel>> getCategories() => (super.noSuchMethod(
+  _i5.Future<List<_i22.CategoryModel>> getCategories() => (super.noSuchMethod(
         Invocation.method(
           #getCategories,
           [],
         ),
         returnValue:
-            _i5.Future<List<_i21.CategoryModel>>.value(<_i21.CategoryModel>[]),
-      ) as _i5.Future<List<_i21.CategoryModel>>);
+            _i5.Future<List<_i22.CategoryModel>>.value(<_i22.CategoryModel>[]),
+      ) as _i5.Future<List<_i22.CategoryModel>>);
 
   @override
   _i5.Future<void> updateStock(
@@ -1949,116 +1970,116 @@ class MockCatalogueRemoteDataSource extends _i1.Mock
 /// A class which mocks [AuthRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuthRepository extends _i1.Mock implements _i22.AuthRepository {
+class MockAuthRepository extends _i1.Mock implements _i23.AuthRepository {
   MockAuthRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Stream<_i23.AuthProfile?> get user => (super.noSuchMethod(
+  _i5.Stream<_i24.AuthProfile?> get user => (super.noSuchMethod(
         Invocation.getter(#user),
-        returnValue: _i5.Stream<_i23.AuthProfile?>.empty(),
-      ) as _i5.Stream<_i23.AuthProfile?>);
+        returnValue: _i5.Stream<_i24.AuthProfile?>.empty(),
+      ) as _i5.Stream<_i24.AuthProfile?>);
 
   @override
-  _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>> signInWithGoogle() =>
+  _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>> signInWithGoogle() =>
       (super.noSuchMethod(
         Invocation.method(
           #signInWithGoogle,
           [],
         ),
         returnValue:
-            _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>>.value(
-                _i8.dummyValue<_i24.Either<_i25.Failure, _i23.AuthProfile>>(
+            _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>>.value(
+                _i8.dummyValue<_i25.Either<_i26.Failure, _i24.AuthProfile>>(
           this,
           Invocation.method(
             #signInWithGoogle,
             [],
           ),
         )),
-      ) as _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>>);
+      ) as _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>>);
 
   @override
-  _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>> signInSilently() =>
+  _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>> signInSilently() =>
       (super.noSuchMethod(
         Invocation.method(
           #signInSilently,
           [],
         ),
         returnValue:
-            _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>>.value(
-                _i8.dummyValue<_i24.Either<_i25.Failure, _i23.AuthProfile>>(
+            _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>>.value(
+                _i8.dummyValue<_i25.Either<_i26.Failure, _i24.AuthProfile>>(
           this,
           Invocation.method(
             #signInSilently,
             [],
           ),
         )),
-      ) as _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>>);
+      ) as _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>>);
 
   @override
-  _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>> signInAnonymously() =>
+  _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>> signInAnonymously() =>
       (super.noSuchMethod(
         Invocation.method(
           #signInAnonymously,
           [],
         ),
         returnValue:
-            _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>>.value(
-                _i8.dummyValue<_i24.Either<_i25.Failure, _i23.AuthProfile>>(
+            _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>>.value(
+                _i8.dummyValue<_i25.Either<_i26.Failure, _i24.AuthProfile>>(
           this,
           Invocation.method(
             #signInAnonymously,
             [],
           ),
         )),
-      ) as _i5.Future<_i24.Either<_i25.Failure, _i23.AuthProfile>>);
+      ) as _i5.Future<_i25.Either<_i26.Failure, _i24.AuthProfile>>);
 
   @override
-  _i5.Future<_i24.Either<_i25.Failure, void>> signOut() => (super.noSuchMethod(
+  _i5.Future<_i25.Either<_i26.Failure, void>> signOut() => (super.noSuchMethod(
         Invocation.method(
           #signOut,
           [],
         ),
-        returnValue: _i5.Future<_i24.Either<_i25.Failure, void>>.value(
-            _i8.dummyValue<_i24.Either<_i25.Failure, void>>(
+        returnValue: _i5.Future<_i25.Either<_i26.Failure, void>>.value(
+            _i8.dummyValue<_i25.Either<_i26.Failure, void>>(
           this,
           Invocation.method(
             #signOut,
             [],
           ),
         )),
-      ) as _i5.Future<_i24.Either<_i25.Failure, void>>);
+      ) as _i5.Future<_i25.Either<_i26.Failure, void>>);
 }
 
 /// A class which mocks [AccountRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAccountRepository extends _i1.Mock implements _i26.AccountRepository {
+class MockAccountRepository extends _i1.Mock implements _i27.AccountRepository {
   MockAccountRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<List<_i27.AdminProfile>> getUserAccounts(String? email) =>
+  _i5.Future<List<_i28.AdminProfile>> getUserAccounts(String? email) =>
       (super.noSuchMethod(
         Invocation.method(
           #getUserAccounts,
           [email],
         ),
         returnValue:
-            _i5.Future<List<_i27.AdminProfile>>.value(<_i27.AdminProfile>[]),
-      ) as _i5.Future<List<_i27.AdminProfile>>);
+            _i5.Future<List<_i28.AdminProfile>>.value(<_i28.AdminProfile>[]),
+      ) as _i5.Future<List<_i28.AdminProfile>>);
 
   @override
-  _i5.Future<_i28.AccountProfile?> getAccount(String? accountId) =>
+  _i5.Future<_i29.AccountProfile?> getAccount(String? accountId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getAccount,
           [accountId],
         ),
-        returnValue: _i5.Future<_i28.AccountProfile?>.value(),
-      ) as _i5.Future<_i28.AccountProfile?>);
+        returnValue: _i5.Future<_i29.AccountProfile?>.value(),
+      ) as _i5.Future<_i29.AccountProfile?>);
 
   @override
   _i5.Future<void> saveSelectedAccountId(String? accountId) =>

@@ -8,9 +8,10 @@ import '../../domain/usecases/create_user_usecase.dart';
 import '../../domain/usecases/delete_user_usecase.dart';
 import '../../domain/usecases/get_users_usecase.dart';
 import '../../domain/usecases/update_user_usecase.dart';
+import '../../../../core/presentation/providers/initializable_provider.dart';
 
 @injectable
-class MultiUserProvider extends ChangeNotifier {
+class MultiUserProvider extends ChangeNotifier implements InitializableProvider {
   final GetUsersUseCase _getUsersUseCase;
   final CreateUserUseCase _createUserUseCase;
   final UpdateUserUseCase _updateUserUseCase;
@@ -36,53 +37,75 @@ class MultiUserProvider extends ChangeNotifier {
 
   StreamSubscription? _usersSubscription;
   String? _currentAccountId;
+  String? get currentAccountId => _currentAccountId;
 
   AdminProfile? _currentUser;
   AdminProfile? get currentUser => _currentUser;
+
+  bool _disposed = false;
 
   /// Check if current user has permission to create/manage users
   bool get canCreateUsers => _currentUser?.multiuser ?? false;
 
   @override
+  void notifyListeners() {
+    if (!_disposed) {
+      super.notifyListeners();
+    }
+  }
+
+  @override
   void dispose() {
+    _disposed = true;
     _usersSubscription?.cancel();
     super.dispose();
   }
 
+  @override
+  void cleanup() {
+    _usersSubscription?.cancel();
+    _users = [];
+    _currentUser = null;
+    _currentAccountId = null;
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> initialize(String accountId) async {
+    _currentAccountId = accountId;
+    await loadUsers();
+  }
+
   Future<void> loadUsers() async {
+    if (_currentAccountId == null) return;
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _currentAccountId = await _getUserAccountsUseCase.getSelectedAccountId();
-
-      // Load current user from persistence
+      // Load current user from persistence (admin profile)
       _currentUser = await _getUserAccountsUseCase.loadAdminProfile();
 
-      if (_currentAccountId != null) {
-        _usersSubscription?.cancel();
-        _usersSubscription = _getUsersUseCase(_currentAccountId!).listen(
-          (result) {
-            result.fold(
-              (failure) {
-                _errorMessage = failure.message;
-                _isLoading = false;
-                notifyListeners();
-              },
-              (users) {
-                _users = users;
-                _isLoading = false;
-                notifyListeners();
-              },
-            );
-          },
-        );
-      } else {
-        _errorMessage = "No account selected";
-        _isLoading = false;
-        notifyListeners();
-      }
+      _usersSubscription?.cancel();
+      _usersSubscription = _getUsersUseCase(_currentAccountId!).listen(
+        (result) {
+          result.fold(
+            (failure) {
+              _errorMessage = failure.message;
+              _isLoading = false;
+              notifyListeners();
+            },
+            (users) {
+              _users = users;
+              _isLoading = false;
+              notifyListeners();
+            },
+          );
+        },
+      );
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;

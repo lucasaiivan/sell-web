@@ -49,6 +49,19 @@ class UserAccessValidator {
       reason: UserAccessDeniedReason.none,
     );
   }
+
+  /// Verifica si el usuario tiene acceso general Y permiso específico para una acción
+  ///
+  /// Retorna [true] solo si el usuario tiene acceso permitido (hora/día/status)
+  /// Y tiene el permiso [permission] asignado.
+  static bool canPerform(AdminProfile user, AdminPermission permission) {
+    // 1. Validar acceso general (bloqueo, horario, día)
+    final access = validateAccess(user);
+    if (!access.hasAccess) return false;
+
+    // 2. Validar permiso específico
+    return user.hasPermission(permission);
+  }
 }
 
 /// Razones de denegación de acceso

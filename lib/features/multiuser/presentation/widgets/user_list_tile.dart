@@ -18,293 +18,228 @@ class UserListTile extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth >= 600;
 
-    // Verificar si este usuario es la cuenta actual (comparar por email o id de Firebase Auth)
+    // Verificar si este usuario es la cuenta actual
     final isCurrentAccount = authProvider.user?.email == user.email ||
         authProvider.user?.uid == user.id;
 
     final roleText = user.superAdmin
-        ? 'Super Administrador'
+        ? 'Super Admin'
         : user.admin
             ? 'Administrador'
             : 'Personalizado';
 
-    final roleIcon = user.superAdmin
-        ? Icons.security_rounded
-        : user.admin
-            ? Icons.admin_panel_settings_rounded
-            : Icons.person_rounded;
+    // Determinar color base según rol
+    final Color roleColor = user.inactivate
+        ? colorScheme.error
+        : user.superAdmin
+            ? Colors.purple
+            : user.admin
+                ? Colors.blue
+                : colorScheme.tertiary;
 
-    final roleColor = user.superAdmin
-        ? Colors.purple
-        : user.admin
-            ? Colors.blue
-            : colorScheme.onSurfaceVariant;
+    // Icono o iniciales
+    Widget buildAvatar() {
+      final name = user.name.isNotEmpty ? user.name : user.email;
+      final initials = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
-    return InkWell(
-      onTap: () {
-        final multiUserProvider =
-            Provider.of<MultiUserProvider>(context, listen: false);
-        showDialog(
-          context: context,
-          builder: (_) => ChangeNotifierProvider.value(
-            value: multiUserProvider,
-            child: UserAdminDialog(user: user, fullView: true),
+      return Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: roleColor.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: roleColor.withValues(alpha: 0.3),
+            width: 1.5,
           ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: isLargeScreen
-            ? _buildLargeScreenLayout(context, theme, colorScheme,
-                isCurrentAccount, roleText, roleIcon, roleColor)
-            : _buildSmallScreenLayout(context, theme, colorScheme,
-                isCurrentAccount, roleText, roleIcon, roleColor),
+        ),
+        alignment: Alignment.center,
+        child: user.superAdmin
+            ? Icon(Icons.verified_user_rounded, color: roleColor, size: 22)
+            : Text(
+                initials,
+                style: TextStyle(
+                  color: roleColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+      );
+    }
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surface,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+        ),
       ),
-    );
-  }
-
-  /// Layout para pantallas pequeñas (diseño original)
-  Widget _buildSmallScreenLayout(
-    BuildContext context,
-    ThemeData theme,
-    ColorScheme colorScheme,
-    bool isCurrentAccount,
-    String roleText,
-    IconData roleIcon,
-    Color roleColor,
-  ) {
-    return Row(
-      children: [
-        // Icono de rol
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: roleColor.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            roleIcon,
-            color: roleColor,
-            size: 22,
-          ),
-        ),
-        const SizedBox(width: 14),
-
-        // Info Principal
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Nombre o email principal
-              Text(
-                user.name.isNotEmpty ? user.name : user.email,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              if (user.name.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                // Email (solo si el nombre no está vacío)
-                Text(
-                  user.email,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        // Indicador de cuenta actual
-        if (isCurrentAccount) ...[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.check_circle,
-                size: 14,
-                color: colorScheme.primary,
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-        ],
-
-        // Badge de rol en el extremo derecho
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: roleColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            roleText,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: roleColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          final multiUserProvider =
+              Provider.of<MultiUserProvider>(context, listen: false);
+          showDialog(
+            context: context,
+            builder: (_) => ChangeNotifierProvider.value(
+              value: multiUserProvider,
+              child: UserAdminDialog(user: user, fullView: true),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Layout para pantallas grandes (3 columnas)
-  Widget _buildLargeScreenLayout(
-    BuildContext context,
-    ThemeData theme,
-    ColorScheme colorScheme,
-    bool isCurrentAccount,
-    String roleText,
-    IconData roleIcon,
-    Color roleColor,
-  ) {
-    return Row(
-      children: [
-        // Columna 1: Icono de rol, nombre y email
-        Expanded(
-          flex: 3,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Icono de rol
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: roleColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  roleIcon,
-                  color: roleColor,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
+              // Avatar Section
+              buildAvatar(),
+              const SizedBox(width: 16),
 
-              // Info Principal
+              // Info Section
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nombre o email principal
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            user.name.isNotEmpty ? user.name : user.email,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              decoration: user.inactivate
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: user.inactivate
+                                  ? theme.colorScheme.onSurface.withOpacity(0.5)
+                                  : theme.colorScheme.onSurface,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isCurrentAccount) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'TÚ',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (user.inactivate) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.errorContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'BLOQUEADO',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.error,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      user.name.isNotEmpty ? user.name : user.email,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
+                      user.email,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
                     ),
-                    if (user.name.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      // Email (solo si el nombre no está vacío)
-                      Text(
-                        user.email,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.75),
-                          fontSize: 12,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                    if (user.hasAccessTimeConfiguration &&
+                        !user.superAdmin &&
+                        !user.inactivate) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 12,
+                            color: theme.colorScheme.tertiary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            user.accessTimeFormat,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.tertiary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
                 ),
               ),
+
+              if (isLargeScreen) ...[
+                const SizedBox(width: 16),
+                _buildRoleBadge(
+                    context, roleText, roleColor, theme, isLargeScreen),
+                const SizedBox(width: 16),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.outline,
+                ),
+              ] else ...[
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _buildRoleBadge(
+                        context, roleText, roleColor, theme, isLargeScreen),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
-
-        const SizedBox(width: 16),
-
-        // Columna 2 (Centro): Estado del usuario actual
-        Expanded(
-          flex: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (isCurrentAccount)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        size: 14,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Usuario Actual',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 16),
-
-        // Columna 3: Badge de rol
-        Expanded(
-          flex: 2,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: roleColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  roleText,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: roleColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Icono de acción
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 22,
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
+
+  Widget _buildRoleBadge(BuildContext context, String text, Color color,
+      ThemeData theme, bool isLarge) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  // Legacy layout methods removed in favor of responsive Card layout above
 }

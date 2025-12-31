@@ -63,12 +63,34 @@ class LoadAdminProfileUseCase extends UseCase<AdminProfile?, NoParams> {
       startTime: data['startTime'] ?? {},
       endTime: data['endTime'] ?? {},
       daysOfWeek: (data['daysOfWeek'] as List?)?.cast<String>() ?? [],
-      arqueo: data['arqueo'] ?? false,
-      historyArqueo: data['historyArqueo'] ?? false,
-      transactions: data['transactions'] ?? false,
-      catalogue: data['catalogue'] ?? false,
-      multiuser: data['multiuser'] ?? false,
-      editAccount: data['editAccount'] ?? false,
+      permissions: _getPermissionsFromMap(data),
     );
+  }
+
+  List<String> _getPermissionsFromMap(Map<String, dynamic> data) {
+    List<String> permissions = data.containsKey("permissions")
+        ? List<String>.from(data["permissions"])
+        : [];
+
+    // Migración manual
+    if ((data['arqueo'] ?? false) && !permissions.contains(AdminPermission.createCashCount.name)) {
+      permissions.add(AdminPermission.createCashCount.name);
+    }
+    if ((data['historyArqueo'] ?? false) && !permissions.contains(AdminPermission.viewCashCountHistory.name)) {
+      permissions.add(AdminPermission.viewCashCountHistory.name);
+    }
+    if ((data['transactions'] ?? false) && !permissions.contains(AdminPermission.manageTransactions.name)) {
+      permissions.add(AdminPermission.manageTransactions.name);
+    }
+    if ((data['catalogue'] ?? false) && !permissions.contains(AdminPermission.manageCatalogue.name)) {
+      permissions.add(AdminPermission.manageCatalogue.name);
+    }
+    if ((data['multiuser'] ?? false) && !permissions.contains(AdminPermission.manageUsers.name)) {
+      permissions.add(AdminPermission.manageUsers.name);
+    }
+    if ((data['editAccount'] ?? false) && !permissions.contains(AdminPermission.manageAccount.name)) {
+      permissions.add(AdminPermission.manageAccount.name);
+    }
+    return permissions;
   }
 }

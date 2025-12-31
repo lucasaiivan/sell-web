@@ -27,12 +27,8 @@ class GetDemoAdminProfileUseCase extends UseCase<AdminProfile, NoParams> {
         creation: DateTime.now(),
         lastUpdate: DateTime.now(),
         // Habilitar todos los permisos
-        arqueo: true,
-        historyArqueo: true,
-        transactions: true,
-        catalogue: true,
-        multiuser: true,
-        editAccount: true,
+        // Habilitar todos los permisos
+        permissions: AdminPermission.values.map((e) => e.name).toList(),
       );
 
       return Right(demoAdmin);

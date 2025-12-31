@@ -20,16 +20,49 @@ class AdminProfileModel extends AdminProfile {
     super.startTime,
     super.endTime,
     super.daysOfWeek,
-    super.arqueo,
-    super.historyArqueo,
-    super.transactions,
-    super.catalogue,
-    super.multiuser,
-    super.editAccount,
+    super.permissions,
   });
 
   factory AdminProfileModel.fromDocument(DocumentSnapshot doc) {
     Map data = doc.data() as Map;
+    
+    // 1. Cargar lista de permisos existentes si la hay
+    List<String> permissions = data.containsKey("permissions")
+        ? List<String>.from(data["permissions"])
+        : [];
+
+    // 2. Migrar campos booleanos antiguos a la lista de permisos si no existen en la lista
+    if (data.containsKey("arqueo") && data["arqueo"] == true) {
+      if (!permissions.contains(AdminPermission.createCashCount.name)) {
+        permissions.add(AdminPermission.createCashCount.name);
+      }
+    }
+    if (data.containsKey("historyArqueo") && data["historyArqueo"] == true) {
+      if (!permissions.contains(AdminPermission.viewCashCountHistory.name)) {
+        permissions.add(AdminPermission.viewCashCountHistory.name);
+      }
+    }
+    if (data.containsKey("transactions") && data["transactions"] == true) {
+      if (!permissions.contains(AdminPermission.manageTransactions.name)) {
+        permissions.add(AdminPermission.manageTransactions.name);
+      }
+    }
+    if (data.containsKey("catalogue") && data["catalogue"] == true) {
+      if (!permissions.contains(AdminPermission.manageCatalogue.name)) {
+        permissions.add(AdminPermission.manageCatalogue.name);
+      }
+    }
+    if (data.containsKey("multiuser") && data["multiuser"] == true) {
+      if (!permissions.contains(AdminPermission.manageUsers.name)) {
+        permissions.add(AdminPermission.manageUsers.name);
+      }
+    }
+    if (data.containsKey("editAccount") && data["editAccount"] == true) {
+      if (!permissions.contains(AdminPermission.manageAccount.name)) {
+        permissions.add(AdminPermission.manageAccount.name);
+      }
+    }
+
     return AdminProfileModel(
       id: doc.id,
       inactivate: data.containsKey("inactivate") ? doc["inactivate"] : false,
@@ -61,14 +94,7 @@ class AdminProfileModel extends AdminProfile {
       daysOfWeek: data.containsKey("daysOfWeek")
           ? List<String>.from(doc["daysOfWeek"])
           : [],
-      arqueo: data.containsKey("arqueo") ? doc["arqueo"] : false,
-      historyArqueo:
-          data.containsKey("historyArqueo") ? doc["historyArqueo"] : false,
-      transactions:
-          data.containsKey("transactions") ? doc["transactions"] : false,
-      catalogue: data.containsKey("catalogue") ? doc["catalogue"] : false,
-      multiuser: data.containsKey("multiuser") ? doc["multiuser"] : false,
-      editAccount: data.containsKey("editAccount") ? doc["editAccount"] : false,
+      permissions: permissions,
     );
   }
 
@@ -87,6 +113,9 @@ class AdminProfileModel extends AdminProfile {
         'endTime': endTime,
         'daysOfWeek': daysOfWeek,
         "personalized": personalized,
+        // Guardar la nueva lista de permisos
+        "permissions": permissions,
+        // Mantener compatibilidad escribiendo los booleanos calculados (getters)
         "arqueo": arqueo,
         "historyArqueo": historyArqueo,
         "transactions": transactions,
@@ -96,6 +125,30 @@ class AdminProfileModel extends AdminProfile {
       };
 
   factory AdminProfileModel.fromMap(Map data) {
+    List<String> permissions = data.containsKey("permissions")
+        ? List<String>.from(data["permissions"])
+        : [];
+
+    // Migración manual para fromMap también
+    if ((data['arqueo'] ?? false) && !permissions.contains(AdminPermission.createCashCount.name)) {
+      permissions.add(AdminPermission.createCashCount.name);
+    }
+    if ((data['historyArqueo'] ?? false) && !permissions.contains(AdminPermission.viewCashCountHistory.name)) {
+      permissions.add(AdminPermission.viewCashCountHistory.name);
+    }
+    if ((data['transactions'] ?? false) && !permissions.contains(AdminPermission.manageTransactions.name)) {
+      permissions.add(AdminPermission.manageTransactions.name);
+    }
+    if ((data['catalogue'] ?? false) && !permissions.contains(AdminPermission.manageCatalogue.name)) {
+      permissions.add(AdminPermission.manageCatalogue.name);
+    }
+    if ((data['multiuser'] ?? false) && !permissions.contains(AdminPermission.manageUsers.name)) {
+      permissions.add(AdminPermission.manageUsers.name);
+    }
+    if ((data['editAccount'] ?? false) && !permissions.contains(AdminPermission.manageAccount.name)) {
+      permissions.add(AdminPermission.manageAccount.name);
+    }
+
     return AdminProfileModel(
       id: data['id'] ?? '',
       inactivate: data['inactivate'] ?? false,
@@ -121,12 +174,7 @@ class AdminProfileModel extends AdminProfile {
       daysOfWeek: data['daysOfWeek'] != null
           ? List<String>.from(data['daysOfWeek'])
           : [],
-      arqueo: data['arqueo'] ?? false,
-      historyArqueo: data['historyArqueo'] ?? false,
-      transactions: data['transactions'] ?? false,
-      catalogue: data['catalogue'] ?? false,
-      multiuser: data['multiuser'] ?? false,
-      editAccount: data['editAccount'] ?? false,
+      permissions: permissions,
     );
   }
 
@@ -146,12 +194,7 @@ class AdminProfileModel extends AdminProfile {
       startTime: entity.startTime,
       endTime: entity.endTime,
       daysOfWeek: entity.daysOfWeek,
-      arqueo: entity.arqueo,
-      historyArqueo: entity.historyArqueo,
-      transactions: entity.transactions,
-      catalogue: entity.catalogue,
-      multiuser: entity.multiuser,
-      editAccount: entity.editAccount,
+      permissions: entity.permissions,
     );
   }
 }

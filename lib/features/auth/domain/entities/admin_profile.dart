@@ -23,6 +23,18 @@
 /// - `startTime`: Hora de inicio de acceso (Map con 'hour' y 'minute')
 /// - `endTime`: Hora de fin de acceso
 /// - `daysOfWeek`: Días de la semana con acceso habilitado
+/// Permisos granulares de administración
+enum AdminPermission {
+  createCashCount, // Arqueo
+  viewCashCountHistory, // Historial de arqueo
+  manageTransactions, // Transacciones
+  manageCatalogue, // Catálogo
+  manageUsers, // Multiusuario
+  manageAccount, // Editar cuenta
+  registerSales, // Registrar ventas (Nuevo)
+  dashboardAnalytics, // Ver analytics (Implicit?)
+}
+
 class AdminProfile {
   final String id;
   final bool inactivate;
@@ -39,13 +51,8 @@ class AdminProfile {
   final Map<String, dynamic> endTime;
   final List<String> daysOfWeek;
 
-  // Permisos personalizados
-  final bool arqueo;
-  final bool historyArqueo;
-  final bool transactions;
-  final bool catalogue;
-  final bool multiuser;
-  final bool editAccount;
+  // New: List of permissions (Strings for flexibility/Enum serialization)
+  final List<String> permissions;
 
   const AdminProfile({
     this.id = "",
@@ -62,12 +69,7 @@ class AdminProfile {
     this.startTime = const {},
     this.endTime = const {},
     this.daysOfWeek = const [],
-    this.arqueo = false,
-    this.historyArqueo = false,
-    this.transactions = false,
-    this.catalogue = false,
-    this.multiuser = false,
-    this.editAccount = false,
+    this.permissions = const [],
   });
 
   /// Copia la entidad con los valores proporcionados
@@ -86,12 +88,10 @@ class AdminProfile {
     Map<String, dynamic>? startTime,
     Map<String, dynamic>? endTime,
     List<String>? daysOfWeek,
-    bool? arqueo,
-    bool? historyArqueo,
-    bool? transactions,
-    bool? catalogue,
-    bool? multiuser,
-    bool? editAccount,
+    List<String>? permissions,
+    // Backward compatibility for copyWith - these will be ignored or mapped if possible
+    // but typically copyWith is used with specific fields. 
+    // We will rely on 'permissions' argument for updates.
   }) {
     return AdminProfile(
       id: id ?? this.id,
@@ -108,14 +108,37 @@ class AdminProfile {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
-      arqueo: arqueo ?? this.arqueo,
-      historyArqueo: historyArqueo ?? this.historyArqueo,
-      transactions: transactions ?? this.transactions,
-      catalogue: catalogue ?? this.catalogue,
-      multiuser: multiuser ?? this.multiuser,
-      editAccount: editAccount ?? this.editAccount,
+      permissions: permissions ?? this.permissions,
     );
   }
+
+  // ==============================================================================
+  // Access Control Logic
+  // ==============================================================================
+
+  /// Verifica si el usuario tiene un permiso específico
+  bool hasPermission(AdminPermission permission) {
+    // SuperAdmin y Admin tienen acceso total
+    if (superAdmin || admin) return true;
+    
+    // Usuarios personalizados verifican la lista
+    if (personalized) {
+      return permissions.contains(permission.name);
+    }
+    
+    return false;
+  }
+
+  // ==============================================================================
+  // Backward Compatibility Getters
+  // ==============================================================================
+  
+  bool get arqueo => hasPermission(AdminPermission.createCashCount);
+  bool get historyArqueo => hasPermission(AdminPermission.viewCashCountHistory);
+  bool get transactions => hasPermission(AdminPermission.manageTransactions);
+  bool get catalogue => hasPermission(AdminPermission.manageCatalogue);
+  bool get multiuser => hasPermission(AdminPermission.manageUsers);
+  bool get editAccount => hasPermission(AdminPermission.manageAccount);
 
   /// Obtiene la hora de acceso formateada (HH:MM - HH:MM)
   String get accessTimeFormat {

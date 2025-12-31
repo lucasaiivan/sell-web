@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/utils/formatters/date_formatter.dart';
 import '../../../auth/domain/entities/admin_profile.dart';
+import '../../../sales/presentation/providers/sales_provider.dart';
 import '../provider/multi_user_provider.dart';
 import 'time_range_selector.dart';
 
@@ -84,6 +86,9 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   bool _inactivate = false;
 
   // ==================== Granular Permissions ====================
+  /// Permiso para registrar ventas
+  bool _sales = false;
+
   /// Permiso para realizar arqueo (cierre de caja)
   bool _arqueo = false;
 
@@ -147,12 +152,14 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     _isSuperAdmin = user?.superAdmin ?? false;
     _isPersonalized = user?.personalized ?? false;
 
-    _arqueo = user?.arqueo ?? false;
-    _historyArqueo = user?.historyArqueo ?? false;
-    _transactions = user?.transactions ?? false;
-    _catalogue = user?.catalogue ?? false;
-    _multiuser = user?.multiuser ?? false;
-    _editAccount = user?.editAccount ?? false;
+    // Load granular permissions usando hasPermission()
+    _sales = user?.hasPermission(AdminPermission.registerSales) ?? false;
+    _arqueo = user?.hasPermission(AdminPermission.createCashCount) ?? false;
+    _historyArqueo = user?.hasPermission(AdminPermission.viewCashCountHistory) ?? false;
+    _transactions = user?.hasPermission(AdminPermission.manageTransactions) ?? false;
+    _catalogue = user?.hasPermission(AdminPermission.manageCatalogue) ?? false;
+    _multiuser = user?.hasPermission(AdminPermission.manageUsers) ?? false;
+    _editAccount = user?.hasPermission(AdminPermission.manageAccount) ?? false;
 
     // Load days of week
     if (user != null && user.daysOfWeek.isNotEmpty) {
@@ -545,6 +552,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                   _isAdmin = true;
                   _isPersonalized = false;
                   // Admin gets all permissions
+                  _sales = true;
                   _arqueo = true;
                   _historyArqueo = true;
                   _transactions = true;
@@ -555,6 +563,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
                   _isAdmin = false;
                   _isPersonalized = true;
                   // Reset personalized permissions
+                  _sales = false;
                   _arqueo = false;
                   _historyArqueo = false;
                   _transactions = false;
@@ -701,6 +710,17 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
               : null,
           child: Column(
             children: [
+              CheckboxListTile(
+                title: const Text('Ventas'),
+                subtitle: const Text('Registrar ventas y gestionar tickets'),
+                value: _sales,
+                onChanged: (value) {
+                  setState(() {
+                    _sales = value ?? false;
+                    _clearPersonalizedPermissionsError();
+                  });
+                },
+              ),
               CheckboxListTile(
                 title: const Text('Arqueo'),
                 subtitle: const Text('Crear cierre de caja'),
@@ -989,6 +1009,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   /// Muestra errores visuales y snackbars si las validaciones fallan
   Future<void> _saveUser() async {
     // Activar mostrar errores de validación
+    if (!mounted) return;
     setState(() {
       _showValidationErrors = true;
     });
@@ -1002,9 +1023,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     // Validation: at least one permission type selected
     final permissionTypeValid = _isAdmin || _isSuperAdmin || _isPersonalized;
     if (!permissionTypeValid) {
+      if (!mounted) return;
       setState(() {
         _permissionTypeError = true;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Debes seleccionar un tipo de permiso'),
@@ -1017,16 +1040,19 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
 
     // Validation: at least one permission selected for personalized users
     if (_isPersonalized) {
-      final hasAnyPermission = _arqueo ||
+      final hasAnyPermission = _sales ||
+          _arqueo ||
           _historyArqueo ||
           _transactions ||
           _catalogue ||
           _multiuser ||
           _editAccount;
       if (!hasAnyPermission) {
+        if (!mounted) return;
         setState(() {
           _personalizedPermissionsError = true;
         });
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
@@ -1042,9 +1068,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     // Validation: days of week selected (if not super admin)
     final daysValid = _isSuperAdmin || _selectedDays.isNotEmpty;
     if (!daysValid) {
+      if (!mounted) return;
       setState(() {
         _daysOfWeekError = true;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Debes seleccionar al menos un día de la semana'),
@@ -1058,9 +1086,11 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     // Validation: access time configured (if not super admin)
     final timeValid = _isSuperAdmin || (_startTime != null && _endTime != null);
     if (!timeValid) {
+      if (!mounted) return;
       setState(() {
         _accessTimeError = true;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Debes configurar el horario de acceso'),
@@ -1072,6 +1102,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     }
 
     // Reiniciar flags de error
+    if (!mounted) return;
     setState(() {
       _permissionTypeError = false;
       _personalizedPermissionsError = false;
@@ -1079,6 +1110,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       _accessTimeError = false;
     });
 
+    if (!mounted) return;
     final provider = Provider.of<MultiUserProvider>(context, listen: false);
     final now = DateTime.now();
 
@@ -1094,6 +1126,22 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         ? {'hour': _endTime!.hour, 'minute': _endTime!.minute}
         : <String, dynamic>{};
 
+    // Build permissions list
+    List<String> permissions = [];
+    if (_isPersonalized) {
+      if (_sales) permissions.add(AdminPermission.registerSales.name);
+      if (_arqueo) permissions.add(AdminPermission.createCashCount.name);
+      if (_historyArqueo) permissions.add(AdminPermission.viewCashCountHistory.name);
+      if (_transactions) permissions.add(AdminPermission.manageTransactions.name);
+      if (_catalogue) permissions.add(AdminPermission.manageCatalogue.name);
+      if (_multiuser) permissions.add(AdminPermission.manageUsers.name);
+      if (_editAccount) permissions.add(AdminPermission.manageAccount.name);
+    } else if (_isAdmin || _isSuperAdmin) {
+       // Opcional: Podríamos agregar todos, pero la lógica de AdminProfile
+       // ya maneja (admin || superAdmin) => true para cualquier permiso.
+       // Dejamos la lista vacía o limpia para evitar redundancia.
+    }
+
     final newUser = AdminProfile(
       id: widget.user?.id ?? '',
       inactivate: _inactivate,
@@ -1106,13 +1154,7 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
       creation: widget.user?.creation ?? now,
       lastUpdate: now,
       account: widget.user?.account ?? '',
-      arqueo: _isPersonalized ? _arqueo : _isAdmin || _isSuperAdmin,
-      historyArqueo:
-          _isPersonalized ? _historyArqueo : _isAdmin || _isSuperAdmin,
-      transactions: _isPersonalized ? _transactions : _isAdmin || _isSuperAdmin,
-      catalogue: _isPersonalized ? _catalogue : _isAdmin || _isSuperAdmin,
-      multiuser: _isPersonalized ? _multiuser : _isAdmin || _isSuperAdmin,
-      editAccount: _isPersonalized ? _editAccount : _isAdmin || _isSuperAdmin,
+      permissions: permissions,
       daysOfWeek: daysOfWeek,
       startTime: startTime,
       endTime: endTime,
@@ -1126,6 +1168,26 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     }
 
     if (success && mounted) {
+      // Si el usuario editado es el usuario actualmente logueado,
+      // refrescar su AdminProfile en SalesProvider para que los cambios
+      // de permisos se reflejen inmediatamente
+      final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+      final currentAdminEmail = salesProvider.currentAdminProfile?.email;
+      
+      if (currentAdminEmail != null && 
+          currentAdminEmail == newUser.email) {
+        if (kDebugMode) {
+          print('🔄 UserAdminDialog: Refrescando AdminProfile del usuario actual');
+        }
+        
+        // Refrescar el perfil desde Firebase para obtener los cambios
+        await salesProvider.refreshCurrentAdminProfile();
+        
+        if (kDebugMode) {
+          print('✅ UserAdminDialog: AdminProfile actualizado');
+        }
+      }
+      
       Navigator.of(context).pop();
     } else if (mounted && provider.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
-import '../../../../core/di/injection_container.dart';
 import '../provider/multi_user_provider.dart';
 import '../widgets/useradmin_dialog.dart';
 import '../widgets/user_list_tile.dart';
@@ -15,79 +14,67 @@ class MultiUserPage extends StatefulWidget {
 }
 
 class _MultiUserPageState extends State<MultiUserPage> {
-  late final MultiUserProvider _provider;
-
-  @override
-  void initState() {
-    super.initState();
-    _provider = getIt<MultiUserProvider>();
-    _provider.loadUsers();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _provider,
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        drawer: const AppDrawer(),
-        floatingActionButton: Consumer<MultiUserProvider>(
-          builder: (context, provider, child) {
-            // Only show FAB if current user has permission to create users
-            if (!provider.canCreateUsers) {
-              return const SizedBox.shrink();
-            }
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      drawer: const AppDrawer(),
+      floatingActionButton: Consumer<MultiUserProvider>(
+        builder: (context, provider, child) {
+          // Only show FAB if current user has permission to create users
+          if (!provider.canCreateUsers) {
+            return const SizedBox.shrink();
+          }
 
-            return FloatingActionButton.extended(
-              heroTag: 'multiuser_add_fab',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => ChangeNotifierProvider.value(
-                    value: provider,
-                    child: const UserAdminDialog(fullView: true),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.person_add_rounded),
-              label: const Text('Agregar'),
-            );
-          },
-        ),
-        body: Consumer<MultiUserProvider>(
-          builder: (context, provider, child) {
-            if (provider.isLoading && provider.users.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (provider.errorMessage != null) {
-              return Center(child: Text('Error: ${provider.errorMessage}'));
-            }
-
-            if (provider.users.isEmpty) {
-              return _buildEmptyState(context);
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-              itemCount: provider.users.length,
-              separatorBuilder: (context, index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(
-                  height: 0.5,
-                  thickness: 0.5,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outlineVariant
-                      .withValues(alpha: 0.3),
+          return FloatingActionButton.extended(
+            heroTag: 'multiuser_add_fab',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => ChangeNotifierProvider.value(
+                  value: provider,
+                  child: const UserAdminDialog(fullView: true),
                 ),
+              );
+            },
+            icon: const Icon(Icons.person_add_rounded),
+            label: const Text('Agregar'),
+          );
+        },
+      ),
+      body: Consumer<MultiUserProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading && provider.users.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (provider.errorMessage != null) {
+            return Center(child: Text('Error: ${provider.errorMessage}'));
+          }
+
+          if (provider.users.isEmpty) {
+            return _buildEmptyState(context);
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+            itemCount: provider.users.length,
+            separatorBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Divider(
+                height: 0.5,
+                thickness: 0.5,
+                color: Theme.of(context)
+                    .colorScheme
+                    .outlineVariant
+                    .withValues(alpha: 0.3),
               ),
-              itemBuilder: (context, index) {
-                return UserListTile(user: provider.users[index]);
-              },
-            );
-          },
-        ),
+            ),
+            itemBuilder: (context, index) {
+              return UserListTile(user: provider.users[index]);
+            },
+          );
+        },
       ),
     );
   }

@@ -464,6 +464,41 @@ class SalesProvider extends ChangeNotifier {
     }
   }
 
+  /// Refresca el AdminProfile actual desde Firebase
+  ///
+  /// RESPONSABILIDAD: Sincronizar permisos actualizados del usuario
+  /// Este método debe llamarse cuando:
+  /// - Se actualizan los permisos del usuario actual
+  /// - Se necesita refrescar los datos del perfil desde Firebase
+  ///
+  /// Útil para reflejar cambios inmediatos sin necesidad de cerrar sesión
+  Future<void> refreshCurrentAdminProfile() async {
+    if (_state.currentAdminProfile == null) {
+      if (kDebugMode) {
+        print('⚠️ SellProvider: No hay AdminProfile actual para refrescar');
+      }
+      return;
+    }
+
+    final email = _state.currentAdminProfile!.email;
+    if (email.isEmpty) {
+      if (kDebugMode) {
+        print('⚠️ SellProvider: Email del AdminProfile está vacío');
+      }
+      return;
+    }
+
+    if (kDebugMode) {
+      print('🔄 SellProvider: Refrescando AdminProfile para: $email');
+    }
+
+    await updateAdminProfileForSelectedAccount(email);
+
+    if (kDebugMode) {
+      print('✅ SellProvider: AdminProfile refrescado exitosamente');
+    }
+  }
+
   Future<void> _saveTicket() async {
     try {
       await _persistenceService

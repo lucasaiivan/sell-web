@@ -13,6 +13,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
+import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
@@ -1501,6 +1502,16 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Verificar permisos de arqueo
+    final sellProvider = context.watch<SalesProvider>();
+    final adminProfile = sellProvider.currentAdminProfile;
+    
+    // Si no tiene permiso de arqueo, no mostrar el widget
+    final hasArqueoPermission = adminProfile?.hasPermission(AdminPermission.createCashCount) ?? false;
+    if (!hasArqueoPermission) {
+      return const SizedBox.shrink();
+    }
+
     // consumer : obtiene el estado de la caja registradora
     return Consumer<CashRegisterProvider>(
       builder: (context, provider, child) {

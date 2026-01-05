@@ -4,7 +4,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
-import 'package:sellweb/features/auth/presentation/dialogs/account_business_dialog.dart';
+import 'package:sellweb/features/auth/presentation/views/account_business_view.dart';
 
 class WelcomeSelectedAccountPage extends StatelessWidget {
   final Future<void> Function(AccountProfile) onSelectAccount;
@@ -120,11 +120,78 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
     );
   }
 
+  /// Construye el item para crear una nueva cuenta
+  Widget _buildCreateAccountItem(BuildContext context, AuthProvider authProvider) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      onTap: () async {
+        // Para crear una cuenta necesitamos el ID del usuario actual
+        final userId = authProvider.user?.uid;
+        if (userId != null) {
+          // Crear perfil admin temporal para la creación
+          final tempAdmin = AdminProfile(
+            id: userId,
+            email: authProvider.user?.email ?? '',
+            name: authProvider.user?.displayName ?? '',
+            creation: DateTime.now(),
+            lastUpdate: DateTime.now(),
+          );
+          
+          
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AccountBusinessView(
+                admin: tempAdmin,
+              ),
+            ),
+          );
+        }
+      },
+      splashColor: colorScheme.primary.withValues(alpha: 0.1),
+      highlightColor: colorScheme.primary.withValues(alpha: 0.05),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add,
+              color: colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Crear cuenta',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // providers
     final authProvider = Provider.of<AuthProvider>(context);
     List<AccountProfile> accounts = authProvider.accountsWithDemo;
+    
+    // Preparar items de la lista
+    List<Widget> listItems = [];
+    
+    // Añadir cuentas existentes
+    listItems.addAll(accounts.map((account) => _buildAccountCard(context, account)));
+    
+    // Añadir botón de crear cuenta si corresponde
+    if (!authProvider.isLoadingAccounts && authProvider.user != null) {
+      listItems.add(_buildCreateAccountItem(context, authProvider));
+    }
 
     return Scaffold(
       body: Stack(
@@ -187,59 +254,23 @@ class WelcomeSelectedAccountPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                  // view : lista de cuentas asociadas al usuario usando DialogComponents.itemList
-                  if (accounts.isNotEmpty)
+                  // view : lista de cuentas y acciones
+                  if (listItems.isNotEmpty)
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
                       child: DialogComponents.itemList(
                         padding: const EdgeInsets.all(0),
                         context: context,
-                        items: accounts
-                            .map((account) =>
-                                _buildAccountCard(context, account))
-                            .toList(),
+                        items: listItems,
                         showDividers: true,
                         maxVisibleItems: 4,
-                        expandText: 'Ver más cuentas',
+                        expandText: 'Ver más opciones',
                         collapseText: 'Ver menos',
                         borderRadius: 16,
                         backgroundColor: Theme.of(context)
                             .colorScheme
                             .surface
                             .withValues(alpha: 0.5),
-                      ),
-                    ),
-                  const SizedBox(height: 30),
-                  
-                  // Botón: Crear nueva cuenta
-                  if (!authProvider.isLoadingAccounts && authProvider.user != null)
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        // Para crear una cuenta necesitamos el ID del usuario actual
-                        final userId = authProvider.user?.uid;
-                        if (userId != null) {
-                          // Crear perfil admin temporal para la creación
-                          final tempAdmin = AdminProfile(
-                            id: userId,
-                            email: authProvider.user?.email ?? '',
-                            name: authProvider.user?.displayName ?? '',
-                            creation: DateTime.now(),
-                            lastUpdate: DateTime.now(),
-                          );
-                          
-                          await showAccountBusinessDialog(
-                            context: context,
-                            currentAdmin: tempAdmin,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.add_business_rounded),
-                      label: const Text('Crear Nueva Cuenta'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
                       ),
                     ),
                   

@@ -54,10 +54,6 @@ class AdminProfile {
   // New: List of permissions (Strings for flexibility/Enum serialization)
   final List<String> permissions;
 
-  /// Última vez que este usuario creó una cuenta de negocio
-  /// Null si nunca ha creado una cuenta
-  final DateTime? lastAccountCreation;
-
   const AdminProfile({
     this.id = "",
     this.inactivate = false,
@@ -74,7 +70,6 @@ class AdminProfile {
     this.endTime = const {},
     this.daysOfWeek = const [],
     this.permissions = const [],
-    this.lastAccountCreation,
   });
 
   /// Copia la entidad con los valores proporcionados
@@ -94,7 +89,6 @@ class AdminProfile {
     Map<String, dynamic>? endTime,
     List<String>? daysOfWeek,
     List<String>? permissions,
-    DateTime? lastAccountCreation,
     // Backward compatibility for copyWith - these will be ignored or mapped if possible
     // but typically copyWith is used with specific fields. 
     // We will rely on 'permissions' argument for updates.
@@ -115,7 +109,6 @@ class AdminProfile {
       endTime: endTime ?? this.endTime,
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
       permissions: permissions ?? this.permissions,
-      lastAccountCreation: lastAccountCreation ?? this.lastAccountCreation,
     );
   }
 
@@ -210,52 +203,6 @@ class AdminProfile {
   /// Obtiene los días de la semana en español
   List<String> get daysOfWeekInSpanish {
     return daysOfWeek.map((day) => _translateDay(day)).toList();
-  }
-
-  /// Verifica si el administrador puede crear una nueva cuenta de negocio
-  ///
-  /// El administrador puede crear una cuenta si:
-  /// - Nunca ha creado una cuenta (lastAccountCreation es null)
-  /// - Han pasado 30 días o más desde la última creación
-  ///
-  /// **Retorna:** `true` si puede crear una cuenta
-  bool canCreateAccount() {
-    if (lastAccountCreation == null) {
-      return true; // Primera vez, puede crear
-    }
-
-    final daysSinceLastCreation = DateTime.now().difference(lastAccountCreation!).inDays;
-    return daysSinceLastCreation >= 30;
-  }
-
-  /// Calcula los días restantes hasta que pueda crear una nueva cuenta
-  ///
-  /// **Retorna:** Número de días restantes, o 0 si ya puede crear
-  int daysUntilCanCreateAccount() {
-    if (lastAccountCreation == null) {
-      return 0; // Puede crear inmediatamente
-    }
-
-    final daysSinceLastCreation = DateTime.now().difference(lastAccountCreation!).inDays;
-    final daysRemaining = 30 - daysSinceLastCreation;
-    
-    return daysRemaining > 0 ? daysRemaining : 0;
-  }
-
-  /// Retorna mensaje informativo sobre cuándo puede crear una nueva cuenta
-  ///
-  /// **Retorna:** String con el mensaje apropiado
-  String getAccountCreationMessage() {
-    if (canCreateAccount()) {
-      return 'Puedes crear una nueva cuenta';
-    }
-
-    final days = daysUntilCanCreateAccount();
-    if (days == 1) {
-      return 'Podrás crear una nueva cuenta en 1 día';
-    }
-    
-    return 'Podrás crear una nueva cuenta en $days días';
   }
 
   /// Traduce un día de la semana al español

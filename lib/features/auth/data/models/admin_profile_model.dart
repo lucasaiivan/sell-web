@@ -21,7 +21,6 @@ class AdminProfileModel extends AdminProfile {
     super.endTime,
     super.daysOfWeek,
     super.permissions,
-    super.lastAccountCreation,
   });
 
   factory AdminProfileModel.fromDocument(DocumentSnapshot doc) {
@@ -96,11 +95,6 @@ class AdminProfileModel extends AdminProfile {
           ? List<String>.from(doc["daysOfWeek"])
           : [],
       permissions: permissions,
-      lastAccountCreation: data.containsKey("lastAccountCreation")
-          ? (doc["lastAccountCreation"] is Timestamp
-              ? (doc["lastAccountCreation"] as Timestamp).toDate()
-              : doc["lastAccountCreation"] as DateTime?)
-          : null,
     );
   }
 
@@ -121,9 +115,6 @@ class AdminProfileModel extends AdminProfile {
         "personalized": personalized,
         // Guardar la nueva lista de permisos
         "permissions": permissions,
-        // Guardar lastAccountCreation si existe
-        if (lastAccountCreation != null)
-          "lastAccountCreation": Timestamp.fromDate(lastAccountCreation!),
         // Mantener compatibilidad escribiendo los booleanos calculados (getters)
         "arqueo": arqueo,
         "historyArqueo": historyArqueo,
@@ -184,9 +175,6 @@ class AdminProfileModel extends AdminProfile {
           ? List<String>.from(data['daysOfWeek'])
           : [],
       permissions: permissions,
-      lastAccountCreation: data['lastAccountCreation'] is String
-          ? DateTime.parse(data['lastAccountCreation'])
-          : (data['lastAccountCreation'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -207,7 +195,6 @@ class AdminProfileModel extends AdminProfile {
       endTime: entity.endTime,
       daysOfWeek: entity.daysOfWeek,
       permissions: entity.permissions,
-      lastAccountCreation: entity.lastAccountCreation,
     );
   }
 }

@@ -7,6 +7,8 @@ import 'package:lottie/lottie.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación
@@ -185,18 +187,18 @@ class _TicketContent extends StatelessWidget {
                 _buildTotalItems(ticket, textSmallStyle, textDescriptionStyle),
                 const SizedBox(height: 5),
                 // Total del ticket
+                // Total del ticket
                 _buildTotalSection(ticket, colorScheme.primary, textTotalStyle,
                     textDescriptionStyle),
-                // view : Sección unificada de vuelto y descuento con chips editables
-                _buildEditableChipsSection(
-                    ticket, onEditCashAmount, colorScheme),
-                // Métodos de pago
-                _buildPaymentMethods(onEditCashAmount),
 
                 const SizedBox(height: 12),
 
-                // Checkbox para imprimir ticket
-                _buildPrintCheckbox(),
+                // Métodos de pago
+                _buildPaymentMethods(onEditCashAmount),
+
+                // Sección unificada de vuelto y descuento con chips editables
+                _buildEditableChipsSection(
+                    ticket, onEditCashAmount, colorScheme),
               ],
             ),
           ),
@@ -297,7 +299,7 @@ class _TicketContent extends StatelessWidget {
             ticket.valueReceived >= ticket.getTotalPrice;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -716,111 +718,94 @@ class _TicketContent extends StatelessWidget {
   /// Construye los métodos de pago
   Widget _buildPaymentMethods(VoidCallback? onCashPaymentSelected) {
     return Builder(
-      builder: (context) => Padding(
-        padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom: 0),
-        child: Column(
-          children: [
-            Text(
-              'Forma de pago:',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.87),
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Consumer<SalesProvider>(
-              builder: (context, provider, _) {
-                return Wrap(
-                  spacing: 5,
-                  alignment: WrapAlignment.center,
-                  runSpacing: 5,
-                  children: PaymentMethod.getValidMethods().map((method) {
-                    final isSelected = provider.ticket.payMode == method.code;
-                    return ChoiceChip(
-                      avatar: Icon(
-                        method.icon,
-                        size: 18,
-                        color: isSelected ? Colors.white : null,
-                      ),
-                      label: Text(method.displayName),
-                      selected: isSelected,
-                      onSelected: (bool selected) {
-                        if (selected &&
-                            method == PaymentMethod.cash &&
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Consumer<SalesProvider>(
+            builder: (context, provider, _) {
+              return Wrap(
+                spacing: 8,
+                alignment: WrapAlignment.center,
+                runSpacing: 8,
+                children: PaymentMethod.getValidMethods().map((method) {
+                  final isSelected = provider.ticket.payMode == method.code;
+                  
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if (method == PaymentMethod.cash &&
                             onCashPaymentSelected != null) {
                           onCashPaymentSelected();
                         }
-                        provider.setPayMode(
-                            payMode: selected ? method.code : '');
+                        provider.setPayMode(payMode: method.code);
                       },
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Construye el checkbox para imprimir ticket
-  Widget _buildPrintCheckbox() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Consumer<SalesProvider>(
-        builder: (context, sellProvider, __) {
-          final colorScheme = Theme.of(context).colorScheme;
-
-          return Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: sellProvider.shouldPrintTicket
-                    ? colorScheme.primary.withValues(alpha: 0.3)
-                    : colorScheme.outline.withValues(alpha: 0.2),
-                width: 1,
-              ),
-              borderRadius: BorderRadius.circular(6),
-              color: !sellProvider.shouldPrintTicket
-                  ? null
-                  : colorScheme.primaryContainer.withValues(alpha: 0.1),
-            ),
-            child: CheckboxListTile(
-              dense: true,
-              value: sellProvider.shouldPrintTicket,
-              onChanged: (bool? value) {
-                sellProvider.setShouldPrintTicket(value ?? false);
-              },
-              title: Text(
-                'Ticket',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: sellProvider.shouldPrintTicket
-                          ? colorScheme.primary
-                          : colorScheme.onSurface,
-                      fontWeight: FontWeight.w500,
+                      borderRadius: BorderRadius.circular(12),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colorScheme.primary
+                              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.outline.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  )
+                                ]
+                              : [],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              method.icon,
+                              size: 18,
+                              color: isSelected
+                                  ? colorScheme.onPrimary
+                                  : colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              method.displayName,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: isSelected
+                                    ? colorScheme.onPrimary
+                                    : colorScheme.onSurface,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-              ),
-              secondary: Icon(
-                sellProvider.shouldPrintTicket
-                    ? Icons.receipt_long
-                    : Icons.receipt_long_outlined,
-                color: sellProvider.shouldPrintTicket
-                    ? colorScheme.primary
-                    : colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 2,
-              ),
-            ),
-          );
-        },
-      ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        );
+      }
     );
   }
+
+
 
   /// Construye los botones de acción
   Widget _buildActionButtons(
@@ -1025,9 +1010,15 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
   late AnimationController _scaleController;
   bool _animationCompleted = false;
 
+  // AudioPlayer para el sonido de éxito
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
+
+    // Reproducir sonido de éxito
+    _playSuccessSound();
 
     // Controlador para fade-in del contenido
     _fadeController = AnimationController(
@@ -1050,6 +1041,7 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
     });
 
     // Simular la duración típica de la animación Lottie (aproximadamente 2 segundos)
+    /*
     // y agregar 1 segundo adicional como solicita el usuario
     Future.delayed(const Duration(milliseconds: 3000), () {
       if (mounted && !_animationCompleted) {
@@ -1057,10 +1049,28 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
         widget.onAnimationComplete?.call();
       }
     });
+    */
+  }
+
+  Future<void> _playSuccessSound() async {
+    try {
+      // Configurar modo de baja latencia para efectos de sonido cortos (crucial en Web)
+      // Ajustar volumen al máximo explícitamente antes de reproducir
+      await _audioPlayer.setVolume(1.0);
+      
+      await _audioPlayer.play(
+        AssetSource('sounds/sale_success.mp3'), 
+        volume: 1.0,
+        mode: PlayerMode.lowLatency, // Ayuda en web para eliminar delay y problemas de carga
+      );
+    } catch (e) {
+      debugPrint('Error reproduciendo sonido (Sales Success): $e');
+    }
   }
 
   @override
   void dispose() {
+    _audioPlayer.dispose();
     _fadeController.dispose();
     _scaleController.dispose();
     super.dispose();
@@ -1071,6 +1081,14 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
     final provider = Provider.of<SalesProvider>(context, listen: false);
     final theme = Theme.of(context);
     final ticket = provider.ticket;
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Colores para el diseño minimalista
+    final backgroundColor = isDark ? colorScheme.surface : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF2D3E4F); // Color oscuro tipo "Hecho"
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.grey.shade600;
+    final primaryColor = colorScheme.primary;
 
     return ScaleTransition(
       scale: CurvedAnimation(
@@ -1078,220 +1096,163 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
         curve: Curves.elasticOut,
       ),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        width: widget.width - 24,
+        margin: const EdgeInsets.all(0), // Sin márgenes externos en móvil
+        width: widget.width,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.green.shade300,
-              Colors.green.shade500,
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.green.withValues(alpha: 0.4),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-              spreadRadius: 2,
-            ),
-          ],
+          color: backgroundColor,
+          // En modo escritorio/tablet queremos bordes redondeados si es un modal/drawer
+          borderRadius: BorderRadius.circular(isMobile(context) ? 0 : 16),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(40),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Animación Lottie prominente
-              Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-                child: Center(
-                  child: Lottie.asset(
-                    'assets/anim/success_check.json',
-                    width: 140,
-                    height: 140,
-                    fit: BoxFit.contain,
-                    repeat: false,
-                    animate: true,
-                    frameRate: FrameRate.max,
-                    options: LottieOptions(
-                      enableMergePaths: true,
-                    ),
-                    onLoaded: (composition) {
-                      // Cuando se carga la composición, podemos obtener la duración real
-                      final duration = composition.duration;
-                      if (mounted && !_animationCompleted) {
-                        // Programar el cierre automático basado en la duración real + 1 segundo
-                        Future.delayed(
-                            duration + const Duration(milliseconds: 1000), () {
-                          if (mounted && !_animationCompleted) {
-                            _animationCompleted = true;
-                            widget.onAnimationComplete?.call();
-                          }
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Título principal con animación
-              FadeTransition(
-                opacity: _fadeController,
-                child: Text(
-                  '¡Venta Exitosa!',
-                  style: theme.textTheme.headlineLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
-                    letterSpacing: 0.5,
-                  ),
-                  textAlign: TextAlign.center,
+              const Spacer(),
+              
+              // 1. Animación Lottie (Check)
+              // Usamos un tamaño adecuado y repetitivo como se solicitó
+              SizedBox(
+                width: 180,
+                height: 180,
+                child: Lottie.asset(
+                  'assets/anim/success_check.json',
+                  fit: BoxFit.contain,
+                  repeat: true,
+                  animate: true,
+                  frameRate: FrameRate.max,
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // Total de la venta - información principal
+              // 2. Título "Hecho" o "Venta exitosa"
               FadeTransition(
                 opacity: _fadeController,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
+                child: Text(
+                  'Venta exitosa',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Total',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        CurrencyFormatter.formatPrice(
-                            value: ticket.getTotalPrice),
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'RobotoMono',
-                          fontSize: 32,
-                        ),
-                      ),
-                    ],
-                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Información adicional minimalista
+              // 3. Monto Total (Grande)
               FadeTransition(
                 opacity: _fadeController,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Artículos
-                    _buildInfoChip(
-                      icon: Icons.shopping_bag_outlined,
-                      label: '${ticket.getProductsQuantity()} artículos',
-                      theme: theme,
-                    ),
+                child: Text(
+                  CurrencyFormatter.formatPrice(value: ticket.getTotalPrice),
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w400, // Fuente más fina y elegante
+                    letterSpacing: -1.0,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
 
-                    // Método de pago
-                    _buildInfoChip(
-                      icon: _getPaymentMethodIcon(ticket.payMode),
-                      label: _getPaymentMethodDisplayText(ticket.payMode),
-                      theme: theme,
+              // 4. Vuelto (Sutil)
+              if (ticket.valueReceived > ticket.getTotalPrice) ...[
+                const SizedBox(height: 8),
+                FadeTransition(
+                  opacity: _fadeController,
+                  child: Text(
+                    'Vuelto: ${CurrencyFormatter.formatPrice(value: ticket.valueReceived - ticket.getTotalPrice)}',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: secondaryTextColor,
+                      fontSize: 18,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+
+              const Spacer(flex: 2),
+
+              // 5. Botones de Acción 
+              FadeTransition(
+                opacity: _fadeController,
+                child: Column(
+                  children: [
+                    // Botón Recibo (Outlined)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Abrir diálogo de opciones de ticket
+                          showTicketOptionsDialog(
+                            context: context,
+                            ticket: ticket,
+                            businessName: provider.profileAccountSelected.name.isNotEmpty
+                                ? provider.profileAccountSelected.name
+                                : 'PUNTO DE VENTA',
+                            onComplete: () {
+                              // Callback cuando se completa el proceso
+                            },
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: textColor,
+                          side: BorderSide(color: Colors.grey.withValues(alpha: 0.4), width: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                          backgroundColor: Colors.transparent,
+                        ),
+                        icon: Icon(Icons.receipt_long_rounded, color: secondaryTextColor),
+                        label: Text(
+                          'Recibo',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Botón Realizar nueva venta (Filled Primary)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: FilledButton(
+                        onPressed: () {
+                          if (mounted && !_animationCompleted) {
+                            _animationCompleted = true;
+                            widget.onAnimationComplete?.call();
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Continuar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-
-              // Mostrar descuento si aplica
-              if (ticket.discount > 0) ...[
-                const SizedBox(height: 16),
-                FadeTransition(
-                  opacity: _fadeController,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      ticket.discountIsPercentage
-                          ? 'Descuento aplicado: ${ticket.discount.toStringAsFixed(0)}%'
-                          : 'Descuento: ${CurrencyFormatter.formatPrice(value: ticket.discount)}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-
-              // Mostrar vuelto si aplica
-              if (ticket.valueReceived > 0 &&
-                  ticket.valueReceived > ticket.getTotalPrice) ...[
-                const SizedBox(height: 16),
-                FadeTransition(
-                  opacity: _fadeController,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Vuelto a entregar',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          CurrencyFormatter.formatPrice(
-                            value: ticket.valueReceived - ticket.getTotalPrice,
-                          ),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'RobotoMono',
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              const SizedBox(height: 12),
             ],
           ),
         ),

@@ -22,7 +22,7 @@ Este workflow realiza un deploy completo de la aplicación Flutter Web a Firebas
 
 3. **Build para web (release)**
    ```bash
-   flutter build web --release --web-renderer canvaskit
+   flutter build web --release
    ```
 
 4. **Deploy a Firebase Hosting**

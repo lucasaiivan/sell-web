@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/core.dart';
@@ -42,6 +43,9 @@ class _SalesPageState extends State<SalesPage> {
   late final _ScannerInputController _scannerInputController;
   int? _lastHomePageIndex;
   bool _skipExitDialogOnce = false;
+  
+  // AudioPlayer para el sonido de escaneo
+  final AudioPlayer _scanAudioPlayer = AudioPlayer();
 
   /// Verifica si hay algún diálogo o modal abierto sobre la página actual
   /// Retorna true si la página de ventas NO es la ruta actual (hay algo encima)
@@ -109,13 +113,14 @@ class _SalesPageState extends State<SalesPage> {
     _deactivateListener(); // Asegurar desactivación al destruir
     _focusNode.dispose();
     _scannerInputController.dispose();
+    _scanAudioPlayer.dispose();
     super.dispose();
   }
 
   /// Activa el listener del teclado/escáner
   void _activateListener() {
     if (!_isListenerActive) {
-      RawKeyboard.instance.addListener(_handleRawKeyEvent);
+      HardwareKeyboard.instance.addHandler(_handleKeyEvent);
       _isListenerActive = true;
       _focusNode.requestFocus(); // Enfocar para recibir eventos
     }
@@ -124,7 +129,7 @@ class _SalesPageState extends State<SalesPage> {
   /// Desactiva el listener del teclado/escáner
   void _deactivateListener() {
     if (_isListenerActive) {
-      RawKeyboard.instance.removeListener(_handleRawKeyEvent);
+      HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
       _isListenerActive = false;
       _scannerInputController
           .clearManualInput(); // Limpiar buffer al desactivar
@@ -143,11 +148,10 @@ class _SalesPageState extends State<SalesPage> {
         // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         // Si es cuenta demo y usuario anónimo, cargar productos demo
-        if (sellProvider.profileAccountSelected.id == 'demo' &&
-            authProvider.user?.isAnonymous == true &&
-            catalogueProvider.products.isEmpty) {
-          final demoProducts =
-              authProvider.getUserAccountsUseCase.getDemoProducts();
+        if (sellProvider.profileAccountSelected.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
+          // cargar productos demo
+          final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
+          
           WidgetsBinding.instance.addPostFrameCallback((_) {
             catalogueProvider.loadDemoProducts(demoProducts);
           });
@@ -241,17 +245,19 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   // admin : Maneja los eventos de teclado crudos para detectar entradas del escáner y entrada manual
-  void _handleRawKeyEvent(RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) return;
+  bool _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
 
     // Ignorar eventos de teclado si hay cualquier diálogo/modal abierto
     // sobre la página de ventas (excepto el diálogo de búsqueda manual propio)
-    if (_hasModalOnTop && !_isDialogOpen) return;
+    if (_hasModalOnTop && !_isDialogOpen) return false;
 
     _scannerInputController.handleKeyInput(
       logicalKey: event.logicalKey,
       character: event.character,
     );
+
+    return false;
   }
 
   void _handleManualEntryRequested() {
@@ -311,6 +317,22 @@ class _SalesPageState extends State<SalesPage> {
     });
   }
 
+  /// Reproduce el sonido de escaneo cuando se encuentra un producto
+  Future<void> _playScanSound() async {
+    try {
+      // Configurar volumen al máximo antes de reproducir
+      await _scanAudioPlayer.setVolume(1.0);
+      
+      await _scanAudioPlayer.play(
+        AssetSource('sounds/scan_bip.mp3'),
+        volume: 1.0,
+        mode: PlayerMode.lowLatency, // Baja latencia para web
+      );
+    } catch (e) {
+      debugPrint('Error reproduciendo sonido de escaneo: $e');
+    }
+  }
+
   Future<void> scanCodeProduct({required String code}) async {
     final context = _focusNode.context;
     if (context == null) return;
@@ -324,6 +346,9 @@ class _SalesPageState extends State<SalesPage> {
         product.id.isNotEmpty &&
         product.description.isNotEmpty) {
       // - Si se encuentra el producto en el catálogo con datos válidos -
+      // Reproducir sonido de escaneo exitoso
+      unawaited(_playScanSound());
+      
       // Si es unidad fraccionaria, mostrar diálogo para elegir cantidad
       if (product.isFractionalUnit) {
         if (mounted) {
@@ -343,7 +368,9 @@ class _SalesPageState extends State<SalesPage> {
           await catalogueProvider.getPublicProductByCode(code);
 
       if (publicProduct != null) {
-        // Si se encuentra un producto público, mostrar el diálogo para agregarlo al ticket
+        // Si se encuentra un producto público, reproducir sonido y mostrar el diálogo
+        unawaited(_playScanSound());
+        
         final productCatalogue = publicProduct.convertProductCatalogue();
         if (mounted) {
           // ignore: use_build_context_synchronously

@@ -26,6 +26,7 @@
 /// - `town`: Ciudad
 class AccountProfile {
   final String id;
+  // USERNAME: Atributo no utilizado temporalmente en la UI/Logica, se mantiene para futura implementación
   final String username;
   final String image;
   final String name;

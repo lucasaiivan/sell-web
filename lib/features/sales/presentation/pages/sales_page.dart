@@ -534,8 +534,8 @@ class _SalesPageState extends State<SalesPage> {
               onTap: (isLoading || isEmpty)
                   ? null
                   : () => showModalBottomSheetSelectProducts(buildContext),
-              isLoading: isLoading || isEmpty,
-              loadingWidget: isLoading || isEmpty
+              isLoading: isLoading,
+              loadingWidget: isLoading
                   ? SizedBox(
                       width: 20,
                       height: 20,

@@ -458,6 +458,8 @@ extension GetItInjectableX on _i174.GetIt {
         _i923.CheckUsernameAvailabilityUseCase(gh<_i348.AuthRepository>()));
     gh.factory<_i762.UpdateBusinessAccountUseCase>(
         () => _i762.UpdateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i437.CreateBusinessAccountUseCase>(
+        () => _i437.CreateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -630,12 +632,6 @@ extension GetItInjectableX on _i174.GetIt {
           printerService: gh<_i897.ThermalPrinterHttpService>(),
           catalogueUseCases: gh<_i1012.CatalogueUseCases>(),
         ));
-    gh.factory<_i437.CreateBusinessAccountUseCase>(
-        () => _i437.CreateBusinessAccountUseCase(
-              gh<_i348.AuthRepository>(),
-              gh<_i85.ValidateUsernameUseCase>(),
-              gh<_i923.CheckUsernameAvailabilityUseCase>(),
-            ));
     gh.factory<_i306.CashRegisterProvider>(() => _i306.CashRegisterProvider(
           gh<_i512.OpenCashRegisterUseCase>(),
           gh<_i202.CloseCashRegisterUseCase>(),
@@ -656,6 +652,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
           gh<_i581.AppDataPersistenceService>(),
         ));
+    gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
+        () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
     gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
           gh<_i253.SignInWithGoogleUseCase>(),
           gh<_i1046.SignInSilentlyUseCase>(),
@@ -665,11 +663,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i644.GetUserAccountsUseCase>(),
           gh<_i437.CreateBusinessAccountUseCase>(),
           gh<_i762.UpdateBusinessAccountUseCase>(),
-          gh<_i923.CheckUsernameAvailabilityUseCase>(),
           gh<_i348.AuthRepository>(),
         ));
-    gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
-        () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
     gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
           gh<_i474.GetCatalogueStreamUseCase>(),
           gh<_i1001.GetPublicProductByCodeUseCase>(),

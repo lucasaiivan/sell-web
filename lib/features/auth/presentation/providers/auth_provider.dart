@@ -14,7 +14,7 @@ import '../../domain/usecases/get_user_stream_usecase.dart';
 import '../../domain/usecases/get_user_accounts_usecase.dart';
 import '../../domain/usecases/create_business_account_usecase.dart';
 import '../../domain/usecases/update_business_account_usecase.dart';
-import '../../domain/usecases/check_username_availability_usecase.dart';
+
 
 /// Provider para gestionar el estado de autenticación
 ///
@@ -33,7 +33,7 @@ class AuthProvider extends ChangeNotifier {
   final GetUserAccountsUseCase _getUserAccountsUseCase;
   final CreateBusinessAccountUseCase _createBusinessAccountUseCase;
   final UpdateBusinessAccountUseCase _updateBusinessAccountUseCase;
-  final CheckUsernameAvailabilityUseCase _checkUsernameAvailabilityUseCase;
+
   final AuthRepository _authRepository;
 
   // Exponer repository para uso en widgets (ej: UsernameTextField)
@@ -84,7 +84,7 @@ class AuthProvider extends ChangeNotifier {
     this._getUserAccountsUseCase,
     this._createBusinessAccountUseCase,
     this._updateBusinessAccountUseCase,
-    this._checkUsernameAvailabilityUseCase,
+
     this._authRepository,
   ) {
     debugPrint('🚀 [AuthProvider] Constructor - Inicializando...');
@@ -301,7 +301,7 @@ class AuthProvider extends ChangeNotifier {
   /// **Retorna:** `true` si se creó exitosamente, `false` en caso contrario
   Future<bool> createBusinessAccount(AccountProfile account) async {
     try {
-      debugPrint('📝 [AuthProvider] Creando nueva cuenta: ${account.username}');
+      debugPrint('📝 [AuthProvider] Creando nueva cuenta: ${account.name}');
 
       final result = await _createBusinessAccountUseCase.call(account);
 
@@ -373,23 +373,5 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Verifica disponibilidad de un username
-  ///
-  /// **Retorna:** `true` si está disponible, `false` si ya existe
-  Future<bool> checkUsernameAvailability(String username) async {
-    try {
-      final result = await _checkUsernameAvailabilityUseCase.call(username);
-      
-      return result.fold(
-        (failure) {
-          debugPrint('❌ [AuthProvider] Error al verificar username: ${failure.message}');
-          return false;
-        },
-        (isAvailable) => isAvailable,
-      );
-    } catch (e) {
-      debugPrint('❌ [AuthProvider] Error inesperado verificando username: $e');
-      return false;
-    }
-  }
+
 }

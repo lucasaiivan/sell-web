@@ -5,7 +5,6 @@
 ///
 /// **Propiedades principales:**
 /// - `id`: ID único de la cuenta
-/// - `username`: Nombre de usuario de la cuenta
 /// - `name`: Nombre del negocio
 /// - `image`: URL de la imagen de perfil
 /// - `currencySign`: Símbolo de moneda (\$, €, etc.)
@@ -26,8 +25,6 @@
 /// - `town`: Ciudad
 class AccountProfile {
   final String id;
-  // USERNAME: Atributo no utilizado temporalmente en la UI/Logica, se mantiene para futura implementación
-  final String username;
   final String image;
   final String name;
   final String currencySign;
@@ -44,11 +41,9 @@ class AccountProfile {
   final String town;
   final DateTime creation;
   final String ownerId; // ID del administrador propietario de la cuenta
-  final DateTime? lastUsernameUpdate; // Última vez que se actualizó el username
 
   const AccountProfile({
     this.id = "",
-    this.username = "",
     this.image = "",
     this.name = "",
     this.currencySign = "\$",
@@ -65,13 +60,11 @@ class AccountProfile {
     this.town = "",
     required this.creation,
     this.ownerId = "",
-    this.lastUsernameUpdate,
   });
 
   /// Copia la entidad con los valores proporcionados
   AccountProfile copyWith({
     String? id,
-    String? username,
     String? image,
     String? name,
     String? currencySign,
@@ -88,11 +81,9 @@ class AccountProfile {
     String? town,
     DateTime? creation,
     String? ownerId,
-    DateTime? lastUsernameUpdate,
   }) {
     return AccountProfile(
       id: id ?? this.id,
-      username: username ?? this.username,
       image: image ?? this.image,
       name: name ?? this.name,
       currencySign: currencySign ?? this.currencySign,
@@ -109,7 +100,6 @@ class AccountProfile {
       town: town ?? this.town,
       creation: creation ?? this.creation,
       ownerId: ownerId ?? this.ownerId,
-      lastUsernameUpdate: lastUsernameUpdate ?? this.lastUsernameUpdate,
     );
   }
 
@@ -159,51 +149,6 @@ class AccountProfile {
   /// **Retorna:** `true` si el adminId coincide con el ownerId dela cuenta
   bool isOwner(String adminId) => ownerId == adminId && adminId.isNotEmpty;
 
-  /// Verifica si el username puede ser actualizado
-  ///
-  /// El username puede actualizarse si:
-  /// - Nunca ha sido actualizado (lastUsernameUpdate es null)
-  /// - Han pasado 30 días o más desde la última actualización
-  ///
-  /// **Retorna:** `true` si puede actualizar el username
-  bool canUpdateUsername() {
-    if (lastUsernameUpdate == null) {
-      return true; // Primera vez, puede actualizar
-    }
-
-    final daysSinceLastUpdate = DateTime.now().difference(lastUsernameUpdate!).inDays;
-    return daysSinceLastUpdate >= 30;
-  }
-
-  /// Calcula los días restantes hasta que pueda actualizar el username
-  ///
-  /// **Retorna:** Número de días restantes, o 0 si ya puede actualizar
-  int daysUntilUsernameUpdate() {
-    if (lastUsernameUpdate == null) {
-      return 0; // Puede actualizar inmediatamente
-    }
-
-    final daysSinceLastUpdate = DateTime.now().difference(lastUsernameUpdate!).inDays;
-    final daysRemaining = 30 - daysSinceLastUpdate;
-    
-    return daysRemaining > 0 ? daysRemaining : 0;
-  }
-
-  /// Retorna mensaje informativo sobre cuándo puede actualizar el username
-  ///
-  /// **Retorna:** String con el mensaje apropiado
-  String getUsernameUpdateMessage() {
-    if (canUpdateUsername()) {
-      return 'Puedes actualizar tu nombre de usuario';
-    }
-
-    final days = daysUntilUsernameUpdate();
-    if (days == 1) {
-      return 'Podrás actualizar tu nombre de usuario en 1 día';
-    }
-    
-    return 'Podrás actualizar tu nombre de usuario en $days días';
-  }
 
   @override
   bool operator ==(Object other) =>
@@ -211,7 +156,6 @@ class AccountProfile {
       other is AccountProfile &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          username == other.username &&
           name == other.name &&
           blockingAccount == other.blockingAccount &&
           verifiedAccount == other.verifiedAccount;
@@ -219,13 +163,12 @@ class AccountProfile {
   @override
   int get hashCode =>
       id.hashCode ^
-      username.hashCode ^
       name.hashCode ^
       blockingAccount.hashCode ^
       verifiedAccount.hashCode;
 
   @override
   String toString() {
-    return 'AccountProfile(id: $id, username: $username, name: $name, verified: $verifiedAccount, blocked: $blockingAccount)';
+    return 'AccountProfile(id: $id, name: $name, verified: $verifiedAccount, blocked: $blockingAccount)';
   }
 }

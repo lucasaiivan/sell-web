@@ -9,6 +9,8 @@ import '../../domain/entities/auth_profile.dart';
 import '../../domain/entities/account_profile.dart';
 import '../models/auth_profile_model.dart';
 import '../models/account_profile_model.dart';
+import '../models/admin_profile_model.dart';
+import '../../domain/entities/admin_profile.dart';
 import '../../../../core/services/database/firestore_paths.dart';
 import '../../../../core/utils/helpers/id_generator.dart';
 
@@ -159,6 +161,14 @@ class AuthRepositoryImpl implements AuthRepository {
       AccountProfile account) async {
     try {
       final firestore = FirebaseFirestore.instance;
+      final currentUser = _firebaseAuth.currentUser;
+
+      if (currentUser == null || currentUser.email == null) {
+        return Left(ServerFailure(
+            'No hay un usuario autenticado con email para crear la cuenta'));
+      }
+
+      final email = currentUser.email!;
 
       // Generar ID único para la cuenta usando IdGenerator
       final accountId = IdGenerator.generateAccountId();
@@ -171,15 +181,45 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Convertir a Map para Firestore
       final accountModel = AccountProfileModel.fromEntity(accountWithId);
-      final data = accountModel.toFirestore();
+      final accountData = accountModel.toFirestore();
 
-      // Guardar en Firestore usando el ID generado
-      await firestore.doc(FirestorePaths.account(accountId)).set(data);
+      // Crear el perfil de administrador (superuser)
+      final adminProfile = AdminProfileModel(
+        id: currentUser.uid,
+        email: email,
+        name: currentUser.displayName ?? '',
+        account: accountId,
+        superAdmin: true, // Por defecto es superuser
+        admin: true,
+        creation: DateTime.now(),
+        lastUpdate: DateTime.now(),
+        permissions: AdminPermission.values
+            .map((e) => e.name)
+            .toList(), // Full permissions
+      );
+
+      final adminData = adminProfile.toJson();
+
+      // Batch para asegurar que se crea la cuenta y los accesos atómicamente
+      final batch = firestore.batch();
+
+      // 1. Guardar la cuenta en /ACCOUNTS/{id}
+      batch.set(firestore.doc(FirestorePaths.account(accountId)), accountData);
+
+      // 2. Crear identificación de acceso en /ACCOUNTS/{accountId}/USERS/{email}
+      batch.set(
+          firestore.doc(FirestorePaths.accountUser(accountId, email)), adminData);
+
+      // 3. Crear identificación de acceso en /USERS/{email}/ACCOUNTS/{accountId}
+      batch.set(
+          firestore.doc(FirestorePaths.userManagedAccount(email, accountId)),
+          adminData);
+
+      await batch.commit();
 
       return Right(accountWithId);
     } catch (e) {
-      return Left(FirestoreFailure(
-          'Error al crear la cuenta: ${e.toString()}'));
+      return Left(FirestoreFailure('Error al crear la cuenta: ${e.toString()}'));
     }
   }
 

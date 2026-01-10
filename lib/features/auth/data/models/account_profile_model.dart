@@ -7,7 +7,6 @@ import '../../domain/entities/account_profile.dart';
 class AccountProfileModel extends AccountProfile {
   const AccountProfileModel({
     super.id,
-    super.username,
     super.image,
     super.name,
     super.currencySign,
@@ -24,14 +23,12 @@ class AccountProfileModel extends AccountProfile {
     super.town,
     required super.creation,
     super.ownerId,
-    super.lastUsernameUpdate,
   });
 
   factory AccountProfileModel.fromDocument(DocumentSnapshot doc) {
     Map data = doc.data() as Map;
     return AccountProfileModel(
       id: doc.id,
-      username: data["username"] ?? '',
       image: data.containsKey('image')
           ? data['image']
           : data["imagen_perfil"] ?? '',
@@ -77,17 +74,11 @@ class AccountProfileModel extends AccountProfile {
               : data["creation"] as DateTime)
           : DateTime.now(),
       ownerId: data['ownerId'] ?? '',
-      lastUsernameUpdate: data['lastUsernameUpdate'] != null
-          ? (data['lastUsernameUpdate'] is Timestamp
-              ? (data['lastUsernameUpdate'] as Timestamp).toDate()
-              : data['lastUsernameUpdate'] as DateTime)
-          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
         "id": id,
-        "username": username,
         "image": image,
         "name": name,
         "creation": Timestamp.fromDate(creation),
@@ -104,9 +95,6 @@ class AccountProfileModel extends AccountProfile {
         "trialStart": Timestamp.fromDate(trialStart),
         "trialEnd": Timestamp.fromDate(trialEnd),
         "ownerId": ownerId,
-        "lastUsernameUpdate": lastUsernameUpdate != null
-            ? Timestamp.fromDate(lastUsernameUpdate!)
-            : null,
       };
 
   /// Convierte a Map para Firestore (alias de toJson)
@@ -115,7 +103,6 @@ class AccountProfileModel extends AccountProfile {
   factory AccountProfileModel.fromMap(Map data) {
     return AccountProfileModel(
       id: data['id'] ?? '',
-      username: data['username'] ?? '',
       image: data.containsKey('image')
           ? data['image']
           : data['imagen_perfil'] ?? '',
@@ -158,16 +145,12 @@ class AccountProfileModel extends AccountProfile {
           ? (data['trialEnd'] as Timestamp).toDate()
           : Timestamp.now().toDate(),
       ownerId: data['ownerId'] ?? '',
-      lastUsernameUpdate: data['lastUsernameUpdate'] != null
-          ? (data['lastUsernameUpdate'] as Timestamp).toDate()
-          : null,
     );
   }
 
   factory AccountProfileModel.fromEntity(AccountProfile entity) {
     return AccountProfileModel(
       id: entity.id,
-      username: entity.username,
       image: entity.image,
       name: entity.name,
       currencySign: entity.currencySign,
@@ -184,7 +167,6 @@ class AccountProfileModel extends AccountProfile {
       town: entity.town,
       creation: entity.creation,
       ownerId: entity.ownerId,
-      lastUsernameUpdate: entity.lastUsernameUpdate,
     );
   }
 }

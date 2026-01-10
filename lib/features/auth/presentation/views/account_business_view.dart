@@ -5,6 +5,8 @@ import 'package:sellweb/core/constants/location_data.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:sellweb/core/presentation/widgets/success/creation_success_view.dart';
 
 
 class AccountBusinessView extends StatefulWidget {
@@ -68,19 +70,18 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
       return;
     }
 
-    setState(() => _isLoading = true);
-
     try {
       final authProvider = context.read<AuthProvider>();
+      
       bool success = false;
+      String accountName = _nameController.text.trim();
 
       if (_isEditing) {
         // --- MODO EDICIÓN ---
+        setState(() => _isLoading = true);
         
         final updatedAccount = widget.account!.copyWith(
-          // Mantener username existente ya que no se edita en UI
-          username: widget.account!.username, 
-          name: _nameController.text.trim(),
+          name: accountName,
           currencySign: _selectedCurrency,
           country: _countryController.text.trim(),
           province: _provinceController.text.trim(),
@@ -91,11 +92,24 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
           updatedAccount,
           widget.admin,
         );
+
+        if (!mounted) return;
+
+        setState(() => _isLoading = false);
+
+        if (success) {
+          Navigator.of(context).pop();
+          _showSuccess('Cuenta actualizada exitosamente');
+        } else {
+          _showError('Error al procesar la solicitud');
+        }
       } else {
         // --- MODO CREACIÓN ---
+        setState(() => _isLoading = true);
+
+        // Crear la cuenta
         final newAccount = AccountProfile(
-          username: '', // Username vacío temporalmente
-          name: _nameController.text.trim(),
+          name: accountName,
           currencySign: _selectedCurrency,
           country: _countryController.text.trim(),
           province: _provinceController.text.trim(),
@@ -107,25 +121,49 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
         );
 
         success = await authProvider.createBusinessAccount(newAccount);
-      }
 
-      if (!mounted) return;
+        if (!mounted) return;
+        
+        setState(() => _isLoading = false);
 
-      if (success) {
-        Navigator.of(context).pop();
-        _showSuccess(_isEditing 
-            ? 'Cuenta actualizada exitosamente' 
-            : 'Cuenta creada exitosamente');
-      } else {
-        _showError('Error al procesar la solicitud');
+        if (success) {
+          // Obtener la cuenta recién creada de la lista actualizada
+          final createdAccount = authProvider.accountsAssociateds.last;
+          
+          // Guardar como cuenta seleccionada e inicializar el estado global
+          if (mounted) {
+            await context.read<SalesProvider>().initAccount(
+              account: createdAccount,
+              context: context,
+            );
+          }
+
+          if (!mounted) return;
+
+          // Navegar a la vista de éxito REEMPLAZANDO la vista actual
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => CreationSuccessView(
+                loadingText: 'Finalizando...',
+                successTitle: '¡Cuenta creada!',
+                successSubtitle: accountName,
+                finalText: 'Redirigiendo...',
+                loadingDuration: 500, // Breve pausa inicial
+                successDuration: 2000,
+                onComplete: () {
+                   Navigator.of(context).pop(); 
+                },
+              ),
+            ),
+          );
+        } else {
+           _showError('Error al crear la cuenta: ${authProvider.authError ?? "Intente nuevamente"}');
+        }
       }
     } catch (e) {
       if (mounted) {
-        _showError('Error inesperado: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
         setState(() => _isLoading = false);
+        _showError('Error inesperado: ${e.toString()}');
       }
     }
   }
@@ -151,6 +189,7 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
       ),
     );
   }
+
 
   Widget _buildSectionHeader({
     required BuildContext context,

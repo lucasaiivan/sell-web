@@ -10,6 +10,7 @@ Gestiona la **autenticación y autorización** de usuarios en la aplicación, in
 - **Sistema de permisos y roles granulares**
 - Selección de cuenta activa
 - Control de acceso multi-colección
+- **Eliminación segura de cuentas y datos**
 
 ---
 
@@ -24,6 +25,8 @@ auth/
 │       ├── GetUserAccountsUseCase
 │       ├── CreateBusinessAccountUseCase
 │       ├── UpdateBusinessAccountUseCase
+│       ├── DeleteBusinessAccountUseCase
+│       ├── DeleteUserAccountUseCase
 │       └── SaveSelectedAccountIdUseCase
 ├── data/
 │   ├── models/            # Models con serialización Firestore
@@ -135,6 +138,46 @@ El proceso de creación utiliza **Firestore WriteBatch** para garantizar atomici
   // Permite al usuario descubrir sus cuentas rápidamente
 }
 ```
+
+---
+
+## 🗑️ Lógica de Negocio: Eliminación de Cuenta
+
+Se implementan dos niveles de eliminación segura, respetando la integridad referencial y limpiando datos en múltiples colecciones y servicios.
+
+### Opción 1: Eliminar Cuenta de Negocio
+
+Esta acción elimina **un negocio específico** y todos sus datos asociados.
+
+**Proceso (`deleteBusinessAccount`):**
+1. **Limpieza de Referencias**:
+   - Se buscan todos los usuarios (Admins) de la cuenta.
+   - Se elimina la referencia del negocio en el perfil de cada usuario (`/USERS/{email}/ACCOUNTS/{accountId}`).
+2. **Eliminación de Subcolecciones (Batch)**:
+   - Se eliminan recursivamente por lotes (max 500 ops) todas las subcolecciones:
+     - `CATALOGUE` (Productos)
+     - `TRANSACTIONS` (Ventas)
+     - `CASHREGISTERS` y `RECORDS` (Caja)
+     - `CATEGORY`, `PROVIDER`, `USERS`, `SETTINGS`
+3. **Limpieza de Storage**:
+   - Se elimina la imagen de perfil del negocio.
+4. **Eliminación del Documento Principal**:
+   - `/ACCOUNTS/{accountId}`.
+
+### Opción 2: Eliminar Cuenta de Usuario
+
+Esta acción elimina el **usuario autenticado** y todos los negocios que le pertenecen.
+
+**Proceso (`deleteUserAccount`):**
+1. **Búsqueda de Negocios**:
+   - Se obtienen todas las cuentas donde el usuario tiene acceso.
+2. **Evaluación de Propiedad**:
+   - Si es **Dueño (SuperAdmin)**: Se ejecuta la eliminación completa del negocio (Opción 1).
+   - Si es **Solo Admin**: Solo se elimina su acceso, el negocio persiste.
+3. **Eliminación de Perfil**:
+   - Se elimina `/USERS/{email}`.
+4. **Eliminación de Auth**:
+   - Se invoca `user.delete()` en Firebase Auth.
 
 ---
 
@@ -255,6 +298,16 @@ if (currentAdmin.hasPermission(AdminPermission.manageCatalogue)) {
 **Input:** ID de cuenta  
 **Output:** `Either<Failure, void>`  
 **Responsabilidad:** Guardar cuenta seleccionada en preferencias
+
+### 5. `DeleteBusinessAccountUseCase`
+**Input:** ID de cuenta
+**Output:** `Either<Failure, void>`
+**Responsabilidad:** Eliminar cuenta de negocio y limpieza profunda de datos
+
+### 6. `DeleteUserAccountUseCase`
+**Input:** Ninguno
+**Output:** `Either<Failure, void>`
+**Responsabilidad:** Eliminar usuario, sus negocios propios y datos de autenticación
 
 ---
 

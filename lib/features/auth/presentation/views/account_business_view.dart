@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/presentation/widgets/inputs/currency_selector.dart';
 import 'package:sellweb/core/constants/location_data.dart';
+import 'package:sellweb/core/presentation/helpers/snackbar_helper.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'package:sellweb/core/presentation/widgets/success/creation_success_view.dart';
+import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
 
 
 class AccountBusinessView extends StatefulWidget {
@@ -70,16 +71,16 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     try {
       final authProvider = context.read<AuthProvider>();
-      
+      final accountName = _nameController.text.trim();
+
       bool success = false;
-      String accountName = _nameController.text.trim();
 
       if (_isEditing) {
         // --- MODO EDICIÓN ---
-        setState(() => _isLoading = true);
-        
         final updatedAccount = widget.account!.copyWith(
           name: accountName,
           currencySign: _selectedCurrency,
@@ -95,42 +96,44 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
 
         if (!mounted) return;
 
-        setState(() => _isLoading = false);
-
         if (success) {
           Navigator.of(context).pop();
-          _showSuccess('Cuenta actualizada exitosamente');
+          if (mounted) {
+            context.showSuccessSnackBar('Cuenta actualizada exitosamente');
+          }
         } else {
-          _showError('Error al procesar la solicitud');
+          if (mounted) {
+            context.showErrorSnackBar(authProvider.authError ?? 'Error al procesar la solicitud');
+          }
         }
       } else {
         // --- MODO CREACIÓN ---
-        setState(() => _isLoading = true);
-
-        // Crear la cuenta
-        final newAccount = AccountProfile(
+        // Usar el método del provider para construir la cuenta con valores por defecto
+        final newAccount = authProvider.buildNewAccount(
           name: accountName,
           currencySign: _selectedCurrency,
+          ownerId: widget.admin.id,
           country: _countryController.text.trim(),
           province: _provinceController.text.trim(),
           town: _townController.text.trim(),
-          ownerId: widget.admin.id,
-          creation: DateTime.now(),
-          trialStart: DateTime.now(),
-          trialEnd: DateTime.now().add(const Duration(days: 30)),
         );
 
         success = await authProvider.createBusinessAccount(newAccount);
 
         if (!mounted) return;
-        
-        setState(() => _isLoading = false);
 
         if (success) {
-          // Obtener la cuenta recién creada de la lista actualizada
-          final createdAccount = authProvider.accountsAssociateds.last;
+          // Obtener la cuenta recién creada desde el provider
+          final createdAccount = authProvider.getLatestCreatedAccount();
           
-          // Guardar como cuenta seleccionada e inicializar el estado global
+          if (createdAccount == null) {
+            if (mounted) {
+              context.showErrorSnackBar('Error: No se pudo obtener la cuenta creada');
+            }
+            return;
+          }
+          
+          // Inicializar el estado global con la nueva cuenta
           if (mounted) {
             await context.read<SalesProvider>().initAccount(
               account: createdAccount,
@@ -140,75 +143,150 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
 
           if (!mounted) return;
 
-          // Navegar a la vista de éxito REEMPLAZANDO la vista actual
+          // Navegar a la vista de éxito
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => CreationSuccessView(
+              builder: (context) => ProcessSuccessView(
                 loadingText: 'Finalizando...',
                 successTitle: '¡Cuenta creada!',
                 successSubtitle: accountName,
                 finalText: 'Redirigiendo...',
-                loadingDuration: 500, // Breve pausa inicial
+                loadingDuration: 500,
                 successDuration: 2000,
                 onComplete: () {
-                   Navigator.of(context).pop(); 
+                  Navigator.of(context).pop();
                 },
               ),
             ),
           );
         } else {
-           _showError('Error al crear la cuenta: ${authProvider.authError ?? "Intente nuevamente"}');
+          if (mounted) {
+            context.showErrorSnackBar(authProvider.authError ?? 'Error al crear la cuenta');
+          }
         }
       }
     } catch (e) {
       if (mounted) {
+        context.showErrorSnackBar('Error inesperado: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
         setState(() => _isLoading = false);
-        _showError('Error inesperado: ${e.toString()}');
       }
     }
   }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showSuccess(String message) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
 
   Widget _buildSectionHeader({
     required BuildContext context,
     required String title,
     required IconData icon,
+    Color? color,
   }) {
     final theme = Theme.of(context);
+    final headerColor = color ?? theme.colorScheme.primary;
+
     return Row(
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        Icon(icon, size: 20, color: headerColor),
         const SizedBox(width: 8),
         Text(
           title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+            color: headerColor,
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _confirmDeleteBusiness() async {
+    final theme = Theme.of(context);
+    final accountName = widget.account?.name ?? 'Cuenta de negocio';
+    
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar negocio?'),
+        icon: Icon(Icons.warning_amber_rounded,
+            color: theme.colorScheme.error, size: 48),
+        content: Text(
+            'Estás a punto de eliminar "$accountName".\n\nEsta acción es IRREVERSIBLE. Se perderán todos los datos:\n• Catálogo de productos\n• Historial de ventas\n• Registros de caja\n• Accesos de usuarios'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sí, eliminar permanentemente')),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    _handleDeleteBusiness(accountName);
+  }
+
+  void _handleDeleteBusiness(String accountName) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => ProcessSuccessView(
+          loadingText: 'Eliminando cuenta...',
+          successTitle: '¡Cuenta eliminada!',
+          successSubtitle: accountName,
+          finalText: 'Redirigiendo...',
+          loadingDuration: 1500,
+          successDuration: 2000,
+          playSound: false,
+          onComplete: () async {
+            final authProvider = context.read<AuthProvider>();
+            final salesProvider = context.read<SalesProvider>();
+            
+            final success = await authProvider.deleteBusinessAccount(widget.account!.id);
+
+            if (!context.mounted) return;
+
+            if (success) {
+              salesProvider.cleanData();
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pop();
+              if (context.mounted) {
+                context.showErrorSnackBar(authProvider.authError ?? 'Error al eliminar negocio');
+              }
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDangerZone(BuildContext context) {
+    final theme = Theme.of(context);
+    final errorColor = theme.colorScheme.error;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: errorColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(Icons.delete_forever_rounded, color: errorColor),
+      ),
+      title: Text(
+        'Eliminar este negocio',
+        style: TextStyle(
+            color: errorColor, fontWeight: FontWeight.bold),
+      ),
+      subtitle: const Text(
+        'Borra permanentemente este negocio y sus datos.',
+      ),
+      onTap: _isLoading ? null : _confirmDeleteBusiness,
     );
   }
 
@@ -347,6 +425,12 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
                   ),
                   
                   const SizedBox(height: 60),
+
+                  // ZONA DE PELIGRO
+                  if (_isEditing) ...[
+                    const Divider(height:50),  
+                    _buildDangerZone(context),
+                  ],
                 ],
               ),
             ),

@@ -51,6 +51,7 @@ SellWeb está construido para escalar contigo.
 *   **Multi-Dispositivo:** Funciona perfectamente en el mostrador o en movimiento.
 *   **Siempre Disponible:** Infraestructura en la nube que garantiza que tu negocio nunca se detenga.
 *   **Seguridad de Grado Bancario:** Autenticación robusta y roles de usuario para proteger tu información sensible.
+*   **Gestión de Datos:** Herramientas de "Derecho al Olvido" para la eliminación segura de cuentas y datos empresariales.
 
 ---
 

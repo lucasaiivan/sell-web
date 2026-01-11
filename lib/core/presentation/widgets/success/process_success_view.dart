@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-/// Widget reutilizable para mostrar confirmación visual de procesos de creación
+/// Widget reutilizable para mostrar confirmación visual de procesos
 ///
 /// **Características:**
 /// - Pantalla completa con animación de check
@@ -11,20 +11,26 @@ import 'package:audioplayers/audioplayers.dart';
 /// - Duraciones configurables
 /// - Callback al completar
 ///
+/// **Casos de uso:**
+/// - Creación de cuentas de negocio
+/// - Eliminación de cuentas de negocio
+/// - Eliminación de cuentas de usuario
+/// - Cualquier proceso que requiera feedback visual
+///
 /// **Ejemplo de uso:**
 /// ```dart
 /// Navigator.of(context).push(
 ///   MaterialPageRoute(
-///     builder: (context) => CreationSuccessView(
-///       loadingText: 'Creando producto...',
-///       successTitle: '¡Producto creado!',
-///       successSubtitle: 'Nombre del Producto',
+///     builder: (context) => ProcessSuccessView(
+///       loadingText: 'Eliminando cuenta...',
+///       successTitle: '¡Cuenta eliminada!',
+///       successSubtitle: 'Nombre de la cuenta',
 ///       onComplete: () => Navigator.of(context).pop(),
 ///     ),
 ///   ),
 /// );
 /// ```
-class CreationSuccessView extends StatefulWidget {
+class ProcessSuccessView extends StatefulWidget {
   /// Texto mostrado durante el estado de carga
   final String loadingText;
   
@@ -52,7 +58,13 @@ class CreationSuccessView extends StatefulWidget {
   /// Callback ejecutado al completar la animación
   final VoidCallback? onComplete;
 
-  const CreationSuccessView({
+  /// Acción asíncrona a ejecutar. Si se proporciona, el tiempo de carga dependerá de esta acción
+  final Future<dynamic> Function()? action;
+
+  /// Callback para manejar errores si la acción falla
+  final Function(Object error)? onError;
+
+  const ProcessSuccessView({
     super.key,
     this.loadingText = 'Procesando...',
     this.successTitle = '¡Completado!',
@@ -63,13 +75,15 @@ class CreationSuccessView extends StatefulWidget {
     this.playSound = true,
     this.soundAssetPath = 'sounds/sale_success.mp3',
     this.onComplete,
+    this.action,
+    this.onError,
   });
 
   @override
-  State<CreationSuccessView> createState() => _CreationSuccessViewState();
+  State<ProcessSuccessView> createState() => _ProcessSuccessViewState();
 }
 
-class _CreationSuccessViewState extends State<CreationSuccessView>
+class _ProcessSuccessViewState extends State<ProcessSuccessView>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -84,23 +98,50 @@ class _CreationSuccessViewState extends State<CreationSuccessView>
       vsync: this,
     );
 
-    // Mostrar estado de carga por la duración especificada
-    Future.delayed(Duration(milliseconds: widget.loadingDuration), () {
-      if (mounted) {
-        setState(() => _showSuccess = true);
-        
-        if (widget.playSound) {
-          _playSuccessSound();
-        }
-        
-        _controller.forward();
+    _startProcess();
+  }
 
-        // Esperar duración de éxito antes de completar
-        Future.delayed(Duration(milliseconds: widget.successDuration), () {
-          if (mounted) {
-            widget.onComplete?.call();
+  Future<void> _startProcess() async {
+    // Si hay una acción definida, ejecutarla
+    if (widget.action != null) {
+      try {
+        await widget.action!();
+        if (mounted) {
+          _triggerSuccess();
+        }
+      } catch (e) {
+        if (mounted) {
+          if (widget.onError != null) {
+            widget.onError!(e);
+          } else {
+            // Comportamiento por defecto ante error: cerrar la vista
+            Navigator.of(context).pop();
           }
-        });
+        }
+      }
+    } else {
+      // Modo temporizado (legacy)
+      Future.delayed(Duration(milliseconds: widget.loadingDuration), () {
+        if (mounted) {
+          _triggerSuccess();
+        }
+      });
+    }
+  }
+
+  void _triggerSuccess() {
+    setState(() => _showSuccess = true);
+
+    if (widget.playSound) {
+      _playSuccessSound();
+    }
+
+    _controller.forward();
+
+    // Esperar duración de éxito antes de completar
+    Future.delayed(Duration(milliseconds: widget.successDuration), () {
+      if (mounted) {
+        widget.onComplete?.call();
       }
     });
   }

@@ -16,6 +16,7 @@ import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_d
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
 import 'package:sellweb/core/constants/unit_constants.dart';
+import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -239,6 +240,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Si es creación, usar la nueva vista de éxito
+    if (widget.isCreatingMode) {
+      _saveProductWithSuccessView();
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
@@ -276,6 +283,48 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         _showErrorMessage(e.toString());
       }
     }
+  }
+
+  /// Guarda el producto usando la vista de éxito (solo para creación)
+  void _saveProductWithSuccessView() {
+    dynamic savedResult;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProcessSuccessView(
+          loadingText: _isCombo ? 'Creando combo...' : 'Creando producto...',
+          successTitle: _isCombo ? '¡Combo Creado!' : '¡Producto Creado!',
+          successSubtitle: _descriptionController.text.trim(),
+          action: () async {
+            final updatedProduct = _buildUpdatedProduct();
+            
+            // Siempre true para creación
+            const shouldUpdateUpgrade = true;
+
+            final result = await widget.catalogueProvider.saveProduct(
+              product: updatedProduct,
+              accountId: widget.accountId,
+              isCreatingMode: true,
+              shouldUpdateUpgrade: shouldUpdateUpgrade,
+              newImageBytes: _newImageBytes,
+            );
+            
+            savedResult = result.updatedProduct;
+            
+            // Pequeña espera para asegurar propagación
+            await Future.delayed(const Duration(milliseconds: 300));
+          },
+          onComplete: () {
+            Navigator.of(context).pop(); // Cerrar SuccessView
+            Navigator.of(context).pop(savedResult); // Cerrar EditView
+          },
+          onError: (error) {
+            Navigator.of(context).pop(); // Cerrar SuccessView
+            _showErrorMessage(error.toString());
+          },
+        ),
+      ),
+    );
   }
 
   /// Construye el producto actualizado con los valores del formulario

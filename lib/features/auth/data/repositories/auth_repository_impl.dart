@@ -12,6 +12,7 @@ import '../models/account_profile_model.dart';
 import '../models/admin_profile_model.dart';
 import '../../domain/entities/admin_profile.dart';
 import '../../../../core/services/database/firestore_paths.dart';
+import '../../../../core/services/storage/i_storage_datasource.dart';
 import '../../../../core/utils/helpers/id_generator.dart';
 
 /// Implementación del repositorio de autenticación
@@ -22,8 +23,13 @@ import '../../../../core/utils/helpers/id_generator.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final fb_auth.FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final IStorageDataSource _storageDataSource;
 
-  AuthRepositoryImpl(this._firebaseAuth, this._googleSignIn);
+  AuthRepositoryImpl(
+    this._firebaseAuth,
+    this._googleSignIn,
+    this._storageDataSource,
+  );
 
   @override
   Future<Either<Failure, AuthProfile>> signInWithGoogle() async {
@@ -246,6 +252,183 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       return Left(FirestoreFailure(
           'Error al actualizar la cuenta: ${e.toString()}'));
+    }
+  }
+  @override
+  Future<Either<Failure, void>> deleteBusinessAccount(String accountId) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // 1. Obtener la referencia de la cuenta
+      final accountRef = firestore.doc(FirestorePaths.account(accountId));
+      final accountDoc = await accountRef.get();
+
+      if (!accountDoc.exists) {
+        return Left(FirestoreFailure('La cuenta no existe'));
+      }
+
+      // 2. Limpiar referencias en usuarios (Admins)
+      // Obtenemos los usuarios que tienen acceso a esta cuenta
+      final accountUsersRef =
+          firestore.collection(FirestorePaths.accountUsers(accountId));
+      final accountUsersSnapshot = await accountUsersRef.get();
+
+      final batch = firestore.batch();
+      bool batchHasOps = false;
+
+      for (final doc in accountUsersSnapshot.docs) {
+        final email = doc.id; // El ID es el email
+        // Referencia a la cuenta en el perfil del usuario
+        final userAccountRef = firestore.doc(
+            FirestorePaths.userManagedAccount(email, accountId));
+        batch.delete(userAccountRef);
+        batchHasOps = true;
+      }
+
+      if (batchHasOps) {
+        await batch.commit();
+      }
+
+      // 3. Eliminar subcolecciones (Recursive delete client-side simulator)
+      // Lista explícita de subcolecciones conocidas según FirestorePaths
+      final subcollections = [
+        'CATALOGUE',
+        'CATEGORY',
+        'PROVIDER',
+        'TRANSACTIONS',
+        'USERS',
+        'CASHREGISTERS',
+        'RECORDS',
+        'FIXERDESCRIPTIONS',
+        'SETTINGS',
+      ];
+
+      for (final subcollection in subcollections) {
+        final collectionDir = accountRef.collection(subcollection);
+        await _deleteCollection(collectionDir);
+      }
+
+      // 4. Eliminar TODAS las imágenes en Storage asociadas a esta cuenta
+      try {
+        // A. Eliminar toda la carpeta de la cuenta en Storage (incluye productos, perfil, etc.)
+        // Esto eliminará recursivamente:
+        // - ACCOUNTS/{accountId}/PRODUCTS/* (todas las imágenes de productos)
+        // - ACCOUNTS/{accountId}/PROFILE/* (imagen de perfil)
+        // - ACCOUNTS/{accountId}/BRANDS/* (si existen imágenes de marcas personalizadas)
+        final accountStoragePath = 'ACCOUNTS/$accountId';
+        await _storageDataSource.deleteFolder(accountStoragePath);
+        print('✅ Imágenes de la cuenta eliminadas: $accountStoragePath');
+      } catch (e) {
+        // Si falla la eliminación de Storage, logueamos pero continuamos
+        // No queremos que un error en Storage bloquee la eliminación de la cuenta
+        print('⚠️ Error eliminando imágenes de Storage: $e');
+      }
+
+      // 5. Eliminar el documento de la cuenta
+      await accountRef.delete();
+
+      return const Right(null);
+    } catch (e) {
+      return Left(FirestoreFailure(
+          'Error al eliminar cuenta de negocio: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteUserAccount() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final currentUser = _firebaseAuth.currentUser;
+
+      if (currentUser == null || currentUser.email == null) {
+        return Left(ServerFailure('No hay usuario autenticado'));
+      }
+
+      final email = currentUser.email!;
+
+      // 1. Obtener todas las cuentas gestionadas por el usuario
+      // IMPORTANTE: Solo debemos eliminar las que son PROPIEDAD del usuario.
+      // Sin embargo, la estructura actual no distingue claramente propiedad vs administración en el path
+      // Asumiremos que si está en 'ACCOUNTS' del usuario, debemos procesarla.
+      // Pero si es solo admin, ¿deberíamos borrar la cuenta del negocio?
+      // El requerimiento dice: "1-eliminar cuenta, 2-eliminar cuentas (cuenta de su propiedad creado por ese usuario auteticado)"
+      // Para seguridad, verificaremos si el usuario es SuperAdmin de la cuenta antes de borrarla.
+      
+      final userAccountsRef =
+          firestore.collection(FirestorePaths.userManagedAccounts(email));
+      final userAccountsSnapshot = await userAccountsRef.get();
+
+      for (final doc in userAccountsSnapshot.docs) {
+        final accountId = doc.id;
+        final accountData = doc.data();
+        
+        // Verificar si es superAdmin o propietario para decidir si borrar el negocio completo
+        // Si es solo 'admin', solo quitamos la referencia (que el paso 3 y el delete de Auth harian implicitamente
+        // al no poder acceder más). Pero para limpieza completa:
+        
+        final isSuperAdmin = accountData['superAdmin'] == true;
+        
+        if (isSuperAdmin) {
+           // Si es dueño, borramos el negocio
+           final result = await deleteBusinessAccount(accountId);
+           result.fold(
+             (failure) => print('Error borrando cuenta $accountId: $failure'),
+             (_) => print('Cuenta $accountId eliminada correctamente'),
+           );
+        } else {
+          // Si no es dueño, solo removemos la referencia de SU perfil
+          await doc.reference.delete();
+          
+          // Y removemos su usuario de la lista de usuarios de la cuenta
+           await firestore
+              .doc(FirestorePaths.accountUser(accountId, email))
+              .delete();
+        }
+      }
+
+      // 2. Eliminar documento de usuario
+      await firestore.doc(FirestorePaths.user(email)).delete();
+
+      // 3. Eliminar usuario de Firebase Auth
+      // Requerimos borrarlo al final
+      await currentUser.delete();
+
+      return const Right(null);
+    } catch (e) {
+      if (e is fb_auth.FirebaseAuthException && e.code == 'requires-recent-login') {
+         return Left(ServerFailure('Por seguridad, debes iniciar sesión nuevamente para eliminar tu cuenta.'));
+      }
+      return Left(ServerFailure('Error al eliminar usuario: ${e.toString()}'));
+    }
+  }
+
+  /// Helper para eliminar colecciones grandes por lotes
+  Future<void> _deleteCollection(Query collectionRef) async {
+    // Implementación recursiva por lotes
+    final limit = 500;
+    final snapshot = await collectionRef.limit(limit).get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = FirebaseFirestore.instance.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+      
+      // NOTA: Si las subcolecciones tuvieran subcolecciones propias (nivel 3),
+      // necesitaríamos recursividad aquí.
+      // Según el análisis, la estructura es mayormente plana (Nivel 2), 
+      // excepto casos puntuales que trataremos si existen.
+      // Para una solución genérica robusta, deberíamos listar subcolecciones de cada doc.
+      // Pero Firestore no permite listar subcolecciones de un doc en Web/Client SDK fácilmente
+      // sin conocer sus nombres.
+      // Asumimos estructura conocida.
+    }
+    
+    await batch.commit();
+
+    // Si borramos el límite, reintentamos (hay más docs)
+    if (snapshot.size >= limit) {
+      await _deleteCollection(collectionRef);
     }
   }
 }

@@ -75,6 +75,24 @@ abstract class AuthRepository {
   /// - [Left(Failure)] si hay un error en la actualización
   Future<Either<Failure, void>> updateBusinessAccount(AccountProfile account);
 
+  /// Elimina una cuenta de negocio y todos sus datos asociados
+  ///
+  /// **Acciones:**
+  /// 1. Elimina recursivamente todas las subcolecciones (Catalog, Sales, etc)
+  /// 2. Elimina referencias en perfiles de usuarios administradores
+  /// 3. Elimina el documento principal de la cuenta
+  /// 4. Elimina imágenes en Storage asociadas
+  Future<Either<Failure, void>> deleteBusinessAccount(String accountId);
+
+  /// Elimina la cuenta del usuario actual y todos sus datos
+  ///
+  /// **Acciones:**
+  /// 1. Busca todas las cuentas de negocio propiedad del usuario
+  /// 2. Ejecuta [deleteBusinessAccount] para cada una
+  /// 3. Elimina el documento de perfil de usuario /USERS/{email}
+  /// 4. Elimina la cuenta de autenticación de Firebase (Auth)
+  Future<Either<Failure, void>> deleteUserAccount();
+
   /// Stream que emite el usuario autenticado actual
   ///
   /// Emite null cuando no hay usuario autenticado

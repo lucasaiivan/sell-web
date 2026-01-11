@@ -15,6 +15,8 @@ import '../../domain/usecases/get_user_accounts_usecase.dart';
 import '../../domain/usecases/create_business_account_usecase.dart';
 import '../../domain/usecases/update_business_account_usecase.dart';
 
+import '../../domain/usecases/delete_business_account_usecase.dart';
+import '../../domain/usecases/delete_user_account_usecase.dart';
 
 /// Provider para gestionar el estado de autenticación
 ///
@@ -33,6 +35,8 @@ class AuthProvider extends ChangeNotifier {
   final GetUserAccountsUseCase _getUserAccountsUseCase;
   final CreateBusinessAccountUseCase _createBusinessAccountUseCase;
   final UpdateBusinessAccountUseCase _updateBusinessAccountUseCase;
+  final DeleteBusinessAccountUseCase _deleteBusinessAccountUseCase;
+  final DeleteUserAccountUseCase _deleteUserAccountUseCase;
 
   final AuthRepository _authRepository;
 
@@ -84,6 +88,8 @@ class AuthProvider extends ChangeNotifier {
     this._getUserAccountsUseCase,
     this._createBusinessAccountUseCase,
     this._updateBusinessAccountUseCase,
+    this._deleteBusinessAccountUseCase,
+    this._deleteUserAccountUseCase,
 
     this._authRepository,
   ) {
@@ -370,6 +376,102 @@ class AuthProvider extends ChangeNotifier {
       _authError = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Construye una nueva cuenta de negocio con valores por defecto
+  ///
+  /// **Parámetros:**
+  /// - `name`: Nombre del negocio
+  /// - `currencySign`: Símbolo de moneda
+  /// - `country`: País (opcional)
+  /// - `province`: Provincia (opcional)
+  /// - `town`: Ciudad (opcional)
+  /// - `ownerId`: ID del propietario
+  ///
+  /// **Retorna:** Un nuevo `AccountProfile` con valores por defecto inicializados
+  AccountProfile buildNewAccount({
+    required String name,
+    required String currencySign,
+    required String ownerId,
+    String? country,
+    String? province,
+    String? town,
+  }) {
+    final now = DateTime.now();
+    return AccountProfile(
+      name: name,
+      currencySign: currencySign,
+      country: country ?? '',
+      province: province ?? '',
+      town: town ?? '',
+      ownerId: ownerId,
+      creation: now,
+      trialStart: now,
+      trialEnd: now.add(const Duration(days: 30)),
+    );
+  }
+
+  /// Obtiene la última cuenta creada de la lista de cuentas asociadas
+  ///
+  /// **Retorna:** La última cuenta en la lista, o `null` si la lista está vacía
+  AccountProfile? getLatestCreatedAccount() {
+    if (_accountsAssociateds.isEmpty) return null;
+    return _accountsAssociateds.last;
+  }
+
+  Future<bool> deleteBusinessAccount(String accountId) async {
+    try {
+      debugPrint('🚨 [AuthProvider] Eliminando cuenta: $accountId');
+      final result = await _deleteBusinessAccountUseCase(accountId);
+      
+      return result.fold(
+         (failure) {
+           debugPrint('❌ [AuthProvider] Error al eliminar cuenta: ${failure.message}');
+           _authError = failure.message;
+           notifyListeners();
+           return false;
+         },
+         (_) {
+           debugPrint('✅ [AuthProvider] Cuenta eliminada: $accountId');
+           _accountsAssociateds.removeWhere((a) => a.id == accountId);
+           notifyListeners();
+           return true; 
+         }
+      );
+    } catch (e) {
+       debugPrint('❌ [AuthProvider] Error inesperado: $e');
+       _authError = e.toString();
+       notifyListeners();
+       return false;
+    }
+  }
+
+  Future<bool> deleteUserAccount() async {
+    try {
+       debugPrint('🚨 [AuthProvider] Eliminando usuario y todos sus datos');
+       final result = await _deleteUserAccountUseCase();
+       
+       return result.fold(
+         (failure) {
+           debugPrint('❌ [AuthProvider] Error al eliminar usuario: ${failure.message}');
+           _authError = failure.message;
+           notifyListeners();
+           return false;
+         },
+         (_) {
+           debugPrint('✅ [AuthProvider] Usuario eliminado');
+           _user = null;
+           _accountsAssociateds = [];
+           notifyListeners();
+           return true;
+         }
+       );
+    } catch (e) {
+       debugPrint('❌ [AuthProvider] Error inesperado: $e');
+       _authError = e.toString();
+       notifyListeners();
+       return false;
     }
   }
 

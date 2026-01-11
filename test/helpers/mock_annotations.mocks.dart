@@ -2106,6 +2106,41 @@ class MockAuthRepository extends _i1.Mock implements _i23.AuthRepository {
           ),
         )),
       ) as _i5.Future<_i25.Either<_i26.Failure, void>>);
+
+  @override
+  _i5.Future<_i25.Either<_i26.Failure, void>> deleteBusinessAccount(
+          String? accountId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteBusinessAccount,
+          [accountId],
+        ),
+        returnValue: _i5.Future<_i25.Either<_i26.Failure, void>>.value(
+            _i8.dummyValue<_i25.Either<_i26.Failure, void>>(
+          this,
+          Invocation.method(
+            #deleteBusinessAccount,
+            [accountId],
+          ),
+        )),
+      ) as _i5.Future<_i25.Either<_i26.Failure, void>>);
+
+  @override
+  _i5.Future<_i25.Either<_i26.Failure, void>> deleteUserAccount() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteUserAccount,
+          [],
+        ),
+        returnValue: _i5.Future<_i25.Either<_i26.Failure, void>>.value(
+            _i8.dummyValue<_i25.Either<_i26.Failure, void>>(
+          this,
+          Invocation.method(
+            #deleteUserAccount,
+            [],
+          ),
+        )),
+      ) as _i5.Future<_i25.Either<_i26.Failure, void>>);
 }
 
 /// A class which mocks [AccountRepository].

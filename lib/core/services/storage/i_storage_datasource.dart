@@ -37,4 +37,12 @@ abstract interface class IStorageDataSource {
   /// [path] Ruta completa del archivo
   /// Returns true si existe, false si no
   Future<bool> fileExists(String path);
+
+  /// Elimina todos los archivos dentro de una carpeta en Storage
+  ///
+  /// [folderPath] Ruta de la carpeta a eliminar (ej: 'ACCOUNTS/abc123/PRODUCTS')
+  /// 
+  /// **Nota:** Elimina recursivamente todos los archivos dentro de la carpeta.
+  /// Si la carpeta no existe o está vacía, no lanza error.
+  Future<void> deleteFolder(String folderPath);
 }

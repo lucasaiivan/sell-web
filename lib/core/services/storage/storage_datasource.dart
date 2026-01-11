@@ -85,4 +85,42 @@ class StorageDataSource implements IStorageDataSource {
       throw Exception('Error al verificar existencia de archivo: $e');
     }
   }
+
+  @override
+  Future<void> deleteFolder(String folderPath) async {
+    try {
+      final ref = _storage.ref(folderPath);
+      
+      // Listar todos los archivos en la carpeta
+      final listResult = await ref.listAll();
+      
+      // Eliminar todos los archivos (items)
+      for (final item in listResult.items) {
+        try {
+          await item.delete();
+        } catch (e) {
+          // Continuar aunque falle la eliminación de un archivo individual
+          print('⚠️ Error eliminando ${item.fullPath}: $e');
+        }
+      }
+      
+      // Eliminar recursivamente todas las subcarpetas (prefixes)
+      for (final prefix in listResult.prefixes) {
+        try {
+          await deleteFolder(prefix.fullPath);
+        } catch (e) {
+          // Continuar aunque falle la eliminación de una subcarpeta
+          print('⚠️ Error eliminando subcarpeta ${prefix.fullPath}: $e');
+        }
+      }
+    } on FirebaseException catch (e) {
+      // Si la carpeta no existe, no es un error
+      if (e.code == 'object-not-found') {
+        return;
+      }
+      throw Exception('Error al eliminar carpeta de Storage: $e');
+    } catch (e) {
+      throw Exception('Error al eliminar carpeta de Storage: $e');
+    }
+  }
 }

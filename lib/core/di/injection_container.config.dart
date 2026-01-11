@@ -65,6 +65,10 @@ import 'package:sellweb/features/auth/domain/usecases/clear_admin_profile_usecas
     as _i465;
 import 'package:sellweb/features/auth/domain/usecases/create_business_account_usecase.dart'
     as _i437;
+import 'package:sellweb/features/auth/domain/usecases/delete_business_account_usecase.dart'
+    as _i1;
+import 'package:sellweb/features/auth/domain/usecases/delete_user_account_usecase.dart'
+    as _i112;
 import 'package:sellweb/features/auth/domain/usecases/fetch_admin_profile_usecase.dart'
     as _i33;
 import 'package:sellweb/features/auth/domain/usecases/get_account_admins_usecase.dart'
@@ -403,6 +407,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i348.AuthRepository>(() => _i566.AuthRepositoryImpl(
           gh<_i59.FirebaseAuth>(),
           gh<_i116.GoogleSignIn>(),
+          gh<_i283.IStorageDataSource>(),
         ));
     gh.lazySingleton<_i1071.IProductRepository>(
         () => _i1071.ProductRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
@@ -460,6 +465,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i762.UpdateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
     gh.factory<_i437.CreateBusinessAccountUseCase>(
         () => _i437.CreateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i1.DeleteBusinessAccountUseCase>(
+        () => _i1.DeleteBusinessAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i112.DeleteUserAccountUseCase>(
+        () => _i112.DeleteUserAccountUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -654,17 +663,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.lazySingleton<_i161.GetSalesAnalyticsUseCase>(
         () => _i161.GetSalesAnalyticsUseCase(gh<_i732.AnalyticsRepository>()));
-    gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
-          gh<_i253.SignInWithGoogleUseCase>(),
-          gh<_i1046.SignInSilentlyUseCase>(),
-          gh<_i380.SignInAnonymouslyUseCase>(),
-          gh<_i158.SignOutUseCase>(),
-          gh<_i557.GetUserStreamUseCase>(),
-          gh<_i644.GetUserAccountsUseCase>(),
-          gh<_i437.CreateBusinessAccountUseCase>(),
-          gh<_i762.UpdateBusinessAccountUseCase>(),
-          gh<_i348.AuthRepository>(),
-        ));
     gh.factory<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
           gh<_i474.GetCatalogueStreamUseCase>(),
           gh<_i1001.GetPublicProductByCodeUseCase>(),
@@ -699,6 +697,19 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i395.UpdateUserUseCase>(),
           gh<_i799.DeleteUserUseCase>(),
           gh<_i644.GetUserAccountsUseCase>(),
+        ));
+    gh.factory<_i638.AuthProvider>(() => _i638.AuthProvider(
+          gh<_i253.SignInWithGoogleUseCase>(),
+          gh<_i1046.SignInSilentlyUseCase>(),
+          gh<_i380.SignInAnonymouslyUseCase>(),
+          gh<_i158.SignOutUseCase>(),
+          gh<_i557.GetUserStreamUseCase>(),
+          gh<_i644.GetUserAccountsUseCase>(),
+          gh<_i437.CreateBusinessAccountUseCase>(),
+          gh<_i762.UpdateBusinessAccountUseCase>(),
+          gh<_i1.DeleteBusinessAccountUseCase>(),
+          gh<_i112.DeleteUserAccountUseCase>(),
+          gh<_i348.AuthRepository>(),
         ));
     gh.factory<_i975.AnalyticsProvider>(() => _i975.AnalyticsProvider(
           gh<_i161.GetSalesAnalyticsUseCase>(),

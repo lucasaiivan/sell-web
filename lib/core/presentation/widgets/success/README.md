@@ -1,9 +1,9 @@
-# CreationSuccessView
+# ProcessSuccessView
 
-Widget reutilizable para mostrar confirmación visual de procesos de creación con animación de éxito.
+Widget reutilizable para mostrar confirmación visual de procesos con animación de éxito.
 
 ## 📍 Ubicación
-`lib/core/presentation/widgets/success/creation_success_view.dart`
+`lib/core/presentation/widgets/success/process_success_view.dart`
 
 ## ✨ Características
 
@@ -16,13 +16,22 @@ Widget reutilizable para mostrar confirmación visual de procesos de creación c
 - 📱 **Responsive** y adaptable a tema claro/oscuro
 - 🎯 **Callback** al completar la animación
 
+## 🎯 Casos de Uso
+
+- ✅ Creación de cuentas de negocio
+- ❌ Eliminación de cuentas de negocio
+- ❌ Eliminación de cuentas de usuario
+- ✅ Creación de productos
+- 💾 Guardado de configuraciones
+- 🔄 Cualquier proceso que requiera feedback visual
+
 ## 🎯 Parámetros
 
 | Parámetro | Tipo | Requerido | Por Defecto | Descripción |
 |-----------|------|-----------|-------------|-------------|
 | `loadingText` | `String` | ❌ | `'Procesando...'` | Texto mostrado durante la carga |
 | `successTitle` | `String` | ❌ | `'¡Completado!'` | Título del estado de éxito |
-| `successSubtitle` | `String?` | ❌ | `null` | Subtítulo destacado (ej: nombre del elemento creado) |
+| `successSubtitle` | `String?` | ❌ | `null` | Subtítulo destacado (ej: nombre del elemento) |
 | `finalText` | `String?` | ❌ | `'Redirigiendo...'` | Texto final debajo del subtítulo |
 | `loadingDuration` | `int` | ❌ | `1500` | Duración del estado de carga en ms |
 | `successDuration` | `int` | ❌ | `2000` | Duración del estado de éxito en ms |
@@ -32,16 +41,18 @@ Widget reutilizable para mostrar confirmación visual de procesos de creación c
 
 ## 📖 Ejemplos de Uso
 
-### Ejemplo 1: Creación de Cuenta (Uso actual)
+### Ejemplo 1: Creación de Cuenta de Negocio
 
 ```dart
-Navigator.of(context).push(
+Navigator.of(context).pushReplacement(
   MaterialPageRoute(
-    builder: (context) => CreationSuccessView(
-      loadingText: 'Creando cuenta\nEspere un momento...',
+    builder: (context) => ProcessSuccessView(
+      loadingText: 'Finalizando...',
       successTitle: '¡Cuenta creada!',
       successSubtitle: 'Mi Tienda Online',
       finalText: 'Redirigiendo...',
+      loadingDuration: 500,
+      successDuration: 2000,
       onComplete: () {
         Navigator.of(context).pop();
       },
@@ -50,55 +61,85 @@ Navigator.of(context).push(
 );
 ```
 
-### Ejemplo 2: Creación de Producto
+### Ejemplo 2: Eliminación de Cuenta de Negocio
+
+```dart
+Navigator.of(context).pushReplacement(
+  MaterialPageRoute(
+    builder: (context) => ProcessSuccessView(
+      loadingText: 'Eliminando cuenta...',
+      successTitle: '¡Cuenta eliminada!',
+      successSubtitle: accountName,
+      finalText: 'Redirigiendo...',
+      loadingDuration: 1500,
+      successDuration: 2000,
+      playSound: false, // Sin sonido para eliminaciones
+      onComplete: () async {
+        // Ejecutar la eliminación real aquí
+        final success = await authProvider.deleteBusinessAccount(accountId);
+        if (success) {
+          Navigator.of(context).pop();
+        }
+      },
+    ),
+  ),
+);
+```
+
+### Ejemplo 3: Eliminación de Cuenta de Usuario
 
 ```dart
 Navigator.of(context).push(
   MaterialPageRoute(
-    builder: (context) => CreationSuccessView(
+    builder: (context) => ProcessSuccessView(
+      loadingText: 'Eliminando cuenta de usuario...',
+      successTitle: '¡Cuenta eliminada!',
+      successSubtitle: userName,
+      finalText: 'Cerrando sesión...',
+      loadingDuration: 1500,
+      successDuration: 2000,
+      playSound: false, // Sin sonido para eliminaciones
+      onComplete: () async {
+        final success = await authProvider.deleteUserAccount();
+        if (success) {
+          Navigator.of(context).pop();
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      },
+    ),
+  ),
+);
+```
+
+### Ejemplo 4: Creación de Producto
+
+```dart
+Navigator.of(context).push(
+  MaterialPageRoute(
+    builder: (context) => ProcessSuccessView(
       loadingText: 'Agregando producto...',
       successTitle: '¡Producto agregado!',
       successSubtitle: 'Coca-Cola 500ml',
       finalText: null, // Sin texto final
-      loadingDuration: 1000, // Más rápido
+      loadingDuration: 1000,
       successDuration: 1500,
       onComplete: () {
         Navigator.of(context).pop();
-        // Lógica adicional...
       },
     ),
   ),
 );
 ```
 
-### Ejemplo 3: Proceso sin Sonido
+### Ejemplo 5: Proceso sin Sonido
 
 ```dart
 Navigator.of(context).push(
   MaterialPageRoute(
-    builder: (context) => CreationSuccessView(
+    builder: (context) => ProcessSuccessView(
       loadingText: 'Guardando cambios...',
       successTitle: '¡Guardado!',
       playSound: false, // Sin sonido
-      onComplete: () {
-        Navigator.of(context).pop();
-      },
-    ),
-  ),
-);
-```
-
-### Ejemplo 4: Confirmación Mínima
-
-```dart
-Navigator.of(context).push(
-  MaterialPageRoute(
-    builder: (context) => CreationSuccessView(
-      successTitle: '¡Listo!',
-      loadingDuration: 500,
-      successDuration: 1000,
-      finalText: null,
-      successSubtitle: null,
       onComplete: () {
         Navigator.of(context).pop();
       },
@@ -133,6 +174,18 @@ Navigator.of(context).push(
 | **Normal** (defecto) | 1500ms | 2000ms | 3.5s |
 | **Lenta/Importante** | 2000ms | 3000ms | 5s |
 
+## 🎨 Recomendaciones de UX
+
+### Para Operaciones de Creación ✅
+- `playSound: true` - Refuerza el éxito positivo
+- Duraciones normales o rápidas
+- Texto final: "Redirigiendo..."
+
+### Para Operaciones de Eliminación ❌
+- `playSound: false` - Evita celebrar una acción destructiva
+- Duraciones normales
+- Texto final: "Redirigiendo..." o "Cerrando sesión..."
+
 ## 🔧 Personalización Avanzada
 
 Si necesitas personalizar aún más (colores, animaciones diferentes, etc.), puedes:
@@ -147,7 +200,15 @@ Si necesitas personalizar aún más (colores, animaciones diferentes, etc.), pue
 - El sonido por defecto es `sounds/sale_success.mp3`
 - Se adapta automáticamente a tema claro/oscuro
 - Usa `ScaleTransition` con `Curves.elasticOut` para un efecto más dinámico
+- El `onComplete` se ejecuta DESPUÉS de la animación, perfecto para operaciones asíncronas
 
 ## 🎨 Diseño
 
 El widget sigue los principios de Material Design 3 y se adapta al tema de la aplicación.
+
+## 🔄 Migración desde CreationSuccessView
+
+Si estabas usando `CreationSuccessView`, simplemente:
+1. Cambiar el import: `creation_success_view.dart` → `process_success_view.dart`
+2. Cambiar el nombre de la clase: `CreationSuccessView` → `ProcessSuccessView`
+3. Los parámetros son idénticos, no se necesitan cambios adicionales

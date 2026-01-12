@@ -154,11 +154,22 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
+  /// 
+  /// Verifica [mounted] antes de llamar a [setState] para evitar errores
+  /// cuando el widget ya ha sido eliminado del árbol de widgets.
   void _setupListeners() {
-    _salePriceController.addListener(() => setState(() {}));
-    _purchasePriceController.addListener(() => setState(() {}));
-    _descriptionController.addListener(() => setState(() {}));
-    _markController.addListener(() => setState(() {}));
+    _salePriceController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _purchasePriceController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _descriptionController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _markController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -169,7 +180,6 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     _categoryController.dispose();
     _providerController.dispose();
     _markController.dispose();
-    _unitController.dispose();
     _unitController.dispose();
     _expirationController.dispose();
     super.dispose();
@@ -237,89 +247,64 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   ///
   /// Delega toda la lógica de negocio al [SaveProductUseCase]
   /// que determina el tipo de producto y aplica las reglas correspondientes.
+  ///
+  /// Usa [ProcessSuccessView] para proporcionar feedback visual consistente
+  /// tanto para creación como para actualización.
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Si es creación, usar la nueva vista de éxito
-    if (widget.isCreatingMode) {
-      _saveProductWithSuccessView();
-      return;
-    }
-
-    setState(() => _isSaving = true);
-
-    try {
-      final updatedProduct = _buildUpdatedProduct();
-
-      // Detectar si cambiaron los precios para actualizar el timestamp upgrade
-      final pricesChanged = widget.isCreatingMode ? true : _havePricesChanged();
-      final shouldUpdateUpgrade = pricesChanged || _newImageBytes != null;
-
-      // Delegar toda la lógica de negocio al Provider
-      final result = await widget.catalogueProvider.saveProduct(
-        product: updatedProduct,
-        accountId: widget.accountId,
-        isCreatingMode: widget.isCreatingMode,
-        shouldUpdateUpgrade: shouldUpdateUpgrade,
-        newImageBytes: _newImageBytes,
-      );
-
-      if (mounted) {
-        setState(() => _isSaving = false);
-        _showSuccessMessage(result.message);
-
-        // Esperar un poco más para que Firestore propague los cambios
-        // y el listener del provider actualice la lista de productos
-        await Future.delayed(const Duration(milliseconds: 300));
-
-        if (mounted) {
-          // Retornar el producto actualizado para que la vista anterior lo use
-          Navigator.of(context).pop(result.updatedProduct);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        _showErrorMessage(e.toString());
-      }
-    }
+    // Usar ProcessSuccessView para ambos casos: creación y actualización
+    _saveProductWithSuccessView();
   }
 
-  /// Guarda el producto usando la vista de éxito (solo para creación)
+  /// Guarda el producto usando la vista de éxito
+  ///
+  /// Utilizado tanto para creación como para actualización.
+  /// Proporciona feedback visual inmersivo con [ProcessSuccessView].
   void _saveProductWithSuccessView() {
-    dynamic savedResult;
+    // Determinar textos según modo de edición
+    final bool isCreating = widget.isCreatingMode;
+    final String loadingText = isCreating
+        ? (_isCombo ? 'Creando combo...' : 'Creando producto...')
+        : (_isCombo ? 'Actualizando combo...' : 'Actualizando producto...');
+    final String successTitle = isCreating
+        ? (_isCombo ? '¡Combo Creado!' : '¡Producto Creado!')
+        : (_isCombo ? '¡Combo Actualizado!' : '¡Producto Actualizado!');
 
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ProcessSuccessView(
-          loadingText: _isCombo ? 'Creando combo...' : 'Creando producto...',
-          successTitle: _isCombo ? '¡Combo Creado!' : '¡Producto Creado!',
+          loadingText: loadingText,
+          successTitle: successTitle,
           successSubtitle: _descriptionController.text.trim(),
+          finalText: null, // No mostrar "Redirigiendo..." para guardar
+          // popCount: 2 = cerrar ProcessSuccessView + cerrar ProductEditView
+          // El resultado del action se usará automáticamente para el último pop
+          popCount: 2,
           action: () async {
             final updatedProduct = _buildUpdatedProduct();
-            
-            // Siempre true para creación
-            const shouldUpdateUpgrade = true;
 
+            // Detectar si cambiaron los precios para actualizar el timestamp upgrade
+            final pricesChanged = isCreating ? true : _havePricesChanged();
+            final shouldUpdateUpgrade = pricesChanged || _newImageBytes != null;
+
+            // Ejecutar guardado
             final result = await widget.catalogueProvider.saveProduct(
               product: updatedProduct,
               accountId: widget.accountId,
-              isCreatingMode: true,
+              isCreatingMode: isCreating,
               shouldUpdateUpgrade: shouldUpdateUpgrade,
               newImageBytes: _newImageBytes,
             );
-            
-            savedResult = result.updatedProduct;
-            
-            // Pequeña espera para asegurar propagación
+
+            // Pequeña espera para asegurar propagación de Firestore
             await Future.delayed(const Duration(milliseconds: 300));
-          },
-          onComplete: () {
-            Navigator.of(context).pop(); // Cerrar SuccessView
-            Navigator.of(context).pop(savedResult); // Cerrar EditView
+
+            // Retornar el producto guardado como resultado para el pop
+            return result.updatedProduct;
           },
           onError: (error) {
-            Navigator.of(context).pop(); // Cerrar SuccessView
+            Navigator.of(context).pop(); // Cerrar ProcessSuccessView
             _showErrorMessage(error.toString());
           },
         ),
@@ -504,73 +489,40 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     }
   }
 
-  /// Elimina el producto del catálogo
+  /// Elimina el producto del catálogo usando ProcessSuccessView
+  ///
+  /// Proporciona feedback visual inmersivo durante el proceso de eliminación.
+  /// Maneja errores de manera consistente con el resto de operaciones CRUD.
   Future<void> _deleteProduct() async {
-    setState(() => _isSaving = true);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProcessSuccessView(
+          loadingText: _isCombo ? 'Eliminando combo...' : 'Eliminando producto...',
+          successTitle: _isCombo ? '¡Combo Eliminado!' : '¡Producto Eliminado!',
+          successSubtitle: widget.product.description,
+          finalText: null, // No mostrar "Redirigiendo..." para eliminar
+          playSound: false, // No reproducir sonido de éxito para eliminación
+          // popCount: 2 = cerrar ProcessSuccessView + cerrar ProductEditView
+          // popResult: null indica que el producto fue eliminado
+          popCount: 2,
+          popResult: null,
+          action: () async {
+            // Ejecutar eliminación
+            await widget.catalogueProvider.deleteProduct(
+              product: widget.product,
+              accountId: widget.accountId,
+            );
 
-    try {
-      await widget.catalogueProvider.deleteProduct(
-        product: widget.product,
-        accountId: widget.accountId,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        final uniqueKey = UniqueKey();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            key: uniqueKey,
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                      'Producto "${widget.product.description}" eliminado'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.only(
-              bottom: 16,
-              left: 16,
-              right: 16,
-            ),
-          ),
-        );
-        Navigator.of(context).pop(true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        final uniqueKey = UniqueKey();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            key: uniqueKey,
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('Error al eliminar: $e'),
-                ),
-              ],
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.only(
-              bottom: 16,
-              left: 16,
-              right: 16,
-            ),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+            // Pequeña espera para asegurar propagación de Firestore
+            await Future.delayed(const Duration(milliseconds: 300));
+          },
+          onError: (error) {
+            Navigator.of(context).pop(); // Cerrar ProcessSuccessView
+            _showErrorMessage(error.toString());
+          },
+        ),
+      ),
+    );
   }
 
   /// Muestra modal para crear o editar una marca

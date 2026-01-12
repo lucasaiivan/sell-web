@@ -55,7 +55,7 @@ class ProcessSuccessView extends StatefulWidget {
   /// Ruta del archivo de sonido (por defecto usa el de ventas)
   final String soundAssetPath;
   
-  /// Callback ejecutado al completar la animación
+  /// Callback ejecutado al completar la animación (después de los pops automáticos)
   final VoidCallback? onComplete;
 
   /// Acción asíncrona a ejecutar. Si se proporciona, el tiempo de carga dependerá de esta acción
@@ -63,6 +63,18 @@ class ProcessSuccessView extends StatefulWidget {
 
   /// Callback para manejar errores si la acción falla
   final Function(Object error)? onError;
+  
+  /// Número de navegaciones pop a ejecutar automáticamente al completar.
+  /// 
+  /// Si es > 0, el widget ejecutará `Navigator.pop()` esa cantidad de veces
+  /// usando su propio contexto válido. El último pop puede incluir [popResult].
+  /// 
+  /// Esto evita problemas cuando el callback [onComplete] captura un contexto
+  /// de un widget padre que ya fue dispuesto.
+  final int popCount;
+  
+  /// Resultado a pasar en el último Navigator.pop() si [popCount] > 0
+  final dynamic popResult;
 
   const ProcessSuccessView({
     super.key,
@@ -77,6 +89,8 @@ class ProcessSuccessView extends StatefulWidget {
     this.onComplete,
     this.action,
     this.onError,
+    this.popCount = 0,
+    this.popResult,
   });
 
   @override
@@ -88,6 +102,9 @@ class _ProcessSuccessViewState extends State<ProcessSuccessView>
   late AnimationController _controller;
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _showSuccess = false;
+  
+  /// Resultado devuelto por el action (si aplica)
+  dynamic _actionResult;
 
   @override
   void initState() {
@@ -98,14 +115,21 @@ class _ProcessSuccessViewState extends State<ProcessSuccessView>
       vsync: this,
     );
 
-    _startProcess();
+    // Demorar la ejecución hasta después del frame actual
+    // para evitar conflictos con notifyListeners durante el build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _startProcess();
+      }
+    });
   }
 
   Future<void> _startProcess() async {
     // Si hay una acción definida, ejecutarla
     if (widget.action != null) {
       try {
-        await widget.action!();
+        // Capturar el resultado del action para usarlo en la navegación
+        _actionResult = await widget.action!();
         if (mounted) {
           _triggerSuccess();
         }
@@ -141,9 +165,32 @@ class _ProcessSuccessViewState extends State<ProcessSuccessView>
     // Esperar duración de éxito antes de completar
     Future.delayed(Duration(milliseconds: widget.successDuration), () {
       if (mounted) {
-        widget.onComplete?.call();
+        _handleCompletion();
       }
     });
+  }
+  
+  /// Maneja la finalización ejecutando pops automáticos y el callback
+  void _handleCompletion() {
+    // Ejecutar pops automáticos con el contexto válido de este widget
+    if (widget.popCount > 0) {
+      // Determinar el resultado a usar: explícito > resultado del action
+      final resultToPass = widget.popResult ?? _actionResult;
+      
+      for (int i = 0; i < widget.popCount; i++) {
+        if (!mounted) break;
+        
+        // En el último pop, pasar el resultado si existe
+        if (i == widget.popCount - 1 && resultToPass != null) {
+          Navigator.of(context).pop(resultToPass);
+        } else {
+          Navigator.of(context).pop();
+        }
+      }
+    }
+    
+    // Llamar callback adicional si existe
+    widget.onComplete?.call();
   }
 
   Future<void> _playSuccessSound() async {

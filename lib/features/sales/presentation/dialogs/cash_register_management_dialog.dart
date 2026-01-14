@@ -23,7 +23,6 @@ class _CashRegisterDialogConstants {
   static const double borderRadiusXLarge = 12.0;
 
   // Opacidades
-  static const double opacityLight = 0.05;
   static const double opacityMedium = 0.1;
   static const double opacityHeavy = 0.15;
 
@@ -413,88 +412,159 @@ class _CashRegisterManagementDialogState
         final authProvider = context.read<AuthProvider>();
         final provider = context.read<CashRegisterProvider>();
 
-        // widgets
-        Widget infoCashRegister = DialogComponents.infoBadge(
-          context: context,
-          margin: EdgeInsets.only(bottom: isMobile ? 16 : 24),
-          borderRadius: 5,
-          text:
-              'Las cajas te permiten diferenciar tus transacciones y llevar un control de tu flujo de caja de cada turno',
-        );
-
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Verificar si hay cajas disponibles
             if (data.hasAvailable) ...[
-              // Mostrar lista de cajas disponibles usando DialogComponents.itemList
+              // Título de sección estilizado
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 12),
+                child: Text(
+                  'CAJAS DISPONIBLES',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+              // Mostrar lista de cajas disponibles con diseño premium
               DialogComponents.itemList(
                 context: context,
-                title: 'Cajas activas',
                 maxVisibleItems:
                     _CashRegisterDialogConstants.maxVisibleCashRegisters,
                 expandText:
                     'Ver más cajas (${data.cashRegisters.length > _CashRegisterDialogConstants.maxVisibleCashRegisters ? data.cashRegisters.length - _CashRegisterDialogConstants.maxVisibleCashRegisters : 0})',
                 collapseText: 'Ver menos',
-                backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: _CashRegisterDialogConstants.opacityLight - 0.01),
-                borderColor: theme.colorScheme.primary.withValues(alpha: 0.01),
-                items: data.cashRegisters.map((cashRegister) {
-                  return _buildCashRegisterTile(
-                      context, cashRegister, provider, isMobile);
-                }).toList(),
+                showDividers: true,
+                borderRadius: 16,
+                useFillStyle: true,
+                backgroundColor: theme.colorScheme.surfaceContainerLow,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                items: [
+                  ...data.cashRegisters.map((cashRegister) {
+                    return _buildCashRegisterTile(
+                        context, cashRegister, provider, isMobile);
+                  }),
+                  // Item: Abrir nueva caja
+                  _buildCreateCashRegisterItem(context, authProvider, isMobile),
+                ],
               ),
               SizedBox(height: isMobile ? 16 : 24),
             ] else ...[
-              // view : Mostrar mensaje de no cajas disponibles
+              // view : Mostrar mensaje de no cajas disponibles con diseño mejorado
               Container(
                 padding: EdgeInsets.symmetric(
-                  vertical: isMobile ? 32 : 48,
-                  horizontal: isMobile ? 16 : 24,
+                  vertical: isMobile ? 40 : 56,
+                  horizontal: isMobile ? 24 : 32,
                 ),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // icon and text : Icono y texto representativo para vista sin cajas
+                    // Icono destacado con gradiente sutil
                     Container(
-                      padding: EdgeInsets.all(isMobile ? 12 : 16),
+                      padding: EdgeInsets.all(isMobile ? 16 : 20),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainer
-                            .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                            theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(isMobile ? 16 : 20),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                          width: 1,
+                        ),
                       ),
                       child: Icon(
-                        Icons.point_of_sale_outlined,
-                        size: isMobile ? 36 : 48,
-                        color: theme.colorScheme.onSurfaceVariant,
+                        Icons.point_of_sale,
+                        size: isMobile ? 48 : 64,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
-                    SizedBox(height: isMobile ? 12 : 16),
+                    SizedBox(height: isMobile ? 20 : 24),
+                    
+                    // Título principal
                     Text(
-                      'No hay cajas disponibles',
+                      'Sin cajas abiertas',
                       style: (isMobile
-                              ? theme.textTheme.bodyMedium
-                              : theme.textTheme.bodyLarge)
+                              ? theme.textTheme.titleLarge
+                              : theme.textTheme.headlineSmall)
                           ?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DialogComponents.primaryActionButton(
-                        context: context,
-                        text: 'Nueva caja',
-                        onPressed: authProvider.isGuest
-                            ? null
-                            : () => _showOpenDialog(context),
-                        isLoading: data.isLoading,
+                    SizedBox(height: isMobile ? 8 : 12),
+                    
+                    // Descripción mejorada
+                    Text(
+                      'Abre una caja para comenzar a registrar\nventas y gestionar tu flujo de efectivo',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: isMobile ? 24 : 32),
+                    
+                    // Botón de acción principal
+                    DialogComponents.primaryActionButton(
+                      context: context,
+                      text: authProvider.isGuest 
+                          ? 'Inicia sesión para abrir caja' 
+                          : 'Abrir nueva caja',
+                      icon: authProvider.isGuest 
+                          ? Icons.login_rounded 
+                          : Icons.add_circle_outline_rounded,
+                      onPressed: authProvider.isGuest
+                          ? null
+                          : () => _showOpenDialog(context),
+                      isLoading: data.isLoading,
+                    ),
+                    SizedBox(height: isMobile ? 16 : 20),
+                    
+                    // Info badge mejorado
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Cada caja representa un arqueo en un tiempo determinado o turno de trabajo',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: isMobile ? 4 : 8),
-                    infoCashRegister,
                   ],
                 ),
               ),
@@ -508,78 +578,178 @@ class _CashRegisterManagementDialogState
   Widget _buildCashRegisterTile(BuildContext context, CashRegister cashRegister,
       CashRegisterProvider provider, bool isMobile) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return TweenAnimationBuilder<double>(
-      duration: _CashRegisterDialogConstants.animationDuration,
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 10 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => provider.selectCashRegister(cashRegister),
-                borderRadius: BorderRadius.circular(
-                    _CashRegisterDialogConstants.borderRadiusLarge),
-                hoverColor: theme.colorScheme.primary.withValues(
-                    alpha: _CashRegisterDialogConstants.opacityLight),
-                child: AnimatedContainer(
-                  duration: _CashRegisterDialogConstants.fastAnimationDuration,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 8 : 12,
-                    vertical: isMobile ? 8 : 12,
-                  ),
-                  child: Row(
-                    children: [
-                      AnimatedContainer(
-                        duration:
-                            _CashRegisterDialogConstants.fastAnimationDuration,
-                        padding: EdgeInsets.all(isMobile ? 6 : 8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                              alpha:
-                                  _CashRegisterDialogConstants.opacityMedium),
-                          borderRadius: BorderRadius.circular(isMobile ? 4 : 6),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => provider.selectCashRegister(cashRegister),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.transparent, width: 1),
+          ),
+          child: Row(
+            children: [
+              // Avatar de la caja con sombra
+              Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                        child: Icon(
-                          Icons.point_of_sale_rounded,
-                          size: isMobile ? 14 : 16,
-                          color: theme.colorScheme.primary,
-                        ),
+                      ],
+                    ),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colorScheme.surfaceContainerHigh,
                       ),
-                      SizedBox(width: isMobile ? 10 : 12),
-                      Expanded(
-                        child: Text(
-                          cashRegister.description,
-                          style: (isMobile
-                                  ? theme.textTheme.bodySmall
-                                  : theme.textTheme.bodyMedium)
-                              ?.copyWith(
-                            fontWeight: FontWeight.w500,
+                      child: Icon(
+                        Icons.point_of_sale_rounded,
+                        size: 20,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+
+              // Información de la caja
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cashRegister.description,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.history_rounded,
+                          size: 14,
+                          color: colorScheme.primary.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${cashRegister.opening.day.toString().padLeft(2, '0')}/${cashRegister.opening.month.toString().padLeft(2, '0')} ${cashRegister.opening.hour.toString().padLeft(2, '0')}:${cashRegister.opening.minute.toString().padLeft(2, '0')} • ${DateTime.now().difference(cashRegister.opening).inHours}h ${DateTime.now().difference(cashRegister.opening).inMinutes % 60}m',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      AnimatedRotation(
-                        duration: const Duration(milliseconds: 200),
-                        turns: 0,
-                        child: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: isMobile ? 12 : 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
+
+              // Flecha indicadora
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: colorScheme.surfaceContainerHigh,
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  /// Item para abrir una nueva caja
+  Widget _buildCreateCashRegisterItem(
+    BuildContext context,
+    AuthProvider authProvider,
+    bool isMobile,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: authProvider.isGuest
+            ? null
+            : () => _showOpenDialog(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.transparent, width: 1),
+          ),
+          child: Row(
+            children: [
+              // Icono de +
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Texto
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Abrir nueva caja',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Inicia un nuevo turno de caja',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Flecha
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: colorScheme.surfaceContainerHigh,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

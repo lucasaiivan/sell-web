@@ -213,11 +213,11 @@ class _NavigationMenu extends StatelessWidget {
                     isEnabled: true,
                   ),
 
-                // Catálogo - Requiere permiso manageCatalogue
-                if (hasCatalogueAccess)
+                // Analíticas - Requiere permiso manageTransactions
+                if (hasAnalyticsAccess)
                   _DrawerNavTile(
-                    icon: Icons.inventory_2,
-                    label: 'Catálogo',
+                    icon: Icons.analytics,
+                    label: 'Analíticas',
                     index: 1,
                     currentIndex: homeProvider.currentPageIndex,
                     onSelected: () {
@@ -231,11 +231,11 @@ class _NavigationMenu extends StatelessWidget {
                     isEnabled: !isOffline,
                   ),
 
-                // Analíticas - Requiere permiso manageTransactions
-                if (hasAnalyticsAccess)
+                // Catálogo - Requiere permiso manageCatalogue
+                if (hasCatalogueAccess)
                   _DrawerNavTile(
-                    icon: Icons.analytics,
-                    label: 'Analíticas',
+                    icon: Icons.inventory_2,
+                    label: 'Catálogo',
                     index: 2,
                     currentIndex: homeProvider.currentPageIndex,
                     onSelected: () {
@@ -249,11 +249,11 @@ class _NavigationMenu extends StatelessWidget {
                     isEnabled: !isOffline,
                   ),
 
-                // Historial Caja - Requiere permiso viewCashCountHistory
-                if (hasHistoryAccess)
+                // Usuarios - Requiere permiso manageUsers
+                if (hasUsersAccess)
                   _DrawerNavTile(
-                    icon: Icons.history,
-                    label: 'Historial Caja',
+                    icon: Icons.people,
+                    label: 'Usuarios',
                     index: 3,
                     currentIndex: homeProvider.currentPageIndex,
                     onSelected: () {
@@ -267,11 +267,11 @@ class _NavigationMenu extends StatelessWidget {
                     isEnabled: !isOffline,
                   ),
 
-                // Usuarios - Requiere permiso manageUsers
-                if (hasUsersAccess)
+                // Historial Caja - Requiere permiso viewCashCountHistory
+                if (hasHistoryAccess)
                   _DrawerNavTile(
-                    icon: Icons.people,
-                    label: 'Usuarios',
+                    icon: Icons.history,
+                    label: 'Historial Caja',
                     index: 4,
                     currentIndex: homeProvider.currentPageIndex,
                     onSelected: () {

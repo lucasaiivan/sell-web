@@ -128,8 +128,7 @@ class DialogComponents {
     // Para listas largas, usar ExpandableListContainer
     return Container(
       decoration: decoration,
-      clipBehavior: Clip.antiAlias,
-      padding: padding, // Solo se aplicará si se proporciona explícitamente
+      clipBehavior: Clip.antiAlias, 
       child: ExpandableListContainer<Widget>(
         items: items,
         isMobile: isMobile,

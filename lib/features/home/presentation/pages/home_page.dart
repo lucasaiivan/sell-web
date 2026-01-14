@@ -311,11 +311,11 @@ class _HomePageState extends State<HomePage> {
           child: IndexedStack(
             index: homeProvider.currentPageIndex,
             children: const [
-              SalesPage(),
-              CataloguePage(),
-              AnalyticsPage(),
-              HistoryCashRegisterPage(),
-              MultiUserPage(),
+              SalesPage(), // 0: Ventas
+              AnalyticsPage(), // 1: Analíticas
+              CataloguePage(), // 2: Catálogo
+              MultiUserPage(), // 3: Usuarios
+              HistoryCashRegisterPage(), // 4: Historial de Caja
             ],
           ),
         ),

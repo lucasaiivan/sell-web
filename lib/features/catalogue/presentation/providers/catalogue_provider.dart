@@ -355,10 +355,24 @@ class CatalogueProvider extends ChangeNotifier
     _catalogueSubscription =
         _getCatalogueStreamUseCase(GetCatalogueStreamParams(id)).listen(
       (snapshot) {
-        final products = snapshot.docs
-            .map((doc) =>
-                ProductCatalogue.fromMap(doc.data() as Map<String, dynamic>))
-            .toList();
+        final products = snapshot.docs.map((doc) {
+          try {
+            final data = doc.data();
+            // Convertir explícitamente a Map<String, dynamic> para manejar LegacyJavaScriptObject
+            final Map<String, dynamic> dataMap =
+                Map<String, dynamic>.from(data as Map);
+            return ProductCatalogue.fromMap(dataMap);
+          } catch (e) {
+            debugPrint('❌ Error al parsear producto: $e');
+            // Retornar un producto vacío en caso de error
+            return ProductCatalogue(
+              creation: DateTime.now(),
+              upgrade: DateTime.now(),
+              documentCreation: DateTime.now(),
+              documentUpgrade: DateTime.now(),
+            );
+          }
+        }).where((p) => p.code.isNotEmpty).toList(); // Filtrar productos vacíos
 
         products.sort((a, b) => b.upgrade.compareTo(a.upgrade));
 

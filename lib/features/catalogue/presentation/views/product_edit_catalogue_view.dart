@@ -2330,11 +2330,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         orElse: () => Category())
                     : null,
                 searchHint: 'Buscar',
-                onAdd: () => showCategoryDialog(
-                  context,
-                  catalogueProvider: widget.catalogueProvider,
-                  accountId: widget.accountId,
-                ),
+                onAdd: () async {
+                  // Mostrar diálogo de creación y esperar resultado
+                  final newCategory = await showCategoryDialog(
+                    context,
+                    catalogueProvider: widget.catalogueProvider,
+                    accountId: widget.accountId,
+                  );
+                  // Si se creó una categoría, retornarla para seleccionarla
+                  return newCategory;
+                },
                 labelButton: 'Crear categoría',
                 onButton: (item) => showCategoryDialog(
                   context,
@@ -2403,11 +2408,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                             catalog_provider.Provider(id: '', name: ''))
                     : null,
                 searchHint: 'Buscar',
-                onAdd: () => showProviderDialog(
-                  context,
-                  catalogueProvider: widget.catalogueProvider,
-                  accountId: widget.accountId,
-                ),
+                onAdd: () async {
+                  // Mostrar diálogo de creación y esperar resultado
+                  final newProvider = await showProviderDialog(
+                    context,
+                    catalogueProvider: widget.catalogueProvider,
+                    accountId: widget.accountId,
+                  );
+                  // Si se creó un proveedor, retornarlo para seleccionarlo
+                  return newProvider;
+                },
                 labelButton: 'Crear proveedor',
                 onButton: (item) => showProviderDialog(
                   context,

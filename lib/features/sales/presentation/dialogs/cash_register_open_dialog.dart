@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
+import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
@@ -17,10 +18,14 @@ class CashRegisterOpenDialog extends StatefulWidget {
 
 class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   List<String> _localFixedDescriptions = [];
+  bool _rememberDescription = false; // Nueva variable para el checkbox
 
   @override
   void initState() {
     super.initState();
+    // Resetear el checkbox
+    _rememberDescription = false;
+    
     // Limpiar errores previos al inicializar el diálogo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -41,12 +46,18 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
     final sellProvider = context.read<SalesProvider>();
     final accountId = sellProvider.profileAccountSelected.id;
 
+    debugPrint('🔄 Cargando nombres frecuentes para accountId: $accountId');
+    
     if (accountId.isNotEmpty) {
       await cashRegisterProvider.loadCashRegisterFixedDescriptions(accountId);
+      debugPrint('📋 Nombres frecuentes del provider: ${cashRegisterProvider.fixedDescriptions}');
       setState(() {
         _localFixedDescriptions =
             List.from(cashRegisterProvider.fixedDescriptions);
       });
+      debugPrint('📋 Nombres frecuentes cargados en estado local: $_localFixedDescriptions');
+    } else {
+      debugPrint('⚠️ accountId está vacío, no se pueden cargar nombres frecuentes');
     }
   }
 
@@ -66,10 +77,12 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
           DialogComponents.sectionSpacing,
           InputTextField(
             controller: cashRegisterProvider.openDescriptionController,
-            labelText: 'Nombre',
+            labelText: 'Descripción',
             hintText: 'Ej: Caja Principal',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          // checkbox : Recordar descripción como frecuente
+          _buildRememberCheckbox(context), 
           // view : items fixers con nombres frecuentes de caja
           _buildFrequentNamesSection(context, cashRegisterProvider),
           const SizedBox(height: 16),
@@ -115,36 +128,22 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   /// Construye la sección de nombres frecuentes de caja registradora
   Widget _buildFrequentNamesSection(
       BuildContext context, CashRegisterProvider cashRegisterProvider) {
+    // Si no hay nombres frecuentes, no mostrar nada
+    if (_localFixedDescriptions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header con título y botón de agregar
-        Row(
-          children: [
-            Text(
-              'Nombres frecuentes',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(width: 8),
-            // button : Botón para agregar nuevo nombre frecuente
-            InkWell(
-              onTap: () =>
-                  _showAddDescriptionDialog(context, cashRegisterProvider),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  Icons.add_circle_outline,
-                  size: 18,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-          ],
+        // Header de nombres frecuentes (sin botón de agregar)
+        Text(
+          'Nombres frecuentes',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 8),
         // view : Lista de nombres frecuentes con scroll
@@ -152,40 +151,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
           constraints: const BoxConstraints(
             maxHeight: 120, // Altura máxima para evitar desbordamiento
           ),
-          child: _localFixedDescriptions.isEmpty
-              ? Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Aún no hay nombres frecuentes guardados',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.7),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
+          child: SingleChildScrollView(
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -285,114 +251,106 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
     final userName =
         authProvider.user?.displayName ?? authProvider.user?.email ?? 'Usuario';
 
-    final success = await cashRegisterProvider.openCashRegister(
-      accountId: accountId,
-      cashierId: userId,
-      cashierName: userName,
-    );
+    // ⚠️ IMPORTANTE: Capturar valores ANTES de navegar a ProcessSuccessView
+    // porque dentro del callback 'action' el contexto cambia y los valores pueden perderse
+    final description = cashRegisterProvider.openDescriptionController.text.trim();
+    final shouldRemember = _rememberDescription;
+    
+    debugPrint('📝 Valores capturados ANTES de ProcessSuccessView:');
+    debugPrint('   - Descripción: "$description"');
+    debugPrint('   - Recordar: $shouldRemember');
 
-    if (success && context.mounted) {
-      Navigator.of(context).pop();
-    }
+    // Mostrar ProcessSuccessView mientras se ejecuta la apertura
+    if (!context.mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProcessSuccessView(
+          loadingText: 'Abriendo caja...',
+          successTitle: '¡Caja abierta!',
+          successSubtitle: description.isEmpty 
+              ? 'Caja registradora' 
+              : description,
+          finalText: null,
+          popCount: 2, // Cerrar ProcessSuccessView + CashRegisterOpenDialog
+          action: () async {
+            // 1. Abrir la caja registradora
+            final success = await cashRegisterProvider.openCashRegister(
+              accountId: accountId,
+              cashierId: userId,
+              cashierName: userName,
+            );
+            
+            if (!success) {
+              throw Exception(cashRegisterProvider.errorMessage ?? 'Error al abrir la caja');
+            }
+
+            // 2. Si está marcado "Recordar", guardar como nombre frecuente
+            debugPrint('🔍 shouldRemember (variable capturada): $shouldRemember');
+            if (shouldRemember) {
+              debugPrint('🔍 Descripción a guardar (variable capturada): "$description"');
+              debugPrint('🔍 Ya existe en lista local: ${_localFixedDescriptions.contains(description)}');
+              debugPrint('🔍 Lista local actual: $_localFixedDescriptions');
+              
+              if (description.isNotEmpty && !_localFixedDescriptions.contains(description)) {
+                try {
+                  debugPrint('✅ Guardando nombre frecuente: "$description" en accountId: $accountId');
+                  await cashRegisterProvider.createCashRegisterFixedDescription(
+                    accountId,
+                    description,
+                  );
+                  debugPrint('✅ Nombre frecuente guardado exitosamente');
+                  // Nota: No actualizamos _localFixedDescriptions aquí porque el diálogo
+                  // se cierra con popCount:2. La próxima vez que se abra el diálogo,
+                  // se recargarán automáticamente los nombres desde Firestore en initState.
+                } catch (e) {
+                  // Error al guardar nombre frecuente, pero la caja ya se abrió exitosamente
+                  debugPrint('❌ Error al guardar nombre frecuente: $e');
+                }
+              } else {
+                debugPrint('⚠️ No se guarda: descripción vacía o ya existe');
+              }
+            }
+          },
+          onError: (error) {
+            // Mostrar error con SnackBar
+            if (context.mounted) {
+              Navigator.of(context).pop(); // Cerrar ProcessSuccessView
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(error.toString().replaceAll('Exception: ', '')),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+        ),
+      ),
+    );
   }
 
-  /// Muestra diálogo para agregar nueva descripción frecuente
-  void _showAddDescriptionDialog(
-    BuildContext context,
-    CashRegisterProvider cashRegisterProvider,
-  ) {
-    final textController = TextEditingController();
-    final sellProvider = context.read<SalesProvider>();
-
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Agregar Nombre Frecuente'),
-          content: SizedBox(
-            width: 300,
-            child: InputTextField(
-              controller: textController,
-              labelText: 'Descripción',
-              hintText: 'Ej: Caja Secundaria',
-              autofocus: true,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final description = textController.text.trim();
-                if (description.isNotEmpty) {
-                  // 1. Agregar inmediatamente a la lista local para mejor UX
-                  setState(() {
-                    _localFixedDescriptions.add(description);
-                  });
-
-                  if (dialogContext.mounted) {
-                    Navigator.of(dialogContext).pop();
-                  }
-
-                  // 2. Guardar en el backend en segundo plano
-                  try {
-                    final accountId = sellProvider.profileAccountSelected.id;
-                    final success = await cashRegisterProvider
-                        .createCashRegisterFixedDescription(
-                      accountId,
-                      description,
-                    );
-
-                    if (!success && mounted) {
-                      // Si falló, remover de la lista local
-                      setState(() {
-                        _localFixedDescriptions.remove(description);
-                      });
-                      if (context.mounted) {
-                        final theme = Theme.of(context);
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        final uniqueKey = UniqueKey();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            key: uniqueKey,
-                            content: const Text(
-                                'Error al guardar el nombre frecuente'),
-                            backgroundColor: theme.colorScheme.error,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
-                  } catch (e) {
-                    // Si falló, remover de la lista local
-                    if (mounted) {
-                      setState(() {
-                        _localFixedDescriptions.remove(description);
-                      });
-                      if (context.mounted) {
-                        final theme = Theme.of(context);
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        final uniqueKey = UniqueKey();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            key: uniqueKey,
-                            content: Text('Error al guardar: $e'),
-                            backgroundColor: theme.colorScheme.error,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
-                  }
-                }
-              },
-              child: const Text('Agregar'),
-            ),
-          ],
-        );
+  /// Construye el checkbox para recordar la descripción
+  Widget _buildRememberCheckbox(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return CheckboxListTile(
+      value: _rememberDescription,
+      onChanged: (value) {
+        setState(() {
+          _rememberDescription = value ?? false;
+        });
       },
+      title: Text(
+        'Recordar descripción',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
+      dense: true,
     );
   }
 

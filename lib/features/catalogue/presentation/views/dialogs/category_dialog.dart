@@ -128,6 +128,9 @@ class _CategoryDialogState extends State<CategoryDialog> {
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Guardar referencia al Navigator ANTES de operaciones async
+    final navigator = Navigator.of(context);
+
     setState(() => _isProcessing = true);
 
     final name = _controller.text.trim();
@@ -138,21 +141,32 @@ class _CategoryDialogState extends State<CategoryDialog> {
     );
 
     try {
+      Category? savedCategory;
       if (_isEditing) {
         await widget.catalogueProvider.updateCategory(
           accountId: widget.accountId,
           category: categoryToSave,
         );
+        savedCategory = categoryToSave;
       } else {
+        // Al crear, esperamos a que se guarde y obtenemos el ID generado
         await widget.catalogueProvider.createCategory(
           accountId: widget.accountId,
           category: categoryToSave,
         );
+        // Esperamos un poco para que Firestore propague el cambio
+        await Future.delayed(const Duration(milliseconds: 300));
+        // Obtenemos la categoría desde el stream para tener el ID correcto
+        final categories = await widget.catalogueProvider
+            .getCategoriesStream(widget.accountId)
+            .first;
+        savedCategory = categories.firstWhere(
+          (cat) => cat.name == name,
+          orElse: () => categoryToSave,
+        );
       }
 
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      navigator.pop(savedCategory);
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -168,13 +182,13 @@ class _CategoryDialogState extends State<CategoryDialog> {
 }
 
 /// Muestra diálogo para crear o editar una categoría
-Future<void> showCategoryDialog(
+Future<Category?> showCategoryDialog(
   BuildContext context, {
   required CatalogueProvider catalogueProvider,
   required String accountId,
   Category? category,
 }) {
-  return showModalBottomSheet(
+  return showModalBottomSheet<Category>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

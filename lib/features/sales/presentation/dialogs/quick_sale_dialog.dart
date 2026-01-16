@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../../core/core.dart';
@@ -95,7 +96,7 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
 
             const SizedBox(height: 32),
 
-            // SELECTOR DE UNIDAD (MODERNIZADO)
+            // SELECTOR DE UNIDAD 
             _buildModernUnitSelector(context),
 
             const SizedBox(height: 24),
@@ -174,8 +175,10 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
     );
   }
 
-  /// Selector de unidades moderno y minimalista
+  /// Selector de unidades moderno y minimalista con soporte para scroll con mouse
   Widget _buildModernUnitSelector(BuildContext context) {
+    final scrollController = ScrollController();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,69 +194,82 @@ class _QuickSaleDialogState extends State<QuickSaleDialog> {
             ),
           ),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          child: Row(
-            children: _units.map((unit) {
-              final isSelected = _selectedUnit == unit;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedUnit = unit;
-                      _quantity = 1;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: AnimatedContainer(
-                    duration: 250.ms,
-                    curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              )
-                            ]
-                          : [],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isSelected) ...[
-                          const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
-                          const SizedBox(width: 6),
-                        ],
-                        Text(
-                          UnitHelper.getUnitDisplayName(unit),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected
-                                ? Colors.white
-                                : Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+        Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {
+              // Convertir scroll vertical del mouse en scroll horizontal
+              final newOffset = scrollController.offset + pointerSignal.scrollDelta.dy;
+              scrollController.jumpTo(
+                newOffset.clamp(0.0, scrollController.position.maxScrollExtent),
               );
-            }).toList(),
+            }
+          },
+          child: ScrollConfiguration(
+            // Habilitar drag en todas las plataformas
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+              },
+              scrollbars: false,
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              child: Row(
+                children: _units.map((unit) {
+                  final isSelected = _selectedUnit == unit;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedUnit = unit;
+                          _quantity = 1;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: 250.ms,
+                        curve: Curves.easeInOut,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                          ), 
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isSelected) ...[
+                              const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
+                              const SizedBox(width: 6),
+                            ],
+                            Text(
+                              UnitHelper.getUnitDisplayName(unit),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ),
       ],

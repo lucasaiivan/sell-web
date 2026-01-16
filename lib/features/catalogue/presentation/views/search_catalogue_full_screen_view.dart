@@ -47,6 +47,7 @@ class _ProductCatalogueFullScreenViewState
 
   List<ProductCatalogue> _filteredProducts = [];
   bool _isGridView = false; // Estado para controlar vista lista/cuadrícula
+  bool _showOnlyFavorites = false; // Estado para controlar filtro de favoritos
 
   @override
   void initState() {
@@ -119,12 +120,22 @@ class _ProductCatalogueFullScreenViewState
           }).toList();
         }
       }
+
+      // Aplicar filtro de favoritos si está activo
+      if (_showOnlyFavorites) {
+        _filteredProducts = _filteredProducts.where((p) => p.favorite).toList();
+      }
     });
   }
 
   void _onFocusChanged() {
     // Solo cambiar a modo búsqueda si hay texto escrito
     // El foco por sí solo no debe cambiar la vista
+  }
+
+  /// Verifica si existe al menos un producto marcado como favorito
+  bool _hasFavoriteProducts() {
+    return widget.products.any((product) => product.favorite);
   }
 
   /// Obtiene la cantidad total de productos seleccionados en el ticket (suma de cantidades)
@@ -536,6 +547,16 @@ class _ProductCatalogueFullScreenViewState
           // Descripción del producto
           Row(
             children: [
+              // Ícono de favorito (si aplica)
+              if (product.favorite) ...[
+                Icon(
+                  Icons.star,
+                  size: 14,
+                  color: Colors.amber.shade700,
+                ),
+                const SizedBox(width: 2),
+              ],
+              // Ícono de venta rápida (si aplica)
               if (product.isQuickSale) ...[
                 Icon(
                   Icons.bolt_rounded,
@@ -857,6 +878,40 @@ class _ProductCatalogueFullScreenViewState
           spacing: chipSpacing,
           runSpacing: 6,
           children: [
+            // Chip de Favoritos (solo si hay favoritos) - Primera posición
+            if (_hasFavoriteProducts())
+              FilterChip(
+                label: Text(
+                  'Mostrar favoritos',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                selected: _showOnlyFavorites,
+                onSelected: (bool selected) {
+                  setState(() {
+                    _showOnlyFavorites = selected;
+                    _onSearchChanged(); // Reaplica el filtrado
+                  });
+                },
+                backgroundColor: Colors.amber.withValues(alpha: 0.2),
+                selectedColor: Colors.amber.withValues(alpha: 0.4),
+                checkmarkColor: Colors.amber.shade800,
+                side: BorderSide(
+                  color: _showOnlyFavorites
+                      ? Colors.amber.withValues(alpha: 0.6)
+                      : Colors.amber.withValues(alpha: 0.3),
+                  width: _showOnlyFavorites ? 1.5 : 1,
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                avatar: Icon(
+                  Icons.star,
+                  color: Colors.amber.shade700,
+                  size: 16,
+                ),
+              ),
+
             // Chips de marcas visibles (llenan la primera línea)
             ...visibleBrands.map((brand) {
               return ActionChip(
@@ -1008,6 +1063,16 @@ class _ProductCatalogueFullScreenViewState
             children: [
               Row(
                 children: [
+                  // Ícono de favorito (si aplica)
+                  if (product.favorite) ...[
+                    Icon(
+                      Icons.star,
+                      size: 16,
+                      color: Colors.amber.shade700,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  // Ícono de venta rápida (si aplica)
                   if (product.isQuickSale) ...[
                     Icon(
                       Icons.bolt_rounded,

@@ -152,6 +152,9 @@ class _ProviderDialogState extends State<ProviderDialog> {
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Guardar referencia al Navigator ANTES de operaciones async
+    final navigator = Navigator.of(context);
+
     setState(() => _isProcessing = true);
 
     final name = _nameController.text.trim();
@@ -166,21 +169,32 @@ class _ProviderDialogState extends State<ProviderDialog> {
     );
 
     try {
+      Provider? savedProvider;
       if (_isEditing) {
         await widget.catalogueProvider.updateProvider(
           accountId: widget.accountId,
           provider: providerEntity,
         );
+        savedProvider = providerEntity;
       } else {
+        // Al crear, esperamos a que se guarde y obtenemos el ID generado
         await widget.catalogueProvider.createProvider(
           accountId: widget.accountId,
           provider: providerEntity,
         );
+        // Esperamos un poco para que Firestore propague el cambio
+        await Future.delayed(const Duration(milliseconds: 300));
+        // Obtenemos el proveedor desde el stream para tener el ID correcto
+        final providers = await widget.catalogueProvider
+            .getProvidersStream(widget.accountId)
+            .first;
+        savedProvider = providers.firstWhere(
+          (prov) => prov.name == name,
+          orElse: () => providerEntity,
+        );
       }
 
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      navigator.pop(savedProvider);
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -196,13 +210,13 @@ class _ProviderDialogState extends State<ProviderDialog> {
 }
 
 /// Muestra diálogo para crear o editar un proveedor
-Future<void> showProviderDialog(
+Future<Provider?> showProviderDialog(
   BuildContext context, {
   required CatalogueProvider catalogueProvider,
   required String accountId,
   Provider? provider,
 }) {
-  return showModalBottomSheet(
+  return showModalBottomSheet<Provider>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

@@ -15,7 +15,7 @@ class Category {
       {required DocumentSnapshot documentSnapshot}) {
     final rawData = documentSnapshot.data();
     final data =
-        rawData != null ? Map<String, dynamic>.from(rawData as Map) : {};
+        rawData != null ? Map<String, dynamic>.from(rawData as dynamic) : {};
 
     return Category(
       id: documentSnapshot.id,

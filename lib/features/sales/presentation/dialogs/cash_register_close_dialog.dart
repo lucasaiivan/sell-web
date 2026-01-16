@@ -1,6 +1,7 @@
 import '../../../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
@@ -214,13 +215,43 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
     CashRegisterProvider cashRegisterProvider,
     SalesProvider sellProvider,
   ) async {
-    final success = await cashRegisterProvider.closeCashRegister(
-      sellProvider.profileAccountSelected.id,
-      widget.cashRegister.id,
-    );
+    // Mostrar ProcessSuccessView mientras se ejecuta el cierre
+    if (!context.mounted) return;
 
-    if (success && context.mounted) {
-      Navigator.of(context).pop();
-    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProcessSuccessView(
+          loadingText: 'Cerrando caja...',
+          successTitle: '¡Caja cerrada!',
+          successSubtitle: widget.cashRegister.description,
+          finalText: 'Balance: ${CurrencyFormatter.formatPrice(value: _provider.finalBalanceController.doubleValue)}',
+          popCount: 2, // Cerrar ProcessSuccessView + CashRegisterCloseDialog
+          action: () async {
+            final success = await cashRegisterProvider.closeCashRegister(
+              sellProvider.profileAccountSelected.id,
+              widget.cashRegister.id,
+            );
+            
+            if (!success) {
+              throw Exception(cashRegisterProvider.errorMessage ?? 'Error al cerrar la caja');
+            }
+          },
+          onError: (error) {
+            // Mostrar error con SnackBar
+            if (context.mounted) {
+              Navigator.of(context).pop(); // Cerrar ProcessSuccessView
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(error.toString().replaceAll('Exception: ', '')),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+        ),
+      ),
+    );
   }
 }

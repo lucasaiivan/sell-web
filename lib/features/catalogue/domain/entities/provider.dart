@@ -17,7 +17,7 @@ class Provider {
       {required DocumentSnapshot documentSnapshot}) {
     final rawData = documentSnapshot.data();
     final data =
-        rawData != null ? Map<String, dynamic>.from(rawData as Map) : {};
+        rawData != null ? Map<String, dynamic>.from(rawData as dynamic) : {};
 
     return Provider(
       id: documentSnapshot.id,

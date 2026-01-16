@@ -30,7 +30,7 @@ class SelectionModal<T> extends StatefulWidget {
   final String Function(T)? imageUrlBuilder;
   final T? selectedItem;
   final String searchHint;
-  final VoidCallback? onAdd;
+  final Future<T?> Function()? onAdd;
   final String? labelButton;
   final void Function(T item)? onButton;
 
@@ -235,9 +235,15 @@ class _SelectionModalState<T> extends State<SelectionModal<T>> {
       actions: widget.onAdd != null
           ? [
               FilledButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  widget.onAdd!();
+                onPressed: () async {
+                  // Guardar referencia al Navigator ANTES del await
+                  final navigator = Navigator.of(context);
+                  // Ejecutar la acción de crear (muestra el diálogo de creación)
+                  final newItem = await widget.onAdd!();
+                  // Si se creó un item, cerrar el modal con el item seleccionado
+                  if (newItem != null) {
+                    navigator.pop(newItem);
+                  }
                 },
                 icon: const Icon(Icons.add, size: 20),
                 label: Text(widget.labelButton ?? 'Crear'),

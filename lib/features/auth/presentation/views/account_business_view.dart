@@ -108,62 +108,68 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
         }
       } else {
         // --- MODO CREACIÓN ---
-        // Usar el método del provider para construir la cuenta con valores por defecto
-        final newAccount = authProvider.buildNewAccount(
-          name: accountName,
-          currencySign: _selectedCurrency,
-          ownerId: widget.admin.id,
-          country: _countryController.text.trim(),
-          province: _provinceController.text.trim(),
-          town: _townController.text.trim(),
-        );
-
-        success = await authProvider.createBusinessAccount(newAccount);
-
+        // Navegar inmediatamente a la vista de proceso
         if (!mounted) return;
+        
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => ProcessSuccessView(
+              loadingText: 'Creando cuenta...',
+              successTitle: '¡Cuenta creada exitosamente!',
+              successSubtitle: accountName,
+              finalText: 'Redirigiendo...', 
+              popCount: 1, // Hacer pop automáticamente después del éxito
+              action: () async {
+                // Ejecutar la lógica de creación dentro del callback
+                final authProvider = context.read<AuthProvider>();
+                
+                // Construir la cuenta con valores por defecto
+                final newAccount = authProvider.buildNewAccount(
+                  name: accountName,
+                  currencySign: _selectedCurrency,
+                  ownerId: widget.admin.id,
+                  country: _countryController.text.trim(),
+                  province: _provinceController.text.trim(),
+                  town: _townController.text.trim(),
+                );
 
-        if (success) {
-          // Obtener la cuenta recién creada desde el provider
-          final createdAccount = authProvider.getLatestCreatedAccount();
-          
-          if (createdAccount == null) {
-            if (mounted) {
-              context.showErrorSnackBar('Error: No se pudo obtener la cuenta creada');
-            }
-            return;
-          }
-          
-          // Inicializar el estado global con la nueva cuenta
-          if (mounted) {
-            await context.read<SalesProvider>().initAccount(
-              account: createdAccount,
-              context: context,
-            );
-          }
+                final success = await authProvider.createBusinessAccount(newAccount);
 
-          if (!mounted) return;
+                if (!context.mounted) {
+                  throw Exception('Widget no está montado');
+                }
 
-          // Navegar a la vista de éxito
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => ProcessSuccessView(
-                loadingText: 'Finalizando...',
-                successTitle: '¡Cuenta creada!',
-                successSubtitle: accountName,
-                finalText: 'Redirigiendo...',
-                loadingDuration: 500,
-                successDuration: 2000,
-                onComplete: () {
-                  Navigator.of(context).pop();
-                },
-              ),
+                if (!success) {
+                  throw Exception(authProvider.authError ?? 'Error al crear la cuenta');
+                }
+
+                // Obtener la cuenta recién creada desde el provider
+                final createdAccount = authProvider.getLatestCreatedAccount();
+                
+                if (createdAccount == null) {
+                  throw Exception('No se pudo obtener la cuenta creada');
+                }
+                
+                // Inicializar el estado global con la nueva cuenta
+                if (context.mounted) {
+                  await context.read<SalesProvider>().initAccount(
+                    account: createdAccount,
+                    context: context,
+                  );
+                } else {
+                  throw Exception('Widget no está montado');
+                }
+              },
+              onError: (error) {
+                // Manejar errores cerrando la vista y mostrando mensaje
+                Navigator.of(context).pop();
+                if (context.mounted) {
+                  context.showErrorSnackBar(error.toString().replaceFirst('Exception: ', ''));
+                }
+              },
             ),
-          );
-        } else {
-          if (mounted) {
-            context.showErrorSnackBar(authProvider.authError ?? 'Error al crear la cuenta');
-          }
-        }
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -269,22 +275,14 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
     final errorColor = theme.colorScheme.error;
 
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: errorColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(Icons.delete_forever_rounded, color: errorColor),
-      ),
+      contentPadding: EdgeInsets.zero, 
       title: Text(
         'Eliminar este negocio',
         style: TextStyle(
             color: errorColor, fontWeight: FontWeight.bold),
       ),
       subtitle: const Text(
-        'Borra permanentemente este negocio y sus datos.',
+        'Borra permanentemente la cuenta y todos sus datos',
       ),
       onTap: _isLoading ? null : _confirmDeleteBusiness,
     );

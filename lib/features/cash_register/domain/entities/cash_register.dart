@@ -19,6 +19,7 @@ class CashRegister {
   double balance; // monto de cierre
   List<dynamic> cashInFlowList; // lista de ingresos de caja [CashFlow]
   List<dynamic> cashOutFlowList; // lista de egresos de caja [CashFlow]
+  String? note; // nota u observaciones sobre el cierre de caja (opcional)
 
   CashRegister({
     required this.id,
@@ -38,6 +39,7 @@ class CashRegister {
     required this.balance,
     required this.cashInFlowList,
     required this.cashOutFlowList,
+    this.note,
   });
 
   // contructor
@@ -159,6 +161,7 @@ class CashRegister {
       balance: 0.0,
       cashInFlowList: [],
       cashOutFlowList: [],
+      note: null,
     );
   }
   // tojson : convierte el objeto a json
@@ -180,6 +183,7 @@ class CashRegister {
         "balance": balance,
         "cashInFlowList": cashInFlowList,
         "cashOutFlowList": cashOutFlowList,
+        "note": note,
       };
 
   // fromjson : convierte el json en un objeto
@@ -226,6 +230,7 @@ class CashRegister {
       cashOutFlowList: data.containsKey('cashOutFlowList')
           ? data['cashOutFlowList'] ?? []
           : [],
+      note: data.containsKey('note') ? data['note'] : null,
     );
   }
 
@@ -254,6 +259,9 @@ class CashRegister {
     balance = documentSnapshot['balance'].toDouble();
     cashInFlowList = documentSnapshot['cashInFlowList'];
     cashOutFlowList = documentSnapshot['cashOutFlowList'];
+    note = documentSnapshot.data().toString().contains('note')
+        ? documentSnapshot['note']
+        : null;
   }
 
   // update : actualiza los valores individualmente de la caja
@@ -275,6 +283,7 @@ class CashRegister {
     double? balance,
     List<dynamic>? cashInFlowList, // lista de ingresos de caja [CashFlow]
     List<dynamic>? cashOutFlowList, // lista de egresos de caja [CashFlow]
+    String? note,
   }) {
     return CashRegister(
       id: id ?? this.id,
@@ -294,6 +303,7 @@ class CashRegister {
       balance: balance ?? this.balance,
       cashInFlowList: cashInFlowList ?? this.cashInFlowList,
       cashOutFlowList: cashOutFlowList ?? this.cashOutFlowList,
+      note: note ?? this.note,
     );
   }
 }

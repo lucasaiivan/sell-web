@@ -207,7 +207,7 @@ class BaseDialog extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: textColor.withValues(alpha: 0.8),
+                      color: textColor.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -263,8 +263,21 @@ class BaseDialog extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context, ThemeData theme) {
-    return Container(  
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+    return Container(
+      decoration: BoxDecoration(
+        // Gradiente sutil de fondo para elevar visualmente los botones
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            theme.colorScheme.surface.withValues(alpha: 0.0),
+            theme.colorScheme.surface.withValues(alpha: 0.95),
+            theme.colorScheme.surface,
+          ],
+          stops: const [0.0, 0.3, 1.0],
+        ), 
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
       child: actions!.length == 1
           ? actions![0] // Si solo hay un botón, ocupar todo el ancho
           : Row(

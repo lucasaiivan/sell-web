@@ -96,8 +96,7 @@ class InputTextField extends StatelessWidget {
 
         // Configuración de bordes y colores
         filled: true,
-        fillColor: fillColor ??
-            colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        fillColor: fillColor ?? colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
 
         // Borde normal
         border: OutlineInputBorder(

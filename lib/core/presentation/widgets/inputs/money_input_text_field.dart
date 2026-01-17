@@ -14,6 +14,7 @@ class MoneyInputTextField extends StatelessWidget {
   final FocusNode? nextFocusNode;
   final String labelText;
   final String? hintText;
+  final String? helperText;
   final String? errorText;
   final Color? fillColor;
   final List<TextInputFormatter>? inputFormatters;
@@ -35,8 +36,9 @@ class MoneyInputTextField extends StatelessWidget {
     this.onEditingComplete,
     this.focusNode,
     this.nextFocusNode,
-    this.labelText = 'Monto',
+    this.labelText = '',
     this.hintText,
+    this.helperText,
     this.errorText,
     this.fillColor,
     this.inputFormatters,
@@ -68,11 +70,12 @@ class MoneyInputTextField extends StatelessWidget {
       textAlign: center ? TextAlign.center : TextAlign.start,
       decoration: InputDecoration(
         labelText: labelText.isEmpty ? null : labelText,
-        hintText: hintText,
+        hintText: labelText.isEmpty ? (hintText ?? '0.0') : hintText,
         hintStyle: (style ?? theme.textTheme.titleLarge)?.copyWith(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           fontSize: fontSize,
         ),
+        helperText: helperText,
         errorText: errorText,
         prefixIcon: showCurrencyIcon ? const Icon(Icons.attach_money) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

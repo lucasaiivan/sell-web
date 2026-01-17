@@ -293,6 +293,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required String accountId,
     required String cashRegisterId,
     required double finalBalance,
+    String? note,
   }) async {
     try {
       // Obtener la caja registradora actual
@@ -306,6 +307,7 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
       final updatedCashRegister = cashRegister.update(
         closure: DateTime.now(),
         balance: finalBalance,
+        note: note,
       );
 
       // Mover al historial

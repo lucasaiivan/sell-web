@@ -89,6 +89,7 @@ abstract class CashRegisterRepository {
     required String accountId,
     required String cashRegisterId,
     required double finalBalance,
+    String? note,
   });
 
   /// Registra un ingreso de caja

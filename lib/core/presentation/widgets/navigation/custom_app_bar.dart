@@ -56,10 +56,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: toolbarHeight,
       titleSpacing: titleSpacing,
-      actionsPadding: const EdgeInsets.only(right: 8.0, top: 8.0),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       automaticallyImplyLeading: automaticallyImplyLeading,
       title: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
         child: titleWidget ??
             (title != null
                 ? Text(
@@ -87,6 +87,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        kToolbarHeight + (bottom?.preferredSize.height ?? 0.0),
+        (toolbarHeight ?? kToolbarHeight) + (bottom?.preferredSize.height ?? 0.0),
       );
 }

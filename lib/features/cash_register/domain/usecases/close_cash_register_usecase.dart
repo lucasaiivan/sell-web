@@ -10,11 +10,13 @@ class CloseCashRegisterParams {
   final String accountId;
   final String cashRegisterId;
   final double finalBalance;
+  final String? note;
 
   const CloseCashRegisterParams({
     required this.accountId,
     required this.cashRegisterId,
     required this.finalBalance,
+    this.note,
   });
 }
 
@@ -47,6 +49,7 @@ class CloseCashRegisterUseCase
         accountId: params.accountId,
         cashRegisterId: params.cashRegisterId,
         finalBalance: params.finalBalance,
+        note: params.note,
       );
       return Right(cashRegister);
     } catch (e) {

@@ -172,6 +172,9 @@ class CashRegisterProvider extends ChangeNotifier
       TextEditingController();
   final AppMoneyTextEditingController movementAmountController =
       AppMoneyTextEditingController();
+  final TextEditingController noteController =
+      TextEditingController(); // Notas de cierre de caja
+
 
   // Immutable state
   _CashRegisterState _state = const _CashRegisterState();
@@ -246,6 +249,7 @@ class CashRegisterProvider extends ChangeNotifier
     finalBalanceController.dispose();
     movementDescriptionController.dispose();
     movementAmountController.dispose();
+    noteController.dispose();
     super.dispose();
   }
 
@@ -573,6 +577,7 @@ class CashRegisterProvider extends ChangeNotifier
         accountId: accountId,
         cashRegisterId: cashRegisterId,
         finalBalance: finalBalanceController.doubleValue,
+        note: noteController.text.trim().isNotEmpty ? noteController.text.trim() : null,
       ));
 
       return result.fold(
@@ -1045,6 +1050,7 @@ class CashRegisterProvider extends ChangeNotifier
 
   void _clearCloseForm() {
     finalBalanceController.clear();
+    noteController.clear();
   }
 
   void _clearMovementForm() {

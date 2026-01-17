@@ -248,9 +248,7 @@ class _CashRegisterManagementDialogState
     // ✅ Usar Selector para escuchar SOLO hasActiveCashRegister y evitar rebuilds innecesarios
     return Selector<CashRegisterProvider, bool>(
       selector: (_, provider) => provider.hasActiveCashRegister,
-      builder: (context, hasActiveCashRegister, child) {
-        // var
-        final sTitle =  hasActiveCashRegister ? 'Flujo de Caja' : 'Administración de Caja';
+      builder: (context, hasActiveCashRegister, child) { 
 
 
         // Vista normal en diálogo
@@ -261,7 +259,8 @@ class _CashRegisterManagementDialogState
             // dialog : base dialog
             return BaseDialog(
               fullView: true,
-              title: sTitle,
+              title: 'Gestión de Caja', 
+              subtitle: 'Administración de caja',
               icon: Icons.point_of_sale_rounded,
               headerColor: Theme.of(context)
                   .colorScheme
@@ -380,6 +379,8 @@ class _CashRegisterManagementDialogState
         child: DialogComponents.primaryActionButton(
           context: context,
           text: 'Cerrar Caja',
+          accentColor:Colors.red.shade400,
+          icon: Icons.point_of_sale_rounded,
           onPressed: () => _showCloseDialog(context, cashRegister),
         ),
       ),

@@ -14,6 +14,7 @@ class DateFormatter {
   static final _fullDateFormat = DateFormat('dd MMMM yyyy', 'es_ES');
   static final _shortDateFormat = DateFormat('dd MMMM', 'es_ES');
   static final _timeFormat = DateFormat('HH:mm', 'es_ES');
+  static final _fullDateWithDayFormat = DateFormat('EEEE, d \'de\' MMMM \'de\' yyyy', 'es_ES');
 
   /// Formatea fecha y hora en formato estándar
   ///
@@ -21,6 +22,17 @@ class DateFormatter {
   /// **Complejidad:** O(1)
   static String formatPublicationDate({required DateTime dateTime}) =>
       _fullDateTimeFormat.format(dateTime);
+
+  /// Formatea fecha con día de la semana completo
+  ///
+  /// **Formato:** EEEE, d 'de' MMMM 'de' yyyy
+  /// **Ejemplo:** "Viernes, 16 de enero de 2026"
+  /// **Complejidad:** O(1)
+  static String formatFullDateWithDay({required DateTime dateTime}) {
+    final formatted = _fullDateWithDayFormat.format(dateTime);
+    // Capitalizar la primera letra del día de la semana
+    return formatted.substring(0, 1).toUpperCase() + formatted.substring(1);
+  }
 
   /// Obtiene la fecha de publicación en formato legible simple
   ///

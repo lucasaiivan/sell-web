@@ -19,6 +19,7 @@ class CashRegisterOpenDialog extends StatefulWidget {
 class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   List<String> _localFixedDescriptions = [];
   bool _rememberDescription = false; // Nueva variable para el checkbox
+  String? _montoError; // Error para el campo de monto inicial
 
   @override
   void initState() {
@@ -35,6 +36,22 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         // Limpiar los campos de texto para empezar con valores vacíos
         provider.openDescriptionController.clear();
         provider.initialCashController.clear();
+
+        // Agregar listener para limpiar errores al escribir
+        provider.openDescriptionController.addListener(() {
+          if (mounted && provider.errorMessage != null) {
+            provider.clearError();
+          }
+        });
+
+        // Agregar listener para limpiar error de monto al escribir
+        provider.initialCashController.addListener(() {
+          if (mounted && _montoError != null) {
+            setState(() {
+              _montoError = null;
+            });
+          }
+        });
 
         _loadFixedDescriptions();
       }
@@ -67,43 +84,48 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
 
     return BaseDialog(
       title: 'Apertura de Caja',
-      icon: Icons.lock_open_rounded,
+      subtitle: 'Inicia la apertura de una caja registradora contable',
+      icon: Icons.point_of_sale,
       width: 500,
       fullView: widget.fullView,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DialogComponents.sectionSpacing,
+        children: [ 
+          // Fecha actual
+          Opacity(opacity: 0.5, child: _buildDateHeader(context)),
+          const SizedBox(height: 16), 
+          DialogComponents.buildIconTitleLabel(icon: Icons.edit_outlined, label: 'Nombre'),
           InputTextField(
-            controller: cashRegisterProvider.openDescriptionController,
-            labelText: 'Descripción',
-            hintText: 'Ej: Caja Principal',
-          ),
-          const SizedBox(height: 8),
+            maxLength: 20,
+            controller: cashRegisterProvider.openDescriptionController, 
+            hintText: 'Ej: Turno Mañana, caja principal',  
+            errorText: (cashRegisterProvider.errorMessage != null) ? cashRegisterProvider.errorMessage : null,
+          ), 
           // checkbox : Recordar descripción como frecuente
           _buildRememberCheckbox(context), 
-          // view : items fixers con nombres frecuentes de caja
+          const SizedBox(height: 16),
+          DialogComponents.buildIconTitleLabel(icon: Icons.history, label: 'Nombres Frecuentes'),
           _buildFrequentNamesSection(context, cashRegisterProvider),
           const SizedBox(height: 16),
-          // input : Campo para monto inicial
+          DialogComponents.buildIconTitleLabel(icon: Icons.monetization_on_outlined, label: 'Monto Inicial de la caja'),
           MoneyInputTextField(
-            controller: cashRegisterProvider.initialCashController,
-            labelText: 'Monto Inicial',
-          ),
-
-          if (cashRegisterProvider.errorMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              cashRegisterProvider.errorMessage!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            controller: cashRegisterProvider.initialCashController,  
+            hintText: '0.0', 
+            helperText: 'Efectivo disponible al iniciar el turno',
+            errorText: _montoError,
+          ), 
           DialogComponents.sectionSpacing,
         ],
       ),
       actions: [
+        // boton : cancelar
+        DialogComponents.secondaryActionButton(
+          context: context,
+          text: 'Cancelar',
+          onPressed: () => Navigator.pop(context),
+        ),
+        // boton : abrir caja
         Consumer<SalesProvider>(
           builder: (context, sellProvider, child) {
             return DialogComponents.primaryActionButton(
@@ -123,6 +145,20 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         ),
       ],
     );
+  } 
+  /// Construye el encabezado con la fecha actual formateada
+  Widget _buildDateHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentDate = DateTime.now();
+    final formattedDate = DateFormatter.formatFullDateWithDay(dateTime: currentDate);
+
+    return Text(
+      formattedDate,
+      style: theme.textTheme.labelLarge?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w400,
+      ),
+    );
   }
 
   /// Construye la sección de nombres frecuentes de caja registradora
@@ -135,107 +171,92 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
 
     final theme = Theme.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header de nombres frecuentes (sin botón de agregar)
-        Text(
-          'Nombres frecuentes',
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 8),
-        // view : Lista de nombres frecuentes con scroll
-        Container(
-          constraints: const BoxConstraints(
-            maxHeight: 120, // Altura máxima para evitar desbordamiento
-          ),
-          child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _localFixedDescriptions.map((description) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: theme.colorScheme.outline
-                                .withValues(alpha: 0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: IntrinsicWidth(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Área clickeable del chip
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () {
-                                    cashRegisterProvider
-                                        .openDescriptionController
-                                        .text = description;
-                                  },
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(20),
-                                    bottomLeft: Radius.circular(20),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: Text(
-                                      description,
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Divisor vertical
-                              Container(
-                                width: 1,
-                                height: 16,
-                                color: theme.colorScheme.outline
-                                    .withValues(alpha: 0.2),
-                              ),
-                              // Botón de eliminar
-                              InkWell(
-                                onTap: () => _deleteFixedDescription(
-                                    context, cashRegisterProvider, description),
-                                borderRadius: const BorderRadius.only(
-                                  topRight: Radius.circular(20),
-                                  bottomRight: Radius.circular(20),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 14,
-                                    color: theme.colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+    return SingleChildScrollView(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _localFixedDescriptions.map((description) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: theme.colorScheme.outline
+                          .withValues(alpha: 0.2),
+                      width: 1,
+                    ),
                   ),
-                ),
-        ),
-      ],
-    );
+                  child: IntrinsicWidth(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Área clickeable del chip
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              cashRegisterProvider
+                                  .openDescriptionController
+                                  .text = description;
+                              // Limpiar error al seleccionar un nombre frecuente
+                              if (cashRegisterProvider.errorMessage != null) {
+                                cashRegisterProvider.clearError();
+                              }
+                            },
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              bottomLeft: Radius.circular(20),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 2,
+                              ),
+                              child: Text(
+                                description,
+                                style:
+                                    theme.textTheme.bodySmall?.copyWith(
+                                  color:
+                                      theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Divisor vertical
+                        Container(
+                          width: 1,
+                          height: 16,
+                          color: theme.colorScheme.outline
+                              .withValues(alpha: 0.2),
+                        ),
+                        // Botón de eliminar
+                        InkWell(
+                          onTap: () => _deleteFixedDescription(
+                              context, cashRegisterProvider, description),
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(
+                              Icons.close,
+                              size: 14,
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          );
   }
 
   Future<void> _handleOpenCashRegister(
@@ -251,13 +272,26 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
     final userName =
         authProvider.user?.displayName ?? authProvider.user?.email ?? 'Usuario';
 
+    // ⚠️ VALIDACIÓN: El monto inicial es obligatorio
+    final montoText = cashRegisterProvider.initialCashController.text.trim();
+    if (montoText.isEmpty) {
+      // Establecer el error en el campo de monto
+      setState(() {
+        _montoError = 'Debe ingresar el monto inicial (o escribir 0)';
+      });
+      return;
+    }
+
     // ⚠️ IMPORTANTE: Capturar valores ANTES de navegar a ProcessSuccessView
     // porque dentro del callback 'action' el contexto cambia y los valores pueden perderse
     final description = cashRegisterProvider.openDescriptionController.text.trim();
+    // Si la descripción está vacía, usar "Caja" por defecto
+    final finalDescription = description.isEmpty ? 'Caja' : description;
     final shouldRemember = _rememberDescription;
     
     debugPrint('📝 Valores capturados ANTES de ProcessSuccessView:');
-    debugPrint('   - Descripción: "$description"');
+    debugPrint('   - Descripción original: "$description"');
+    debugPrint('   - Descripción final: "$finalDescription"');
     debugPrint('   - Recordar: $shouldRemember');
 
     // Mostrar ProcessSuccessView mientras se ejecuta la apertura
@@ -268,12 +302,15 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         builder: (context) => ProcessSuccessView(
           loadingText: 'Abriendo caja...',
           successTitle: '¡Caja abierta!',
-          successSubtitle: description.isEmpty 
-              ? 'Caja registradora' 
-              : description,
+          successSubtitle: finalDescription,
           finalText: null,
           popCount: 2, // Cerrar ProcessSuccessView + CashRegisterOpenDialog
           action: () async {
+            // Establecer la descripción final en el controller para que el provider la use
+            if (finalDescription != description) {
+              cashRegisterProvider.openDescriptionController.text = finalDescription;
+            }
+            
             // 1. Abrir la caja registradora
             final success = await cashRegisterProvider.openCashRegister(
               accountId: accountId,
@@ -288,16 +325,17 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
             // 2. Si está marcado "Recordar", guardar como nombre frecuente
             debugPrint('🔍 shouldRemember (variable capturada): $shouldRemember');
             if (shouldRemember) {
-              debugPrint('🔍 Descripción a guardar (variable capturada): "$description"');
-              debugPrint('🔍 Ya existe en lista local: ${_localFixedDescriptions.contains(description)}');
+              debugPrint('🔍 Descripción a guardar (variable capturada): "$finalDescription"');
+              debugPrint('🔍 Ya existe en lista local: ${_localFixedDescriptions.contains(finalDescription)}');
               debugPrint('🔍 Lista local actual: $_localFixedDescriptions');
               
-              if (description.isNotEmpty && !_localFixedDescriptions.contains(description)) {
+              // Solo guardar si no es el nombre por defecto "Caja" y no existe ya
+              if (finalDescription != 'Caja' && !_localFixedDescriptions.contains(finalDescription)) {
                 try {
-                  debugPrint('✅ Guardando nombre frecuente: "$description" en accountId: $accountId');
+                  debugPrint('✅ Guardando nombre frecuente: "$finalDescription" en accountId: $accountId');
                   await cashRegisterProvider.createCashRegisterFixedDescription(
                     accountId,
-                    description,
+                    finalDescription,
                   );
                   debugPrint('✅ Nombre frecuente guardado exitosamente');
                   // Nota: No actualizamos _localFixedDescriptions aquí porque el diálogo

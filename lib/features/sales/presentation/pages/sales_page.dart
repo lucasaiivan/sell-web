@@ -21,8 +21,7 @@ import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
 import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
-import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart';
-import 'package:sellweb/core/presentation/widgets/connectivity_indicator.dart';
+import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart'; 
 import 'package:sellweb/features/sales/presentation/widgets/product_item.dart';
 
 
@@ -548,9 +547,7 @@ class _SalesPageState extends State<SalesPage> {
               label: textHintSearchButton,
             ),
           ),
-          const SizedBox(width: 12),
-          // Indicador de conectividad
-          const ConnectivityIndicator(),
+          const SizedBox(width: 12), 
           // view : botones de la barra de acciones
           Row(
             children: [

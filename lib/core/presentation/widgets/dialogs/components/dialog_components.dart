@@ -664,6 +664,22 @@ class DialogComponents {
 
   /// Espaciado mínimo entre elementos relacionados
   static const Widget minSpacing = SizedBox(height: 8);
+
+   static Widget buildIconTitleLabel({
+    required String label,
+    required IconData icon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
 }
 
 /// Widget reutilizable para mostrar listas expandibles dentro de un contenedor estilizado.

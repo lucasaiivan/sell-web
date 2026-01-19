@@ -131,12 +131,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       // ✅ Usar método optimizado de DataSource
       final path = FirestorePaths.accountProduct(accountId, productId);
 
+      // Solo incrementar ventas, sin actualizar timestamp 'upgrade'
+      // El timestamp 'upgrade' solo se actualiza en ediciones manuales del producto
       await _dataSource.incrementField(path, 'sales', quantity);
-
-      // Actualizar timestamp
-      await _dataSource.updateDocument(path, {
-        'upgrade': Timestamp.now(),
-      });
     } catch (e) {
       throw Exception('Error al incrementar ventas del producto: $e');
     }
@@ -158,12 +155,9 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
       // ✅ Usar método optimizado de DataSource
       final path = FirestorePaths.accountProduct(accountId, productId);
 
+      // Solo decrementar stock, sin actualizar timestamp 'upgrade'
+      // El timestamp 'upgrade' solo se actualiza en ediciones manuales del producto
       await _dataSource.incrementField(path, 'quantityStock', -quantity);
-
-      // Actualizar timestamp
-      await _dataSource.updateDocument(path, {
-        'upgrade': Timestamp.now(),
-      });
     } catch (e) {
       throw Exception('Error al decrementar stock del producto: $e');
     }

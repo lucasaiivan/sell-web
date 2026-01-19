@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:rxdart/rxdart.dart'; // ✅ Necesario para combinar streams
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register_metrics.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 
@@ -27,6 +29,7 @@ import '../../domain/usecases/delete_cash_register_fixed_description_usecase.dar
 import '../../domain/usecases/get_today_transactions_stream_usecase.dart';
 import '../../domain/usecases/get_transactions_by_date_range_usecase.dart';
 import '../../domain/usecases/save_ticket_to_transaction_history_usecase.dart';
+import '../../domain/usecases/calculate_cash_register_metrics_usecase.dart';
 
 /// Extension helper para firstOrNull si no está disponible
 extension ListExtensions<T> on List<T> {
@@ -45,6 +48,7 @@ class _CashRegisterState {
   final bool isProcessing;
   final List<String> fixedDescriptions;
   final Map<String, bool> expandedMonths;
+  final CashRegisterMetrics? cachedMetrics; // ✅ OPTIMIZACIÓN: Caché de métricas
 
   const _CashRegisterState({
     this.activeCashRegisters = const [],
@@ -57,6 +61,7 @@ class _CashRegisterState {
     this.isProcessing = false,
     this.fixedDescriptions = const [],
     this.expandedMonths = const {},
+    this.cachedMetrics,
   });
 
   bool get hasActiveCashRegister => selectedCashRegister != null;
@@ -75,6 +80,8 @@ class _CashRegisterState {
     bool? isProcessing,
     List<String>? fixedDescriptions,
     Map<String, bool>? expandedMonths,
+    CashRegisterMetrics? cachedMetrics,
+    bool clearCachedMetrics = false,
   }) {
     return _CashRegisterState(
       activeCashRegisters: activeCashRegisters ?? this.activeCashRegisters,
@@ -91,6 +98,7 @@ class _CashRegisterState {
       isProcessing: isProcessing ?? this.isProcessing,
       fixedDescriptions: fixedDescriptions ?? this.fixedDescriptions,
       expandedMonths: expandedMonths ?? this.expandedMonths,
+      cachedMetrics: clearCachedMetrics ? null : (cachedMetrics ?? this.cachedMetrics),
     );
   }
 
@@ -149,10 +157,12 @@ class CashRegisterProvider extends ChangeNotifier
   final GetTransactionsByDateRangeUseCase _getTransactionsByDateRangeUseCase;
   final SaveTicketToTransactionHistoryUseCase
       _saveTicketToTransactionHistoryUseCase;
+  final CalculateCashRegisterMetricsUseCase _calculateMetricsUseCase;
   final AppDataPersistenceService _persistenceService;
 
   // Stream subscriptions
   StreamSubscription<List<CashRegister>>? _activeCashRegistersSubscription;
+  StreamSubscription<CashRegisterMetrics>? _metricsSubscription;
   String? _currentAccountId;
   bool _disposed = false;
 
@@ -193,6 +203,10 @@ class CashRegisterProvider extends ChangeNotifier
   bool get hasAvailableCashRegisters => _state.hasAvailableCashRegisters;
   CashRegister? get currentActiveCashRegister =>
       _state.currentActiveCashRegister;
+  
+  /// Métricas cacheadas de la caja activa actual
+  /// ✅ OPTIMIZACIÓN: Acceso inmediato sin esperar al stream
+  CashRegisterMetrics? get cachedMetrics => _state.cachedMetrics;
 
   Future<List<TicketModel>?>? get cashRegisterTickets => _cashRegisterTickets;
   bool get isLoadingTickets => _isLoadingTickets;
@@ -237,6 +251,7 @@ class CashRegisterProvider extends ChangeNotifier
     this._getTodayTransactionsStreamUseCase,
     this._getTransactionsByDateRangeUseCase,
     this._saveTicketToTransactionHistoryUseCase,
+    this._calculateMetricsUseCase,
     this._persistenceService,
   );
 
@@ -244,6 +259,7 @@ class CashRegisterProvider extends ChangeNotifier
   void dispose() {
     _disposed = true;
     _activeCashRegistersSubscription?.cancel();
+    _metricsSubscription?.cancel();
     openDescriptionController.dispose();
     initialCashController.dispose();
     finalBalanceController.dispose();
@@ -251,6 +267,34 @@ class CashRegisterProvider extends ChangeNotifier
     movementAmountController.dispose();
     noteController.dispose();
     super.dispose();
+  }
+
+  /// Suscribe automáticamente al stream de métricas para mantener el caché actualizado
+  /// ✅ OPTIMIZACIÓN: El caché se actualiza en tiempo real cuando cambian los datos
+  void _subscribeToMetricsStream(String accountId) {
+    final cashRegister = currentActiveCashRegister;
+    if (cashRegister == null || accountId.isEmpty) {
+      _metricsSubscription?.cancel();
+      _metricsSubscription = null;
+      return;
+    }
+
+    // Cancelar suscripción anterior si existe
+    _metricsSubscription?.cancel();
+
+    // Suscribirse al stream de métricas
+    _metricsSubscription = getCashRegisterMetricsStream(
+      accountId: accountId,
+    ).listen(
+      (metrics) {
+        // El caché ya se actualiza dentro de getCashRegisterMetricsStream
+        // Pero aseguramos notificar listeners para que el UI se actualice
+        notifyListeners();
+      },
+      onError: (_) {
+        // Ignorar errores silenciosamente para no interrumpir el flujo
+      },
+    );
   }
 
   /// Implementación de InitializableProvider: Inicializa el provider para una cuenta
@@ -329,6 +373,8 @@ class CashRegisterProvider extends ChangeNotifier
             .firstOrNull;
         if (savedCashRegister != null) {
           _state = _state.copyWith(selectedCashRegister: savedCashRegister);
+          // ✅ Suscribirse al stream de métricas para mantener caché actualizado
+          _subscribeToMetricsStream(accountId);
           notifyListeners();
         } else {
           await _persistenceService.clearSelectedCashRegisterId();
@@ -422,6 +468,10 @@ class CashRegisterProvider extends ChangeNotifier
     try {
       clearTicketsCache();
       _state = _state.copyWith(selectedCashRegister: cashRegister);
+      // ✅ Suscribirse al stream de métricas para mantener caché actualizado
+      if (_currentAccountId != null) {
+        _subscribeToMetricsStream(_currentAccountId!);
+      }
       notifyListeners();
       await _persistenceService.saveSelectedCashRegisterId(cashRegister.id);
     } catch (e) {
@@ -635,7 +685,8 @@ class CashRegisterProvider extends ChangeNotifier
       },
       (_) {
         _clearMovementForm();
-        _state = _state.copyWith(isProcessing: false);
+        // ✅ Invalidar caché para forzar recálculo de métricas
+        _state = _state.copyWith(isProcessing: false, clearCachedMetrics: true);
         notifyListeners();
         return true;
       },
@@ -670,7 +721,8 @@ class CashRegisterProvider extends ChangeNotifier
       },
       (_) {
         _clearMovementForm();
-        _state = _state.copyWith(isProcessing: false);
+        // ✅ Invalidar caché para forzar recálculo de métricas
+        _state = _state.copyWith(isProcessing: false, clearCachedMetrics: true);
         notifyListeners();
         return true;
       },
@@ -991,7 +1043,7 @@ class CashRegisterProvider extends ChangeNotifier
               GetTransactionsByDateRangeParams(
                 accountId: accountId,
                 startDate: start,
-                endDate: today.subtract(const Duration(days: 1, hours: 12)),
+                endDate: DateTime(today.year, today.month, today.day),
               ),
             );
 
@@ -1037,6 +1089,85 @@ class CashRegisterProvider extends ChangeNotifier
       }
       yield [];
     }
+  }
+
+  // ==========================================
+  // MÉTRICAS CENTRALIZADAS
+  // ==========================================
+
+  /// Stream de métricas centralizadas para la caja registradora activa.
+  ///
+  /// **Responsabilidad:**
+  /// - Combinar datos de [CashRegister] con tickets para producir [CashRegisterMetrics]
+  /// - Emitir nuevas métricas cuando los tickets o la caja cambien
+  ///
+  /// **Uso en UI:**
+  /// ```dart
+  /// StreamBuilder<CashRegisterMetrics>(
+  ///   stream: provider.getCashRegisterMetricsStream(accountId: accountId),
+  ///   builder: (context, snapshot) => ...
+  /// )
+  /// ```
+  Stream<CashRegisterMetrics> getCashRegisterMetricsStream({
+    required String accountId,
+  }) {
+    final initialCashRegister = currentActiveCashRegister;
+    if (initialCashRegister == null || accountId.isEmpty) {
+      return Stream.value(CashRegisterMetrics.empty());
+    }
+
+    // 1. Stream de la caja registradora (filtrado de todas las activas)
+    // Esto asegura que detectemos cambios en cashInFlow, cashOutFlow, etc.
+    final cashRegisterStream = _getActiveCashRegistersStreamUseCase(
+      GetActiveCashRegistersStreamParams(accountId)
+    ).map((activeRegisters) {
+      return activeRegisters
+          .where((cr) => cr.id == initialCashRegister.id)
+          .firstOrNull ?? initialCashRegister;
+    });
+
+    // 2. Stream de tickets
+    final ticketsStream = getCashRegisterTicketsStream(
+      accountId: accountId,
+      cashRegisterId: initialCashRegister.id,
+    );
+    
+    // 3. Combinar ambos streams
+    // ✅ CORRECCIÓN: Ahora recalculamos si cambian los tickets O la caja
+    return Rx.combineLatest2<CashRegister, List<TicketModel>, CashRegisterMetrics>(
+      cashRegisterStream,
+      ticketsStream,
+      (cashRegister, tickets) {
+        // ✅ ARQUITECTURA: Calcular métricas con ambos datos actualizados
+        final metrics = _calculateMetricsUseCase(
+          cashRegister: cashRegister,
+          tickets: tickets,
+        );
+        
+        // ✅ OPTIMIZACIÓN: Actualizar caché para acceso inmediato en UI
+        _state = _state.copyWith(cachedMetrics: metrics);
+        
+        return metrics;
+      }
+    );
+  }
+
+  /// Calcula métricas de forma síncrona desde tickets precargados.
+  ///
+  /// Útil cuando ya tienes los tickets en memoria y no necesitas stream.
+  CashRegisterMetrics calculateMetrics({
+    required List<TicketModel> tickets,
+    CashRegister? cashRegister,
+  }) {
+    final cr = cashRegister ?? currentActiveCashRegister;
+    if (cr == null) {
+      return CashRegisterMetrics.empty();
+    }
+    // ✅ ARQUITECTURA: Usar UseCase inyectado
+    return _calculateMetricsUseCase(
+      cashRegister: cr,
+      tickets: tickets,
+    );
   }
 
   // ==========================================

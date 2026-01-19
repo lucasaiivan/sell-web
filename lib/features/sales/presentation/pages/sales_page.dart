@@ -1341,7 +1341,8 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     }
   }
 
-  // - Muestra el popup menu con opciones de caja registradora -
+  // - Muestra el diálogo con acciones de caja registradora -
+  // - Muestra el diálogo con acciones de caja registradora -
   void _showStatusDialog(BuildContext context) {
     // - obtenemos los proveedores necesarios para el diálogo
     final cashRegisterProvider =
@@ -1349,123 +1350,180 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Obtener el balance esperado de la caja activa
-    final balance = cashRegisterProvider.hasActiveCashRegister
-        ? cashRegisterProvider.currentActiveCashRegister?.getExpectedBalance ??
-            0.0
-        : 0.0;
+    // Obtener el balance esperado desde las métricas cacheadas (más preciso)
+    // Las métricas incluyen tickets y movimientos de caja en tiempo real
+    final balance = cashRegisterProvider.cachedMetrics?.expectedBalance ?? 
+        (cashRegisterProvider.currentActiveCashRegister?.getExpectedBalance ?? 0.0);
 
-    // Mostrar popup menu
-    showMenu<String>(
+    final theme = Theme.of(context);
+    
+    // Capturar el contexto original que tiene acceso a los providers
+    final originalContext = context;
+
+    showDialog(
       context: context,
-      menuPadding: const EdgeInsets.all(0),
-      position: RelativeRect.fromLTRB(
-        MediaQuery.of(context).size.width - 200, // Posición desde la derecha
-        kToolbarHeight + 20, // Debajo del AppBar
-        20,
-        0,
+      builder: (dialogContext) => BaseDialog(
+        title: 'Caja Registradora',
+        subtitle: 'Balance actual: ${CurrencyFormatter.formatPrice(value: balance)}',
+        icon: Icons.point_of_sale_rounded,
+        width: isMobile(context) ? null : 450,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Descripción
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Text(
+                'Selecciona una acción para gestionar tu caja',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            
+            // 1. Botón de Ingreso
+            if (cashRegisterProvider.hasActiveCashRegister)
+              _buildLargeActionButton(
+                dialogContext,
+                originalContext: originalContext,
+                icon: Icons.arrow_downward_rounded,
+                label: 'Ingreso',
+                description: 'Registrar entrada de dinero',
+                color: Colors.green,
+                onTap: () => _showCashFlowDialog(
+                    originalContext, true, cashRegisterProvider, sellProvider, authProvider),
+              ),
+            
+            const SizedBox(height: 12),
+            
+            // 2. Botón de Egreso
+            if (cashRegisterProvider.hasActiveCashRegister)
+              _buildLargeActionButton(
+                dialogContext,
+                originalContext: originalContext,
+                icon: Icons.arrow_upward_rounded,
+                label: 'Egreso',
+                description: 'Registrar salida de dinero',
+                color: Colors.orange,
+                onTap: () => _showCashFlowDialog(
+                    originalContext, false, cashRegisterProvider, sellProvider, authProvider),
+              ),
+            
+            const SizedBox(height: 12),
+            
+            // 3. Botón de Cerrar Caja
+            if (cashRegisterProvider.hasActiveCashRegister)
+              _buildLargeActionButton(
+                dialogContext,
+                originalContext: originalContext,
+                icon: Icons.lock_rounded,
+                label: 'Cerrar Caja',
+                description: 'Finalizar turno y arqueo',
+                color: theme.colorScheme.error,
+                onTap: () => _showCloseCashRegisterDialog(
+                    originalContext, cashRegisterProvider, sellProvider),
+              ),
+            
+            const SizedBox(height: 16),
+            
+            // Link a vista detallada
+            TextButton.icon(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await Future.delayed(const Duration(milliseconds: 50));
+                if (!originalContext.mounted) return;
+                // ignore: use_build_context_synchronously
+                CashRegisterManagementDialog.showAdaptive(originalContext);
+              },
+              icon: Icon(Icons.open_in_new_rounded, size: 18),
+              label: Text('Ver detalles completos'),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          DialogComponents.secondaryActionButton(
+            context: dialogContext,
+            text: 'Cerrar',
+            onPressed: () => Navigator.pop(dialogContext),
+          )
+        ],
       ),
-      items: [
-        // item : Titular con balance total (cliqueable para ir al administrador)
-        PopupMenuItem<String>(
-          value: 'manage',
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Balance Total',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                CurrencyFormatter.formatPrice(value: balance),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-              const Divider(height: 16),
-            ],
+    );
+  }
+
+  /// Construye un botón grande de acción siguiendo Material Design 3
+  Widget _buildLargeActionButton(
+    BuildContext context, {
+    required BuildContext originalContext,
+    required IconData icon,
+    required String label,
+    required String description,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    
+    return FilledButton.tonal(
+      onPressed: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      style: FilledButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.1),
+        foregroundColor: color,
+        padding: const EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: color.withValues(alpha: 0.2),
+            width: 1,
           ),
         ),
-        // Opción de ingreso (solo si hay caja activa)
-        if (cashRegisterProvider.hasActiveCashRegister)
-          PopupMenuItem<String>(
-            value: 'income',
-            child: Row(
+      ),
+      child: Row(
+        children: [
+          // Icono
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 28, color: color),
+          ),
+          const SizedBox(width: 16),
+          // Textos
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.arrow_downward_sharp,
-                    size: 20, color: Colors.green.shade600),
-                const SizedBox(width: 12),
-                const Text('Ingreso'),
+                Text(
+                  label,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
-        // Opción de egreso (solo si hay caja activa)
-        if (cashRegisterProvider.hasActiveCashRegister)
-          PopupMenuItem<String>(
-            value: 'expense',
-            child: Row(
-              children: [
-                Icon(Icons.arrow_outward_rounded,
-                    size: 20, color: Colors.red.shade600),
-                const SizedBox(width: 12),
-                const Text('Egreso'),
-              ],
-            ),
-          ),
-        // Opción para cerrar caja (solo si hay caja activa)
-        if (cashRegisterProvider.hasActiveCashRegister)
-          PopupMenuItem<String>(
-            value: 'close',
-            child: Row(
-              children: [
-                Icon(Icons.exit_to_app, size: 20),
-                const SizedBox(width: 12),
-                const Text('Cerrar caja'),
-              ],
-            ),
-          ),
-      ],
-    ).then((value) {
-      if (value != null) {
-        switch (value) {
-          case 'manage':
-            // Mostrar el diálogo completo de administración usando el método estático
-            CashRegisterManagementDialog.showAdaptive(context);
-            break;
-          case 'income':
-            // Reutilizar CashFlowDialog para ingresos
-            _showCashFlowDialog(context, true, cashRegisterProvider,
-                sellProvider, authProvider);
-            break;
-          case 'expense':
-            // Reutilizar CashFlowDialog para egresos
-            _showCashFlowDialog(context, false, cashRegisterProvider,
-                sellProvider, authProvider);
-            break;
-          case 'close':
-            // Mostrar confirmación de cierre
-            _showCloseCashRegisterDialog(
-                context, cashRegisterProvider, sellProvider);
-            break;
-        }
-      }
-    });
+          // Indicador de acción
+          Icon(Icons.chevron_right_rounded, color: color.withValues(alpha: 0.5)),
+        ],
+      ),
+    );
   }
 
   // - Reutiliza CashFlowDialog para mostrar diálogo de ingresos/egresos -
@@ -1556,9 +1614,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
                   _showCashRegisterManagementDialog(context);
                 } else {
                   // Si hay caja activa, mostrar el diálogo de estado
-                  isMobile(context)
-                      ? _showStatusDialog(context)
-                      : _showCashRegisterManagementDialog(context);
+                  _showStatusDialog(context);
                 }
               },
               backgroundColor:

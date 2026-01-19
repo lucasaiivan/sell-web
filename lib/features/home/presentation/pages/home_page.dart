@@ -13,6 +13,8 @@ import 'package:sellweb/features/cash_register/presentation/pages/history_cash_r
 import 'package:sellweb/features/multiuser/presentation/pages/multi_user_page.dart';
 import 'package:sellweb/core/utils/helpers/user_access_validator.dart';
 import 'package:sellweb/core/presentation/widgets/widgets.dart';
+import 'package:sellweb/core/di/injection_container.dart';
+import 'package:sellweb/core/services/window/full_screen_service.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 /// Controla el flujo entre: selección de cuenta, ventas y catálogo
@@ -27,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   Timer? _accessCheckTimer;
   String? _lastCheckedAdminId;
   UserAccessResult? _currentAccessResult;
+  int? _lastPageIndex;
 
   @override
   void initState() {
@@ -287,6 +290,10 @@ class _HomePageState extends State<HomePage> {
     _handleDemoProducts(context, sellProvider);
 
     final homeProvider = context.watch<HomeProvider>();
+    
+    // Gestionar modo pantalla completa según la vista
+    _handleFullScreenMode(homeProvider.currentPageIndex);
+
     final isDemo = sellProvider.profileAccountSelected.id == 'demo';
 
     return Column(
@@ -492,6 +499,30 @@ class _HomePageState extends State<HomePage> {
       default:
         return 'Contacta con el administrador para más información.';
     }
+  }
+
+  /// Gestiona el modo pantalla completa
+  /// Entra en pantalla completa si la vista es Ventas (0)
+  /// Sale si es cualquier otra vista
+  void _handleFullScreenMode(int index) {
+      // Evitar ejecución redundante si el índice no ha cambiado
+      if (_lastPageIndex == index) return;
+      _lastPageIndex = index;
+      
+      // Ejecutar cambio de pantalla completa post-frame para asegurar que el build ha terminado
+      // y evitar conflictos durante el renderizado
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          final fullScreenService = getIt<FullScreenService>();
+          if (index == 0) {
+            fullScreenService.enterFullScreen();
+          } else {
+            fullScreenService.exitFullScreen();
+          }
+        } catch (e) {
+          debugPrint('Error al cambiar modo pantalla completa: $e');
+        }
+      });
   }
 }
 

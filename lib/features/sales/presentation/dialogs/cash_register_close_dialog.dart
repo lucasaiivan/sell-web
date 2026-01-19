@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register_metrics.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
@@ -23,7 +24,7 @@ class CashRegisterCloseDialog extends StatefulWidget {
 }
 
 class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
-  double _currentDifference = 0.0;
+
   String? _arqueoError; // Error para el campo de arqueo de fondos
   late CashRegisterProvider _provider;
 
@@ -72,12 +73,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
   void _updateDifference() {
     if (mounted) {
       setState(() {
-        final finalBalance = _provider.finalBalanceController.doubleValue;
-        final expectedBalance = widget.cashRegister.getExpectedBalance;
-
-        // Diferencia = Balance Final (lo que hay) - Balance Esperado (lo que debería haber)
-        // Positivo = sobrante (verde), Negativo = faltante (rojo)
-        _currentDifference = finalBalance - expectedBalance;
+        // Actualizar UI para recalcular diferencia en build
       });
     }
   }
@@ -85,86 +81,124 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
   @override
   Widget build(BuildContext context) {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
+    final sellProvider = context.read<SalesProvider>();
 
-    return BaseDialog(
-      title: 'Cierre de Caja',
-      icon: Icons.lock_rounded,
-      width: 500,
-      fullView: widget.fullView,
-      headerColor:
-          Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DialogComponents.sectionSpacing,
-          _buildSummaryCard(context),
-          const SizedBox(height: 16),
-          DialogComponents.buildIconTitleLabel(icon: Icons.monetization_on_outlined, label: 'Arqueo de Fondos'),
-          MoneyInputTextField(
-            controller: cashRegisterProvider.finalBalanceController,
-            helperText: 'Ingresar lo que realmente cobraste en efectivo y otros medios',
-            hintText: '0.0',
-            errorText: _arqueoError,
-          ),
-          // Mostrar diferencia en tiempo real con contenedor animado
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: cashRegisterProvider.finalBalanceController.text.trim().isNotEmpty
-                ? _buildDifferenceIndicator()
-                : const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 16),
-          DialogComponents.buildIconTitleLabel(icon: Icons.edit_outlined, label: 'Notas (Opcional)'),
-          InputTextField(
-            controller: cashRegisterProvider.noteController,
-            hintText: 'Notas sobre el cierre de caja...',
-            maxLines: 3,
-            minLines: 1,
-          ),
-          const SizedBox(height: 16),
-          // text : Mensaje de error si existe
-          if (cashRegisterProvider.errorMessage != null)
-            Text(
-              cashRegisterProvider.errorMessage!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-          DialogComponents.sectionSpacing,
-        ],
+    // ✅ OPTIMIZACIÓN: Usar métricas cacheadas para renderizado inmediato
+    final cachedMetrics = cashRegisterProvider.cachedMetrics;
+    
+    // Si hay métricas en caché, usarlas inmediatamente
+    if (cachedMetrics != null && cachedMetrics.cashRegister.id == widget.cashRegister.id) {
+      return _buildDialog(context, cashRegisterProvider, cachedMetrics);
+    }
+
+    // Si no hay caché, usar StreamBuilder (primera carga)
+    return StreamBuilder<CashRegisterMetrics>(
+      stream: cashRegisterProvider.getCashRegisterMetricsStream(
+        accountId: sellProvider.profileAccountSelected.id,
       ),
-      actions: [
-        // button : Cerrar caja
-        Consumer<SalesProvider>(
-          builder: (context, sellProvider, child) {
-            return DialogComponents.primaryActionButton(
-              context: context,
-              text: 'Confirmar Cierre',
-              icon: Icons.lock_rounded,
-              isLoading: cashRegisterProvider.isProcessing,
-              onPressed: () {
-                if (cashRegisterProvider.isProcessing) return;
-                _handleCloseCashRegister(
-                  context,
-                  cashRegisterProvider,
-                  sellProvider,
-                );
-              },
-            );
-          },
-        ),
-      ],
+      builder: (context, snapshot) {
+        // Usar métricas del stream o fallback a valores del cashRegister
+        final metrics = snapshot.data;
+        return _buildDialog(context, cashRegisterProvider, metrics);
+      },
     );
   }
 
+  Widget _buildDialog(
+    BuildContext context,
+    CashRegisterProvider cashRegisterProvider,
+    CashRegisterMetrics? metrics,
+  ) {
+    // ✅ Calcular balance esperado con la fuente de verdad más reciente (Métricas > CashRegister inicial)
+    // Esto corrige el problema de "valores no coherentes" al asegurar que usamos datos frescos
+    final expectedBalance = metrics?.expectedBalance ?? widget.cashRegister.getExpectedBalance;
+        
+        return BaseDialog(
+          title: 'Cierre de Caja',
+          icon: Icons.lock_rounded,
+          width: 500,
+          fullView: widget.fullView,
+          headerColor:
+              Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DialogComponents.sectionSpacing,
+              // view : resumen de caja
+              DialogComponents.buildIconTitleLabel(icon: Icons.point_of_sale_outlined, label: 'Resumen de Caja'),
+              _expandableListTile(context, metrics),
+              const SizedBox(height: 16),
+              // view : input de arqueo de fondos
+              DialogComponents.buildIconTitleLabel(icon: Icons.monetization_on_outlined, label: 'Arqueo de Fondos'),
+              // indicator : diferencia
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: cashRegisterProvider.finalBalanceController.text.trim().isNotEmpty
+                    ? _buildDifferenceIndicator(expectedBalance)
+                    : const SizedBox.shrink(),
+              ),
+              // input : arqueo de fondos
+              MoneyInputTextField(
+                controller: cashRegisterProvider.finalBalanceController,
+                helperText: 'Ingresar lo que realmente cobraste en efectivo y otros medios',
+                hintText: '0.0',
+                errorText: _arqueoError,
+              ), 
+              const SizedBox(height: 12),
+              DialogComponents.buildIconTitleLabel(icon: Icons.edit_outlined, label: 'Notas (Opcional)'),
+              InputTextField(
+                controller: cashRegisterProvider.noteController,
+                hintText: 'Notas sobre el cierre de caja...',
+                maxLines: 3,
+                minLines: 1,
+              ),
+              const SizedBox(height: 16),
+              // text : Mensaje de error si existe
+              if (cashRegisterProvider.errorMessage != null)
+                Text(
+                  cashRegisterProvider.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              DialogComponents.sectionSpacing,
+            ],
+          ),
+          actions: [
+            // button : Cerrar caja
+            Consumer<SalesProvider>(
+              builder: (context, sellProvider, child) {
+                return DialogComponents.primaryActionButton(
+                  context: context,
+                  text: 'Confirmar Cierre',
+                  icon: Icons.lock_rounded,
+                  isLoading: cashRegisterProvider.isProcessing,
+                  onPressed: () {
+                    if (cashRegisterProvider.isProcessing) return;
+                    _handleCloseCashRegister(
+                      context,
+                      cashRegisterProvider,
+                      sellProvider,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        );
+  }
+
   /// Construye el indicador de diferencia con diseño mejorado
-  Widget _buildDifferenceIndicator() {
+  Widget _buildDifferenceIndicator(double expectedBalance) {
     final theme = Theme.of(context);
     
+    final finalBalance = _provider.finalBalanceController.doubleValue;
+    final difference = finalBalance - expectedBalance;
+    
     // Determinar el estado del arqueo
-    final bool isPerfecto = _currentDifference == 0;
-    final bool isSobrante = _currentDifference > 0;
+    final bool isPerfecto = difference == 0;
+    final bool isSobrante = difference > 0;
     
     // Configurar colores, íconos y labels según el estado
     final Color color;
@@ -186,8 +220,8 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(top: 12, bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.only(top: 6, bottom:8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12), 
@@ -196,7 +230,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
         children: [
           // Icono
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
@@ -220,7 +254,7 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
           ),
           if (!isPerfecto)
             Text(
-              CurrencyFormatter.formatPrice(value: _currentDifference.abs()),
+              CurrencyFormatter.formatPrice(value: difference.abs()),
               style: theme.textTheme.titleMedium?.copyWith(
                 color: color,
                 fontWeight: FontWeight.bold,
@@ -231,82 +265,118 @@ class _CashRegisterCloseDialogState extends State<CashRegisterCloseDialog> {
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Arqueo de Caja',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            // apertura de caja : widget.cashRegister.opening
-            _buildSummaryRow(
-                'Apertura:',
-                DateFormatter.formatPublicationDate(  dateTime: widget.cashRegister.opening)),
-            _buildSummaryRow(
-                'Monto Inicial de caja:',
-                CurrencyFormatter.formatPrice(
-                    value: widget.cashRegister.initialCash)),
-            _buildSummaryRow('Ventas:', widget.cashRegister.sales.toString()),
-            _buildSummaryRow(
-                'Facturación:',
-                CurrencyFormatter.formatPrice(
-                    value: widget.cashRegister.billing)),
-            _buildSummaryRow(
-                'Descuentos:',
-                CurrencyFormatter.formatPrice(
-                    value: widget.cashRegister.discount)),
-            _buildSummaryRow(
-                'Ingresos:',
-                CurrencyFormatter.formatPrice(
-                    value: widget.cashRegister.cashInFlow)),
-            _buildSummaryRow(
-                'Egresos:',
-                CurrencyFormatter.formatPrice(
-                    value: widget.cashRegister.cashOutFlow)),
-            const Divider(),
-            _buildSummaryRow(
-              'Balance Esperado:',
-              CurrencyFormatter.formatPrice(
-                  value: widget.cashRegister.getExpectedBalance),
-              true,
-            ),
-          ],
-        ),
-      ),
+  Widget _expandableListTile(BuildContext context, CashRegisterMetrics? metrics) {
+    final theme = Theme.of(context);
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
+    // Calcular tiempo transcurrido desde la apertura
+    final timeElapsed = DateFormatter.getElapsedTime(
+      fechaInicio: widget.cashRegister.opening,
     );
-  }
 
-  Widget _buildSummaryRow(String label, String value, [bool isTotal = false]) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // ✅ Usar métricas centralizadas cuando estén disponibles
+    final expectedBalance = metrics?.expectedBalance ?? widget.cashRegister.getExpectedBalance;
+    final totalBilling = metrics?.totalBilling ?? widget.cashRegister.billing;
+    final totalDiscount = metrics?.totalDiscount ?? widget.cashRegister.discount;
+    final totalInflows = metrics?.totalInflows ?? widget.cashRegister.cashInFlow;
+    final totalOutflows = metrics?.totalOutflows ?? widget.cashRegister.cashOutFlow.abs();
+    final initialCash = metrics?.initialCash ?? widget.cashRegister.initialCash;
+    final salesCount = metrics?.effectiveSalesCount ?? widget.cashRegister.sales;
+
+    return ExpandablePremiumListTile( 
+      iconColor: theme.colorScheme.primary,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            label,
-            style: TextStyle(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            'Balance Esperado',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
-            value,
-            style: TextStyle(
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            CurrencyFormatter.formatPrice(value: expectedBalance),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
         ],
       ),
+      subtitle: Row(
+        children: [
+          Icon(
+            Icons.schedule_rounded,
+            size: 14,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Tiempo transcurrido: $timeElapsed',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+      expandedInfo: [
+        ExpandableInfoItem(
+          icon: Icons.schedule_rounded,
+          label: 'Apertura',
+          value: DateFormatter.formatPublicationDate(
+            dateTime: widget.cashRegister.opening,
+          ),
+        ),
+        ExpandableInfoItem(
+          icon: Icons.attach_money_rounded,
+          label: 'Monto Inicial',
+          value: CurrencyFormatter.formatPrice(
+            value: initialCash,
+          ),
+        ),
+        ExpandableInfoItem(
+          icon: Icons.receipt_long_rounded,
+          label: 'Ventas',
+          value: salesCount.toString(),
+        ),
+        ExpandableInfoItem(
+          icon: Icons.trending_up_rounded,
+          label: 'Facturación',
+          value: CurrencyFormatter.formatPrice(
+            value: totalBilling,
+          ),
+        ),
+        ExpandableInfoItem(
+          icon: Icons.discount_rounded,
+          label: 'Descuentos',
+          value: CurrencyFormatter.formatPrice(
+            value: totalDiscount,
+          ),
+        ),
+        ExpandableInfoItem(
+          icon: Icons.arrow_downward_rounded,
+          label: 'Ingresos',
+          value: CurrencyFormatter.formatPrice(
+            value: totalInflows,
+          ),
+        ),
+        ExpandableInfoItem(
+          icon: Icons.arrow_upward_rounded,
+          label: 'Egresos',
+          value: CurrencyFormatter.formatPrice(
+            value: totalOutflows,
+          ),
+        ),
+      ],
+      isMobile: isMobile,
+      initiallyExpanded: false,
     );
   }
+
 
   Future<void> _handleCloseCashRegister(
     BuildContext context,

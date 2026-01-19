@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/features/cash_register/domain/entities/cash_register.dart';
+import 'package:sellweb/features/cash_register/domain/entities/cash_register_metrics.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
@@ -19,16 +20,12 @@ class _CashRegisterDialogConstants {
    
   // Border radius
   static const double borderRadiusMedium = 6.0;
-  static const double borderRadiusLarge = 8.0;
-  static const double borderRadiusXLarge = 12.0;
 
   // Opacidades
   static const double opacityMedium = 0.1;
-  static const double opacityHeavy = 0.15;
 
   // Tamaños de iconos
   static const double iconSizeSmall = 14.0;
-  static const double iconSizeXLarge = 24.0;
 
   // Anchos de diálogo
   static const double dialogWidthTablet = 600.0;
@@ -348,11 +345,9 @@ class _CashRegisterManagementDialogState
         children: [
           // view : información de flujo de caja (usa stream del provider)
           _buildCashFlowView(context, provider, isMobile),
-          SizedBox(height: getResponsiveSpacing(context, scale: 2)),
-
+          SizedBox(height: getResponsiveSpacing(context, scale: 2)), 
           // view : metodo de pago y ventas recientes
-          if (accountId.isNotEmpty &&
-              provider.currentActiveCashRegister != null)
+          if (accountId.isNotEmpty && provider.currentActiveCashRegister != null)
             _PaymentMethodsAndRecentSalesSection(
               accountId: accountId,
               cashRegisterId: provider.currentActiveCashRegister!.id,
@@ -367,8 +362,7 @@ class _CashRegisterManagementDialogState
     );
   }
 
-  List<Widget> _buildCashRegisterActionButtons(
-      BuildContext context, bool isMobile) {
+  List<Widget> _buildCashRegisterActionButtons(BuildContext context, bool isMobile) {
     // ✅ Usar context.read para acceder al provider sin suscribirse
     final provider = context.read<CashRegisterProvider>();
     final cashRegister = provider.currentActiveCashRegister!;
@@ -755,8 +749,7 @@ class _CashRegisterManagementDialogState
   }
 
   /// Construye la vista de flujo de caja con información financiera
-  Widget _buildCashFlowView(
-      BuildContext context, CashRegisterProvider provider, bool isMobile) {
+  Widget _buildCashFlowView(BuildContext context, CashRegisterProvider provider, bool isMobile) {
     final cashRegister = provider.currentActiveCashRegister!;
 
     // ✅ Usar widget separado que no depende de FutureBuilder
@@ -768,16 +761,14 @@ class _CashRegisterManagementDialogState
 
   void _showOpenDialog(BuildContext context) {
     // Capturar los providers antes de mostrar el diálogo
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
         ],
         child: const CashRegisterOpenDialog(),
@@ -787,16 +778,14 @@ class _CashRegisterManagementDialogState
 
   void _showCloseDialog(BuildContext context, CashRegister cashRegister) {
     // Capturar los providers antes de mostrar el diálogo
-    final cashRegisterProvider =
-        Provider.of<CashRegisterProvider>(context, listen: false);
+    final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (_) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(
-              value: cashRegisterProvider),
+          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
           ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
         ],
         child: CashRegisterCloseDialog(cashRegister: cashRegister),
@@ -887,7 +876,7 @@ class _TicketsStreamListener extends StatelessWidget {
         if (!snapshot.hasData ||
             snapshot.data == null ||
             snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
+          return _buildEmptyTransactionsMessage(context);
         }
 
         final tickets = snapshot.data!;
@@ -895,7 +884,7 @@ class _TicketsStreamListener extends StatelessWidget {
             tickets.where((ticket) => !ticket.annulled).toList();
 
         if (activeTickets.isEmpty) {
-          return const SizedBox.shrink();
+          return _buildEmptyTransactionsMessage(context);
         }
 
         // ✅ Usar AnimatedSwitcher para transiciones suaves entre estados
@@ -918,6 +907,26 @@ class _TicketsStreamListener extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// Construye el mensaje cuando no hay transacciones
+  Widget _buildEmptyTransactionsMessage(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: Text(
+          'Sin transacciones aún',
+          style: (isMobile 
+              ? theme.textTheme.bodyMedium 
+              : theme.textTheme.bodyLarge)?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }
@@ -1115,7 +1124,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
               key: ValueKey(data.version),
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ✅ Información de flujo de caja con StreamBuilder solo para tickets
+                // view : Información de flujo de caja  
                 _CashFlowInformation(
                   cashRegister: currentCashRegister,
                   isMobile: widget.isMobile,
@@ -1240,7 +1249,7 @@ class _CashFlowViewState extends State<_CashFlowView> {
 }
 
 /// Widget separado para información de flujo de caja
-/// ✅ OPTIMIZADO: Actualiza solo los datos sin reconstruir toda la vista
+/// ✅ OPTIMIZADO: Usa CashRegisterMetrics centralizado para evitar recálculos
 class _CashFlowInformation extends StatelessWidget {
   final CashRegister cashRegister;
   final bool isMobile;
@@ -1275,31 +1284,45 @@ class _CashFlowInformation extends StatelessWidget {
           ),
           SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
 
-          // ✅ Balance total - Sección separada
-          _BalanceSection(
-            cashRegister: cashRegister,
-            isMobile: isMobile,
-          ),
-          SizedBox(height: getResponsiveSpacing(context, scale: 1.5)),
+          // ✅ OPTIMIZADO: Usar métricas cacheadas o stream
+          if (accountId.isNotEmpty && cashRegister.id.isNotEmpty) ...[
+            // Intentar usar caché primero para renderizado inmediato
+            Builder(
+              builder: (context) {
+                final cachedMetrics = cashRegisterProvider.cachedMetrics;
+                
+                // Si hay métricas en caché de esta caja, usarlas directamente
+                if (cachedMetrics != null && cachedMetrics.cashRegister.id == cashRegister.id) {
+                  return _FinancialSummarySection(
+                    cashRegister: cashRegister,
+                    isMobile: isMobile,
+                    metrics: cachedMetrics,
+                  );
+                }
+                
+                // Si no hay caché, usar StreamBuilder con skeleton
+                return StreamBuilder<CashRegisterMetrics>(
+                  stream: cashRegisterProvider.getCashRegisterMetricsStream(
+                    accountId: accountId,
+                  ),
+                  builder: (context, snapshot) {
+                    // Mostrar skeleton solo si aún no hay datos
+                    if (!snapshot.hasData) {
+                      return _FinancialSummarySkeleton(isMobile: isMobile);
+                    }
 
-          // ✅ Información financiera con StreamBuilder SOLO para tickets
-          if (accountId.isNotEmpty && cashRegister.id.isNotEmpty)
-            StreamBuilder<List<TicketModel>>(
-              stream: cashRegisterProvider.getCashRegisterTicketsStream(
-                accountId: accountId,
-                cashRegisterId: cashRegister.id,
-              ),
-              builder: (context, snapshot) {
-                final tickets = snapshot.data;
-                return _FinancialInfoSection(
-                  cashRegister: cashRegister,
-                  isMobile: isMobile,
-                  tickets: tickets,
+                    final metrics = snapshot.data;
+                    return _FinancialSummarySection(
+                      cashRegister: cashRegister,
+                      isMobile: isMobile,
+                      metrics: metrics,
+                    );
+                  },
                 );
               },
-            )
-          else
-            _FinancialInfoSection(
+            ),
+          ] else
+            _FinancialSummarySection(
               cashRegister: cashRegister,
               isMobile: isMobile,
             ),
@@ -1329,33 +1352,64 @@ class _CashRegisterHeaderSection extends StatelessWidget {
       builder: (context, activeCashRegister, child) {
         final currentCashRegister = activeCashRegister ?? cashRegister;
 
-        final timeInfo = [
-          {
-            'icon': Icons.schedule_rounded,
-            'label': 'Apertura',
-            'value': DateFormatter.formatPublicationDate(
-                dateTime: currentCashRegister.opening),
-          },
-          {
-            'icon': Icons.timelapse_rounded,
-            'label': 'Tiempo activo',
-            'value': DateFormatter.getElapsedTime(
-                fechaInicio: currentCashRegister.opening),
-          },
-          {
-            'icon': Icons.person_rounded,
-            'label': 'Cajero',
-            'value': currentCashRegister.nameUser.isNotEmpty
-                ? currentCashRegister.idUser
-                : 'Desconocido',
-          },
-        ];
+        // ✅ Calcular tiempo activo para el subtítulo
+        final activeTime = DateFormatter.getElapsedTime(
+          fechaInicio: currentCashRegister.opening,
+        );
 
-        return _CashRegisterExpandableHeader(
-          cashRegister: currentCashRegister,
-          theme: theme,
+        // ✅ Usar el nuevo componente reutilizable ExpandablePremiumListTile
+        return ExpandablePremiumListTile(
+          icon: Icons.point_of_sale_rounded,
+          iconColor: theme.colorScheme.primary,
+          title: currentCashRegister.description,
+          subtitle: Row(
+            children: [
+              Icon(
+                Icons.timelapse_rounded,
+                size: isMobile ? 14 : 16,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                activeTime,
+                style: (isMobile
+                        ? theme.textTheme.bodySmall
+                        : theme.textTheme.bodyMedium)
+                    ?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          badge: PremiumListTileBadge(
+            label: 'ACTIVA',
+            color: Colors.green.shade700,
+            showDot: true,
+          ),
+          expandedInfo: [
+            ExpandableInfoItem(
+              icon: Icons.schedule_rounded,
+              label: 'Apertura',
+              value: DateFormatter.formatPublicationDate(
+                dateTime: currentCashRegister.opening,
+              ),
+            ),
+            ExpandableInfoItem(
+              icon: Icons.timelapse_rounded,
+              label: 'Tiempo activo',
+              value: activeTime,
+            ),
+            ExpandableInfoItem(
+              icon: Icons.person_rounded,
+              label: 'Cajero',
+              value: currentCashRegister.nameUser.isNotEmpty
+                  ? currentCashRegister.idUser
+                  : 'Desconocido',
+            ),
+          ],
           isMobile: isMobile,
-          timeInfo: timeInfo,
+          initiallyExpanded: false,
         );
       },
     );
@@ -1483,272 +1537,218 @@ class _StatsCardsSection extends StatelessWidget {
   }
 }
 
-/// Widget separado para mostrar el balance total
-/// ✅ OPTIMIZADO: Solo se reconstruye cuando cambia el balance
-class _BalanceSection extends StatelessWidget {
+/// Widget consolidado para resumen financiero con ExpandablePremiumListTile
+/// ✅ OPTIMIZADO: Usa CashRegisterMetrics pre-calculado para evitar recálculos O(n)
+class _FinancialSummarySection extends StatelessWidget {
   final CashRegister cashRegister;
   final bool isMobile;
+  final CashRegisterMetrics? metrics;
 
-  const _BalanceSection({
+  const _FinancialSummarySection({
     required this.cashRegister,
     required this.isMobile,
+    this.metrics,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Selector<CashRegisterProvider, double>(
-      selector: (_, provider) {
-        final cr = provider.currentActiveCashRegister ?? cashRegister;
-        return cr.getExpectedBalance;
-      },
-      builder: (context, balance, child) {
-        return Container(
-          padding: EdgeInsets.all(isMobile ? 14 : 16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+    // ✅ Usar métricas pre-calculadas o valores del cashRegister como fallback
+    final totalProfit = metrics?.totalProfit ?? 0.0;
+    final totalDiscount = metrics?.totalDiscount ?? cashRegister.discount;
+    final totalBilling = metrics?.totalBilling ?? cashRegister.billing;
+    final expectedBalance = metrics?.expectedBalance ?? cashRegister.getExpectedBalance;
+    final totalIngresos = metrics?.totalInflows ?? cashRegister.getTotalIngresos;
+    final totalEgresos = metrics?.totalOutflows ?? cashRegister.getTotalEgresos;
+    final initialCash = metrics?.initialCash ?? cashRegister.initialCash;
+
+    // Construir items expandibles solo con información secundaria
+    final List<ExpandableInfoItem> expandedInfo = [];
+
+    // Facturación total
+    if (totalBilling > 0) {
+      expandedInfo.add(
+        ExpandableInfoItem(
+          icon: Icons.receipt_long_rounded,
+          label: 'Facturación de ventas',
+          valueWidget: Text(
+            CurrencyFormatter.formatPrice(value: totalBilling),
+            style: (isMobile
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      );
+    }
+
+    // Monto inicial
+    if (initialCash > 0) {
+      expandedInfo.add(
+        ExpandableInfoItem(
+          icon: Icons.attach_money_rounded,
+          label: 'Monto Inicial',
+          valueWidget: Text(
+            CurrencyFormatter.formatPrice(value: initialCash),
+            style: (isMobile
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Ingresos en caja
+    if (totalIngresos > 0) {
+      expandedInfo.add(
+        ExpandableInfoItem(
+          icon: Icons.call_received_rounded,
+          label: 'Ingresos en caja',
+          valueWidget: Text(
+            CurrencyFormatter.formatPrice(value: totalIngresos),
+            style: (isMobile
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.green,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Egresos en caja
+    if (totalEgresos > 0) {
+      expandedInfo.add(
+        ExpandableInfoItem(
+          icon: Icons.arrow_outward_rounded,
+          label: 'Egresos en caja',
+          valueWidget: Text(
+            '-${CurrencyFormatter.formatPrice(value: totalEgresos)}',
+            style: (isMobile
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.red,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Descuentos
+    if (totalDiscount > 0) {
+      expandedInfo.add(
+        ExpandableInfoItem(
+          icon: Icons.discount_rounded,
+          label: 'Descuentos',
+          valueWidget: Text(
+            '-${CurrencyFormatter.formatPrice(value: totalDiscount)}',
+            style: (isMobile
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.red,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Construir el ExpandablePremiumListTile con Balance y Ganancia en header
+    return ExpandablePremiumListTile(
+      iconColor: theme.colorScheme.primary,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
+              Icon(
+                Icons.point_of_sale_rounded,
+                size: isMobile ? 16 : 18,
+                color: theme.colorScheme.primary.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 6),
               Text(
                 'Balance Total',
                 style: (isMobile
-                        ? theme.textTheme.titleSmall
-                        : theme.textTheme.titleMedium)
+                        ? theme.textTheme.bodyMedium
+                        : theme.textTheme.bodyLarge)
                     ?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
-                  fontSize: isMobile ? 18 : 24,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
-              const Spacer(),
-              SizedBox(height: 4),
+            ],
+          ),
+          Row(
+            children: [
+              Icon(
+                Icons.trending_up_rounded,
+                size: isMobile ? 16 : 18,
+                color: Colors.green.shade700.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 6),
               Text(
-                CurrencyFormatter.formatPrice(value: balance),
+                'Ganancias',
                 style: (isMobile
-                        ? theme.textTheme.headlineSmall
-                        : theme.textTheme.headlineMedium)
+                        ? theme.textTheme.bodyMedium
+                        : theme.textTheme.bodyLarge)
                     ?.copyWith(
-                  fontSize: isMobile ? 22 : 28,
-                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      // Mostrar Balance y Ganancia en el header
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                CurrencyFormatter.formatPrice(value: expectedBalance),
+                style: (isMobile
+                        ? theme.textTheme.titleMedium
+                        : theme.textTheme.titleLarge)
+                    ?.copyWith(
+                  fontWeight: FontWeight.w800,
                   color: theme.colorScheme.primary,
                 ),
               ),
+              Text(
+                CurrencyFormatter.formatPrice(value: totalProfit),
+                style: (isMobile
+                        ? theme.textTheme.titleMedium
+                        : theme.textTheme.titleLarge)
+                    ?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.green.shade700,
+                ),
+              ),
             ],
           ),
-        );
-      },
-    );
-  }
-}
-
-/// Widget separado para la información financiera
-/// ✅ OPTIMIZADO: Solo se reconstruye cuando cambian los datos financieros o tickets
-class _FinancialInfoSection extends StatelessWidget {
-  final CashRegister cashRegister;
-  final bool isMobile;
-  final List<TicketModel>? tickets;
-
-  const _FinancialInfoSection({
-    required this.cashRegister,
-    required this.isMobile,
-    this.tickets,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Selector<
-        CashRegisterProvider,
-        ({
-          double ingresos,
-          double egresos,
-          double discount,
-          double billing,
-          double initialCash,
-        })>(
-      selector: (_, provider) {
-        final cr = provider.currentActiveCashRegister ?? cashRegister;
-        return (
-          ingresos: cr.getTotalIngresos,
-          egresos: cr.getTotalEgresos,
-          discount: cr.discount,
-          billing: cr.billing,
-          initialCash: cr.initialCash,
-        );
-      },
-      builder: (context, financialData, child) {
-        // ✅ Calcular ganancias totales usando el método del modelo
-        final currentCashRegister =
-            context.read<CashRegisterProvider>().currentActiveCashRegister ??
-                cashRegister;
-        final totalProfit = tickets != null && tickets!.isNotEmpty
-            ? currentCashRegister.calculateTotalProfit(tickets!)
-            : 0.0;
-
-        // ✅ Calcular descuentos totales desde los tickets (más preciso que el valor guardado)
-        final totalDiscount = tickets != null && tickets!.isNotEmpty
-            ? currentCashRegister.calculateTotalDiscount(tickets!)
-            : financialData.discount;
-
-        final financialItems = [
-          // Facturación total - RESALTADA
-          {
-            'label': 'Facturación de ventas',
-            'value':
-                CurrencyFormatter.formatPrice(value: financialData.billing),
-            'rawValue': financialData.billing,
-            'icon': Icons.receipt_long_rounded,
-            'color': theme.colorScheme.primary,
-            'highlight': true,
-          },
-          // 5. Ganancias totales - RESALTADA
-          if (totalProfit > 0)
-            {
-              'label': 'Ganancias totales',
-              'value': CurrencyFormatter.formatPrice(value: totalProfit),
-              'rawValue': totalProfit,
-              'icon': Icons.trending_up_rounded,
-              'color': Colors.green.shade700,
-              'highlight': true,
-            },
-          // Monto inicial
-          if (financialData.initialCash > 0)
-            {
-              'label': 'Monto Inicial',
-              'value': CurrencyFormatter.formatPrice(
-                  value: financialData.initialCash),
-              'rawValue': financialData.initialCash,
-              'icon': Icons.attach_money_rounded,
-              'color': theme.colorScheme.primary,
-              'highlight': false,
-            },
-          // Ingresos en caja
-          if (financialData.ingresos > 0)
-            {
-              'label': 'Ingresos en caja',
-              'value':
-                  CurrencyFormatter.formatPrice(value: financialData.ingresos),
-              'rawValue': financialData.ingresos,
-              'icon': Icons.call_received_rounded,
-              'color': Colors.green,
-              'highlight': false,
-            },
-          // Egresos en caja
-          if (financialData.egresos > 0)
-            {
-              'label': 'Egresos en caja',
-              'value':
-                  '-${CurrencyFormatter.formatPrice(value: financialData.egresos)}',
-              'rawValue': -financialData.egresos,
-              'icon': Icons.arrow_outward_rounded,
-              'color': Colors.red,
-              'highlight': false,
-            },
-          // Descuentos - usar cálculo desde tickets
-          if (totalDiscount > 0)
-            {
-              'label': 'Descuentos',
-              'value':
-                  '-${CurrencyFormatter.formatPrice(value: totalDiscount)}',
-              'rawValue': -totalDiscount,
-              'icon': Icons.discount_rounded,
-              'color': Colors.red,
-              'highlight': false,
-            },
-        ];
-
-        return Container(
-          padding: EdgeInsets.all(isMobile ? 12 : 14),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.5),
-              width: 0.5,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Lista de items financieros
-              ...financialItems.map((item) {
-                final isHighlight = item['highlight'] as bool;
-                final itemColor = item['color'] as Color;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Container(
-                    padding: isHighlight
-                        ? EdgeInsets.symmetric(
-                            horizontal: isMobile ? 8 : 10,
-                            vertical: isMobile ? 6 : 8,
-                          )
-                        : EdgeInsets.zero,
-                    decoration: isHighlight
-                        ? BoxDecoration(
-                            color: itemColor.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          )
-                        : null,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(isMobile ? 6 : 8),
-                          decoration: BoxDecoration(
-                            color: itemColor.withValues(
-                                alpha: isHighlight ? 0.15 : 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            item['icon'] as IconData,
-                            size: isMobile ? 16 : 18,
-                            color: itemColor,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            item['label'] as String,
-                            style: (isMobile
-                                    ? theme.textTheme.bodyMedium
-                                    : theme.textTheme.bodyLarge)
-                                ?.copyWith(
-                              color: isHighlight
-                                  ? theme.colorScheme.onSurface
-                                  : theme.colorScheme.onSurfaceVariant,
-                              fontWeight: isHighlight
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        // text : monto
-                        Text(
-                          item['value'] as String,
-                          style: (isMobile
-                                  ? theme.textTheme.titleSmall
-                                  : theme.textTheme.titleMedium)
-                              ?.copyWith(
-                            fontWeight:
-                                isHighlight ? FontWeight.w800 : FontWeight.w700,
-                            color: itemColor,
-                            fontSize: isHighlight ? (isMobile ? 15 : 17) : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
+      expandedInfo: expandedInfo,
+      isMobile: isMobile,
+      initiallyExpanded: false,
     );
   }
 }
@@ -1814,134 +1814,136 @@ class _CashFlowMovementsList extends StatelessWidget {
         switchInCurve: Curves.easeInOut,
         switchOutCurve: Curves.easeInOut,
         child: Container(
-          key: ValueKey(
-              'movements_${allMovements.length}_${totalIngresos}_$totalEgresos'),
+          key: ValueKey('movements_${allMovements.length}_${totalIngresos}_$totalEgresos'),
           child: DialogComponents.itemList(
             context: context,
             useFillStyle: true,
             showDividers: true,
             borderColor: theme.dividerColor.withValues(alpha: 0.3),
-            title: 'Movimientos de caja',
-            trailing: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Total de ingresos
-                if (totalIngresos > 0) ...[
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(
-                          alpha: _CashRegisterDialogConstants.opacityMedium),
-                      borderRadius: BorderRadius.circular(
-                          _CashRegisterDialogConstants.borderRadiusMedium),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.arrow_downward_rounded,
-                          size: isMobile
-                              ? _CashRegisterDialogConstants.iconSizeSmall - 2
-                              : _CashRegisterDialogConstants.iconSizeSmall,
-                          color: Colors.green.shade700,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          CurrencyFormatter.formatPrice(value: totalIngresos),
-                          style: (isMobile
-                                  ? theme.textTheme.bodySmall
-                                  : theme.textTheme.bodyMedium)
-                              ?.copyWith(
-                            fontWeight: FontWeight.bold,
+            title: 'Movimientos',
+            trailing: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Total de ingresos
+                  if (totalIngresos > 0) ...[
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(
+                            alpha: _CashRegisterDialogConstants.opacityMedium),
+                        borderRadius: BorderRadius.circular(
+                            _CashRegisterDialogConstants.borderRadiusMedium),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.arrow_downward_rounded,
+                            size: isMobile
+                                ? _CashRegisterDialogConstants.iconSizeSmall - 2
+                                : _CashRegisterDialogConstants.iconSizeSmall,
                             color: Colors.green.shade700,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            CurrencyFormatter.formatPrice(value: totalIngresos),
+                            style: (isMobile
+                                    ? theme.textTheme.bodySmall
+                                    : theme.textTheme.bodyMedium)
+                                ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                // Total de egresos
-                if (totalEgresos > 0) ...[
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(
-                          alpha: _CashRegisterDialogConstants.opacityMedium),
-                      borderRadius: BorderRadius.circular(
-                          _CashRegisterDialogConstants.borderRadiusMedium),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.arrow_outward_rounded,
-                          size: isMobile
-                              ? _CashRegisterDialogConstants.iconSizeSmall - 2
-                              : _CashRegisterDialogConstants.iconSizeSmall,
-                          color: Colors.red.shade700,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          CurrencyFormatter.formatPrice(value: totalEgresos),
-                          style: (isMobile
-                                  ? theme.textTheme.bodySmall
-                                  : theme.textTheme.bodyMedium)
-                              ?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(width: 4),
+                  ],
+                  // Total de egresos
+                  if (totalEgresos > 0) ...[
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(
+                            alpha: _CashRegisterDialogConstants.opacityMedium),
+                        borderRadius: BorderRadius.circular(
+                            _CashRegisterDialogConstants.borderRadiusMedium),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.arrow_outward_rounded,
+                            size: isMobile
+                                ? _CashRegisterDialogConstants.iconSizeSmall - 2
+                                : _CashRegisterDialogConstants.iconSizeSmall,
                             color: Colors.red.shade700,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            CurrencyFormatter.formatPrice(value: totalEgresos),
+                            style: (isMobile
+                                    ? theme.textTheme.bodySmall
+                                    : theme.textTheme.bodyMedium)
+                                ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                // Balance neto
-                if (totalIngresos > 0 || totalEgresos > 0) ...[
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: balanceNeto >= 0
-                          ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                          : Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          balanceNeto >= 0
-                              ? Icons.trending_up_rounded
-                              : Icons.trending_down_rounded,
-                          size: isMobile ? 12 : 14,
-                          color: balanceNeto >= 0
-                              ? theme.colorScheme.primary
-                              : Colors.orange.shade700,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          CurrencyFormatter.formatPrice(
-                              value: balanceNeto.abs()),
-                          style: (isMobile
-                                  ? theme.textTheme.bodySmall
-                                  : theme.textTheme.bodyMedium)
-                              ?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(width: 4),
+                  ],
+                  // Balance neto
+                  if (totalIngresos > 0 || totalEgresos > 0) ...[
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: balanceNeto >= 0
+                            ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                            : Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            balanceNeto >= 0
+                                ? Icons.trending_up_rounded
+                                : Icons.trending_down_rounded,
+                            size: isMobile ? 12 : 14,
                             color: balanceNeto >= 0
                                 ? theme.colorScheme.primary
                                 : Colors.orange.shade700,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            CurrencyFormatter.formatPrice(
+                                value: balanceNeto.abs()),
+                            style: (isMobile
+                                    ? theme.textTheme.bodySmall
+                                    : theme.textTheme.bodyMedium)
+                                ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: balanceNeto >= 0
+                                  ? theme.colorScheme.primary
+                                  : Colors.orange.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
             maxVisibleItems: _CashRegisterDialogConstants.maxVisibleMovements,
             expandText:
@@ -2130,64 +2132,67 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
                 useFillStyle: true,
                 padding: EdgeInsets.all(widget.isMobile ? 12 : 14),
                 showDividers: true,
-                title: 'Transacciones recientes',
+                title: 'Transacciones',
                 borderColor: theme.dividerColor.withValues(alpha: 0.3),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Total de facturación
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Total ${CurrencyFormatter.formatPrice(value: totalBilling)}',
-                        style: (widget.isMobile
-                                ? theme.textTheme.bodySmall
-                                : theme.textTheme.bodyMedium)
-                            ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    // Ganancia total (si existe)
-                    if (totalProfit > 0) ...[
-                      const SizedBox(width: 4),
+                trailing: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Total de facturación
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.trending_up_rounded,
-                              size: widget.isMobile ? 12 : 14,
-                              color: Colors.green.shade700,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              CurrencyFormatter.formatPrice(value: totalProfit),
-                              style: (widget.isMobile
-                                      ? theme.textTheme.bodySmall
-                                      : theme.textTheme.bodyMedium)
-                                  ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.green.shade700,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          'Total ${CurrencyFormatter.formatPrice(value: totalBilling)}',
+                          style: (widget.isMobile
+                                  ? theme.textTheme.bodySmall
+                                  : theme.textTheme.bodyMedium)
+                              ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                       ),
+                      // Ganancia total (si existe)
+                      if (totalProfit > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.trending_up_rounded,
+                                size: widget.isMobile ? 12 : 14,
+                                color: Colors.green.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                CurrencyFormatter.formatPrice(value: totalProfit),
+                                style: (widget.isMobile
+                                        ? theme.textTheme.bodySmall
+                                        : theme.textTheme.bodyMedium)
+                                    ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.green.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
                 maxVisibleItems: 5,
                 expandText: '',
@@ -2712,329 +2717,121 @@ class _RecentTicketsViewState extends State<RecentTicketsView> {
   }
 }
 
-/// Widget expandible para el encabezado de caja registradora
-/// Muestra el nombre de la caja y tiempo activo con opción de expandir para ver detalles
-class _CashRegisterExpandableHeader extends StatefulWidget {
-  final CashRegister cashRegister;
-  final ThemeData theme;
-  final bool isMobile;
-  final List<Map<String, dynamic>> timeInfo;
 
-  const _CashRegisterExpandableHeader({
-    required this.cashRegister,
-    required this.theme,
+/// Skeleton loader para _FinancialSummarySection
+/// ✅ UX: Muestra un placeholder animado mientras se cargan las métricas
+class _FinancialSummarySkeleton extends StatefulWidget {
+  final bool isMobile;
+
+  const _FinancialSummarySkeleton({
     required this.isMobile,
-    required this.timeInfo,
   });
 
   @override
-  State<_CashRegisterExpandableHeader> createState() =>
-      _CashRegisterExpandableHeaderState();
+  State<_FinancialSummarySkeleton> createState() => _FinancialSummarySkeletonState();
 }
 
-class _CashRegisterExpandableHeaderState
-    extends State<_CashRegisterExpandableHeader>
+class _FinancialSummarySkeletonState extends State<_FinancialSummarySkeleton>
     with SingleTickerProviderStateMixin {
-  bool _isExpanded = false;
-  late AnimationController _animationController;
-  late Animation<double> _iconRotation;
-  late Animation<double> _expandAnimation;
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    // ✅ OPTIMIZADO: Usar constante para duración
-    _animationController = AnimationController(
-      duration: _CashRegisterDialogConstants.animationDuration,
+    _controller = AnimationController(
       vsync: this,
-    );
-
-    // ✅ OPTIMIZADO: Usar Tween const cuando sea posible
-    _iconRotation = Tween<double>(begin: 0.0, end: 0.5).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _expandAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.3, end: 0.7).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
 
   @override
   void dispose() {
-    // ✅ IMPORTANTE: Disponer del controller para evitar memory leaks
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
-  }
-
-  void _toggleExpanded() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Calcular tiempo activo para mostrar en el encabezado
-    final activeTime =
-        DateFormatter.getElapsedTime(fechaInicio: widget.cashRegister.opening);
+    final theme = Theme.of(context);
+    final isMobile = widget.isMobile;
 
-    return AnimatedContainer(
-      duration: _CashRegisterDialogConstants.animationDuration,
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: widget.theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(
-            _CashRegisterDialogConstants.borderRadiusXLarge),
-        border: Border.all(
-          color: _isExpanded
-              ? widget.theme.colorScheme.primary.withValues(alpha: 0.3)
-              : widget.theme.dividerColor.withValues(alpha: 0.5),
-          width: _isExpanded ? 1.5 : 0.5,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Encabezado clickeable
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _toggleExpanded,
-              borderRadius: BorderRadius.circular(
-                  _CashRegisterDialogConstants.borderRadiusXLarge),
-              child: Padding(
-                padding: EdgeInsets.all(widget.isMobile ? 12 : 14),
-                child: Row(
-                  children: [
-                    // Icono de caja con animación
-                    AnimatedContainer(
-                      duration: _CashRegisterDialogConstants.animationDuration,
-                      padding: EdgeInsets.all(widget.isMobile ? 8 : 10),
-                      decoration: BoxDecoration(
-                        color: _isExpanded
-                            ? widget.theme.colorScheme.primary.withValues(
-                                alpha:
-                                    _CashRegisterDialogConstants.opacityHeavy)
-                            : widget.theme.colorScheme.primary.withValues(
-                                alpha:
-                                    _CashRegisterDialogConstants.opacityMedium),
-                        borderRadius: BorderRadius.circular(
-                            _CashRegisterDialogConstants.borderRadiusLarge),
-                      ),
-                      child: Icon(
-                        Icons.point_of_sale_rounded,
-                        size: widget.isMobile
-                            ? 20
-                            : _CashRegisterDialogConstants.iconSizeXLarge,
-                        color: widget.theme.colorScheme.primary,
-                      ),
-                    ),
-                    SizedBox(width: widget.isMobile ? 12 : 14),
-
-                    // Información principal (nombre y tiempo activo)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Nombre de la caja
-                          Text(
-                            widget.cashRegister.description,
-                            style: (widget.isMobile
-                                    ? widget.theme.textTheme.titleMedium
-                                    : widget.theme.textTheme.titleLarge)
-                                ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: widget.theme.colorScheme.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: widget.isMobile ? 4 : 6),
-
-                          // Tiempo activo con icono
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.timelapse_rounded,
-                                size: widget.isMobile ? 14 : 16,
-                                color: widget.theme.colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.7),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                activeTime,
-                                style: (widget.isMobile
-                                        ? widget.theme.textTheme.bodySmall
-                                        : widget.theme.textTheme.bodyMedium)
-                                    ?.copyWith(
-                                  color:
-                                      widget.theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Badge de estado ACTIVA
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: widget.isMobile ? 8 : 10,
-                        vertical: widget.isMobile ? 4 : 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: widget.isMobile ? 6 : 8,
-                            height: widget.isMobile ? 6 : 8,
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade700,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'ACTIVA',
-                            style: (widget.isMobile
-                                    ? widget.theme.textTheme.labelSmall
-                                    : widget.theme.textTheme.labelMedium)
-                                ?.copyWith(
-                              color: Colors.green.shade700,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Icono de expansión animado
-                    RotationTransition(
-                      turns: _iconRotation,
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: widget.isMobile ? 24 : 28,
-                        color: widget.theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.1),
             ),
           ),
-
-          // Contenido expandible con información detallada
-          SizeTransition(
-            sizeFactor: _expandAnimation,
-            axisAlignment: -1.0,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(
-                widget.isMobile ? 12 : 14,
-                0,
-                widget.isMobile ? 12 : 14,
-                widget.isMobile ? 12 : 14,
-              ),
-              child: Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con títulos
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Divisor sutil
-                  Container(
-                    height: 1,
-                    margin: EdgeInsets.only(
-                      bottom: widget.isMobile ? 12 : 14,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          widget.theme.dividerColor.withValues(alpha: 0.3),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
+                  _buildShimmerBox(
+                    width: isMobile ? 100 : 120,
+                    height: isMobile ? 16 : 18,
+                    opacity: _animation.value,
                   ),
-
-                  // Lista de información detallada
-                  ...widget.timeInfo.map((info) => _buildInfoRow(
-                        icon: info['icon'] as IconData,
-                        label: info['label'] as String,
-                        value: info['value'] as String,
-                      )),
+                  _buildShimmerBox(
+                    width: isMobile ? 80 : 100,
+                    height: isMobile ? 16 : 18,
+                    opacity: _animation.value,
+                  ),
                 ],
               ),
-            ),
+              const SizedBox(height: 12),
+              // Valores principales
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildShimmerBox(
+                    width: isMobile ? 90 : 110,
+                    height: isMobile ? 24 : 28,
+                    opacity: _animation.value,
+                  ),
+                  _buildShimmerBox(
+                    width: isMobile ? 90 : 110,
+                    height: isMobile ? 24 : 28,
+                    opacity: _animation.value,
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String label,
-    required String value,
+  Widget _buildShimmerBox({
+    required double width,
+    required double height,
+    required double opacity,
   }) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: widget.isMobile ? 10 : 12),
-      child: Row(
-        children: [
-          // Icono con fondo
-          Container(
-            padding: EdgeInsets.all(widget.isMobile ? 6 : 8),
-            decoration: BoxDecoration(
-              color: widget.theme.colorScheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              icon,
-              size: widget.isMobile ? 16 : 18,
-              color: widget.theme.colorScheme.primary.withValues(alpha: 0.8),
-            ),
-          ),
-          SizedBox(width: widget.isMobile ? 10 : 12),
-
-          // Label
-          Expanded(
-            child: Text(
-              label,
-              style: (widget.isMobile
-                      ? widget.theme.textTheme.bodySmall
-                      : widget.theme.textTheme.bodyMedium)
-                  ?.copyWith(
-                color: widget.theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-
-          // Valor
-          Text(
-            value,
-            style: (widget.isMobile
-                    ? widget.theme.textTheme.bodySmall
-                    : widget.theme.textTheme.bodyMedium)
-                ?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: widget.theme.colorScheme.onSurface,
-            ),
-          ),
-        ],
+    final theme = Theme.of(context);
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.onSurface.withValues(alpha: opacity * 0.15),
+        borderRadius: BorderRadius.circular(6),
       ),
     );
   }
 }
+
+/// Widget expandible para el encabezado de caja registradora
+/// Muestra el nombre de la caja y tiempo activo con opción de expandir para ver detalles
+// ✅ ELIMINADO: _CashRegisterExpandableHeader - Ahora se usa ExpandablePremiumListTile del core
+// Este widget ha sido reemplazado por el componente reutilizable premium_list_tile.dart

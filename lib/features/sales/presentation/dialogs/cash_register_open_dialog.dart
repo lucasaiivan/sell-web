@@ -92,10 +92,11 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [ 
-          // Fecha actual
+          // view : fecha actual
           Opacity(opacity: 0.5, child: _buildDateHeader(context)),
-          const SizedBox(height: 16), 
-          DialogComponents.buildIconTitleLabel(icon: Icons.edit_outlined, label: 'Nombre'),
+          const SizedBox(height: 20), 
+          // view : description
+          DialogComponents.buildIconTitleLabel(icon: Icons.edit_outlined, label: 'Descripción'),
           InputTextField(
             maxLength: 20,
             controller: cashRegisterProvider.openDescriptionController, 
@@ -104,10 +105,10 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
           ), 
           // checkbox : Recordar descripción como frecuente
           _buildRememberCheckbox(context), 
-          const SizedBox(height: 16),
-          DialogComponents.buildIconTitleLabel(icon: Icons.history, label: 'Nombres Frecuentes'),
+          const SizedBox(height: 12),
+          DialogComponents.buildIconTitleLabel(icon: Icons.history, label: 'Frecuentes'),
           _buildFrequentNamesSection(context, cashRegisterProvider),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           DialogComponents.buildIconTitleLabel(icon: Icons.monetization_on_outlined, label: 'Monto Inicial de la caja'),
           MoneyInputTextField(
             controller: cashRegisterProvider.initialCashController,  
@@ -373,22 +374,42 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   Widget _buildRememberCheckbox(BuildContext context) {
     final theme = Theme.of(context);
     
-    return CheckboxListTile(
-      value: _rememberDescription,
-      onChanged: (value) {
+    return InkWell(
+      onTap: () {
         setState(() {
-          _rememberDescription = value ?? false;
+          _rememberDescription = !_rememberDescription;
         });
       },
-      title: Text(
-        'Recordar descripción',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurface,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: _rememberDescription,
+                onChanged: (value) {
+                  setState(() {
+                    _rememberDescription = value ?? false;
+                  });
+                },
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Recordar como frecuente',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
         ),
       ),
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      dense: true,
     );
   }
 

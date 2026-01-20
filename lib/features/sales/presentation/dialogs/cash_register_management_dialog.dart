@@ -764,16 +764,22 @@ class _CashRegisterManagementDialogState
     final cashRegisterProvider = Provider.of<CashRegisterProvider>(context, listen: false);
     final sellProvider = Provider.of<SalesProvider>(context, listen: false);
 
-    showDialog(
-      context: context,
-      builder: (_) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
-          ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
-        ],
-        child: const CashRegisterOpenDialog(),
-      ),
-    );
+    // ✅ Cerrar el diálogo actual antes de abrir el nuevo
+    Navigator.of(context).pop();
+
+    // ✅ Usar addPostFrameCallback para asegurar que el pop se complete antes del showDialog
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        builder: (_) => MultiProvider(
+          providers: [
+            ChangeNotifierProvider<CashRegisterProvider>.value(value: cashRegisterProvider),
+            ChangeNotifierProvider<SalesProvider>.value(value: sellProvider),
+          ],
+          child: const CashRegisterOpenDialog(),
+        ),
+      );
+    });
   }
 
   void _showCloseDialog(BuildContext context, CashRegister cashRegister) {

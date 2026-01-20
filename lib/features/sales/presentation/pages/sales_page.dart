@@ -1599,15 +1599,20 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
       builder: (context, provider, child) {
         final bool isActive = provider.hasActiveCashRegister;
         final int salesCount = provider.currentActiveCashRegister?.sales ?? 0;
+        final String cashRegisterDescription = 
+            provider.currentActiveCashRegister?.description ?? '';
 
         // button : boton con el estado de la caja registradora
         return Stack(
           clipBehavior: Clip.none,
           children: [
+            // boton de caja registradora
             AppBarButtonCircle(
               isLoading: _isInitializing,
               icon: Icons.point_of_sale_outlined,
-              tooltip: isActive ? 'Caja abierta' : 'Abrir caja',
+              tooltip: isActive 
+                  ? 'Caja: $cashRegisterDescription' 
+                  : 'Abrir caja',
               onPressed: () {
                 // Si no hay caja activa, abrir directamente el administrador de caja
                 if (!isActive) {
@@ -1622,7 +1627,7 @@ class _CashRegisterStatusWidgetState extends State<CashRegisterStatusWidget> {
               colorAccent: isActive ? Colors.green.shade700 : null,
               text: isMobile(context)
                   ? null
-                  : (isActive ? 'Caja abierta' : 'Abrir caja'),
+                  : (isActive ? cashRegisterDescription : 'Abrir caja'),
             ),
             // contador : burbuja circular roja con contador de ventas
             if (isActive && salesCount > 0)

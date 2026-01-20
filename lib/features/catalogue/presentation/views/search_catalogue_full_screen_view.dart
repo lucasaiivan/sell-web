@@ -121,9 +121,15 @@ class _ProductCatalogueFullScreenViewState
         }
       }
 
-      // Aplicar filtro de favoritos si está activo
+      // Aplicar ordenamiento por favoritos si está activo
+      // En lugar de filtrar, prioriza los favoritos mostrándolos primero
       if (_showOnlyFavorites) {
-        _filteredProducts = _filteredProducts.where((p) => p.favorite).toList();
+        _filteredProducts = [
+          // Primero todos los productos favoritos
+          ..._filteredProducts.where((p) => p.favorite),
+          // Luego todos los productos no favoritos
+          ..._filteredProducts.where((p) => !p.favorite),
+        ];
       }
     });
   }
@@ -831,7 +837,8 @@ class _ProductCatalogueFullScreenViewState
   }
 
   /// Construye los chips de sugerencias con las marcas disponibles en el catálogo
-  /// Calcula dinámicamente cuántos chips caben en la primera línea según el ancho de pantalla
+  /// Calcula dinámicamente cuántos chips caben en una sola fila según el ancho de pantalla
+  /// GARANTIZA que todos los chips se muestren en una sola fila con scroll horizontal
   Widget _buildSuggestionChips() {
     // Obtener marcas únicas de los productos
     final Set<String> uniqueBrands = widget.products
@@ -852,136 +859,178 @@ class _ProductCatalogueFullScreenViewState
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
 
-        // Calcular cuántos chips caben en la primera línea
+        // Configuración de espaciado
         final chipSpacing = 8.0;
-        final horizontalPadding = 32.0; // 16px de cada lado
-        final availableWidth = constraints.maxWidth - horizontalPadding;
+        final availableWidth = constraints.maxWidth;
 
-        // Estimar ancho promedio de un chip (incluye padding, texto y bordes)
-        final estimatedChipWidth = _estimateChipWidth(theme);
-        final maxChipsPerLine = ((availableWidth + chipSpacing) /
-                (estimatedChipWidth + chipSpacing))
-            .floor();
+        // Calcular anchos de chips especiales
+        final favoriteChipWidth = _hasFavoriteProducts() 
+            ? _calculateChipWidth('Priorizar favoritos', hasIcon: true, theme: theme) + chipSpacing
+            : 0.0;
+        
+        // Ancho del chip "Ver más" (siempre debe estar visible)
+        final seeMoreChipWidth = _calculateChipWidth(
+          'Ver más (+${sortedBrands.length})', 
+          hasIcon: true, 
+          theme: theme
+        ) + chipSpacing;
 
-        // Asegurar al menos 2 chips y máximo la cantidad que cabe
-        final int totalBrands = sortedBrands.length;
-        final int minVisible = totalBrands < 2 ? totalBrands : 2;
-        final maxVisibleBrands =
-            (maxChipsPerLine - 1).clamp(minVisible, totalBrands);
+        // Espacio disponible para chips de marcas
+        double remainingWidth = availableWidth - favoriteChipWidth - seeMoreChipWidth;
 
-        // Lista de marcas que se mostrarán
-        final List<String> visibleBrands =
-            sortedBrands.take(maxVisibleBrands).toList();
-        final bool hasMoreBrands = sortedBrands.length > maxVisibleBrands;
+        // Calcular cuántas marcas caben en el espacio disponible
+        List<String> visibleBrands = [];
+        double accumulatedWidth = 0.0;
 
-        return Wrap(
-          spacing: chipSpacing,
-          runSpacing: 6,
-          children: [
-            // Chip de Favoritos (solo si hay favoritos) - Primera posición
-            if (_hasFavoriteProducts())
-              FilterChip(
-                label: Text(
-                  'Mostrar favoritos',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+        for (final brand in sortedBrands) {
+          final brandChipWidth = _calculateChipWidth(brand, hasIcon: false, theme: theme) + chipSpacing;
+          
+          if (accumulatedWidth + brandChipWidth <= remainingWidth) {
+            visibleBrands.add(brand);
+            accumulatedWidth += brandChipWidth;
+          } else {
+            break; // No caben más chips
+          }
+        }
+
+        final bool hasMoreBrands = sortedBrands.length > visibleBrands.length;
+
+        // Usar ListView horizontal para garantizar una sola fila con scroll
+        return SizedBox(
+          height: 32, // Altura fija para los chips
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            children: [
+              // Chip de Favoritos (solo si hay favoritos) - Primera posición
+              if (_hasFavoriteProducts()) ...[
+                FilterChip(
+                  label: Text(
+                    'Priorizar favoritos',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _showOnlyFavorites 
+                          ? Colors.amber.shade900 
+                          : colorScheme.onSurface,
+                    ),
+                  ),
+                  selected: _showOnlyFavorites,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _showOnlyFavorites = selected;
+                      _onSearchChanged(); // Reaplica el filtrado
+                    });
+                  },
+                  // Colores cuando NO está seleccionado: neutros
+                  backgroundColor: colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                  // Colores cuando SÍ está seleccionado: tonos naranjas
+                  selectedColor: Colors.amber.withValues(alpha: 0.3),
+                  // Ocultar el checkmark para evitar superposición con el ícono de estrella
+                  showCheckmark: false,
+                  side: BorderSide(
+                    color: _showOnlyFavorites
+                        ? Colors.amber.withValues(alpha: 0.6)
+                        : colorScheme.outline.withValues(alpha: 0.2),
+                    width: _showOnlyFavorites ? 1.5 : 0.5,
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  avatar: Icon(
+                    Icons.star,
+                    color: _showOnlyFavorites 
+                        ? Colors.amber.shade700 
+                        : Colors.amber.shade600,
+                    size: 16,
                   ),
                 ),
-                selected: _showOnlyFavorites,
-                onSelected: (bool selected) {
-                  setState(() {
-                    _showOnlyFavorites = selected;
-                    _onSearchChanged(); // Reaplica el filtrado
-                  });
-                },
-                backgroundColor: Colors.amber.withValues(alpha: 0.2),
-                selectedColor: Colors.amber.withValues(alpha: 0.4),
-                checkmarkColor: Colors.amber.shade800,
-                side: BorderSide(
-                  color: _showOnlyFavorites
-                      ? Colors.amber.withValues(alpha: 0.6)
-                      : Colors.amber.withValues(alpha: 0.3),
-                  width: _showOnlyFavorites ? 1.5 : 1,
-                ),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                avatar: Icon(
-                  Icons.star,
-                  color: Colors.amber.shade700,
-                  size: 16,
-                ),
-              ),
+                SizedBox(width: chipSpacing),
+              ],
 
-            // Chips de marcas visibles (llenan la primera línea)
-            ...visibleBrands.map((brand) {
-              return ActionChip(
-                label: Text(
-                  brand,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
+              // Chips de marcas visibles
+              ...visibleBrands.map((brand) {
+                return Padding(
+                  padding: EdgeInsets.only(right: chipSpacing),
+                  child: ActionChip(
+                    label: Text(
+                      brand,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onPressed: () {
+                      // Agregar la marca al campo de búsqueda
+                      _searchController.text = brand;
+                      _onSearchChanged();
+                      // Mantener el foco en el campo de búsqueda
+                      _searchFocusNode.requestFocus();
+                    },
+                    backgroundColor:
+                        colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                    side: BorderSide(
+                      color: colorScheme.outline.withValues(alpha: 0.2),
+                      width: 0.5,
+                    ),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                );
+              }),
+
+              // Chip "Ver más" si hay más marcas (SIEMPRE VISIBLE al final)
+              if (hasMoreBrands)
+                ActionChip(
+                  label: Text(
+                    'Ver más (+${sortedBrands.length - visibleBrands.length})',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onPressed: () => _showAllBrandsDialog(sortedBrands),
+                  backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                  side: BorderSide(
+                    color: colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  avatar: Icon(
+                    Icons.expand_more,
+                    size: 16,
+                    color: colorScheme.primary,
                   ),
                 ),
-                onPressed: () {
-                  // Agregar la marca al campo de búsqueda
-                  _searchController.text = brand;
-                  _onSearchChanged();
-                  // Mantener el foco en el campo de búsqueda
-                  _searchFocusNode.requestFocus();
-                },
-                backgroundColor:
-                    colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                side: BorderSide(
-                  color: colorScheme.outline.withValues(alpha: 0.2),
-                  width: 0.5,
-                ),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              );
-            }),
-
-            // Chip "Ver más" si hay más marcas (se ajusta al espacio restante)
-            if (hasMoreBrands)
-              ActionChip(
-                label: Text(
-                  'Ver más (+${sortedBrands.length - maxVisibleBrands})',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                onPressed: () => _showAllBrandsDialog(sortedBrands),
-                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-                side: BorderSide(
-                  color: colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                avatar: Icon(
-                  Icons.expand_more,
-                  size: 16,
-                  color: colorScheme.primary,
-                ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 
-  /// Estima el ancho promedio de un chip basado en el texto y estilo
-  double _estimateChipWidth(ThemeData theme) {
-    // Ancho base del chip (padding interno, bordes, etc.)
-    const double chipPadding = 24.0; // 12px de cada lado
-    const double iconSpace = 20.0; // Espacio para el ícono cuando aplique
+  /// Calcula el ancho exacto de un chip basado en su contenido
+  /// Considera el texto, padding, bordes e íconos
+  double _calculateChipWidth(String text, {required bool hasIcon, required ThemeData theme}) {
+    // Padding horizontal del chip (12px cada lado según Material Design)
+    const double chipHorizontalPadding = 24.0;
+    
+    // Espacio del ícono si existe (16px ícono + 8px gap)
+    final double iconSpace = hasIcon ? 24.0 : 0.0;
+    
+    // Calcular ancho del texto usando TextPainter
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
 
-    // Ancho promedio basado en caracteres comunes de marcas
-    // La mayoría de marcas tienen entre 4-8 caracteres
-    const double averageCharWidth = 8.0;
-    const double averageTextLength = 6.0; // caracteres promedio
-    const double estimatedTextWidth = averageCharWidth * averageTextLength;
-
-    return chipPadding + estimatedTextWidth + iconSpace;
+    return chipHorizontalPadding + iconSpace + textPainter.width;
   }
+
+
 
   /// Muestra un diálogo con todas las marcas disponibles y permite filtrar por ellas
   void _showAllBrandsDialog(List<String> allBrands) {

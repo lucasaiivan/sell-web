@@ -81,6 +81,7 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   @override
   Widget build(BuildContext context) {
     final cashRegisterProvider = context.watch<CashRegisterProvider>();
+    final authProvider = context.watch<AuthProvider>();
 
     return BaseDialog(
       title: 'Apertura de Caja',
@@ -94,6 +95,9 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         children: [ 
           // view : fecha actual
           Opacity(opacity: 0.5, child: _buildDateHeader(context)),
+          const SizedBox(height: 20),
+          // view : cajero (email del usuario admin)
+          _buildCashierField(context, authProvider),
           const SizedBox(height: 20), 
           // view : description
           DialogComponents.buildIconTitleLabel(icon: Icons.edit_outlined, label: 'Descripción'),
@@ -104,16 +108,15 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
             errorText: (cashRegisterProvider.errorMessage != null) ? cashRegisterProvider.errorMessage : null,
           ), 
           // checkbox : Recordar descripción como frecuente
-          _buildRememberCheckbox(context), 
-          const SizedBox(height: 12),
-          DialogComponents.buildIconTitleLabel(icon: Icons.history, label: 'Frecuentes'),
+          _buildRememberCheckbox(context, cashRegisterProvider), 
+          const SizedBox(height: 12), 
           _buildFrequentNamesSection(context, cashRegisterProvider),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           DialogComponents.buildIconTitleLabel(icon: Icons.monetization_on_outlined, label: 'Monto Inicial de la caja'),
           MoneyInputTextField(
             controller: cashRegisterProvider.initialCashController,  
             hintText: '0.0', 
-            helperText: 'Efectivo disponible al iniciar el turno',
+            helperText: 'Dinero en efectivo disponible al iniciar',
             errorText: _montoError,
           ), 
           DialogComponents.sectionSpacing,
@@ -159,6 +162,27 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
         color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w400,
       ),
+    );
+  }
+
+  /// Construye el campo de cajero (email del usuario admin) - solo lectura
+  Widget _buildCashierField(BuildContext context, AuthProvider authProvider) {
+    final userEmail = authProvider.user?.email ?? 'Sin email';
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DialogComponents.buildIconTitleLabel(
+          icon: Icons.person_outline_rounded, 
+          label: 'Cajero'
+        ),
+        InputTextField(
+          controller: TextEditingController(text: userEmail),
+          enabled: false,
+          hintText: 'Email del cajero',  
+          fillColor: Colors.green.withValues(alpha: 0.05),
+        ),
+      ],
     );
   }
 
@@ -371,45 +395,70 @@ class _CashRegisterOpenDialogState extends State<CashRegisterOpenDialog> {
   }
 
   /// Construye el checkbox para recordar la descripción
-  Widget _buildRememberCheckbox(BuildContext context) {
+  Widget _buildRememberCheckbox(BuildContext context, CashRegisterProvider cashRegisterProvider) {
     final theme = Theme.of(context);
     
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _rememberDescription = !_rememberDescription;
-        });
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: cashRegisterProvider.openDescriptionController,
+      builder: (context, value, child) {
+        final description = value.text.trim();
+        
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _rememberDescription = !_rememberDescription;
+            });
+          },
+          borderRadius: BorderRadius.circular(4),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _rememberDescription,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberDescription = value ?? false;
+                      });
+                    },
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: description.isEmpty
+                      ? Text(
+                          'Recordar como frecuente',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        )
+                      : RichText(
+                          text: TextSpan(
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            children: [
+                              const TextSpan(text: 'Recordar '),
+                              TextSpan(
+                                text: '\'$description\'',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              const TextSpan(text: ' como frecuente'),
+                            ],
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
       },
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: Checkbox(
-                value: _rememberDescription,
-                onChanged: (value) {
-                  setState(() {
-                    _rememberDescription = value ?? false;
-                  });
-                },
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Recordar como frecuente',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

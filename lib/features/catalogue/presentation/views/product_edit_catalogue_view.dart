@@ -1951,11 +1951,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de precio de venta con validación
   Widget _buildSalePriceField() {
+    // Texto condicional según si hay IVA aplicado
+    final helperText = _selectedIva > 0
+        ? 'Este es el precio que cobrarás en POS (con IVA incluido)'
+        : 'Este es el precio que cobrarás en POS';
+    
     return MoneyInputTextField(
       controller: _salePriceController,
       labelText: 'Precio Final',
       hintText: '0.00',
-      helperText: 'Este es el precio que cobrarás en POS (con IVA incluido)',
+      helperText: helperText,
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'El precio de venta es requerido';

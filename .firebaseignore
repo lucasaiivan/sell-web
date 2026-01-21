@@ -1,0 +1,3 @@
+# Allow all files
+! .git
+! .gitignore

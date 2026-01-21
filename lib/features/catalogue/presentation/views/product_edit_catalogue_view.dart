@@ -11,12 +11,18 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart' as cat
 import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/brand_search_dialog.dart';
+import '../widgets/margin_calculator_card.dart';
 import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
+import 'package:sellweb/core/constants/ui_constants.dart';
 import 'package:sellweb/core/constants/unit_constants.dart';
 import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
+import 'package:sellweb/core/presentation/widgets/inputs/input_text_field.dart';
+import 'package:sellweb/core/presentation/widgets/inputs/money_input_text_field.dart';
+import 'package:sellweb/core/presentation/widgets/buttons/app_button.dart';
+import 'package:sellweb/core/utils/formatters/money_input_formatter.dart';
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -68,8 +74,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   // Controllers
   late final TextEditingController _descriptionController;
-  late final TextEditingController _salePriceController;
-  late final TextEditingController _purchasePriceController;
+  late final AppMoneyTextEditingController _salePriceController;
+  late final AppMoneyTextEditingController _purchasePriceController;
 
   double _quantityStock = 0;
   double _alertStock = 0;
@@ -112,13 +118,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   void _initializeControllers() {
     final product = widget.product;
     _descriptionController = TextEditingController(text: product.description);
-    _salePriceController = TextEditingController(
-      text: product.salePrice > 0
+    _salePriceController = AppMoneyTextEditingController(
+      value: product.salePrice > 0
           ? CurrencyFormatter.formatPrice(value: product.salePrice, moneda: '')
           : '',
     );
-    _purchasePriceController = TextEditingController(
-      text: product.purchasePrice > 0
+    _purchasePriceController = AppMoneyTextEditingController(
+      value: product.purchasePrice > 0
           ? CurrencyFormatter.formatPrice(
               value: product.purchasePrice, moneda: '')
           : '',
@@ -328,8 +334,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       description: widget.product.isVerified
           ? widget.product.description
           : _descriptionController.text.trim(),
-      salePrice: _parsePriceFromController(_salePriceController),
-      purchasePrice: _parsePriceFromController(_purchasePriceController),
+      salePrice: _salePriceController.doubleValue,
+      purchasePrice: _purchasePriceController.doubleValue,
       quantityStock: stockValue,
       alertStock: _alertStock,
       category: _selectedCategoryId ?? '',
@@ -359,17 +365,11 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return updated;
   }
 
-  /// Parsea el precio desde un controller limpiando formato
-  double _parsePriceFromController(TextEditingController controller) {
-    final cleanValue = controller.text.replaceAll('.', '').replaceAll(',', '.');
-    return double.tryParse(cleanValue) ?? 0.0;
-  }
 
-  /// Verifica si los precios de compra o venta han cambiado
+
   bool _havePricesChanged() {
-    final newSalePrice = _parsePriceFromController(_salePriceController);
-    final newPurchasePrice =
-        _parsePriceFromController(_purchasePriceController);
+    final newSalePrice = _salePriceController.doubleValue;
+    final newPurchasePrice = _purchasePriceController.doubleValue;
     return newSalePrice != widget.product.salePrice ||
         newPurchasePrice != widget.product.purchasePrice;
   }
@@ -1041,42 +1041,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (_variants.isEmpty) ...[
           const SizedBox(height: 16),
           if (!isVerified)
-            InkWell(
-              onTap: _showAddVariantDialog,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add,
-                      size: 18,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Agregar variante',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.primary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            AppButton.outlined(
+              text: 'Agregar variante',
+              onPressed: _showAddVariantDialog,
+              icon: const Icon(Icons.add, size: 18),
+              borderRadius: UIConstants.defaultRadius,
+              fontSize: 12,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             )
           else
             Container(
@@ -1434,43 +1405,19 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                       const SizedBox(height: 8),
 
                       // Botón agregar variante
-                      InkWell(
-                        onTap: () {
+                      AppButton.outlined(
+                        text: 'Agregar variante',
+                        onPressed: () {
                           setDialogState(() {
                             variantControllers.add(TextEditingController());
                           });
                         },
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: colorScheme.primary.withOpacity(0.4),
-                              style: BorderStyle.solid,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add,
-                                size: 18,
-                                color: colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Agregar variante',
-                                style: TextStyle(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+                        icon: const Icon(Icons.add, size: 18),
+                        borderRadius: UIConstants.defaultRadius,
+                        fontSize: 14,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
                         ),
                       ),
                     ],
@@ -1752,67 +1699,66 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           children: [
             // Campo de código de barras (solo lectura)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                color: isValidCode
+                    ? Colors.green.withOpacity(0.05)
+                    : Colors.orange.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.2),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   width: 1.0,
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(
+                   Icon(
                     isValidCode ? Icons.public : Icons.store,
                     color: isValidCode ? Colors.green : Colors.orange.shade700,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
+                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Text(
+                             Text(
                               'Código de barras',
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
-                            ),
-                            const SizedBox(width: 8),
+                             ),
+                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isValidCode
-                                    ? Colors.green.withOpacity(0.15)
-                                    : Colors.orange.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                displayLabel,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: isValidCode
-                                      ? Colors.green.shade700
-                                      : Colors.orange.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: isValidCode
+                      ? Colors.green.withOpacity(0.15)
+                      : Colors.orange.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  displayLabel,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: isValidCode
+                        ? Colors.green.shade700
+                        : Colors.orange.shade700,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.product.code.isNotEmpty
-                              ? widget.product.code
-                              : 'Sin código',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'monospace',
-                              fontSize: 18),
+                          code,
+                           style: theme.textTheme.bodyLarge,
                         ),
                       ],
                     ),
@@ -1857,31 +1803,25 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 ),
               ),
             ] else ...[
-              // Campo de descripción (editable)
-              TextFormField(
-                controller: _descriptionController,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  labelText: 'Descripción del producto *',
-                  hintText: 'Ej: Coca Cola 2L',
-                  prefixIcon: const Opacity(
-                    opacity: _iconOpacity,
-                    child: Icon(Icons.description_outlined),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                minLines: 1,
-                maxLines: null,
-                maxLength: 100,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'La descripción es requerida';
-                  }
-                  return null;
-                },
+              // Campo de descripción
+            FormInputTextField(
+              controller: _descriptionController,
+              labelText: 'Nombre del producto',
+              hintText: 'Ej: Coca Cola 1.5L',
+              textInputAction: TextInputAction.next,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'El nombre es requerido';
+                }
+                return null;
+              },
+              maxLength: 60,
+              borderRadius: UIConstants.defaultRadius,
+              prefixIcon: const Opacity(
+                opacity: _iconOpacity,
+                child: Icon(Icons.edit_outlined),
               ),
+            ),
             ],
             if (widget.product.isVerified || !_isCombo)
               const SizedBox(height: 12),
@@ -1978,9 +1918,32 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (!_isCombo) ...[
           const SizedBox(height: 16),
           _buildPurchasePriceField(),
-          if (_salePriceController.text.isNotEmpty &&
-              _purchasePriceController.text.isNotEmpty)
-            _buildProfitPreview(),
+
+
+          
+          // Margin Calculator (se muestra solo si hay un costo válido)
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _purchasePriceController.doubleValue > 0
+                ? Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      MarginCalculatorCard(
+                        costPrice: _purchasePriceController.doubleValue,
+                        salePrice: _salePriceController.doubleValue,
+                        ivaPercentage: _selectedIva,
+                        onApplyPrice: (newPrice) {
+                          setState(() {
+                            _salePriceController.updateValue(newPrice);
+                          });
+                        },
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ],
     );
@@ -1988,59 +1951,36 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   /// Campo de precio de venta con validación
   Widget _buildSalePriceField() {
-    return TextFormField(
+    return MoneyInputTextField(
       controller: _salePriceController,
-      decoration: InputDecoration(
-        labelText: 'Precio Final',
-        hintText: '0.00',
-        suffixText: 'ARS',
-        prefixIcon: const Opacity(
-          opacity: _iconOpacity,
-          child: Icon(Icons.public_sharp),
-        ),
-        prefixText: '\$ ',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        helperText: 'Este es el precio que cobrarás en POS (con IVA incluido)',
-      ),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [AppMoneyInputFormatter(symbol: '')],
+      labelText: 'Precio Final',
+      hintText: '0.00',
+      helperText: 'Este es el precio que cobrarás en POS (con IVA incluido)',
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'El precio de venta es requerido';
         }
-        final price = _parsePriceFromController(_salePriceController);
+        final price = _salePriceController.doubleValue;
         if (price <= 0) return 'Ingrese un precio válido mayor a 0';
         return null;
       },
+      borderRadius: UIConstants.defaultRadius,
     );
   }
 
   /// Campo de precio de coste
   Widget _buildPurchasePriceField() {
-    return TextFormField(
+    return MoneyInputTextField(
       controller: _purchasePriceController,
-      decoration: InputDecoration(
-        labelText: 'Costo',
-        hintText: '0.00',
-        prefixIcon: const Opacity(
-          opacity: _iconOpacity,
-          child: Icon(Icons.inventory_2_outlined),
-        ),
-        prefixText: '\$ ',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [AppMoneyInputFormatter(symbol: '')],
+      labelText: 'Costo',
+      hintText: '0.00',
+      borderRadius: UIConstants.defaultRadius,
     );
   }
 
   /// Campo de selección de IVA con dropdown
   Widget _buildIvaField() {
-    final theme = Theme.of(context);
+
     
     String getIvaLabel(int iva) {
       if (iva == 0) return 'Exento';
@@ -2052,23 +1992,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       onTap: () => _showIvaSelectionDialog(),
       borderRadius: BorderRadius.circular(12),
       child: IgnorePointer(
-        child: TextFormField(
+        child: InputTextField(
           controller: TextEditingController(text: getIvaLabel(_selectedIva)),
           readOnly: true,
-          decoration: InputDecoration(
-            labelText: 'Impuesto aplicable',
-            hintText: 'Seleccionar IVA',
-            prefixIcon: const Opacity(
-              opacity: _iconOpacity,
-              child: Icon(Icons.percent_outlined),
-            ),
-            suffixIcon: const Icon(Icons.arrow_drop_down),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ), 
-            helperMaxLines: 2,
-          ),
-          style: theme.textTheme.bodyLarge,
+          labelText: 'Impuesto aplicable',
+          hintText: 'Seleccionar IVA',
+          borderRadius: UIConstants.defaultRadius, 
+          suffixIcon: const Icon(Icons.arrow_drop_down),
         ),
       ),
     );
@@ -2181,55 +2111,31 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Widget _buildUnitFieldAsLabel() {
     final isVerified = widget.product.isVerified;
     final colorScheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
+  
 
     if (isVerified) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colorScheme.outline.withOpacity(0.2),
-            width: 1.0,
-          ),
+      return InputTextField(
+        controller: TextEditingController(
+          text: _getUnitDisplayName(_unitController.text),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Vender por',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _getUnitDisplayName(_unitController.text),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
+        readOnly: true,
+        labelText: 'Vender por',
+        helperText: 'Unidad verificada por el sistema',
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: UIConstants.defaultRadius,
       );
     }
 
     return InkWell(
       onTap: () => _showUnitSelectionDialog(),
       child: IgnorePointer(
-        child: TextFormField(
+        child: InputTextField(
           controller: TextEditingController(
             text: _getUnitDisplayName(_unitController.text),
           ),
-          decoration: InputDecoration(
-            labelText: 'Vender por',
-            suffixIcon: const Icon(Icons.arrow_drop_down),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
+          labelText: 'Vender por',
+          suffixIcon: const Icon(Icons.arrow_drop_down),
+          borderRadius: UIConstants.defaultRadius,
         ),
       ),
     );
@@ -2324,7 +2230,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+             borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
             border: Border.all(
               color: colorScheme.primary.withOpacity(0.3),
               width: 1.5,
@@ -2509,20 +2415,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             }
           },
           child: IgnorePointer(
-            child: TextFormField(
+            child: InputTextField(
               controller: _categoryController,
-              decoration: InputDecoration(
-                labelText: 'Categoría',
-                hintText: 'Seleccionar categoría',
-                prefixIcon: const Opacity(
-                  opacity: _iconOpacity,
-                  child: Icon(Icons.category_outlined),
-                ),
-                suffixIcon: const Icon(Icons.arrow_drop_down),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              labelText: 'Categoría',
+            hintText: 'Seleccionar categoría',
+            borderRadius: UIConstants.defaultRadius,
+            prefixIcon: const Opacity(
+                opacity: _iconOpacity,
+                child: Icon(Icons.category_outlined),
               ),
+              suffixIcon: const Icon(Icons.arrow_drop_down),
             ),
           ),
         );
@@ -2587,20 +2489,16 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             }
           },
           child: IgnorePointer(
-            child: TextFormField(
+            child: InputTextField(
               controller: _providerController,
-              decoration: InputDecoration(
-                labelText: 'Proveedor',
-                hintText: 'Seleccionar proveedor',
-                prefixIcon: const Opacity(
-                  opacity: _iconOpacity,
-                  child: Icon(Icons.local_shipping_outlined),
-                ),
-                suffixIcon: const Icon(Icons.arrow_drop_down),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              labelText: 'Proveedor',
+            hintText: 'Seleccionar proveedor',
+            borderRadius: UIConstants.defaultRadius,
+            prefixIcon: const Opacity(
+                opacity: _iconOpacity,
+                child: Icon(Icons.local_shipping_outlined),
               ),
+              suffixIcon: const Icon(Icons.arrow_drop_down),
             ),
           ),
         );
@@ -2641,48 +2539,36 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             }
           : () => _showBrandSearchDialog(),
       child: IgnorePointer(
-        child: TextFormField(
+        child: InputTextField(
           controller: _markController,
-          decoration: InputDecoration(
-            labelText: 'Buscar marca',
-            prefixIcon:
-                _selectedBrandImage != null && _selectedBrandImage!.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: NetworkImage(_selectedBrandImage!),
-                              fit: BoxFit.cover,
-                            ),
+          labelText: 'Buscar marca',
+          borderRadius: UIConstants.defaultRadius,
+          prefixIcon:
+              _selectedBrandImage != null && _selectedBrandImage!.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            image: NetworkImage(_selectedBrandImage!),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                      )
-                    : Icon(
-                        isVerified
-                            ? Icons.verified
-                            : Icons.branding_watermark_outlined,
-                        color: isVerified ? Colors.blue : null,
                       ),
-            suffixIcon: Icon(
-              isVerified ? Icons.lock : Icons.search,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            enabledBorder: isVerified
-                ? OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.blue.withValues(alpha: 0.3),
-                      width: 1.5,
+                    )
+                  : Icon(
+                      isVerified
+                          ? Icons.verified
+                          : Icons.branding_watermark_outlined,
+                      color: isVerified ? Colors.blue : null,
                     ),
-                  )
-                : null,
+          suffixIcon: Icon(
+            isVerified ? Icons.lock : Icons.search,
           ),
+          enabled: !isVerified, // InputTextField handles enabled/disabled style
         ),
       ),
     );
@@ -2778,99 +2664,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Calcula el beneficio y porcentaje de ganancia
-  ({double profit, double percentage, bool isProfitable})? _calculateProfit() {
-    final salePrice = _parsePriceFromController(_salePriceController);
-    final purchasePrice = _parsePriceFromController(_purchasePriceController);
 
-    if (salePrice <= 0 || purchasePrice <= 0) return null;
-
-    final profit = salePrice - purchasePrice;
-    final percentage = (profit / purchasePrice) * 100;
-
-    return (
-      profit: profit,
-      percentage: percentage,
-      isProfitable: profit > 0,
-    );
-  }
-
-  /// Preview del beneficio calculado con indicadores visuales
-  Widget _buildProfitPreview() {
-    final calculation = _calculateProfit();
-    if (calculation == null) return const SizedBox.shrink();
-
-    final profit = calculation.profit;
-    final percentage = calculation.percentage;
-    final isProfitable = calculation.isProfitable;
-
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isProfitable
-            ? Colors.green.withValues(alpha: 0.08)
-            : Colors.red.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isProfitable
-              ? Colors.green.withValues(alpha: 0.3)
-              : Colors.red.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isProfitable ? Icons.trending_up : Icons.trending_down,
-            color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isProfitable ? 'Beneficio estimado' : 'Pérdida estimada',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isProfitable
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  CurrencyFormatter.formatPrice(value: profit.abs()),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: isProfitable
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isProfitable ? Colors.green : Colors.red,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '${isProfitable ? '+' : ''}${percentage.toStringAsFixed(1)}%',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   // ═══════════════════════════════════════════════════════════════════════════
   // LÓGICA DE COMBOS
   // ═══════════════════════════════════════════════════════════════════════════

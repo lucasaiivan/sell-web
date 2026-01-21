@@ -250,11 +250,7 @@ class FormInputTextField extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         // Configuración de bordes y colores usando los mismos estilos que InputTextField
         filled: true,
-        fillColor: fillColor ??
-            Theme.of(context)
-                .colorScheme
-                .secondaryContainer
-                .withValues(alpha: 0.3),
+        fillColor: fillColor ?? Colors.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(

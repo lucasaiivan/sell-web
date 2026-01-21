@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sellweb/core/constants/ui_constants.dart';
 import 'package:sellweb/core/utils/helpers/unit_helper.dart';
 
 /// Widget reutilizable para seleccionar cantidad de productos
@@ -219,7 +220,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
         color: isEnabled
             ? theme.colorScheme.primary.withValues(alpha: 0.12)
             : theme.colorScheme.outline.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
       ),
       child: IconButton(
         onPressed: onPressed,
@@ -258,7 +259,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Quitar padding vertical para que centre bien
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
         border: Border.all(
           color: _isEditing
               ? theme.colorScheme.primary
@@ -342,7 +343,7 @@ class _QuantitySelectorState extends State<QuantitySelector> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

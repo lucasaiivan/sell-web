@@ -78,6 +78,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   late final TextEditingController _markController;
   late final TextEditingController _unitController;
 
+  // IVA state
+  int _selectedIva = 0;
+  final List<int> _commonIvaOptions = [21, 27, 10, 0];
+
   // Selected IDs
   String? _selectedCategoryId;
   String? _selectedProviderId;
@@ -151,6 +155,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     if (_comboExpiration != null) {
       _expirationController.text = '${_comboExpiration!.day}/${_comboExpiration!.month}/${_comboExpiration!.year}'; 
     }
+    
+    // Inicializar IVA
+    _selectedIva = widget.product.iva;
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
@@ -344,6 +351,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       stock: _stockEnabled,
       favorite: _favoriteEnabled,
       variants: _variants,
+      iva: _selectedIva,
       comboItems: _isCombo ? _comboItems : [],
       comboExpiration: _isCombo ? _comboExpiration : null,
       status: widget.product.status, // Mantener status original
@@ -1965,6 +1973,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           const SizedBox(height: 16),
         ],
         _buildSalePriceField(),
+        const SizedBox(height: 16),
+        _buildIvaField(),
         if (!_isCombo) ...[
           const SizedBox(height: 16),
           _buildPurchasePriceField(),
@@ -1981,8 +1991,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return TextFormField(
       controller: _salePriceController,
       decoration: InputDecoration(
-        labelText: 'Precio de venta',
+        labelText: 'Precio Final',
         hintText: '0.00',
+        suffixText: 'ARS',
         prefixIcon: const Opacity(
           opacity: _iconOpacity,
           child: Icon(Icons.public_sharp),
@@ -1991,6 +2002,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        helperText: 'Este es el precio que cobrarás en POS (con IVA incluido)',
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [AppMoneyInputFormatter(symbol: '')],
@@ -2010,7 +2022,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     return TextFormField(
       controller: _purchasePriceController,
       decoration: InputDecoration(
-        labelText: 'Precio de coste',
+        labelText: 'Costo',
         hintText: '0.00',
         prefixIcon: const Opacity(
           opacity: _iconOpacity,
@@ -2023,6 +2035,145 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [AppMoneyInputFormatter(symbol: '')],
+    );
+  }
+
+  /// Campo de selección de IVA con dropdown
+  Widget _buildIvaField() {
+    final theme = Theme.of(context);
+    
+    String getIvaLabel(int iva) {
+      if (iva == 0) return 'Exento';
+      if (iva == 10) return 'IVA 10.5%';
+      return 'IVA $iva%';
+    }
+
+    return InkWell(
+      onTap: () => _showIvaSelectionDialog(),
+      borderRadius: BorderRadius.circular(12),
+      child: IgnorePointer(
+        child: TextFormField(
+          controller: TextEditingController(text: getIvaLabel(_selectedIva)),
+          readOnly: true,
+          decoration: InputDecoration(
+            labelText: 'Impuesto aplicable',
+            hintText: 'Seleccionar IVA',
+            prefixIcon: const Opacity(
+              opacity: _iconOpacity,
+              child: Icon(Icons.percent_outlined),
+            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ), 
+            helperMaxLines: 2,
+          ),
+          style: theme.textTheme.bodyLarge,
+        ),
+      ),
+    );
+  }
+
+  /// Muestra diálogo de selección de IVA
+  void _showIvaSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Seleccionar IVA'),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Opciones predefinidas
+              ..._commonIvaOptions.map((iva) {
+                final label = iva == 0 ? 'Exento' : iva == 10 ? 'IVA 10.5%' : 'IVA $iva%';
+                final realValue = iva == 10 ? 10.5 : iva.toDouble();
+                
+                return RadioListTile<double>(
+                  title: Text(label),
+                  value: realValue,
+                  groupValue: _selectedIva.toDouble(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedIva = value?.toInt() ?? 0;
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+              const Divider(),
+              // Opción para agregar porcentaje manual
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Agregar porcentaje manual...'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showCustomIvaDialog();
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Muestra diálogo para ingresar IVA personalizado
+  void _showCustomIvaDialog() {
+    final controller = TextEditingController(
+      text: _selectedIva > 0 && !_commonIvaOptions.contains(_selectedIva) 
+          ? _selectedIva.toString() 
+          : '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Porcentaje de IVA'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Porcentaje',
+            hintText: '0 - 100',
+            suffixText: '%',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = int.tryParse(controller.text);
+              if (value != null && value >= 0 && value <= 100) {
+                setState(() {
+                  _selectedIva = value;
+                });
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Ingrese un porcentaje válido entre 0 y 100'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
     );
   }
 

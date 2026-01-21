@@ -44,6 +44,7 @@ class ProductCatalogue {
   final double purchasePrice; // Precio de coste
   final String unit; // Unidad de venta (unidad, kilogramo, litro, metro)
   final String currencySign;
+  final int iva; // Porcentaje de IVA (0 = sin IVA o exento)
 
   // Variables en tiempo de ejecución
   final double quantity; // Cantidad en el ticket (soporta fraccionarios: 0.025 = 25g, 2.5 = 2.5kg)
@@ -84,6 +85,7 @@ class ProductCatalogue {
     this.purchasePrice = 0.0,
     this.unit = UnitConstants.unit,
     this.currencySign = "\$",
+    this.iva = 0,
     this.idMark = '',
     this.nameMark = '',
     this.imageMark = '',
@@ -125,6 +127,7 @@ class ProductCatalogue {
     double? purchasePrice,
     String? unit,
     String? currencySign,
+    int? iva,
     String? idMark,
     String? nameMark,
     String? imageMark,
@@ -164,6 +167,7 @@ class ProductCatalogue {
       purchasePrice: purchasePrice ?? this.purchasePrice,
       unit: unit ?? this.unit,
       currencySign: currencySign ?? this.currencySign,
+      iva: iva ?? this.iva,
       idMark: idMark ?? this.idMark,
       nameMark: nameMark ?? this.nameMark,
       imageMark: imageMark ?? this.imageMark,
@@ -403,6 +407,7 @@ class ProductCatalogue {
       "alertStock": alertStock,
       "revenue": revenue,
       "unit": unit,
+      "iva": iva,
       'comboItems': comboItems.map((e) => e.toMap()).toList(),
       'comboExpiration':  comboExpiration?.millisecondsSinceEpoch,
     };
@@ -487,6 +492,7 @@ class ProductCatalogue {
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
       unit: UnitConstants.normalizeId(data['unit'] ?? UnitConstants.unit),
+      iva: data['iva'] ?? 0,
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])
           : data.containsKey('attributes') && data['attributes'] != null

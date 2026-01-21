@@ -44,6 +44,7 @@ class ProductCatalogueModel extends ProductCatalogue {
     super.quantity,
     super.variants,
     super.status,
+    super.iva,
   });
 
   /// Crea una instancia desde un Map con soporte para nombres legacy
@@ -135,12 +136,12 @@ class ProductCatalogueModel extends ProductCatalogue {
           : data.containsKey('attributes') && data['attributes'] != null
               ? Map<String, dynamic>.from(data['attributes'])
               : {},
-      // Migración: Lee 'status' si existe, sino convierte desde 'verified'
       status: data.containsKey('status')
           ? data['status']
           : (data.containsKey('verified') && data['verified'] == true)
               ? 'verified'
               : 'pending',
+      iva: data['iva'] ?? 0,
     );
   }
 
@@ -206,6 +207,7 @@ class ProductCatalogueModel extends ProductCatalogue {
         "revenue": revenue,
         "variants": variants,
         "status": status,
+        "iva": iva,
       };
 
   /// Convierte a entidad de dominio pura
@@ -246,6 +248,7 @@ class ProductCatalogueModel extends ProductCatalogue {
       quantity: quantity,
       variants: variants,
       status: status,
+      iva: iva,
     );
   }
 

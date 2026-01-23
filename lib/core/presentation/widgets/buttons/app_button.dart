@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellweb/core/constants/ui_constants.dart';
 
 /// Enumeración para definir tipos de botones unificados
 enum AppButtonType {
@@ -68,7 +69,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.loadingColor,
     this.loadingSize = 20,
-    this.borderRadius = 20,
+    this.borderRadius = UIConstants.defaultRadius,
     this.customBorderRadius,
     this.extended = false,
     this.heroTag,
@@ -84,7 +85,7 @@ class AppButton extends StatelessWidget {
     Color? textColor,
     Color? accentColor,
     Color? iconColor,
-    double borderRadius = 16,
+    double borderRadius = UIConstants.defaultRadius,
     Widget? icon,
   }) {
     return AppButton(
@@ -154,7 +155,7 @@ class AppButton extends StatelessWidget {
     double? fontSize,
     EdgeInsets? padding,
     bool isLoading = false,
-    double borderRadius = 20,
+    double borderRadius = UIConstants.defaultRadius,
   }) {
     return AppButton(
       key: key,
@@ -188,7 +189,7 @@ class AppButton extends StatelessWidget {
     double? fontSize,
     EdgeInsets? padding,
     bool isLoading = false,
-    double borderRadius = 20,
+    double borderRadius = UIConstants.defaultRadius,
   }) {
     return AppButton(
       key: key,

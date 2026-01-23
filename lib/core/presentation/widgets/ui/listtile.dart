@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// {@template premium_list_tile}
-/// Widget reutilizable de ListTile con diseño premium y moderno.
+/// Widget reutilizable de ListTile con diseño moderno.
 ///
 /// Características:
 /// - Icono principal con fondo coloreado y animación
@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 /// - Animación al hacer tap
 /// - Bordes y sombras sutiles
 /// {@endtemplate}
-class PremiumListTile extends StatelessWidget {
+class ListTileApp extends StatelessWidget {
   /// Icono principal que se muestra a la izquierda (opcional)
   final IconData? icon;
 
@@ -51,7 +51,7 @@ class PremiumListTile extends StatelessWidget {
   final EdgeInsets? padding;
 
   /// {@macro premium_list_tile}
-  const PremiumListTile({
+  const ListTileApp({
     super.key,
     this.icon,
     this.iconColor,
@@ -64,7 +64,7 @@ class PremiumListTile extends StatelessWidget {
     this.backgroundColor,
     this.borderColor,
     this.borderRadius,
-    this.padding,
+    this.padding, required Column child,
   });
 
   @override
@@ -77,8 +77,7 @@ class PremiumListTile extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
-        color: backgroundColor ??
-            theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
+        color:   backgroundColor ?? theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(effectiveBorderRadius),
         border: Border.all(
           color: borderColor ??
@@ -148,9 +147,7 @@ class PremiumListTile extends StatelessWidget {
         if (title is String)
           Text(
             title,
-            style: (isMobile
-                    ? theme.textTheme.titleMedium
-                    : theme.textTheme.titleLarge)
+            style: (theme.textTheme.titleMedium)
                 ?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
@@ -249,7 +246,7 @@ class PremiumListTileBadge {
 /// Widget reutilizable de ListTile expandible con diseño premium y animaciones.
 ///
 /// Características:
-/// - Todo lo del [PremiumListTile] básico
+/// - Todo lo del [ListTileApp] básico
 /// - Expansión/colapso animado con ícono rotatorio
 /// - Contenido expandible personalizable
 /// - Animaciones suaves de borde y color

@@ -168,9 +168,7 @@ class _AppNavigatorState extends State<_AppNavigator> {
         final accountId = sellProvider.profileAccountSelected.id;
 
         // Crear o reutilizar AccountScopeProvider
-        if (_accountScope == null) {
-          _accountScope = getIt<AccountScopeProvider>();
-        }
+        _accountScope ??= getIt<AccountScopeProvider>();
 
         // Detectar cambio de cuenta
         final isAccountChanged =

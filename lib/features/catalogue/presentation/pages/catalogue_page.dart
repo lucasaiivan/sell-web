@@ -420,7 +420,7 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  /// Construye la vista en lista vertical
+  /// Construye la vista en lista vertical de productos
   Widget _buildListView(List<ProductCatalogue> products) {
     return ListView.separated(
       padding: const EdgeInsets.all(0),

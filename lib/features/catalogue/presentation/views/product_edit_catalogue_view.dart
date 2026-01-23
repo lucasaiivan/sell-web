@@ -15,14 +15,8 @@ import '../widgets/margin_calculator_card.dart';
 import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
-import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
-import 'package:sellweb/core/constants/ui_constants.dart';
-import 'package:sellweb/core/constants/unit_constants.dart';
-import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
-import 'package:sellweb/core/presentation/widgets/inputs/input_text_field.dart';
-import 'package:sellweb/core/presentation/widgets/inputs/money_input_text_field.dart';
-import 'package:sellweb/core/presentation/widgets/buttons/app_button.dart';
-import 'package:sellweb/core/utils/formatters/money_input_formatter.dart';
+import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart'; 
+import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart'; 
 
 /// Formulario de edición de producto con validación y estado local
 ///
@@ -96,6 +90,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   // Variants
   Map<String, dynamic> _variants = {};
+  
+  // Calculator reset key (incrementa cuando el usuario edita el precio final manualmente)
+  int _calculatorResetKey = 0;
 
   // Combo state
   bool _isCombo = false;
@@ -172,7 +169,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   /// cuando el widget ya ha sido eliminado del árbol de widgets.
   void _setupListeners() {
     _salePriceController.addListener(() {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {
+          // Incrementar el contador para resetear la calculadora
+          // cada vez que el usuario edita el precio final principal
+          _calculatorResetKey++;
+        });
+      }
     });
     _purchasePriceController.addListener(() {
       if (mounted) setState(() {});
@@ -999,7 +1002,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   const SizedBox(height: 24),
                 ],
                 
-                // Precios (siempre visible)
+                // Precios y costos (siempre visible)
                 _buildPricingSection(),
                 const SizedBox(height: 24),
                 
@@ -1009,7 +1012,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   const SizedBox(height: 24),
                 ],
                 
-                // Control de Stock / Límite de Ventas (siempre visible)
+                // Inventario y control de stock (siempre visible)
                 _buildInventorySection(colorScheme),
                 const SizedBox(height: 24),
                 
@@ -1041,15 +1044,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (_variants.isEmpty) ...[
           const SizedBox(height: 16),
           if (!isVerified)
+          // Botón para agregar variantes si el producto no está verificado
             AppButton.outlined(
               text: 'Agregar variante',
               onPressed: _showAddVariantDialog,
-              icon: const Icon(Icons.add, size: 18),
-              borderRadius: UIConstants.defaultRadius,
-              fontSize: 12,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              icon: const Icon(Icons.add),
+              borderRadius: UIConstants.defaultRadius,  
             )
           else
+          // Mensaje cuando no hay variantes y el producto no está verificado
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
@@ -1086,96 +1089,138 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               ),
             ),
         ] else ...[
+          // mostrar si el producto está verificado y tiene variantes
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          
+          // Lista de variantes con layout responsivo
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ..._variants.entries.map((entry) {
                 final value = entry.value;
                 final String displayValue =
                     value is List ? value.join(', ') : value?.toString() ?? '';
 
-                return InkWell(
-                  onTap: !isVerified
-                      ? () => _showAddVariantDialog(
-                            editKey: entry.key,
-                            editValue: entry.value,
-                          )
-                      : null,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.3),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          entry.key,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primary,
-                            fontSize: 12,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: !isVerified
+                          ? () => _showAddVariantDialog(
+                                editKey: entry.key,
+                                editValue: entry.value,
+                              )
+                          : null,
+                      borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.3),
                           ),
                         ),
-                        if (displayValue.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            displayValue,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colorScheme.onSurfaceVariant,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
+                        child: Row(
+                          children: [
+                            // Nombre de la variante (Sin ícono previo)
+                            Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                        ],
-                      ],
+                            
+                            // Mostrar opciones solo si hay datos
+                            if (displayValue.isNotEmpty) ...[
+                              const SizedBox(width: 12),
+                              // Separador
+                              Text(
+                                '-',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              
+                              // Opciones de la variante
+                              Expanded(
+                                child: Text(
+                                  displayValue,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ] else 
+                              const Spacer(),
+                            
+                            // Icono de edición (solo si no está verificado)
+                            if (!isVerified) ...[
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 18,
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 );
               }),
+              
+              // Botón para agregar nueva variante (Estilo simplificado)
               if (!isVerified)
-                InkWell(
-                  onTap: _showAddVariantDialog,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.25),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: InkWell(
+                    onTap: _showAddVariantDialog,
+                    borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
                       ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add,
-                          size: 16,
-                          color: colorScheme.primary,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+                        border: Border.all(
+                          color: colorScheme.outline.withValues(alpha: 0.5),
+                          style: BorderStyle.solid,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Agregar',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: colorScheme.primary,
-                            fontSize: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add, 
+                            size: 18, 
+                            color: colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Text(
+                            'Agregar variante',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1221,8 +1266,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     final keyController = TextEditingController(text: editKey);
     final formKey = GlobalKey<FormState>();
 
-    // Lista de variantes con controladores editables
+    // Lista de variantes con controladores editables y FocusNodes
     final List<TextEditingController> variantControllers = [];
+    final List<FocusNode> variantFocusNodes = [];
 
     // Inicializar controladores con valores existentes
     if (editValue is List) {
@@ -1230,10 +1276,12 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         if (variant.toString().isNotEmpty) {
           variantControllers
               .add(TextEditingController(text: variant.toString()));
+          variantFocusNodes.add(FocusNode());
         }
       }
     } else if (editValue != null && editValue.toString().isNotEmpty) {
       variantControllers.add(TextEditingController(text: editValue.toString()));
+      variantFocusNodes.add(FocusNode());
     }
 
     // Para nuevos atributos, las variantes son opcionales, no agregar campo inicial
@@ -1265,7 +1313,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child:
-                        Text(isEditing ? 'Editar variante' : 'Nueva variante'),
+                        Text(isEditing ? 'Editar' : 'Nueva variante'),
                   ),
                   if (isEditing)
                     IconButton(
@@ -1289,94 +1337,140 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Campo: Nombre del atributo
-                      TextFormField(
+                      InputTextField(
                         controller: keyController,
-                        enabled: !isEditing,
-                        autofocus: !isEditing,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          labelText: 'Nombre de la variante',
-                          hintText: 'ej. Color, Talle, Peso',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        enabled: true,
+                        autofocus: !isEditing, 
+                        hintText: 'ej. Color, Talle, Rojo, ..',
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Ingrese el nombre de la variante';
+                            return 'El nombre es obligatorio';
                           }
-                          if (!isEditing &&
-                              _variants.containsKey(value.trim())) {
-                            return 'Esta variante ya existe';
+                          final newKey = value.trim();
+                          // Validar si la variante ya existe (excluyendo la actual si estamos editando)
+                          if (_variants.containsKey(newKey)) {
+                            if (!isEditing || (isEditing && newKey != editKey)) {
+                              return 'Esta variante ya existe';
+                            }
                           }
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Lista de variantes editables
-                      Row(
-                        children: [
-                          Text(
-                            'Variantes',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurfaceVariant,
+                      ),                      const SizedBox(height: 16),   
+                      // Botón estilo Input para "Agregar opción"
+                      InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            // Insertar al principio de la lista (índice 0)
+                            variantControllers.insert(0, TextEditingController());
+                            final newFocusNode = FocusNode();
+                            variantFocusNodes.insert(0, newFocusNode);
+                            
+                            // Dar foco al nuevo campo después de que se construya
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (newFocusNode.canRequestFocus) {
+                                newFocusNode.requestFocus();
+                              }
+                            });
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14, // Altura estándar de inputs
+                          ),
+                          decoration: BoxDecoration(
+                            // Fondo con opacidad para destacar la acción
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+                            border: Border.all(
+                              color: colorScheme.outline.withValues(alpha: 0.3),
+                              width: 1.0,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '(Opcional)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colorScheme.onSurfaceVariant
-                                  .withOpacity(0.6),
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Items de variantes en lista
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 250),
-                        child: SingleChildScrollView(
-                          child: Column(
+                          child: Row(
                             children: [
-                              ...List.generate(variantControllers.length,
-                                  (index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: colorScheme.outline
-                                            .withOpacity(0.3),
+                              Icon(
+                                Icons.add,
+                                size: 20,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Agregar opción',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colorScheme.onSurfaceVariant, // Estilo hintText
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+
+                      // Items de variantes en lista (AHORA DEBAJO DEL BOTÓN)
+                      if (variantControllers.isNotEmpty)
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 250),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                // 🔥 Mostrar variantes en el orden actual (nuevas arriba)
+                                ...List.generate(variantControllers.length,
+                                    (index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        // Fondo transparente para los items
+                                        color: Colors.transparent,
+                                        border: Border.all(
+                                          color: colorScheme.outline
+                                              .withOpacity(0.3),
+                                        ),
                                       ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller:
-                                                variantControllers[index],
-                                            textCapitalization:
-                                                TextCapitalization.sentences,
-                                            decoration: InputDecoration(
-                                              hintText: 'Escribe la variante',
-                                              border: InputBorder.none,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 12,
+                                      child: Row(
+                                        children: [
+                                          // Número indicador
+                                          Container(
+                                            margin: const EdgeInsets.only(left: 12),
+                                            child: Text(
+                                              '${index + 1}.',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: colorScheme.primary
+                                                    .withOpacity(0.6),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        if (variantControllers.length > 1)
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: TextField(
+                                              controller:
+                                                  variantControllers[index],
+                                              focusNode: variantFocusNodes[index],
+                                              textCapitalization:
+                                                  TextCapitalization.sentences,
+                                              decoration: InputDecoration(
+                                                hintText: 'Escribe la opción',
+                                                hintStyle: TextStyle(
+                                                  color: colorScheme.onSurfaceVariant
+                                                      .withValues(alpha: 0.6),
+                                                ) ,
+                                                border: InputBorder.none,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                           IconButton(
                                             icon: Icon(
                                               Icons.close,
@@ -1387,39 +1481,25 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                                               setDialogState(() {
                                                 variantControllers[index]
                                                     .dispose();
+                                                variantFocusNodes[index]
+                                                    .dispose();
                                                 variantControllers
+                                                    .removeAt(index);
+                                                variantFocusNodes
                                                     .removeAt(index);
                                               });
                                             },
                                             tooltip: 'Eliminar',
                                           ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }),
-                            ],
+                                  );
+                                }),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Botón agregar variante
-                      AppButton.outlined(
-                        text: 'Agregar variante',
-                        onPressed: () {
-                          setDialogState(() {
-                            variantControllers.add(TextEditingController());
-                          });
-                        },
-                        icon: const Icon(Icons.add, size: 18),
-                        borderRadius: UIConstants.defaultRadius,
-                        fontSize: 14,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
+                        )
                     ],
                   ),
                 ),
@@ -1429,6 +1509,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                   onPressed: () {
                     for (var controller in variantControllers) {
                       controller.dispose();
+                    }
+                    for (var focusNode in variantFocusNodes) {
+                      focusNode.dispose();
                     }
                     Navigator.pop(context);
                   },
@@ -1713,7 +1796,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               child: Row(
                 children: [
                    Icon(
-                    isValidCode ? Icons.public : Icons.store,
+                    isValidCode ? Icons.public : Icons.qr_code_rounded,
                     color: isValidCode ? Colors.green : Colors.orange.shade700,
                     size: 20,
                   ),
@@ -1758,7 +1841,10 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                         const SizedBox(height: 4),
                         Text(
                           code,
-                           style: theme.textTheme.bodyLarge,
+                           style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                           ),
+                           
                         ),
                       ],
                     ),
@@ -1806,8 +1892,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               // Campo de descripción
             FormInputTextField(
               controller: _descriptionController,
-              labelText: 'Nombre del producto',
-              hintText: 'Ej: Coca Cola 1.5L',
+              labelText: 'Nombre',
+              hintText: 'Ej: Coca Cola 1.5L, Pack Oferta',
               textInputAction: TextInputAction.next,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -1904,23 +1990,21 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       children: [
         _buildSectionHeader(
           context: context,
-          title: 'Precios y márgenes',
+          title: 'Precios y Costos',
           icon: Icons.attach_money,
         ),
-        const SizedBox(height: 12),
-        if (!_isCombo) ...[
-          _buildUnitFieldAsLabel(), // Campo de unidad de venta (con estilo similar a marca)
-          const SizedBox(height: 16),
-        ],
-        _buildSalePriceField(),
-        const SizedBox(height: 16),
-        _buildIvaField(),
+        const SizedBox(height: 12), 
+        _buildIvaField(), // IVA
         if (!_isCombo) ...[
           const SizedBox(height: 16),
-          _buildPurchasePriceField(),
-
-
+          _buildPurchasePriceField(), // precio de costo
+          const SizedBox(height: 16),
+          _buildSalePriceField(), // precio de venta
           
+          // Profit Indicator (se muestra si hay precio de venta y costo válidos)
+          if (_purchasePriceController.doubleValue > 0 && _salePriceController.doubleValue > 0)
+            _buildProfitIndicator(),
+ 
           // Margin Calculator (se muestra solo si hay un costo válido)
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
@@ -1931,6 +2015,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                     children: [
                       const SizedBox(height: 16),
                       MarginCalculatorCard(
+                        key: ValueKey('calculator_$_calculatorResetKey'),
                         costPrice: _purchasePriceController.doubleValue,
                         salePrice: _salePriceController.doubleValue,
                         ivaPercentage: _selectedIva,
@@ -1980,6 +2065,104 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       labelText: 'Costo',
       hintText: '0.00',
       borderRadius: UIConstants.defaultRadius,
+    );
+  }
+
+  /// Indicador de beneficio/pérdida estimado
+  Widget _buildProfitIndicator() {
+    final theme = Theme.of(context);
+    
+    final costPrice = _purchasePriceController.doubleValue;
+    final salePrice = _salePriceController.doubleValue;
+    
+    if (costPrice <= 0 || salePrice <= 0) {
+      return const SizedBox.shrink();
+    }
+    
+    final profit = salePrice - costPrice;
+    final percentage = (profit / costPrice) * 100;
+    final isProfitable = profit > 0;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isProfitable
+              ? [Colors.green.withValues(alpha: 0.12), Colors.green.withValues(alpha: 0.05)]
+              : [Colors.red.withValues(alpha: 0.12), Colors.red.withValues(alpha: 0.05)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+        border: Border.all(
+          color: isProfitable
+              ? Colors.green.withValues(alpha: 0.4)
+              : Colors.red.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isProfitable
+                  ? Colors.green.withValues(alpha: 0.15)
+                  : Colors.red.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isProfitable ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+              color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isProfitable ? 'Beneficio estimado' : 'Pérdida estimada',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: isProfitable
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${percentage.abs().round()}% de ${isProfitable ? 'ganancia' : 'pérdida'}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: (isProfitable ? Colors.green : Colors.red).shade600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                CurrencyFormatter.formatPrice(value: profit.abs()),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isProfitable
+                      ? Colors.green.shade700
+                      : Colors.red.shade700,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -2233,43 +2416,54 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           icon: Icons.inventory_2_outlined,
         ),
         const SizedBox(height: 12),
+        if (!_isCombo) ...[
+          _buildUnitFieldAsLabel(), // unidad de venta
+          const SizedBox(height: 16),
+        ], 
+        // view : control de stock
         Container(
           decoration: BoxDecoration(
              borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
+              color: colorScheme.primary.withValues (alpha: 0.3),
               width: 1.5,
             ),
           ),
-          child: SwitchListTile(
-            value: _stockEnabled,
-            onChanged: (value) => setState(() => _stockEnabled = value),
-            title: Text(_isCombo ? 'Límite de ventas' : 'Control de stock'),
-            subtitle: Text(_isCombo
-                ? 'Define cuántas veces se puede vender este combo'
-                : 'Activa para rastrear cantidad disponible'),
-            secondary: Opacity(
-              opacity: _iconOpacity,
-              child: Icon(
-                _isCombo ? Icons.production_quantity_limits : Icons.inventory_outlined,
-                color: _stockEnabled ? colorScheme.primary : null,
+          child: Column(
+            children: [
+              SwitchListTile(
+                value: _stockEnabled,
+                onChanged: (value) => setState(() => _stockEnabled = value),
+                title: Text(_isCombo ? 'Límite de ventas' : 'Stock'),
+                subtitle: Text(_isCombo
+                    ? 'Define cuántas veces se puede vender este combo'
+                    : 'Controla la cantidad disponible del producto'),
+                secondary: Opacity(
+                  opacity: _iconOpacity,
+                  child: Icon(
+                    _isCombo ? Icons.production_quantity_limits : Icons.inventory_outlined,
+                    color: _stockEnabled ? colorScheme.primary : null,
+                  ),
+                ),
               ),
-            ),
+              // view : control de stock
+              if (_stockEnabled) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildQuantityField(),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildAlertStockField(),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
           ),
         ),
-        // view : control de stock
-        if (_stockEnabled) ...[
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: _buildQuantityField(),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: _buildAlertStockField(),
-          ),
-        ],
+        
       ],
     );
   }
@@ -2317,7 +2511,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Alerta de stock bajo',
+            'Cantidad mínima',
             style: TextStyle(
               fontSize: 16,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2705,15 +2899,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
                 child: Column(
                   children: [
                     Icon(
-                      Icons.add_shopping_cart,
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      Icons.add_to_photos_rounded,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                       size: 32,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Agrega productos al combo',
+                      'Sin productos',
                       style: TextStyle(
-                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -2906,36 +3100,27 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             ),
 
           const SizedBox(height: 16),
-          FilledButton.tonalIcon(
-            onPressed: _showComboItemsModal,
-            icon: const Icon(Icons.edit),
-            label: Text(_comboItems.isEmpty ? 'Agregar productos' : 'Gestionar productos'),
-          ),
+          AppButton.filled(text: 'Agregar producto', onPressed: _showComboItemsModal),
           
           const SizedBox(height: 24),
           // Fecha de expiración (opcional)
-          TextFormField(
+          InputTextField(
             controller: _expirationController,
+            hintText: 'Seleccionar fecha de expiración',
+            labelText: 'Válido hasta (Opcional)',
             readOnly: true,
-            decoration: InputDecoration(
-              labelText: 'Válido hasta (Opcional)',
-              hintText: 'Seleccionar fecha de expiración',
-              prefixIcon: const Icon(Icons.calendar_today_outlined),
-              suffixIcon: _comboExpiration != null
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        setState(() {
-                          _comboExpiration = null;
-                          _expirationController.clear();
-                        });
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            prefixIcon: const Icon(Icons.calendar_today_outlined),
+            suffixIcon: _comboExpiration != null
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _comboExpiration = null;
+                        _expirationController.clear();
+                      });
+                    },
+                  )
+                : null,
             onTap: () async {
               final DateTime? picked = await showDatePicker(
                 context: context,
@@ -2946,10 +3131,13 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
               if (picked != null) {
                 setState(() {
                   _comboExpiration = picked;
-                  _expirationController.text = '${picked.day}/${picked.month}/${picked.year}';
+                  // Formato de fecha local
+                  _expirationController.text =
+                      '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
                 });
               }
             },
+            
           ),
         ],
 

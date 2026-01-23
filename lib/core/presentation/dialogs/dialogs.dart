@@ -8,9 +8,6 @@ export '../widgets/dialogs/base/standard_dialogs.dart';
 // UI Components (from widgets/dialogs/)
 export '../widgets/dialogs/components/dialog_components.dart';
 
-// Product Type Selection
-export 'product_type_selection_dialog.dart';
-
 // Catalogue Dialogs
 export 'package:sellweb/features/catalogue/presentation/dialogs/add_product_dialog.dart';
 export 'package:sellweb/features/catalogue/presentation/dialogs/product_edit_dialog.dart';

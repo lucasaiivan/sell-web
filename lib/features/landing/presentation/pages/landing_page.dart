@@ -868,16 +868,19 @@ class _GlassFeatureCardState extends State<_GlassFeatureCard> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          feat,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.color
-                                ?.withOpacity(0.8),
-                            height: 1.4,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            feat,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color
+                                  ?.withOpacity(0.8),
+                              height: 1.4,
+                            ),
                           ),
                         ),
                       ),

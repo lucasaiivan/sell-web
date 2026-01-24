@@ -80,7 +80,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   // IVA state
   int _selectedIva = 0;
-  int _revenuePercentage = 0;
+  double _revenuePercentage = 0.0;
   // Selected IDs
   String? _selectedCategoryId;
   String? _selectedProviderId;

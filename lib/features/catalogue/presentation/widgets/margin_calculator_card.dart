@@ -10,8 +10,8 @@ class MarginCalculatorCard extends StatefulWidget {
   final double costPrice;
   final double salePrice;
   final int initialIva;
-  final int initialRevenuePercentage;
-  final Function(double price, int revenuePercentage, int iva) onApplyValues;
+  final double initialRevenuePercentage;
+  final Function(double price, double revenuePercentage, int iva) onApplyValues;
 
   const MarginCalculatorCard({
     super.key,
@@ -45,7 +45,7 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     final margin = double.tryParse(marginText) ?? 0.0;
     
     // Notificamos incluso si el precio es 0, para guardar ganancia e IVA
-    widget.onApplyValues(price, margin.toInt(), _currentIva);
+    widget.onApplyValues(price, margin, _currentIva);
   }
   bool _isValidCost = false;
   bool _isManualEdit = false;
@@ -211,8 +211,8 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     final margin = double.tryParse(marginText) ?? 0.0;
     
     if (price != null) {
-      // Devolvemos: Precio Final, Margen Entero, IVA Entero
-      widget.onApplyValues(price, margin.toInt(), _currentIva);
+      // Devolvemos: Precio Final, Margen decimal, IVA Entero
+      widget.onApplyValues(price, margin, _currentIva);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -366,9 +366,9 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true), 
       // Habilitado siempre para permitir configurar el margen esperado
       enabled: true,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly, // Solo enteros
-      ],
+      // inputFormatters: [
+      //   FilteringTextInputFormatter.digitsOnly, 
+      // ],
       borderRadius: UIConstants.defaultRadius,
     );
   }

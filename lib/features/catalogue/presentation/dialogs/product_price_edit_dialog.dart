@@ -546,8 +546,8 @@ class _ProductPriceEditDialogState extends State<ProductPriceEditDialog> {
           quantity: currentQuantity, // Preservar la cantidad del ticket
           documentIdUpgrade: accountId,
           revenuePercentage: (purchasePrice > 0) 
-              ? (((salePrice - purchasePrice) / purchasePrice) * 100).round()
-              : 0,
+              ? (((salePrice - purchasePrice) / purchasePrice) * 100)
+              : 0.0,
         );
 
         // Actualizar en el catálogo (shouldUpdateUpgrade=true porque estamos editando precios)

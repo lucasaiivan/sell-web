@@ -45,7 +45,7 @@ class ProductCatalogue {
   final String unit; // Unidad de venta (unidad, kilogramo, litro, metro)
   final String currencySign; // Símbolo de la moneda
   final int iva; // Porcentaje de IVA (0 = sin IVA o exento)
-  final int revenuePercentage; // Porcentaje de ganancia
+  final double revenuePercentage; // Porcentaje de ganancia
 
   // Variables en tiempo de ejecución (no se guardan en la base de datos)
   final double quantity; // Cantidad en el ticket (soporta fraccionarios: 0.025 = 25g, 2.5 = 2.5kg)
@@ -75,7 +75,7 @@ class ProductCatalogue {
     this.quantityStock = 0.0,
     this.alertStock = 5.0,
     this.revenueTotal = 0.0,
-    this.revenuePercentage = 0,
+    this.revenuePercentage = 0.0,
     required this.creation,
     required this.upgrade,
     required this.documentCreation,
@@ -118,7 +118,7 @@ class ProductCatalogue {
     double? quantityStock,
     double? alertStock,
     double? revenueTotal,
-    int? revenuePercentage,
+    double? revenuePercentage,
     DateTime? creation,
     DateTime? upgrade,
     DateTime? documentCreation,
@@ -227,10 +227,14 @@ class ProductCatalogue {
   }
 
   String get getPorcentageFormat {
-    return '$revenuePercentage%';
+    // Si es entero, mostrar sin decimales
+    if (revenuePercentage % 1 == 0) {
+      return '${revenuePercentage.toInt()}%';
+    }
+    return '${revenuePercentage.toStringAsFixed(2)}%';
   }
 
-  int get getPorcentageValue => revenuePercentage;
+  double get getPorcentageValue => revenuePercentage;
 
   double get getBenefitsValue {
     if (purchasePrice <= 0) return 0.0;
@@ -239,7 +243,10 @@ class ProductCatalogue {
 
   String get getBenefits {
     if (purchasePrice <= 0) return '';
-    return '$revenuePercentage%';
+    if (revenuePercentage % 1 == 0) {
+      return '${revenuePercentage.toInt()}%';
+    }
+    return '${revenuePercentage.toStringAsFixed(2)}%';
   }
 
   bool get isComplete => description.isNotEmpty && nameMark.isNotEmpty;

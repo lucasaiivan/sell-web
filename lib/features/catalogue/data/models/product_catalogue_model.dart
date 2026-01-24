@@ -131,7 +131,9 @@ class ProductCatalogueModel extends ProductCatalogue {
       stock: data.containsKey('stock') ? data['stock'] : false,
       alertStock: data.containsKey('alertStock') ? _parseDouble(data['alertStock'], 5.0) : 5.0,
       revenueTotal: data.containsKey('revenueTotal') ? _parseDouble(data['revenueTotal'], 0.0) : 0.0,
-      revenuePercentage: data.containsKey('revenuePercentage') ? (data['revenuePercentage'] as num).toInt() : 0,
+      revenuePercentage: data.containsKey('revenuePercentage') 
+          ? _parseDouble(data['revenuePercentage'], 0.0) 
+          : 0.0,
       quantity: data.containsKey('quantity') ? _parseDouble(data['quantity'], 1.0) : 1.0,
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])

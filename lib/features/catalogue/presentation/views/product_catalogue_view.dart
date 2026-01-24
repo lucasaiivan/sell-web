@@ -420,7 +420,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 'label': 'Beneficio estimado',
                 'valueColor': Colors.green.shade700,
                 'value':
-                    '${product.currencySign} ${product.getBenefitsValue.toStringAsFixed(2)} ganancia',
+                    '${CurrencyFormatter.formatPrice(value: product.getBenefitsValue, moneda: product.currencySign)} ganancia',
                 'icon': Icons.ssid_chart_outlined,
               },
           ],

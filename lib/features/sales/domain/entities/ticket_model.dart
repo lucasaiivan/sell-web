@@ -696,34 +696,21 @@ class TicketModel {
 
   // get : obtenemos el porcentaje de ganancia de la venta del ticket
   int get getPercentageProfit {
-    // se obtiene el total de la venta de los productos sin descuento
-    double total = 0.0;
-    double totalWithoutDiscount = getTotalPrice;
+    double totalProfit = getProfit;
+    double totalCost = 0.0;
 
-    // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
-      // condition : si el producto tiene un valor de compra y venta se calcula la ganancia
-      if (product.purchasePrice != 0) {
-        total += (product.salePrice - product.purchasePrice) * product.quantity;
+      if (product.purchasePrice > 0) {
+        totalCost += product.purchasePrice * product.quantity;
       }
     }
 
-    // si existe un descuento se calcula el porcentaje de ganancia con el descuento aplicado
-    if (getDiscountAmount != 0) {
-      total -= getDiscountAmount;
-    }
+    if (totalCost == 0) return 0;
 
-    // se calcula el porcentaje de ganancia
-    double percentage = 0;
-    // condition : si el total de la venta es mayor a 0 y el total de la venta sin descuento es mayor a 0 se calcula el porcentaje
-    if (totalWithoutDiscount != 0 &&
-        total.isFinite &&
-        totalWithoutDiscount.isFinite) {
-      percentage = (total * 100) / totalWithoutDiscount;
-    }
-    // condition : si el porcentaje es menor o igual a 0 o no es finito se retorna 0
+    double percentage = (totalProfit / totalCost) * 100;
+    
     if (percentage <= 0 || !percentage.isFinite) return 0;
-
+    
     return percentage.toInt();
   }
 
@@ -745,26 +732,21 @@ class TicketModel {
 
   // double : obtenemos las ganancias de la venta del ticket
   double get getProfit {
-    // se obtiene el total de la venta de los productos sin descuento
     double total = 0.0;
 
-    // Usar el getter products que obtiene ProductCatalogue directamente
     for (var product in products) {
-      // condition : si el producto tiene un valor de compra y venta se calcula la ganancia
       if (product.purchasePrice > 0) {
-        total += (product.salePrice - product.purchasePrice) * product.quantity;
+        // Obtenemos la ganancia usando el porcentaje de ganancia del producto
+        total += (product.purchasePrice * (product.revenuePercentage / 100)) * product.quantity;
       }
     }
 
-    // si existe un descuento se calcula el porcentaje de ganancia con el descuento aplicado
-    if (getDiscountAmount > 0 && total > 0) {
-      if (total - getDiscountAmount < 0) {
-        return 0;
-      }
-      total -= getDiscountAmount;
+    // restar descuento si existe
+    if (getDiscountAmount > 0) {
+       total -= getDiscountAmount; // Asumimos que el descuento afecta directamente la ganancia
     }
 
-    return total;
+    return total < 0 ? 0 : total;
   }
 
   // get : obtiene el monto total del ticket sin descuento aplicados

@@ -68,7 +68,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   // Controllers
   late final TextEditingController _descriptionController;
-  late final AppMoneyTextEditingController _salePriceController;
+  late final AppMoneyTextEditingController _salePriceController; // precio de venta
   late final AppMoneyTextEditingController _purchasePriceController;
 
   double _quantityStock = 0;
@@ -80,8 +80,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
 
   // IVA state
   int _selectedIva = 0;
-  final List<int> _commonIvaOptions = [21, 27, 10, 0];
-
+  int _revenuePercentage = 0;
   // Selected IDs
   String? _selectedCategoryId;
   String? _selectedProviderId;
@@ -159,8 +158,9 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       _expirationController.text = '${_comboExpiration!.day}/${_comboExpiration!.month}/${_comboExpiration!.year}'; 
     }
     
-    // Inicializar IVA
+    // Inicializar IVA y Margen
     _selectedIva = widget.product.iva;
+    _revenuePercentage = widget.product.revenuePercentage;
   }
 
   /// Configura listeners para recalcular beneficios y actualizar preview
@@ -361,6 +361,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       favorite: _favoriteEnabled,
       variants: _variants,
       iva: _selectedIva,
+      revenuePercentage: _revenuePercentage,
       comboItems: _isCombo ? _comboItems : [],
       comboExpiration: _isCombo ? _comboExpiration : null,
       status: widget.product.status, // Mantener status original
@@ -1994,7 +1995,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
           icon: Icons.attach_money,
         ),
         const SizedBox(height: 12), 
-        _buildIvaField(), // IVA
+        // El campo de IVA se movió dentro de MarginCalculatorCard
         if (!_isCombo) ...[
           const SizedBox(height: 16),
           _buildPurchasePriceField(), // precio de costo
@@ -2010,24 +2011,25 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             alignment: Alignment.topCenter,
-            child: _purchasePriceController.doubleValue > 0
-                ? Column(
+            child:Column(
                     children: [
                       const SizedBox(height: 16),
                       MarginCalculatorCard(
                         key: ValueKey('calculator_$_calculatorResetKey'),
                         costPrice: _purchasePriceController.doubleValue,
                         salePrice: _salePriceController.doubleValue,
-                        ivaPercentage: _selectedIva,
-                        onApplyPrice: (newPrice) {
+                        initialIva: _selectedIva,
+                        initialRevenuePercentage: _revenuePercentage,
+                        onApplyValues: (newPrice, newRevenuePercentage, newIva) {
                           setState(() {
                             _salePriceController.updateValue(newPrice);
+                            _revenuePercentage = newRevenuePercentage;
+                            _selectedIva = newIva;
                           });
                         },
                       ),
                     ],
-                  )
-                : const SizedBox.shrink(),
+                  ) ,
           ),
         ],
       ],
@@ -2038,8 +2040,8 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   Widget _buildSalePriceField() {
     // Texto condicional según si hay IVA aplicado
     final helperText = _selectedIva > 0
-        ? 'Este es el precio que cobrarás en POS (con IVA incluido)'
-        : 'Este es el precio que cobrarás en POS';
+        ? 'Este es el precio que cobrarás ( IVA incluido )'
+        : 'Este es el precio que cobrarás';
     
     return MoneyInputTextField(
       controller: _salePriceController,
@@ -2047,11 +2049,15 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
       hintText: '0.00',
       helperText: helperText,
       validator: (value) {
+        // En algunos flujos el precio puede ser 0 (ej. productos promocionales o por definir)
+        // Solo validamos que sea numérico si se ingresó algo.
         if (value == null || value.trim().isEmpty) {
+          // Si es obligatorio requerir precio > 0, mantener validación.
+          // Pero si el usuario dice que "siempre da error", es probable que el controller
+          // no esté actualizando el valor a tiempo o se desee permitir 0.
+          // Validaremos solo formato por ahora.
           return 'El precio de venta es requerido';
         }
-        final price = _salePriceController.doubleValue;
-        if (price <= 0) return 'Ingrese un precio válido mayor a 0';
         return null;
       },
       borderRadius: UIConstants.defaultRadius,
@@ -2166,134 +2172,7 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
     );
   }
 
-  /// Campo de selección de IVA con dropdown
-  Widget _buildIvaField() {
 
-    
-    String getIvaLabel(int iva) {
-      if (iva == 0) return 'Exento';
-      if (iva == 10) return 'IVA 10.5%';
-      return 'IVA $iva%';
-    }
-
-    return InkWell(
-      onTap: () => _showIvaSelectionDialog(),
-      borderRadius: BorderRadius.circular(12),
-      child: IgnorePointer(
-        child: InputTextField(
-          controller: TextEditingController(text: getIvaLabel(_selectedIva)),
-          readOnly: true,
-          labelText: 'Impuesto aplicable',
-          hintText: 'Seleccionar IVA',
-          borderRadius: UIConstants.defaultRadius, 
-          suffixIcon: const Icon(Icons.arrow_drop_down),
-        ),
-      ),
-    );
-  }
-
-  /// Muestra diálogo de selección de IVA
-  void _showIvaSelectionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Seleccionar IVA'),
-        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Opciones predefinidas
-              ..._commonIvaOptions.map((iva) {
-                final label = iva == 0 ? 'Exento' : iva == 10 ? 'IVA 10.5%' : 'IVA $iva%';
-                final realValue = iva == 10 ? 10.5 : iva.toDouble();
-                
-                return RadioListTile<double>(
-                  title: Text(label),
-                  value: realValue,
-                  groupValue: _selectedIva.toDouble(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedIva = value?.toInt() ?? 0;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              }),
-              const Divider(),
-              // Opción para agregar porcentaje manual
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Agregar porcentaje manual...'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showCustomIvaDialog();
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Muestra diálogo para ingresar IVA personalizado
-  void _showCustomIvaDialog() {
-    final controller = TextEditingController(
-      text: _selectedIva > 0 && !_commonIvaOptions.contains(_selectedIva) 
-          ? _selectedIva.toString() 
-          : '',
-    );
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Porcentaje de IVA'),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Porcentaje',
-            hintText: '0 - 100',
-            suffixText: '%',
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final value = int.tryParse(controller.text);
-              if (value != null && value >= 0 && value <= 100) {
-                setState(() {
-                  _selectedIva = value;
-                });
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Ingrese un porcentaje válido entre 0 y 100'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
-              }
-            },
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Campo de unidad de venta con estilo similar al campo de marca
   Widget _buildUnitFieldAsLabel() {

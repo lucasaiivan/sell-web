@@ -235,16 +235,14 @@ class SalesAnalytics extends Equatable {
     for (final ticket in filteredTransactions) {
       for (final product in ticket.products) {
         final productId = product.id;
-        final profit =
-            (product.salePrice - product.purchasePrice) * product.quantity;
+        final profit = product.totalProfit;
 
         if (!profitableStats.containsKey(productId)) {
           profitableStats[productId] = {
             'product': product, // obj
             'totalProfit': 0.0, // total ganancia
             'quantitySold': 0.0, // cantidad vendida (soporta fraccionarios)
-            'profitPerUnit': (product.salePrice -
-                product.purchasePrice), // ganancia por unidad
+            'profitPerUnit': product.purchasePrice * (product.revenuePercentage / 100), // ganancia por unidad
           };
         }
         profitableStats[productId]!['totalProfit'] =

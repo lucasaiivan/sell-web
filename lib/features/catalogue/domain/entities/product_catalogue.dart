@@ -43,12 +43,13 @@ class ProductCatalogue {
   final double salePrice; // Precio de venta
   final double purchasePrice; // Precio de coste
   final String unit; // Unidad de venta (unidad, kilogramo, litro, metro)
-  final String currencySign;
+  final String currencySign; // Símbolo de la moneda
   final int iva; // Porcentaje de IVA (0 = sin IVA o exento)
+  final int revenuePercentage; // Porcentaje de ganancia
 
-  // Variables en tiempo de ejecución
+  // Variables en tiempo de ejecución (no se guardan en la base de datos)
   final double quantity; // Cantidad en el ticket (soporta fraccionarios: 0.025 = 25g, 2.5 = 2.5kg)
-  final double revenue;
+  final double revenueTotal; // Ganancia total del productos
   final double priceTotal; // precio total del producto considerando la cantidades
 
   // Variables en desuso
@@ -73,7 +74,8 @@ class ProductCatalogue {
     this.stock = false,
     this.quantityStock = 0.0,
     this.alertStock = 5.0,
-    this.revenue = 0.0,
+    this.revenueTotal = 0.0,
+    this.revenuePercentage = 0,
     required this.creation,
     required this.upgrade,
     required this.documentCreation,
@@ -115,7 +117,8 @@ class ProductCatalogue {
     bool? stock,
     double? quantityStock,
     double? alertStock,
-    double? revenue,
+    double? revenueTotal,
+    int? revenuePercentage,
     DateTime? creation,
     DateTime? upgrade,
     DateTime? documentCreation,
@@ -155,7 +158,8 @@ class ProductCatalogue {
       stock: stock ?? this.stock,
       quantityStock: quantityStock ?? this.quantityStock,
       alertStock: alertStock ?? this.alertStock,
-      revenue: revenue ?? this.revenue,
+      revenueTotal: revenueTotal ?? this.revenueTotal,
+      revenuePercentage: revenuePercentage ?? this.revenuePercentage,
       creation: creation ?? this.creation,
       upgrade: upgrade ?? this.upgrade,
       documentCreation: documentCreation ?? this.documentCreation,
@@ -206,7 +210,7 @@ class ProductCatalogue {
   bool get isOutOfStock => stock && quantityStock <= 0;
 
   /// Indica si tiene margen de beneficio positivo
-  bool get hasProfitMargin => salePrice > purchasePrice;
+  bool get hasProfitMargin => revenuePercentage > 0;
 
   /// Retorna la fecha de última actualización del producto
   ///
@@ -223,29 +227,19 @@ class ProductCatalogue {
   }
 
   String get getPorcentageFormat {
-    if (purchasePrice == 0 || salePrice == 0) return '';
-    double ganancia = salePrice - purchasePrice;
-    double porcentajeDeGanancia = (ganancia / purchasePrice) * 100;
-    return '${porcentajeDeGanancia.toInt()}%';
+    return '$revenuePercentage%';
   }
 
-  int get getPorcentageValue {
-    if (purchasePrice == 0 || salePrice == 0) return 0;
-    double ganancia = salePrice - purchasePrice;
-    double porcentajeDeGanancia = (ganancia / purchasePrice) * 100;
-    return porcentajeDeGanancia.toInt();
-  }
+  int get getPorcentageValue => revenuePercentage;
 
   double get getBenefitsValue {
-    if (purchasePrice <= 0 || salePrice <= 0) return 0.0;
-    return salePrice - purchasePrice;
+    if (purchasePrice <= 0) return 0.0;
+    return purchasePrice * (revenuePercentage / 100);
   }
 
   String get getBenefits {
-    if (purchasePrice <= 0 || salePrice <= 0) return '';
-    final profit = salePrice - purchasePrice;
-    final percentage = (profit / purchasePrice) * 100;
-    return '${percentage.toStringAsFixed(0)}%';
+    if (purchasePrice <= 0) return '';
+    return '$revenuePercentage%';
   }
 
   bool get isComplete => description.isNotEmpty && nameMark.isNotEmpty;
@@ -287,7 +281,7 @@ class ProductCatalogue {
   double get totalPrice => salePrice * quantity;
 
   /// Obtiene la ganancia total del producto (ganancia unitaria × cantidad)
-  double get totalProfit => (salePrice - purchasePrice) * quantity;
+  double get totalProfit => (purchasePrice * (revenuePercentage / 100)) * quantity;
 
   /// Formatea la cantidad según el tipo de unidad
   /// - Discretas: "1", "5", "10"
@@ -405,9 +399,10 @@ class ProductCatalogue {
       "quantityStock": quantityStock,
       "sales": sales,
       "alertStock": alertStock,
-      "revenue": revenue,
+      "revenueTotal": revenueTotal,
       "unit": unit,
       "iva": iva,
+      "revenuePercentage": revenuePercentage,
       'comboItems': comboItems.map((e) => e.toMap()).toList(),
       'comboExpiration':  comboExpiration?.millisecondsSinceEpoch,
     };
@@ -488,11 +483,12 @@ class ProductCatalogue {
       quantityStock: parseStock(data['quantityStock'], 0.0),
       sales: parseStock(data['sales'], 0.0),
       alertStock: parseStock(data['alertStock'], 5.0),
-      revenue: (data['revenue'] ?? 0.0).toDouble(),
+      revenueTotal: (data['revenueTotal'] ?? 0.0).toDouble(),
       salePrice: (data['salePrice'] ?? 0.0).toDouble(),
       purchasePrice: (data['purchasePrice'] ?? 0.0).toDouble(),
       unit: UnitConstants.normalizeId(data['unit'] ?? UnitConstants.unit),
       iva: data['iva'] ?? 0,
+      revenuePercentage: data['revenuePercentage'] ?? 0,
       variants: data.containsKey('variants') && data['variants'] != null
           ? Map<String, dynamic>.from(data['variants'])
           : data.containsKey('attributes') && data['attributes'] != null

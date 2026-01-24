@@ -191,8 +191,8 @@ class SalesAnalyticsModel extends SalesAnalytics {
                 product.quantity;
 
         // Most profitable products
-        final profitPerUnit = product.salePrice - product.purchasePrice;
-        if (profitPerUnit > 0) {
+        final profitPerUnit = product.purchasePrice * (product.revenuePercentage / 100);
+        if (product.revenuePercentage > 0) {
           final totalSalesProduct = product.salePrice * product.quantity;
           final totalCostProduct = product.purchasePrice * product.quantity;
 

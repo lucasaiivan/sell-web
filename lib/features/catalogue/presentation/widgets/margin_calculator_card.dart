@@ -9,16 +9,20 @@ import 'package:sellweb/core/presentation/widgets/ui/ui.dart';
 class MarginCalculatorCard extends StatefulWidget {
   final double costPrice;
   final double salePrice;
-  final int ivaPercentage;
-  final Function(double) onApplyPrice;
+  final int initialIva;
+  final int initialRevenuePercentage;
+  final Function(double price, int revenuePercentage, int iva) onApplyValues;
 
   const MarginCalculatorCard({
     super.key,
     required this.costPrice,
     required this.salePrice,
-    required this.ivaPercentage,
-    required this.onApplyPrice,
+    required this.initialIva,
+    required this.initialRevenuePercentage,
+    required this.onApplyValues,
   });
+
+
 
   @override
   State<MarginCalculatorCard> createState() => _MarginCalculatorCardState();
@@ -28,9 +32,29 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
   final _marginController = TextEditingController();
   final _finalPriceController = TextEditingController();
   final _listTileController = ListTileController();
+  
+  // Método auxiliar para notificar cambios incluso sin cálculo de precio
+  void _notifyParentValues() {
+    final priceText = _finalPriceController.text
+        .replaceAll('\$', '')
+        .replaceAll('.', '') 
+        .replaceAll(',', '.');
+        
+    final price = double.tryParse(priceText.trim()) ?? 0.0;
+    final marginText = _marginController.text.replaceAll(',', '.');
+    final margin = double.tryParse(marginText) ?? 0.0;
+    
+    // Notificamos incluso si el precio es 0, para guardar ganancia e IVA
+    widget.onApplyValues(price, margin.toInt(), _currentIva);
+  }
   bool _isValidCost = false;
   bool _isManualEdit = false;
 
+  
+  // Estado para la animación de highlight
+  // Estado local para impuestos
+  late int _currentIva;
+  final List<int> _commonIvaOptions = [21, 27, 10, 0];
   
   // Estado para la animación de highlight
   bool _isPriceHighlighted = false;
@@ -38,11 +62,16 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
   @override
   void initState() {
     super.initState();
+    _currentIva = widget.initialIva;
+    _marginController.text = widget.initialRevenuePercentage > 0 
+        ? widget.initialRevenuePercentage.toString() 
+        : '';
+        
     _checkCostValidity();
     
-    // Inicialización: Si ya existe un precio de venta y costo, calculamos el margen implícito.
-    if (_isValidCost && widget.salePrice > 0) {
-      _calculateMarginReverse();
+    // Si tenemos datos iniciales, calculamos el precio
+    if (_isValidCost) {
+       _calculatePrice();
     }
     
     _marginController.addListener(_calculatePrice);
@@ -54,39 +83,34 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     
     final bool costChanged = oldWidget.costPrice != widget.costPrice;
     final bool salePriceChanged = oldWidget.salePrice != widget.salePrice;
-    final bool ivaChanged = oldWidget.ivaPercentage != widget.ivaPercentage;
+    
+    // Si cambio el widget padre (ej. otro producto seleccionado o reset), actualizamos iva
+    if (oldWidget.initialIva != widget.initialIva) {
+      _currentIva = widget.initialIva;
+    }
+    
+    if (oldWidget.initialRevenuePercentage != widget.initialRevenuePercentage) {
+       if (widget.initialRevenuePercentage > 0 && !_isManualEdit) {
+         _marginController.text = widget.initialRevenuePercentage.toString();
+       }
+    }
 
-    if (costChanged || salePriceChanged || ivaChanged) {
+    if (costChanged || salePriceChanged) {
       _checkCostValidity();
       
-      // Auto-expandir si hay datos relevantes
-      if ((costChanged || ivaChanged) && widget.costPrice > 0) {
-        _listTileController.expand();
-      }
-
       if (!_isValidCost) {
         _finalPriceController.clear();
         return;
       }
-
-      // LÓGICA DE ACTUALIZACIÓN
       
-      if (salePriceChanged) {
-        // Caso 1: El usuario cambió el Precio Final manualmente en el formulario padre.
-        // Debemos recalcular el Margen para reflejar este cambio (Reverse).
-        if (widget.costPrice > 0) {
-           _calculateMarginReverse();
-        }
+      // Si cambia el precio de venta externo (ej. input manual de precio final), 
+      // calculamos el margen inverso manteniendo el IVA actual
+      if (salePriceChanged && widget.salePrice > 0) {
+        _calculateMarginReverse();
       } 
-      else if (costChanged || ivaChanged) {
-        // Caso 2: El usuario cambió el Costo o el Impuesto.
-        // Debemos mantener el Margen % constante y calcular el nuevo Precio Final (Forward).
-        // EXCEPCIÓN: Si es la primera vez (no hay margen seteado) y tenemos precio de venta, hacemos reverse.
-        if (_marginController.text.isNotEmpty) {
-          _calculatePrice();
-        } else if (widget.salePrice > 0) {
-          _calculateMarginReverse();
-        }
+      // Si cambia el costo, recalculamos precio final manteniendo margen y iva
+      else if (costChanged) {
+        _calculatePrice();
       }
     }
   }
@@ -96,12 +120,15 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     // Evitar division por cero
     if (widget.costPrice <= 0) return;
 
-    // PrecioVenta = Costo * (1 + Margen) * (1 + IVA)
-    // PrecioVenta / (1 + IVA) = Costo * (1 + Margen)
-    // (PrecioVenta / (1 + IVA) / Costo) - 1 = Margen
-
-    final priceWithoutIva = widget.salePrice / (1 + (widget.ivaPercentage / 100));
-    final marginRatio = (priceWithoutIva / widget.costPrice) - 1;
+    // Nueva fórmula aditiva:
+    // PrecioVenta = Costo * (1 + Margen% + IVA%)
+    // PrecioVenta / Costo = 1 + Margen% + IVA%
+    // (PrecioVenta / Costo) - 1 - IVA% = Margen%
+    
+    final priceToCostRatio = widget.salePrice / widget.costPrice;
+    final ivaRatio = _currentIva / 100.0;
+    
+    final marginRatio = priceToCostRatio - 1 - ivaRatio;
     final marginPercentage = marginRatio * 100;
 
     // Actualizar UI
@@ -137,26 +164,30 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     if (!mounted) return;
     
     setState(() {
+      // Si no hay costo, no podemos calcular un precio numérico basado en margen
+      // Pero permitimos que la UI actualice los valores de estado
       if (!_isValidCost) return;
 
       final marginText = _marginController.text.replaceAll(',', '.');
-      final margin = double.tryParse(marginText);
+      // Si está vacío o es inválido, asumimos 0 para mostrar el precio base (Costo + IVA)
+      final margin = double.tryParse(marginText) ?? 0.0;
 
-      if (margin != null && margin > 0) {
-        // Precio = Costo * (1 + Margen/100) * (1 + IVA/100)
-        final costWithMargin = widget.costPrice * (1 + (margin / 100));
-        final finalPrice = costWithMargin * (1 + (widget.ivaPercentage / 100));
+      // Nueva fórmula aditiva:
+      // Precio = Costo * (1 + Margen/100 + IVA/100)
+      // Es decir, tanto el Margen como el IVA se calculan sobre el Costo Base.
+      
+      final marginRatio = margin / 100.0;
+      final ivaRatio = _currentIva / 100.0;
+      
+      final finalPrice = widget.costPrice * (1 + marginRatio + ivaRatio);
 
-        _finalPriceController.text = CurrencyFormatter.formatPrice(
-          value: finalPrice,
-          moneda: '\$',
-        );
+      _finalPriceController.text = CurrencyFormatter.formatPrice(
+        value: finalPrice,
+        moneda: '\$',
+      );
         
-        // Activar highlight visual
-        _triggerPriceHighlight();
-      } else {
-        _finalPriceController.clear();
-      }
+      // Activar highlight visual
+      _triggerPriceHighlight();
     });
   }
   
@@ -176,12 +207,16 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
         .replaceAll(',', '.'); // Replace decimal separator
         
     final price = double.tryParse(priceText.trim());
+    final marginText = _marginController.text.replaceAll(',', '.');
+    final margin = double.tryParse(marginText) ?? 0.0;
+    
     if (price != null) {
-      widget.onApplyPrice(price);
+      // Devolvemos: Precio Final, Margen Entero, IVA Entero
+      widget.onApplyValues(price, margin.toInt(), _currentIva);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Precio aplicado correctamente'),
+          content: Text('Valores aplicados correctamente'),
           backgroundColor: Colors.green.shade600,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -197,9 +232,9 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
 
     return ListTileAppExpanded(
       controller: _listTileController,
-      title: 'Calculadora de Margen',
+      title: 'Ganancias e impuestos',
       subtitle: Text(
-        'Calcula el precio final según el margen y impuestos',
+        'Define el margen de ganancia y los impuestos aplicables',
         style: theme.textTheme.bodySmall?.copyWith(
           color: colorScheme.onSurfaceVariant,
         ),
@@ -210,32 +245,6 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!_isValidCost)
-             Container(
-               margin: const EdgeInsets.only(bottom: 16),
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                 color: colorScheme.errorContainer.withValues(alpha: 0.5),
-                 borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
-                 border: Border.all(color: colorScheme.error.withValues(alpha: 0.2)),
-               ),
-               child: Row(
-                 children: [
-                   Icon(Icons.info_outline, size: 16, color: colorScheme.error),
-                   const SizedBox(width: 8),
-                   Expanded(
-                     child: Text(
-                       'Ingresa un costo válido para usar la calculadora',
-                       style: theme.textTheme.labelMedium?.copyWith(
-                         color: colorScheme.error,
-                         fontWeight: FontWeight.bold
-                       ),
-                     ),
-                   )
-                 ],
-               ),
-             ),
-
           // Inputs Row
           LayoutBuilder(
             builder: (context, constraints) {
@@ -244,38 +253,108 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
               if (isMobile) {
                 return Column(
                   children: [
-                    _buildMarginInput(),
-                    const SizedBox(height: 12),
-                    _buildPriceOutput(),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52, // Match input height
-                      child: _buildApplyButton(theme),
-                    ),
-                  ],
-                );
-              } else {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildMarginInput()),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildPriceOutput()),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SizedBox(
-                        height: 52, // Match input height roughly
+                      _buildTaxSelector(colorScheme),
+                      const SizedBox(height: 12),
+                      _buildMarginInput(),
+                      const SizedBox(height: 12),
+                      _buildPriceOutput(),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52, // Match input height
                         child: _buildApplyButton(theme),
                       ),
-                    ),
-                  ],
-                );
-              }
-            },
-          ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      // Fila de inputs
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                           Expanded(child: _buildTaxSelector(colorScheme)),
+                           const SizedBox(width: 12),
+                           Expanded(child: _buildMarginInput()),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Fila de resultado
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(child: _buildPriceOutput()),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 52, // Match input height roughly
+                              child: _buildApplyButton(theme),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                }
+              },
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTaxSelector(ColorScheme colorScheme) {
+    String getIvaLabel(int iva) {
+      if (iva == 0) return 'Exento';
+      if (iva == 10) return 'IVA 10%';
+      return 'IVA $iva%';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<int>(
+            initialValue: _commonIvaOptions.contains(_currentIva) ? _currentIva : null,
+            decoration: InputDecoration(
+              labelText: 'Impuestos aplicable',
+              hintText: 'Seleccionar IVA',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(UIConstants.defaultRadius),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+            items: [
+              ..._commonIvaOptions.map((iva) {
+                return DropdownMenuItem(
+                  value: iva,
+                  child: Text(getIvaLabel(iva)),
+                );
+              }),
+              if (!_commonIvaOptions.contains(_currentIva))
+                DropdownMenuItem(
+                  value: _currentIva,
+                  child: Text('Manual $_currentIva%'),
+                )
+            ],
+      onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _currentIva = value;
+                    
+                    // Si hay costo, recalculamos precio.
+                    // Si no, solo notificamos el cambio de IVA manteniendo el precio actual
+                    if (_isValidCost) {
+                      _calculatePrice();
+                    } else {
+                      _notifyParentValues(); 
+                    }
+                  });
+                }
+              },
+          ),
+
+
+      ],
     );
   }
 
@@ -285,9 +364,10 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
       labelText: '% de Ganancia',
       hintText: '30', 
       keyboardType: const TextInputType.numberWithOptions(decimal: true), 
-      enabled: _isValidCost,
+      // Habilitado siempre para permitir configurar el margen esperado
+      enabled: true,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+        FilteringTextInputFormatter.digitsOnly, // Solo enteros
       ],
       borderRadius: UIConstants.defaultRadius,
     );
@@ -296,17 +376,16 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
   Widget _buildPriceOutput() {
     // Determinar el label dinámico según qué se esté calculando
     String getFinalPriceLabel() {
-      final hasMargin = _marginController.text.isNotEmpty && 
-                        double.tryParse(_marginController.text.replaceAll(',', '.')) != null &&
-                        double.parse(_marginController.text.replaceAll(',', '.')) > 0;
-      final hasIva = widget.ivaPercentage > 0;
+      final marginText = _marginController.text;
+      final hasMargin = marginText.isNotEmpty && (int.tryParse(marginText) ?? 0) > 0;
+      final hasIva = _currentIva > 0;
 
       if (hasMargin && hasIva) {
-        return 'Precio Final (Ganancia + IVA ${widget.ivaPercentage}%)';
+        return 'Precio Final (Ganancia + IVA $_currentIva%)';
       } else if (hasMargin) {
         return 'Precio Final (con Ganancia)';
       } else if (hasIva) {
-        return 'Precio Final (IVA ${widget.ivaPercentage}%)';
+        return 'Precio Final (IVA $_currentIva%)';
       } else {
         return 'Precio Final';
       }
@@ -336,15 +415,12 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
   }
 
   Widget _buildApplyButton(ThemeData theme) {
-    // Habilitar botón solo si hay margen Y precio final válidos
-    final hasValidMargin = _marginController.text.isNotEmpty &&
-        double.tryParse(_marginController.text.replaceAll(',', '.')) != null &&
-        double.parse(_marginController.text.replaceAll(',', '.')) > 0;
+    // Habilitar botón si hay precio final válido (incluso con margen 0)
     final hasValidPrice = _finalPriceController.text.isNotEmpty;
     
     return AppButton.filled(
       text: 'Aplicar Precio',
-      onPressed: (_isValidCost && hasValidMargin && hasValidPrice)
+      onPressed: (_isValidCost && hasValidPrice)
           ? _handleApply
           : null,
       icon: const Icon(Icons.check_circle_outline, size: 20),

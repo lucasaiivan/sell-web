@@ -328,6 +328,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn);
+    gh.lazySingleton<_i521.FullScreenService>(() => _i521.FullScreenService());
     gh.lazySingleton<_i853.CreateQuickProductUseCase>(
         () => _i853.CreateQuickProductUseCase());
     gh.lazySingleton<_i283.CreateEmptyTicketUseCase>(
@@ -364,7 +365,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i377.GetProductByCodeUseCase());
     gh.lazySingleton<_i1012.TrendCalculatorService>(
         () => _i1012.TrendCalculatorService());
-    gh.lazySingleton<_i521.FullScreenService>(() => _i521.FullScreenService());
     gh.lazySingleton<_i283.IStorageDataSource>(
         () => _i390.StorageDataSource(gh<_i457.FirebaseStorage>()));
     gh.lazySingleton<_i581.AppDataPersistenceService>(

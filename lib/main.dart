@@ -99,8 +99,8 @@ void _runApp() {
         ChangeNotifierProxyProvider<AuthProvider, SalesProvider>(
           create: (_) => _createSalesProvider(),
           update: (_, auth, previousSell) {
-            // Preservar instancia existente para mantener estado del ticket
-            if (previousSell != null) {
+            // Preservar instancia existente para mantener estado del ticket SOLO si hay usuario
+            if (previousSell != null && auth.user != null) {
               // Sincronizar AdminProfile cuando hay usuario autenticado y cuenta seleccionada
               if (auth.user?.email != null &&
                   previousSell.profileAccountSelected.id.isNotEmpty &&

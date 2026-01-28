@@ -10,6 +10,10 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
 import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
 import 'package:sellweb/core/services/database/firestore_paths.dart';
+import 'package:sellweb/features/catalogue/data/datasources/catalogue_local_datasource.dart';
+import 'package:sellweb/features/catalogue/data/models/product_catalogue_model.dart';
+import 'package:sellweb/features/catalogue/data/models/category_model.dart';
+import 'package:sellweb/core/services/sync/i_sync_service.dart';
 
 /// Repository implementation usando nuevo sistema refactorizado
 ///
@@ -24,8 +28,14 @@ import 'package:sellweb/core/services/database/firestore_paths.dart';
 @LazySingleton(as: CatalogueRepository)
 class CatalogueRepositoryImpl implements CatalogueRepository {
   final IFirestoreDataSource _dataSource;
+  final CatalogueLocalDataSource _localDataSource;
+  final ISyncService _syncService;
 
-  CatalogueRepositoryImpl(this._dataSource);
+  CatalogueRepositoryImpl(
+    this._dataSource,
+    this._localDataSource,
+    this._syncService,
+  );
 
   // stream : Devolverá un stream de productos del catálogo  de la cuenta del negocio seleccionada.
   @override
@@ -424,14 +434,69 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
 
   @override
   Future<List<ProductCatalogue>> getProducts(String accountId) async {
-    // ✅ Usar FirestorePaths + DataSource
-    final path = FirestorePaths.accountCatalogue(accountId);
-    final collection = _dataSource.collection(path);
-    final snapshot = await _dataSource.getDocuments(collection);
+    // 1. Obtener productos locales
+    // Convertimos a Map para facilitar el merge (búsqueda O(1) por ID)
+    final localProducts = await _localDataSource.getProducts();
+    final productMap = {for (var p in localProducts) p.id: p};
 
-    return snapshot.docs
-        .map((doc) => ProductCatalogue.fromMap(doc.data()))
-        .toList();
+    try {
+      // 2. Verificar si necesitamos update
+      final needsUpdate = await _syncService.needsUpdate(
+        accountId,
+        SyncDataType.products,
+      );
+
+      if (needsUpdate || localProducts.isEmpty) {
+        // ✅ DELTA SYNC STRATEGY
+        // En lugar de traer TODA la colección, traemos solo lo modificado
+        final lastSyncTime = _syncService.getLastSyncTime(
+          accountId,
+          SyncDataType.products,
+        );
+        
+        final path = FirestorePaths.accountCatalogue(accountId);
+        Query<Map<String, dynamic>> query = _dataSource.collection(path);
+
+        // Si tenemos datos locales y un timestamp válido, filtramos por delta
+        // Si es la primera vez (lastSyncTime=0), traemos todo.
+        if (lastSyncTime > 0 && localProducts.isNotEmpty) {
+           final lastSyncTimestamp = Timestamp.fromMillisecondsSinceEpoch(lastSyncTime);
+           // Nota: Firestore requiere índice compuesto para desigualdades si hay ordenamientos
+           // pero aquí es simple filtrado.
+           query = query.where('upgrade', isGreaterThan: lastSyncTimestamp);
+           print('🔄 Delta Sync: Buscando productos modificados desde $lastSyncTimestamp');
+        } else {
+           print('⬇️ Full Sync: Descargando catálogo completo');
+        }
+
+        final snapshot = await _dataSource.getDocuments(query);
+        final remoteDeltas = snapshot.docs
+            .map((doc) => ProductCatalogueModel.fromMap(doc.data()))
+            .toList();
+
+        if (remoteDeltas.isNotEmpty) {
+          print('📦 Delta Sync: Recibidos ${remoteDeltas.length} productos actualizados/nuevos');
+          
+          // Merge: Actualizar o agregar los deltas al mapa local
+          for (final delta in remoteDeltas) {
+            productMap[delta.id] = delta;
+          }
+          
+          // Guardar la lista consolidada en local
+          await _localDataSource.saveProducts(productMap.values.toList());
+        } else {
+          print('✅ Delta Sync: No hubo cambios remotos');
+        }
+        
+        // Marcar como actualizado
+        await _syncService.markAsUpdated(accountId, SyncDataType.products);
+      }
+    } catch (e) {
+      print('⚠️ Error syncing products: $e');
+      // En error, devolvemos lo local (Offline First)
+    }
+    
+    return productMap.values.map((e) => e.toEntity()).toList();
   }
 
   @override
@@ -479,14 +544,34 @@ class CatalogueRepositoryImpl implements CatalogueRepository {
   @override
   Future<List<Category>> getCategories(String accountId) async {
     if (accountId.isNotEmpty) {
-      // ✅ Usar FirestorePaths + DataSource
-      final path = FirestorePaths.accountCategories(accountId);
-      final collection = _dataSource.collection(path);
-      final snapshot = await _dataSource.getDocuments(collection);
+      // 1. Local
+      final localCats = await _localDataSource.getCategories();
 
-      return snapshot.docs
-          .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
-          .toList();
+      try {
+        final needsUpdate = await _syncService.needsUpdate(
+          accountId,
+          SyncDataType.categories,
+        );
+
+        if (localCats.isEmpty || needsUpdate) {
+          final path = FirestorePaths.accountCategories(accountId);
+          final collection = _dataSource.collection(path);
+          final snapshot = await _dataSource.getDocuments(collection);
+
+          final remoteCats = snapshot.docs
+              .map((doc) => CategoryModel.fromMap(doc.data()))
+              .toList();
+
+          await _localDataSource.saveCategories(remoteCats);
+          await _syncService.markAsUpdated(accountId, SyncDataType.categories);
+
+          return remoteCats.map((e) => e.toEntity()).toList();
+        }
+      } catch (e) {
+        print('⚠️ Error syncing categories: $e');
+      }
+
+      return localCats.map((e) => e.toEntity()).toList();
     }
     return [];
   }

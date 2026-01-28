@@ -6,6 +6,7 @@ import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_comp
 import 'package:provider/provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo: Información del Perfil de Administrador
 ///
@@ -385,25 +386,35 @@ class _DeleteUserAccountButton extends StatefulWidget {
 class _DeleteUserAccountButtonState extends State<_DeleteUserAccountButton> {
   bool _isDeleting = false;
 
-  Future<void> _confirmDeleteUser() async {
+  Future<void> _confirmDeleteAction() async {
     final theme = Theme.of(context);
+    final isOwner = widget.admin.superAdmin;
+    
+    // Configurar textos según rol
+    final title = isOwner ? '¿Eliminar Negocio?' : '¿Salir del Negocio?';
+    final content = isOwner 
+        ? 'Estás a punto de ELIMINAR ESTE NEGOCIO y todos sus datos (ventas, productos, clientes).\n\nEsta acción es IRREVERSIBLE, pero TU usuario personal seguirá existiendo.'
+        : 'Estás a punto de salir de este negocio. Perderás el acceso a sus datos, pero tu usuario personal seguirá activo en otros comercios.';
+    
+    final confirmBtnText = isOwner ? 'Sí, eliminar negocio' : 'Sí, salir del negocio';
+    final btnColor = theme.colorScheme.error;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar tu cuenta?'),
-        icon: Icon(Icons.person_remove_rounded,
-            color: theme.colorScheme.error, size: 48),
-        content: const Text(
-            'Estás a punto de eliminar TU USUARIO y TODOS los negocios que administras como dueño.\n\nEsta acción es IRREVERSIBLE y borrará todos tus datos del sistema.'),
+        title: Text(title),
+        icon: Icon(Icons.warning_amber_rounded,
+            color: btnColor, size: 48),
+        content: Text(content),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancelar')),
           FilledButton(
               style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.error),
+                  backgroundColor: btnColor),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sí, eliminar mi cuenta')),
+              child: Text(confirmBtnText)),
         ],
       ),
     );
@@ -411,40 +422,51 @@ class _DeleteUserAccountButtonState extends State<_DeleteUserAccountButton> {
     if (confirm == true) {
       if (!mounted) return;
       
-      final userName = widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email;
+      final authProvider = context.read<AuthProvider>();
+      // Obtener el nombre de la cuenta para mostrar mensaje amigable
+      final accountName = authProvider.getProfileAccountById(widget.admin.account)?.name ?? widget.admin.account;
       
-      // Cerrar el diálogo primero
+      // Cerrar el diálogo de perfil primero
       Navigator.of(context).pop();
       
-      // Navegar a la vista de proceso (no como reemplazo, sino como nueva página)
+      // Navegar a la vista de proceso
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => ProcessSuccessView(
-            loadingText: 'Eliminando cuenta de usuario...',
-            successTitle: '¡Cuenta eliminada!',
-            successSubtitle: userName,
-            finalText: 'Cerrando sesión...',
-            loadingDuration: 1500, // Tiempo para el proceso de eliminación
-            successDuration: 2000,
-            playSound: false, // Sin sonido para eliminaciones
+            loadingText: isOwner ? 'Eliminando negocio...' : 'Saliendo del negocio...',
+            successTitle: isOwner ? '¡Negocio eliminado!' : '¡Salida exitosa!',
+            successSubtitle: accountName,
+            finalText: 'Redirigiendo...',
+            loadingDuration: 1500,
+            successDuration: 1500,
+            playSound: false,
             onComplete: () async {
-              // Ejecutar la eliminación real aquí
-              final authProvider = context.read<AuthProvider>();
-              final success = await authProvider.deleteUserAccount();
+              // Ejecutar la acción contextual
+              final success = await authProvider.deleteAdminAccess(
+                widget.admin.account, 
+                widget.admin
+              );
               
               if (!context.mounted) return;
               
               if (success) {
-                // Cerrar la vista de éxito
+                // Cerrar ProcessView
                 Navigator.of(context).pop();
-                // Redirigir al login - El stream de auth ya debería llevar al usuario
-                Navigator.of(context).popUntil((route) => route.isFirst);
+
+                // Limpiar datos de venta para forzar navegación a la pantalla de selección de cuenta
+                if (context.mounted) {
+                  context.read<SalesProvider>().cleanData();
+                }
+                
+                // Si borramos el negocio o salimos, debemos ir a la selección de cuenta
+                // El authProvider ya actualizó la lista de cuentas
+                // Navegar al root para que HomePage detecte que no hay cuenta seleccionada
+                 Navigator.of(context).popUntil((route) => route.isFirst);
               } else {
-                // En caso de error, volver y mostrar mensaje
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(authProvider.authError ?? 'Error al eliminar usuario'),
+                    content: Text(authProvider.authError ?? 'Error al procesar la solicitud'),
                     backgroundColor: theme.colorScheme.error,
                   ),
                 );
@@ -460,6 +482,7 @@ class _DeleteUserAccountButtonState extends State<_DeleteUserAccountButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final errorColor = theme.colorScheme.error;
+    final isOwner = widget.admin.superAdmin;
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -471,20 +494,24 @@ class _DeleteUserAccountButtonState extends State<_DeleteUserAccountButton> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
-          _isDeleting ? Icons.hourglass_empty_rounded : Icons.no_accounts_rounded,
+          _isDeleting 
+              ? Icons.hourglass_empty_rounded 
+              : (isOwner ? Icons.delete_forever_rounded : Icons.exit_to_app_rounded),
           color: errorColor,
         ),
       ),
       title: Text(
-        'Eliminar mi cuenta de usuario',
+        isOwner ? 'Eliminar este Negocio' : 'Salir de este Negocio',
         style: TextStyle(color: errorColor, fontWeight: FontWeight.bold),
       ),
       subtitle: Text(
         _isDeleting
-            ? 'Eliminando...'
-            : 'Borra tu usuario y todos sus datos',
+            ? 'Procesando...'
+            : (isOwner 
+                ? 'Elimina el negocio actual permanentemente' 
+                : 'Desvincula tu cuenta de este negocio'),
       ),
-      onTap: _isDeleting ? null : _confirmDeleteUser,
+      onTap: _isDeleting ? null : _confirmDeleteAction,
     );
   }
 }

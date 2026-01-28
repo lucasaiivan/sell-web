@@ -2439,148 +2439,126 @@ class _ProductEditCatalogueViewState extends State<ProductEditCatalogueView> {
   }
 
   /// Campo de categoría
+  /// Campo de categoría
   Widget _buildCategoryField() {
-    return StreamBuilder<List<Category>>(
-      stream: widget.catalogueProvider.getCategoriesStream(widget.accountId),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
+    return InkWell(
+      onTap: () async {
+        final categories = widget.catalogueProvider.categories;
 
-        final categories = snapshot.data ?? [];
-
-        return InkWell(
-          onTap: () async {
-            final selected = await showModalBottomSheet<Category>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => SelectionModal<Category>(
-                title: 'Seleccionar Categoría',
-                items: categories,
-                labelBuilder: (item) => item.name,
-                idBuilder: (item) => item.id,
-                selectedItem: _selectedCategoryId != null
-                    ? categories.firstWhere((c) => c.id == _selectedCategoryId,
-                        orElse: () => Category())
-                    : null,
-                searchHint: 'Buscar',
-                onAdd: () async {
-                  // Mostrar diálogo de creación y esperar resultado
-                  final newCategory = await showCategoryDialog(
-                    context,
-                    catalogueProvider: widget.catalogueProvider,
-                    accountId: widget.accountId,
-                  );
-                  // Si se creó una categoría, retornarla para seleccionarla
-                  return newCategory;
-                },
-                labelButton: 'Crear categoría',
-                onButton: (item) => showCategoryDialog(
-                  context,
-                  catalogueProvider: widget.catalogueProvider,
-                  accountId: widget.accountId,
-                  category: item,
-                ),
-              ),
-            );
-
-            if (selected != null) {
-              setState(() {
-                _selectedCategoryId = selected.id;
-                _categoryController.text = selected.name;
-              });
-            }
-          },
-          child: IgnorePointer(
-            child: InputTextField(
-              controller: _categoryController,
-              labelText: 'Categoría',
-            hintText: 'Seleccionar categoría',
-            borderRadius: UIConstants.defaultRadius,
-            prefixIcon: const Opacity(
-                opacity: _iconOpacity,
-                child: Icon(Icons.category_outlined),
-              ),
-              suffixIcon: const Icon(Icons.arrow_drop_down),
+        final selected = await showModalBottomSheet<Category>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => SelectionModal<Category>(
+            title: 'Seleccionar Categoría',
+            items: categories,
+            labelBuilder: (item) => item.name,
+            idBuilder: (item) => item.id,
+            selectedItem: _selectedCategoryId != null
+                ? categories.firstWhere((c) => c.id == _selectedCategoryId,
+                    orElse: () => Category())
+                : null,
+            searchHint: 'Buscar',
+            onAdd: () async {
+              final newCategory = await showCategoryDialog(
+                context,
+                catalogueProvider: widget.catalogueProvider,
+                accountId: widget.accountId,
+              );
+              return newCategory;
+            },
+            labelButton: 'Crear categoría',
+            onButton: (item) => showCategoryDialog(
+              context,
+              catalogueProvider: widget.catalogueProvider,
+              accountId: widget.accountId,
+              category: item,
             ),
           ),
         );
+
+        if (selected != null) {
+          setState(() {
+            _selectedCategoryId = selected.id;
+            _categoryController.text = selected.name;
+          });
+        }
       },
+      child: IgnorePointer(
+        child: InputTextField(
+          controller: _categoryController,
+          labelText: 'Categoría',
+          hintText: 'Seleccionar categoría',
+          borderRadius: UIConstants.defaultRadius,
+          prefixIcon: const Opacity(
+            opacity: _iconOpacity,
+            child: Icon(Icons.category_outlined),
+          ),
+          suffixIcon: const Icon(Icons.arrow_drop_down),
+        ),
+      ),
     );
   }
 
   /// Campo de proveedor
   Widget _buildProviderField() {
-    return StreamBuilder<List<catalog_provider.Provider>>(
-      stream: widget.catalogueProvider.getProvidersStream(widget.accountId),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
+    return InkWell(
+      onTap: () async {
+        final providers = widget.catalogueProvider.providers;
 
-        final providers = snapshot.data ?? [];
-
-        return InkWell(
-          onTap: () async {
-            final selected =
-                await showModalBottomSheet<catalog_provider.Provider>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => SelectionModal<catalog_provider.Provider>(
-                title: 'Seleccionar Proveedor',
-                items: providers,
-                labelBuilder: (item) => item.name,
-                idBuilder: (item) => item.id,
-                selectedItem: _selectedProviderId != null
-                    ? providers.firstWhere((p) => p.id == _selectedProviderId,
-                        orElse: () =>
-                            catalog_provider.Provider(id: '', name: ''))
-                    : null,
-                searchHint: 'Buscar',
-                onAdd: () async {
-                  // Mostrar diálogo de creación y esperar resultado
-                  final newProvider = await showProviderDialog(
-                    context,
-                    catalogueProvider: widget.catalogueProvider,
-                    accountId: widget.accountId,
-                  );
-                  // Si se creó un proveedor, retornarlo para seleccionarlo
-                  return newProvider;
-                },
-                labelButton: 'Crear proveedor',
-                onButton: (item) => showProviderDialog(
-                  context,
-                  catalogueProvider: widget.catalogueProvider,
-                  accountId: widget.accountId,
-                  provider: item,
-                ),
-              ),
-            );
-
-            if (selected != null) {
-              setState(() {
-                _selectedProviderId = selected.id;
-                _providerController.text = selected.name;
-              });
-            }
-          },
-          child: IgnorePointer(
-            child: InputTextField(
-              controller: _providerController,
-              labelText: 'Proveedor',
-            hintText: 'Seleccionar proveedor',
-            borderRadius: UIConstants.defaultRadius,
-            prefixIcon: const Opacity(
-                opacity: _iconOpacity,
-                child: Icon(Icons.local_shipping_outlined),
-              ),
-              suffixIcon: const Icon(Icons.arrow_drop_down),
+        final selected = await showModalBottomSheet<catalog_provider.Provider>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => SelectionModal<catalog_provider.Provider>(
+            title: 'Seleccionar Proveedor',
+            items: providers,
+            labelBuilder: (item) => item.name,
+            idBuilder: (item) => item.id,
+            selectedItem: _selectedProviderId != null
+                ? providers.firstWhere((p) => p.id == _selectedProviderId,
+                    orElse: () =>
+                        catalog_provider.Provider(id: '', name: ''))
+                : null,
+            searchHint: 'Buscar',
+            onAdd: () async {
+              final newProvider = await showProviderDialog(
+                context,
+                catalogueProvider: widget.catalogueProvider,
+                accountId: widget.accountId,
+              );
+              return newProvider;
+            },
+            labelButton: 'Crear proveedor',
+            onButton: (item) => showProviderDialog(
+              context,
+              catalogueProvider: widget.catalogueProvider,
+              accountId: widget.accountId,
+              provider: item,
             ),
           ),
         );
+
+        if (selected != null) {
+          setState(() {
+            _selectedProviderId = selected.id;
+            _providerController.text = selected.name;
+          });
+        }
       },
+      child: IgnorePointer(
+        child: InputTextField(
+          controller: _providerController,
+          labelText: 'Proveedor',
+          hintText: 'Seleccionar proveedor',
+          borderRadius: UIConstants.defaultRadius,
+          prefixIcon: const Opacity(
+            opacity: _iconOpacity,
+            child: Icon(Icons.local_shipping_outlined),
+          ),
+          suffixIcon: const Icon(Icons.arrow_drop_down),
+        ),
+      ),
     );
   }
 

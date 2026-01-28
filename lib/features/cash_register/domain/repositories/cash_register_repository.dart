@@ -29,10 +29,12 @@ abstract class CashRegisterRepository {
   // ==========================================
 
   /// Obtiene todo el historial de arqueos de caja de una cuenta
-  Future<List<CashRegister>> getCashRegisterHistory(String accountId);
+  /// Obtiene todo el historial de arqueos de caja de una cuenta (Paginado)
+  Future<List<CashRegister>> getCashRegisterHistory(String accountId, {int limit = 20});
 
   /// Stream del historial de arqueos de caja
-  Stream<List<CashRegister>> getCashRegisterHistoryStream(String accountId);
+  /// [limit] Limita la cantidad de documentos a escuchar (por defecto 10)
+  Stream<List<CashRegister>> getCashRegisterHistoryStream(String accountId, {int limit = 10});
 
   /// Obtiene los arqueos de caja de los últimos N días
   Future<List<CashRegister>> getCashRegisterByDays(String accountId, int days);
@@ -149,7 +151,15 @@ abstract class CashRegisterRepository {
   });
 
   /// Stream de transacciones de ventas con actualizaciones en tiempo real
-  Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId);
+  /// [startDate] Opcional: Filtra transacciones desde esta fecha (inclusive)
+  /// [endDate] Opcional: Filtra transacciones hasta esta fecha (inclusive)
+  /// [limit] Opcional: Limita la cantidad de documentos (default 20 si no se especifica rango)
+  Stream<List<Map<String, dynamic>>> getTransactionsStream(
+    String accountId, {
+    DateTime? startDate,
+    DateTime? endDate,
+    int? limit,
+  });
 
   /// Obtiene el detalle de una transacción específica
   Future<Map<String, dynamic>?> getTransactionDetail({

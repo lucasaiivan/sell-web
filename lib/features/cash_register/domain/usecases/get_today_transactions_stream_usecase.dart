@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:injectable/injectable.dart';
 import '../repositories/cash_register_repository.dart';
 
@@ -12,29 +12,22 @@ class GetTodayTransactionsStreamUseCase {
     required String accountId,
     String cashRegisterId = '',
   }) {
-    final today = DateTime.now();
-    final transactionsStream = _repository.getTransactionsStream(accountId);
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
-    return transactionsStream.map((allTransactions) {
-      final todayTransactions = allTransactions.where((transaction) {
-        if (transaction['creation'] == null) return false;
-
-        final creation = transaction['creation'] as Timestamp;
-        final transactionDate = creation.toDate();
-
-        final isToday = transactionDate.year == today.year &&
-            transactionDate.month == today.month &&
-            transactionDate.day == today.day;
-
-        if (!isToday) return false;
-
-        if (cashRegisterId.isNotEmpty) {
+    return _repository
+        .getTransactionsStream(
+      accountId,
+      startDate: startOfDay,
+      endDate: endOfDay,
+    )
+        .map((todayTransactions) {
+      if (cashRegisterId.isNotEmpty) {
+        return todayTransactions.where((transaction) {
           return transaction['cashRegisterId'] == cashRegisterId;
-        }
-
-        return true;
-      }).toList();
-
+        }).toList();
+      }
       return todayTransactions;
     });
   }

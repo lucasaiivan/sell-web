@@ -26,6 +26,9 @@ class CategoryModel extends Category {
         "subcategories": subcategories,
       };
 
+  /// Alias para toJson (compatibilidad)
+  Map<String, dynamic> toMap() => toJson();
+
   /// Convierte a entidad de dominio
   Category toEntity() {
     return Category(

@@ -9,6 +9,7 @@ import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import '../widgets.dart';
+import '../monitoring/query_counter_widget.dart';
 
 /// Widget reutilizable del Drawer para las pantallas principales
 /// Muestra información de la cuenta seleccionada, controles de tema y acceso a funcionalidades
@@ -406,6 +407,8 @@ class _DrawerFooter extends StatelessWidget {
               },
             ),
           ),
+          const SizedBox(height: 12),
+          const QueryCounterWidget(),
           const SizedBox(height: 20),
         ],
       ),

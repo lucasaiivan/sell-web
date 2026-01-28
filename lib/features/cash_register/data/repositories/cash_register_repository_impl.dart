@@ -85,11 +85,16 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   // ==========================================
 
   @override
-  Future<List<CashRegister>> getCashRegisterHistory(String accountId) async {
+  Future<List<CashRegister>> getCashRegisterHistory(String accountId, {int limit = 20, DocumentSnapshot? startAfter}) async {
     try {
       final path = FirestorePaths.accountCashRegisterHistory(accountId);
       final collection = _dataSource.collection(path);
-      final query = collection.orderBy('opening', descending: true);
+      var query = collection.orderBy('opening', descending: true).limit(limit);
+      
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+      
       final querySnapshot = await _dataSource.getDocuments(query);
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
@@ -100,10 +105,11 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Stream<List<CashRegister>> getCashRegisterHistoryStream(String accountId) {
+  Stream<List<CashRegister>> getCashRegisterHistoryStream(String accountId,
+      {int limit = 10}) {
     final path = FirestorePaths.accountCashRegisterHistory(accountId);
     final collection = _dataSource.collection(path);
-    final query = collection.orderBy('opening', descending: true);
+    final query = collection.orderBy('opening', descending: true).limit(limit);
     return _dataSource.streamDocuments(query).map((querySnapshot) {
       return querySnapshot.docs.map((doc) {
         return CashRegister.fromMap(doc.data());
@@ -329,23 +335,13 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required CashFlow cashFlow,
   }) async {
     try {
-      // Obtener la caja registradora actual
-      final activeCashRegisters = await getActiveCashRegisters(accountId);
-      final cashRegister = activeCashRegisters.firstWhere(
-        (cr) => cr.id == cashRegisterId,
-        orElse: () => throw Exception('Caja registradora no encontrada'),
-      );
+      final path =
+          FirestorePaths.accountCashRegister(accountId, cashRegisterId);
 
-      // Actualizar listas y totales
-      final updatedInflows = List<dynamic>.from(cashRegister.cashInFlowList)
-        ..add(cashFlow.toJson());
-
-      final updatedCashRegister = cashRegister.update(
-        cashInFlow: cashRegister.cashInFlow + cashFlow.amount,
-        cashInFlowList: updatedInflows,
-      );
-
-      await setCashRegister(accountId, updatedCashRegister);
+      await _dataSource.updateDocument(path, {
+        'cashInFlow': FieldValue.increment(cashFlow.amount),
+        'cashInFlowList': FieldValue.arrayUnion([cashFlow.toJson()]),
+      });
     } catch (e) {
       throw Exception('Error al agregar ingreso de caja: $e');
     }
@@ -358,24 +354,18 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     required CashFlow cashFlow,
   }) async {
     try {
-      // Obtener la caja registradora actual
-      final activeCashRegisters = await getActiveCashRegisters(accountId);
-      final cashRegister = activeCashRegisters.firstWhere(
-        (cr) => cr.id == cashRegisterId,
-        orElse: () => throw Exception('Caja registradora no encontrada'),
-      );
+      final path =
+          FirestorePaths.accountCashRegister(accountId, cashRegisterId);
 
-      // Actualizar listas y totales (egreso es negativo)
-      final updatedOutflows = List<dynamic>.from(cashRegister.cashOutFlowList)
-        ..add(cashFlow.toJson());
-
-      final updatedCashRegister = cashRegister.update(
-        cashOutFlow: cashRegister.cashOutFlow -
-            cashFlow.amount, // Se resta porque es egreso
-        cashOutFlowList: updatedOutflows,
-      );
-
-      await setCashRegister(accountId, updatedCashRegister);
+      // Egreso es negativo en el total, pero positivo en el objeto CashFlow
+      // Revisar lógica original: cashOutFlow: cashRegister.cashOutFlow - cashFlow.amount
+      // Si cashOutFlow inicia en 0 y se restan valores, será negativo.
+      // Confirmamos que el requerimiento es restar.
+      
+      await _dataSource.updateDocument(path, {
+        'cashOutFlow': FieldValue.increment(-cashFlow.amount),
+        'cashOutFlowList': FieldValue.arrayUnion([cashFlow.toJson()]),
+      });
     } catch (e) {
       throw Exception('Error al agregar egreso de caja: $e');
     }
@@ -392,24 +382,14 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
     // ⚠️ IMPORTANTE: Este método SOLO debe usarse para VENTAS EFECTIVAS
     // Para anulaciones, usar updateBillingOnAnnullment() que NO incrementa sales
     try {
-      // Obtener la caja registradora actual
-      final activeCashRegisters = await getActiveCashRegisters(accountId);
-      final cashRegister = activeCashRegisters.firstWhere(
-        (cr) => cr.id == cashRegisterId,
-        orElse: () => throw Exception('Caja registradora no encontrada'),
-      );
+      final path =
+          FirestorePaths.accountCashRegister(accountId, cashRegisterId);
 
-      // Actualizar totales de ventas
-      final updatedCashRegister = cashRegister.update(
-        sales:
-            cashRegister.sales + 1, // ✅ Incrementa contador de ventas efectivas
-        billing: cashRegister.billing +
-            billingIncrement, // Incrementa la facturación
-        discount: cashRegister.discount +
-            discountIncrement, // Incrementa el descuento
-      );
-
-      await setCashRegister(accountId, updatedCashRegister);
+      await _dataSource.updateDocument(path, {
+        'sales': FieldValue.increment(1),
+        'billing': FieldValue.increment(billingIncrement),
+        'discount': FieldValue.increment(discountIncrement),
+      });
     } catch (e) {
       throw Exception('Error al actualizar ventas y facturación: $e');
     }
@@ -432,23 +412,14 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
         discountDecrement, // Monto a restar de discount (valor positivo)
   }) async {
     try {
-      // Obtener la caja registradora actual
-      final activeCashRegisters = await getActiveCashRegisters(accountId);
-      final cashRegister = activeCashRegisters.firstWhere(
-        (cr) => cr.id == cashRegisterId,
-        orElse: () => throw Exception('Caja registradora no encontrada'),
-      );
+      final path =
+          FirestorePaths.accountCashRegister(accountId, cashRegisterId);
 
-      // Actualizar solo billing y discount (sales NO se modifica)
-      final updatedCashRegister = cashRegister.update(
-        // NO modificar sales - las ventas efectivas no incluyen anulaciones
-        billing: cashRegister.billing - billingDecrement, // Restar facturación
-        discount: cashRegister.discount - discountDecrement, // Restar descuento
-        annulledTickets: cashRegister.annulledTickets +
-            1, // ✅ Incrementar contador de anulados
-      );
-
-      await setCashRegister(accountId, updatedCashRegister);
+      await _dataSource.updateDocument(path, {
+        'billing': FieldValue.increment(-billingDecrement),
+        'discount': FieldValue.increment(-discountDecrement),
+        'annulledTickets': FieldValue.increment(1),
+      });
     } catch (e) {
       throw Exception('Error al actualizar billing por anulación: $e');
     }
@@ -517,9 +488,39 @@ class CashRegisterRepositoryImpl implements CashRegisterRepository {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> getTransactionsStream(String accountId) {
+  Stream<List<Map<String, dynamic>>> getTransactionsStream(
+    String accountId, {
+    DateTime? startDate,
+    DateTime? endDate,
+    int? limit,
+  }) {
     final path = FirestorePaths.accountTransactions(accountId);
-    return _dataSource.collectionStream(path).map((querySnapshot) {
+
+    var query = _dataSource
+        .collection(path)
+        .orderBy('creation', descending: true);
+
+    if (startDate != null) {
+      query = query.where('creation',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+    }
+
+    if (endDate != null) {
+      query = query.where('creation',
+          isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+    }
+
+    if (limit != null && startDate == null && endDate == null) {
+      query = query.limit(limit);
+    } else if (limit != null) {
+       // Si hay rango de fechas, el límite aplicaría a los resultados dentro de ese rango
+       query = query.limit(limit);
+    } else if (startDate == null && endDate == null) {
+      // Default safety limit if no filters provided
+       query = query.limit(20);
+    }
+
+    return _dataSource.streamDocuments(query).map((querySnapshot) {
       return querySnapshot.docs.map((doc) {
         final data = doc.data();
         // Normalizar timestamps en el documento

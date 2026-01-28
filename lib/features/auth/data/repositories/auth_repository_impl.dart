@@ -402,6 +402,33 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> leaveBusinessAccount(
+      String accountId, String email) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      final batch = firestore.batch();
+
+      // 1. Referencia a la cuenta en el perfil del usuario
+      final userAccountRef =
+          firestore.doc(FirestorePaths.userManagedAccount(email, accountId));
+      batch.delete(userAccountRef);
+
+      // 2. Referencia al usuario en la lista de usuarios de la cuenta
+      final accountUserRef =
+          firestore.doc(FirestorePaths.accountUser(accountId, email));
+      batch.delete(accountUserRef);
+
+      await batch.commit();
+
+      return const Right(null);
+    } catch (e) {
+      return Left(
+          FirestoreFailure('Error al salir de la cuenta: ${e.toString()}'));
+    }
+  }
+
   /// Helper para eliminar colecciones grandes por lotes
   Future<void> _deleteCollection(Query collectionRef) async {
     // Implementación recursiva por lotes

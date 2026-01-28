@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'i_firestore_datasource.dart';
+import '../../services/monitoring/query_counter_service.dart';
 
 /// Implementación de Firestore DataSource
 ///
@@ -13,8 +14,9 @@ import 'i_firestore_datasource.dart';
 @LazySingleton(as: IFirestoreDataSource)
 class FirestoreDataSource implements IFirestoreDataSource {
   final FirebaseFirestore _firestore;
+  final QueryCounterService _queryCounter;
 
-  FirestoreDataSource(this._firestore);
+  FirestoreDataSource(this._firestore, this._queryCounter);
 
   @override
   CollectionReference<Map<String, dynamic>> collection(String path) {
@@ -31,19 +33,35 @@ class FirestoreDataSource implements IFirestoreDataSource {
     Query<Map<String, dynamic>> query, {
     Source source = Source.serverAndCache,
   }) async {
-    return await query.get(GetOptions(source: source));
+    final snapshot = await query.get(GetOptions(source: source));
+    
+    // Contar lecturas solo si no vienen de caché
+    if (!snapshot.metadata.isFromCache) {
+      _queryCounter.incrementReads(snapshot.docs.length);
+    }
+    
+    return snapshot;
   }
 
   @override
   Stream<QuerySnapshot<Map<String, dynamic>>> streamDocuments(
     Query<Map<String, dynamic>> query,
   ) {
-    return query.snapshots();
+    return query.snapshots().map((snapshot) {
+      // En streams, contar solo cambios si no es de caché
+      // Nota: La primera emisión trae todos los docs como 'added'
+       if (!snapshot.metadata.isFromCache) {
+        // En teoría deberíamos contar solo docChanges para actualizaciones
+        // pero para simplificar y ser conservadores con el costo estimado:
+        _queryCounter.incrementReads(snapshot.docChanges.length);
+      }
+      return snapshot;
+    });
   }
 
   @override
   Stream<QuerySnapshot<Map<String, dynamic>>> collectionStream(String path) {
-    return _firestore.collection(path).snapshots();
+    return streamDocuments(_firestore.collection(path));
   }
 
   @override
@@ -53,6 +71,7 @@ class FirestoreDataSource implements IFirestoreDataSource {
     bool merge = false,
   }) async {
     await _firestore.doc(path).set(data, SetOptions(merge: merge));
+    _queryCounter.incrementWrites(1);
   }
 
   @override
@@ -61,11 +80,13 @@ class FirestoreDataSource implements IFirestoreDataSource {
     Map<String, dynamic> data,
   ) async {
     await _firestore.doc(path).update(data);
+    _queryCounter.incrementWrites(1);
   }
 
   @override
   Future<void> deleteDocument(String path) async {
     await _firestore.doc(path).delete();
+    _queryCounter.incrementWrites(1);
   }
 
   @override
@@ -92,6 +113,7 @@ class FirestoreDataSource implements IFirestoreDataSource {
     }
 
     await batch.commit();
+    _queryCounter.incrementWrites(operations.length);
   }
 
   @override
@@ -103,6 +125,7 @@ class FirestoreDataSource implements IFirestoreDataSource {
     await _firestore.doc(path).update({
       field: FieldValue.increment(value),
     });
+    _queryCounter.incrementWrites(1);
   }
 
   @override

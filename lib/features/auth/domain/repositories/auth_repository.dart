@@ -93,6 +93,13 @@ abstract class AuthRepository {
   /// 4. Elimina la cuenta de autenticación de Firebase (Auth)
   Future<Either<Failure, void>> deleteUserAccount();
 
+  /// Desvincula al usuario de la cuenta de negocio
+  ///
+  /// **Acciones:**
+  /// 1. Elimina referencia en /USERS/{email}/ACCOUNTS/{accountId}
+  /// 2. Elimina usuario en /ACCOUNTS/{accountId}/USERS/{email}
+  Future<Either<Failure, void>> leaveBusinessAccount(String accountId, String email);
+
   /// Stream que emite el usuario autenticado actual
   ///
   /// Emite null cuando no hay usuario autenticado

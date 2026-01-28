@@ -17,6 +17,7 @@ import '../../domain/usecases/update_business_account_usecase.dart';
 
 import '../../domain/usecases/delete_business_account_usecase.dart';
 import '../../domain/usecases/delete_user_account_usecase.dart';
+import '../../domain/usecases/leave_business_account_usecase.dart';
 
 /// Provider para gestionar el estado de autenticación
 ///
@@ -37,6 +38,7 @@ class AuthProvider extends ChangeNotifier {
   final UpdateBusinessAccountUseCase _updateBusinessAccountUseCase;
   final DeleteBusinessAccountUseCase _deleteBusinessAccountUseCase;
   final DeleteUserAccountUseCase _deleteUserAccountUseCase;
+  final LeaveBusinessAccountUseCase _leaveBusinessAccountUseCase;
 
   final AuthRepository _authRepository;
 
@@ -90,7 +92,7 @@ class AuthProvider extends ChangeNotifier {
     this._updateBusinessAccountUseCase,
     this._deleteBusinessAccountUseCase,
     this._deleteUserAccountUseCase,
-
+    this._leaveBusinessAccountUseCase,
     this._authRepository,
   ) {
     debugPrint('🚀 [AuthProvider] Constructor - Inicializando...');
@@ -181,6 +183,11 @@ class AuthProvider extends ChangeNotifier {
         _authError = null;
         _isSigningInWithGoogle = false;
         _isSigningInAsGuest = false;
+
+        // Limpiar persistencia local
+        _getUserAccountsUseCase.removeSelectedAccountId();
+        _getUserAccountsUseCase.clearAdminProfile();
+
         debugPrint('✅ Cierre de sesión exitoso');
       },
     );
@@ -447,6 +454,53 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Gestiona la eliminación de acceso según el rol del admin
+  ///
+  /// - Si es **SuperAdmin (Dueño)**: Elimina el negocio completo
+  /// - Si es **Admin/Empleado**: Solo sale del negocio (Leave)
+  Future<bool> deleteAdminAccess(String accountId, AdminProfile admin) async {
+    // Caso 1: SuperAdmin -> Eliminar negocio permanentemente
+    if (admin.superAdmin) {
+      debugPrint('🚨 [AuthProvider] SuperAdmin detectado: eliminando negocio $accountId');
+      return deleteBusinessAccount(accountId);
+    }
+    
+    // Caso 2: Empleado -> Solo salir del negocio
+    debugPrint('👋 [AuthProvider] Admin/Empleado: saliendo del negocio $accountId');
+    return leaveBusinessAccount(accountId, admin.email);
+  }
+
+  Future<bool> leaveBusinessAccount(String accountId, String email) async {
+    try {
+      debugPrint('👋 [AuthProvider] Saliendo de cuenta: $accountId');
+      final result = await _leaveBusinessAccountUseCase(
+        accountId: accountId,
+        email: email,
+      );
+
+      return result.fold(
+        (failure) {
+          debugPrint('❌ [AuthProvider] Error al salir de cuenta: ${failure.message}');
+          _authError = failure.message;
+          notifyListeners();
+          return false;
+        },
+        (_) {
+          debugPrint('✅ [AuthProvider] Salida exitosa de: $accountId');
+          _accountsAssociateds.removeWhere((a) => a.id == accountId);
+          notifyListeners();
+          return true;
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ [AuthProvider] Error inesperado: $e');
+      _authError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Mantenemos este por compatibilidad, pero ya no debería usarse desde la UI principal
   Future<bool> deleteUserAccount() async {
     try {
        debugPrint('🚨 [AuthProvider] Eliminando usuario y todos sus datos');
@@ -474,6 +528,4 @@ class AuthProvider extends ChangeNotifier {
        return false;
     }
   }
-
-
 }

@@ -209,15 +209,23 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
   Future<void> _confirmDeleteBusiness() async {
     final theme = Theme.of(context);
     final accountName = widget.account?.name ?? 'Cuenta de negocio';
+    final isOwner = widget.admin.superAdmin;
     
+    // Configurar textos según rol (Dueño vs Empleado)
+    final title = isOwner ? '¿Eliminar negocio?' : '¿Salir del negocio?';
+    final content = isOwner 
+        ? 'Estás a punto de eliminar "$accountName".\n\nEsta acción es IRREVERSIBLE. Se perderán todos los datos:\n• Catálogo de productos\n• Historial de ventas\n• Registros de caja\n• Accesos de usuarios'
+        : 'Estás a punto de salir de "$accountName".\n\nPerderás el acceso a sus datos, pero tu usuario personal seguirá activo en otros comercios.';
+    
+    final confirmBtnText = isOwner ? 'Sí, eliminar permanentemente' : 'Sí, salir del negocio';
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar negocio?'),
+        title: Text(title),
         icon: Icon(Icons.warning_amber_rounded,
             color: theme.colorScheme.error, size: 48),
-        content: Text(
-            'Estás a punto de eliminar "$accountName".\n\nEsta acción es IRREVERSIBLE. Se perderán todos los datos:\n• Catálogo de productos\n• Historial de ventas\n• Registros de caja\n• Accesos de usuarios'),
+        content: Text(content),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -226,22 +234,22 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
               style: FilledButton.styleFrom(
                   backgroundColor: theme.colorScheme.error),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sí, eliminar permanentemente')),
+              child: Text(confirmBtnText)),
         ],
       ),
     );
 
     if (confirm != true || !mounted) return;
 
-    _handleDeleteBusiness(accountName);
+    _handleDeleteBusiness(accountName, isOwner);
   }
 
-  void _handleDeleteBusiness(String accountName) {
+  void _handleDeleteBusiness(String accountName, bool isOwner) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => ProcessSuccessView(
-          loadingText: 'Eliminando cuenta...',
-          successTitle: '¡Cuenta eliminada!',
+          loadingText: isOwner ? 'Eliminando cuenta...' : 'Saliendo del negocio...',
+          successTitle: isOwner ? '¡Cuenta eliminada!' : '¡Salida exitosa!',
           successSubtitle: accountName,
           finalText: 'Redirigiendo...',
           loadingDuration: 1500,
@@ -251,17 +259,25 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
             final authProvider = context.read<AuthProvider>();
             final salesProvider = context.read<SalesProvider>();
             
-            final success = await authProvider.deleteBusinessAccount(widget.account!.id);
+            // Usar el método unificado que discierne entre eliminar o salir según el rol
+            final success = await authProvider.deleteAdminAccess(
+                widget.account!.id, 
+                widget.admin
+            );
 
             if (!context.mounted) return;
 
             if (success) {
               salesProvider.cleanData();
-              Navigator.of(context).pop();
+              
+              // Navegar al root para que updatee la UI de HomePage
+              // Esto sacará la visa de ProcessView, luego la vista de AccountBusinessView
+              // Y finalmente volverá a la pantalla de selección si es necesario
+               Navigator.of(context).popUntil((route) => route.isFirst);
             } else {
               Navigator.of(context).pop();
               if (context.mounted) {
-                context.showErrorSnackBar(authProvider.authError ?? 'Error al eliminar negocio');
+                context.showErrorSnackBar(authProvider.authError ?? 'Error al procesar la solicitud');
               }
             }
           },
@@ -274,15 +290,21 @@ class _AccountBusinessViewState extends State<AccountBusinessView> {
     final theme = Theme.of(context);
     final errorColor = theme.colorScheme.error;
 
+    final isOwner = widget.admin.superAdmin;
+    final title = isOwner ? 'Eliminar este negocio' : 'Salir de este negocio';
+    final subtitle = isOwner 
+        ? 'Borra permanentemente la cuenta y todos sus datos'
+        : 'Remueve tu acceso a este negocio';
+
     return ListTile(
       contentPadding: EdgeInsets.zero, 
       title: Text(
-        'Eliminar este negocio',
+        title,
         style: TextStyle(
             color: errorColor, fontWeight: FontWeight.bold),
       ),
-      subtitle: const Text(
-        'Borra permanentemente la cuenta y todos sus datos',
+      subtitle: Text(
+        subtitle,
       ),
       onTap: _isLoading ? null : _confirmDeleteBusiness,
     );

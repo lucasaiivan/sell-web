@@ -160,6 +160,14 @@ class FirestorePaths {
       '/ACCOUNTS/$accountId/SETTINGS/analytics_preferences';
 
   // ==========================================
+  // METADATA Y SINCRONIZACIÓN
+  // ==========================================
+
+  /// Metadata de sincronización de la cuenta
+  static String accountMetadata(String accountId) =>
+      '/ACCOUNTS/$accountId/METADATA/sync_status';
+
+  // ==========================================
   // COLECCIONES DE USUARIOS (/USERS)
   // ==========================================
 

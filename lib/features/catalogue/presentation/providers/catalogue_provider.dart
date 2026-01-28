@@ -148,7 +148,7 @@ class _CatalogueState {
 }
 
 /// Provider para gestionar el estado del catálogo de productos
-@injectable
+@lazySingleton
 class CatalogueProvider extends ChangeNotifier
     implements InitializableProvider {
   bool _shouldNotifyListeners = true;
@@ -330,13 +330,23 @@ class CatalogueProvider extends ChangeNotifier
     this._deleteProviderUseCase,
   );
 
+  // Track current account to prevent re-initialization
+  String? _currentAccountId;
+
   void initCatalogue(String id) {
     if (id.isEmpty) {
       throw Exception('El ID de la cuenta no puede estar vacío.');
     }
 
+    // Prevent re-initialization if already connected to this account
+    if (_currentAccountId == id && _catalogueSubscription != null) {
+      debugPrint('ℹ️ CatalogueProvider already initialized for account: $id');
+      return;
+    }
+
     if (_disposed) return;
 
+    _currentAccountId = id;
     _catalogueSubscription?.cancel();
 
     _updateState(const _CatalogueState(
@@ -726,10 +736,41 @@ class CatalogueProvider extends ChangeNotifier
       throw Exception('El código del producto es requerido');
     }
 
-    try {
-      _state = _state.copyWith(isLoading: true);
-      notifyListeners();
+    // ─────────────────────────────────────────────────────────────────────────
+    // OPTIMISTIC UPDATE: Actualizar UI inmediatamente
+    // ─────────────────────────────────────────────────────────────────────────
+    final previousProducts = List<ProductCatalogue>.from(_state.products);
+    var optimisticProduct = product;
+    
+    // Si es nuevo y no tiene ID, usar código temporalmente para la UI
+    if (isCreatingMode && optimisticProduct.id.isEmpty) {
+        optimisticProduct = optimisticProduct.copyWith(id: optimisticProduct.code);
+    }
+    
+    // Si hay imagen nueva bytes, no podemos mostrarla optimísticamente fácil 
+    // sin subirla primero, pero el resto de datos sí.
+    
+    final updatedList = List<ProductCatalogue>.from(_state.products);
+    if (isCreatingMode) {
+        updatedList.add(optimisticProduct);
+    } else {
+        final index = updatedList.indexWhere((p) => p.id == optimisticProduct.id);
+        if (index != -1) {
+            updatedList[index] = optimisticProduct;
+        }
+    }
+    
+    // Ordenar y actualizar estado local SIN loading
+    updatedList.sort((a, b) => b.upgrade.compareTo(a.upgrade));
+    _updateState(_state.copyWith(products: updatedList));
+    _rebuildCaches(updatedList);
+    _refreshFilteredView();
+    // ─────────────────────────────────────────────────────────────────────────
 
+    try {
+      // NOTE: No ponemos isLoading=true para evitar reconstrucción masiva
+      // El formulario ya muestra su propio loading (ProcessSuccessView)
+      
       final existedInCatalogue = productExistsInCatalogue(product.code);
 
       var productToSave = product;
@@ -805,12 +846,47 @@ class CatalogueProvider extends ChangeNotifier
       );
 
       return result.fold(
-        (failure) => throw Exception(failure.message),
-        (saveResult) => saveResult,
+        (failure) {
+          // REVERTIR CAMBIOS EN CASO DE ERROR
+          _updateState(_state.copyWith(products: previousProducts));
+          _rebuildCaches(previousProducts);
+          _refreshFilteredView();
+          
+          throw Exception(failure.message);
+        },
+        (saveResult) {
+            // Actualizar con el producto final (puede tener URLs de imagen o campos de servidor)
+             final finalList = List<ProductCatalogue>.from(_state.products);
+             if (isCreatingMode) {
+                // Buscar el temporal y reemplazar o asegurar que esté
+                 final index = finalList.indexWhere((p) => p.code == saveResult.updatedProduct.code);
+                 if (index != -1) {
+                     finalList[index] = saveResult.updatedProduct;
+                 } else {
+                     finalList.add(saveResult.updatedProduct);
+                 }
+            } else {
+                final index = finalList.indexWhere((p) => p.id == saveResult.updatedProduct.id);
+                if (index != -1) {
+                    finalList[index] = saveResult.updatedProduct;
+                }
+            }
+            finalList.sort((a, b) => b.upgrade.compareTo(a.upgrade));
+            
+            // Actualizar estado final silenciosamente
+            _updateState(_state.copyWith(products: finalList));
+            _rebuildCaches(finalList);
+            _refreshFilteredView();
+            
+            return saveResult;
+        },
       );
-    } finally {
-      _state = _state.copyWith(isLoading: false);
-      notifyListeners();
+    } catch (e) {
+      // REVERTIR CAMBIOS EN CASO DE EXCEPCIÓN
+      _updateState(_state.copyWith(products: previousProducts));
+       _rebuildCaches(previousProducts);
+       _refreshFilteredView();
+      throw Exception('Error al guardar producto: $e');
     }
   }
 

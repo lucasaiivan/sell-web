@@ -1260,53 +1260,6 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
     );
   }
 
-  /// Construye un chip de información minimalista
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String label,
-    required ThemeData theme,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: Colors.white.withValues(alpha: 0.9),
-            size: 18,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Obtiene el texto a mostrar para el método de pago
-  String _getPaymentMethodDisplayText(String payMode) {
-    // Normalizar código y obtener el método de pago desde el enum
-    final paymentMethod = PaymentMethod.fromCode(payMode);
-    return paymentMethod.displayName;
-  }
-
-  /// Obtiene el icono correspondiente al método de pago
-  IconData _getPaymentMethodIcon(String payMode) {
-    // Normalizar código y obtener el método de pago desde el enum
-    final paymentMethod = PaymentMethod.fromCode(payMode);
-    return paymentMethod.icon;
-  }
 }
 
 /// Dibuja una línea punteada horizontal para simular el corte de un ticket impreso

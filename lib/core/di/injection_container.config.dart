@@ -38,7 +38,6 @@ import 'package:sellweb/core/services/sync/i_sync_service.dart' as _i997;
 import 'package:sellweb/core/services/sync/sync_service_impl.dart' as _i782;
 import 'package:sellweb/core/services/theme/theme_service.dart' as _i750;
 import 'package:sellweb/core/services/window/full_screen_service.dart' as _i521;
-import 'package:sellweb/core/USAGE_EXAMPLES.dart' as _i1071;
 import 'package:sellweb/features/analytics/data/datasources/analytics_local_datasource.dart'
     as _i372;
 import 'package:sellweb/features/analytics/data/datasources/analytics_preferences_remote_datasource.dart'
@@ -525,10 +524,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i116.GoogleSignIn>(),
           gh<_i283.IStorageDataSource>(),
         ));
-    gh.lazySingleton<_i1071.IProductRepository>(
-        () => _i1071.ProductRepositoryImpl(gh<_i562.IFirestoreDataSource>()));
-    gh.lazySingleton<_i1071.GetProductsUseCase>(
-        () => _i1071.GetProductsUseCase(gh<_i1071.IProductRepository>()));
     gh.lazySingleton<_i754.MultiUserRepository>(() =>
         _i431.MultiUserRepositoryImpl(gh<_i925.MultiUserRemoteDataSource>()));
     gh.lazySingleton<_i442.CreateUserUseCase>(
@@ -558,8 +553,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i563.GetAccountAdminsUseCase(gh<_i840.AccountRepository>()));
     gh.lazySingleton<_i2.RemoveSelectedAccountIdUseCase>(() =>
         _i2.RemoveSelectedAccountIdUseCase(gh<_i840.AccountRepository>()));
-    gh.factory<_i1071.ProductProvider>(
-        () => _i1071.ProductProvider(gh<_i1071.GetProductsUseCase>()));
     gh.lazySingleton<_i33.FetchAdminProfileUseCase>(() =>
         _i33.FetchAdminProfileUseCase(gh<_i563.GetAccountAdminsUseCase>()));
     gh.lazySingleton<_i817.GetProfilesAccountsAssociatedUseCase>(

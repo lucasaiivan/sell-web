@@ -22,7 +22,7 @@ Para mantener consistencia, usa los componentes base en lugar de crear widgets d
     
 
 ## Principios de Diseño
-1.  **Atomismo:** Construye widgets pequeños. Si un widget supera las 100 líneas, divídelo.
+1.  **Atomismo:** Reutiliza los widgests de la carpeta `/lib/core/presentation/` en lo posible, crea widgests reutilizables si es necesario y va reutilizar en mas de una pantalla, Crea widgets modulares segun las responsabilidades de cada uno (avitar generar muchos wisgets desacoplados innecesariamente).
 2.  **Adaptive:** La UI debe responder bien a Mobile, Tablet, Desktop y Web con metricas definidas en `helpers/`.
 3.  **Feedback:** reutiliza `/feedback/` o crea 'feedback' realmente util en la UI para mensajes efímeros.
 4.  **Loading:** Implementa estados de carga visuales (Skeletons/Shimmer) mientras esperas datos asíncronos y `/success` para despues de cada operacion critica.

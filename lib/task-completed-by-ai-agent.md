@@ -1,3 +1,7 @@
+### [2026-01-31 01:35] Despliegue a Producción
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy`).
+- **Resumen:** Se desplegó una nueva versión de la web app en Firebase Hosting tras actualizar dependencias y compilar una release limpia.
+
 ### [2026-01-31 01:23] Mejora UI Botón Combos y Click en Items
 - **Tareas:** Se actualizó el botón de acción en sección Combos para mostrar 'Editar' (Icono Edit) si hay items. Se hicieron clickeables los items del listado resumen para abrir el modal de gestión.
 - **Resumen:** Se mejoró la intuitividad de la interfaz de combos permitiendo editar directamente al hacer click en los items y reflejando el estado de edición en el botón principal.

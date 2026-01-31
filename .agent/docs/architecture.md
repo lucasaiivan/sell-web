@@ -71,13 +71,14 @@ graph TD
 
 ### 1. Features (`lib/features/`)
 El núcleo del negocio está dividido en dominios estancos.
+*   **landing:** Páginas públicas/informativas.
 *   **auth:** Gestión de sesión, perfiles y seguridad.
+*   **home:** Gestiona la navegación entre las pantallas principales.
 *   **catalogue:** Gestión de productos, categorías, variantes y combos.
 *   **sales:** Puntos de venta, lógica de facturación y carritos.
-*   **cash_register:** Control de caja, aperturas y cierres.
-*   **analytics:** Métricas y reportes.
+*   **cash_register:** Historial de arqueos de cajas.
+*   **analytics:** historial transacciones, Métricas y reportes.
 *   **multiuser:** Gestión de roles y permisos.
-*   **landing:** Páginas públicas/informativas.
 
 ### 2. Core (`lib/core/`)
 Utilidades transversales compartidas por todas las features. Esta carpeta organiza los componentes compartidos y la lógica base de toda la aplicación.

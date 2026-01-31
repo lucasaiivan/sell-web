@@ -2,26 +2,30 @@
 
 El proyecto utiliza **Material Design 3** con una implementación modular de componentes reutilizables.
 
-## Estructura de UI (`lib/core/presentation/`)
-
 ### 1. Theme
 *   Gestión centralizada de temas (Light/Dark) en `theme/`.
 *   Colores y tipografía definidos globalmente.
 
-### 2. Componentes Globales
+### 2. Estructuran y Componentes Globales de UI (`lib/core/presentation/`)
 Para mantener consistencia, usa los componentes base en lugar de crear widgets desde cero:
 *   **Dialogs:** Alertas y confirmaciones estándar en `dialogs/`.
 *   **Modals:** BottomSheets para acciones secundarias en `modals/`.
 *   **Widgets:** Librería de átomos y moléculas compartidos en `widgets/`.
-    *   Botones personalizados.
-    *   Inputs de texto con validación.
-    *   Elementos de tarjeta (Cards).
+    *   `buttons` : Botones personalizados.
+    *   `dialogs` : Dialogs personalizados.
+    *   `feedback` : Feedbacks personalizados.
+    *   `graphics` : Gráficos personalizados (PercentageBarChart).
+    *   `inputs` : Inputs personalizados.
+    *   `navigation` : widgets personalizados para navegación.
+    *   `success` : Widget reutilizable para mostrar confirmación visual de procesos
+    *   `ui` : mas widgets personalizados para UI (avartar de producto, avatar de usuario, divider, image, listile,progress, etc...).
+    
 
 ## Principios de Diseño
 1.  **Atomismo:** Construye widgets pequeños. Si un widget supera las 100 líneas, divídelo.
-2.  **Adaptive:** La UI debe responder bien a Web y Móvil.
-3.  **Feedback:** Usa `Feedback` en la UI para mensajes efímeros y `Dialogs` para decisiones críticas.
-4.  **Loading:** Implementa estados de carga visuales (Skeletons/Shimmer) mientras esperas datos asíncronos.
+2.  **Adaptive:** La UI debe responder bien a Mobile, Tablet, Desktop y Web con metricas definidas en `helpers/`.
+3.  **Feedback:** reutiliza `/feedback/` o crea 'feedback' realmente util en la UI para mensajes efímeros.
+4.  **Loading:** Implementa estados de carga visuales (Skeletons/Shimmer) mientras esperas datos asíncronos y `/success` para despues de cada operacion critica.
 
 ## Recursos
 *   **Iconografía:** Standard Material Icons de material design. 

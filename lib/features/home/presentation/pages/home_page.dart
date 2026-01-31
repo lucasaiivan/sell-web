@@ -17,7 +17,6 @@ import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/window/full_screen_service.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
-/// Controla el flujo entre: selección de cuenta, ventas y catálogo
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 

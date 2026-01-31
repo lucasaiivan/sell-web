@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/monitoring/query_counter_service.dart';
 
+/// Widget que muestra un contador de consultas (tests UI)
 class QueryCounterWidget extends StatefulWidget {
   const QueryCounterWidget({super.key});
 

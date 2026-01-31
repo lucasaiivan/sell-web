@@ -25,6 +25,7 @@ class BaseBottomSheet extends StatefulWidget {
     this.onSearch,
     this.searchHint = 'Buscar...',
     this.searchController,
+    this.initialSearchMode = false,
   });
 
   final String title;
@@ -47,6 +48,9 @@ class BaseBottomSheet extends StatefulWidget {
   /// Controlador opcional parea el buscador
   final TextEditingController? searchController;
 
+  /// Si es true, inicia con el buscador abierto
+  final bool initialSearchMode;
+
   @override
   State<BaseBottomSheet> createState() => _BaseBottomSheetState();
 }
@@ -59,6 +63,7 @@ class _BaseBottomSheetState extends State<BaseBottomSheet> {
   void initState() {
     super.initState();
     _searchController = widget.searchController ?? TextEditingController();
+    _isSearching = widget.initialSearchMode;
   }
 
   @override
@@ -326,6 +331,7 @@ Future<T?> showBaseBottomSheet<T>({
   ValueChanged<String>? onSearch,
   String searchHint = 'Buscar...',
   TextEditingController? searchController,
+  bool initialSearchMode = false,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -345,6 +351,7 @@ Future<T?> showBaseBottomSheet<T>({
       onSearch: onSearch,
       searchHint: searchHint,
       searchController: searchController,
+      initialSearchMode: initialSearchMode,
     ),
   );
 }

@@ -225,6 +225,8 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     }
   }
 
+  bool _isExpanded = false;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -233,15 +235,15 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
     return ListTileAppExpanded(
       controller: _listTileController,
       title: 'Ganancias e impuestos',
-      subtitle: Text(
-        'Define el margen de ganancia y los impuestos aplicables',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
+      subtitle: _buildSubtitle(theme, colorScheme),
       icon: Icons.calculate_outlined,
       iconColor: colorScheme.primary, 
       initiallyExpanded: false,
+      onExpansionChanged: (expanded) {
+        setState(() {
+          _isExpanded = expanded;
+        });
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -301,6 +303,70 @@ class _MarginCalculatorCardState extends State<MarginCalculatorCard> {
         ],
       ),
     );
+  }
+
+  Widget _buildSubtitle(ThemeData theme, ColorScheme colorScheme) {
+    // Si esta expandido, mostrar el texto de ayuda genérico
+    if (_isExpanded) {
+      return Text(
+        'Define el margen de ganancia y los impuestos aplicables',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+
+    // Si esta colapsado, mostrar chips resumen
+    final marginText = _marginController.text.replaceAll(',', '.');
+    final margin = double.tryParse(marginText) ?? 0.0;
+    
+    final hasIva = _currentIva > 0;
+    final hasMargin = margin > 0;
+
+    if (!hasIva && !hasMargin) {
+       // Si no hay nada configurado, mostrar texto ayuda también
+       return Text(
+        'Define el margen de ganancia y los impuestos aplicables',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        if (hasIva)
+          _buildChip(theme, 'IVA $_currentIva%', Colors.blue.shade100, Colors.blue.shade900),
+        if (hasMargin)
+          _buildChip(theme, 'Ganancia ${margin.toStringAsFixed(0)}%', Colors.green.shade100, Colors.green.shade900),
+      ],
+    );
+  }
+
+  Widget _buildChip(ThemeData theme, String label, Color bg, Color text) {
+      final isDark = theme.brightness == Brightness.dark;
+      // Ajustar colores para modo oscuro si es necesario
+      final finalBg = isDark ? bg.withOpacity(0.2) : bg;
+      final finalText = isDark ? text.withOpacity(0.9) : text;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: finalBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: finalText.withOpacity(0.2), width: 0.5),
+        ),
+        child: Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: finalText,
+            fontWeight: FontWeight.w600,
+            fontSize: 10,
+          ),
+        ),
+      );
   }
 
   Widget _buildTaxSelector(ColorScheme colorScheme) {

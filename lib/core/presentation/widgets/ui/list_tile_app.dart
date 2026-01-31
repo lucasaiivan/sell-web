@@ -65,6 +65,13 @@ class ListTileAppExpanded extends StatefulWidget {
   /// Controlador opcional
   final ListTileController? controller;
 
+  /// Callback cuando cambia el estado de expansión
+  final ValueChanged<bool>? onExpansionChanged;
+
+  /// Widget de acción opcional en el header
+  final Widget? action;
+
+
   const ListTileAppExpanded({
     super.key,
     this.icon,
@@ -77,6 +84,8 @@ class ListTileAppExpanded extends StatefulWidget {
     this.initiallyExpanded = false,
     this.contentPadding,
     this.controller,
+    this.onExpansionChanged,
+    this.action,
   });
 
   @override
@@ -128,6 +137,7 @@ class _ListTileAppExpandedState extends State<ListTileAppExpanded>
       } else {
         _controller.reverse();
       }
+      widget.onExpansionChanged?.call(_isExpanded);
     });
   }
 
@@ -136,6 +146,7 @@ class _ListTileAppExpandedState extends State<ListTileAppExpanded>
       setState(() {
         _isExpanded = true;
         _controller.forward();
+        widget.onExpansionChanged?.call(_isExpanded);
       });
     }
   }
@@ -145,6 +156,7 @@ class _ListTileAppExpandedState extends State<ListTileAppExpanded>
       setState(() {
         _isExpanded = false;
         _controller.reverse();
+        widget.onExpansionChanged?.call(_isExpanded);
       });
     }
   }
@@ -219,6 +231,10 @@ class _ListTileAppExpandedState extends State<ListTileAppExpanded>
                       ],
                     ),
                   ),
+                  if (widget.action != null) ...[
+                    widget.action!,
+                    SizedBox(width: widget.isMobile ? 8 : 12),
+                  ],
                   RotationTransition(
                     turns: _iconTurns,
                     child: Icon(

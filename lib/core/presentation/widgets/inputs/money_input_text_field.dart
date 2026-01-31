@@ -31,6 +31,7 @@ class MoneyInputTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final bool showCurrencyIcon;
   final EdgeInsetsGeometry? contentPadding;
+  final bool enabled;
 
   const MoneyInputTextField({
     super.key,
@@ -58,6 +59,7 @@ class MoneyInputTextField extends StatefulWidget {
     this.keyboardType,
     this.showCurrencyIcon = true,
     this.contentPadding,
+    this.enabled = true,
   });
 
   @override
@@ -118,6 +120,7 @@ class _MoneyInputTextFieldState extends State<MoneyInputTextField> {
 
     return TextFormField(
       controller: widget.controller,
+      enabled: widget.enabled,
       focusNode: widget.focusNode,
       keyboardType: widget.keyboardType ??
           const TextInputType.numberWithOptions(decimal: true, signed: false),

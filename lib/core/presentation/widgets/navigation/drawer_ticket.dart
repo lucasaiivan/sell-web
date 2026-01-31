@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart';
 

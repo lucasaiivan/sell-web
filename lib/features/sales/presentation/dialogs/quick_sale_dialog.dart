@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../../core/core.dart';
-import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
+import 'package:sellweb/core/presentation/widgets/ui/quantity_selector.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 
 /// Diálogo modernizado para venta rápida siguiendo Material Design 3

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Widget que muestra un tag de combo 
 class ComboTag extends StatelessWidget {
   final bool isCompact;
   const ComboTag({super.key, this.isCompact = false});

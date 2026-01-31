@@ -12,7 +12,7 @@ import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
 import '../providers/catalogue_provider.dart';
 import '../widgets/brand_search_dialog.dart';
 import '../widgets/margin_calculator_card.dart';
-import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
+import 'package:sellweb/core/presentation/widgets/ui/quantity_selector.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart'; 

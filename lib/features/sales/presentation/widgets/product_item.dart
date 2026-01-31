@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
-import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 
 class ProductItem extends StatefulWidget {
   final ProductCatalogue producto;

@@ -4,7 +4,7 @@ import 'product_price_edit_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
-import 'package:sellweb/core/presentation/widgets/quantity_selector.dart';
+import 'package:sellweb/core/presentation/widgets/ui/quantity_selector.dart';
 import 'package:provider/provider.dart' as provider_package;
 
 /// Diálogo para editar producto seleccionado

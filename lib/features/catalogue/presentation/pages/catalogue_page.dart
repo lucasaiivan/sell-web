@@ -12,7 +12,7 @@ import '../views/product_catalogue_view.dart';
 
 import '../widgets/catalogue_metrics_bar.dart';
 import '../widgets/product_list_tile.dart';
-import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import '../views/search_product_full_screen_view.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
 import 'package:sellweb/features/catalogue/domain/entities/catalogue_metric.dart';

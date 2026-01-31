@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../providers/catalogue_provider.dart';
 import 'product_edit_catalogue_view.dart';

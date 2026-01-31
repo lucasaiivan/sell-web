@@ -11,7 +11,7 @@ import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dar
 // Presentation imports
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
-import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import 'package:sellweb/features/catalogue/presentation/widgets/product_search_field.dart';
 
 /// Vista de pantalla completa para el catálogo de productos con búsqueda avanzada.

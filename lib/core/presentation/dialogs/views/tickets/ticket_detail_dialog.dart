@@ -1,7 +1,7 @@
 import 'package:sellweb/core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
-import 'package:sellweb/core/presentation/widgets/combo_tag.dart';
+import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 
 /// Diálogo reutilizable para mostrar los detalles completos de un ticket
 ///

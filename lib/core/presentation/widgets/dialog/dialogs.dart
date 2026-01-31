@@ -6,4 +6,4 @@ export 'base/base_dialog.dart';
 export 'base/standard_dialogs.dart';
 
 // 🎨 Componentes de UI reutilizables
-export 'components/dialog_components.dart';
+export 'base/dialog_components.dart';

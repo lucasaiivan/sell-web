@@ -11,7 +11,7 @@ export 'inputs/inputs.dart';
 export 'ui/ui.dart';
 
 // 🎯 Componentes base de diálogos
-export 'dialogs/dialogs.dart';
+export 'dialog/dialogs.dart';
 
 // 📢 Feedback y notificaciones
 export 'feedback/feedback.dart';

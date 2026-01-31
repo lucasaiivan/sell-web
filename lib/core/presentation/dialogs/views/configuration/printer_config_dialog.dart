@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
-import '../../../widgets/dialogs/base/base_dialog.dart';
-import '../../../widgets/dialogs/base/standard_dialogs.dart';
-import '../../../widgets/dialogs/components/dialog_components.dart';
+import '../../../widgets/dialog/base/base_dialog.dart';
+import '../../../widgets/dialog/base/standard_dialogs.dart';
+import '../../../widgets/dialog/base/dialog_components.dart';
 
 import 'package:sellweb/core/presentation/helpers/responsive_helper.dart';
 

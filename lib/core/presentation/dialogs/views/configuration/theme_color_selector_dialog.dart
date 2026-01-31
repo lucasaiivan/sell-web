@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../widgets/dialogs/base/base_dialog.dart';
+import '../../../widgets/dialog/base/base_dialog.dart';
 import 'package:sellweb/core/presentation/providers/theme_provider.dart';
 
 /// Diálogo para personalizar el tema de la aplicación (color y brillo)

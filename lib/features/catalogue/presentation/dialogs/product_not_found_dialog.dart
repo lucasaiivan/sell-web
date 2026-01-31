@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/core/presentation/widgets/dialog/base/base_dialog.dart';
+import 'package:sellweb/core/presentation/widgets/dialog/base/dialog_components.dart';
 
 /// Diálogo que se muestra cuando un producto no es encontrado
 class ProductNotFoundDialog extends StatelessWidget {

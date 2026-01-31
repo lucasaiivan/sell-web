@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/presentation/widgets/dialogs/base/base_dialog.dart';
-import 'package:sellweb/core/presentation/widgets/dialogs/components/dialog_components.dart';
+import 'package:sellweb/core/presentation/widgets/dialog/base/base_dialog.dart';
+import 'package:sellweb/core/presentation/widgets/dialog/base/dialog_components.dart';
 
 /// Diálogo de confirmación para descartar un ticket
 class DiscardTicketDialog extends StatelessWidget {

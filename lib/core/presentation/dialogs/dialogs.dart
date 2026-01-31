@@ -2,11 +2,11 @@
 // Centraliza todas las exportaciones de diálogos para fácil acceso
 
 // Base Components (from widgets/dialogs/)
-export '../widgets/dialogs/base/base_dialog.dart';
-export '../widgets/dialogs/base/standard_dialogs.dart';
+export '../widgets/dialog/base/base_dialog.dart';
+export '../widgets/dialog/base/standard_dialogs.dart';
 
 // UI Components (from widgets/dialogs/)
-export '../widgets/dialogs/components/dialog_components.dart';
+export '../widgets/dialog/base/dialog_components.dart';
 
 // Catalogue Dialogs
 export 'package:sellweb/features/catalogue/presentation/dialogs/add_product_dialog.dart';
@@ -31,8 +31,8 @@ export 'package:sellweb/features/auth/presentation/dialogs/admin_profile_info_di
 export 'package:sellweb/features/auth/presentation/dialogs/account_selection_dialog.dart';
 
 // Re-exportar funciones helper principales
-export '../widgets/dialogs/base/base_dialog.dart' show showBaseDialog;
-export '../widgets/dialogs/base/standard_dialogs.dart'
+export '../widgets/dialog/base/base_dialog.dart' show showBaseDialog;
+export '../widgets/dialog/base/standard_dialogs.dart'
     show
         showConfirmationDialog,
         showInfoDialog,

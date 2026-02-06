@@ -21,6 +21,8 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
 import '../views/dialogs/category_dialog.dart';
 import '../views/dialogs/provider_dialog.dart';
 import '../widgets/product_search_field.dart';
+import 'package:showcaseview/showcaseview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -38,11 +40,58 @@ class _CataloguePageState extends State<CataloguePage>
   final FocusNode _searchFocusNode = FocusNode();
   late TabController _tabController;
 
+  // Showcase Keys
+  final GlobalKey _addFabKey = GlobalKey();
+  final GlobalKey _filterKey = GlobalKey();
+  final GlobalKey _tabsKey = GlobalKey();
+  bool _showcaseInitialized = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+  }
+  
+  Future<bool> _shouldShowShowcase() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !(prefs.getBool('catalogue_page_showcase_shown') ?? false);
+  }
+
+  Future<void> _markShowcaseAsShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('catalogue_page_showcase_shown', true);
+  }
+
+  void _checkAndStartShowcase(BuildContext context) async {
+    if (_showcaseInitialized) return;
+    
+    final shouldShow = await _shouldShowShowcase();
+    if (!shouldShow) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+        
+        // Verificar que la página de catálogo esté activa antes de mostrar el showcase
+        // Esto previene que se inicie simultáneamente con showcases de otras páginas
+        final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+        if (homeProvider.currentPageIndex != 2) {
+          // Si no estamos en la página correcta, permitir retry cuando se navegue aquí
+          return;
+        }
+        
+        // Solo marcar como inicializado después de verificar que vamos a mostrar el showcase
+        _showcaseInitialized = true;
+        _markShowcaseAsShown();
+        
+        ShowCaseWidget.of(context).startShowCase([
+          _addFabKey,
+          _filterKey,
+          _tabsKey,
+        ]);
+      });
+    });
   }
 
   void _onTabChanged() {
@@ -69,20 +118,26 @@ class _CataloguePageState extends State<CataloguePage>
   Widget build(BuildContext context) {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-
-        // Navegar de vuelta a la página de ventas
-        homeProvider.navigateToSell();
+    return ShowCaseWidget(
+      builder: (context) {
+        _checkAndStartShowcase(context);
+        
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+    
+            // Navegar de vuelta a la página de ventas
+            homeProvider.navigateToSell();
+          },
+          child: Scaffold(
+            appBar: _buildAppBar(context),
+            drawer: const AppDrawer(),
+            body: _buildBody(context),
+            floatingActionButton: _buildFloatingActionButton(context),
+          ),
+        );
       },
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        drawer: const AppDrawer(),
-        body: _buildBody(context),
-        floatingActionButton: _buildFloatingActionButton(context),
-      ),
     );
   }
 
@@ -180,36 +235,42 @@ class _CataloguePageState extends State<CataloguePage>
           // Filtros (Visibles en todos los tabs)
           Consumer<CatalogueProvider>(
             builder: (context, catalogueProvider, _) {
-              return PopupMenuButton<CatalogueFilter>(
-                tooltip: catalogueProvider.hasActiveFilter
-                    ? 'Filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
-                    : 'Filtrar productos',
-                position: PopupMenuPosition.under,
-                offset: const Offset(0, 8),
-                initialValue: catalogueProvider.activeFilter,
-                onSelected: (filter) {
-                  catalogueProvider.applyFilter(filter);
-                  // Si estamos en otro tab y aplicamos un filtro (que no sea 'none'),
-                  // cambiar automáticamente al tab de productos
-                  if (_tabController.index != 0 &&
-                      filter != CatalogueFilter.none) {
-                    _tabController.animateTo(0);
-                  }
-                },
-                itemBuilder: (context) => _buildFilterMenuEntries(
-                  context,
-                  catalogueProvider.activeFilter,
-                ),
-                child: IgnorePointer(
-                  child: Badge(
-                    isLabelVisible: catalogueProvider.hasActiveFilter,
-                    alignment: const Alignment(0.4, -0.4),
-                    child: AppBarButtonCircle(
-                      icon: Icons.filter_alt_rounded,
-                      tooltip: catalogueProvider.hasActiveFilter
-                          ? 'Quitar filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
-                          : 'Filtrar productos',
-                      onPressed: () {},
+              return Showcase(
+                key: _filterKey,
+                title: '🌪️ Filtros Avanzados',
+                description: 'Filtra por stock bajo, agotados o favoritos entre otros filtros',
+                targetBorderRadius: BorderRadius.circular(50),
+                child: PopupMenuButton<CatalogueFilter>(
+                  tooltip: catalogueProvider.hasActiveFilter
+                      ? 'Filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
+                      : 'Filtrar productos',
+                  position: PopupMenuPosition.under,
+                  offset: const Offset(0, 8),
+                  initialValue: catalogueProvider.activeFilter,
+                  onSelected: (filter) {
+                    catalogueProvider.applyFilter(filter);
+                    // Si estamos en otro tab y aplicamos un filtro (que no sea 'none'),
+                    // cambiar automáticamente al tab de productos
+                    if (_tabController.index != 0 &&
+                        filter != CatalogueFilter.none) {
+                      _tabController.animateTo(0);
+                    }
+                  },
+                  itemBuilder: (context) => _buildFilterMenuEntries(
+                    context,
+                    catalogueProvider.activeFilter,
+                  ),
+                  child: IgnorePointer(
+                    child: Badge(
+                      isLabelVisible: catalogueProvider.hasActiveFilter,
+                      alignment: const Alignment(0.4, -0.4),
+                      child: AppBarButtonCircle(
+                        icon: Icons.filter_alt_rounded,
+                        tooltip: catalogueProvider.hasActiveFilter
+                            ? 'Quitar filtro: ${_getFilterLabel(catalogueProvider.activeFilter)}'
+                            : 'Filtrar productos',
+                        onPressed: () {},
+                      ),
                     ),
                   ),
                 ),
@@ -225,13 +286,22 @@ class _CataloguePageState extends State<CataloguePage>
             ),
         ],
       ),
-      bottom: TabBar(
-        controller: _tabController,
-        tabs: const [
-          Tab(text: 'Productos'),
-          Tab(text: 'Categorías'),
-          Tab(text: 'Proveedores'),
-        ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(kTextTabBarHeight),
+        child: Showcase(
+          key: _tabsKey,
+          title: '📑 Gestión de Catálogo',
+          description: 'Navega entre Productos, Categorías y Proveedores',
+          targetBorderRadius: BorderRadius.circular(12),
+          child: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Productos'),
+              Tab(text: 'Categorías'),
+              Tab(text: 'Proveedores'),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -548,20 +618,26 @@ class _CataloguePageState extends State<CataloguePage>
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
 
-    return isSmallScreen
-        ? FloatingActionButton(
-            heroTag: 'catalogue_add_fab',
-            onPressed: () =>
-                _handleFabAction(context, catalogueProvider, salesProvider),
-            child: const Icon(Icons.add),
-          )
-        : FloatingActionButton.extended(
-            heroTag: 'catalogue_add_fab',
-            onPressed: () =>
-                _handleFabAction(context, catalogueProvider, salesProvider),
-            icon: const Icon(Icons.add),
-            label: const Text('Agregar'),
-          );
+    return Showcase(
+      key: _addFabKey,
+      title: '➕ Nuevo Producto',
+      description: 'Agrega un nuevo producto al catálogo',
+      targetBorderRadius: BorderRadius.circular(50),
+      child: isSmallScreen
+          ? FloatingActionButton(
+              heroTag: 'catalogue_add_fab',
+              onPressed: () =>
+                  _handleFabAction(context, catalogueProvider, salesProvider),
+              child: const Icon(Icons.add),
+            )
+          : FloatingActionButton.extended(
+              heroTag: 'catalogue_add_fab',
+              onPressed: () =>
+                  _handleFabAction(context, catalogueProvider, salesProvider),
+              icon: const Icon(Icons.add),
+              label: const Text('Agregar'),
+            ),
+    );
   }
 
   /// Maneja la acción del FAB según la vista activa

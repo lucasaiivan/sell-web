@@ -66,9 +66,11 @@ class _AdminProfileInfoContent extends StatelessWidget {
           DialogComponents.sectionSpacing,
           _buildAccessRestrictions(context),
         ],
-        // Zona de peligro
-        DialogComponents.sectionSpacing,
-        _buildDangerZone(context),
+        // Zona de peligro (Solo si NO es invitado)
+        if (!Provider.of<AuthProvider>(context, listen: false).isGuest) ...[
+          DialogComponents.sectionSpacing,
+          _buildDangerZone(context),
+        ],
       ],
     );
   }

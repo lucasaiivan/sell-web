@@ -15,6 +15,7 @@ import 'package:sellweb/core/utils/helpers/user_access_validator.dart';
 import 'package:sellweb/core/presentation/widgets/widgets.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/window/full_screen_service.dart';
+import 'package:sellweb/core/services/demo_account/demo_account_service.dart';
 
 /// Página principal que gestiona la navegación entre las pantallas principales
 class HomePage extends StatefulWidget {
@@ -29,6 +30,9 @@ class _HomePageState extends State<HomePage> {
   String? _lastCheckedAdminId;
   UserAccessResult? _currentAccessResult;
   int? _lastPageIndex;
+  
+  /// Flag para controlar que los datos demo se carguen solo una vez
+  bool _demoProductsLoaded = false;
 
   @override
   void initState() {
@@ -125,7 +129,13 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _currentAccessResult = null;
           _lastCheckedAdminId = null;
+          _demoProductsLoaded = false; // Reset flag de carga de datos demo
         });
+
+        // Limpiar caché de DemoAccountService si viene de modo demo
+        if (sellProvider.profileAccountSelected.id == 'demo') {
+          DemoAccountService().clearCache();
+        }
 
         // Selecciona la cuenta y recarga el catálogo
         await sellProvider.initAccount(account: account, context: context);
@@ -246,7 +256,14 @@ class _HomePageState extends State<HomePage> {
                           setState(() {
                             _currentAccessResult = null;
                             _lastCheckedAdminId = null;
+                            _demoProductsLoaded = false; // Reset flag de carga de datos demo
                           });
+                          
+                          // Limpiar caché de DemoAccountService si es modo demo
+                          if (sellProvider.profileAccountSelected.id == 'demo') {
+                            DemoAccountService().clearCache();
+                          }
+                          
                           // Limpiar datos del provider
                           sellProvider.cleanData();
                         },
@@ -260,16 +277,27 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final authProvider = context.read<AuthProvider>();
-                          await authProvider.signOut();
+                      child: Consumer<AuthProvider>(
+                        builder: (context, authProvider, child) {
+                          final isGuest = authProvider.isGuest;
+                          
+                          return OutlinedButton(
+                            onPressed: () async {
+                              if (isGuest) {
+                                // Para invitados: navegar a login
+                                Navigator.of(context).pushReplacementNamed('/');
+                              } else {
+                                // Para usuarios normales: cerrar sesión
+                                await authProvider.signOut();
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: colorScheme.onSurfaceVariant,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(isGuest ? 'Iniciar Sesión' : 'Cerrar Sesión'),
+                          );
                         },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colorScheme.onSurfaceVariant,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text('Cerrar Sesión'),
                       ),
                     ),
                   ],
@@ -295,53 +323,160 @@ class _HomePageState extends State<HomePage> {
 
     final isDemo = sellProvider.profileAccountSelected.id == 'demo';
 
-    return Column(
-      children: [
-        if (isDemo)
-          Container(
-            width: double.infinity,
-            color: Colors.orange.shade800,
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            child: const Text(
-              'MODO INVITADO - Los datos no se guardarán',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+    return Material(
+      child: Column(
+        children: [
+          if (isDemo)
+          // view : banner modo invitado mejorado
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.amber.shade700, Colors.orange.shade600],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icono destacado
+                  Icon(
+                    Icons.auto_fix_high,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Textos informativos
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Modo Demostración',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text('Explora las funciones de la app libremente',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Botón de registro destacado
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.login, size: 16),
+                    label: const Text(
+                      'Iniciar Sesión',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.amber.shade900,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () async {
+                      final sellProvider = context.read<SalesProvider>();
+                      final authProvider = context.read<AuthProvider>();
+                      
+                      // Limpiar datos del provider
+                      sellProvider.cleanData();
+                      
+                      // Navegar solo si el widget sigue montado
+                      if (!context.mounted) return;
+                      
+                      // Para invitados: navegar a login
+                      await authProvider.signOut();
+                      
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushReplacementNamed('/');
+                    },
+                  ),
+                ],
+              ),
+            ),
+          // Banner de conectividad (muestra cuando está offline)
+          const ConnectivityBanner(),
+          Expanded(
+            child: IndexedStack(
+              index: homeProvider.currentPageIndex,
+              children: const [
+                SalesPage(), // 0: Ventas
+                AnalyticsPage(), // 1: Analíticas
+                CataloguePage(), // 2: Catálogo
+                MultiUserPage(), // 3: Usuarios
+                HistoryCashRegisterPage(), // 4: Historial de Caja
+              ],
             ),
           ),
-        // Banner de conectividad (muestra cuando está offline)
-        const ConnectivityBanner(),
-        Expanded(
-          child: IndexedStack(
-            index: homeProvider.currentPageIndex,
-            children: const [
-              SalesPage(), // 0: Ventas
-              AnalyticsPage(), // 1: Analíticas
-              CataloguePage(), // 2: Catálogo
-              MultiUserPage(), // 3: Usuarios
-              HistoryCashRegisterPage(), // 4: Historial de Caja
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   /// Maneja la carga de productos demo si corresponde
+  /// 
+  /// **Optimización:** Solo carga los datos una vez gracias al flag _demoProductsLoaded
+  /// y el caché interno de DemoAccountService
   void _handleDemoProducts(BuildContext context, SalesProvider sellProvider) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final catalogueProvider =
         Provider.of<CatalogueProvider>(context, listen: false);
 
+    // Solo cargar si:
+    // 1. Es cuenta demo
+    // 2. Usuario es anónimo
+    // 3. No se han cargado previamente (flag)
+    // 4. El catálogo está vacío
     if (sellProvider.profileAccountSelected.id == 'demo' &&
         authProvider.user?.isAnonymous == true &&
+        !_demoProductsLoaded &&
         catalogueProvider.products.isEmpty) {
-      final demoProducts =
-          authProvider.getUserAccountsUseCase.getDemoProducts();
+      
+      // Marcar como cargado ANTES de ejecutar para evitar re-entradas
+      _demoProductsLoaded = true;
+      
+      // Usar servicio con caché (primera llamada genera, subsecuentes usan caché)
+      final service = DemoAccountService();
+      final demoProducts = service.products;      // Usa caché lazy loading
+      final demoCategories = service.categories;  // Usa caché lazy loading
+      final demoProviders = service.providers;    // Usa caché lazy loading
+      
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        catalogueProvider.loadDemoProducts(demoProducts);
+        if (!context.mounted) return;
+        catalogueProvider.loadDemoProducts(
+          products: demoProducts,
+          categories: demoCategories,
+          providers: demoProviders,
+        );
       });
     }
   }

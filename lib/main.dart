@@ -210,21 +210,19 @@ Widget _buildAccountSpecificProviders({
         value: accountScope,
       ),
       // Exponer providers individuales para acceso directo desde widgets
-      ChangeNotifierProxyProvider<AccountScopeProvider, CatalogueProvider>(
-        create: (_) => accountScope.catalogueProvider,
-        update: (_, scope, __) => scope.catalogueProvider,
+      // IMPORTANTE: Usar .value porque estos objetos son gestionados por AccountScopeProvider
+      // y NO deben ser eliminados por este MultiProvider.
+      ChangeNotifierProvider<CatalogueProvider>.value(
+        value: accountScope.catalogueProvider,
       ),
-      ChangeNotifierProxyProvider<AccountScopeProvider, CashRegisterProvider>(
-        create: (_) => accountScope.cashRegisterProvider,
-        update: (_, scope, __) => scope.cashRegisterProvider,
+      ChangeNotifierProvider<CashRegisterProvider>.value(
+        value: accountScope.cashRegisterProvider,
       ),
-      ChangeNotifierProxyProvider<AccountScopeProvider, AnalyticsProvider>(
-        create: (_) => accountScope.analyticsProvider,
-        update: (_, scope, __) => scope.analyticsProvider,
+      ChangeNotifierProvider<AnalyticsProvider>.value(
+        value: accountScope.analyticsProvider,
       ),
-      ChangeNotifierProxyProvider<AccountScopeProvider, MultiUserProvider>(
-        create: (_) => accountScope.multiUserProvider,
-        update: (_, scope, __) => scope.multiUserProvider,
+      ChangeNotifierProvider<MultiUserProvider>.value(
+        value: accountScope.multiUserProvider,
       ),
     ],
     child: const HomePage(),

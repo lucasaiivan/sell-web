@@ -934,14 +934,24 @@ class CatalogueProvider extends ChangeNotifier
     }
   }
 
-  void loadDemoProducts(List<ProductCatalogue> demoProducts) {
+  void loadDemoProducts({
+    required List<ProductCatalogue> products,
+    required List<Category> categories,
+    required List<Provider> providers,
+  }) {
     if (_disposed) return;
     _shouldNotifyListeners = false;
+    
+    // Cargar listas auxiliares
+    _categories = categories;
+    _providers = providers;
+    
+    // Cargar productos y actualizar estado
     _state = _state.copyWith(
-      products: demoProducts,
+      products: products,
       isLoading: false,
     );
-    _rebuildCaches(demoProducts); // Reconstruir cachés
+    _rebuildCaches(products); // Reconstruir cachés
     _recomputeFilteredProducts(shouldNotify: false);
     _shouldNotifyListeners = true;
     notifyListeners();

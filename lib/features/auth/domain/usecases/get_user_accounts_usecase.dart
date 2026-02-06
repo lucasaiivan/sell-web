@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:injectable/injectable.dart';
-import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import '../repositories/account_repository.dart';
 import '../entities/admin_profile.dart';
 import '../entities/account_profile.dart';
 import '../../../../core/services/storage/app_data_persistence_service.dart';
+import '../../../../core/services/demo_account/demo_account_service.dart';
 
 /// Caso de uso: Gestión de cuentas y perfiles de administrador
 ///
@@ -223,26 +223,11 @@ class GetUserAccountsUseCase {
     );
   }
 
-  /// Devuelve una lista de productos de prueba para la cuenta demo.
-  List<ProductCatalogue> getDemoProducts({int count = 30}) {
-    return List.generate(
-        count,
-        (i) => ProductCatalogue(
-              id: 'demo_product_${i + 1}',
-              nameMark: 'Marca Demo',
-              image: '',
-              description: 'Producto de prueba #${i + 1}',
-              code: 'DEMO${(i + 1).toString().padLeft(3, '0')}',
-              salePrice: 10.0 + i,
-              quantityStock: (100 - i).toDouble(),
-              stock: true,
-              alertStock: 10.0,
-              currencySign: '24',
-              creation: DateTime.now(),
-              upgrade: DateTime.now(),
-              documentCreation: DateTime.now(),
-              documentUpgrade: DateTime.now(),
-            ));
+  /// Retorna usuarios demo para demostración de multiusuarios
+  /// 
+  /// Delega la generación a [DemoAccountService] para mantener coherencia
+  List<AdminProfile> getDemoUsers() {
+    return DemoAccountService().adminUsers;
   }
 
   // ==========================================

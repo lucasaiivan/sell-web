@@ -188,6 +188,13 @@ class CashRegister {
 
   // fromjson : convierte el json en un objeto
   factory CashRegister.fromMap(Map data) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is DateTime) return date;
+      return DateTime.now();
+    }
+
     return CashRegister(
       id: data['id'],
       description: data.containsKey('description') ? data['description'] : '',
@@ -196,12 +203,8 @@ class CashRegister {
       initialCash: data.containsKey('initialCash')
           ? double.parse(data['initialCash'].toString())
           : 0.0,
-      opening: data.containsKey('opening')
-          ? data['opening'].toDate()
-          : DateTime.now(),
-      closure: data.containsKey('closure')
-          ? data['closure'].toDate()
-          : DateTime.now(),
+      opening: parseDate(data['opening']),
+      closure: parseDate(data['closure']),
       sales: data.containsKey('sales') ? data['sales'] ?? 0 : 0,
       annulledTickets: data.containsKey('annulledTickets')
           ? data['annulledTickets'] ?? 0
@@ -244,8 +247,8 @@ class CashRegister {
         ? documentSnapshot['nameUser']
         : '';
     initialCash = documentSnapshot['initialCash'].toDouble();
-    opening = documentSnapshot['opening'].toDate();
-    closure = documentSnapshot['closure'].toDate();
+    opening = (documentSnapshot['opening'] as Timestamp).toDate();
+    closure = (documentSnapshot['closure'] as Timestamp).toDate();
     billing = documentSnapshot['billing'].toDouble();
     discount = documentSnapshot['discount'].toDouble();
     sales = documentSnapshot['sales'];
@@ -344,12 +347,22 @@ class CashFlow {
       };
   // fromjson : convierte el json en un objeto
   factory CashFlow.fromMap(Map<dynamic, dynamic> data) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is DateTime) return date;
+      return DateTime.now();
+    }
+
+    // Soporte para clave 'date' o 'timestamp'
+    final rawDate = data['date'] ?? data['timestamp'];
+
     return CashFlow(
       id: data['id'] ?? '',
       userId: data['userId'] ?? '',
       description: data['description'] ?? '',
       amount: (data['amount'] ?? 0).toDouble(),
-      date: data['date'].toDate(),
+      date: parseDate(rawDate),
     );
   }
 }

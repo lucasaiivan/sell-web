@@ -9,6 +9,7 @@ import 'package:sellweb/features/sales/presentation/providers/sales_provider.dar
 import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
 /// Consolidado para priorizar simplicidad y reducir fragmentación
@@ -17,6 +18,10 @@ class TicketDrawerWidget extends StatelessWidget {
   final VoidCallback? onEditCashAmount;
   final VoidCallback? onConfirmSale;
   final VoidCallback? onCloseTicket;
+  final GlobalKey? confirmSaleKey;
+  final GlobalKey? totalAmountKey;
+  final GlobalKey? paymentMethodsKey;
+  final GlobalKey? discountKey;
 
   const TicketDrawerWidget({
     super.key,
@@ -24,6 +29,10 @@ class TicketDrawerWidget extends StatelessWidget {
     this.onEditCashAmount,
     this.onConfirmSale,
     this.onCloseTicket,
+    this.confirmSaleKey,
+    this.totalAmountKey,
+    this.paymentMethodsKey,
+    this.discountKey,
   });
 
   @override
@@ -47,6 +56,10 @@ class TicketDrawerWidget extends StatelessWidget {
               onEditCashAmount: onEditCashAmount,
               onConfirmSale: onConfirmSale,
               onCloseTicket: onCloseTicket,
+              confirmSaleKey: confirmSaleKey,
+              totalAmountKey: totalAmountKey,
+              paymentMethodsKey: paymentMethodsKey,
+              discountKey: discountKey,
             ),
           );
   }
@@ -57,11 +70,19 @@ class _TicketContent extends StatelessWidget {
   final VoidCallback? onEditCashAmount;
   final VoidCallback? onConfirmSale;
   final VoidCallback? onCloseTicket;
+  final GlobalKey? confirmSaleKey;
+  final GlobalKey? totalAmountKey;
+  final GlobalKey? paymentMethodsKey;
+  final GlobalKey? discountKey;
 
   const _TicketContent({
     this.onEditCashAmount,
     this.onConfirmSale,
     this.onCloseTicket,
+    this.confirmSaleKey,
+    this.totalAmountKey,
+    this.paymentMethodsKey,
+    this.discountKey,
   });
 
   @override
@@ -319,7 +340,36 @@ class _TicketContent extends StatelessWidget {
                 ),
 
               // Chip de descuento
-              _buildEditableChip(
+              discountKey != null 
+              ? Showcase(
+                  key: discountKey!,
+                  title: '🏷️ Descuento',
+                  description: 'Aplica un descuento global al ticket, ya sea por monto fijo o porcentaje',
+                  targetBorderRadius: BorderRadius.circular(20),
+                  child: _buildEditableChip(
+                    context: context,
+                    text: hasDiscount
+                        ? _getDiscountDisplayText(provider.ticket)
+                        : 'Agregar descuento',
+                    onTap: () => showDiscountDialog(context),
+                    backgroundColor: hasDiscount
+                        ? colorScheme.errorContainer.withValues(alpha: 0.2)
+                        : colorScheme.primaryContainer.withValues(alpha: 0.2),
+                    borderColor: hasDiscount
+                        ? colorScheme.error.withValues(alpha: 0.3)
+                        : colorScheme.primary.withValues(alpha: 0.3),
+                    textColor:
+                        hasDiscount ? colorScheme.error : colorScheme.primary,
+                    iconColor:
+                        hasDiscount ? colorScheme.error : colorScheme.primary,
+                    showRemoveButton: hasDiscount,
+                    onRemove: hasDiscount
+                        ? () =>
+                            provider.setDiscount(discount: 0.0, isPercentage: false)
+                        : null,
+                  ),
+                )
+              : _buildEditableChip(
                 context: context,
                 text: hasDiscount
                     ? _getDiscountDisplayText(provider.ticket)
@@ -495,6 +545,198 @@ class _TicketContent extends StatelessWidget {
           fontWeight: FontWeight.w500,
         );
 
+        final Widget content = hasDiscount
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Subtotal
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Subtotal',
+                        style: adaptiveSubtitleStyle,
+                      ),
+                      Text(
+                        CurrencyFormatter.formatPrice(
+                            value: ticket.getTotalPriceWithoutDiscount),
+                        style: adaptiveSubtitleStyle.copyWith(
+                          fontFamily: 'RobotoMono',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // Descuento
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.local_offer_outlined,
+                            size: 16,
+                            color: onPrimaryColor.withValues(alpha: 0.8),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            ticket.discountIsPercentage
+                                ? 'Descuento (${ticket.discount.toStringAsFixed(0)}%)'
+                                : 'Descuento',
+                            style: adaptiveDiscountStyle,
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
+                        style: adaptiveDiscountStyle.copyWith(
+                          fontFamily: 'RobotoMono',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Separador elegante
+                  Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          onPrimaryColor.withValues(alpha: 0.0),
+                          onPrimaryColor.withValues(alpha: 0.3),
+                          onPrimaryColor.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Total final destacado
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'TOTAL',
+                            style: adaptiveTotalStyle.copyWith(fontSize: 18),
+                          ),
+                          Text(
+                            CurrencyFormatter.formatPrice(
+                                value: ticket.getTotalPrice),
+                            style: adaptiveTotalStyle.copyWith(
+                              fontFamily: 'RobotoMono',
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Vuelto (si aplica)
+                      if (hasChange) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Vuelto',
+                              style: adaptiveChangeStyle,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: onPrimaryColor.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                                color: onPrimaryColor.withValues(alpha: 0.1),
+                              ),
+                              child: Text(
+                                CurrencyFormatter.formatPrice(
+                                    value: ticket.valueReceived -
+                                        ticket.getTotalPrice),
+                                style: adaptiveChangeStyle.copyWith(
+                                  fontFamily: 'RobotoMono',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'TOTAL',
+                        style: adaptiveTotalStyle.copyWith(fontSize: 20),
+                      ),
+                      Text(
+                        CurrencyFormatter.formatPrice(
+                            value: ticket.getTotalPrice),
+                        style: adaptiveTotalStyle.copyWith(
+                          fontFamily: 'RobotoMono',
+                          fontSize: 32,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Vuelto (si aplica)
+                  if (hasChange) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Vuelto',
+                          style: adaptiveChangeStyle,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: onPrimaryColor.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                            color: onPrimaryColor.withValues(alpha: 0.1),
+                          ),
+                          child: Text(
+                            CurrencyFormatter.formatPrice(
+                                value: ticket.valueReceived -
+                                    ticket.getTotalPrice),
+                            style: adaptiveChangeStyle.copyWith(
+                              fontFamily: 'RobotoMono',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              );
+
         return Padding(
           padding:
               const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 6),
@@ -512,202 +754,15 @@ class _TicketContent extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: hasDiscount
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Subtotal
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Subtotal',
-                              style: adaptiveSubtitleStyle,
-                            ),
-                            Text(
-                              CurrencyFormatter.formatPrice(
-                                  value: ticket.getTotalPriceWithoutDiscount),
-                              style: adaptiveSubtitleStyle.copyWith(
-                                fontFamily: 'RobotoMono',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        // Descuento
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.local_offer_outlined,
-                                  size: 16,
-                                  color: onPrimaryColor.withValues(alpha: 0.8),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  ticket.discountIsPercentage
-                                      ? 'Descuento (${ticket.discount.toStringAsFixed(0)}%)'
-                                      : 'Descuento',
-                                  style: adaptiveDiscountStyle,
-                                ),
-                              ],
-                            ),
-                            Text(
-                              '- ${CurrencyFormatter.formatPrice(value: ticket.getDiscountAmount)}',
-                              style: adaptiveDiscountStyle.copyWith(
-                                fontFamily: 'RobotoMono',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Separador elegante
-                        Container(
-                          height: 1,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                onPrimaryColor.withValues(alpha: 0.0),
-                                onPrimaryColor.withValues(alpha: 0.3),
-                                onPrimaryColor.withValues(alpha: 0.0),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Total final destacado
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'TOTAL',
-                                  style:
-                                      adaptiveTotalStyle.copyWith(fontSize: 18),
-                                ),
-                                Text(
-                                  CurrencyFormatter.formatPrice(
-                                      value: ticket.getTotalPrice),
-                                  style: adaptiveTotalStyle.copyWith(
-                                    fontFamily: 'RobotoMono',
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            // Vuelto (si aplica)
-                            if (hasChange) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Vuelto',
-                                    style: adaptiveChangeStyle,
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: onPrimaryColor.withValues(
-                                            alpha: 0.3),
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(6),
-                                      color:
-                                          onPrimaryColor.withValues(alpha: 0.1),
-                                    ),
-                                    child: Text(
-                                      CurrencyFormatter.formatPrice(
-                                          value: ticket.valueReceived -
-                                              ticket.getTotalPrice),
-                                      style: adaptiveChangeStyle.copyWith(
-                                        fontFamily: 'RobotoMono',
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
+              child: totalAmountKey != null
+                  ? Showcase(
+                      key: totalAmountKey!,
+                      title: '💵 Total a Pagar',
+                      description: 'Visualiza el desglose total de la venta, incluyendo subtotal y descuentos aplicados',
+                      targetBorderRadius: BorderRadius.circular(16),
+                      child: content,
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'TOTAL',
-                              style: adaptiveTotalStyle.copyWith(fontSize: 20),
-                            ),
-                            Text(
-                              CurrencyFormatter.formatPrice(
-                                  value: ticket.getTotalPrice),
-                              style: adaptiveTotalStyle.copyWith(
-                                fontFamily: 'RobotoMono',
-                                fontSize: 32,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // Vuelto (si aplica)
-                        if (hasChange) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Vuelto',
-                                style: adaptiveChangeStyle,
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color:
-                                        onPrimaryColor.withValues(alpha: 0.3),
-                                    width: 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                  color: onPrimaryColor.withValues(alpha: 0.1),
-                                ),
-                                child: Text(
-                                  CurrencyFormatter.formatPrice(
-                                      value: ticket.valueReceived -
-                                          ticket.getTotalPrice),
-                                  style: adaptiveChangeStyle.copyWith(
-                                    fontFamily: 'RobotoMono',
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
+                  : content,
             ),
           ),
         );
@@ -726,7 +781,7 @@ class _TicketContent extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Consumer<SalesProvider>(
             builder: (context, provider, _) {
-              return Wrap(
+              final paymentMethodsWrap = Wrap(
                 spacing: 8,
                 alignment: WrapAlignment.center,
                 runSpacing: 8,
@@ -798,6 +853,16 @@ class _TicketContent extends StatelessWidget {
                   );
                 }).toList(),
               );
+
+              return paymentMethodsKey != null
+                  ? Showcase(
+                      key: paymentMethodsKey!,
+                      title: '💳 Métodos de Pago',
+                      description: 'Selecciona el método de pago preferido para esta venta (Efectivo, Tarjeta, Transferencia, etc.)',
+                      targetBorderRadius: BorderRadius.circular(12),
+                      child: paymentMethodsWrap,
+                    )
+                  : paymentMethodsWrap;
             },
           ),
         );
@@ -827,13 +892,27 @@ class _TicketContent extends StatelessWidget {
           ).animate(delay: const Duration(milliseconds: 0)).fade(),
           const SizedBox(width: 8),
         ],
-        AppButton.fab(
-          heroTag: "confirm_sale_nav_fab", // Hero tag único para navigation
-          onPressed: onConfirmSale,
-          icon: Icons.check_circle_outline_rounded,
-          text: confirmarText,
-          extended: true,
-        ).animate(delay: const Duration(milliseconds: 0)).fade(),
+        confirmSaleKey != null
+            ? Showcase(
+                key: confirmSaleKey!,
+                title: '✅ Confirmar Venta',
+                description: 'Finaliza la venta y genera el ticket. Verifica que el monto y método de pago sean correctos',
+                targetBorderRadius: BorderRadius.circular(50),
+                child: AppButton.fab(
+                  heroTag: "confirm_sale_nav_fab", // Hero tag único para navigation
+                  onPressed: onConfirmSale,
+                  icon: Icons.check_circle_outline_rounded,
+                  text: confirmarText,
+                  extended: true,
+                ).animate(delay: const Duration(milliseconds: 0)).fade(),
+              )
+            : AppButton.fab(
+                heroTag: "confirm_sale_nav_fab", // Hero tag único para navigation
+                onPressed: onConfirmSale,
+                icon: Icons.check_circle_outline_rounded,
+                text: confirmarText,
+                extended: true,
+              ).animate(delay: const Duration(milliseconds: 0)).fade(),
       ],
     );
   }

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 import 'combo_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sellweb/core/constants/unit_constants.dart';
@@ -414,8 +414,7 @@ class ProductCatalogue {
       'comboExpiration':  comboExpiration?.millisecondsSinceEpoch,
     };
 
-    debugPrint(
-        '🔍 ProductCatalogue.toMap: Serializando ${variants.length} variantes para producto $code');
+
     return map;
   }
 

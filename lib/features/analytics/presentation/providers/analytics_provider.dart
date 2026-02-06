@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/presentation/providers/initializable_provider.dart';
 import '../../data/services/analytics_preferences_service.dart';
 import '../../data/services/trend_calculator_service.dart';
+import '../../data/helpers/analytics_demo_helper.dart';
 import '../../domain/entities/date_filter.dart';
 import '../../domain/entities/sales_analytics.dart';
 import '../../domain/entities/trend_data.dart';
@@ -121,12 +122,21 @@ class AnalyticsProvider extends ChangeNotifier
   /// Carga las preferencias de tarjetas para el usuario actual
   ///
   /// **Lógica:**
+  /// - Si es cuenta demo → mostrar TODAS las tarjetas disponibles (mejor UX)
   /// - Si no hay preferencias guardadas → mostrar solo tarjeta por defecto ('billing')
   /// - Si hay preferencias guardadas → cargar esas tarjetas
   ///
   /// Se llama automáticamente en `initialize()`
   Future<void> loadCardPreferences(String accountId) async {
     try {
+      // En modo demo, habilitar TODAS las tarjetas para demostración completa
+      if (accountId == 'demo') {
+        final allCardIds = AnalyticsCardRegistry.allCards.map((card) => card.id).toList();
+        _state = _state.copyWith(visibleCardIds: allCardIds);
+        notifyListeners();
+        return;
+      }
+
       final savedCards = await _preferencesService.loadVisibleCards(accountId);
 
       if (savedCards == null || savedCards.isEmpty) {
@@ -229,6 +239,12 @@ class AnalyticsProvider extends ChangeNotifier
     _state = _state.copyWith(isLoading: true, clearError: true);
     notifyListeners();
 
+    // Si es usuario invitado (demo), cargar datos demo
+    if (accountId == 'demo') {
+      _loadDemoAnalytics();
+      return;
+    }
+
     _subscription = _getSalesAnalyticsUseCase(
       AnalyticsParams(
         accountId: accountId,
@@ -264,6 +280,26 @@ class AnalyticsProvider extends ChangeNotifier
         notifyListeners();
       },
     );
+  }
+
+  /// Carga analytics demo para modo invitado
+  void _loadDemoAnalytics() {
+    try {
+      // Importar el helper y generar analytics demo
+      final demoAnalytics = AnalyticsDemoHelper.generateDemoAnalytics();
+      
+      _state = _state.copyWith(
+        isLoading: false,
+        analytics: demoAnalytics,
+      );
+      notifyListeners();
+    } catch (e) {
+      _state = _state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error cargando analytics demo: $e',
+      );
+      notifyListeners();
+    }
   }
 
   /// Calcula datos de tendencia para el filtro actual

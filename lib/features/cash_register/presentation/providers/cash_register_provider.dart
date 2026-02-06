@@ -30,6 +30,7 @@ import '../../domain/usecases/get_today_transactions_stream_usecase.dart';
 import '../../domain/usecases/get_transactions_by_date_range_usecase.dart';
 import '../../domain/usecases/save_ticket_to_transaction_history_usecase.dart';
 import '../../domain/usecases/calculate_cash_register_metrics_usecase.dart';
+import '../../../../core/services/demo_account/demo_account_service.dart';
 
 /// Extension helper para firstOrNull si no está disponible
 extension ListExtensions<T> on List<T> {
@@ -825,51 +826,68 @@ class CashRegisterProvider extends ChangeNotifier
 
     try {
       List<CashRegister> history = [];
-      Either<Failure, List<CashRegister>> result;
+      
+      // Detectar modo demo
+      if (accountId == 'demo') {
+        // En modo demo, por defecto mostramos TODO el historial si el filtro es el default ('Última semana')
+        // para asegurar que el usuario vea la riqueza de los datos generados
+        if (_state.historyFilter == 'Última semana') {
+            _state = _state.copyWith(historyFilter: 'Todo');
+        }
+        
+        history = _loadDemoCashRegisterHistory();
+        _state = _state.copyWith(
+          cashRegisterHistory: history,
+          isLoadingHistory: false,
+        );
+      } else {
+        // Modo Firebase
+        Either<Failure, List<CashRegister>> result;
 
-      switch (_state.historyFilter) {
-        case 'Última semana':
-          result = await _getCashRegisterByDaysUseCase(
-              GetCashRegisterByDaysParams(accountId: accountId, days: 7));
-          break;
-        case 'Último mes':
-          result = await _getCashRegisterByDaysUseCase(
-              GetCashRegisterByDaysParams(accountId: accountId, days: 30));
-          break;
-        case 'Mes anterior':
-          final now = DateTime.now();
-          final endDate = DateTime(now.year, now.month, 1);
-          final startDate = DateTime(now.year, now.month - 1, 1);
-          result = await _getCashRegisterByDateRangeUseCase(
-              GetCashRegisterByDateRangeParams(
-                  accountId: accountId,
-                  startDate: startDate,
-                  endDate: endDate));
-          break;
-        case 'Todo':
-          result = await _getCashRegisterHistoryUseCase(
-              GetCashRegisterHistoryParams(accountId));
-          break;
-        default:
-          result = await _getCashRegisterByDaysUseCase(
-              GetCashRegisterByDaysParams(accountId: accountId, days: 7));
+        switch (_state.historyFilter) {
+          case 'Última semana':
+            result = await _getCashRegisterByDaysUseCase(
+                GetCashRegisterByDaysParams(accountId: accountId, days: 7));
+            break;
+          case 'Último mes':
+            result = await _getCashRegisterByDaysUseCase(
+                GetCashRegisterByDaysParams(accountId: accountId, days: 30));
+            break;
+          case 'Mes anterior':
+            final now = DateTime.now();
+            final endDate = DateTime(now.year, now.month, 1);
+            final startDate = DateTime(now.year, now.month - 1, 1);
+            result = await _getCashRegisterByDateRangeUseCase(
+                GetCashRegisterByDateRangeParams(
+                    accountId: accountId,
+                    startDate: startDate,
+                    endDate: endDate));
+            break;
+          case 'Todo':
+            result = await _getCashRegisterHistoryUseCase(
+                GetCashRegisterHistoryParams(accountId));
+            break;
+          default:
+            result = await _getCashRegisterByDaysUseCase(
+                GetCashRegisterByDaysParams(accountId: accountId, days: 7));
+        }
+
+        result.fold(
+          (failure) {
+            _state = _state.copyWith(
+              errorMessage: failure.message,
+              isLoadingHistory: false,
+            );
+          },
+          (data) {
+            history = data;
+            _state = _state.copyWith(
+              cashRegisterHistory: history,
+              isLoadingHistory: false,
+            );
+          },
+        );
       }
-
-      result.fold(
-        (failure) {
-          _state = _state.copyWith(
-            errorMessage: failure.message,
-            isLoadingHistory: false,
-          );
-        },
-        (data) {
-          history = data;
-          _state = _state.copyWith(
-            cashRegisterHistory: history,
-            isLoadingHistory: false,
-          );
-        },
-      );
     } catch (e) {
       _state = _state.copyWith(
         errorMessage: e.toString(),
@@ -877,6 +895,43 @@ class CashRegisterProvider extends ChangeNotifier
       );
     }
     notifyListeners();
+  }
+
+  /// Carga datos demo de arqueos con filtros de fecha aplicados
+  List<CashRegister> _loadDemoCashRegisterHistory() {
+    final allDemoRegisters = DemoAccountService().cashRegisters;
+    
+    // Si estamos en demo y el filtro es el por defecto (Semana), cambiar a Todo para mostrar la riqueza de datos
+    // O simplemente retornar todo si el filtro es 'Todo'
+    
+    // Aplicar filtros de fecha
+    final now = DateTime.now();
+    switch (_state.historyFilter) {
+      case 'Última semana':
+        final cutoff = now.subtract(const Duration(days: 7));
+        return allDemoRegisters
+            .where((cr) => cr.opening.isAfter(cutoff))
+            .toList();
+      
+      case 'Último mes':
+        final cutoff = now.subtract(const Duration(days: 30));
+        return allDemoRegisters
+            .where((cr) => cr.opening.isAfter(cutoff))
+            .toList();
+      
+      case 'Mes anterior':
+        final endDate = DateTime(now.year, now.month, 1);
+        final startDate = DateTime(now.year, now.month - 1, 1);
+        return allDemoRegisters
+            .where((cr) => cr.opening.isAfter(startDate) && cr.opening.isBefore(endDate))
+            .toList();
+      
+      case 'Todo':
+      default:
+        // Ordenar por fecha descendente (lo más nuevo primero)
+        allDemoRegisters.sort((a, b) => b.opening.compareTo(a.opening));
+        return allDemoRegisters;
+    }
   }
 
   void setHistoryFilter(String filter, String accountId) {

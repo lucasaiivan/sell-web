@@ -9,6 +9,7 @@ import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart'
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/dialogs/cash_flow_dialog.dart';
+import 'package:sellweb/core/services/demo_account/helpers/guest_mode_helper.dart';
 import 'cash_register_close_dialog.dart';
 import 'cash_register_open_dialog.dart';
 
@@ -514,13 +515,20 @@ class _CashRegisterManagementDialogState
                     DialogComponents.primaryActionButton(
                       context: context,
                       text: authProvider.isGuest 
-                          ? 'Inicia sesión para abrir caja' 
+                          ? '🔒 Inicia sesión para abrir caja' 
                           : 'Abrir nueva caja',
                       icon: authProvider.isGuest 
-                          ? Icons.login_rounded 
+                          ? Icons.lock_outline 
                           : Icons.add_circle_outline_rounded,
                       onPressed: authProvider.isGuest
-                          ? null
+                          ? () {
+                              // Importar al inicio del archivo si no existe:
+                              // import 'package:sellweb/core/services/demo_account/helpers/guest_mode_helper.dart';
+                              GuestModeHelper.showRestrictionDialog(
+                                context,
+                                featureName: 'Apertura de Caja',
+                              );
+                            }
                           : () => _showOpenDialog(context),
                       isLoading: data.isLoading,
                     ),

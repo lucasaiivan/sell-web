@@ -241,6 +241,8 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.user != null;
     final theme = Theme.of(context);
+    final provider = Provider.of<MultiUserProvider>(context, listen: false);
+    final isGuestMode = provider.currentAccountId == 'demo' || widget.user?.account == 'demo';
 
     return BaseDialog(
       title: isEditing ? 'Editar Usuario' : 'Nuevo Usuario',
@@ -256,6 +258,81 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Banner informativo mejorado para modo invitado
+            if (isGuestMode) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.amber.withValues(alpha: 0.15),
+                      Colors.orange.withValues(alpha: 0.08),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.amber.shade300,
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_fix_high,
+                          color: Colors.amber.shade700,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Modo Demostración',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Los datos de usuario no se pueden modificar en demo. Regístrate para gestionar tu equipo completo.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 12,
+                        color: Colors.amber.shade800,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.login, size: 18),
+                        label: const Text('Crear Cuenta Gratis'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pushReplacementNamed('/');
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             _buildBasicInfoSection(),
             const SizedBox(height: 20),
             if (isEditing && !widget.user!.superAdmin) ...[
@@ -275,21 +352,21 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
         ),
       ),
       actions: [
-        if (isEditing && !widget.user!.superAdmin)
+        if (isEditing && !widget.user!.superAdmin && !isGuestMode)
           AppButton.text(
             text: 'Eliminar',
             onPressed: () => _confirmDelete(context),
             foregroundColor: theme.colorScheme.error,
           ),
-        if (isEditing && !widget.user!.superAdmin)
-          AppButton.text(
-            text: 'Cancelar',
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        AppButton.primary(
-          text: isEditing ? 'Actualizar' : 'Crear',
-          onPressed: _saveUser,
+        AppButton.text(
+          text: 'Cerrar',
+          onPressed: () => Navigator.of(context).pop(),
         ),
+        if (!isGuestMode)
+          AppButton.primary(
+            text: isEditing ? 'Actualizar' : 'Crear',
+            onPressed: _saveUser,
+          ),
       ],
     );
   }
@@ -1008,6 +1085,31 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
   ///
   /// Muestra errores visuales y snackbars si las validaciones fallan
   Future<void> _saveUser() async {
+    // Detectar modo invitado
+    final provider = Provider.of<MultiUserProvider>(context, listen: false);
+    final isGuestMode = provider.currentAccountId == 'demo' || widget.user?.account == 'demo';
+    
+    if (isGuestMode) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('No puedes editar usuarios en modo demostración'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.amber.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // Activar mostrar errores de validación
     if (!mounted) return;
     setState(() {
@@ -1111,7 +1213,6 @@ class _UserAdminDialogState extends State<UserAdminDialog> {
     });
 
     if (!mounted) return;
-    final provider = Provider.of<MultiUserProvider>(context, listen: false);
     final now = DateTime.now();
 
     // Build days of week list

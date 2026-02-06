@@ -23,6 +23,9 @@ import 'package:sellweb/features/cash_register/presentation/providers/cash_regis
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart'; 
 import 'package:sellweb/features/sales/presentation/widgets/product_item.dart';
+import 'package:sellweb/core/services/demo_account/demo_account_service.dart';
+import 'package:showcaseview/showcaseview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class SalesPage extends StatefulWidget {
@@ -45,6 +48,26 @@ class _SalesPageState extends State<SalesPage> {
   
   // AudioPlayer para el sonido de escaneo
   final AudioPlayer _scanAudioPlayer = AudioPlayer();
+
+  // GlobalKeys para el showcase
+  final GlobalKey _quickSaleKey = GlobalKey();
+  final GlobalKey _cashRegisterKey = GlobalKey();
+  final GlobalKey _lastTicketKey = GlobalKey();
+  final GlobalKey _printerKey = GlobalKey();
+  final GlobalKey _searchProductKey = GlobalKey();
+  final GlobalKey _favoritesKey = GlobalKey();
+  
+  // Showcase Parte 2 (Cobrar y Ticket)
+  final GlobalKey _chargeFabKey = GlobalKey();
+  final GlobalKey _confirmSaleKey = GlobalKey();
+  final GlobalKey _totalAmountKey = GlobalKey();
+  final GlobalKey _paymentMethodsKey = GlobalKey();
+  final GlobalKey _discountKey = GlobalKey();
+
+  // Flag para evitar múltiples inicializaciones
+  bool _showcaseInitialized = false;
+  bool _showcasePart2Initialized = false;
+  bool _showcasePart3Initialized = false;
 
   /// Verifica si hay algún diálogo o modal abierto sobre la página actual
   /// Retorna true si la página de ventas NO es la ruta actual (hay algo encima)
@@ -139,107 +162,277 @@ class _SalesPageState extends State<SalesPage> {
     }
   }
 
+  /// Verifica si es la primera vez que se muestra el showcase
+  Future<bool> _shouldShowShowcase() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !(prefs.getBool('sales_page_showcase_shown') ?? false);
+  }
+
+  /// Marca el showcase como mostrado
+  Future<void> _markShowcaseAsShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('sales_page_showcase_shown', true);
+  }
+
+  /// Inicia el showcase
+  void _startShowcase(BuildContext context) {
+
+    // showcasewiget : se ejecuta solo una vez al iniciar la página para tutotial de uso por primera vez
+    ShowCaseWidget.of(context).startShowCase([
+      _quickSaleKey,
+      _cashRegisterKey,
+      _lastTicketKey,
+      _printerKey,
+      _searchProductKey,
+      _favoritesKey,
+    ]);
+  }
+
+  /// Verifica y inicia el showcase si corresponde
+  Future<void> _checkAndStartShowcase(BuildContext showcaseContext) async {
+    // Evitar múltiples inicializaciones
+    if (_showcaseInitialized) return;
+    
+    final shouldShow = await _shouldShowShowcase();
+    if (!shouldShow) return;
+    
+    // Esperar a que el widget tree esté completamente construido
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Delay adicional para asegurar que ShowCaseWidget esté listo
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        
+        // Verificar que la página de ventas esté activa antes de mostrar el showcase
+        // Esto previene que se inicie simultáneamente con showcases de otras páginas
+        final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+        if (homeProvider.currentPageIndex != 0) {
+          // Si no estamos en la página correcta, permitir retry cuando se navegue aquí
+          return;
+        }
+        
+        // Solo marcar como inicializado después de verificar que vamos a mostrar el showcase
+        _showcaseInitialized = true;
+        _markShowcaseAsShown();
+        _startShowcase(showcaseContext);
+      });
+    });
+  }
+
+  // --- Lógica Parte 2 y 3 ---
+
+  Future<bool> _shouldShowShowcasePart2() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !(prefs.getBool('sales_page_showcase_part2_shown') ?? false);
+  }
+
+  Future<void> _markShowcasePart2AsShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('sales_page_showcase_part2_shown', true);
+  }
+
+  Future<bool> _shouldShowShowcasePart3() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !(prefs.getBool('sales_page_showcase_part3_shown') ?? false);
+  }
+
+  Future<void> _markShowcasePart3AsShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('sales_page_showcase_part3_shown', true);
+  }
+
+  void _checkAndStartShowcasePart2(BuildContext context, bool isMobileDevice) async {
+    if (_showcasePart2Initialized) return;
+    
+    final shouldShow = await _shouldShowShowcasePart2();
+    if (!shouldShow) return;
+
+    _showcasePart2Initialized = true;
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _markShowcasePart2AsShown();
+          if (isMobileDevice) {
+             // Móvil: Solo mostrar botón cobrar
+             ShowCaseWidget.of(context).startShowCase([_chargeFabKey]);
+          } else {
+             // Desktop: Mostrar contenido del ticket directamente
+             ShowCaseWidget.of(context).startShowCase([
+               _confirmSaleKey,
+               _totalAmountKey,
+               _paymentMethodsKey,
+               _discountKey,
+             ]);
+          }
+        }
+      });
+    });
+  }
+
+  void _checkAndStartShowcasePart3(BuildContext context) async {
+    if (_showcasePart3Initialized) return;
+    
+    final shouldShow = await _shouldShowShowcasePart3();
+    if (!shouldShow) return;
+
+    _showcasePart3Initialized = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _markShowcasePart3AsShown();
+          ShowCaseWidget.of(context).startShowCase([
+             _confirmSaleKey,
+             _totalAmountKey,
+             _paymentMethodsKey,
+             _discountKey,
+          ]);
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // consumer : escucha los cambios en ventas (SalesProvider) y el catalogo (CatalogueProvider)
-    return Consumer2<SalesProvider, CatalogueProvider>(
-      builder: (_, sellProvider, catalogueProvider, __) {
-        // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        // Si es cuenta demo y usuario anónimo, cargar productos demo
-        if (sellProvider.profileAccountSelected.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
-          // cargar productos demo
-          final demoProducts = authProvider.getUserAccountsUseCase.getDemoProducts();
+    return ShowCaseWidget(
+      builder: (context) => Builder(
+        builder: (builderContext) {
+          // Iniciar showcase automáticamente si es la primera vez
+          _checkAndStartShowcase(builderContext);
           
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            catalogueProvider.loadDemoProducts(demoProducts);
-          });
-        }
+          return Consumer2<SalesProvider, CatalogueProvider>(
+            builder: (_, sellProvider, catalogueProvider, __) {
+              // --- account demo : Si la cuenta seleccionada es demo y usuario anónimo, cargar productos demo. ---
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              // Si es cuenta demo y usuario anónimo, cargar productos demo
+              if (sellProvider.profileAccountSelected.id == 'demo' && authProvider.user?.isAnonymous == true && catalogueProvider.products.isEmpty) {
+                // Usar servicio de datos demo
+                final service = DemoAccountService();
+                final demoProducts = service.products;
+                final demoCategories = service.categories;
+                final demoProviders = service.providers;
+                
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  catalogueProvider.loadDemoProducts(
+                    products: demoProducts,
+                    categories: demoCategories,
+                    providers: demoProviders,
+                  );
+                });
+              }
 
-        // inicialiar [initializeFromPersistence]
+              // inicialiar [initializeFromPersistence]
 
-        // --- pantalla principal de venta ---
-        return PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, result) async {
-            if (didPop) return;
+              final isMobileDevice = isMobile(context);
+              final hasProducts = sellProvider.ticket.getProductsQuantity() > 0;
+              final isTicketViewOpen = sellProvider.ticketView;
 
-            // Evitar mostrar el diálogo inmediatamente al volver desde otra pestaña
-            if (_skipExitDialogOnce) {
-              _skipExitDialogOnce = false;
-              return;
-            }
+              // Chequear Parte 2 y 3 del tutorial
+              if (hasProducts) {
+                 if (isMobileDevice) {
+                    // Si es móvil, activar Parte 2 (botón cobrar)
+                    _checkAndStartShowcasePart2(builderContext, true);
+                    
+                    // Si además abrió el ticket, activar Parte 3 (contenido ticket)
+                    if (isTicketViewOpen) {
+                       _checkAndStartShowcasePart3(builderContext);
+                    }
+                 } else {
+                    // Desktop: Activar Parte 2 (contenido ticket directo)
+                    _checkAndStartShowcasePart2(builderContext, false);
+                 }
+              }
 
-            // Mostrar diálogo de confirmación para salir de la app
-            final shouldExit = await showConfirmationDialog(
-              context: context,
-              title: 'Salir de la aplicación',
-              message: '¿Estás seguro que deseas salir?',
-              confirmText: 'Salir',
-              cancelText: 'Cancelar',
-              icon: Icons.exit_to_app_rounded,
-              isDestructive: true,
-            );
+              // --- pantalla principal de venta ---
+              return PopScope(
+                canPop: false,
+                onPopInvokedWithResult: (didPop, result) async {
+                  if (didPop) return;
 
-            // Si confirma, cerrar la aplicación
-            if (shouldExit == true) {
-              SystemNavigator.pop();
-            }
-          },
-          child: Scaffold(
-            appBar: appbar(buildContext: context, provider: sellProvider),
-            drawer: const AppDrawer(),
-            body: LayoutBuilder(
-              builder: (context, constraints) {
-                return Row(
-                  children: [
-                    Flexible(
-                      child: Stack(
+                  // Evitar mostrar el diálogo inmediatamente al volver desde otra pestaña
+                  if (_skipExitDialogOnce) {
+                    _skipExitDialogOnce = false;
+                    return;
+                  }
+
+                  // Mostrar diálogo de confirmación para salir de la app
+                  final shouldExit = await showConfirmationDialog(
+                    context: context,
+                    title: 'Salir de la aplicación',
+                    message: '¿Estás seguro que deseas salir?',
+                    confirmText: 'Salir',
+                    cancelText: 'Cancelar',
+                    icon: Icons.exit_to_app_rounded,
+                    isDestructive: true,
+                  );
+
+                  // Si confirma, cerrar la aplicación
+                  if (shouldExit == true) {
+                    SystemNavigator.pop();
+                  }
+                },
+                child: Scaffold(
+                  appBar: appbar(buildContext: context, provider: sellProvider),
+                  drawer: const AppDrawer(),
+                  body: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Row(
                         children: [
-                          // -----------------------------
-                          /// scan bar (KeyboardListener) se utiliza para detectar y responder a eventos del Escaner de codigo de barra
-                          // -----------------------------
-                          /// body : cuerpo de la página de venta
-                          /// ----------------------------
-                          Focus(
-                            focusNode: _focusNode,
-                            autofocus: true,
-                            child: body(provider: sellProvider),
+                          Flexible(
+                            child: Stack(
+                              children: [
+                                // -----------------------------
+                                /// scan bar (KeyboardListener) se utiliza para detectar y responder a eventos del Escaner de codigo de barra
+                                // -----------------------------
+                                /// body : cuerpo de la página de venta
+                                /// ----------------------------
+                                Focus(
+                                  focusNode: _focusNode,
+                                  autofocus: true,
+                                  child: body(provider: sellProvider),
+                                ),
+                                // floatingActionButtonBody : boton flotante para agregar productos al ticket
+                                Positioned(
+                                  bottom: 16,
+                                  right: 16,
+                                  child: floatingActionButtonBody(
+                                      sellProvider: sellProvider),
+                                ),
+                              ],
+                            ),
                           ),
-                          // floatingActionButtonBody : boton flotante para agregar productos al ticket
-                          Positioned(
-                            bottom: 16,
-                            right: 16,
-                            child: floatingActionButtonBody(
-                                sellProvider: sellProvider),
-                          ),
+                          // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
+                          if (!isMobile(context) &&
+                                  sellProvider.ticket.getProductsQuantity() != 0 ||
+                              (isMobile(context) && sellProvider.ticketView))
+                            // drawerTicket : información del ticket
+                            TicketDrawerWidget(
+                              showConfirmedPurchase:
+                                  _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
+                              onEditCashAmount: () =>
+                                  dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
+                              onConfirmSale: () => _confirmSale(
+                                  sellProvider), // para confirmar la venta
+                              onCloseTicket: _showConfirmedPurchase
+                                  ? _onConfirmationComplete // Callback especial cuando está en modo confirmación
+                                  : () => sellProvider.setTicketView(
+                                      false), // para cerrar el ticket normalmente
+                              confirmSaleKey: _confirmSaleKey,
+                              totalAmountKey: _totalAmountKey,
+                              paymentMethodsKey: _paymentMethodsKey,
+                              discountKey: _discountKey,
+                            ),
                         ],
-                      ),
-                    ),
-                    // si es mobile, no mostrar el drawer o si no se seleccionó ningun producto
-                    if (!isMobile(context) &&
-                            sellProvider.ticket.getProductsQuantity() != 0 ||
-                        (isMobile(context) && sellProvider.ticketView))
-                      // drawerTicket : información del ticket
-                      TicketDrawerWidget(
-                        showConfirmedPurchase:
-                            _showConfirmedPurchase, // para mostrar el mensaje de compra confirmada
-                        onEditCashAmount: () =>
-                            dialogSelectedIncomeCash(), // para editar el monto de efectivo recibido
-                        onConfirmSale: () => _confirmSale(
-                            sellProvider), // para confirmar la venta
-                        onCloseTicket: _showConfirmedPurchase
-                            ? _onConfirmationComplete // Callback especial cuando está en modo confirmación
-                            : () => sellProvider.setTicketView(
-                                false), // para cerrar el ticket normalmente
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      },
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -528,15 +721,21 @@ class _SalesPageState extends State<SalesPage> {
           const SizedBox(width: 12),
           // button : busqueda de productos 
           Expanded(
-            child: SearchTextField.button(
-              height: 40,
-              onTap: (isLoading || isEmpty)
-                  ? null
-                  : () => showModalBottomSheetSelectProducts(buildContext),
-              isLoading: isLoading,
-              loadingWidget: isLoading
-                  ? SizedBox(
-                      width: 20,
+            child: Showcase(
+              key: _searchProductKey,
+              title: '🔍 Busca tus Productos',
+              description: 'Encuentra productos rápidamente escribiendo su nombre o código. También con el teclado puedes escribir o escanear códigos de barras directamente',
+              targetBorderRadius: BorderRadius.circular(20),
+              targetPadding: const EdgeInsets.all(8),
+              child: SearchTextField.button(
+                height: 40,
+                onTap: (isLoading || isEmpty)
+                    ? null
+                    : () => showModalBottomSheetSelectProducts(buildContext),
+                isLoading: isLoading,
+                loadingWidget: isLoading
+                    ? SizedBox(
+                        width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2,
@@ -544,7 +743,8 @@ class _SalesPageState extends State<SalesPage> {
                               .colorScheme
                               .primaryContainer))
                   : null,
-              label: textHintSearchButton,
+                label: textHintSearchButton,
+              ),
             ),
           ),
           const SizedBox(width: 12), 
@@ -555,18 +755,25 @@ class _SalesPageState extends State<SalesPage> {
               Consumer<PrinterProvider>(
                 builder: (context, printerProvider, __) {
                   final isConnected = printerProvider.isConnected;
-                  return AppBarButtonCircle(
-                    icon: isConnected
-                        ? Icons.print_outlined
-                        : Icons.print_disabled_outlined,
-                    tooltip: isConnected
-                        ? 'Impresora conectada y lista\nToca para configurar'
-                        : 'Impresora no disponible\nToca para configurar conexión',
-                    onPressed: () => _showPrinterConfigDialog(buildContext),
-                    backgroundColor: isConnected
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : null,
-                    colorAccent: isConnected ? Colors.green.shade700 : null,
+                  return Showcase(
+                    key: _printerKey,
+                    title: '🖨️ Impresora',
+                    description: 'Configura tu impresora térmica para imprimir tickets automáticamente. El indicador verde muestra cuando está conectada con una impresora física',
+                    targetBorderRadius: BorderRadius.circular(50),
+                    targetPadding: const EdgeInsets.all(8),
+                    child: AppBarButtonCircle(
+                      icon: isConnected
+                          ? Icons.print_outlined
+                          : Icons.print_disabled_outlined,
+                      tooltip: isConnected
+                          ? 'Impresora conectada y lista\nToca para configurar'
+                          : 'Impresora no disponible\nToca para configurar conexión',
+                      onPressed: () => _showPrinterConfigDialog(buildContext),
+                      backgroundColor: isConnected
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : null,
+                      colorAccent: isConnected ? Colors.green.shade700 : null,
+                    ),
                   );
                 },
               ),
@@ -575,25 +782,39 @@ class _SalesPageState extends State<SalesPage> {
               Consumer<SalesProvider>(
                 builder: (context, sellProvider, __) {
                   final hasLastTicket = sellProvider.lastSoldTicket != null;
-                  return AppBarButtonCircle(
-                      icon: Icons.receipt_long_rounded,
-                      tooltip: hasLastTicket
-                          ? 'Ver último ticket\nToca para ver detalles y reimprimir'
-                          : 'No hay tickets recientes',
-                      onPressed: hasLastTicket
-                          ? () =>
-                              _showLastTicketDialog(buildContext, sellProvider)
-                          : null,
-                      backgroundColor: Theme.of(buildContext)
-                          .colorScheme
-                          .primaryContainer
-                          .withValues(alpha: 0.4),
-                      colorAccent: Theme.of(buildContext).colorScheme.primary);
+                  return Showcase(
+                    key: _lastTicketKey,
+                    title: '🧾 Último Ticket',
+                    description: 'Accede rápidamente al último ticket generado para consultarlo o reimprimirlo si es necesario',
+                    targetBorderRadius: BorderRadius.circular(50),
+                    targetPadding: const EdgeInsets.all(8),
+                    child: AppBarButtonCircle(
+                        icon: Icons.receipt_long_rounded,
+                        tooltip: hasLastTicket
+                            ? 'Ver último ticket\nToca para ver detalles y reimprimir'
+                            : 'No hay tickets recientes',
+                        onPressed: hasLastTicket
+                            ? () =>
+                                _showLastTicketDialog(buildContext, sellProvider)
+                            : null,
+                        backgroundColor: Theme.of(buildContext)
+                            .colorScheme
+                            .primaryContainer
+                            .withValues(alpha: 0.4),
+                        colorAccent: Theme.of(buildContext).colorScheme.primary),
+                  );
                 },
               ),
 
               // button : administrar caja
-              CashRegisterStatusWidget(),
+              Showcase(
+                key: _cashRegisterKey,
+                title: '🏦 Gestión de Caja',
+                description: 'Abre, cierra y administra tu caja registradora. Controla el efectivo, registra movimientos y genera arqueos al final del día o turno',
+                targetBorderRadius: BorderRadius.circular(50),
+                targetPadding: const EdgeInsets.all(8),
+                child: CashRegisterStatusWidget(),
+              ),
             ],
           )
         ],
@@ -647,28 +868,43 @@ class _SalesPageState extends State<SalesPage> {
           ).animate(delay: const Duration(milliseconds: 0)).fade(),
         const SizedBox(width: 8),
         // button : muestra el botón de venta rápida
-        AppButton.fab(
-          heroTag: "quick_sale_fab", // Hero tag único
-          onPressed: () => showQuickSaleDialog(context, provider: sellProvider),
-          icon: Icons.flash_on_rounded,
-          backgroundColor: Colors.amber,
-        ).animate(delay: const Duration(milliseconds: 0)).fade(),
+        Showcase(
+          key: _quickSaleKey,
+          title: '⚡ Venta Rápida',
+          description: 'Registra ventas al instante sin registro previo, ideal para ventas simples y rápidas',
+          targetBorderRadius: BorderRadius.circular(50),
+          targetPadding: const EdgeInsets.all(8),
+          child: AppButton.fab(
+            heroTag: "quick_sale_fab", // Hero tag único
+            onPressed: () => showQuickSaleDialog(context, provider: sellProvider),
+            icon: Icons.flash_on_rounded,
+            backgroundColor: Colors.amber,
+          ).animate(delay: const Duration(milliseconds: 0)).fade(),
+        ),
+        const SizedBox(width: 8),
+        // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         const SizedBox(width: 8),
         // button : muestra el botón de cobrar si es móvil y el ticket no está visible
         isMobile(context)
-            ? AppButton.fab(
-                heroTag: "charge_fab", // Hero tag único
-                onPressed: () {
-                  if (sellProvider.ticket.getTotalPrice == 0) {
-                    return;
-                  }
-                  sellProvider.setTicketView(true);
-                },
-                text:
-                    'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : CurrencyFormatter.formatPrice(value: sellProvider.ticket.getTotalPrice)}',
-                backgroundColor:
-                    sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
-                extended: true,
+            ? Showcase(
+                key: _chargeFabKey,
+                title: '💰 Cobrar Ticket',
+                description: 'Toca aquí para ver el resumen del ticket, seleccionar método de pago y finalizar la venta',
+                targetBorderRadius: BorderRadius.circular(50),
+                child: AppButton.fab(
+                  heroTag: "charge_fab", // Hero tag único
+                  onPressed: () {
+                    if (sellProvider.ticket.getTotalPrice == 0) {
+                      return;
+                    }
+                    sellProvider.setTicketView(true);
+                  },
+                  text:
+                      'Cobrar ${sellProvider.ticket.getTotalPrice == 0 ? '' : CurrencyFormatter.formatPrice(value: sellProvider.ticket.getTotalPrice)}',
+                  backgroundColor:
+                      sellProvider.ticket.getTotalPrice == 0 ? Colors.grey : null,
+                  extended: true,
+                ),
               )
             : const SizedBox.shrink(),
       ],
@@ -774,50 +1010,57 @@ class _SalesPageState extends State<SalesPage> {
       return const SizedBox.shrink();
     }
 
-    return Container(
-        height: 100,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: ScrollConfiguration(
-            behavior: const MaterialScrollBehavior().copyWith(
-              scrollbars: true,
-              dragDevices: {
-                PointerDeviceKind.mouse,
-                PointerDeviceKind.touch,
-                PointerDeviceKind.stylus,
-                PointerDeviceKind.unknown,
-              },
-            ),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: displayProducts.length,
-              itemBuilder: (context, index) {
-                final product = displayProducts[index];
-                final isInTicket =
-                    provider.ticket.products.any((p) => p.id == product.id);
+    return Showcase(
+      key: _favoritesKey,
+      title: '⭐ Favoritos y Productos Recientes',
+      description: 'Acceso rápido a tus productos. Toca cualquiera para agregarlo al ticket',
+      targetBorderRadius: BorderRadius.circular(12),
+      targetPadding: const EdgeInsets.all(8),
+      child: Container(
+          height: 100,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ScrollConfiguration(
+              behavior: const MaterialScrollBehavior().copyWith(
+                scrollbars: true,
+                dragDevices: {
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.stylus,
+                  PointerDeviceKind.unknown,
+                },
+              ),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: displayProducts.length,
+                itemBuilder: (context, index) {
+                  final product = displayProducts[index];
+                  final isInTicket =
+                      provider.ticket.products.any((p) => p.id == product.id);
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: AvatarCircleProduct(
-                    product: product,
-                    isSelected: isInTicket,
-                    onTap: () {
-                      // Si es unidad fraccionaria, mostrar diálogo para elegir cantidad
-                      if (product.isFractionalUnit) {
-                        showProductEditDialog(
-                          context,
-                          producto: product.copyWith(quantity: 1.0),
-                          onProductUpdated: () {},
-                        );
-                      } else {
-                        // Unidad discreta: agregar directamente al ticket
-                        provider.addProductsticket(product.copyWith());
-                      }
-                    },
-                  ),
-                );
-              },
-            )));
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: AvatarCircleProduct(
+                      product: product,
+                      isSelected: isInTicket,
+                      onTap: () {
+                        // Si es unidad fraccionaria, mostrar diálogo para elegir cantidad
+                        if (product.isFractionalUnit) {
+                          showProductEditDialog(
+                            context,
+                            producto: product.copyWith(quantity: 1.0),
+                            onProductUpdated: () {},
+                          );
+                        } else {
+                          // Unidad discreta: agregar directamente al ticket
+                          provider.addProductsticket(product.copyWith());
+                        }
+                      },
+                    ),
+                  );
+                },
+              ))),
+    );
   }
 
   Widget paymentMethodChips() {

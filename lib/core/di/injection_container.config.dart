@@ -342,7 +342,7 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
-    gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn);
+    gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn); 
     gh.lazySingleton<_i521.FullScreenService>(() => _i521.FullScreenService());
     gh.lazySingleton<_i853.CreateQuickProductUseCase>(
         () => _i853.CreateQuickProductUseCase());
@@ -374,8 +374,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i612.GetDemoAccountUseCase());
     gh.lazySingleton<_i960.CalculateCashRegisterMetricsUseCase>(
         () => _i960.CalculateCashRegisterMetricsUseCase());
-    gh.lazySingleton<_i329.GetDemoProductsUseCase>(
-        () => _i329.GetDemoProductsUseCase());
     gh.lazySingleton<_i377.GetProductByCodeUseCase>(
         () => _i377.GetProductByCodeUseCase());
     gh.lazySingleton<_i372.AnalyticsLocalDataSource>(
@@ -420,7 +418,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i485.FirestoreDataSource(
               gh<_i974.FirebaseFirestore>(),
               gh<_i920.QueryCounterService>(),
-            ));
+            )); 
     gh.lazySingleton<_i76.SellUsecases>(() => _i76.SellUsecases(
         persistenceService: gh<_i581.AppDataPersistenceService>()));
     gh.lazySingleton<_i823.AddDemoAccountIfAnonymousUseCase>(() =>
@@ -448,12 +446,39 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i576.CatalogueRepositoryImpl(
               gh<_i562.IFirestoreDataSource>(),
               gh<_i103.CatalogueLocalDataSource>(),
-              gh<_i997.ISyncService>(),
+              gh<_i997.ISyncService>(), 
             ));
     gh.lazySingleton<_i983.CatalogueRemoteDataSource>(() =>
         _i983.CatalogueRemoteDataSourceImpl(gh<_i562.IFirestoreDataSource>()));
+    gh.lazySingleton<_i348.AuthRepository>(() => _i566.AuthRepositoryImpl(
+          gh<_i59.FirebaseAuth>(),
+          gh<_i116.GoogleSignIn>(),
+          gh<_i283.IStorageDataSource>(), 
+        ));
     gh.factory<_i178.PrinterProvider>(
         () => _i178.PrinterProvider(gh<_i897.ThermalPrinterHttpService>()));
+    gh.lazySingleton<_i557.GetUserStreamUseCase>(
+        () => _i557.GetUserStreamUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i1046.SignInSilentlyUseCase>(
+        () => _i1046.SignInSilentlyUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i253.SignInWithGoogleUseCase>(
+        () => _i253.SignInWithGoogleUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i380.SignInAnonymouslyUseCase>(
+        () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
+    gh.lazySingleton<_i158.SignOutUseCase>(
+        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i1.DeleteBusinessAccountUseCase>(
+        () => _i1.DeleteBusinessAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i923.CheckUsernameAvailabilityUseCase>(() =>
+        _i923.CheckUsernameAvailabilityUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i762.UpdateBusinessAccountUseCase>(
+        () => _i762.UpdateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i34.LeaveBusinessAccountUseCase>(
+        () => _i34.LeaveBusinessAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i112.DeleteUserAccountUseCase>(
+        () => _i112.DeleteUserAccountUseCase(gh<_i348.AuthRepository>()));
+    gh.factory<_i437.CreateBusinessAccountUseCase>(
+        () => _i437.CreateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
     gh.lazySingleton<_i577.AnalyticsRemoteDataSource>(() =>
         _i577.AnalyticsRemoteDataSource(gh<_i562.IFirestoreDataSource>()));
     gh.lazySingleton<_i716.AnalyticsPreferencesRemoteDataSource>(() =>
@@ -519,11 +544,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1012.CatalogueUseCases(gh<_i83.CatalogueRepository>()));
     gh.lazySingleton<_i453.GetProductsUseCase>(
         () => _i453.GetProductsUseCase(gh<_i83.CatalogueRepository>()));
-    gh.lazySingleton<_i348.AuthRepository>(() => _i566.AuthRepositoryImpl(
-          gh<_i59.FirebaseAuth>(),
-          gh<_i116.GoogleSignIn>(),
-          gh<_i283.IStorageDataSource>(),
-        ));
     gh.lazySingleton<_i754.MultiUserRepository>(() =>
         _i431.MultiUserRepositoryImpl(gh<_i925.MultiUserRemoteDataSource>()));
     gh.lazySingleton<_i442.CreateUserUseCase>(
@@ -567,56 +587,6 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i732.AnalyticsRepository>(() =>
         _i164.AnalyticsRepositoryImpl(gh<_i577.AnalyticsRemoteDataSource>()));
-    gh.lazySingleton<_i557.GetUserStreamUseCase>(
-        () => _i557.GetUserStreamUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i1046.SignInSilentlyUseCase>(
-        () => _i1046.SignInSilentlyUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i253.SignInWithGoogleUseCase>(
-        () => _i253.SignInWithGoogleUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i380.SignInAnonymouslyUseCase>(
-        () => _i380.SignInAnonymouslyUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i158.SignOutUseCase>(
-        () => _i158.SignOutUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i1.DeleteBusinessAccountUseCase>(
-        () => _i1.DeleteBusinessAccountUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i923.CheckUsernameAvailabilityUseCase>(() =>
-        _i923.CheckUsernameAvailabilityUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i762.UpdateBusinessAccountUseCase>(
-        () => _i762.UpdateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i34.LeaveBusinessAccountUseCase>(
-        () => _i34.LeaveBusinessAccountUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i112.DeleteUserAccountUseCase>(
-        () => _i112.DeleteUserAccountUseCase(gh<_i348.AuthRepository>()));
-    gh.factory<_i437.CreateBusinessAccountUseCase>(
-        () => _i437.CreateBusinessAccountUseCase(gh<_i348.AuthRepository>()));
-    gh.lazySingleton<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
-          gh<_i474.GetCatalogueStreamUseCase>(),
-          gh<_i1001.GetPublicProductByCodeUseCase>(),
-          gh<_i821.AddProductToCatalogueUseCase>(),
-          gh<_i651.RegisterProductPriceUseCase>(),
-          gh<_i878.IncrementProductSalesUseCase>(),
-          gh<_i84.DecrementProductStockUseCase>(),
-          gh<_i55.UpdateProductFavoriteUseCase>(),
-          gh<_i690.GetCategoriesStreamUseCase>(),
-          gh<_i241.GetProvidersStreamUseCase>(),
-          gh<_i230.GetBrandsStreamUseCase>(),
-          gh<_i753.CreateBrandUseCase>(),
-          gh<_i334.UpdateBrandUseCase>(),
-          gh<_i540.CreatePublicProductUseCase>(),
-          gh<_i214.IncrementProductFollowersUseCase>(),
-          gh<_i354.DecrementProductFollowersUseCase>(),
-          gh<_i1046.SaveProductUseCase>(),
-          gh<_i126.DeleteProductUseCase>(),
-          gh<_i275.SearchBrandsUseCase>(),
-          gh<_i199.GetPopularBrandsUseCase>(),
-          gh<_i256.GetBrandByIdUseCase>(),
-          gh<_i824.CreateCategoryUseCase>(),
-          gh<_i824.UpdateCategoryUseCase>(),
-          gh<_i94.DeleteCategoryUseCase>(),
-          gh<_i201.CreateProviderUseCase>(),
-          gh<_i519.UpdateProviderUseCase>(),
-          gh<_i654.DeleteProviderUseCase>(),
-        ));
     gh.lazySingleton<_i23.CreateCashRegisterFixedDescriptionUseCase>(() =>
         _i23.CreateCashRegisterFixedDescriptionUseCase(
             gh<_i818.CashRegisterRepository>()));
@@ -710,6 +680,34 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i223.SaveTicketToTransactionHistoryUseCase>(),
           gh<_i960.CalculateCashRegisterMetricsUseCase>(),
           gh<_i581.AppDataPersistenceService>(),
+        ));
+    gh.lazySingleton<_i127.CatalogueProvider>(() => _i127.CatalogueProvider(
+          gh<_i474.GetCatalogueStreamUseCase>(),
+          gh<_i1001.GetPublicProductByCodeUseCase>(),
+          gh<_i821.AddProductToCatalogueUseCase>(),
+          gh<_i651.RegisterProductPriceUseCase>(),
+          gh<_i878.IncrementProductSalesUseCase>(),
+          gh<_i84.DecrementProductStockUseCase>(),
+          gh<_i55.UpdateProductFavoriteUseCase>(),
+          gh<_i690.GetCategoriesStreamUseCase>(),
+          gh<_i241.GetProvidersStreamUseCase>(),
+          gh<_i230.GetBrandsStreamUseCase>(),
+          gh<_i753.CreateBrandUseCase>(),
+          gh<_i334.UpdateBrandUseCase>(),
+          gh<_i540.CreatePublicProductUseCase>(),
+          gh<_i214.IncrementProductFollowersUseCase>(),
+          gh<_i354.DecrementProductFollowersUseCase>(),
+          gh<_i1046.SaveProductUseCase>(),
+          gh<_i126.DeleteProductUseCase>(),
+          gh<_i275.SearchBrandsUseCase>(),
+          gh<_i199.GetPopularBrandsUseCase>(),
+          gh<_i256.GetBrandByIdUseCase>(),
+          gh<_i824.CreateCategoryUseCase>(),
+          gh<_i824.UpdateCategoryUseCase>(),
+          gh<_i94.DeleteCategoryUseCase>(),
+          gh<_i201.CreateProviderUseCase>(),
+          gh<_i519.UpdateProviderUseCase>(),
+          gh<_i654.DeleteProviderUseCase>(), 
         ));
     gh.lazySingleton<_i644.GetUserAccountsUseCase>(
         () => _i644.GetUserAccountsUseCase(

@@ -89,6 +89,12 @@ class MultiUserProvider extends ChangeNotifier implements InitializableProvider 
       // Load current user from persistence (admin profile)
       _currentUser = await _getUserAccountsUseCase.loadAdminProfile();
 
+      // Si es usuario invitado (demo), cargar datos demo
+      if (_currentAccountId == 'demo') {
+        await _loadDemoUsers();
+        return;
+      }
+
       _usersSubscription?.cancel();
       _usersSubscription = _getUsersUseCase(_currentAccountId!).listen(
         (result) {
@@ -108,6 +114,20 @@ class MultiUserProvider extends ChangeNotifier implements InitializableProvider 
       );
     } catch (e) {
       _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Carga usuarios demo para modo invitado
+  Future<void> _loadDemoUsers() async {
+    try {
+      final demoUsers = await _getUserAccountsUseCase.getDemoUsers();
+      _users = demoUsers;
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Error cargando usuarios demo: $e';
       _isLoading = false;
       notifyListeners();
     }

@@ -26,3 +26,6 @@ Para cada tarea, ejecuta:
 *   Nunca dejes `TODOs` funcionales sin resolver en el código entregado.
 *   Documenta el "Porqué", no el "Qué" (el código ya dice el qué).
 *   Si tocas UI, asegúrate de que sea responsive y visualmente pulida.
+
+## 5. SEGURIDAD 
+*   El agente no puede editar ni agregar archivos en '/.agent' ni en ninguna subcarpeta de '/.agent'.

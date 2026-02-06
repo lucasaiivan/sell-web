@@ -71,13 +71,18 @@ Future<void> _handleSignOut(
   AuthProvider authProvider,
 ) async {
   final theme = Theme.of(context);
+  final isGuest = authProvider.isGuest;
+  
   final confirm = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Cerrar sesión'),
-      content: const Text(
-          '¿Estás seguro de que deseas cerrar sesión en este dispositivo?'),
-      icon: Icon(Icons.logout_rounded, color: theme.colorScheme.error),
+      title: Text(isGuest ? 'Iniciar sesión' : 'Cerrar sesión'),
+      content: Text(
+          isGuest 
+              ? '¿Deseas salir del modo invitado e iniciar sesión con tu cuenta?' 
+              : '¿Estás seguro de que deseas cerrar sesión en este dispositivo?'),
+      icon: Icon(isGuest ? Icons.login_rounded : Icons.logout_rounded, 
+          color: theme.colorScheme.primary), // Usar primary para login, error para logout tradicional si se quiere
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
@@ -86,10 +91,10 @@ Future<void> _handleSignOut(
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: FilledButton.styleFrom(
-            backgroundColor: theme.colorScheme.error,
-            foregroundColor: theme.colorScheme.onError,
+            backgroundColor: isGuest ? theme.colorScheme.primary : theme.colorScheme.error,
+            foregroundColor: isGuest ? theme.colorScheme.onPrimary : theme.colorScheme.onError,
           ),
-          child: const Text('Cerrar sesión'),
+          child: Text(isGuest ? 'Ir al login' : 'Cerrar sesión'),
         ),
       ],
     ),
@@ -136,7 +141,7 @@ class _AccountSelectionContent extends StatelessWidget {
         const SizedBox(height: 24),
 
         // Sección: Lista de cuentas asociadas
-        _buildAccountsSection(context, authProvider.accountsAssociateds)
+        _buildAccountsSection(context, authProvider.accountsWithDemo, authProvider.isGuest)
             .animate()
             .fadeIn(duration: 500.ms, delay: 100.ms)
             .slideY(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
@@ -268,6 +273,7 @@ class _AccountSelectionContent extends StatelessWidget {
   Widget _buildAccountsSection(
     BuildContext context,
     List<AccountProfile> accounts,
+    bool isGuest,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -325,10 +331,10 @@ class _AccountSelectionContent extends StatelessWidget {
             ...accounts.map((account) {
               final isSelected =
                   sellProvider.profileAccountSelected.id == account.id;
-              return _buildAccountItem(context, account, isSelected, sellProvider);
+              return _buildAccountItem(context, account, isSelected, sellProvider, isGuest);
             }),
-            // Item: Crear nueva cuenta
-            _buildCreateAccountItem(context, sellProvider),
+            // Item: Crear nueva cuenta o Iniciar Sesión (si es invitado)
+            _buildCreateAccountItem(context, sellProvider, isGuest),
           ],
           showDividers: true,
           maxVisibleItems: 10,
@@ -347,6 +353,7 @@ class _AccountSelectionContent extends StatelessWidget {
     AccountProfile account,
     bool isSelected,
     SalesProvider sellProvider,
+    bool isGuest,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -478,7 +485,7 @@ class _AccountSelectionContent extends StatelessWidget {
                         currentAdmin.hasPermission(
                             AdminPermission.manageAccount);
 
-                    if (!canEdit) return const SizedBox.shrink();
+                    if (!canEdit || isGuest) return const SizedBox.shrink();
 
                     return TextButton.icon(
                       onPressed: () async {
@@ -528,22 +535,34 @@ class _AccountSelectionContent extends StatelessWidget {
   Widget _buildCreateAccountItem(
     BuildContext context,
     SalesProvider sellProvider,
+    bool isGuest,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final currentAdmin = sellProvider.currentAdminProfile;
 
-    if (currentAdmin == null) return const SizedBox.shrink();
+    if (currentAdmin == null && !isGuest) return const SizedBox.shrink();
+
+    // Si es invitado, cambiamos la acción a "Iniciar sesión"
+    final title = isGuest ? 'Iniciar sesión para crear una cuenta' : 'Crear nueva cuenta';
+    final subtitle = isGuest ? 'Crea tu propio negocio real' : 'Agrega un nuevo comercio';
+    final iconData = isGuest ? Icons.login_rounded : Icons.add_rounded;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          await showAccountBusinessDialog(
-            context: context,
-            currentAdmin: currentAdmin,
-          );
+          if (isGuest) {
+            // Si es invitado, redirigir a cerrar sesión (login)
+            final authProvider = context.read<AuthProvider>();
+            await _handleSignOut(context, authProvider);
+          } else {
+            await showAccountBusinessDialog(
+              context: context,
+              currentAdmin: currentAdmin!,
+            );
+          }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -564,8 +583,8 @@ class _AccountSelectionContent extends StatelessWidget {
                     color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
-                child: Icon(
-                  Icons.add_rounded,
+                  child: Icon(
+                  iconData,
                   color: colorScheme.primary,
                   size: 24,
                 ),
@@ -578,14 +597,14 @@ class _AccountSelectionContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Crear nueva cuenta',
+                      title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
                       ),
                     ),
                     Text(
-                      'Agrega un nuevo comercio',
+                      subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),

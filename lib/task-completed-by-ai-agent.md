@@ -1,3 +1,11 @@
+### [2026-02-07 01:56] Mejora Visual: Brillo de Tabs en Catálogo
+- **Tareas:** Se actualizó `CataloguePage` para asignar un color de indicador específico (`Color(0xFF3E3E)`) en modo oscuro y `surface` (blanco) en modo claro.
+- **Resumen:** Se mejoró la distinción visual de la pestaña seleccionada en ambos temas, asegurando un brillo adecuado para el modo oscuro.
+
+### [2026-02-07 01:35] Despliegue a Producción
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`).
+- **Resumen:** Se desplegó una nueva versión de la web app en Firebase Hosting tras construir una release limpia.
+
 ### [2026-02-06 18:32] Optimización de Performance: Modo Demo
 - **Tareas:** Implementado sistema de caché lazy loading en `DemoAccountService` para eliminar regeneración redundante de datos. Se agregaron variables de caché privadas (_cachedProducts, _cachedCategories, _cachedProviders, _cachedBrands, _cachedAdminUsers, _cachedAccount, _cachedAdminProfile, _cachedTickets, _cachedCashRegisters). Se modificaron todos los getters para usar patrón `??=` garantizando generación única. Se agregó método `clearCache()` para gestión de memoria. En `HomePage`, se implementó flag `_demoProductsLoaded` para prevenir carga múltiple y se agregó limpieza de caché al cambiar de cuenta (`_buildWelcomeScreen` y `_buildBlockedScreen`).
 - **Resumen:** Eliminado delay al cargar pantalla principal en modo Demo (de ~300-500ms a ~10ms en cargas subsecuentes). Los datos se generan una sola vez y se cachean, reduciendo regeneraciones de 300 productos y 500 tickets a solo 100 productos y tickets según scope necesario.
@@ -110,26 +118,4 @@
 - **Tareas:** Se reincorporó el botón `AppButton.outlined` "Gestionar productos" debajo del resumen financiero en `_buildComboSection`.
 - **Resumen:** A petición del usuario, se mantuvo el botón explícito para gestionar productos además de la interacción en la tarjeta de resumen.
 
-### [2026-01-30 13:00] Refactorización UI de Combos
-- **Tareas:** `_buildComboSection` ahora muestra un resumen financiero en lugar de la lista completa. `_buildProductCard` oculta el precio si es 0 en búsqueda y listado.
-- **Resumen:** Se simplificó la vista principal de combos con un card de resumen y se mejoró la visualización de items gratuitos u opcionales ocultando su precio cero.
 
-### [2026-01-30 12:35] Implementar creación rápida de items en Combo
-- **Tareas:** Implementado `_createQuickProduct` y `_showQuickCreateDialog` en `_ComboManagementSheet`. Agregado botón de creación en la vista de búsqueda vacía.
-- **Resumen:** Se añadió la funcionalidad de crear productos rápidos (solo nombre) directamente desde el modal de gestión de combos para facilitar el flujo de trabajo.
-
-### [2026-01-30 12:05] Mejorar UX de Combo Section
-- **Tareas:** Actualizado `_buildComboSection` para mejorar UI de items y hacerlos clickeables. Actualizado `_showComboItemsModal` para agregar título grande.
-- **Resumen:** Se mejoró la experiencia de usuario en la gestión de combos, haciendo los items interactivos y agregando un título claro en el modal de gestión.
-
-### [2026-01-29 20:50] Despliegue a Producción
-- **Tareas:** Ejecución de pipeline de despliegue (Clean, Build Web Release, Firebase Deploy).
-- **Resumen:** Actualización exitosa del entorno de producción en Firebase Hosting.
-
-### [2026-01-29 20:30] Refinamiento Chips Combo
-- **Tareas:** Actualización de `_buildComboSubtitle` para mostrar Valor Real (tachado si aplica) y Precio Final en vista colapsada.
-- **Resumen:** Mejora en la visualización de resumen financiero en la sección de combos.
-
-### [2026-01-29 16:30] Mejora UI Sección Combos
-- **Tareas:** Refactor `_buildComboSection` usando `ListTileAppExpanded`, creación de `_ComboManagementSheet` optimizado, mejora en `BaseBottomSheet` para auto-focus.
-- **Resumen:** Se estandarizó la UI de combos igualando el estilo de la calculadora de márgenes y mejorando la UX de selección de productos.

@@ -301,10 +301,10 @@ class _CataloguePageState extends State<CataloguePage>
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             height: 40,
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .surfaceContainerHighest
-                  .withValues(alpha: 0.5),
+              color: Colors.transparent,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: TabBar(
@@ -314,17 +314,17 @@ class _CataloguePageState extends State<CataloguePage>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              labelColor: Theme.of(context).colorScheme.onSurface,
+              labelColor: Theme.of(context).colorScheme.onPrimary,
               unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),

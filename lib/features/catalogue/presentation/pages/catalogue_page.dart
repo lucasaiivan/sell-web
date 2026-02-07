@@ -12,6 +12,7 @@ import '../views/product_catalogue_view.dart';
 
 import '../widgets/catalogue_metrics_bar.dart';
 import '../widgets/product_list_tile.dart';
+import '../widgets/product_table_view.dart';
 import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import '../views/search_product_full_screen_view.dart';
 import 'package:sellweb/features/catalogue/domain/entities/category.dart';
@@ -21,6 +22,9 @@ import 'package:sellweb/features/catalogue/domain/entities/provider.dart'
 import '../views/dialogs/category_dialog.dart';
 import '../views/dialogs/provider_dialog.dart';
 import '../widgets/product_search_field.dart';
+import '../widgets/category_table_view.dart';
+import '../widgets/provider_table_view.dart';
+import 'package:sellweb/core/presentation/widgets/ui/avatar.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -287,19 +291,49 @@ class _CataloguePageState extends State<CataloguePage>
         ],
       ),
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(kTextTabBarHeight),
+        preferredSize: const Size.fromHeight(60),
         child: Showcase(
           key: _tabsKey,
           title: '📑 Gestión de Catálogo',
           description: 'Navega entre Productos, Categorías y Proveedores',
           targetBorderRadius: BorderRadius.circular(12),
-          child: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: 'Productos'),
-              Tab(text: 'Categorías'),
-              Tab(text: 'Proveedores'),
-            ],
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            height: 40,
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              splashBorderRadius: BorderRadius.circular(10),
+              padding: const EdgeInsets.all(4),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              labelColor: Theme.of(context).colorScheme.onSurface,
+              unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              tabs: const [
+                Tab(text: 'Productos'),
+                Tab(text: 'Categorías'),
+                Tab(text: 'Proveedores'),
+              ],
+            ),
           ),
         ),
       ),
@@ -351,9 +385,11 @@ class _CataloguePageState extends State<CataloguePage>
         return Column(
           children: [
             // Barra de métricas (se ajusta según el filtro)
-            CatalogueMetricsBar(
-              metrics: state.catalogueMetrics,
-            ),
+            // Solo mostrar en pantallas pequeñas (< 600px)
+            if (MediaQuery.of(context).size.width < 600)
+              CatalogueMetricsBar(
+                metrics: state.catalogueMetrics,
+              ),
             // Contenido principal (Lista)
             Expanded(
               child: _buildProductsContent(
@@ -370,6 +406,8 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
+
+  
   /// Construye el contenido de la lista de productos o el estado vacío
   Widget _buildProductsContent(
     BuildContext context,
@@ -386,6 +424,16 @@ class _CataloguePageState extends State<CataloguePage>
         return _buildFilteredEmptyState(context, activeFilter);
       }
       return _buildEmptyState(context);
+    }
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Si es pantalla grande (>= 600px), usar la vista de tabla
+    if (screenWidth >= 600) {
+      return ProductTableView(
+        products: displayProducts,
+        catalogueProvider: Provider.of<CatalogueProvider>(context, listen: false),
+        metrics: Provider.of<CatalogueProvider>(context, listen: false).catalogueMetrics,
+      );
     }
 
     return _isGridView
@@ -409,6 +457,21 @@ class _CataloguePageState extends State<CataloguePage>
                 .where((category) =>
                     category.name.toLowerCase().contains(searchQuery))
                 .toList();
+        
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        if (screenWidth >= 600) {
+          return CategoryTableView(
+            categories: categories,
+            catalogueProvider: catalogueProvider,
+            accountId: salesProvider.profileAccountSelected.id,
+            onCategoryTap: (categoryId, categoryName) {
+              _searchController.text = categoryName;
+              _tabController.animateTo(0);
+              catalogueProvider.filterByCategory(categoryId);
+            },
+          );
+        }
 
         return CategoriesListView(
           accountId: salesProvider.profileAccountSelected.id,
@@ -440,6 +503,21 @@ class _CataloguePageState extends State<CataloguePage>
             : provider.providers
                 .where((prov) => prov.name.toLowerCase().contains(searchQuery))
                 .toList();
+        
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        if (screenWidth >= 600) {
+          return ProviderTableView(
+            providers: providers,
+            catalogueProvider: catalogueProvider,
+            accountId: salesProvider.profileAccountSelected.id,
+            onProviderTap: (providerId, providerName) {
+              _searchController.text = providerName;
+              _tabController.animateTo(0);
+              catalogueProvider.filterByProvider(providerId);
+            },
+          );
+        }
 
         return ProvidersListView(
           accountId: salesProvider.profileAccountSelected.id,
@@ -1291,9 +1369,6 @@ class _CategoriesListViewState extends State<CategoriesListView> {
     final colorScheme = theme.colorScheme;
 
     // Generar avatar con 2 primeros caracteres
-    final avatarText = category.name.length >= 2
-        ? category.name.substring(0, 2).toUpperCase()
-        : category.name.toUpperCase();
 
     return InkWell(
       onTap: onTap,
@@ -1303,15 +1378,13 @@ class _CategoriesListViewState extends State<CategoriesListView> {
         child: Row(
           children: [
             // Avatar con iniciales
-            CircleAvatar(
+             AvatarItem(
+              name: category.name,
               radius: 20,
               backgroundColor: colorScheme.primaryContainer,
-              child: Text(
-                avatarText,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
+              textStyle: theme.textTheme.titleSmall?.copyWith(
+                color: colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 16),
@@ -1482,9 +1555,6 @@ class _ProvidersListViewState extends State<ProvidersListView> {
     final colorScheme = theme.colorScheme;
 
     // Generar avatar con 2 primeros caracteres
-    final avatarText = provider.name.length >= 2
-        ? provider.name.substring(0, 2).toUpperCase()
-        : provider.name.toUpperCase();
 
     return InkWell(
       onTap: onTap,
@@ -1494,15 +1564,13 @@ class _ProvidersListViewState extends State<ProvidersListView> {
         child: Row(
           children: [
             // Avatar con iniciales
-            CircleAvatar(
+             AvatarItem(
+              name: provider.name,
               radius: 20,
               backgroundColor: colorScheme.secondaryContainer,
-              child: Text(
-                avatarText,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
+              textStyle: theme.textTheme.titleSmall?.copyWith(
+                color: colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 16),

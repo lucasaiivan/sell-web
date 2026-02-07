@@ -224,8 +224,6 @@ import 'package:sellweb/features/catalogue/domain/usecases/get_catalogue_stream_
     as _i474;
 import 'package:sellweb/features/catalogue/domain/usecases/get_categories_stream_usecase.dart'
     as _i690;
-import 'package:sellweb/features/catalogue/domain/usecases/get_demo_products_usecase.dart'
-    as _i329;
 import 'package:sellweb/features/catalogue/domain/usecases/get_popular_brands_usecase.dart'
     as _i199;
 import 'package:sellweb/features/catalogue/domain/usecases/get_product_by_code_usecase.dart'

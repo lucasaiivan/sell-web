@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:provider/provider.dart';
 import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
@@ -27,6 +28,7 @@ import '../widgets/provider_table_view.dart';
 import 'package:sellweb/core/presentation/widgets/ui/avatar.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/brand_stories_list.dart';
 
 /// Página dedicada para gestionar el catálogo de productos
 /// Separada de la lógica de ventas para mejor organización
@@ -43,6 +45,10 @@ class _CataloguePageState extends State<CataloguePage>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   late TabController _tabController;
+
+  // Control de visibilidad de lista de marcas
+  bool _showBrandsList = true;
+  double _lastScrollOffset = 0.0;
 
   // Showcase Keys
   final GlobalKey _addFabKey = GlobalKey();
@@ -281,24 +287,34 @@ class _CataloguePageState extends State<CataloguePage>
               );
             },
           ),
-          // Botón para alternar vista (solo visible en tab de productos)
-          if (_tabController.index == 0)
-            AppBarButtonCircle(
-              icon: _isGridView ? Icons.view_list : Icons.grid_view,
-              tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
-              onPressed: () => setState(() => _isGridView = !_isGridView),
-            ),
+          // Botón para alternar vista (solo visible en tab de productos y en móviles)
+          AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, _) {
+              // Asegurar que solo se muestre en el tab de productos (index 0) y en móviles
+              // Usamos AnimatedBuilder para que reaccione a los cambios de tab
+              if (_tabController.index == 0 &&
+                  MediaQuery.of(context).size.width < 600) {
+                return AppBarButtonCircle(
+                  icon: _isGridView ? Icons.view_list : Icons.grid_view,
+                  tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
+                  onPressed: () => setState(() => _isGridView = !_isGridView),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
+        preferredSize: const Size.fromHeight(50),
         child: Showcase(
           key: _tabsKey,
           title: '📑 Gestión de Catálogo',
           description: 'Navega entre Productos, Categorías y Proveedores',
           targetBorderRadius: BorderRadius.circular(12),
           child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             height: 40,
             decoration: BoxDecoration(
               color: Colors.transparent,
@@ -362,6 +378,8 @@ class _CataloguePageState extends State<CataloguePage>
         hasActiveFilter: provider.hasActiveFilter,
         activeFilter: provider.activeFilter,
         catalogueMetrics: provider.catalogueMetrics,
+        brands: provider.getBrandsFromVisibleProducts(),
+        selectedBrandId: provider.selectedBrandId,
       ),
       builder: (context, state, child) {
         // Estado de carga
@@ -381,7 +399,7 @@ class _CataloguePageState extends State<CataloguePage>
           );
         }
 
-        // Lista de productos con métricas
+        // Lista de productos con métricas y marcas
         return Column(
           children: [
             // Barra de métricas (se ajusta según el filtro)
@@ -390,14 +408,57 @@ class _CataloguePageState extends State<CataloguePage>
               CatalogueMetricsBar(
                 metrics: state.catalogueMetrics,
               ),
-            // Contenido principal (Lista)
+            // Lista de marcas con animación de collapse
+            // Solo mostrar si hay al menos 2 marcas diferentes
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: _showBrandsList && state.brands.length >= 2
+                  ? BrandStoriesList(
+                      brands: state.brands,
+                      selectedBrandId: state.selectedBrandId,
+                      onBrandTap: (brandId, brandName) {
+                        final catalogueProvider = Provider.of<CatalogueProvider>(
+                          context,
+                          listen: false,
+                        );
+                        // Mostrar el nombre de la marca en el buscador
+                        _searchController.text = brandName;
+                        // Aplicar filtro de marca
+                        catalogueProvider.filterByBrand(brandId);
+                      },
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            // Contenido principal (Lista) con listener de scroll
             Expanded(
-              child: _buildProductsContent(
-                context,
-                state.visibleProducts,
-                state.currentSearchQuery.isNotEmpty,
-                state.hasActiveFilter,
-                state.activeFilter,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification notification) {
+                  if (notification is ScrollUpdateNotification) {
+                    final currentOffset = notification.metrics.pixels;
+                    // Ocultar historias al scrollear hacia abajo
+                    if (currentOffset > _lastScrollOffset && currentOffset > 50) {
+                      if (_showBrandsList) {
+                        setState(() => _showBrandsList = false);
+                      }
+                    }
+                    // Mostrar historias al scrollear hacia arriba o estar en top
+                    else if (currentOffset < _lastScrollOffset || currentOffset <= 50) {
+                      if (!_showBrandsList) {
+                        setState(() => _showBrandsList = true);
+                      }
+                    }
+                    _lastScrollOffset = currentOffset;
+                  }
+                  return false;
+                },
+                child: _buildProductsContent(
+                  context,
+                  state.visibleProducts,
+                  state.currentSearchQuery.isNotEmpty,
+                  state.hasActiveFilter,
+                  state.activeFilter,
+                ),
               ),
             ),
           ],
@@ -900,9 +961,13 @@ class _ProductCatalogueCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Card(
       elevation: 1,
-      color: Theme.of(context).colorScheme.surface,
+      color: isDark 
+          ? colorScheme.surfaceBright 
+          : colorScheme.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -1093,9 +1158,10 @@ class _ProductCatalogueCard extends StatelessWidget {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      // Beneficio y porcentaje (solo si hay precio de coste)
+                      // Beneficio y porcentaje (solo si hay precio de coste y datos)
                       if (product.purchasePrice > 0 &&
-                          product.getBenefits.isNotEmpty)
+                          product.getBenefits.isNotEmpty &&
+                          product.getBenefits != '\$0')
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
@@ -1359,6 +1425,34 @@ class _CategoriesListViewState extends State<CategoriesListView> {
     );
   }
 
+  void _showDeleteConfirmation(BuildContext context, Category category) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar categoría'),
+        content: Text(
+            '¿Estás seguro de que deseas eliminar la categoría "${category.name}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Provider.of<CatalogueProvider>(context, listen: false).deleteCategory(
+                accountId: widget.accountId,
+                categoryId: category.id,
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCategoryTile({
     required Category category,
     required int productCount,
@@ -1413,6 +1507,37 @@ class _CategoriesListViewState extends State<CategoriesListView> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: colorScheme.onSurfaceVariant),
+              onSelected: (value) {
+                switch (value) {
+                  case 'edit':
+                    if (onEdit != null) onEdit();
+                    break;
+                  case 'delete':
+                     _showDeleteConfirmation(context, category);
+                    break;
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: ListTile(
+                    leading: Icon(Icons.edit_outlined),
+                    title: Text('Editar'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_outlined, color: Colors.red),
+                    title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1545,6 +1670,35 @@ class _ProvidersListViewState extends State<ProvidersListView> {
     );
   }
 
+  void _showDeleteConfirmation(
+      BuildContext context, catalogue_provider_entity.Provider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar proveedor'),
+        content: Text(
+            '¿Estás seguro de que deseas eliminar el proveedor "${provider.name}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Provider.of<CatalogueProvider>(context, listen: false).deleteProvider(
+                accountId: widget.accountId,
+                providerId: provider.id,
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProviderTile({
     required catalogue_provider_entity.Provider provider,
     required int productCount,
@@ -1618,6 +1772,37 @@ class _ProvidersListViewState extends State<ProvidersListView> {
                 ),
               ),
             ),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: colorScheme.onSurfaceVariant),
+              onSelected: (value) {
+                switch (value) {
+                  case 'edit':
+                    if (onEdit != null) onEdit();
+                    break;
+                  case 'delete':
+                     _showDeleteConfirmation(context, provider);
+                    break;
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: ListTile(
+                    leading: Icon(Icons.edit_outlined),
+                    title: Text('Editar'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_outlined, color: Colors.red),
+                    title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -1634,6 +1819,8 @@ class _ProductsTabState {
   final bool hasActiveFilter;
   final CatalogueFilter activeFilter;
   final CatalogueMetrics catalogueMetrics;
+  final List<BrandInfo> brands;
+  final String? selectedBrandId;
 
   const _ProductsTabState({
     required this.isLoading,
@@ -1642,6 +1829,8 @@ class _ProductsTabState {
     required this.hasActiveFilter,
     required this.activeFilter,
     required this.catalogueMetrics,
+    required this.brands,
+    this.selectedBrandId,
   });
 
   @override
@@ -1654,7 +1843,9 @@ class _ProductsTabState {
           currentSearchQuery == other.currentSearchQuery &&
           hasActiveFilter == other.hasActiveFilter &&
           activeFilter == other.activeFilter &&
-          catalogueMetrics == other.catalogueMetrics;
+          catalogueMetrics == other.catalogueMetrics &&
+          listEquals(brands, other.brands) &&
+          selectedBrandId == other.selectedBrandId;
 
   @override
   int get hashCode =>
@@ -1663,5 +1854,7 @@ class _ProductsTabState {
       currentSearchQuery.hashCode ^
       hasActiveFilter.hashCode ^
       activeFilter.hashCode ^
-      catalogueMetrics.hashCode;
+      catalogueMetrics.hashCode ^
+      brands.hashCode ^
+      selectedBrandId.hashCode;
 }

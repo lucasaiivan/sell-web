@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-// avatar circular con imagen o texto por defecto de las primeras letras del nombre 
+// avatar circular con imagen o texto por defecto de 
 // util para mostrar avatares en items generales de nombres con o sin imagen
 
 class AvatarItem extends StatelessWidget {
@@ -32,24 +32,63 @@ class AvatarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasImageUrl = imageUrl != null && imageUrl!.isNotEmpty;
 
+    // Si no hay URL, mostrar directamente las iniciales
+    if (!hasImageUrl) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: backgroundColor ?? theme.colorScheme.primaryContainer,
+        child: Text(
+          _initials,
+          style: textStyle ??
+              TextStyle(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.bold,
+                fontSize: radius * 0.8,
+              ),
+        ),
+      );
+    }
+
+    // Si hay URL, intentar cargar la imagen con manejo de errores
     return CircleAvatar(
       radius: radius,
       backgroundColor: backgroundColor ?? theme.colorScheme.primaryContainer,
-      backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-          ? NetworkImage(imageUrl!)
-          : null,
-      child: (imageUrl == null || imageUrl!.isEmpty)
-          ? Text(
-              _initials,
-              style: textStyle ??
-                  TextStyle(
-                    color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                    fontSize: radius * 0.8,
-                  ),
-            )
-          : null,
+      child: Image.network(
+        imageUrl!,
+        fit: BoxFit.cover,
+        width: radius * 2,
+        height: radius * 2,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            // Imagen cargada exitosamente
+            return ClipOval(child: child);
+          }
+          // Mientras carga, mostrar un indicador o las iniciales
+          return Text(
+            _initials,
+            style: textStyle ??
+                TextStyle(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                  fontSize: radius * 0.8,
+                ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          // Si falla la carga, mostrar las iniciales
+          return Text(
+            _initials,
+            style: textStyle ??
+                TextStyle(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                  fontSize: radius * 0.8,
+                ),
+          );
+        },
+      ),
     );
   }
 }

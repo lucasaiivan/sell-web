@@ -1,6 +1,26 @@
+### [2026-02-11 00:35] Fix: Error de Compilación en Catálogo
+- **Tareas:** Se creó el archivo `brand_stories_list.dart` faltante en `lib/features/catalogue/presentation/widgets/`. Se implementó el widget `BrandStoriesList` para mostrar historias de marcas horizontalmente usando `AvatarItem`. Se verificó la corrección mediante `flutter analyze`.
+- **Resumen:** Solucionado el error de compilación que impedía ejecutar la app debido a la referencia a un archivo inexistente en `CataloguePage`.
+
+### [2026-02-08 11:15] Mejora UX: Menú Contextual en Listas de Catálogo
+- **Tareas:** Se agregaron `PopupMenuButton` en `CategoriesListView` y `ProvidersListView` dentro de `CataloguePage`. Se implementó lógica de confirmación de eliminación (`_showDeleteConfirmation`) en los estados correspondientes.
+- **Resumen:** Ahora es posible editar y eliminar categorías y proveedores directamente desde la vista de lista (móvil) mediante un menú contextual, igualando la funcionalidad de la vista de tabla (escritorio).
+
 ### [2026-02-07 01:56] Mejora Visual: Brillo de Tabs en Catálogo
 - **Tareas:** Se actualizó `CataloguePage` para asignar un color de indicador específico (`Color(0xFF3E3E)`) en modo oscuro y `surface` (blanco) en modo claro.
 - **Resumen:** Se mejoró la distinción visual de la pestaña seleccionada en ambos temas, asegurando un brillo adecuado para el modo oscuro.
+
+### [2026-02-10 00:45] Unificar patrón de estilos de chips en vista web
+- **Tareas:** Refactorizada sección `summaryWebContent` en `product_catalogue_view.dart` para usar `_buildMetaChip` y `_buildStatusChip` con el mismo patrón que mobile.
+- **Resumen:** Se eliminó el chip personalizado de marca y se reorganizaron categoría/proveedor de metadatos a chips de estado, logrando consistencia visual entre mobile y web.
+
+### [2026-02-10 00:25] Agregar parámetros a `_buildMetaChip`
+- **Tareas:** Modificado `_buildMetaChip` en `product_catalogue_view.dart` para aceptar `accentColor` y `radius`.
+- **Resumen:** Se añadieron parámetros opcionales para personalizar el color de acento y el radio del borde en el widget de chips de metadatos.
+
+### [2026-02-09 06:40] Deploying Web App to Production
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`).
+- **Resumen:** Se desplegó una nueva versión de la web app en Firebase Hosting tras construir una release limpia.
 
 ### [2026-02-07 01:35] Despliegue a Producción
 - **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`).
@@ -101,21 +121,4 @@
 ### [2026-01-30 14:15] Convertir Card de Resumen en Botón de Acción
 - **Tareas:** Se eliminó el botón explícito "Gestionar productos". Se actualizó la tarjeta de Resumen Financiero para comportarse y lucir como un botón cuando no hay datos financieros, y como una tarjeta sutil cuando los tiene.
 - **Resumen:** Se unificó la acción de gestión en un solo elemento de UI (la tarjeta), mejorando la estética y reduciendo redundancia visual.
-
-### [2026-01-30 13:58] Corregir espaciado visual en Resumen de Combos
-- **Tareas:** Se ajustó la lógica en `_buildComboSection` para que el `Divider` y el espaciado inferior solo se rendericen si existe al menos un valor financiero > 0.
-- **Resumen:** Se solucionó un problema visual donde se mostraba una línea divisora y espacio vacío innecesario cuando el combo no tenía costos ni precio asignado.
-
-### [2026-01-30 13:50] Mejorar Resumen Financiero en Combos
-- **Tareas:** Se actualizó `_buildComboSection` para ocultar automáticamente las filas de "Valor Real", "Costo Total" y "Precio Final" si sus valores son 0.
-- **Resumen:** Se limpió la interfaz del resumen financiero, mostrando solo la información relevante y ocultando valores en cero para una visualización más concisa.
-
-### [2026-01-30 13:35] Mejorar UX de creación rápida en Combos
-- **Tareas:** Se implementó un estado de carga (`_isCreating`) con indicador visual durante la creación de productos. Se rediseñó la vista vacía de búsqueda con textos más claros y un botón de creación más prominente.
-- **Resumen:** Se optimizó el flujo de creación de productos rápidos para que sea más intuitivo y fluido, proporcionando feedback inmediato al usuario.
-
-### [2026-01-30 13:15] Restaurar botón de gestión en Combos
-- **Tareas:** Se reincorporó el botón `AppButton.outlined` "Gestionar productos" debajo del resumen financiero en `_buildComboSection`.
-- **Resumen:** A petición del usuario, se mantuvo el botón explícito para gestionar productos además de la interacción en la tarjeta de resumen.
-
 

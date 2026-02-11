@@ -49,6 +49,35 @@ import '../../domain/usecases/delete_provider_usecase.dart';
 /// Tipos de filtro disponibles para el catálogo
 enum CatalogueFilter { none, favorites, lowStock, outOfStock }
 
+/// Información de una marca para mostrar en la lista de historias
+class BrandInfo {
+  final String id;
+  final String name;
+  final String image;
+  final int productCount;
+
+  const BrandInfo({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.productCount,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BrandInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          image == other.image &&
+          productCount == other.productCount;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ name.hashCode ^ image.hashCode ^ productCount.hashCode;
+}
+
 /// Estado inmutable del provider de catálogo
 class _CatalogueState {
   final List<ProductCatalogue> products;
@@ -60,9 +89,10 @@ class _CatalogueState {
   final List<ProductCatalogue> filteredProducts;
   final String currentSearchQuery;
   final CatalogueFilter activeFilter;
-  // Filtros por categoría y proveedor
+  // Filtros por categoría, proveedor y marca
   final String? selectedCategoryId;
   final String? selectedProviderId;
+  final String? selectedBrandId;
 
   const _CatalogueState({
     required this.products,
@@ -76,6 +106,7 @@ class _CatalogueState {
     this.activeFilter = CatalogueFilter.none,
     this.selectedCategoryId,
     this.selectedProviderId,
+    this.selectedBrandId,
   });
 
   _CatalogueState copyWith({
@@ -90,6 +121,7 @@ class _CatalogueState {
     CatalogueFilter? activeFilter,
     Object? selectedCategoryId = const Object(),
     Object? selectedProviderId = const Object(),
+    Object? selectedBrandId = const Object(),
   }) {
     return _CatalogueState(
       products: products ?? this.products,
@@ -112,6 +144,9 @@ class _CatalogueState {
       selectedProviderId: selectedProviderId == const Object()
           ? this.selectedProviderId
           : selectedProviderId as String?,
+      selectedBrandId: selectedBrandId == const Object()
+          ? this.selectedBrandId
+          : selectedBrandId as String?,
     );
   }
 
@@ -130,7 +165,8 @@ class _CatalogueState {
           currentSearchQuery == other.currentSearchQuery &&
           activeFilter == other.activeFilter &&
           selectedCategoryId == other.selectedCategoryId &&
-          selectedProviderId == other.selectedProviderId;
+          selectedProviderId == other.selectedProviderId &&
+          selectedBrandId == other.selectedBrandId;
 
   @override
   int get hashCode =>
@@ -144,7 +180,8 @@ class _CatalogueState {
       currentSearchQuery.hashCode ^
       activeFilter.hashCode ^
       selectedCategoryId.hashCode ^
-      selectedProviderId.hashCode;
+      selectedProviderId.hashCode ^
+      selectedBrandId.hashCode;
 }
 
 /// Provider para gestionar el estado del catálogo de productos
@@ -244,15 +281,18 @@ class CatalogueProvider extends ChangeNotifier
   bool get hasActiveFilter => activeFilter != CatalogueFilter.none;
   String? get selectedCategoryId => _state.selectedCategoryId;
   String? get selectedProviderId => _state.selectedProviderId;
+  String? get selectedBrandId => _state.selectedBrandId;
   bool get hasCategoryFilter => _state.selectedCategoryId != null;
   bool get hasProviderFilter => _state.selectedProviderId != null;
+  bool get hasBrandFilter => _state.selectedBrandId != null;
 
-  /// Verifica si hay algún filtro activo (búsqueda, categoría, proveedor o filtro especial)
+  /// Verifica si hay algún filtro activo (búsqueda, categoría, proveedor, marca o filtro especial)
   bool get _hasAnyActiveFilter =>
       currentSearchQuery.isNotEmpty ||
       hasActiveFilter ||
       hasCategoryFilter ||
-      hasProviderFilter;
+      hasProviderFilter ||
+      hasBrandFilter;
 
   bool get isFiltering => _hasAnyActiveFilter;
   List<Category> get categories => _categories;
@@ -288,6 +328,50 @@ class CatalogueProvider extends ChangeNotifier
       currencySign:
           productsList.isNotEmpty ? productsList.first.currencySign : '\$',
     );
+  }
+
+  /// Obtiene las marcas únicas de los productos visibles
+  /// 
+  /// Retorna una lista de [BrandInfo] con:
+  /// - Solo marcas que tienen nombre e imagen válidos
+  /// - Contador de productos por marca
+  /// - Ordenadas alfabéticamente por nombre
+  List<BrandInfo> getBrandsFromVisibleProducts() {
+    final brandMap = <String, BrandInfo>{};
+    
+    for (final product in visibleProducts) {
+      // Solo incluir marcas con nombre e imagen válidos
+      if (product.idMark.isEmpty || 
+          product.nameMark.isEmpty || 
+          product.imageMark.isEmpty) {
+        continue;
+      }
+      
+      if (brandMap.containsKey(product.idMark)) {
+        // Incrementar contador de productos
+        final existing = brandMap[product.idMark]!;
+        brandMap[product.idMark] = BrandInfo(
+          id: existing.id,
+          name: existing.name,
+          image: existing.image,
+          productCount: existing.productCount + 1,
+        );
+      } else {
+        // Agregar nueva marca
+        brandMap[product.idMark] = BrandInfo(
+          id: product.idMark,
+          name: product.nameMark,
+          image: product.imageMark,
+          productCount: 1,
+        );
+      }
+    }
+    
+    // Convertir a lista y ordenar alfabéticamente
+    final brands = brandMap.values.toList();
+    brands.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    
+    return brands;
   }
 
   // ===============================================================
@@ -1390,7 +1474,9 @@ class CatalogueProvider extends ChangeNotifier
     CatalogueFilter? filter,
     String? categoryId,
     String? providerId,
+    String? brandId,
     bool clearCategoryProvider = false,
+    bool clearBrand = false,
     bool shouldNotify = true,
   }) {
     final normalizedQuery = (query ?? _state.currentSearchQuery).trim();
@@ -1401,11 +1487,15 @@ class CatalogueProvider extends ChangeNotifier
     final effectiveProviderId = clearCategoryProvider
         ? null
         : (providerId ?? _state.selectedProviderId);
+    final effectiveBrandId = clearBrand || clearCategoryProvider
+        ? null
+        : (brandId ?? _state.selectedBrandId);
 
     final bool hasQuery = normalizedQuery.isNotEmpty;
     final bool hasFilter = effectiveFilter != CatalogueFilter.none;
     final bool hasCategoryFilter = effectiveCategoryId != null;
     final bool hasProviderFilter = effectiveProviderId != null;
+    final bool hasBrandFilter = effectiveBrandId != null;
 
     List<ProductCatalogue> workingList = _state.products;
 
@@ -1423,7 +1513,14 @@ class CatalogueProvider extends ChangeNotifier
           .toList();
     }
 
-    // 3. Búsqueda por texto (descripción, marca, código, etc.)
+    // 3. Filtro por marca
+    if (hasBrandFilter) {
+      workingList = workingList
+          .where((product) => product.idMark == effectiveBrandId)
+          .toList();
+    }
+
+    // 4. Búsqueda por texto (descripción, marca, código, etc.)
     if (hasQuery) {
       // Si tenemos resultados de búsqueda pre-calculados, usarlos como referencia
       if (searchResults != null) {
@@ -1437,13 +1534,13 @@ class CatalogueProvider extends ChangeNotifier
       }
     }
 
-    // 4. Filtros especiales (favoritos, stock)
+    // 5. Filtros especiales (favoritos, stock)
     if (hasFilter) {
       workingList = _filterProductsByOption(workingList, effectiveFilter);
     }
 
     final bool shouldUseFilteredList =
-        hasQuery || hasFilter || hasCategoryFilter || hasProviderFilter;
+        hasQuery || hasFilter || hasCategoryFilter || hasProviderFilter || hasBrandFilter;
 
     _state = _state.copyWith(
       filteredProducts: shouldUseFilteredList
@@ -1453,6 +1550,7 @@ class CatalogueProvider extends ChangeNotifier
       activeFilter: effectiveFilter,
       selectedCategoryId: effectiveCategoryId,
       selectedProviderId: effectiveProviderId,
+      selectedBrandId: effectiveBrandId,
     );
 
     if (shouldNotify) {
@@ -1699,5 +1797,36 @@ class CatalogueProvider extends ChangeNotifier
     } catch (_) {
       return null;
     }
+  }
+
+  /// Obtiene el nombre de la marca seleccionada
+  String? get selectedBrandName {
+    if (_state.selectedBrandId == null) return null;
+    // Buscar en los productos visibles la marca seleccionada
+    try {
+      final product = visibleProducts.firstWhere(
+        (p) => p.idMark == _state.selectedBrandId,
+      );
+      return product.nameMark;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Filtra productos por marca (usa el sistema centralizado)
+  void filterByBrand(String brandId) {
+    _recomputeFilteredProducts(
+      brandId: brandId,
+      categoryId: null, // Limpiar filtro de categoría
+      providerId: null, // Limpiar filtro de proveedor
+      query: '', // Mantener la búsqueda vacía, se mostrará el nombre en el buscador desde la UI
+    );
+  }
+
+  /// Limpia el filtro de marca
+  void clearBrandFilter() {
+    _recomputeFilteredProducts(
+      clearBrand: true,
+    );
   }
 }

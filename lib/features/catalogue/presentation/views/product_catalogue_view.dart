@@ -322,6 +322,46 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
   List<Widget> _buildInfoCards(BuildContext context) {
     final product = _currentProduct;
     final cards = <Widget>[
+      _buildInfoCard(
+        context: context,
+        title: 'Precios y margen',
+        icon: Icons.attach_money_rounded,
+        child: _buildInfoList(
+          context,
+          [
+            {
+              'label': 'Venta al público',
+              'value': CurrencyFormatter.formatPrice(value: product.salePrice),
+              'icon': Icons.local_offer_outlined,
+            },
+            {
+              'label': 'Compra',
+              'value': product.purchasePrice > 0
+                  ? CurrencyFormatter.formatPrice(
+                      value: product.purchasePrice,
+                    )
+                  : 'No definido',
+              'icon': Icons.local_shipping_outlined,
+            },
+            if (product.purchasePrice > 0 &&
+                product.getPorcentageFormat.isNotEmpty)
+              {
+                'label': 'Margen',
+                'valueColor': Colors.green.shade700,
+                'value': product.getPorcentageFormat,
+                'icon': Icons.trending_up,
+              },
+            if (product.purchasePrice > 0 && product.getBenefitsValue > 0)
+              {
+                'label': 'Beneficio estimado',
+                'valueColor': Colors.green.shade700,
+                'value':
+                    '${CurrencyFormatter.formatPrice(value: product.getBenefitsValue, moneda: product.currencySign)} ganancia',
+                'icon': Icons.ssid_chart_outlined,
+              },
+          ],
+        ),
+      ),
       if (product.nameCategory.isNotEmpty ||
           product.provider.isNotEmpty ||
           product.nameProvider.isNotEmpty ||
@@ -388,46 +428,6 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
         ),
       _buildInfoCard(
         context: context,
-        title: 'Precios y margen',
-        icon: Icons.attach_money_rounded,
-        child: _buildInfoList(
-          context,
-          [
-            {
-              'label': 'Venta al público',
-              'value': CurrencyFormatter.formatPrice(value: product.salePrice),
-              'icon': Icons.local_offer_outlined,
-            },
-            {
-              'label': 'Compra',
-              'value': product.purchasePrice > 0
-                  ? CurrencyFormatter.formatPrice(
-                      value: product.purchasePrice,
-                    )
-                  : 'No definido',
-              'icon': Icons.local_shipping_outlined,
-            },
-            if (product.purchasePrice > 0 &&
-                product.getPorcentageFormat.isNotEmpty)
-              {
-                'label': 'Margen',
-                'valueColor': Colors.green.shade700,
-                'value': product.getPorcentageFormat,
-                'icon': Icons.trending_up,
-              },
-            if (product.purchasePrice > 0 && product.getBenefitsValue > 0)
-              {
-                'label': 'Beneficio estimado',
-                'valueColor': Colors.green.shade700,
-                'value':
-                    '${CurrencyFormatter.formatPrice(value: product.getBenefitsValue, moneda: product.currencySign)} ganancia',
-                'icon': Icons.ssid_chart_outlined,
-              },
-          ],
-        ),
-      ),
-      _buildInfoCard(
-        context: context,
         title: 'Actividad',
         icon: Icons.timeline_outlined,
         child: _buildInfoList(
@@ -435,7 +435,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           [
             {
               'label': 'Ventas',
-              'value': product.sales.toString(),
+              'value': product.sales.round().toString(),
               'icon': Icons.receipt_long_outlined,
             },
             {
@@ -535,205 +535,105 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
     final product = _currentProduct;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final salePrice = CurrencyFormatter.formatPrice(value: product.salePrice);
-    final purchasePrice = product.purchasePrice > 0
-        ? CurrencyFormatter.formatPrice(value: product.purchasePrice)
-        : 'Sin dato';
     final updatedLabel = DateFormatter.getSimplePublicationDate(
       product.upgrade,
       DateTime.now(),
     );
 
+    // Contenido para móvil
     final summaryMobileContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Row superior: imagen + marca y descripción
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Imagen del producto
-            SizedBox(
-              width: 100,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Stack(
-                    children: [
-                      ProductImage(
-                        imageUrl: product.image,
-                        fit: BoxFit.cover,
-                        productDescription: product.description,
-                      ),
-                      if (product.isCombo)
-                        const Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: ComboTag(isCompact: true),
-                        ),
-                    ],
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  children: [
+                    ProductImage(
+                      imageUrl: product.image,
+                      fit: BoxFit.cover,
+                      productDescription: product.description,
+                    ),
+                    if (product.isCombo)
+                      const Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: ComboTag(isCompact: true),
+                      ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            // Columna con marca y descripción
+            const SizedBox(width: 20),
+            // Información principal
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Marca del producto
-                  if (product.nameMark.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: product.isVerified
-                            ? Colors.blue.withValues(alpha: 0.12)
-                            : theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(999),
-                        border: product.isVerified
-                            ? Border.all(
-                                color: Colors.blue.withValues(alpha: 0.3))
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (product.isVerified) ...[
-                            Icon(
-                              Icons.verified,
-                              size: 14,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 4),
-                          ],
-                          Flexible(
-                            child: Text(
-                              TextFormatter.capitalizeString(product.nameMark),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: product.isVerified
-                                    ? Colors.blue
-                                    : theme.colorScheme.onSurfaceVariant,
-                                fontWeight:
-                                    product.isVerified ? FontWeight.w600 : null,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  // Descripción del producto
-                  Text(
-                    product.description.isNotEmpty
-                        ? TextFormatter.capitalizeString(product.description)
-                        : 'Producto sin nombre',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.3,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  // Chips de metadata (código, categoría, proveedor)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                children: [ 
+                  Row(
                     children: [
+                      // chip : code
                       if (product.code.isNotEmpty)
                         _buildMetaChip(
                           context,
                           icon: Icons.qr_code_2,
                           label: product.code,
                         ),
-                      if (product.nameCategory.isNotEmpty)
+                      const SizedBox(width: 8),
+                      // chip : brand
+                      if (product.nameMark.isNotEmpty)
                         _buildMetaChip(
                           context,
-                          icon: Icons.category_outlined,
-                          label: TextFormatter.capitalizeString(
-                              product.nameCategory),
-                        ),
-                      if (product.provider.isNotEmpty)
-                        _buildMetaChip(
-                          context,
-                          icon: Icons.local_shipping_outlined,
-                          label: TextFormatter.capitalizeString(
-                              product.nameProvider.isNotEmpty
-                                  ? product.nameProvider
-                                  : product.provider),
+                          icon: Icons.verified,
+                          label: product.nameMark,
+                          accentColor: product.isVerified
+                              ? colorScheme.primary
+                              : null,
                         ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Título
+                  Text(
+                    product.description.isNotEmpty
+                        ? TextFormatter.capitalizeString(product.description)
+                        : 'Producto sin nombre',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                      height: 1.2,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        // Información de precios
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    salePrice,
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '/${product.unit}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer.withValues(
-                        alpha: 0.7,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (product.purchasePrice > 0) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Compra: $purchasePrice',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colorScheme.onPrimaryContainer.withValues(
-                      alpha: 0.8,
-                    ),
-                  ),
-                ),
-                if (product.getPorcentageFormat.isNotEmpty)
-                  Text(
-                    'Margen ${product.getPorcentageFormat}',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-              ],
-            ],
-          ),
-        ),
         const SizedBox(height: 16),
-        // Chips de estado
+        // Estados
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
+            // chip de favorito
             if (product.favorite)
               _buildStatusChip(
                 context,
@@ -741,6 +641,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 label: 'Favorito',
                 color: Colors.amber.shade600,
               ),
+            // chip de stock
             if (product.stock && product.quantityStock > 0)
               _buildStatusChip(
                 context,
@@ -755,6 +656,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                         : Colors.green,
                 filled: true,
               )
+            // chip de sin stock
             else if (product.stock && product.quantityStock <= 0)
               _buildStatusChip(
                 context,
@@ -763,6 +665,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 color: Colors.red,
                 filled: true,
               )
+            // chip de sin control de stock
             else
               _buildStatusChip(
                 context,
@@ -771,20 +674,70 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 color: colorScheme.outline,
                 filled: false,
               ),
+            // chip de categoria
+            if (product.nameCategory.isNotEmpty)
+              _buildStatusChip(
+                context,
+                icon: Icons.category_outlined,
+                label: product.nameCategory,
+                color: colorScheme.primary,
+                filled: false,
+              ),
+            // chip de proveedor
+            if (product.nameProvider.isNotEmpty)
+              _buildStatusChip(
+                context,
+                icon: Icons.local_shipping_outlined,
+                label: product.nameProvider,
+                color: colorScheme.primary,
+                filled: false,
+              ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
-          'Actualizado $updatedLabel',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        const SizedBox(height: 16),
+        // Footer: fecha actualización
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            'Actualizado $updatedLabel',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
     );
+
+    // Contenido para Web
     final summaryWebContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header Web - Metadatos
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            // chip : code
+            if (product.code.isNotEmpty)
+              _buildMetaChip(
+                context,
+                icon: Icons.qr_code_2,
+                label: product.code,
+              ),
+            // chip : brand
+            if (product.nameMark.isNotEmpty)
+              _buildMetaChip(
+                context,
+                icon: Icons.verified,
+                label: product.nameMark,
+                accentColor: product.isVerified
+                    ? colorScheme.primary
+                    : null,
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Título
         Text(
           product.description.isNotEmpty
               ? TextFormatter.capitalizeString(product.description)
@@ -792,149 +745,18 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: -0.5,
+            color: colorScheme.onSurface,
           ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
-        // marca del producto
-        if (product.nameMark.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: product.isVerified
-                  ? Colors.blue.withValues(alpha: 0.12)
-                  : theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(999),
-              border: product.isVerified
-                  ? Border.all(color: Colors.blue.withValues(alpha: 0.3))
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (product.isVerified) ...[
-                  Icon(
-                    Icons.verified,
-                    size: 16,
-                    color: Colors.blue,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  TextFormatter.capitalizeString(product.nameMark),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: product.isVerified
-                        ? Colors.blue
-                        : theme.colorScheme.onSurfaceVariant,
-                    fontWeight: product.isVerified ? FontWeight.w600 : null,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
+        // Estados Web
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            // text chip : código
-            if (product.code.isNotEmpty)
-              _buildMetaChip(
-                context,
-                icon: Icons.qr_code_2,
-                label: product.code,
-              ),
-            // text chip : categoría
-            if (product.nameCategory.isNotEmpty)
-              _buildMetaChip(
-                context,
-                icon: Icons.category_outlined,
-                label: TextFormatter.capitalizeString(product.nameCategory),
-              ),
-
-            // text chip : marca
-            if (product.provider.isNotEmpty)
-              _buildMetaChip(
-                context,
-                icon: Icons.local_shipping_outlined,
-                label: TextFormatter.capitalizeString(
-                    product.nameProvider.isNotEmpty
-                        ? product.nameProvider
-                        : product.provider),
-              ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        salePrice,
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '/${product.unit}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onPrimaryContainer.withValues(
-                            alpha: 0.7,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              if (product.purchasePrice > 0)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Compra: $purchasePrice',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer.withValues(
-                            alpha: 0.8,
-                          ),
-                        ),
-                      ),
-                      if (product.getPorcentageFormat.isNotEmpty)
-                        Text(
-                          'Margen ${product.getPorcentageFormat}',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            // status chip : favorito
+            // chip de favorito
             if (product.favorite)
               _buildStatusChip(
                 context,
@@ -942,7 +764,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 label: 'Favorito',
                 color: Colors.amber.shade600,
               ),
-            // status chip : stock con estados
+            // chip de stock
             if (product.stock && product.quantityStock > 0)
               _buildStatusChip(
                 context,
@@ -957,6 +779,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                         : Colors.green,
                 filled: true,
               )
+            // chip de sin stock
             else if (product.stock && product.quantityStock <= 0)
               _buildStatusChip(
                 context,
@@ -965,6 +788,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 color: Colors.red,
                 filled: true,
               )
+            // chip de sin control de stock
             else
               _buildStatusChip(
                 context,
@@ -973,9 +797,28 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                 color: colorScheme.outline,
                 filled: false,
               ),
+            // chip de categoria
+            if (product.nameCategory.isNotEmpty)
+              _buildStatusChip(
+                context,
+                icon: Icons.category_outlined,
+                label: product.nameCategory,
+                color: colorScheme.primary,
+                filled: false,
+              ),
+            // chip de proveedor
+            if (product.nameProvider.isNotEmpty)
+              _buildStatusChip(
+                context,
+                icon: Icons.local_shipping_outlined,
+                label: product.nameProvider,
+                color: colorScheme.primary,
+                filled: false,
+              ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
+        // Footer: fecha actualización
         Text(
           'Actualizado $updatedLabel',
           style: theme.textTheme.bodySmall?.copyWith(
@@ -985,50 +828,42 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       ],
     );
 
-    Widget imagePreview(BuildContext context) {
-      // Calcular tamaños responsivos
-      final isMobile = !isWide && MediaQuery.of(context).size.width < 600;
-      final imageSize = isWide
-          ? 260.0
-          : isMobile
-              ? 150.0 // Mitad del tamaño en pantallas reducidas
-              : 200.0;
-
-      return SizedBox(
-        width: imageSize,
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: ProductImage(
-              imageUrl: product.image,
-              fit: BoxFit.cover,
-              productDescription: product.description,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(isWide ? 32 : 20),
-        child: isWide
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  imagePreview(context),
-                  const SizedBox(width: 32),
-                  Expanded(child: summaryWebContent),
-                ],
-              )
-            : summaryMobileContent,
-      ),
+    // Contenedor Principal M3 (Surface Tonal)
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isWide ? 32 : 20), 
+      child: isWide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Imagen grande en web
+                Container(
+                  width: 280,
+                  height: 280,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: ProductImage(
+                      imageUrl: product.image,
+                      fit: BoxFit.cover,
+                      productDescription: product.description,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 40),
+                Expanded(child: summaryWebContent),
+              ],
+            )
+          : summaryMobileContent,
     );
   }
 
@@ -1044,39 +879,70 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
     IconData? icon,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
-        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con gradiente
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primaryContainer.withValues(alpha: 0.4),
+                  colorScheme.primaryContainer.withValues(alpha: 0.15),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Row(
               children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 18, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
+                if (icon != null) ...[ 
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                 ],
                 Text(
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
+          ),
+          // Contenido
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: child,
+          ),
+        ],
       ),
     );
   }
@@ -1098,7 +964,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
             selectable: items[index]['selectable'] as bool? ?? false,
           ),
           if (index != items.length - 1)
-            const Divider(height: 16, thickness: 0.4),
+            const Divider(height: 20, thickness: 0.3),
         ],
       ],
     );
@@ -1125,8 +991,8 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
+          Icon(icon, size: 20, color: theme.colorScheme.primary.withValues(alpha: 0.85)),
+          const SizedBox(width: 10),
         ],
         Expanded(
           child: Column(
@@ -1138,7 +1004,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               selectable
                   ? SelectableText(displayValue, style: textStyle)
                   : Text(displayValue, style: textStyle),
@@ -1171,23 +1037,28 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
     BuildContext context, {
     required IconData icon,
     required String label,
+    Color? accentColor,
+    double? radius,
   }) {
     final theme = Theme.of(context);
+    final color = accentColor ?? theme.colorScheme.onSurfaceVariant;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
+        color: accentColor?.withValues(alpha: 0.1) ?? theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(radius ?? 999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 6),
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 7),
           Text(
             label,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: color,
+              fontWeight: accentColor != null ? FontWeight.bold : null,
             ),
           ),
         ],
@@ -1211,7 +1082,7 @@ class _ProductCatalogueViewState extends State<ProductCatalogueView> {
         filled ? Colors.transparent : baseColor.withValues(alpha: 0.3);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(12),

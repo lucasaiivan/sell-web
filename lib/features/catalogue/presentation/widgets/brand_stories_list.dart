@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:sellweb/core/presentation/widgets/ui/avatar.dart';
 import '../providers/catalogue_provider.dart';
 
@@ -19,22 +20,30 @@ class BrandStoriesList extends StatelessWidget {
     if (brands.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
-      height: 110,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        scrollDirection: Axis.horizontal,
-        itemCount: brands.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 16),
-        itemBuilder: (context, index) {
-          final brand = brands[index];
-          final isSelected = brand.id == selectedBrandId;
-          
-          return _BrandStoryItem(
-            brand: brand,
-            isSelected: isSelected,
-            onTap: () => onBrandTap(brand.id, brand.name),
-          );
-        },
+      height: 100,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          scrollDirection: Axis.horizontal,
+          itemCount: brands.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 16),
+          itemBuilder: (context, index) {
+            final brand = brands[index];
+            final isSelected = brand.id == selectedBrandId;
+            
+            return _BrandStoryItem(
+              brand: brand,
+              isSelected: isSelected,
+              onTap: () => onBrandTap(brand.id, brand.name),
+            );
+          },
+        ),
       ),
     );
   }

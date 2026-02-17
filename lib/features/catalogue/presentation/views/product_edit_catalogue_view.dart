@@ -16,8 +16,7 @@ import 'package:sellweb/core/presentation/widgets/ui/quantity_selector.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/category_dialog.dart';
 import 'package:sellweb/features/catalogue/presentation/views/dialogs/provider_dialog.dart';
 import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart'; 
-import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart'; 
-import 'package:sellweb/core/presentation/widgets/ui/ui.dart';
+import 'package:sellweb/core/presentation/widgets/success/process_success_view.dart';  
 
 /// Formulario de edición de producto con validación y estado local
 ///

@@ -1,3 +1,35 @@
+### [2026-02-14 02:00] Despliegue a Producción (Web)
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`). Se omitió `--web-renderer canvaskit` debido a su ausencia en las opciones actuales.
+- **Resumen:** Despliegue exitoso de nueva versión en Firebase Hosting con configuración por defecto.
+
+### [2026-02-14 01:35] Mejora UX: Toggle Grid/List
+- **Tareas:** Se movió el botón de alternar vista (Grid/List) de la `AppBar` a la parte superior de la lista de productos. Se reemplazó el `IconButton` por un `TextButton.icon` alineado a la derecha para mayor claridad y accesibilidad, visible solo en móvil.
+- **Resumen:** El control para cambiar la visualización de productos es ahora más accesible y explícito, ubicado contextualmente sobre el listado.
+
+### [2026-02-14 01:30] Diseño Grid Transparente en Catálogo
+- **Tareas:** Se modificó `_ProductCatalogueCard` en `catalogue_page.dart` para tener fondo `transparent`, `elevation: 0` y un borde sutil (`BorderSide` con `outline`). Se eliminó variable `isDark` no utilizada.
+- **Resumen:** Las tarjetas de producto en vista de cuadrícula ahora siguen un diseño lineal (bordes) sin fondo, integrándose mejor con el estilo visual solicitado.
+
+### [2026-02-14 01:25] Mejora UI: Margen en Item de Lista de Producto
+- **Tareas:** Se actualizó `ProductListTile` en `product_list_tile.dart` agregando un margen (`SizedBox(width: 12)`) entre la información del producto y la columna de precio/ganancia en la vista móvil.
+- **Resumen:** Se mejoró la legibilidad de la lista de productos añadiendo separación visual entre el contenido descriptivo y los datos numéricos.
+
+### [2026-02-12 07:35] Tarjetas Expandibles en Vista de Producto
+- **Tareas:** Se refactorizó `_buildInfoCard` en `product_catalogue_view.dart` para ser expandible/contraíble con fondo transparente y borde. Se agregó `_expandedCards` Set con índice 0 expandido por defecto. Se usó `AnimatedCrossFade` y `AnimatedRotation` para animaciones suaves.
+- **Resumen:** Las tarjetas de información del producto ahora son expandibles/contraíbles con diseño limpio (borde + fondo transparente), la primera "Precios y margen" abierta por defecto.
+
+### [2026-02-11 22:57] Mejora UI: Margen Inferior en Lista de Productos
+- **Tareas:** Se actualizó `CataloguePage` agregando padding inferior en `_buildGridView` y `_buildListView` para asegurar un margen de 50dp al final del scroll.
+- **Resumen:** Se añadió un margen de 50dp al final de las listas de productos para mejorar la visualización.
+
+### [2026-02-11 22:55] Fix: Scroll con Mouse en Lista de Marcas
+- **Tareas:** Se actualizó `brand_stories_list.dart` envolviendo el `ListView` con `ScrollConfiguration` y agregando `PointerDeviceKind.mouse` a `dragDevices`. Se importó `flutter/gestures.dart`.
+- **Resumen:** Habilitado el scroll mediante arrastre con mouse en la lista horizontal de marcas del catálogo.
+
+### [2026-02-11 00:57] Despliegue a Producción (Web)
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`). Se omitió `--web-renderer canvaskit` por deprecación en Flutter 3.35.7+.
+- **Resumen:** Despliegue exitoso de nueva versión en Firebase Hosting con configuración optimizada por defecto.
+
 ### [2026-02-11 00:35] Fix: Error de Compilación en Catálogo
 - **Tareas:** Se creó el archivo `brand_stories_list.dart` faltante en `lib/features/catalogue/presentation/widgets/`. Se implementó el widget `BrandStoriesList` para mostrar historias de marcas horizontalmente usando `AvatarItem`. Se verificó la corrección mediante `flutter analyze`.
 - **Resumen:** Solucionado el error de compilación que impedía ejecutar la app debido a la referencia a un archivo inexistente en `CataloguePage`.
@@ -85,40 +117,3 @@
 ### [2026-02-01 19:55] Mejora UI Banner Modo Invitado
 - **Tareas:** Se rediseñó completamente el banner de modo invitado en `home_page.dart` con un enfoque minimalista premium: gradiente suave con tonos amber/orange más refinados, mejor espaciado, tipografía mejorada con jerarquía visual clara, icono circular con fondo semitransparente, separador con gradiente sutil, y mejor disposición de elementos.
 - **Resumen:** Se mejoró significativamente la estética del banner manteniendo el diseño minimalista pero haciéndolo más moderno, elegante y visualmente atractivo.
-
-### [2026-01-31 18:07] Corrección en AuthProvider
-- **Tareas:** Se corrigió un error de tipo en `AuthProvider` donde `String?` (de `_user!.uid`) no podía asignarse a `String` (en `account.ownerId`). Se implementó un fallback seguro `?? 'guest-user'`.
-- **Resumen:** Se solucionó un error de compilación asegurando que `ownerId` nunca sea nulo, asignando 'guest-user' si el UID no está disponible.
-
-### [2026-01-31 01:35] Despliegue a Producción
-- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy`).
-- **Resumen:** Se desplegó una nueva versión de la web app en Firebase Hosting tras actualizar dependencias y compilar una release limpia.
-
-### [2026-01-31 01:23] Mejora UI Botón Combos y Click en Items
-- **Tareas:** Se actualizó el botón de acción en sección Combos para mostrar 'Editar' (Icono Edit) si hay items. Se hicieron clickeables los items del listado resumen para abrir el modal de gestión.
-- **Resumen:** Se mejoró la intuitividad de la interfaz de combos permitiendo editar directamente al hacer click en los items y reflejando el estado de edición en el botón principal.
-
-### [2026-01-30 21:30] Simplificación Textos Dialog Creación Rápida
-- **Tareas:** Se simplificaron los textos en `_showQuickCreateDialog` ("Nuevo Item", "Nombre", "Crear") y se eliminó la descripción larga para una interfaz más directa.
-- **Resumen:** Se hizo más conciso el diálogo de creación rápida de items en combos para mejorar la velocidad de interacción.
-
-### [2026-01-30 21:20] Ui clean: Vista Previa Producto
-- **Tareas:** Se eliminó el contenedor `_buildSectionContainer` en `_buildPreviewProductCard`. Se ajustó el layout a `Center` con `Row` (MainAxisSize.min) y mayor espaciado.
-- **Resumen:** Se limpió la sección de "Vista previa" eliminando el marco contenedor para una presentación más ligera y centrada del producto.
-
-### [2026-01-30 18:55] Reubicación Campo Expiración
-- **Tareas:** Se movió el campo "Válido hasta" (fecha de expiración) de la sección de Combos a la sección de Inventario y Stock en `ProductEditCatalogueView`.
-- **Resumen:** Se reorganizó la UI para unificar la gestión temporal del producto (expiración) junto con el control de inventario/stock.
-
-### [2026-01-30 18:25] Corrección Navegación Eliminar Producto
-- **Tareas:** Se actualizó `_deleteProduct` en `ProductEditCatalogueView` incrementando `popCount` a 3.
-- **Resumen:** Se corrigió el flujo de navegación al eliminar un producto para asegurar el retorno al catálogo y evitar la vista de detalle obsoleta.
-
-### [2026-01-30 14:45] Items de Combo Locales (Ad-Hoc)
-- **Tareas:** Se modificó `_createQuickProduct` para generar items locales con ID temporal (`temp_...`) en lugar de persistirlos en el catálogo global.
-- **Resumen:** Ahora los productos creados desde "Creación Rápida" son exclusivos del combo actual, evitando contaminar el catálogo principal con items temporales.
-
-### [2026-01-30 14:15] Convertir Card de Resumen en Botón de Acción
-- **Tareas:** Se eliminó el botón explícito "Gestionar productos". Se actualizó la tarjeta de Resumen Financiero para comportarse y lucir como un botón cuando no hay datos financieros, y como una tarjeta sutil cuando los tiene.
-- **Resumen:** Se unificó la acción de gestión en un solo elemento de UI (la tarjeta), mejorando la estética y reduciendo redundancia visual.
-

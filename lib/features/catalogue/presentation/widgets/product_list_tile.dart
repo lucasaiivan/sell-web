@@ -211,6 +211,7 @@ class ProductListTile extends StatelessWidget {
           ],
         ),
       ),
+      const SizedBox(width: 12),
       // Precio y ganancia en el lado derecho
       Column(
         crossAxisAlignment: CrossAxisAlignment.end,

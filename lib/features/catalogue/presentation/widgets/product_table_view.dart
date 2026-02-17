@@ -18,7 +18,10 @@ class ProductTableView extends StatelessWidget {
     required this.products,
     required this.catalogueProvider,
     required this.metrics,
+    this.scrollController,
   });
+
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +36,7 @@ class ProductTableView extends StatelessWidget {
         _buildHeader(context, showStockColumn, metrics),
         Expanded(
           child: ListView.builder(
+            controller: scrollController,
             itemCount: products.length,
             padding: const EdgeInsets.only(bottom: 80), // Espacio para FAB
             itemBuilder: (context, index) {

@@ -5,6 +5,7 @@ import 'package:sellweb/core/core.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:flutter/rendering.dart'; // For ScrollDirection
 import '../providers/catalogue_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
@@ -48,7 +49,6 @@ class _CataloguePageState extends State<CataloguePage>
 
   // Control de visibilidad de lista de marcas
   bool _showBrandsList = true;
-  double _lastScrollOffset = 0.0;
 
   // Showcase Keys
   final GlobalKey _addFabKey = GlobalKey();
@@ -56,13 +56,79 @@ class _CataloguePageState extends State<CataloguePage>
   final GlobalKey _tabsKey = GlobalKey();
   bool _showcaseInitialized = false;
 
+  // Scroll Controller & UI State
+  final ScrollController _productsScrollController = ScrollController();
+  bool _showBackToTop = false;
+  bool _isButtonExpanded = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+    _productsScrollController.addListener(_onScroll);
   }
-  
+
+  void _onScroll() {
+    if (!_productsScrollController.hasClients) return;
+
+    final offset = _productsScrollController.offset;
+    final isScrollingDown = _productsScrollController.position.userScrollDirection ==
+        ScrollDirection.reverse;
+    final isScrollingUp = _productsScrollController.position.userScrollDirection ==
+        ScrollDirection.forward;
+
+    // Logic for Back to Top Button
+    if (offset > 400 && !_showBackToTop) {
+      setState(() => _showBackToTop = true);
+    } else if (offset <= 400 && _showBackToTop) {
+      setState(() => _showBackToTop = false);
+    }
+
+    // Logic for Button Expansion & Brands List
+    if (isScrollingDown && offset > 50) {
+      if (_isButtonExpanded) setState(() => _isButtonExpanded = false);
+      if (_showBrandsList) setState(() => _showBrandsList = false);
+    } else if (isScrollingUp) {
+      if (!_isButtonExpanded) setState(() => _isButtonExpanded = true);
+      if (!_showBrandsList) setState(() => _showBrandsList = true);
+    }
+  }
+
+  /// Calcula el ratio de scroll actual (0.0 - 1.0)
+  double _getCurrentScrollRatio() {
+    if (!_productsScrollController.hasClients) return 0.0;
+    final position = _productsScrollController.position;
+    if (position.maxScrollExtent <= 0) return 0.0;
+    return (position.pixels / position.maxScrollExtent).clamp(0.0, 1.0);
+  }
+
+  /// Alterna el modo de vista conservando la posición visual
+  void _toggleViewMode(List<ProductCatalogue> products) {
+    // Guardar el ratio de scroll actual (porcentaje de desplazamiento)
+    final scrollRatio = _getCurrentScrollRatio();
+
+    setState(() => _isGridView = !_isGridView);
+
+    // Después del rebuild, restaurar el mismo ratio de scroll
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_productsScrollController.hasClients) return;
+      
+      // Esperar un frame adicional para que el layout se complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_productsScrollController.hasClients) return;
+        
+        final position = _productsScrollController.position;
+        if (position.maxScrollExtent <= 0) return;
+        
+        // Calcular el offset objetivo basado en el ratio guardado
+        final targetOffset = position.maxScrollExtent * scrollRatio;
+        
+        _productsScrollController.jumpTo(targetOffset.clamp(0.0, position.maxScrollExtent));
+      });
+    });
+  }
+
   Future<bool> _shouldShowShowcase() async {
     final prefs = await SharedPreferences.getInstance();
     return !(prefs.getBool('catalogue_page_showcase_shown') ?? false);
@@ -121,6 +187,7 @@ class _CataloguePageState extends State<CataloguePage>
     _tabController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _productsScrollController.dispose();
     super.dispose();
   }
 
@@ -288,22 +355,7 @@ class _CataloguePageState extends State<CataloguePage>
             },
           ),
           // Botón para alternar vista (solo visible en tab de productos y en móviles)
-          AnimatedBuilder(
-            animation: _tabController,
-            builder: (context, _) {
-              // Asegurar que solo se muestre en el tab de productos (index 0) y en móviles
-              // Usamos AnimatedBuilder para que reaccione a los cambios de tab
-              if (_tabController.index == 0 &&
-                  MediaQuery.of(context).size.width < 600) {
-                return AppBarButtonCircle(
-                  icon: _isGridView ? Icons.view_list : Icons.grid_view,
-                  tooltip: _isGridView ? 'Vista de lista' : 'Vista de grilla',
-                  onPressed: () => setState(() => _isGridView = !_isGridView),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+
         ],
       ),
       bottom: PreferredSize(
@@ -396,6 +448,7 @@ class _CataloguePageState extends State<CataloguePage>
             state.currentSearchQuery.isNotEmpty,
             state.hasActiveFilter,
             state.activeFilter,
+            _productsScrollController,
           );
         }
 
@@ -430,35 +483,137 @@ class _CataloguePageState extends State<CataloguePage>
                     )
                   : const SizedBox.shrink(),
             ),
-            // Contenido principal (Lista) con listener de scroll
+            // Stack para contenido y botones flotantes/overlay
             Expanded(
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (ScrollNotification notification) {
-                  if (notification is ScrollUpdateNotification) {
-                    final currentOffset = notification.metrics.pixels;
-                    // Ocultar historias al scrollear hacia abajo
-                    if (currentOffset > _lastScrollOffset && currentOffset > 50) {
-                      if (_showBrandsList) {
-                        setState(() => _showBrandsList = false);
-                      }
-                    }
-                    // Mostrar historias al scrollear hacia arriba o estar en top
-                    else if (currentOffset < _lastScrollOffset || currentOffset <= 50) {
-                      if (!_showBrandsList) {
-                        setState(() => _showBrandsList = true);
-                      }
-                    }
-                    _lastScrollOffset = currentOffset;
-                  }
-                  return false;
-                },
-                child: _buildProductsContent(
-                  context,
-                  state.visibleProducts,
-                  state.currentSearchQuery.isNotEmpty,
-                  state.hasActiveFilter,
-                  state.activeFilter,
-                ),
+              child: Stack(
+                children: [
+                  // Contenido principal
+                  Positioned.fill(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: _buildProductsContent(
+                            context,
+                            state.visibleProducts,
+                            state.currentSearchQuery.isNotEmpty,
+                            state.hasActiveFilter,
+                            state.activeFilter,
+                            _productsScrollController,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Botones Flotantes (Unified Layout)
+                  Positioned(
+                    top: MediaQuery.of(context).size.width >= 600 ? 70 : 16,
+                    right: 16,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Botón de alternar vista (Grid/List) - Solo en móvil
+                        if (MediaQuery.of(context).size.width < 600)
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outlineVariant,
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(20),
+                                onTap: () => _toggleViewMode(state.visibleProducts),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: _isButtonExpanded ? 16 : 8,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _isGridView
+                                            ? Icons.view_list_rounded
+                                            : Icons.grid_view_rounded,
+                                        size: 20,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                      if (_isButtonExpanded) ...[
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _isGridView
+                                              ? 'Vista Lista'
+                                              : 'Vista Cuadrícula',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Theme.of(context).colorScheme.primary,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        
+                        const SizedBox(height: 8),
+
+                        // Botón "Volver arriba"
+                        AnimatedScale(
+                          scale: _showBackToTop ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: SizedBox(
+                            height: 40,
+                            child: FloatingActionButton.extended(
+                              heroTag: 'scrollToTop',
+                              onPressed: () {
+                                _productsScrollController.animateTo(
+                                  0,
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              elevation: 2,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primaryContainer,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimaryContainer,
+                              icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                              label: _isButtonExpanded
+                                  ? const Text('Volver arriba',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13))
+                                  : const SizedBox.shrink(),
+                              isExtended: _isButtonExpanded,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -476,6 +631,7 @@ class _CataloguePageState extends State<CataloguePage>
     bool hasSearch,
     bool hasFilter,
     CatalogueFilter activeFilter,
+    ScrollController? scrollController, // Nuevo parámetro opcional
   ) {
     if (displayProducts.isEmpty) {
       if (hasSearch) {
@@ -494,12 +650,13 @@ class _CataloguePageState extends State<CataloguePage>
         products: displayProducts,
         catalogueProvider: Provider.of<CatalogueProvider>(context, listen: false),
         metrics: Provider.of<CatalogueProvider>(context, listen: false).catalogueMetrics,
+        scrollController: scrollController,
       );
     }
 
     return _isGridView
-        ? _buildGridView(displayProducts)
-        : _buildListView(displayProducts);
+        ? _buildGridView(displayProducts, scrollController)
+        : _buildListView(displayProducts, scrollController);
   }
 
   /// Tab de categorías
@@ -596,9 +753,10 @@ class _CataloguePageState extends State<CataloguePage>
   }
 
   /// Construye la vista en grilla con efecto masonry
-  Widget _buildGridView(List<ProductCatalogue> products) {
+  Widget _buildGridView(List<ProductCatalogue> products, ScrollController? scrollController) {
     return MasonryGridView.count(
-      padding: const EdgeInsets.all(12),
+      controller: scrollController,
+      padding: const EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 70),
       crossAxisCount: _getCrossAxisCount(context),
       crossAxisSpacing: 2,
       mainAxisSpacing: 6,
@@ -630,9 +788,10 @@ class _CataloguePageState extends State<CataloguePage>
   }
 
   /// Construye la vista en lista vertical de productos
-  Widget _buildListView(List<ProductCatalogue> products) {
+  Widget _buildListView(List<ProductCatalogue> products, ScrollController? scrollController) {
     return ListView.separated(
-      padding: const EdgeInsets.all(0),
+      controller: scrollController,
+      padding: const EdgeInsets.only(bottom: 50),
       itemCount: products.length,
       separatorBuilder: (context, index) =>
           const Divider(height: 0, thickness: 0.4),
@@ -961,16 +1120,17 @@ class _ProductCatalogueCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final isDark = theme.brightness == Brightness.dark;
+
     
     return Card(
-      elevation: 1,
-      color: isDark 
-          ? colorScheme.surfaceBright 
-          : colorScheme.surface,
+      elevation: 0,
+      color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.4),
+        ),
       ),
       child: InkWell(
         onTap: onTap,

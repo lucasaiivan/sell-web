@@ -1,0 +1,796 @@
+import 'package:injectable/injectable.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sellweb/features/catalogue/domain/repositories/catalogue_repository.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product.dart';
+import 'package:sellweb/features/catalogue/domain/entities/product_price.dart';
+import 'package:sellweb/features/catalogue/domain/entities/category.dart';
+import 'package:sellweb/features/catalogue/domain/entities/mark.dart';
+import 'package:sellweb/features/catalogue/domain/entities/provider.dart';
+import 'package:sellweb/features/catalogue/domain/entities/combo_item.dart';
+import 'package:sellweb/core/services/database/i_firestore_datasource.dart';
+import 'package:sellweb/core/services/database/firestore_paths.dart';
+import 'package:sellweb/features/catalogue/data/datasources/catalogue_local_datasource.dart';
+import 'package:sellweb/features/catalogue/data/models/product_catalogue_model.dart';
+import 'package:sellweb/features/catalogue/data/models/category_model.dart';
+import 'package:sellweb/core/services/sync/i_sync_service.dart';
+
+/// Repository implementation usando nuevo sistema refactorizado
+///
+/// **Cambios principales:**
+/// - Usa [FirestoreDataSource] inyectado (no FirebaseFirestore directo)
+/// - Usa [FirestorePaths] para rutas type-safe
+/// - ErrorMapper se aplicará cuando se agregue Either<Failure, T>
+///
+/// **Próximos pasos:**
+/// - Migrar a Either<Failure, T> en lugar de Future<T>
+/// - Aplicar ErrorMapper en catch blocks
+@LazySingleton(as: CatalogueRepository)
+class CatalogueRepositoryImpl implements CatalogueRepository {
+  final IFirestoreDataSource _dataSource;
+  final CatalogueLocalDataSource _localDataSource;
+  final ISyncService _syncService;
+
+  CatalogueRepositoryImpl(
+    this._dataSource,
+    this._localDataSource,
+    this._syncService,
+  );
+
+  // stream : Devolverá un stream de productos del catálogo  de la cuenta del negocio seleccionada.
+  @override
+  Stream<QuerySnapshot> getCatalogueStream(String accountId) {
+    if (accountId.isEmpty) {
+      return const Stream.empty();
+    }
+
+    // ✅ Usar FirestorePaths para rutas type-safe
+    final path = FirestorePaths.accountCatalogue(accountId);
+    final collection = _dataSource.collection(path);
+
+    return collection.snapshots();
+  }
+
+  // future : buscará un producto por su ID en la (base de datos) publica de productos
+  @override
+  Future<Product?> getPublicProductByCode(String code) async {
+    // ✅ Usar FirestorePaths
+    final path = FirestorePaths.publicProducts();
+    final collection = _dataSource.collection(path);
+
+    final query = collection.where('code', isEqualTo: code).limit(1);
+
+    final snapshot = await _dataSource.getDocuments(query);
+
+    if (snapshot.docs.isNotEmpty) {
+      return Product.fromMap(snapshot.docs.first.data());
+    }
+    return null;
+  }
+
+  //  future : agregar un nuevo producto al catálogo de la cuenta del negocio seleccionada
+  @override
+  Future<void> addProductToCatalogue(
+      ProductCatalogue product, String accountId) async {
+    if (product.id.isEmpty) {
+      throw ArgumentError('El producto debe tener un ID válido');
+    }
+
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.accountProduct(accountId, product.id);
+      final productMap = product.toMap();
+
+      await _dataSource.setDocument(path, productMap, merge: true);
+    } catch (e) {
+      throw Exception('Error al guardar en Firestore: $e');
+    }
+  }
+
+  // future : crear/actualizar un producto en la base de datos pública de productos
+  @override
+  Future<void> createPublicProduct(Product product) async {
+    if (product.id.isEmpty) {
+      throw ArgumentError('El producto debe tener un ID válido');
+    }
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.publicProducts();
+      final docPath = '$path/${product.id}';
+      final productMap = product.toJson();
+
+      // Usar merge:true para no sobrescribir el contador de followers en actualizaciones
+      await _dataSource.setDocument(docPath, productMap, merge: true);
+    } catch (e) {
+      throw Exception(
+          'Error al crear/actualizar producto público en Firestore: $e');
+    }
+  }
+
+  // future : crear un nuevo producto pendiente de moderación
+  @override
+  Future<void> createPendingProduct(Product product) async {
+    if (product.id.isEmpty) {
+      throw ArgumentError('El producto debe tener un ID válido');
+    }
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.productsPending();
+      final docPath = '$path/${product.id}';
+      final productMap = product.toJson();
+
+      await _dataSource.setDocument(docPath, productMap, merge: false);
+    } catch (e) {
+      throw Exception('Error al crear producto pendiente en Firestore: $e');
+    }
+  }
+
+  // future : incrementa el contador de ventas de un producto
+  @override
+  Future<void> incrementSales(
+      String accountId, String productId, double quantity) async {
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw ArgumentError('El accountId y productId son obligatorios');
+    }
+
+    if (quantity <= 0.0) {
+      throw ArgumentError('La cantidad debe ser mayor a 0');
+    }
+
+    try {
+      // ✅ Usar método optimizado de DataSource
+      final path = FirestorePaths.accountProduct(accountId, productId);
+
+      // Solo incrementar ventas, sin actualizar timestamp 'upgrade'
+      // El timestamp 'upgrade' solo se actualiza en ediciones manuales del producto
+      await _dataSource.incrementField(path, 'sales', quantity);
+    } catch (e) {
+      throw Exception('Error al incrementar ventas del producto: $e');
+    }
+  }
+
+  // future : decrementa el stock de un producto
+  @override
+  Future<void> decrementStock(
+      String accountId, String productId, double quantity) async {
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw ArgumentError('El accountId y productId son obligatorios');
+    }
+
+    if (quantity <= 0.0) {
+      throw ArgumentError('La cantidad debe ser mayor a 0');
+    }
+
+    try {
+      // ✅ Usar método optimizado de DataSource
+      final path = FirestorePaths.accountProduct(accountId, productId);
+
+      // Solo decrementar stock, sin actualizar timestamp 'upgrade'
+      // El timestamp 'upgrade' solo se actualiza en ediciones manuales del producto
+      await _dataSource.incrementField(path, 'quantityStock', -quantity);
+    } catch (e) {
+      throw Exception('Error al decrementar stock del producto: $e');
+    }
+  }
+
+  @override
+  Future<void> decrementComboStock(
+      String accountId, List<ComboItem> items, double quantitySold) async {
+    if (accountId.isEmpty) {
+      throw ArgumentError('El accountId es obligatorio');
+    }
+
+    if (quantitySold <= 0.0) {
+      throw ArgumentError('La cantidad vendida debe ser mayor a 0');
+    }
+
+    // Iterar sobre los items y decrementar su stock individualmente
+    // Nota: Idealmente esto debería ser una transacción batch, pero
+    // dada la abstracción actual del DataSource, lo haremos iterativo.
+    for (final item in items) {
+      try {
+        await decrementStock(
+          accountId,
+          item.productId,
+          item.quantity * quantitySold,
+        );
+      } catch (e) {
+        // Loguear error pero intentar continuar con los demás items
+        print(
+            'Error al decrementar stock del item de combo ${item.productId}: $e');
+      }
+    }
+  }
+
+  // future : registra el precio de un producto en la base de datos pública
+  @override
+  Future<void> registerProductPrice(
+      ProductPrice productPrice, String productCode) async {
+    if (productCode.isEmpty) {
+      throw ArgumentError('El código del producto es obligatorio');
+    }
+
+    if (productPrice.idAccount.isEmpty) {
+      throw ArgumentError('El ID de la cuenta es obligatorio');
+    }
+
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.productPrices(productId: productCode);
+      final docPath = '$path${productPrice.idAccount}';
+
+      await _dataSource.setDocument(docPath, productPrice.toJson(),
+          merge: true);
+    } catch (e) {
+      throw Exception('Error al registrar precio del producto: $e');
+    }
+  }
+
+  // future : actualiza el estado de favorito de un producto
+  @override
+  Future<void> updateProductFavorite(
+      String accountId, String productId, bool isFavorite) async {
+    if (accountId.isEmpty || productId.isEmpty) {
+      throw ArgumentError('El accountId y productId son obligatorios');
+    }
+
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.accountProduct(accountId, productId);
+
+      // Solo actualizar el estado de favorito, sin modificar el timestamp upgrade
+      await _dataSource.updateDocument(path, {
+        'favorite': isFavorite,
+      });
+    } catch (e) {
+      throw Exception('Error al actualizar favorito del producto: $e');
+    }
+  }
+
+  @override
+  Stream<List<Category>> getCategoriesStream(String accountId) {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.accountCategories(accountId);
+    final collection = _dataSource.collection(path);
+
+    return _dataSource.streamDocuments(collection).map((snapshot) => snapshot
+        .docs
+        .map((doc) => Category.fromDocumentSnapshot(documentSnapshot: doc))
+        .toList());
+  }
+
+  @override
+  Stream<List<Provider>> getProvidersStream(String accountId) {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.accountProviders(accountId);
+    final collection = _dataSource.collection(path);
+
+    return _dataSource.streamDocuments(collection).map((snapshot) => snapshot
+        .docs
+        .map((doc) => Provider.fromDocumentSnapshot(documentSnapshot: doc))
+        .toList());
+  }
+
+  @override
+  Stream<List<Mark>> getBrandsStream({String country = 'ARG'}) {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.brands(country: country);
+    final collection = _dataSource.collection(path);
+
+    return _dataSource.streamDocuments(collection).map((snapshot) =>
+        snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList());
+  }
+
+  @override
+  Future<List<Mark>> searchBrands({
+    required String query,
+    String country = 'ARG',
+    int limit = 20,
+  }) async {
+    try {
+      if (query.isEmpty) return [];
+
+      final path = FirestorePaths.brands(country: country);
+      final collection = _dataSource.collection(path);
+
+      // Primera búsqueda: por prefijo en 'name'
+      // Busca documentos donde 'name' >= query y 'name' <= query + '\uf8ff'
+      final snapshotByName = await _dataSource.getDocuments(
+        collection
+            .orderBy('name')
+            .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
+      );
+
+      final resultsByName =
+          snapshotByName.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+
+      // Si encontramos resultados en 'name', retornamos
+      if (resultsByName.isNotEmpty) {
+        return resultsByName;
+      }
+
+      // Segunda búsqueda: por prefijo en 'description' si no hay resultados en 'name'
+      final snapshotByDescription = await _dataSource.getDocuments(
+        collection
+            .orderBy('description')
+            .startAt([query]).endAt([query + '\uf8ff']).limit(limit),
+      );
+
+      return snapshotByDescription.docs
+          .map((doc) => Mark.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      throw Exception('Error al buscar marcas: $e');
+    }
+  }
+
+  @override
+  Future<List<Mark>> getPopularBrands({
+    String country = 'ARG',
+    int limit = 20,
+  }) async {
+    try {
+      final path = FirestorePaths.brands(country: country);
+      print('📍 Obteniendo marcas de: $path');
+      final collection = _dataSource.collection(path);
+
+      // Obtiene marcas verificadas ordenadas por fecha de creación
+      final snapshot = await _dataSource.getDocuments(
+        collection
+            .where('verified', isEqualTo: true)
+            .orderBy('creation', descending: true)
+            .limit(limit),
+      );
+
+      print('📊 Documentos obtenidos: ${snapshot.docs.length}');
+      if (snapshot.docs.isNotEmpty) {
+        final firstDoc = snapshot.docs.first.data();
+        print('🔍 Primer documento raw: $firstDoc');
+      }
+
+      return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+    } catch (e) {
+      print('⚠️  Error con query verificadas, intentando sin filtro: $e');
+      // Si falla por falta de índice, intenta sin filtro de verificación
+      try {
+        final path = FirestorePaths.brands(country: country);
+        final collection = _dataSource.collection(path);
+
+        final snapshot = await _dataSource.getDocuments(
+          collection.orderBy('creation', descending: true).limit(limit),
+        );
+
+        print('📊 Documentos obtenidos (sin filtro): ${snapshot.docs.length}');
+        if (snapshot.docs.isNotEmpty) {
+          final firstDoc = snapshot.docs.first.data();
+          print('🔍 Primer documento raw (sin filtro): $firstDoc');
+        }
+
+        return snapshot.docs.map((doc) => Mark.fromMap(doc.data())).toList();
+      } catch (e2) {
+        throw Exception('Error al obtener marcas populares: $e2');
+      }
+    }
+  }
+
+  @override
+  Future<Mark?> getBrandById(String id, {String country = 'ARG'}) async {
+    try {
+      final path = FirestorePaths.brands(country: country);
+      final collection = _dataSource.collection(path);
+
+      // Buscar por ID del documento
+      final query =
+          collection.where(FieldPath.documentId, isEqualTo: id).limit(1);
+      final snapshot = await _dataSource.getDocuments(query);
+
+      if (snapshot.docs.isEmpty) {
+        return null;
+      }
+
+      return Mark.fromMap(snapshot.docs.first.data());
+    } catch (e) {
+      throw Exception('Error al obtener marca por ID: $e');
+    }
+  }
+
+  @override
+  Future<void> createBrand(Mark brand, {String country = 'ARG'}) async {
+    if (brand.id.isEmpty) {
+      throw ArgumentError('La marca debe tener un ID válido');
+    }
+
+    try {
+      // ✅ Usar FirestorePaths + DataSource
+      final path = FirestorePaths.brands(country: country);
+      final docPath = '$path/${brand.id}';
+      final brandMap = brand.toJson();
+
+      await _dataSource.setDocument(docPath, brandMap, merge: false);
+    } catch (e) {
+      throw Exception('Error al crear marca en Firestore: $e');
+    }
+  }
+
+  @override
+  Future<void> updateBrand(Mark brand, {String country = 'ARG'}) async {
+    if (brand.id.isEmpty) {
+      throw ArgumentError('La marca debe tener un ID válido');
+    }
+
+    try {
+      final path = FirestorePaths.brands(country: country);
+      final docPath = '$path/${brand.id}';
+      final brandMap = brand.toJson();
+
+      // Actualizar el timestamp de modificación
+      brandMap['upgrade'] = Timestamp.now();
+
+      await _dataSource.setDocument(docPath, brandMap, merge: true);
+    } catch (e) {
+      throw Exception('Error al actualizar marca en Firestore: $e');
+    }
+  }
+
+  @override
+  Future<List<ProductCatalogue>> getProducts(String accountId) async {
+    // 1. Obtener productos locales
+    // Convertimos a Map para facilitar el merge (búsqueda O(1) por ID)
+    final localProducts = await _localDataSource.getProducts();
+    final productMap = {for (var p in localProducts) p.id: p};
+
+    try {
+      // 2. Verificar si necesitamos update
+      final needsUpdate = await _syncService.needsUpdate(
+        accountId,
+        SyncDataType.products,
+      );
+
+      if (needsUpdate || localProducts.isEmpty) {
+        // ✅ DELTA SYNC STRATEGY
+        // En lugar de traer TODA la colección, traemos solo lo modificado
+        final lastSyncTime = _syncService.getLastSyncTime(
+          accountId,
+          SyncDataType.products,
+        );
+        
+        final path = FirestorePaths.accountCatalogue(accountId);
+        Query<Map<String, dynamic>> query = _dataSource.collection(path);
+
+        // Si tenemos datos locales y un timestamp válido, filtramos por delta
+        // Si es la primera vez (lastSyncTime=0), traemos todo.
+        if (lastSyncTime > 0 && localProducts.isNotEmpty) {
+           final lastSyncTimestamp = Timestamp.fromMillisecondsSinceEpoch(lastSyncTime);
+           // Nota: Firestore requiere índice compuesto para desigualdades si hay ordenamientos
+           // pero aquí es simple filtrado.
+           query = query.where('upgrade', isGreaterThan: lastSyncTimestamp);
+           print('🔄 Delta Sync: Buscando productos modificados desde $lastSyncTimestamp');
+        } else {
+           print('⬇️ Full Sync: Descargando catálogo completo');
+        }
+
+        final snapshot = await _dataSource.getDocuments(query);
+        final remoteDeltas = snapshot.docs
+            .map((doc) => ProductCatalogueModel.fromMap(doc.data()))
+            .toList();
+
+        if (remoteDeltas.isNotEmpty) {
+          print('📦 Delta Sync: Recibidos ${remoteDeltas.length} productos actualizados/nuevos');
+          
+          // Merge: Actualizar o agregar los deltas al mapa local
+          for (final delta in remoteDeltas) {
+            productMap[delta.id] = delta;
+          }
+          
+          // Guardar la lista consolidada en local
+          await _localDataSource.saveProducts(productMap.values.toList());
+        } else {
+          print('✅ Delta Sync: No hubo cambios remotos');
+        }
+        
+        // Marcar como actualizado
+        await _syncService.markAsUpdated(accountId, SyncDataType.products);
+      }
+    } catch (e) {
+      print('⚠️ Error syncing products: $e');
+      // En error, devolvemos lo local (Offline First)
+    }
+    
+    return productMap.values.map((e) => e.toEntity()).toList();
+  }
+
+  @override
+  Future<ProductCatalogue?> getProductById(
+      String accountId, String productId) async {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.accountProduct(accountId, productId);
+    final docRef = _dataSource.document(path);
+    final doc = await docRef.get();
+
+    if (doc.exists) {
+      return ProductCatalogue.fromMap(doc.data()!);
+    }
+    return null;
+  }
+
+  @override
+  Future<void> createProduct(String accountId, ProductCatalogue product) {
+    return addProductToCatalogue(product, accountId);
+  }
+
+  @override
+  Future<void> updateProduct(String accountId, ProductCatalogue product) {
+    return addProductToCatalogue(product, accountId);
+  }
+
+  @override
+  Future<void> deleteProduct(String accountId, String productId) async {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.accountProduct(accountId, productId);
+    await _dataSource.deleteDocument(path);
+  }
+
+  @override
+  Future<List<Product>> searchGlobalProducts(String query) async {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.publicProducts();
+    final collection = _dataSource.collection(path);
+    final queryRef = collection.where('code', isEqualTo: query);
+    final snapshot = await _dataSource.getDocuments(queryRef);
+
+    return snapshot.docs.map((doc) => Product.fromMap(doc.data())).toList();
+  }
+
+  @override
+  Future<List<Category>> getCategories(String accountId) async {
+    if (accountId.isNotEmpty) {
+      // 1. Local
+      final localCats = await _localDataSource.getCategories();
+
+      try {
+        final needsUpdate = await _syncService.needsUpdate(
+          accountId,
+          SyncDataType.categories,
+        );
+
+        if (localCats.isEmpty || needsUpdate) {
+          final path = FirestorePaths.accountCategories(accountId);
+          final collection = _dataSource.collection(path);
+          final snapshot = await _dataSource.getDocuments(collection);
+
+          final remoteCats = snapshot.docs
+              .map((doc) => CategoryModel.fromMap(doc.data()))
+              .toList();
+
+          await _localDataSource.saveCategories(remoteCats);
+          await _syncService.markAsUpdated(accountId, SyncDataType.categories);
+
+          return remoteCats.map((e) => e.toEntity()).toList();
+        }
+      } catch (e) {
+        print('⚠️ Error syncing categories: $e');
+      }
+
+      return localCats.map((e) => e.toEntity()).toList();
+    }
+    return [];
+  }
+
+  @override
+  Future<void> updateStock(
+      String accountId, String productId, double newStock) async {
+    // ✅ Usar FirestorePaths + DataSource
+    final path = FirestorePaths.accountProduct(accountId, productId);
+
+    await _dataSource.updateDocument(path, {
+      'quantityStock': newStock,
+      'upgrade': Timestamp.now(),
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE FOLLOWERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Incrementa el contador de followers de un producto público
+  ///
+  /// Usa FieldValue.increment para operación atómica en Firestore.
+  @override
+  Future<void> incrementProductFollowers(String productId) async {
+    if (productId.isEmpty) {
+      throw ArgumentError('El productId es obligatorio');
+    }
+
+    try {
+      final publicPath = '${FirestorePaths.publicProducts()}/$productId';
+
+      // Verificar si existe en productos públicos
+      final publicDoc = _dataSource.document(publicPath);
+      final publicSnapshot = await publicDoc.get();
+
+      if (!publicSnapshot.exists) {
+        throw Exception(
+            'El producto $productId no existe en la base de datos pública');
+      }
+
+      await _dataSource.incrementField(publicPath, 'followers', 1);
+    } catch (e) {
+      throw Exception('Error al incrementar followers del producto: $e');
+    }
+  }
+
+  /// Decrementa el contador de followers de un producto público
+  ///
+  /// Usa FieldValue.increment con valor negativo para operación atómica.
+  /// El contador se mantiene en 0 como mínimo en la lógica de negocio,
+  /// aunque Firestore permite valores negativos.
+  @override
+  Future<void> decrementProductFollowers(String productId) async {
+    if (productId.isEmpty) {
+      throw ArgumentError('El productId es obligatorio');
+    }
+
+    try {
+      final publicPath = '${FirestorePaths.publicProducts()}/$productId';
+
+      // Verificar si existe en productos públicos
+      final publicDoc = _dataSource.document(publicPath);
+      final publicSnapshot = await publicDoc.get();
+
+      if (!publicSnapshot.exists) {
+        throw Exception(
+            'El producto $productId no existe en la base de datos pública');
+      }
+
+      // Verificar que followers no sea 0 antes de decrementar
+      final data = publicSnapshot.data();
+      final currentFollowers = data?['followers'] ?? 0;
+      if (currentFollowers > 0) {
+        await _dataSource.incrementField(publicPath, 'followers', -1);
+      }
+    } catch (e) {
+      throw Exception('Error al decrementar followers del producto: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE CATEGORÍAS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> createCategory({
+    required String accountId,
+    required String name,
+  }) async {
+    if (accountId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId y name son obligatorios');
+    }
+
+    try {
+      final path = FirestorePaths.accountCategories(accountId);
+      final collection = _dataSource.collection(path);
+
+      await collection.add({
+        'name': name,
+        'subcategories': {},
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al crear categoría: $e');
+    }
+  }
+
+  @override
+  Future<void> updateCategory({
+    required String accountId,
+    required String categoryId,
+    required String name,
+  }) async {
+    if (accountId.isEmpty || categoryId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId, categoryId y name son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountCategories(accountId)}/$categoryId';
+      final doc = _dataSource.document(path);
+
+      await doc.update({
+        'name': name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al actualizar categoría: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteCategory({
+    required String accountId,
+    required String categoryId,
+  }) async {
+    if (accountId.isEmpty || categoryId.isEmpty) {
+      throw ArgumentError('accountId y categoryId son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountCategories(accountId)}/$categoryId';
+      await _dataSource.deleteDocument(path);
+    } catch (e) {
+      throw Exception('Error al eliminar categoría: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GESTIÓN DE PROVEEDORES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  @override
+  Future<void> createProvider({
+    required String accountId,
+    required String name,
+    String? phone,
+    String? email,
+  }) async {
+    if (accountId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId y name son obligatorios');
+    }
+
+    try {
+      final path = FirestorePaths.accountProviders(accountId);
+      final collection = _dataSource.collection(path);
+
+      await collection.add({
+        'name': name,
+        if (phone != null) 'phone': phone,
+        if (email != null) 'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al crear proveedor: $e');
+    }
+  }
+
+  @override
+  Future<void> updateProvider({
+    required String accountId,
+    required String providerId,
+    required String name,
+    String? phone,
+    String? email,
+  }) async {
+    if (accountId.isEmpty || providerId.isEmpty || name.isEmpty) {
+      throw ArgumentError('accountId, providerId y name son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountProviders(accountId)}/$providerId';
+      final doc = _dataSource.document(path);
+
+      await doc.update({
+        'name': name,
+        if (phone != null) 'phone': phone,
+        if (email != null) 'email': email,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error al actualizar proveedor: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteProvider({
+    required String accountId,
+    required String providerId,
+  }) async {
+    if (accountId.isEmpty || providerId.isEmpty) {
+      throw ArgumentError('accountId y providerId son obligatorios');
+    }
+
+    try {
+      final path = '${FirestorePaths.accountProviders(accountId)}/$providerId';
+      await _dataSource.deleteDocument(path);
+    } catch (e) {
+      throw Exception('Error al eliminar proveedor: $e');
+    }
+  }
+}

@@ -1,0 +1,368 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+
+class CashRegister {
+  String id; // id de la caja
+  String description; // descripción de la caja
+  String idUser; // id del usuario que opera la caja
+  String nameUser; // nombre del usuario que opera la caja
+  DateTime opening; // fecha de apertura
+  DateTime closure; // fecha de cierre
+  double initialCash; // monto inicial
+  int sales; // cantidad de ventas
+  int annulledTickets; // cantidad de tickets anulados
+  double billing; // monto de facturación de ventas
+  double discount; // monto de descuento
+  double cashInFlow; // monto de ingresos
+  double cashOutFlow; // monto de egresos (numero negativo)
+  double expectedBalance; // monto esperado
+  double balance; // monto de cierre
+  List<dynamic> cashInFlowList; // lista de ingresos de caja [CashFlow]
+  List<dynamic> cashOutFlowList; // lista de egresos de caja [CashFlow]
+  String? note; // nota u observaciones sobre el cierre de caja (opcional)
+
+  CashRegister({
+    required this.id,
+    required this.description,
+    required this.idUser,
+    required this.nameUser,
+    required this.initialCash,
+    required this.opening,
+    required this.closure,
+    required this.sales,
+    required this.annulledTickets,
+    required this.billing,
+    required this.discount,
+    required this.cashInFlow,
+    required this.cashOutFlow,
+    required this.expectedBalance,
+    required this.balance,
+    required this.cashInFlowList,
+    required this.cashOutFlowList,
+    this.note,
+  });
+
+  // contructor
+
+  // difference : devuelve la diferencia entre el monto esperado y el monto de cierre
+  double get getDifference {
+    if (balance == 0) {
+      return 0.0;
+    }
+    return balance - getExpectedBalance;
+  }
+
+  // balance : devuelve el balance esperado de la caja
+  double get getExpectedBalance {
+    return (initialCash + cashInFlow + billing) + cashOutFlow;
+  }
+
+  // totalIngresos : devuelve el total de ingresos en caja (getter semántico)
+  double get getTotalIngresos => cashInFlow;
+
+  // totalEgresos : devuelve el valor absoluto del total de egresos en caja
+  double get getTotalEgresos => cashOutFlow.abs();
+
+  // effectiveSales : devuelve el número de ventas efectivas (excluyendo anuladas)
+  int get getEffectiveSales => sales - annulledTickets;
+
+  /// Calcula el total de descuentos desde una lista de tickets
+  ///
+  /// Recibe una lista de tickets y calcula la suma total de descuentos
+  /// considerando solo tickets activos (no anulados).
+  ///
+  /// [tickets] - Lista de tickets (TicketModel)
+  ///
+  /// Returns: Total de descuentos, 0.0 si la lista está vacía
+  double calculateTotalDiscount(List<TicketModel> tickets) {
+    if (tickets.isEmpty) return 0.0;
+
+    double totalDiscount = 0.0;
+
+    for (var ticket in tickets) {
+      try {
+        // Verificar si el ticket está anulado
+        if (ticket.annulled == true) continue;
+
+        // Acceder al getter getDiscountAmount
+        final discountAmount = ticket.getDiscountAmount;
+
+        // Asegurarse de que es un número válido y positivo
+        if (discountAmount > 0 && discountAmount.isFinite) {
+          totalDiscount += discountAmount;
+        }
+      } catch (e) {
+        // Si hay error al acceder a las propiedades, continuar con el siguiente
+        continue;
+      }
+    }
+
+    return totalDiscount;
+  }
+
+  /// Calcula las ganancias totales desde una lista de tickets
+  ///
+  /// Recibe una lista de tickets (pueden ser TicketModel o Maps) y calcula
+  /// la suma total de ganancias considerando solo tickets activos (no anulados).
+  ///
+  /// Este método espera que cada ticket tenga:
+  /// - Una propiedad `annulled` (bool)
+  /// - Un getter o propiedad `getProfit` (double)
+  ///
+  /// [tickets] - Lista de tickets (TicketModel o Maps con estructura de TicketModel)
+  ///
+  /// Returns: Total de ganancias calculadas, 0.0 si la lista está vacía
+  ///
+  /// Ejemplo de uso:
+  /// ```dart
+  /// final profit = cashRegister.calculateTotalProfit(ticketsList);
+  /// ```
+  double calculateTotalProfit(List<TicketModel> tickets) {
+    if (tickets.isEmpty) return 0.0;
+
+    double totalProfit = 0.0;
+
+    for (var ticketData in tickets) {
+      try {
+        // Verificar si el ticket está anulado
+        if (ticketData.annulled == true) continue;
+
+        // Acceder al getter getProfit
+        final profit = ticketData.getProfit;
+
+        // Asegurarse de que profit es un número válido
+        totalProfit += profit;
+      } catch (e) {
+        // Si hay error al acceder a las propiedades, continuar con el siguiente
+        continue;
+      }
+    }
+
+    return totalProfit;
+  }
+
+  // default values
+  factory CashRegister.initialData() {
+    return CashRegister(
+      id: '',
+      description: '',
+      idUser: '',
+      nameUser: '',
+      initialCash: 0.0,
+      opening: DateTime.now(),
+      closure: DateTime.now(),
+      sales: 0,
+      annulledTickets: 0,
+      billing: 0.0,
+      discount: 0.0,
+      cashInFlow: 0.0,
+      cashOutFlow: 0.0,
+      expectedBalance: 0.0,
+      balance: 0.0,
+      cashInFlowList: [],
+      cashOutFlowList: [],
+      note: null,
+    );
+  }
+  // tojson : convierte el objeto a json
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "description": description,
+        "idUser": idUser,
+        "nameUser": nameUser,
+        "initialCash": initialCash,
+        "opening": opening,
+        "closure": closure,
+        "sales": sales,
+        "annulledTickets": annulledTickets,
+        "billing": billing,
+        "discount": discount,
+        "cashInFlow": cashInFlow,
+        "cashOutFlow": cashOutFlow,
+        "expectedBalance": expectedBalance,
+        "balance": balance,
+        "cashInFlowList": cashInFlowList,
+        "cashOutFlowList": cashOutFlowList,
+        "note": note,
+      };
+
+  // fromjson : convierte el json en un objeto
+  factory CashRegister.fromMap(Map data) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is DateTime) return date;
+      return DateTime.now();
+    }
+
+    return CashRegister(
+      id: data['id'],
+      description: data.containsKey('description') ? data['description'] : '',
+      idUser: data.containsKey('idUser') ? data['idUser'] : '',
+      nameUser: data.containsKey('nameUser') ? data['nameUser'] : '',
+      initialCash: data.containsKey('initialCash')
+          ? double.parse(data['initialCash'].toString())
+          : 0.0,
+      opening: parseDate(data['opening']),
+      closure: parseDate(data['closure']),
+      sales: data.containsKey('sales') ? data['sales'] ?? 0 : 0,
+      annulledTickets: data.containsKey('annulledTickets')
+          ? data['annulledTickets'] ?? 0
+          : 0,
+      billing: data.containsKey('billing')
+          ? double.parse(data['billing'].toString())
+          : 0.0,
+      discount: data.containsKey('discount')
+          ? double.parse(data['discount'].toString())
+          : 0.0,
+      cashInFlow: data.containsKey('cashInFlow')
+          ? double.parse(data['cashInFlow'].toString())
+          : 0.0,
+      cashOutFlow: data.containsKey('cashOutFlow')
+          ? double.parse(data['cashOutFlow'].toString())
+          : 0.0,
+      expectedBalance: data.containsKey('expectedBalance')
+          ? double.parse(data['expectedBalance'].toString())
+          : 0.0,
+      balance: data.containsKey('balance')
+          ? double.parse(data['balance'].toString())
+          : 0.0,
+      cashInFlowList: data.containsKey('cashInFlowList')
+          ? data['cashInFlowList'] ?? []
+          : [],
+      cashOutFlowList: data.containsKey('cashOutFlowList')
+          ? data['cashOutFlowList'] ?? []
+          : [],
+      note: data.containsKey('note') ? data['note'] : null,
+    );
+  }
+
+  void fromDocumentSnapshot({required DocumentSnapshot documentSnapshot}) {
+    id = documentSnapshot.id;
+    description = documentSnapshot['description'];
+    idUser = documentSnapshot.data().toString().contains('idUser')
+        ? documentSnapshot['idUser']
+        : '';
+    nameUser = documentSnapshot.data().toString().contains('nameUser')
+        ? documentSnapshot['nameUser']
+        : '';
+    initialCash = documentSnapshot['initialCash'].toDouble();
+    opening = (documentSnapshot['opening'] as Timestamp).toDate();
+    closure = (documentSnapshot['closure'] as Timestamp).toDate();
+    billing = documentSnapshot['billing'].toDouble();
+    discount = documentSnapshot['discount'].toDouble();
+    sales = documentSnapshot['sales'];
+    annulledTickets =
+        documentSnapshot.data().toString().contains('annulledTickets')
+            ? documentSnapshot['annulledTickets']
+            : 0;
+    cashInFlow = documentSnapshot['cashInFlow'].toDouble();
+    cashOutFlow = documentSnapshot['cashOutFlow'].toDouble();
+    expectedBalance = documentSnapshot['expectedBalance'].toDouble();
+    balance = documentSnapshot['balance'].toDouble();
+    cashInFlowList = documentSnapshot['cashInFlowList'];
+    cashOutFlowList = documentSnapshot['cashOutFlowList'];
+    note = documentSnapshot.data().toString().contains('note')
+        ? documentSnapshot['note']
+        : null;
+  }
+
+  // update : actualiza los valores individualmente de la caja
+  CashRegister update({
+    String? id,
+    String? description,
+    String? idUser,
+    String? nameUser,
+    double? initialCash,
+    DateTime? opening,
+    DateTime? closure,
+    int? sales,
+    int? annulledTickets,
+    double? billing,
+    double? discount,
+    double? cashInFlow,
+    double? cashOutFlow,
+    double? expectedBalance,
+    double? balance,
+    List<dynamic>? cashInFlowList, // lista de ingresos de caja [CashFlow]
+    List<dynamic>? cashOutFlowList, // lista de egresos de caja [CashFlow]
+    String? note,
+  }) {
+    return CashRegister(
+      id: id ?? this.id,
+      description: description ?? this.description,
+      idUser: idUser ?? this.idUser,
+      nameUser: nameUser ?? this.nameUser,
+      initialCash: initialCash ?? this.initialCash,
+      opening: opening ?? this.opening,
+      closure: closure ?? this.closure,
+      sales: sales ?? this.sales,
+      annulledTickets: annulledTickets ?? this.annulledTickets,
+      billing: billing ?? this.billing,
+      discount: discount ?? this.discount,
+      cashInFlow: cashInFlow ?? this.cashInFlow,
+      cashOutFlow: cashOutFlow ?? this.cashOutFlow,
+      expectedBalance: expectedBalance ?? this.expectedBalance,
+      balance: balance ?? this.balance,
+      cashInFlowList: cashInFlowList ?? this.cashInFlowList,
+      cashOutFlowList: cashOutFlowList ?? this.cashOutFlowList,
+      note: note ?? this.note,
+    );
+  }
+}
+
+// CashFlow : Representa el flujo de caja de 'ingresos' y 'egresos'
+class CashFlow {
+  String id = ''; // id del flujo de caja
+  String userId = ''; // id del usuario que realiza el flujo de caja
+  String description = '';
+  double amount = 0.0; // monto del flujo de caja
+  DateTime date = DateTime.now(); // marca de tiempo
+
+  CashFlow({
+    required this.id,
+    required this.userId,
+    required this.description,
+    required this.amount,
+    required this.date,
+  });
+
+  // default values
+  factory CashFlow.initialData() {
+    return CashFlow(
+      id: '',
+      userId: '',
+      description: '',
+      amount: 0.0,
+      date: DateTime.now(),
+    );
+  }
+  // tojson : convierte el objeto a json
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "userId": userId,
+        "description": description,
+        "amount": amount,
+        "date": date,
+      };
+  // fromjson : convierte el json en un objeto
+  factory CashFlow.fromMap(Map<dynamic, dynamic> data) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is DateTime) return date;
+      return DateTime.now();
+    }
+
+    // Soporte para clave 'date' o 'timestamp'
+    final rawDate = data['date'] ?? data['timestamp'];
+
+    return CashFlow(
+      id: data['id'] ?? '',
+      userId: data['userId'] ?? '',
+      description: data['description'] ?? '',
+      amount: (data['amount'] ?? 0).toDouble(),
+      date: parseDate(rawDate),
+    );
+  }
+}

@@ -1,15 +1,30 @@
-## Descripción
+# 🏗️ Core - Infraestructura Transversal
+
 Funcionalidades compartidas del núcleo de la aplicación incluyendo configuraciones, constantes, servicios y utilidades comunes.
 
 ## Contenido
 ```
 core/
 ├── core.dart - Archivo de barril que exporta todas las funcionalidades del núcleo
-├── config/ - Configuraciones de la aplicación
+├── config/ - Configuraciones de la aplicación (Firebase, OAuth)
 ├── constants/ - Constantes globales de la aplicación
+├── di/ - Inyección de dependencias (get_it + injectable)
+├── errors/ - Manejo de errores (Failures y Exceptions)
 ├── mixins/ - Mixins reutilizables
+├── presentation/ - Capa de presentación compartida
+│   ├── theme/ - Sistema de temas Material 3
+│   ├── widgets/ - Widgets reutilizables organizados por categoría
+│   ├── helpers/ - Helpers de UI (responsive, snackbar, etc.)
+│   └── providers/ - Providers globales (ThemeProvider)
 ├── services/ - Servicios de infraestructura
+│   ├── database/ - Servicios de Firestore
+│   ├── storage/ - Persistencia local
+│   ├── printing/ - Impresión de tickets
+│   └── external/ - APIs externas
+├── usecases/ - Contrato base UseCase<T, Params>
 └── utils/ - Utilidades y helpers
+    ├── formatters/ - Formateadores (moneda, fecha, texto)
+    └── helpers/ - Helpers especializados
 ```
 
 ### 🔧 Utils
@@ -18,8 +33,31 @@ core/
 #### Utilidades Principales:
 - **responsive_breakpoints.dart**: Definición de breakpoints para diseño responsive
 - **fuctions.dart**: Funciones utilitarias generales (formateo, validaciones, etc.)
-- **formaters/**: Formateadores específicos para moneda, fechas, texto, etc.
-- **helpers/**: Funciones helper especializadas para casos de uso específicos
+- **formatters/**: Formateadores específicos para moneda, fechas, texto, etc.
+- **helpers/**: Funciones helper especializadas
+  - `uid_helper.dart` - Generación de UIDs únicos
+  - `date_formatter.dart` - Formateo de fechas
+
+### 🎨 Presentation
+**Propósito**: Componentes UI compartidos y sistema de diseño
+
+#### Subdirectorios:
+- **theme/**: Material 3 theme configuration
+  - `app_theme.dart` - Tema claro y oscuro
+  - `theme_data_app_provider.dart` - Provider de tema
+- **widgets/**: Sistema completo de widgets reutilizables
+  - `buttons/` - Botones estandarizados (AppButton, AppTextButton, etc.)
+  - `inputs/` - Campos de entrada (InputTextField, MoneyInputTextField, etc.)
+  - `ui/` - Componentes UI básicos (AvatarProduct, UserAvatar, etc.)
+  - `feedback/` - Loading, Error states
+  - `graphics/` - Componentes gráficos
+  - `navigation/` - Widgets de navegación
+- **dialogs/**: Sistema modular de diálogos
+  - `base/` - Componentes base reutilizables
+  - Organizados por dominio (catalogue, sales, configuration, etc.)
+- **modals/**: Bottom sheets y overlays
+- **helpers/**: Helpers de UI (responsive, snackbar, etc.)
+- **views/**: Vistas compartidas (welcome pages, etc.)
  
 ## 🎯 Principios de Diseño
 
@@ -48,12 +86,24 @@ import 'package:sell_web/core/utils/functions.dart';
 ```
 
 ### Servicios Singleton
+Utilizamos el paquete `injectable` para generar singletons automáticamente.
+
 ```dart
-// Los servicios core típicamente siguen el patrón singleton
+// ✅ Forma correcta con Injectable
+@lazySingleton
+class ThemeService {
+  final AppDataPersistenceService _persistence;
+  
+  ThemeService(this._persistence);
+}
+```
+
+❌ **Evitar Singletons Manuales:**
+```dart
+// Evitar este patrón antiguo
 class ThemeService {
   static final ThemeService _instance = ThemeService._internal();
   factory ThemeService() => _instance;
-  ThemeService._internal();
 }
 ```
 

@@ -1,9 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/di/injection_container.dart';
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
+import 'package:sellweb/features/sales/presentation/dialogs/share_ticket_dialog.dart';
 
 /// Diálogo modernizado para opciones del ticket siguiendo Material Design 3
 class TicketOptionsDialog extends StatefulWidget {
@@ -23,10 +25,8 @@ class TicketOptionsDialog extends StatefulWidget {
 }
 
 class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
-  bool _downloadPdf = false;
   bool _printDirectly = false;
   bool _shareTicket = false;
-  bool _printBrowser = false;
   bool _isProcessing = false;
   bool _printerConnected = false;
 
@@ -43,11 +43,9 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     setState(() {
       _printerConnected = printerService.isConnected;
 
-      // Establecer valores por defecto
+      // Establecer valor por defecto
       if (_printerConnected) {
         _printDirectly = true;
-      } else {
-        _downloadPdf = true;
       }
     });
   }
@@ -111,34 +109,14 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
                 enabled: _printerConnected,
               ),
               _buildOptionTile(
-                icon: Icons.download_rounded,
-                title: 'Descargar PDF',
-                subtitle: 'Guardar ticket en formato PDF',
-                value: _downloadPdf,
-                onChanged: (value) =>
-                    setState(() => _downloadPdf = value ?? false),
-                iconColor: Colors.blue,
-                enabled: true,
-              ),
-              _buildOptionTile(
-                icon: Icons.print_outlined,
-                title: 'Imprimir en Navegador',
-                subtitle: 'Abrir administrador de impresión con PDF',
-                value: _printBrowser,
-                onChanged: (value) =>
-                    setState(() => _printBrowser = value ?? false),
-                iconColor: Colors.purple,
-                enabled: true,
-              ),
-              _buildOptionTile(
                 icon: Icons.share_rounded,
                 title: 'Compartir Ticket',
-                subtitle: 'Generar imagen para compartir (próximamente)',
+                subtitle: 'Texto, PDF, WhatsApp y más',
                 value: _shareTicket,
                 onChanged: (value) =>
                     setState(() => _shareTicket = value ?? false),
-                iconColor: Colors.orange,
-                enabled: false, // Temporalmente deshabilitado
+                iconColor: Colors.deepPurple,
+                enabled: true,
               ),
             ],
           ),
@@ -312,8 +290,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
   }
 
   bool _canProcess() {
-    return !_isProcessing &&
-        (_downloadPdf || _printDirectly || _shareTicket || _printBrowser);
+    return !_isProcessing && (_printDirectly || _shareTicket);
   }
 
   Future<void> _processTicketOptions() async {
@@ -341,7 +318,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
       // Procesar cada opción
       if (_printDirectly && printerService.isConnected) {
-        final success = await printerService.printTicket(
+        final result = await printerService.printTicket(
           businessName: widget.businessName,
           products: products,
           total: widget.ticket.getTotalPrice,
@@ -354,62 +331,47 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
               : null,
         );
 
-        if (success) {
+        if (result.success) {
           successMessages.add('Ticket impreso correctamente');
         } else {
-          errorMessages.add('Error al imprimir ticket');
-        }
-      }
-
-      if (_downloadPdf) {
-        final success = await printerService.generateTicketPdf(
-          businessName: widget.businessName,
-          products: products,
-          total: widget.ticket.getTotalPrice,
-          paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0
-              ? widget.ticket.valueReceived
-              : null,
-          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
-              ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
-              : null,
-          ticketId: widget.ticket.id,
-        );
-
-        if (success) {
-          successMessages.add('PDF descargado correctamente');
-        } else {
-          errorMessages.add('Error al generar PDF');
-        }
-      }
-
-      if (_printBrowser) {
-        final success = await printerService.printTicketWithBrowser(
-          businessName: widget.businessName,
-          products: products,
-          total: widget.ticket.getTotalPrice,
-          paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0
-              ? widget.ticket.valueReceived
-              : null,
-          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
-              ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
-              : null,
-          ticketId: widget.ticket.id,
-        );
-
-        if (success) {
-          successMessages.add('PDF abierto en administrador de impresión');
-        } else {
-          errorMessages.add('Error al abrir administrador de impresión');
+          errorMessages.add(result.message ?? 'Error al imprimir ticket');
         }
       }
 
       if (_shareTicket) {
-        successMessages.add('Función de compartir disponible próximamente');
+        if (mounted) {
+          // Capturar el navigator y el contexto ANTES de hacer pop.
+          // Después del pop el widget se desmonta y mounted == false,
+          // por eso debemos guardarlo en variable local primero.
+          final navigator = Navigator.of(context);
+          final rootContext = navigator.context;
+
+          navigator.pop();
+
+          if (errorMessages.isNotEmpty) {
+            showErrorDialog(
+              context: rootContext,
+              title: 'Algunos Errores Ocurrieron',
+              message: errorMessages.join('\n'),
+            );
+          }
+
+          widget.onComplete();
+
+          // Pequeña pausa para que el pop termine su animación.
+          await Future.delayed(const Duration(milliseconds: 300));
+
+          // Usamos rootContext en lugar de `context` (ya desmontado).
+          await showShareTicketDialog(
+            context: rootContext,
+            ticket: widget.ticket,
+            businessName: widget.businessName,
+          );
+          return;
+        }
       }
 
-      // Mostrar resultados
+      // Mostrar resultados (solo llega aquí si _shareTicket == false)
       if (mounted) {
         Navigator.of(context).pop();
 

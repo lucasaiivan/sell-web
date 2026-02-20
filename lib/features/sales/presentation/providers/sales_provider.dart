@@ -1179,7 +1179,7 @@ class SalesProvider extends ChangeNotifier {
       }).toList();
 
       // Imprimir el ticket
-      final printSuccess = await printerService.printTicket(
+      final printResult = await printerService.printTicket(
         businessName: _state.profileAccountSelected.name.isNotEmpty
             ? _state.profileAccountSelected.name
             : 'PUNTO DE VENTA',
@@ -1193,6 +1193,7 @@ class SalesProvider extends ChangeNotifier {
             ? _state.ticket.valueReceived - _state.ticket.getTotalPrice
             : null,
       );
+      final printSuccess = printResult.success;
 
       // Mostrar resultado
       if (context.mounted) {
@@ -1212,7 +1213,7 @@ class SalesProvider extends ChangeNotifier {
                   child: Text(
                     printSuccess
                         ? 'Ticket impreso correctamente'
-                        : 'Error al imprimir ticket: ${printerService.lastError ?? "Error desconocido"}',
+                        : 'Error al imprimir: ${printResult.message ?? printerService.lastError ?? "Error desconocido"}',
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),

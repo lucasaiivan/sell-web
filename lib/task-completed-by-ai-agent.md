@@ -1,3 +1,31 @@
+### [2026-02-19 21:07] Fix: Detección de Certificado SSL en Flutter Web (Impresora Local)
+- **Tareas:** Reemplazado `_isCertificateError()` por `_isPossibleCertOrNetworkError()` en `thermal_printer_http_service.dart` para detectar `XmlHttpRequestError` genérico de Flutter Web. Actualizado `_probeUrl()` para marcar probes HTTPS como `isCertError:true` cuando el error es de red genérico. Simplificada condición en `autoDiscover()` para activar flujo de cert si cualquier probe HTTPS falla. Mejorado `printer_config_dialog.dart` con flujo de 3 pasos claro (Verificar app → Abrir servidor → Reintentar) y auto-polling (`Timer` cada 3s) que detecta automáticamente cuando el usuario acepta el cert.
+- **Resumen:** Solucionado el bug donde la webapp siempre mostraba "Servidor no disponible" en vez de "Certificado HTTPS pendiente", porque `fetch()` en Flutter Web no expone strings de certificado en el error.
+
+### [2026-02-19 14:15] UX: Mejorada Compartición de Ticket (Descarga PDF Web)
+- **Tareas:** Implementado helper de descarga `downloadFile` usando imports condicionales (`dart:html` para Web, stub para móvil) para garantizar descarga nativa de PDF en navegador. Actualizado `ShareTicketDialog`: en Web muestra botón "Descargar PDF" (icono `download`), en móvil "Compartir PDF" (icono `share`).
+- **Resumen:** Solucionado problema de descarga de PDF en Web y mejorada la claridad de la UI según plataforma.
+
+### [2026-02-19 11:32] Despliegue a Producción (Web)
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release` sin WASM, `firebase deploy --only hosting`).
+- **Resumen:** Despliegue exitoso de nueva versión en Firebase Hosting con la funcionalidad de Compartir Ticket.
+
+### [2026-02-19 11:05] Feature: Compartir Ticket Multiplataforma (Web + Móvil)
+- **Tareas:** Creado `ticket_share_service.dart` (`@lazySingleton`) con métodos `generateTicketText()`, `shareAsText()`, `copyToClipboard()`, `shareAsPdf()`, `shareViaWhatsApp()` usando `SharePlus.instance.share(ShareParams(...))` y `url_launcher`. Creado `share_ticket_dialog.dart` (MD3, vista previa + grid 2x2 con feedback y auto-dismiss). Actualizado `ticket_options_dialog.dart` (opción habilitada, conectada con nuevo diálogo). Registrado `TicketShareService` en `injection_container.config.dart`. `flutter analyze`: No issues found.
+- **Resumen:** Implementada la función "Compartir Ticket" con soporte para Texto, PDF, portapapeles y WhatsApp tanto en Web como en móvil, cumpliendo Clean Architecture y MD3.
+
+### [2026-02-19 10:38] Refactor: Auto-Discovery Multi-Protocolo de Impresora + UI Simplificada
+- **Tareas:** Reescrito `thermal_printer_http_service.dart` con auto-discovery en paralelo (6 estrategias: HTTPS+HTTP × {puerto ingresado, 8080, 3000}), callback `onDiscoveryProgress` para UI en tiempo real, protocolo resuelto persistido. Reescrito `printer_config_dialog.dart`: solo host+puerto, pasos animados de detección, 4 fases (idle/scanning/success/error). Eliminado campo API Token de la UI. Actualizado `printer_provider.dart`, `shared_prefs_keys.dart`, `app_data_persistence_service.dart`.
+- **Resumen:** Conexión con impresora ahora detecta automáticamente HTTP/HTTPS y puerto correcto sin intervención del usuario.
+
+### [2026-02-18 22:30] Fix: Corrección Errores Impresora + 7 Estados Visuales
+- **Tareas:** Bug 1 corregido: `response['error']` → `response['message']` en `checkConnection()`. Bug 2: `initialize()` solo conecta si hay config previa. Bug 3: `configurePrinter()` retorna `PrinterConnectionResult` (no doble petición). Agregado `PrinterErrorType` enum (7 categorías). Reescrito `printer_config_dialog.dart` con banner animado y card de error con pasos específicos por error. Adaptados `sales_provider.dart` y `ticket_options_dialog.dart`.
+- **Resumen:** Eliminado el error genérico "Servidor no responde correctamente" con diagnóstico preciso y UX visual diferenciada para cada tipo de fallo.
+
+### [2026-02-18 21:37] Migración Servicio de Impresora: HTTP → HTTPS
+- **Tareas:** Reescrito `thermal_printer_http_service.dart` (HTTPS, API token Bearer, heartbeat, certificado auto-firmado, `PrinterConnectionResult`). Actualizado `printer_provider.dart`, `printer_config_dialog.dart` (guía certificado, API token, puerto 8080), `ticket_options_dialog.dart` (eliminados métodos stub). Agregado `printerApiToken` en `shared_prefs_keys.dart` y `app_data_persistence_service.dart`.
+- **Resumen:** Migrado servicio de impresora de HTTP a HTTPS para compatibilidad con webapp HTTPS, evitando Mixed Content. Soporte para certificado auto-firmado con guía visual al usuario.
+
 ### [2026-02-14 02:00] Despliegue a Producción (Web)
 - **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`). Se omitió `--web-renderer canvaskit` debido a su ausencia en las opciones actuales.
 - **Resumen:** Despliegue exitoso de nueva versión en Firebase Hosting con configuración por defecto.

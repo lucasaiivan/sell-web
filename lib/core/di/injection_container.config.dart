@@ -27,6 +27,8 @@ import 'package:sellweb/core/services/database/i_firestore_datasource.dart'
     as _i562;
 import 'package:sellweb/core/services/external/thermal_printer_http_service.dart'
     as _i897;
+import 'package:sellweb/core/services/external/ticket_share_service.dart'
+    as _i1100;
 import 'package:sellweb/core/services/monitoring/query_counter_service.dart'
     as _i920;
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart'
@@ -342,6 +344,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i59.FirebaseAuth>(() => externalModule.firebaseAuth);
     gh.lazySingleton<_i116.GoogleSignIn>(() => externalModule.googleSignIn); 
     gh.lazySingleton<_i521.FullScreenService>(() => _i521.FullScreenService());
+    gh.lazySingleton<_i1100.TicketShareService>(
+        () => _i1100.TicketShareService());
     gh.lazySingleton<_i853.CreateQuickProductUseCase>(
         () => _i853.CreateQuickProductUseCase());
     gh.lazySingleton<_i283.CreateEmptyTicketUseCase>(

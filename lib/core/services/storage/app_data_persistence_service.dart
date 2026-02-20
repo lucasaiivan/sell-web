@@ -384,6 +384,42 @@ class AppDataPersistenceService {
     }
   }
 
+  /// Guarda el API token del servidor de impresión
+  Future<void> savePrinterApiToken(String token) async {
+    try {
+      await _prefs.setString(SharedPrefsKeys.printerApiToken, token);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene el API token del servidor de impresión
+  Future<String?> getPrinterApiToken() async {
+    try {
+      return _prefs.getString(SharedPrefsKeys.printerApiToken);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Guarda el protocolo resuelto por auto-discovery ('http' o 'https')
+  Future<void> savePrinterProtocol(String protocol) async {
+    try {
+      await _prefs.setString(SharedPrefsKeys.printerProtocol, protocol);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Obtiene el protocolo resuelto por auto-discovery
+  Future<String?> getPrinterProtocol() async {
+    try {
+      return _prefs.getString(SharedPrefsKeys.printerProtocol);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Elimina todas las configuraciones de impresora
   Future<void> clearPrinterSettings() async {
     try {
@@ -395,6 +431,8 @@ class AppDataPersistenceService {
         _prefs.remove(SharedPrefsKeys.printerHost),
         _prefs.remove(SharedPrefsKeys.printerPort),
         _prefs.remove(SharedPrefsKeys.printerConfig),
+        _prefs.remove(SharedPrefsKeys.printerApiToken),
+        _prefs.remove(SharedPrefsKeys.printerProtocol),
       ]);
     } catch (e) {
       rethrow;

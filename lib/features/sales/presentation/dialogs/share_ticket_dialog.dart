@@ -177,69 +177,56 @@ class _ShareTicketDialogState extends State<ShareTicketDialog> {
 
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: _PressableCard(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              gradient: isEnabled
-                  ? LinearGradient(
-                      colors: [
-                        color,
-                        Color.lerp(color, Colors.black, 0.15)!,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isEnabled
-                  ? null
-                  : theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: isEnabled
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: isLoading
-                      ? CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        )
-                      : Icon(
-                          icon,
-                          color: isEnabled
-                              ? Colors.white
-                              : theme.colorScheme.outline,
-                          size: 26,
-                        ),
+          child: AspectRatio(
+            aspectRatio: 1, // Cuadrado perfecto (simétrico)
+            child: Container(
+              decoration: BoxDecoration(
+                color: isEnabled
+                    ? theme.colorScheme.surfaceContainerLow
+                    : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isEnabled
+                      ? theme.colorScheme.outlineVariant.withValues(alpha: 0.6)
+                      : Colors.transparent,
+                  width: 1,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  isLoading ? 'Generando...' : label,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: isEnabled
-                        ? Colors.white
-                        : theme.colorScheme.outline,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                    fontSize: 11,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: isLoading
+                        ? CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: color,
+                          )
+                        : Icon(
+                            icon,
+                            color: isEnabled ? color : theme.colorScheme.outline,
+                            size: 28,
+                          ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Text(
+                    isLoading ? 'Cargando' : label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: isEnabled
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.outline,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

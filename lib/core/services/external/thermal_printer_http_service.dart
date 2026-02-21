@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
-import 'package:http/http.dart' as http;
-// ignore: avoid_web_libraries_in_flutter
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:js_util' as js_util;
 import 'dart:html' as html;
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -149,9 +149,9 @@ class PrinterConnectionResult {
       errorType: PrinterErrorType.certificateNotAccepted,
       // Mensaje cubre 2 causas: cert no aceptado O servidor apagado.
       // En Flutter Web no se puede distinguir entre ambas desde fetch().
-      message: 'No se pudo conectar al servidor de impresión. '
-          'Si la app SellPOS está activa, es necesario aceptar el certificado HTTPS '
-          'en el navegador antes de poder conectarse.',
+      message: 'No hemos podido conectar con el servidor local de impresión. '
+          'Asegúrate de tener la app SellPOS de escritorio abierta. Si es la primera vez, '
+          'quizás debas aceptar manualmente la conexión segura en tu navegador.',
       actionUrl: serverUrl,
     );
   }
@@ -735,19 +735,30 @@ class ThermalPrinterHttpService {
   /// Timeout 3 s. No lanza excepciones — siempre retorna [_ProbeResult].
   Future<_ProbeResult> _probeUrl(_ProbeRecord record) async {
     try {
-      final url = Uri.parse('${record.url}/status');
-      final response = await http
-          .get(url, headers: {'Accept': 'application/json'})
-          .timeout(const Duration(seconds: 3));
+      final urlStr = '${record.url}/status';
+      
+      final optionsMap = {
+        'method': 'GET',
+        'mode': 'cors',
+        'headers': {'Accept': 'application/json'}
+      };
+      final options = js_util.jsify(optionsMap);
+      
+      final promise = js_util.callMethod(html.window, 'fetch', [urlStr, options]);
+      final response = await js_util.promiseToFuture(promise).timeout(const Duration(seconds: 3));
+      
+      final statusCode = js_util.getProperty(response, 'status') as int;
+      final textPromise = js_util.callMethod(response, 'text', []);
+      final responseBody = await js_util.promiseToFuture(textPromise) as String;
 
       if (kDebugMode) {
-        debugPrint('🔍 ${record.url} → ${response.statusCode}');
+        debugPrint('🔍 ${record.url} → $statusCode');
       }
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (statusCode >= 200 && statusCode < 300) {
         Map<String, dynamic>? body;
         try {
-          body = jsonDecode(response.body) as Map<String, dynamic>;
+          body = jsonDecode(responseBody) as Map<String, dynamic>;
         } catch (_) {}
 
         final isOk = body?['status'] == 'ok';
@@ -763,12 +774,12 @@ class ThermalPrinterHttpService {
 
       // HTTP 4xx/5xx → servidor existe pero con error
       // p.ej. 401 = token incorrecto → igual es "alcanzable"
-      if (response.statusCode == 401 ||
-          response.statusCode == 400 ||
-          response.statusCode == 503) {
+      if (statusCode == 401 ||
+          statusCode == 400 ||
+          statusCode == 503) {
         Map<String, dynamic>? body;
         try {
-          body = jsonDecode(response.body) as Map<String, dynamic>;
+          body = jsonDecode(responseBody) as Map<String, dynamic>;
         } catch (_) {}
         // Lo reportamos como ok=false pero el servidor SÍ existe
         return _ProbeResult(
@@ -836,26 +847,36 @@ class ThermalPrinterHttpService {
     Map<String, dynamic>? data,
     String baseUrl,
   ) async {
-    final url = Uri.parse('$baseUrl$endpoint');
-    if (kDebugMode) debugPrint('🌐 $method → $url');
+    final urlStr = '$baseUrl$endpoint';
+    if (kDebugMode) debugPrint('🌐 $method → $urlStr');
 
-    http.Response response;
+    int statusCode = 0;
+    String responseBody = '';
+
     try {
-      final headers = _getHeaders();
-      switch (method.toUpperCase()) {
-        case 'GET':
-          response = await http
-              .get(url, headers: headers)
-              .timeout(const Duration(seconds: 5));
-          break;
-        case 'POST':
-          response = await http
-              .post(url, headers: headers, body: jsonEncode(data ?? {}))
-              .timeout(const Duration(seconds: 5));
-          break;
-        default:
-          throw ArgumentError('Método HTTP no soportado: $method');
+      final String methodUpper = method.toUpperCase();
+      if (methodUpper != 'GET' && methodUpper != 'POST') {
+        throw ArgumentError('Método HTTP no soportado: $method');
       }
+
+      final optionsMap = {
+        'method': methodUpper,
+        'mode': 'cors',
+        'headers': _getHeaders(),
+      };
+      if (data != null && methodUpper == 'POST') {
+        optionsMap['body'] = jsonEncode(data);
+      }
+
+      final options = js_util.jsify(optionsMap);
+      final promise = js_util.callMethod(html.window, 'fetch', [urlStr, options]);
+      
+      final response = await js_util.promiseToFuture(promise).timeout(const Duration(seconds: 5));
+      statusCode = js_util.getProperty(response, 'status') as int;
+      
+      final textPromise = js_util.callMethod(response, 'text', []);
+      responseBody = await js_util.promiseToFuture(textPromise) as String;
+
     } on TimeoutException {
       rethrow;
     } catch (e) {
@@ -866,19 +887,19 @@ class ThermalPrinterHttpService {
       rethrow;
     }
 
-    if (kDebugMode) debugPrint('   ← ${response.statusCode}');
+    if (kDebugMode) debugPrint('   ← $statusCode');
 
     Map<String, dynamic>? body;
-    if (response.body.isNotEmpty) {
+    if (responseBody.isNotEmpty) {
       try {
-        body = jsonDecode(response.body) as Map<String, dynamic>;
+        body = jsonDecode(responseBody) as Map<String, dynamic>;
       } catch (_) {
-        body = {'status': 'error', 'message': response.body};
+        body = {'status': 'error', 'message': responseBody};
       }
     }
 
-    switch (response.statusCode) {
-      case >= 200 when response.statusCode < 300:
+    switch (statusCode) {
+      case >= 200 when statusCode < 300:
         return body ?? {'status': 'ok'};
       case 400:
         return {
@@ -904,7 +925,7 @@ class ThermalPrinterHttpService {
         return {
           'status': 'error',
           'message':
-              'Error HTTP ${response.statusCode}: ${body?['message'] ?? response.body}',
+              'Error HTTP $statusCode: ${body?['message'] ?? responseBody}',
         };
     }
   }

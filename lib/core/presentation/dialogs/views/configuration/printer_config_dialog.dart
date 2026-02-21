@@ -381,21 +381,12 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog>
     Widget? actionWidget;
 
     if (result.isCertificateError) {
-      // ── Flujo de 3 pasos para aceptar certificado SSL ────────────────────
+      // ── Flujo de fallback PNA / SSL ────────────────────
       actionWidget = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 8),
 
-          // Paso 1: Verificar que SellPOS está corriendo
-          _buildStepHints([
-            '1. Asegurate de que la app SellPOS está abierta en tu PC',
-          ]),
-          const SizedBox(height: 10),
-
-          // Paso 2: Botón para abrir el servidor y aceptar el cert
-          _buildStepLabel('2. Aceptar el certificado HTTPS (primera vez):'),
-          const SizedBox(height: 6),
           SizedBox(
             width: double.infinity,
             child: FilledButton.tonal(
@@ -409,17 +400,15 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog>
                 children: [
                   Icon(Icons.open_in_new_rounded, size: 16),
                   SizedBox(width: 8),
-                  Text('Abrir servidor y aceptar certificado'),
+                  Text('Solucionar Conexión Segura'),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 10),
 
-          // Paso 3: Reintentar (o status del auto-polling)
+          // Status del auto-polling o reintentar
           if (_isPollingCert) ...[
-            _buildStepLabel('3. Esperando confirmación automática...'),
-            const SizedBox(height: 6),
             Row(
               children: [
                 SizedBox(
@@ -432,7 +421,7 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Reintentando... ($_pollAttempts/$_maxPollAttempts)',
+                  'Esperando confirmación automática... ($_pollAttempts/$_maxPollAttempts)',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -440,8 +429,6 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog>
               ],
             ),
           ] else ...[
-            _buildStepLabel('3. Después de aceptar, volvé aquí:'),
-            const SizedBox(height: 6),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -539,17 +526,6 @@ class _PrinterConfigDialogState extends State<PrinterConfigDialog>
                         ?.copyWith(color: theme.colorScheme.onSurface)),
               ))
           .toList(),
-    );
-  }
-
-  /// Etiqueta de paso numerado con estilo resaltado.
-  Widget _buildStepLabel(String text) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
     );
   }
 

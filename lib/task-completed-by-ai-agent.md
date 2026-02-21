@@ -1,3 +1,19 @@
+### [2026-02-21 01:22] Deploy de WebApp al entorno de Producción
+- **Tareas:** Despliegue de la web app con `flutter build web --release` y `firebase deploy --only hosting` tras compilar la versión de PNA SSL fallbacks en la impresora local.
+- **Resumen:** Actualizado sell-web con las mejoras de comunicación al servidor de impresora de escritorio usando interop nativo de fetch para resolver el CORS.
+
+### [2026-02-20 23:48] Refactor: Conexión de Impresora Nativa (PNA y SSL)
+- **Tareas:** Migrado el uso del paquete HTTP en `ThermalPrinterHttpService` por un `fetch` nativo (`html.window.fetch`) con `mode: 'cors'`, resolviendo incompatibilidades con "Private Network Access" (PNA). Simplificada la UI de fallback en `PrinterConfigDialog` con el diseño y copy deseado para admitir certificados SSL locales.
+- **Resumen:** Se solucionan bloqueos de CORS y PNA en producción, y se mejora significativamente el flujo al fallar el SSL con un botón visible "Solucionar Conexión Segura".
+
+### [2026-02-19 22:31] Despliegue a Producción (Web)
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`).
+- **Resumen:** Despliegue exitoso de nueva versión en Firebase Hosting aplicando refactor y simetría minimalista en la UI de opciones de ticket.
+
+### [2026-02-19 22:30] Mejora UI: Botones Simétricos y Minimalistas en Compartir Ticket
+- **Tareas:** Se refactorizó la UI de `_buildActionCard` en `share_ticket_dialog.dart`. Se eliminaron los gradientes y se introdujo un contenedor de proporciones cuadradas perfectas `AspectRatio(aspectRatio: 1)` para lograr simetría absoluta. Se mejoró el minimalismo utilizando colores base (`surfaceContainerLow` y `.onSurface`) junto con bordes sutiles transparentes en lugar de backgrounds pesados.
+- **Resumen:** Se rediseñaron los botones de acción para compartir ticket y sean completamente simétricos (cuadrados) minimizando su ruido visual al máximo según normativas Material Design 3.
+
 ### [2026-02-19 21:07] Fix: Detección de Certificado SSL en Flutter Web (Impresora Local)
 - **Tareas:** Reemplazado `_isCertificateError()` por `_isPossibleCertOrNetworkError()` en `thermal_printer_http_service.dart` para detectar `XmlHttpRequestError` genérico de Flutter Web. Actualizado `_probeUrl()` para marcar probes HTTPS como `isCertError:true` cuando el error es de red genérico. Simplificada condición en `autoDiscover()` para activar flujo de cert si cualquier probe HTTPS falla. Mejorado `printer_config_dialog.dart` con flujo de 3 pasos claro (Verificar app → Abrir servidor → Reintentar) y auto-polling (`Timer` cada 3s) que detecta automáticamente cuando el usuario acepta el cert.
 - **Resumen:** Solucionado el bug donde la webapp siempre mostraba "Servidor no disponible" en vez de "Certificado HTTPS pendiente", porque `fetch()` en Flutter Web no expone strings de certificado en el error.
@@ -102,46 +118,3 @@
 - **Tareas:** Se reemplazó el método `_generateTodayTickets()` por `_generateLastSevenDaysTickets()` en `AnalyticsDemoHelper`. El método antiguo solo generaba transacciones para el día actual entre las 8am y la hora actual, retornando lista vacía si la hora era anterior a las 8am. El nuevo método genera ~140-180 transacciones distribuidas en los últimos 7 días completos (8am-10pm de cada día), garantizando siempre datos disponibles independientemente de la hora de acceso.
 - **Resumen:** Solucionado el bug donde los usuarios en modo invitado no veían datos de analíticas al acceder antes de las 8am, proporcionando ahora una experiencia demo completa las 24 horas del día con datos realistas de una semana completa.
 
-### [2026-02-05 23:35] Corrección: Conflicto de Showcases Simultáneos
-- **Tareas:** Se agregó verificación del índice de página activa (`homeProvider.currentPageIndex`) en los métodos `_checkAndStartShowcase` de `SalesPage` y `CataloguePage`. Esto previene que ambos showcases se ejecuten simultáneamente cuando ambas páginas están pre-construidas en el PageView con `AutomaticKeepAliveClientMixin`.
-- **Resumen:** Solucionado el bug donde los tutoriales de Ventas y Catálogo se activaban al mismo tiempo, asegurando que solo se muestre el tutorial de la página actualmente visible.
-
-### [2026-02-05 23:25] Tutorial de Catálogo
-- **Tareas:** Se implementó `showcaseview` en `CataloguePage`. Se añadieron keys y lógica para resaltar: Botón flotante 'Agregar Nuevo', Botón de 'Filtros Avanzados', y la barra de pestañas (Productos, Categorías, Proveedores). Se aseguró la integración correcta con `PreferredSize` para la `TabBar`. Persistencia key: `catalogue_page_showcase_shown`.
-- **Resumen:** Se guía al usuario en la gestión del catálogo, destacando cómo agregar items, filtrar la lista y navegar entre las secciones principales.
-
-### [2026-02-05 23:10] Tutorial en Menú Lateral (Drawer)
-- **Tareas:** Se refactorizó `AppDrawer` a `StatefulWidget` para gestionar el ciclo de vida del tutorial. Se integró `showcaseview` dentro del Drawer. Se agregaron keys para: Perfil de Negocio, Ventas, Analíticas, Catálogo, Usuarios e Historial de Caja. Se implementó lógica dinámica que solo incluye en el tutorial los elementos para los cuales el usuario tiene permisos. Persistencia mediante `shared_preferences` (key: `drawer_showcase_shown`).
-- **Resumen:** Se añadió una guía interactiva al menú principal que se activa automáticamente al abrir el drawer por primera vez, explicando cada módulo disponible según los permisos del usuario.
-
-### [2026-02-05 21:55] Extensión Tutorial: Ticket y Pago
-- **Tareas:** Se extendió el tutorial de `sales_page.dart` cubriendo el flujo de cierre de venta. Se modificó `TicketDrawerWidget` para aceptar keys de showcase. Se agregaron disparadores condicionales para mostrar el botón 'Cobrar' en móvil y los elementos del ticket (Confirmar, Total, Pagos, Descuento) en escritorio/móvil cuando hay productos. Se implementó lógica de "Partes" (2 y 3) con persistencia independiente para no abrumar al usuario.
-- **Resumen:** Completado el recorrido guiado del punto de venta, cubriendo desde la selección de productos hasta la confirmación y pago, adaptándose dinámicamente a móvil y escritorio.
-
-### [2026-02-04 21:38] Tutorial Interactivo en Página de Ventas
-- **Tareas:** Se implementó `showcaseview` en `sales_page.dart` con 6 showcases ordenados: ventas rápidas (FAB), gestión de caja, último ticket, configuración de impresora, búsqueda de productos, y productos favoritos. Se envolvió el Consumer2 con `ShowCaseWidget` y `Builder` para contexto correcto. Se implementaron métodos de control (`_shouldShowShowcase`, `_markShowcaseAsShown`, `_startShowcase`, `_checkAndStartShowcase`) con persistencia en SharedPreferences (key: 'sales_page_showcase_shown'). Se agregó flag `_showcaseInitialized` para evitar múltiples inicializaciones. Activación automática con delay de 800ms.
-- **Resumen:** Se agregó tutorial interactivo automático para guiar a usuarios nuevos a través de las funcionalidades clave del punto de venta, mostrándose solo la primera vez con descripciones profesionales en español y emojis para mejor UX.
-
-### [2026-02-04 20:45] Tutorial Interactivo para Modo Invitado
-- **Tareas:** Se implementó el paquete `showcaseview` en `WelcomeSelectedAccountPage`. Se refactorizó de StatelessWidget a StatefulWidget. Se crearon 4 GlobalKeys para destacar: cuenta demo, crear cuenta, cambiar tema, y email/logout. Se agregó lógica de persistencia con SharedPreferences (key: 'guest_mode_showcase_shown'). Se implementó activación automática del tutorial al seleccionar cuenta demo con delay de 300ms.
-- **Resumen:** Se agregó tutorial interactivo automático para guiar a nuevos usuarios cuando entran como invitados, destacando funcionalidades clave de la aplicación y mostrándose solo la primera vez.
-
-### [2026-02-01 21:30] Mejora UX: Modo Invitado en Gestión de Usuarios
-- **Tareas:** Se agregó detección de modo invitado en `UserAdminDialog`. Se muestra banner informativo ámbar indicando que los datos no se pueden modificar. Se oculta el botón de "Actualizar/Crear" y se reemplaza "Cancelar" por "Cerrar". Se previene el intento de guardar en Firebase mostrando SnackBar amigable.
-- **Resumen:** Mejorada experiencia de usuario en modo invitado al visualizar perfiles, evitando errores de Firebase y comunicando claramente que es modo de demostración de solo lectura.
-
-### [2026-02-01 20:55] Hotfix: Crash en Detalle de Caja Demo
-- **Tareas:** Se robusteció `CashRegister.fromMap` y `CashFlow.fromMap` para manejar correctamente tanto `Timestamp` como `DateTime` y valores nulos. Se corrigió `DemoDataService` para usar la clave `date` en lugar de `timestamp` en flujos de caja.
-- **Resumen:** Solucionado error `NoSuchMethodError: 'toDate'` que causaba cierre inesperado al ver detalles de arqueos generados localmente, asegurando compatibilidad entre datos demo y datos de Firebase.
-
-### [2026-02-01 20:40] Datos de Prueba Centralizados para Modo Invitado
-- **Tareas:** Se actualizó `DemoDataService.generateDemoUsers()` para generar 2 usuarios específicos (Superusuario y Empleado). Se conectó `GetUserAccountsUseCase.getDemoUsers()` con import correspondiente. Se agregó soporte demo en `CashRegisterProvider.loadCashRegisterHistory()` con método auxiliar `_loadDemoCashRegisterHistory()` que aplica filtros de fecha (última semana, mes, mes anterior, todo).
-- **Resumen:** Se centralizó y organizó la generación de datos de prueba para modo invitado, permitiendo visualizar usuarios y arqueos de caja con filtros funcionales sin necesidad de Firebase.
-
-### [2026-02-01 20:20] Botón Login en Modo Invitado
-- **Tareas:** Se agregó un botón 'Iniciar sesión' (`TextButton`) dentro del banner de color ámbar que aparece en el modo invitado en `home_page.dart`.
-- **Resumen:** Facilita la salida del modo invitado y el acceso a la pantalla de login directamente desde el banner informativo principal.
-
-### [2026-02-01 19:55] Mejora UI Banner Modo Invitado
-- **Tareas:** Se rediseñó completamente el banner de modo invitado en `home_page.dart` con un enfoque minimalista premium: gradiente suave con tonos amber/orange más refinados, mejor espaciado, tipografía mejorada con jerarquía visual clara, icono circular con fondo semitransparente, separador con gradiente sutil, y mejor disposición de elementos.
-- **Resumen:** Se mejoró significativamente la estética del banner manteniendo el diseño minimalista pero haciéndolo más moderno, elegante y visualmente atractivo.

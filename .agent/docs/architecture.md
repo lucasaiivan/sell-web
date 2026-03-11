@@ -117,5 +117,5 @@ Utilidades transversales compartidas por todas las features. Esta carpeta organi
 2.  **Provider** invoca un **UseCase** del dominio.
 3.  **UseCase** orquesta lógica de negocio y llama al **Repository (Interface)**.
 4.  **Repository (Impl)** decide la fuente de datos (Remote/Local) y llama al **DataSource**.
-5.  **DataSource** ejecuta la petición (Firestore/HTTP/Storage) y retorna datos crudos o `ProductModel`.
-6.  `ProductModel` mapea los datos a `Product` (Entity) y retorna hacia arriba.
+5.  **DataSource** ejecuta la petición (Firestore/HTTP/Storage) y retorna datos crudos.
+6.  Mapea los datos a la entidad correspondiente y retorna hacia arriba.

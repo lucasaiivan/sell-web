@@ -5,10 +5,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
+// print_job.dart import removed
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/cloud_print_provider.dart';
 import 'package:sellweb/core/presentation/widgets/ui/tags/combo_tag.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialog.dart';
+import 'package:sellweb/features/sales/presentation/dialogs/share_ticket_dialog.dart';
 import 'package:showcaseview/showcaseview.dart';
 
 /// Widget principal que muestra el drawer/vista del ticket de venta
@@ -1259,48 +1262,74 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
                 opacity: _fadeController,
                 child: Column(
                   children: [
-                    // Botón Recibo (Outlined)
+                    // Fila: Botón Recibo (Outlined) + IconButton de configuración
                     SizedBox(
-                      width: double.infinity,
                       height: 54,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          // Abrir diálogo de opciones de ticket
-                          showTicketOptionsDialog(
-                            context: context,
-                            ticket: ticket,
-                            businessName: provider.profileAccountSelected.name.isNotEmpty
-                                ? provider.profileAccountSelected.name
-                                : 'PUNTO DE VENTA',
-                            onComplete: () {
-                              // Callback cuando se completa el proceso
-                            },
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: textColor,
-                          side: BorderSide(color: Colors.grey.withValues(alpha: 0.4), width: 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Botón Recibo principal - ejecuta según preferencia guardada
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _onReceiptButtonPressed(
+                                context: context,
+                                ticket: ticket,
+                                provider: provider,
+                                textColor: textColor,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: textColor,
+                                side: BorderSide(color: Colors.grey.withValues(alpha: 0.4), width: 1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                                backgroundColor: Colors.transparent,
+                              ),
+                              icon: Icon(Icons.receipt_long_rounded, color: secondaryTextColor),
+                              label: Text(
+                                'Recibo',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
                           ),
-                          elevation: 0,
-                          backgroundColor: Colors.transparent,
-                        ),
-                        icon: Icon(Icons.receipt_long_rounded, color: secondaryTextColor),
-                        label: Text(
-                          'Recibo',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
+                          const SizedBox(width: 8),
+                          // IconButton de configuración - SIEMPRE abre el dialog de opciones
+                          SizedBox(
+                            width: 54,
+                            child: Tooltip(
+                              message: 'Configurar opciones de ticket',
+                              child: OutlinedButton(
+                                onPressed: () => _openTicketOptionsDialog(
+                                  context: context,
+                                  ticket: ticket,
+                                  provider: provider,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: secondaryTextColor,
+                                  side: BorderSide(color: Colors.grey.withValues(alpha: 0.4), width: 1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  elevation: 0,
+                                  backgroundColor: Colors.transparent,
+                                ),
+                                child: Icon(Icons.tune_rounded, color: secondaryTextColor, size: 20),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                     
                     const SizedBox(height: 12),
                     
-                    // Botón Realizar nueva venta (Filled Primary)
+                    // Botón Continuar (Filled Primary) - limpia el ticket
                     SizedBox(
                       width: double.infinity,
                       height: 54,
@@ -1339,6 +1368,141 @@ class _TicketConfirmedPurchaseState extends State<_TicketConfirmedPurchase>
     );
   }
 
+  // ── Métodos de acción del botón Recibo ──────────────────────────────────
+
+  /// Abre SIEMPRE el dialog de opciones de ticket (para configurar/cambiar método).
+  void _openTicketOptionsDialog({
+    required BuildContext context,
+    required dynamic ticket,
+    required SalesProvider provider,
+  }) {
+    final businessName = provider.profileAccountSelected.name.isNotEmpty
+        ? provider.profileAccountSelected.name
+        : 'PUNTO DE VENTA';
+    showTicketOptionsDialog(
+      context: context,
+      ticket: ticket,
+      businessName: businessName,
+      onComplete: () {
+        if (mounted && !_animationCompleted) {
+          _animationCompleted = true;
+          widget.onAnimationComplete?.call();
+        }
+      },
+    );
+  }
+
+  /// Lógica inteligente del botón Recibo:
+  /// - Si hay preferencia 'print' → FIRE & FORGET: avanza inmediatamente y envía en segundo plano
+  /// - Si hay preferencia 'share' → abre ShareTicketDialog directamente
+  /// - Sin preferencia → abre TicketOptionsDialog
+  void _onReceiptButtonPressed({
+    required BuildContext context,
+    required dynamic ticket,
+    required SalesProvider provider,
+    required Color textColor,
+  }) {
+    // Leer la preferencia sincronamente desde cache de SharedPreferences
+    // (ya cargada en memoria, sin await real perceptible)
+    getTicketOptionPreference().then((pref) {
+      if (!mounted) return;
+
+      final businessName = provider.profileAccountSelected.name.isNotEmpty
+          ? provider.profileAccountSelected.name
+          : 'PUNTO DE VENTA';
+
+      if (pref == 'print') {
+        // ✅ FIRE & FORGET: cerrar pantalla inmediatamente, imprimir en segundo plano
+        if (!_animationCompleted) {
+          _animationCompleted = true;
+          widget.onAnimationComplete?.call();
+        }
+        // Disparar impresión sin bloquear la UI
+        _executePrintBackground(
+          context: context,
+          ticket: ticket,
+          provider: provider,
+        );
+      } else if (pref == 'share') {
+        // Abrir dialog de compartir directamente
+        showShareTicketDialog(
+          context: context,
+          ticket: ticket,
+          businessName: businessName,
+        ).then((_) {
+          if (mounted && !_animationCompleted) {
+            _animationCompleted = true;
+            widget.onAnimationComplete?.call();
+          }
+        });
+      } else {
+        // Sin preferencia: abrir el dialog de opciones
+        _openTicketOptionsDialog(
+          context: context,
+          ticket: ticket,
+          provider: provider,
+        );
+      }
+    });
+  }
+
+  /// Envía el ticket a la cola de impresión en SEGUNDO PLANO (fire & forget).
+  /// La UI ya fue cerrada antes de llamar esto.
+  /// Solo muestra un SnackBar de error si la operación falla.
+  void _executePrintBackground({
+    required BuildContext context,
+    required dynamic ticket,
+    required SalesProvider provider,
+  }) {
+    // Capturar todo antes de que el widget se desmonte
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final cloudPrintProvider = context.read<CloudPrintProvider>();
+    final currentBusinessId = provider.profileAccountSelected.id; 
+ 
+    // 🔥 Disparar en segundo plano sin bloquear
+    cloudPrintProvider.enqueueTicket(
+      businessId: currentBusinessId,
+      job: ticket,
+    ).then((success) {
+      if (!success) {
+        // Solo notificar si falla
+        scaffoldMessenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.print_disabled_rounded, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Error al imprimir: ${cloudPrintProvider.lastError ?? "Error desconocido"}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red.shade700,
+              duration: const Duration(seconds: 5),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+      }
+    }).catchError((e) {
+      scaffoldMessenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('Error al imprimir: $e'),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+    });
+  }
 }
 
 /// Dibuja una línea punteada horizontal para simular el corte de un ticket impreso

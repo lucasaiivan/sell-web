@@ -36,6 +36,9 @@ class TicketModel {
   /// true si el ticket está anulado, false si está activo
   bool annulled = false;
 
+  /// Estado de la impresión. Variantes: 'waiting', 'printed', 'failed'
+  String printStatus = 'waiting';
+
   /// Lista de productos en el ticket almacenados como mapas de ProductCatalogue
   /// Almacena directamente los datos completos del producto del catálogo
   /// PRIVADA: Solo se accede a través de getters/setters y métodos específicos
@@ -62,6 +65,7 @@ class TicketModel {
     this.discountIsPercentage = false,
     this.transactionType = "sale",
     this.annulled = false,
+    this.printStatus = "waiting",
     required List<Map<String, dynamic>> listPoduct,
     required this.creation,
   }) : _listPoduct = listPoduct;
@@ -330,6 +334,7 @@ class TicketModel {
         "discount": discount,
         "transactionType": transactionType,
         "annulled": annulled,
+        "printStatus": printStatus,
         // Usar directamente los mapas de ProductCatalogue almacenados
         "listPoduct": _listPoduct,
         "creation": creation,
@@ -350,6 +355,7 @@ class TicketModel {
         "discount": discount,
         "transactionType": transactionType,
         "annulled": annulled,
+        "printStatus": printStatus,
         // Usar directamente el _listPoduct (que contiene mapas de ProductCatalogue)
         "listPoduct": _listPoduct,
         "creation": creation,
@@ -370,6 +376,7 @@ class TicketModel {
         "discount": discount,
         "transactionType": transactionType,
         "annulled": annulled,
+        "printStatus": printStatus,
         // Serializar productos con Timestamp convertidos a milliseconds para SharedPreferences
         "listPoduct": _listPoduct.map((productMap) {
           Map<String, dynamic> serializedProduct =
@@ -476,6 +483,7 @@ class TicketModel {
         discountIsPercentage: data['discountIsPercentage'] ?? false,
         transactionType: data['transactionType'] ?? 'sale',
         annulled: data['annulled'] ?? false,
+        printStatus: data['printStatus'] ?? 'waiting',
         listPoduct: processedProducts,
         creation: creationTimestamp,
       );
@@ -578,6 +586,9 @@ class TicketModel {
       annulled: data.containsKey('annulled')
           ? (data['annulled'] ?? false) as bool
           : false,
+      printStatus: data.containsKey('printStatus')
+          ? data['printStatus'] as String
+          : 'waiting',
       listPoduct: processedProducts,
       creation: creationTimestamp,
     );
@@ -597,6 +608,7 @@ class TicketModel {
     bool? discountIsPercentage,
     String? transactionType,
     bool? annulled,
+    String? printStatus,
     List<Map<String, dynamic>>? listPoduct,
     Timestamp? creation,
   }) {
@@ -614,6 +626,7 @@ class TicketModel {
       discountIsPercentage: discountIsPercentage ?? this.discountIsPercentage,
       transactionType: transactionType ?? this.transactionType,
       annulled: annulled ?? this.annulled,
+      printStatus: printStatus ?? this.printStatus,
       listPoduct: listPoduct ?? _listPoduct,
       creation: creation ?? this.creation,
     );
@@ -638,6 +651,7 @@ class TicketModel {
     String transactionType =
         "sale", // tipo de transacción que representa este ticket
     bool annulled = false,
+    String printStatus = "waiting",
     Timestamp? creation,
   }) {
     final ticket = TicketModel(
@@ -654,6 +668,7 @@ class TicketModel {
       discountIsPercentage: discountIsPercentage,
       transactionType: transactionType,
       annulled: annulled,
+      printStatus: printStatus,
       listPoduct: [],
       creation: creation ?? Timestamp.now(),
     );
@@ -684,6 +699,7 @@ class TicketModel {
     discount = data['discount'] ?? 0.0;
     transactionType = data['transactionType'] ?? 'sale';
     annulled = data['annulled'] ?? false;
+    printStatus = data['printStatus'] ?? 'waiting';
     _listPoduct = data['listPoduct'] != null
         ? List<Map<String, dynamic>>.from((data['listPoduct'] as List).map(
             (item) => item is Map<String, dynamic>

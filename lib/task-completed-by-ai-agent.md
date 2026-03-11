@@ -1,3 +1,61 @@
+### [2026-03-11 12:20] Mejora UI/UX: Cloud Print Queue Dialog + ClearQueue Feature
+- **Tareas:** Agregado `clearPrintQueue` en `ICloudPrintRepository`, `CloudPrintRepositoryImpl` (WriteBatch atómico), `ClearPrintQueueUseCase`, y `CloudPrintProvider.clearQueue()`. Reescrito `cloud_print_queue_dialog.dart` con items enriquecidos: badge semántico de estado (`_PrintStatusChip`: waiting/printed/failed), avatar dinámico (`_StatusAvatar`), monto total formateado, cantidad de artículos, fecha/hora, color del medio de pago. Botón "Limpiar todo" (con confirmación) en las acciones del dialog. Subtítulo dinámico con contador de documentos en cola.
+- **Resumen:** Se mejoró sustancialmente la UI/UX del diálogo de cola de impresión, aportando información clave al usuario y la capacidad de limpiar toda la cola en una operación atómica.
+
+### [2026-03-08 00:07] Migración de Cola de Impresión a TicketModel
+- **Tareas:** Se eliminaron las clases `PrintJob` y `PrintItem`. Se actualizó `TicketModel` agregando la propiedad `printStatus` ('waiting', 'printed', 'failed'). Se refactorizaron `ICloudPrintRepository`, `CloudPrintRepositoryImpl`, `CloudPrintProvider`, casos de uso y diálogos de UI para operar nativamente sobre `TicketModel`.
+- **Resumen:** Se optimizó la arquitectura eliminando la redundancia de modelos, unificando el flujo de ventas e impresión bajo una misma entidad de dominio con control de estado de impresión.
+
+### [2026-03-06 01:15] Refactorización Cloud Print a Clean Architecture
+- **Tareas:** Creación de entidades `PrintJob`/`PrintItem`, repositorio `ICloudPrintRepository`, implementación en Data, y UseCases. Refactorización de `CloudPrintProvider`, `DrawerTicket`, `SalesProvider` y diálogos para usar datos tipados.
+- **Resumen:** Se desacopló la lógica de impresión de la UI y Firestore, implementando Clean Architecture para mejorar la mantenibilidad y robustez del sistema de impresión.
+
+### [2026-03-05 20:55] Orden descendente en Cola de Impresión
+- **Tareas:** Se modificó `cloud_printer_service.dart` cambiando `descending: false` a `descending: true` en la consulta `getTicketQueue`.
+- **Resumen:** Se optimizó la visualización de la cola de impresión para que los tickets más recientes aparezcan al principio de la lista.
+
+### [2026-02-28 07:29] Mejora UX: Feedback Inmediato en Botón Recibo
+- **Tareas:** Se agregó el estado de carga `_isProcessingReceipt` al widget `_TicketConfirmedPurchase`. Al presionar el botón "Recibo" se muestra un `CircularProgressIndicator` y el texto cambia a "Procesando..." de manera instantánea, bloqueando peticiones duplicadas durante las llamadas de red.
+- **Resumen:** Se mejoró sustancialmente la UX del flujo post-venta añadiendo respuesta visual instantánea y estado de carga mientras se evalúa/envía el ticket, eliminando la latencia visual percibida.
+
+### [2026-02-28 07:14] Mejora Flujo Post-Venta: Preferencia de Ticket Persistente
+- **Tareas:** Modificado `ticket_options_dialog.dart` para guardar y cargar preferencia de opción de ticket en `SharedPreferences` (clave `ticket_option_preference`: `'print'`/`'share'`). Modificado `drawer_ticket.dart` en `_TicketConfirmedPurchaseState`: botón Recibo ejecuta directamente según preferencia (imprimir/compartir sin dialog), botón `IconButton` (⚙️) añadido al lado del Recibo que siempre abre el dialog de opciones, todas las acciones post-ticket limpian el estado con `onAnimationComplete`.
+- **Resumen:** El flujo post-venta recuerda la elección del usuario para opciones de ticket, ejecutando directamente la acción preferida (imprimir o compartir) y permitiendo cambiarlo con el botón de configuración.
+
+### [2026-02-27 00:52] Despliegue rápido a Producción
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`). Se omitió `--web-renderer canvaskit` (deprecado en Flutter actual). Desplegados 56 archivos en Firebase Hosting.
+- **Resumen:** Despliegue exitoso a `https://commer-ef151-b5fde.web.app` con la versión más reciente de la webapp.
+
+### [2026-02-24 00:50] Generación de Prompt Maestro para SellWeb PrintNode (Windows)
+- **Tareas:** Análisis exhaustivo de rutas Firestore reales (`FirestorePaths`), entidades (`AccountProfile`, `AdminProfile`, `TicketModel`), `CloudPrinterService` (`ACCOUNTS/{id}/printing_receipts`), y arquitectura del proyecto. Generado prompt maestro mejorado (`prompt_maestro_sellweb_printnode.md`) con datos 100% reales del proyecto.
+- **Resumen:** Se actualizó y mejoró el prompt de arquitectura para el nuevo proyecto satélite Flutter Windows "SellWeb PrintNode", alineándolo con la estructura Firestore, entidades de dominio y convenciones reales de `sell-web`.
+
+### [2026-02-23 00:05] WebApp a Nodo de Impresión Firestore
+- **Tareas:** Eliminado proveedor viejo y `ThermalPrinterHttpService`. Creados `CloudPrinterService` y `CloudPrintProvider` para inyectar un Documento con `businessId` en Firestore. UI migrada suprimiendo PNA/CORS bugs desde su raíz y acoplamiento removido del State principal.
+- **Resumen:** Se refactorizó la WebApp exitosamente aislando el módulo de impresión y convirtiendo su lógica a cola nativa con Firebase.
+
+### [2026-02-22 19:51] Arquitectura y Refactor: Windows Print Node
+- **Tareas:** Creación del documento de diseño arquitectónico `windows_print_node_architecture.md` detallando la migración de app servidor HTTP a un Nodo de Impresión reactivo. Creado el esquema Clean Architecture, lógica Google Sign-In para Windows y suscripción atómica a Firestore.
+- **Resumen:** Se estructuró y documentó exhaustivamente la refactorización para Windows Desktop resolviendo el problema de comunicación bloqueada por PNA y CORS.
+
+### [2026-02-22 18:43] Despliegue rápido a Producción
+- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`). Se omitió el flag `--web-renderer canvaskit` debido a su ausencia en la versión 3.35.7.
+- **Resumen:** Se desplegó exitosamente la versión más reciente en Firebase Hosting, asegurando que los cambios de `localhost` para PNA estén online.
+
+### [2026-02-22 18:05] Fix PNA: localhost en lugar de 127.0.0.1
+- **Tareas:** Se modificó `thermal_printer_http_service.dart` reemplazando `127.0.0.1` por `localhost` como host por defecto para evitar bloqueos PNA en Chrome. Se desplegó la webapp a Producción.
+- **Resumen:** Se solucionó el bloqueo estricto de Chrome hacia IPs numéricas locales, habilitando la conexión al servidor de impresión local.
+
+### [2026-02-22 02:50] Diagnóstico definitivo de CORS PNA (Chrome Producción)
+- **Tareas:** Investigación intensiva de políticas PNA (Private Network Access) Chrome 130+. Comprobación de que el error HTTPS -> HTTP Localhost (`net::ERR_FAILED`) no depende del Frontend Dart, sino de la falta estricta de headers `OPTIONS` en el backend. Creación del manual `pna_shelf_fix.md` con middleware Shelf requerido (`Access-Control-Allow-Private-Network`).
+- **Resumen:** Se diagnosticó y redactó el fix final para el Backend de Escritorio que bloqueaba por pre-vuelo PNA las peticiones CORS hechas desde la WebApp en producción.
+
+### [2026-02-21 21:58] Simplificación PNA y Remoción SSL (Impresora Local)
+
+### [2026-02-21 01:35] Despliegue rápido a Producción
+- **Tareas:** Ejecución de `flutter build web --release` y `firebase deploy --only hosting`.
+- **Resumen:** Se realizó un despliegue rápido de la aplicación web a Firebase Hosting.
+
 ### [2026-02-21 01:22] Deploy de WebApp al entorno de Producción
 - **Tareas:** Despliegue de la web app con `flutter build web --release` y `firebase deploy --only hosting` tras compilar la versión de PNA SSL fallbacks en la impresora local.
 - **Resumen:** Actualizado sell-web con las mejoras de comunicación al servidor de impresora de escritorio usando interop nativo de fetch para resolver el CORS.
@@ -69,52 +127,3 @@
 ### [2026-02-11 22:55] Fix: Scroll con Mouse en Lista de Marcas
 - **Tareas:** Se actualizó `brand_stories_list.dart` envolviendo el `ListView` con `ScrollConfiguration` y agregando `PointerDeviceKind.mouse` a `dragDevices`. Se importó `flutter/gestures.dart`.
 - **Resumen:** Habilitado el scroll mediante arrastre con mouse en la lista horizontal de marcas del catálogo.
-
-### [2026-02-11 00:57] Despliegue a Producción (Web)
-- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`). Se omitió `--web-renderer canvaskit` por deprecación en Flutter 3.35.7+.
-- **Resumen:** Despliegue exitoso de nueva versión en Firebase Hosting con configuración optimizada por defecto.
-
-### [2026-02-11 00:35] Fix: Error de Compilación en Catálogo
-- **Tareas:** Se creó el archivo `brand_stories_list.dart` faltante en `lib/features/catalogue/presentation/widgets/`. Se implementó el widget `BrandStoriesList` para mostrar historias de marcas horizontalmente usando `AvatarItem`. Se verificó la corrección mediante `flutter analyze`.
-- **Resumen:** Solucionado el error de compilación que impedía ejecutar la app debido a la referencia a un archivo inexistente en `CataloguePage`.
-
-### [2026-02-08 11:15] Mejora UX: Menú Contextual en Listas de Catálogo
-- **Tareas:** Se agregaron `PopupMenuButton` en `CategoriesListView` y `ProvidersListView` dentro de `CataloguePage`. Se implementó lógica de confirmación de eliminación (`_showDeleteConfirmation`) en los estados correspondientes.
-- **Resumen:** Ahora es posible editar y eliminar categorías y proveedores directamente desde la vista de lista (móvil) mediante un menú contextual, igualando la funcionalidad de la vista de tabla (escritorio).
-
-### [2026-02-07 01:56] Mejora Visual: Brillo de Tabs en Catálogo
-- **Tareas:** Se actualizó `CataloguePage` para asignar un color de indicador específico (`Color(0xFF3E3E)`) en modo oscuro y `surface` (blanco) en modo claro.
-- **Resumen:** Se mejoró la distinción visual de la pestaña seleccionada en ambos temas, asegurando un brillo adecuado para el modo oscuro.
-
-### [2026-02-10 00:45] Unificar patrón de estilos de chips en vista web
-- **Tareas:** Refactorizada sección `summaryWebContent` en `product_catalogue_view.dart` para usar `_buildMetaChip` y `_buildStatusChip` con el mismo patrón que mobile.
-- **Resumen:** Se eliminó el chip personalizado de marca y se reorganizaron categoría/proveedor de metadatos a chips de estado, logrando consistencia visual entre mobile y web.
-
-### [2026-02-10 00:25] Agregar parámetros a `_buildMetaChip`
-- **Tareas:** Modificado `_buildMetaChip` en `product_catalogue_view.dart` para aceptar `accentColor` y `radius`.
-- **Resumen:** Se añadieron parámetros opcionales para personalizar el color de acento y el radio del borde en el widget de chips de metadatos.
-
-### [2026-02-09 06:40] Deploying Web App to Production
-- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`).
-- **Resumen:** Se desplegó una nueva versión de la web app en Firebase Hosting tras construir una release limpia.
-
-### [2026-02-07 01:35] Despliegue a Producción
-- **Tareas:** Ejecución de pipeline de despliegue (`flutter clean`, `flutter pub get`, `flutter build web --release`, `firebase deploy --only hosting`).
-- **Resumen:** Se desplegó una nueva versión de la web app en Firebase Hosting tras construir una release limpia.
-
-### [2026-02-06 18:32] Optimización de Performance: Modo Demo
-- **Tareas:** Implementado sistema de caché lazy loading en `DemoAccountService` para eliminar regeneración redundante de datos. Se agregaron variables de caché privadas (_cachedProducts, _cachedCategories, _cachedProviders, _cachedBrands, _cachedAdminUsers, _cachedAccount, _cachedAdminProfile, _cachedTickets, _cachedCashRegisters). Se modificaron todos los getters para usar patrón `??=` garantizando generación única. Se agregó método `clearCache()` para gestión de memoria. En `HomePage`, se implementó flag `_demoProductsLoaded` para prevenir carga múltiple y se agregó limpieza de caché al cambiar de cuenta (`_buildWelcomeScreen` y `_buildBlockedScreen`).
-- **Resumen:** Eliminado delay al cargar pantalla principal en modo Demo (de ~300-500ms a ~10ms en cargas subsecuentes). Los datos se generan una sola vez y se cachean, reduciendo regeneraciones de 300 productos y 500 tickets a solo 100 productos y tickets según scope necesario.
-
-### [2026-02-06 14:26] Hotfix: Crash al Cambiar entre Modo Invitado y Cuenta Real
-- **Tareas:** Se actualizó `main.dart` reemplazando `ChangeNotifierProxyProvider` con `ChangeNotifierProvider.value` para evitar que el framework elimine los Singleton Providers (`CatalogueProvider`, etc.) al reconstruir el widget tree. Se agregaron verificaciones de `mounted` en `HomePage` para prevenir ejecución de lógica asíncrona en widgets desmontados.
-- **Resumen:** Solucionado el crash crítico que cerraba la app al intentar cambiar de cuenta o salir del modo invitado, asegurando la persistencia correcta de los servicios.
-
-### [2026-02-05 21:38] Ampliación de Datos Demo a 100 Productos de Supermercado
-- **Tareas:** Se expandieron las categorías de productos de 8 a 12, agregando `Congelados`, `Perfumería`, `Bazar` y `Mascotas`. Se creó el mapa `providersByCategory` con 3 proveedores por categoría. Se actualizó el método `generateDemoProducts()` para incluir asignación de proveedores (`provider`, `nameProvider`) y cálculo de `revenuePercentage` realista por categoría (15%-60%). Se implementó `_generateProfitPercentage()` con márgenes específicos (ej: lácteos 15-25%, panadería 40-60%). Se ajustó `productNamesByCategory` para generar exactamente 100 productos (8-9 por categoría). El precio de compra ahora se calcula coherentemente: `purchasePrice = salePrice / (1 + profitPercentage/100)`.
-- **Resumen:** Completados los datos demo con 100 productos de supermercado con información completa y coherente: nombre, marca, categoría, stock, ganancia realista por categoría y proveedores específicos.
-
-### [2026-02-05 01:15] Corrección: Datos Demo No Visibles en Primeras Horas (00:00-08:00)
-- **Tareas:** Se reemplazó el método `_generateTodayTickets()` por `_generateLastSevenDaysTickets()` en `AnalyticsDemoHelper`. El método antiguo solo generaba transacciones para el día actual entre las 8am y la hora actual, retornando lista vacía si la hora era anterior a las 8am. El nuevo método genera ~140-180 transacciones distribuidas en los últimos 7 días completos (8am-10pm de cada día), garantizando siempre datos disponibles independientemente de la hora de acceso.
-- **Resumen:** Solucionado el bug donde los usuarios en modo invitado no veían datos de analíticas al acceder antes de las 8am, proporcionando ahora una experiencia demo completa las 24 horas del día con datos realistas de una semana completa.
-

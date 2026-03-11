@@ -23,8 +23,10 @@ export 'package:sellweb/features/sales/presentation/dialogs/ticket_options_dialo
 export 'package:sellweb/features/sales/presentation/dialogs/discard_ticket_dialog.dart';
 
 // Configuration Dialogs
-export 'views/configuration/printer_config_dialog.dart';
 export 'views/configuration/theme_color_selector_dialog.dart';
+
+// Print Queue Dialogs
+export 'package:sellweb/features/sales/presentation/dialogs/cloud_print_queue_dialog.dart';
 
 // Account Dialogs
 export 'package:sellweb/features/auth/presentation/dialogs/admin_profile_info_dialog.dart';

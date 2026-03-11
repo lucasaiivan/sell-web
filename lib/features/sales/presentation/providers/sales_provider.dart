@@ -4,9 +4,8 @@ import 'package:injectable/injectable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sellweb/core/core.dart';
-import 'package:sellweb/core/constants/payment_methods.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
-import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
+// ThermalPrinterHttpService removed
 import 'package:sellweb/features/catalogue/domain/entities/product_catalogue.dart';
 import 'package:sellweb/features/auth/domain/entities/account_profile.dart';
 import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
@@ -30,6 +29,7 @@ import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usec
 
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/cloud_print_provider.dart';
 
 /// Estado inmutable del provider de ventas
 ///
@@ -103,7 +103,7 @@ class _SalesProviderState {
 /// - Delega operaciones de caja a CashRegisterUsecases vía CashRegisterProvider
 /// - Delega actualización de productos a CatalogueUseCases
 /// - Maneja persistencia local con AppDataPersistenceService
-/// - Coordina impresión de tickets con ThermalPrinterHttpService
+/// - Coordina impresión de tickets con CloudPrintProvider (Firestore)
 /// - No contiene validaciones ni lógica de negocio, solo coordinación
 ///
 /// **Arquitectura:**
@@ -119,7 +119,7 @@ class _SalesProviderState {
 ///    - Guardar en Firebase (CashRegisterUsecases)
 ///    - Actualizar caja (CashRegisterUsecases)
 ///    - Actualizar productos (CatalogueUseCases)
-///    - Imprimir ticket (ThermalPrinterHttpService)
+///    - Imprimir ticket (CloudPrintProvider)
 ///
 /// **Uso:**
 /// ```dart
@@ -148,7 +148,6 @@ class SalesProvider extends ChangeNotifier {
 
   final CatalogueUseCases _catalogueUseCases;
   final AppDataPersistenceService _persistenceService;
-  final ThermalPrinterHttpService _printerService;
   bool _disposed = false;
 
   @override
@@ -198,10 +197,8 @@ class SalesProvider extends ChangeNotifier {
     required SaveLastSoldTicketUseCase saveLastSoldTicketUseCase,
     required GetLastSoldTicketUseCase getLastSoldTicketUseCase,
     required AppDataPersistenceService persistenceService,
-    required ThermalPrinterHttpService printerService,
     required CatalogueUseCases catalogueUseCases,
   })  : _persistenceService = persistenceService,
-        _printerService = printerService,
         _addProductToTicketUseCase = addProductToTicketUseCase,
         _removeProductFromTicketUseCase = removeProductFromTicketUseCase,
         _createQuickProductUseCase = createQuickProductUseCase,
@@ -1149,51 +1146,22 @@ class SalesProvider extends ChangeNotifier {
 
   /// Maneja la impresión o generación de ticket según la configuración
   Future<void> _handleTicketPrintingOrGeneration(BuildContext context) async {
-    // Verificar si hay impresora conectada
-    await _printerService.initialize();
-
-    if (_printerService.isConnected) {
-      // Si hay impresora conectada, imprimir directamente
-      await _printTicketDirectly(context, _printerService);
+    if (_state.shouldPrintTicket) {
+      await _printTicketCloud(context);
     } else {
-      // Si no hay impresora, mostrar diálogo de opciones
       await _showTicketOptionsDialog(context);
     }
   }
 
-  /// Imprime el ticket directamente usando la impresora térmica
-  Future<void> _printTicketDirectly(
-      BuildContext context, ThermalPrinterHttpService printerService) async {
+  /// Imprime el ticket de forma remota enviándolo a Firebase Firestore Cloud Queue
+  Future<void> _printTicketCloud(BuildContext context) async {
     try {
-      // Determinar método de pago usando el enum centralizado
-      final paymentMethod = PaymentMethod.fromCode(_state.ticket.payMode);
-      final paymentMethodLabel = paymentMethod.displayName;
+      final cloudPrintProvider = provider.Provider.of<CloudPrintProvider>(context, listen: false);
 
-      // Preparar datos del ticket
-      final products = _state.ticket.products.map((item) {
-        return {
-          'quantity': item.quantity.toString(),
-          'description': item.description,
-          'price': item.salePrice,
-        };
-      }).toList();
-
-      // Imprimir el ticket
-      final printResult = await printerService.printTicket(
-        businessName: _state.profileAccountSelected.name.isNotEmpty
-            ? _state.profileAccountSelected.name
-            : 'PUNTO DE VENTA',
-        products: products,
-        total: _state.ticket.getTotalPrice,
-        paymentMethod: paymentMethodLabel,
-        cashReceived: _state.ticket.valueReceived > 0
-            ? _state.ticket.valueReceived
-            : null,
-        change: _state.ticket.valueReceived > _state.ticket.getTotalPrice
-            ? _state.ticket.valueReceived - _state.ticket.getTotalPrice
-            : null,
+      final printSuccess = await cloudPrintProvider.enqueueTicket(
+        businessId: _state.profileAccountSelected.id,
+        job: _state.ticket.copyWith(printStatus: 'waiting'),
       );
-      final printSuccess = printResult.success;
 
       // Mostrar resultado
       if (context.mounted) {
@@ -1205,15 +1173,15 @@ class SalesProvider extends ChangeNotifier {
             content: Row(
               children: [
                 Icon(
-                  printSuccess ? Icons.check_circle : Icons.error,
+                  printSuccess ? Icons.cloud_done : Icons.error,
                   color: Colors.white,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     printSuccess
-                        ? 'Ticket impreso correctamente'
-                        : 'Error al imprimir: ${printResult.message ?? printerService.lastError ?? "Error desconocido"}',
+                        ? 'Ticket enviado al Nodo de Impresión'
+                        : 'Error al encolar ticket: ${cloudPrintProvider.lastError ?? "Error desconocido"}',
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -1241,7 +1209,7 @@ class SalesProvider extends ChangeNotifier {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Error al procesar impresión: $e',
+                    'Error de conexión en nube: $e',
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),

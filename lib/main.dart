@@ -4,13 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'features/auth/domain/usecases/get_user_accounts_usecase.dart';
 import 'package:sellweb/features/home/presentation/pages/home_page.dart';
-import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'core/config/firebase_options.dart';
 
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'package:sellweb/core/di/injection_container.dart';
+import 'package:sellweb/features/sales/presentation/providers/cloud_print_provider.dart';
 import 'features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'features/catalogue/domain/usecases/catalogue_usecases.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
@@ -34,7 +34,6 @@ import 'package:sellweb/features/sales/domain/usecases/save_last_sold_ticket_use
 import 'package:sellweb/features/sales/domain/usecases/get_last_sold_ticket_usecase.dart';
 import 'package:sellweb/core/services/theme/theme_service.dart';
 import 'package:sellweb/core/services/storage/app_data_persistence_service.dart';
-import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -84,11 +83,8 @@ void _runApp() {
         ChangeNotifierProvider(
           create: (_) => ConnectivityProvider(),
         ),
-        ChangeNotifierProvider(
-          create: (_) =>
-              PrinterProvider(getIt<ThermalPrinterHttpService>())..initialize(),
-        ),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => getIt<CloudPrintProvider>()),
 
         // AuthProvider - gestiona el estado de autenticación
         ChangeNotifierProvider(
@@ -239,7 +235,6 @@ SalesProvider _createSalesProvider() {
   return SalesProvider(
     getUserAccountsUseCase: getIt<GetUserAccountsUseCase>(),
     persistenceService: getIt<AppDataPersistenceService>(),
-    printerService: getIt<ThermalPrinterHttpService>(),
     addProductToTicketUseCase: getIt<AddProductToTicketUseCase>(),
     removeProductFromTicketUseCase: getIt<RemoveProductFromTicketUseCase>(),
     createQuickProductUseCase: getIt<CreateQuickProductUseCase>(),

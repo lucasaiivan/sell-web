@@ -1,11 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
 import '../../../../../core/core.dart';
 import 'package:flutter/material.dart';
-import 'package:sellweb/core/constants/payment_methods.dart';
-import 'package:sellweb/core/di/injection_container.dart';
-import 'package:sellweb/core/services/external/thermal_printer_http_service.dart';
+// import removed
+import 'package:sellweb/features/sales/presentation/providers/cloud_print_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:sellweb/features/sales/domain/entities/ticket_model.dart';
 import 'package:sellweb/features/sales/presentation/dialogs/share_ticket_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// print_job.dart import removed
 
 /// Diálogo modernizado para opciones del ticket siguiendo Material Design 3
 class TicketOptionsDialog extends StatefulWidget {
@@ -24,28 +27,43 @@ class TicketOptionsDialog extends StatefulWidget {
   State<TicketOptionsDialog> createState() => _TicketOptionsDialogState();
 }
 
+/// Clave de SharedPreferences para la preferencia de opción de ticket.
+/// Valores: 'print', 'share', o vacío (sin preferencia).
+const String _kTicketOptionPrefKey = 'ticket_option_preference';
+
+/// Guarda la preferencia de opción de ticket en SharedPreferences.
+Future<void> saveTicketOptionPreference(String value) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_kTicketOptionPrefKey, value);
+}
+
+/// Obtiene la preferencia guardada de opción de ticket. Retorna '' si no hay.
+Future<String> getTicketOptionPreference() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString(_kTicketOptionPrefKey) ?? '';
+}
+
 class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
   bool _printDirectly = false;
   bool _shareTicket = false;
   bool _isProcessing = false;
-  bool _printerConnected = false;
 
   @override
   void initState() {
     super.initState();
-    _checkPrinterAndSetDefaults();
+    _loadPreference();
   }
 
-  Future<void> _checkPrinterAndSetDefaults() async {
-    final printerService = getIt<ThermalPrinterHttpService>();
-    await printerService.initialize();
-
+  Future<void> _loadPreference() async {
+    final pref = await getTicketOptionPreference();
+    if (!mounted) return;
     setState(() {
-      _printerConnected = printerService.isConnected;
-
-      // Establecer valor por defecto
-      if (_printerConnected) {
+      if (pref == 'print') {
         _printDirectly = true;
+        _shareTicket = false;
+      } else if (pref == 'share') {
+        _shareTicket = true;
+        _printDirectly = false;
       }
     });
   }
@@ -76,9 +94,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
 
           DialogComponents.sectionSpacing,
 
-          // Estado de la impresora
-          _buildPrinterStatus(),
-
+          // Ya no necesitamos mostrar estado de la impresora localmente
           DialogComponents.sectionSpacing,
 
           // Opciones disponibles
@@ -98,15 +114,12 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
               _buildOptionTile(
                 icon: Icons.print_rounded,
                 title: 'Imprimir Directamente',
-                subtitle: _printerConnected
-                    ? 'Enviar a impresora térmica conectada'
-                    : 'No hay impresora conectada',
-                value: _printDirectly && _printerConnected,
-                onChanged: _printerConnected
-                    ? (value) => setState(() => _printDirectly = value ?? false)
-                    : null,
-                iconColor: _printerConnected ? Colors.green : Colors.grey,
-                enabled: _printerConnected,
+                subtitle: 'Enviar ticket a la cola de impresión',
+                value: _printDirectly,
+                onChanged: (value) =>
+                    setState(() => _printDirectly = value ?? false),
+                iconColor: Colors.blue,
+                enabled: true,
               ),
               _buildOptionTile(
                 icon: Icons.share_rounded,
@@ -172,63 +185,7 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     );
   }
 
-  Widget _buildPrinterStatus() {
-    final theme = Theme.of(context);
-
-    return DialogComponents.infoSection(
-      context: context,
-      title: 'Estado de la Impresora',
-      icon: Icons.print_rounded,
-      backgroundColor: _printerConnected
-          ? Colors.green.withValues(alpha: 0.1)
-          : Colors.orange.withValues(alpha: 0.1),
-      content: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: _printerConnected
-                  ? Colors.green.withValues(alpha: 0.2)
-                  : Colors.orange.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _printerConnected
-                  ? Icons.check_circle_rounded
-                  : Icons.warning_rounded,
-              color: _printerConnected ? Colors.green[700] : Colors.orange[700],
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _printerConnected ? 'Impresora Conectada' : 'Sin Impresora',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: _printerConnected
-                        ? Colors.green[700]
-                        : Colors.orange[700],
-                  ),
-                ),
-                Text(
-                  _printerConnected
-                      ? 'Lista para imprimir tickets'
-                      : 'Usa otras opciones para procesar el ticket',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // El método _buildPrinterStatus() ha sido removido
 
   Widget _buildOptionTile({
     required IconData icon,
@@ -297,44 +254,35 @@ class _TicketOptionsDialogState extends State<TicketOptionsDialog> {
     setState(() => _isProcessing = true);
 
     try {
-      final printerService = getIt<ThermalPrinterHttpService>();
-      await printerService.initialize();
-
-      // Preparar datos del ticket
-      final products = widget.ticket.products.map((item) {
-        return {
-          'quantity': item.quantity,
-          'description': item.description,
-          'price': CurrencyFormatter.formatPrice(value: item.salePrice),
-        };
-      }).toList();
-
-      // Determinar método de pago usando el enum
-      final paymentMethodEnum = PaymentMethod.fromCode(widget.ticket.payMode);
-      final paymentMethod = paymentMethodEnum.displayName;
+      final cloudPrintProvider = context.read<CloudPrintProvider>();
+      final salesProvider = context.read<SalesProvider>();
+      
+      final currentBusinessId = salesProvider.profileAccountSelected.id;
+      if (_printDirectly && currentBusinessId.isEmpty) {
+         throw Exception('No hay una cuenta de negocio seleccionada activa.');
+      }
 
       List<String> successMessages = [];
       List<String> errorMessages = [];
 
+      // Guardar preferencia del usuario
+      if (_printDirectly) {
+        await saveTicketOptionPreference('print');
+      } else if (_shareTicket) {
+        await saveTicketOptionPreference('share');
+      }
+
       // Procesar cada opción
-      if (_printDirectly && printerService.isConnected) {
-        final result = await printerService.printTicket(
-          businessName: widget.businessName,
-          products: products,
-          total: widget.ticket.getTotalPrice,
-          paymentMethod: paymentMethod,
-          cashReceived: widget.ticket.valueReceived > 0
-              ? widget.ticket.valueReceived
-              : null,
-          change: widget.ticket.valueReceived > widget.ticket.getTotalPrice
-              ? widget.ticket.valueReceived - widget.ticket.getTotalPrice
-              : null,
+      if (_printDirectly) {
+        final success = await cloudPrintProvider.enqueueTicket(
+            businessId: currentBusinessId, 
+            job: widget.ticket.copyWith(printStatus: 'waiting'),
         );
 
-        if (result.success) {
-          successMessages.add('Ticket impreso correctamente');
+        if (success) {
+          successMessages.add('Ticket enviado a la cola de impresión');
         } else {
-          errorMessages.add(result.message ?? 'Error al imprimir ticket');
+          errorMessages.add(cloudPrintProvider.lastError ?? 'Error al poner en cola');
         }
       }
 

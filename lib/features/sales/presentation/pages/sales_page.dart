@@ -18,7 +18,7 @@ import 'package:sellweb/features/auth/domain/entities/admin_profile.dart';
 import 'package:sellweb/features/sales/presentation/providers/sales_provider.dart';
 import 'package:sellweb/features/catalogue/presentation/providers/catalogue_provider.dart';
 import 'package:sellweb/features/auth/presentation/providers/auth_provider.dart';
-import 'package:sellweb/features/sales/presentation/providers/printer_provider.dart';
+import 'package:sellweb/features/sales/presentation/providers/cloud_print_provider.dart';
 import 'package:sellweb/features/cash_register/presentation/providers/cash_register_provider.dart';
 import 'package:sellweb/features/home/presentation/providers/home_provider.dart';
 import 'package:sellweb/core/presentation/widgets/navigation/drawer.dart'; 
@@ -52,8 +52,8 @@ class _SalesPageState extends State<SalesPage> {
   // GlobalKeys para el showcase
   final GlobalKey _quickSaleKey = GlobalKey();
   final GlobalKey _cashRegisterKey = GlobalKey();
+  final GlobalKey _printQueueKey = GlobalKey();
   final GlobalKey _lastTicketKey = GlobalKey();
-  final GlobalKey _printerKey = GlobalKey();
   final GlobalKey _searchProductKey = GlobalKey();
   final GlobalKey _favoritesKey = GlobalKey();
   
@@ -99,7 +99,6 @@ class _SalesPageState extends State<SalesPage> {
     // sirve para que el teclado se enfoque automáticamente al iniciar la página
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
-      Provider.of<PrinterProvider>(context, listen: false).refreshStatus();
     });
   }
 
@@ -181,8 +180,8 @@ class _SalesPageState extends State<SalesPage> {
     ShowCaseWidget.of(context).startShowCase([
       _quickSaleKey,
       _cashRegisterKey,
+      _printQueueKey,
       _lastTicketKey,
-      _printerKey,
       _searchProductKey,
       _favoritesKey,
     ]);
@@ -751,28 +750,21 @@ class _SalesPageState extends State<SalesPage> {
           // view : botones de la barra de acciones
           Row(
             children: [
-              // button : botón de estado de la impresora
-              Consumer<PrinterProvider>(
-                builder: (context, printerProvider, __) {
-                  final isConnected = printerProvider.isConnected;
+              // button : botón de cola de impresión
+              Consumer<CloudPrintProvider>(
+                builder: (context, cloudPrintProvider, __) {
                   return Showcase(
-                    key: _printerKey,
-                    title: '🖨️ Impresora',
-                    description: 'Configura tu impresora térmica para imprimir tickets automáticamente. El indicador verde muestra cuando está conectada con una impresora física',
+                    key: _printQueueKey,
+                    title: '🖨️ Cola de Impresión',
+                    description: 'Mira los tickets pendientes por imprimir desde el Nodo de Escritorio.',
                     targetBorderRadius: BorderRadius.circular(50),
                     targetPadding: const EdgeInsets.all(8),
                     child: AppBarButtonCircle(
-                      icon: isConnected
-                          ? Icons.print_outlined
-                          : Icons.print_disabled_outlined,
-                      tooltip: isConnected
-                          ? 'Impresora conectada y lista\nToca para configurar'
-                          : 'Impresora no disponible\nToca para configurar conexión',
-                      onPressed: () => _showPrinterConfigDialog(buildContext),
-                      backgroundColor: isConnected
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : null,
-                      colorAccent: isConnected ? Colors.green.shade700 : null,
+                      icon: Icons.print_outlined,
+                      tooltip: 'Cola de impresión',
+                      onPressed: () => showCloudPrintQueueDialog(buildContext),
+                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                      colorAccent: Colors.blueAccent.shade700,
                     ),
                   );
                 },
@@ -1510,19 +1502,6 @@ class _SalesPageState extends State<SalesPage> {
 }
 
 
-
-/// Muestra el diálogo de configuración de impresora
-void _showPrinterConfigDialog(BuildContext context) {
-  showDialog<void>(
-    context: context,
-    builder: (BuildContext dialogContext) {
-      return const PrinterConfigDialog();
-    },
-  ).then((_) {
-    // Actualizar el estado de la impresora cuando se cierra el diálogo
-    Provider.of<PrinterProvider>(context, listen: false).refreshStatus();
-  });
-}
 
 /// Muestra el diálogo del último ticket vendido
 void _showLastTicketDialog(BuildContext context, SalesProvider provider) {
